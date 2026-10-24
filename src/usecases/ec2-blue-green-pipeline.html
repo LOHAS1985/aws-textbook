@@ -1,0 +1,63 @@
+<!-- title: EC2のアプリをCI/CDでBlue/Greenデプロイする -->
+<!-- category: デプロイ・自動化 -->
+<!-- lead: CodePipelineで自動化し、CodeDeployのBlue/Greenで安全に切り替える -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>GitHubへのプッシュをきっかけに、ビルド・テストから本番デプロイまでを自動化したい。本番への切り替えはダウンタイムなしで行い、問題があればすぐ元に戻したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 160 85
+node git 0 0 blue "GitHub" "プッシュ"
+node cp 1.25 0 accent "CodePipeline"
+node cb 2.5 0 box "CodeBuild" "ビルド・テスト"
+node ap 3.75 0 box "手動承認"
+node cd 3.75 1.2 accent "CodeDeploy" "Blue/Green"
+node green 2.5 1.2 ok "Green" "新しいASG"
+node blue 2.5 2.3 box "Blue" "旧ASG"
+node alb 1.25 1.75 box "ALB" "向き先を切替"
+node u 0 1.75 blue "利用者"
+edge git cp
+edge cp cb
+edge cb ap
+edge ap cd
+edge cd green "デプロイ"
+edge u alb
+edge alb green "切替後"
+edge alb blue dash "切替前"
+<figcaption>図1 CodePipelineがビルド・テスト・手動承認を経てCodeDeployを起動する。CodeDeployは新しいAuto Scalingグループ(Green)にアプリを配置し、ALBの向き先をBlueからGreenへ切り替える。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/codepipeline.html">AWS CodePipeline</a>:Source → Build → Approval → Deploy の流れを自動化する</li>
+<li><a href="../services/codebuild.html">AWS CodeBuild</a>:buildspec.ymlに従ってビルド・テストする</li>
+<li><a href="../services/codedeploy.html">AWS CodeDeploy</a>:appspec.ymlに従ってEC2にデプロイし、Blue/Greenで切り替える</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:BlueとGreenの切り替え</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:アラームによる自動ロールバック</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>ソースにbuildspec.yml(ビルド手順)とappspec.yml(デプロイ手順・フック)を置く</li>
+<li>CodeDeployのアプリケーションとデプロイグループを作成し、デプロイ方式をBlue/Greenにする</li>
+<li>CodePipelineでSource(GitHub)・Build(CodeBuild)・Approval(手動承認)・Deploy(CodeDeploy)のステージを作る</li>
+<li>CloudWatchアラーム(エラー率など)をデプロイグループに設定し、自動ロールバックを有効にする</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>本番前に人の確認を入れる → <strong>Manual Approval Action</strong>。</li>
+<li>Blue/Greenは旧環境(Blue)を残しておけるので、<strong>ロールバックが非常に容易</strong>(<a href="../terms/deploy-strategies.html">デプロイ戦略</a>)。</li>
+<li>デプロイ後の動作確認は、appspec.ymlの <code>ValidateService</code> などのフックで行う。</li>
+<li>リソースを増やしたくない場合はIn-place(OneAtATimeなど)も選べるが、更新中は台数が減る。</li>
+</ul></div>
+</section>

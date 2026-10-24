@@ -1,0 +1,51 @@
+<!-- title: OIDC(OpenID Connect) -->
+<!-- category: セキュリティ・認証 -->
+<!-- lead: OAuth 2.0を拡張した、ユーザー認証のためのプロトコル -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>OIDC(OpenID Connect)</strong>は、<strong>OAuth 2.0を拡張したプロトコル</strong>です。OAuth 2.0が「認可」のための仕組みなのに対し、OIDCは「認証(ユーザーが誰か)」を扱います。</p>
+<div class="table-wrap"><table>
+<tr><th>プロトコル</th><th>目的</th></tr>
+<tr><td>OAuth 2.0</td><td>認可(Authorization):何をしてよいか</td></tr>
+<tr><td>OpenID Connect</td><td>認証(Authentication):誰か</td></tr>
+</table></div>
+<h3>認証フロー</h3>
+<figure class="figure" data-diagram>
+grid 165 85
+node user 0 0.5 blue "ユーザー"
+node app 1.3 0.5 box "アプリ"
+node idp 2.9 0 accent "IdP" "Google・Okta など"
+node tok 2.9 1 ok "IDトークン(JWT)" "誰が・いつ・どのIdP"
+edge user app "①"
+edge app idp "② 認証"
+edge idp tok "③ 発行"
+edge tok app "④ 署名を検証"
+<figcaption>図1 OIDCの認証フロー。①ユーザーがアプリからIdPにログインし、②IdPが認証して、③IDトークン(JWT)を発行する。④アプリはIDトークンの署名を検証してユーザーを認証する。</figcaption>
+</figure>
+<ol>
+<li>ユーザーが、アプリを通じてIdP(Google、Okta、GitHubなど)にログインする。IdP=ユーザーを認証し、その結果を他のサービスへ提供するもの</li>
+<li>IdPがユーザーを認証する</li>
+<li>IdPが<strong>IDトークン</strong>を発行する。IDトークンはJWT形式で、「誰が」「いつ」「どのIdPによって」認証されたかの情報を含む</li>
+<li>アプリはIDトークンを受け取り、<strong>署名を検証</strong>することで認証を行う</li>
+</ol>
+
+<h3>AWSでの使われ方</h3>
+<p>AWSでは、IAMにOIDC IdPを登録しておき、IdPが発行したIDトークンをSTSの <code>AssumeRoleWithWebIdentity</code> に渡すことで、IAMユーザーなしで一時的な認証情報を受け取れます。EKSのIRSAや、Cognitoのソーシャルログインでも使われています。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="../usecases/cross-account-access.html">異なるAWSアカウントのリソースにアクセス</a>:STSで一時認証情報を得る流れ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:OIDC IdPの登録</li>
+<li><a href="../services/sts.html">AWS STS</a>:AssumeRoleWithWebIdentity</li>
+<li><a href="../services/cognito.html">Amazon Cognito</a>:OIDC IdP経由のサインイン</li>
+<li><a href="../services/eks.html">Amazon EKS</a>:IRSAでOIDCプロバイダーを使う</li>
+</ul>
+</section>

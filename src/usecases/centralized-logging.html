@@ -1,0 +1,59 @@
+<!-- title: 複数アカウントのログを集約して分析する -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: 各アカウントのログを1つのS3に集め、長期保存とSQL分析を行う -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>組織内の複数アカウントのアプリログやAPI操作の記録(CloudTrail)を、ログ集約用のアカウントに集めて長期保存したい。監査のときにはSQLで横断的に検索したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 85
+node a1 0 0 blue "アカウントA" "CloudWatch Logs"
+node a2 0 1 blue "アカウントB" "CloudWatch Logs"
+node ct 0 2 blue "CloudTrail" "組織の証跡"
+node fh 1.4 0.5 box "Data Firehose" "サブスクリプション経由"
+node s3 2.8 1 accent "ログ用S3" "集約アカウント"
+node ath 1.4 2 ok "Athena" "SQLで分析"
+edge a1 fh
+edge a2 fh
+edge fh s3
+edge ct s3
+edge ath s3 dash "クエリ"
+<figcaption>図1 各アカウントのCloudWatch Logsをサブスクリプションフィルター → Data Firehoseで、CloudTrailは組織の証跡で、集約アカウントのS3に保存する。分析はAthenaでS3を直接SQLで検索する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:サブスクリプションフィルターでログをリアルタイムに転送する</li>
+<li><a href="../services/kinesis.html">Amazon Kinesis(Data Firehose)</a>:ログをS3へ配送する</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:組織全体のAPI操作を1つの証跡で記録する</li>
+<li><a href="../services/s3.html">Amazon S3</a>:ログの長期保存(ライフサイクルでGlacierへ)</li>
+<li><a href="../services/athena.html">Amazon Athena</a>:S3のログをSQLで分析する</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:組織の証跡、アカウントの管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>集約アカウントにログ用のS3バケットを作り、バケットポリシーで各アカウントからの書き込みを許可する</li>
+<li>管理アカウントでCloudTrailの組織の証跡を作成し、保存先に集約バケットを指定する</li>
+<li>Data Firehoseの配信ストリームを作り、各アカウントのロググループにサブスクリプションフィルターを設定する</li>
+<li>S3のライフサイクルルールで、古いログをGlacierなどへ移す</li>
+<li>Athenaでテーブルを定義し、SQLで検索する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>短期・頻繁に検索するログはCloudWatch Logs、<strong>長期・たまに検索するログはS3</strong>。</li>
+<li>CloudTrailのログの改ざん検知 → <strong>ログファイルの整合性検証</strong>。</li>
+<li>Athenaのコスト削減 → パーティション分割・列指向形式。</li>
+<li>ログを削除させないために、S3オブジェクトロックやバケットポリシーで削除を制限する。</li>
+</ul></div>
+</section>

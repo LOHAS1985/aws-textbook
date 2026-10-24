@@ -1,0 +1,162 @@
+<!-- title: AWS CloudFormation -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: AWSリソースをテンプレート(コード)で定義し、自動構築・管理 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS CloudFormation</strong>は、AWSリソースを<strong>コード(テンプレート)として定義</strong>し、自動で構築・管理するサービスです(Infrastructure as Code)。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<ul>
+<li><strong>テンプレート</strong>:インフラの設計図(YAML/JSON形式)</li>
+<li><strong>スタック</strong>:テンプレートから作られるリソースの集合(環境そのもののイメージ)</li>
+<li><strong>ネストスタック</strong>:スタックを入れ子構造にする</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 150 85
+node tpl 0 0.5 blue "テンプレート" "YAML / JSON"
+node cfn 1.3 0.5 accent "CloudFormation"
+node vpc 2.6 0 box "VPC"
+node ec2 3.6 0 box "EC2"
+node rds 2.6 1 box "RDS"
+node s3 3.6 1 box "S3"
+group 2.6 0 3.6 1 "スタック" pad=12
+edge tpl cfn
+edge cfn vpc
+edge cfn rds
+<figcaption>図1 CloudFormationの基本。テンプレート(設計図)を渡すと、CloudFormationがリソースをまとめて作成し、スタックとして管理する。更新・削除もスタック単位で行う。</figcaption>
+</figure>
+<h3>主な機能</h3>
+<ul>
+<li><strong>構文の拡張</strong>:サーバーレス用に <a href="sam.html">AWS SAM</a> がある。</li>
+<li><strong class="em">Transformセクション</strong>:デプロイ前にテンプレートを別のテンプレートへ変換する。例:<code>Transform: AWS::Serverless-2016-10-31</code>(SAM)</li>
+<li><strong>カスタムリソース</strong>:実行時の独自処理を作成(ほとんどの場合Lambdaを使う)。例:RDSのDBユーザー作成、Slack通知のWebhook登録</li>
+<li><strong>DeletionPolicy</strong>:リソース削除時の扱い。<strong class="em">Delete(削除する。デフォルト)</strong>/Retain(残す)/Snapshot(スナップショットを取ってから削除)</li>
+<li><strong>NoEcho</strong>:機密情報を画面・ログに表示しない</li>
+<li><strong>変更セット</strong>:実行中のリソースに変更がどう影響するかを事前に確認する。<strong class="em">S3のオブジェクトキーやVersionIdが変わらないと、コードの変更を検知しない</strong>。</li>
+<li><strong>ドリフト検出</strong>:テンプレート(理想の状態)と実際のリソースのズレを検出</li>
+<li><strong>スタックポリシー</strong>:スタック更新時に特定のリソースの変更を禁止する</li>
+<li><strong class="em">ダイナミックリファレンス</strong>:テンプレート内でSecrets Manager/Parameter Storeの値を実行時に参照し、秘密情報を直書きしない。記述は <code>{{resolve:xxxx:...}}</code>。xxxxは <code>ssm</code>(Parameter Store)、<code>ssm-secure</code>(SecureString)、<code>secretsmanager</code>(Secrets Manager)。</li>
+<li><strong class="em">StackSets</strong>:複数のAWSアカウント・リージョンへスタックを一括展開する</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node t2 0 0 blue "新しいテンプレート"
+node cs 1.4 0 box "変更セット" "影響を事前に確認"
+node st 2.8 0.5 accent "スタック" "実際のリソース"
+node dr 1.4 1 box "ドリフト検出" "テンプレートとのズレ"
+node man 1.4 2 ng "手動での変更" "コンソールなど"
+edge t2 cs
+edge cs st "実行"
+edge dr st "比較"
+edge man st dash
+<figcaption>図2 変更セットとドリフト検出。変更セットは更新の前に「何が変わるか」を確認する。ドリフト検出は、コンソールなどで手動変更されて生じたテンプレートとのズレを見つける。</figcaption>
+</figure>
+<h3>AWS CLIのコマンドとオプション</h3>
+<div class="table-wrap"><table>
+<tr><th>コマンド</th><th>内容</th></tr>
+<tr><td><code>create-stack</code></td><td>新規作成</td></tr>
+<tr><td><code>update-stack</code></td><td>更新</td></tr>
+<tr><td><code>delete-stack</code></td><td>削除</td></tr>
+<tr><td><code>describe-stacks</code></td><td>状態確認</td></tr>
+<tr><td><code>deploy</code></td><td>作成/更新</td></tr>
+</table></div>
+<p>主なオプション:<code>--template-file</code>(テンプレート指定)、<code>--stack-name</code>(スタック名)、<code>--parameter-overrides</code>(パラメータ上書き)、<code>--capabilities</code>(IAMリソース作成の許可)、<code>--tags</code>、<code>--region</code>、<code>--role-arn</code>(実行ロール)、<code>--disable-rollback</code>(ロールバック無効)</p>
+
+<h3>テンプレートの例(S3バケットの作成)</h3>
+<ul>
+<li><strong>Parameters</strong>:パラメータ(バケット名、バージョニングのON/OFF。<code>AllowedValues</code> で値の候補を限定)</li>
+<li><strong>Resources</strong>:本体(<code>Properties</code> で設定)</li>
+<li><strong>Conditions</strong>:条件分岐</li>
+<li><strong>Outputs</strong>:外部へ返す情報(<code>!Ref</code> などの組み込み関数で値を取得)</li>
+</ul>
+<pre class="code"><code>AWSTemplateFormatVersion: '2010-09-09'
+Description: Create an S3 bucket with parameters and outputs
+
+Parameters:
+  BucketName:
+    Type: String
+  VersioningEnabled:
+    Type: String
+    AllowedValues: [true, false]
+    Default: false
+
+Conditions:
+  EnableVersioning: !Equals [ !Ref VersioningEnabled, true ]
+
+Resources:
+  MyS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: !If [ EnableVersioning, Enabled, Suspended ]
+
+Outputs:
+  BucketNameOutput:
+    Value: !Ref MyS3Bucket
+  BucketURL:
+    Value: !Sub "https://${MyS3Bucket}.s3.amazonaws.com"</code></pre>
+<figure class="figure" data-diagram>
+grid 170 75
+node admin 0 1 accent "StackSets" "管理アカウント"
+node a1 1.5 0 ok "アカウントA" "東京リージョン"
+node a2 1.5 1 ok "アカウントA" "大阪リージョン"
+node a3 1.5 2 ok "アカウントB" "東京リージョン"
+edge admin a1
+edge admin a2
+edge admin a3
+<figcaption>図3 StackSets。1つのテンプレートから、複数のアカウント・リージョンへ同じスタックを一括で展開する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>開発・ステージング・本番で同じ構成の環境を再現</li>
+<li>複数アカウントへ共通のセキュリティ設定を展開(StackSets)</li>
+<li>本番のDBを誤って削除しないよう保護(DeletionPolicy: Retain/Snapshot、スタックポリシー)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>CloudFormation自体は(AWSリソースを扱う範囲では)無料です。作成されたリソースに料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cdk.html">AWS CDK</a>:プログラミング言語で書いてCloudFormationに変換</li>
+<li><a href="sam.html">AWS SAM</a>:サーバーレス向けの拡張</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>/<a href="systems-manager.html">Parameter Store</a>:ダイナミックリファレンス</li>
+<li><a href="lambda.html">AWS Lambda</a>:カスタムリソース</li>
+<li><a href="service-catalog.html">AWS Service Catalog</a>:テンプレートを製品として配布</li>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:CI/CDでのデプロイ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>スタック削除時にリソースを残す → <strong>DeletionPolicy: Retain</strong>(デフォルトはDelete)。</li>
+<li>パスワードを直書きしない → <strong>ダイナミックリファレンス</strong>/<strong>NoEcho</strong>。</li>
+<li>変更の影響を事前確認 → <strong>変更セット</strong>。手動変更によるズレ → <strong>ドリフト検出</strong>。</li>
+<li>複数アカウント・リージョンへ展開 → <strong>StackSets</strong>。</li>
+<li>IAMリソースを作るテンプレート → <code>--capabilities CAPABILITY_IAM</code> が必要。</li>
+<li>Lambdaのコードを更新したのに反映されない → <strong>S3キーかVersionIdを変える</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CloudFormationはテンプレートからスタックを作るIaCサービス。</li>
+<li>DeletionPolicy・変更セット・ドリフト検出・スタックポリシーで安全に運用する。</li>
+<li>秘密情報はダイナミックリファレンス、マルチアカウントはStackSets。</li>
+</ul>
+</section>

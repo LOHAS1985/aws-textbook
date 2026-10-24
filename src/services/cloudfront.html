@@ -1,0 +1,122 @@
+<!-- title: Amazon CloudFront -->
+<!-- category: ネットワークとコンテンツ配信 -->
+<!-- lead: コンテンツを世界中へ高速配信するCDN -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon CloudFront</strong>は、<strong>CDN(Content Delivery Network)</strong>サービスです。世界中のエッジサーバーにコンテンツをキャッシュし、ユーザーの近くから高速に配信します。</p>
+<ul>
+<li><strong>オリジン</strong>:コンテンツを取得する元のサーバー(S3、ALB、EC2など)</li>
+<li><strong>ディストリビューション</strong>:各種設定の集合</li>
+<li><strong class="em">キャッシュ対象はGET・HEAD・OPTIONSのみ</strong></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>仕組み</h3>
+<ul>
+<li><strong>CloudFrontなし</strong>:日本のユーザーがアメリカのWebサーバーへ直接アクセスすると時間がかかる。</li>
+<li><strong>CloudFrontあり</strong>
+  <ul>
+  <li>初回:日本のエッジサーバーがアメリカのWebサーバーへアクセス(時間は同じ)し、エッジにキャッシュを残す。</li>
+  <li>2回目以降:ユーザーはエッジサーバー(リージョナルエッジキャッシュ)にアクセスするだけで済み、高速になる。</li>
+  </ul></li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 160 85
+node u 0 0 blue "ユーザー" "日本"
+node edge 1.25 0 accent "エッジロケーション" "キャッシュ"
+node rec 2.5 0 box "リージョナル\nエッジキャッシュ"
+node origin 3.75 0 ok "オリジン" "S3 / ALB(米国)"
+edge u edge both
+edge edge rec "ミス時"
+edge rec origin "ミス時"
+<figcaption>図1 CloudFrontの仕組み。初回はエッジからオリジンへ取りに行き、エッジにキャッシュを残す。2回目以降は近くのエッジが応答するため高速。オリジンシールドを使うと、オリジンへのリクエストをさらにまとめられる。</figcaption>
+</figure>
+<h3>オリジンシールド</h3>
+<p>複数のエッジロケーションからオリジンへのリクエストをまとめ、<strong>オリジンへのリクエスト数を減らす</strong>機能です。リージョナルエッジキャッシュを1つにまとめるイメージです。</p>
+
+<h3 class="em">Origin Access Control(OAC)</h3>
+<p>S3オリジンへアクセスする仕組みで、<strong>CloudFront経由でのみS3にアクセスできる</strong>ようにします(S3への直接アクセスを防ぐ)。</p>
+
+<h3>フィールドレベル暗号化</h3>
+<p>HTTPリクエスト内の特定の項目(クレジットカード番号など)をCloudFrontで暗号化する機能です。</p>
+
+<h3>TTL(キャッシュ期限)</h3>
+<ul>
+<li><strong>静的コンテンツ</strong>:誰がアクセスしても同じ内容なので、長時間キャッシュする。</li>
+<li><strong>動的コンテンツ</strong>:人や時刻によって内容が変わるので、短時間キャッシュする。</li>
+</ul>
+
+<h3>HTTPS制御</h3>
+<ul>
+<li><strong class="em">Viewer Protocol Policy</strong>:ユーザー ⇔ CloudFront 間</li>
+<li><strong class="em">Origin Protocol Policy</strong>:CloudFront ⇔ オリジン 間</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 85
+node u 0 0 blue "ユーザー"
+node cf 1.4 0 accent "CloudFront" "OACで署名"
+node s3 2.8 0 ok "S3バケット" "OACのみ許可"
+node x 1.4 1 ng "S3へ直接アクセス" "拒否される"
+edge u cf "Viewer側"
+edge cf s3 "Origin側"
+edge x s3 dash
+<figcaption>図2 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
+</figure>
+<h3>注意:カスタムドメインと証明書</h3>
+<p>API Gateway(エッジ最適化)などでカスタムドメインを使う場合の手順です。</p>
+<ol>
+<li>証明書をACMに登録する。<strong>ACM証明書は us-east-1 に存在する必要がある</strong>。</li>
+<li>DNSにCNAMEレコード(ドメイン名の別名)を作成する。</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>S3の静的Webサイト・画像・動画の高速配信(OACでS3を非公開に)</li>
+<li>グローバルユーザー向けWebアプリの高速化</li>
+<li>エッジでのリクエスト加工(Lambda@Edge/CloudFront Functions)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>エッジからユーザーへのデータ転送量と、HTTP/HTTPSリクエスト数で課金されます。オリジン(AWS内)からCloudFrontへの転送は無料です。キャッシュヒット率を上げるとオリジンの負荷とコストを下げられます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:代表的なオリジン(OAC)</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:動的コンテンツのオリジン</li>
+<li><a href="lambda.html">AWS Lambda</a>:Lambda@Edge</li>
+<li><a href="acm.html">AWS Certificate Manager</a>:証明書(us-east-1)</li>
+<li><a href="global-accelerator.html">AWS Global Accelerator</a>:TCP/UDPの経路最適化(キャッシュなし)</li>
+<li><a href="api-gateway.html">Amazon API Gateway</a>:エッジ最適化APIで内部的にCloudFrontを利用</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>S3へのアクセスをCloudFront経由に限定 → <strong>OAC</strong>。</li>
+<li>CloudFrontで使うACM証明書は<strong>us-east-1</strong>。</li>
+<li>ユーザー側のHTTPS強制 → <strong>Viewer Protocol Policy</strong>、オリジン側 → <strong>Origin Protocol Policy</strong>。</li>
+<li>オリジンの負荷を減らしたい → <strong>オリジンシールド</strong>、TTLを長くする。</li>
+<li>POST/PUTなどはキャッシュされない(キャッシュはGET/HEAD/OPTIONSのみ)。</li>
+<li>機密項目だけを暗号化 → <strong>フィールドレベル暗号化</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CloudFrontはエッジでキャッシュして配信を高速化するCDN。</li>
+<li>OAC・フィールドレベル暗号化・プロトコルポリシーでセキュリティを確保する。</li>
+<li>証明書はus-east-1、キャッシュ対象はGET/HEAD/OPTIONS。</li>
+</ul>
+</section>

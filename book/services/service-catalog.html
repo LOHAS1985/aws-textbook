@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Service Catalog | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">マネジメントとガバナンス</span>
+  <h1>AWS Service Catalog</h1>
+  <p class="lead">承認済みの構成を「製品」としてカタログから起動させる</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Service Catalog</strong>は、構成(CloudFormationテンプレート)を<strong>製品</strong>として<strong>カタログ</strong>にまとめ、利用者がそこから起動できるようにするサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li><strong>製品</strong>:CloudFormationテンプレートで定義した構成。</li>
+<li><strong>ポートフォリオ</strong>:関連する製品をまとめたもの。<strong>共有されたポートフォリオは、ローカルポートフォリオへのコピー以外の操作ができない</strong>。</li>
+</ul>
+<p>管理者は、ポートフォリオに対して「誰が使えるか(IAMユーザー/グループ/ロール)」と「制約」を設定します。<strong>起動制約</strong>を使うと、利用者本人には強い権限がなくても、指定したIAMロールの権限で製品を起動できます。ポートフォリオは他のアカウントやOrganizations全体と共有できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 822 202" style="max-width:822px;min-width:520px" role="img" aria-label="図1 Service Catalogの構成。管理者がCloudFormationテンプレートを製品として登録し、ポートフォリオにまとめて利用者に公開する。利用者はカタログから承認済みの構成だけを起動できる。"><defs><marker id="dgservices-service-catalog-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="104" text-anchor="middle" class="dg-t">管理者</text>
+<text x="104" y="122" text-anchor="middle" class="dg-s">承認済みの構成</text>
+<rect x="242" y="40" width="140" height="52" rx="8" class="dg-box"/>
+<text x="312" y="62" text-anchor="middle" class="dg-t">製品</text>
+<text x="312" y="80" text-anchor="middle" class="dg-s">CloudFormation</text>
+<rect x="242" y="126" width="140" height="52" rx="8" class="dg-box"/>
+<text x="312" y="147" text-anchor="middle" class="dg-t">製品</text>
+<text x="312" y="165" text-anchor="middle" class="dg-s">CloudFormation</text>
+<rect x="450" y="83" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="520" y="104" text-anchor="middle" class="dg-tb">ポートフォリオ</text>
+<text x="520" y="122" text-anchor="middle" class="dg-s">製品をまとめる</text>
+<rect x="658" y="40" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="728" y="62" text-anchor="middle" class="dg-t">利用者</text>
+<text x="728" y="80" text-anchor="middle" class="dg-s">カタログから起動</text>
+<rect x="658" y="126" width="140" height="52" rx="8" class="dg-box"/>
+<text x="728" y="147" text-anchor="middle" class="dg-t">他アカウント</text>
+<text x="728" y="165" text-anchor="middle" class="dg-s">共有(コピーのみ)</text>
+<path d="M174.0,94.7 L242.0,80.8" class="dg-line" marker-end="url(#dgservices-service-catalog-1)"/>
+<path d="M174.0,123.3 L242.0,137.2" class="dg-line" marker-end="url(#dgservices-service-catalog-1)"/>
+<path d="M382.0,80.8 L450.0,94.7" class="dg-line" marker-end="url(#dgservices-service-catalog-1)"/>
+<path d="M382.0,137.2 L450.0,123.3" class="dg-line" marker-end="url(#dgservices-service-catalog-1)"/>
+<path d="M590.0,94.7 L658.0,80.8" class="dg-line" marker-end="url(#dgservices-service-catalog-1)"/>
+<path d="M590.0,123.3 L658.0,137.2" class="dg-line" marker-end="url(#dgservices-service-catalog-1)"/>
+</svg>
+</div>
+<figcaption>図1 Service Catalogの構成。管理者がCloudFormationテンプレートを製品として登録し、ポートフォリオにまとめて利用者に公開する。利用者はカタログから承認済みの構成だけを起動できる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>社内で承認済みの構成(暗号化済みS3、標準VPCなど)だけを開発者に使わせる</li>
+<li>開発者にEC2の作成権限を直接与えずに、決められた構成のサーバーだけを起動させる</li>
+<li>複数アカウントへ標準構成を配布</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>APIの呼び出し回数に応じて課金されます(無料枠あり)。製品として起動したリソースには、それぞれの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:製品の実体となるテンプレート</li>
+<li><a href="organizations.html">AWS Organizations</a>:ポートフォリオの共有先</li>
+<li><a href="iam.html">AWS IAM</a>:利用者の制御、起動制約</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「承認済みの構成だけをセルフサービスで起動させたい」→ <strong>Service Catalog</strong>。</li>
+<li>共有されたポートフォリオは編集できない。変更したいときは<strong>ローカルにコピー</strong>する。</li>
+<li>利用者に広い権限を与えずに起動させる → <strong>起動制約</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Service CatalogはCloudFormationテンプレートを製品として配布・起動させるサービス。</li>
+<li>製品はポートフォリオにまとめて共有する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="compute-optimizer.html"><span class="label">← 前へ</span>AWS Compute Optimizer</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="ram.html"><span class="label">次へ →</span>AWS Resource Access Manager</a>
+</nav>
+</main>
+</body>
+</html>

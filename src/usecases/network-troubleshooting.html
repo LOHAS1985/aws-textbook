@@ -1,0 +1,59 @@
+<!-- title: EC2に接続できない原因を調査する -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: 経路と許可を順番に確認し、VPCフローログで通信の拒否を特定する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>インターネットからEC2上のWebサーバーにアクセスできない。どこで通信が止まっているのかを、順番に確認して特定したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 156 85
+node rt 0 0 box "① ルートテーブル" "経路はあるか"
+node igw 1 0 box "② IGW / NAT" "アタッチ状態"
+node sg 2 0 box "③ SG" "許可されているか"
+node nacl 3 0 box "④ NACL" "戻りも許可?"
+node ip 4 0 box "⑤ パブリックIP" "割り当てはあるか"
+edge rt igw
+edge igw sg
+edge sg nacl
+edge nacl ip
+node fl 1 1.3 accent "VPCフローログ" "ACCEPT / REJECT"
+node li 2.5 1.3 ok "Logs Insights" "REJECTを検索"
+edge fl li
+<figcaption>図1 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:ルートテーブル、IGW、セキュリティグループ、ネットワークACL、<a href="../terms/vpc-flow-logs.html">VPCフローログ</a></li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:フローログの保存とLogs Insightsでの検索</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:ステータスチェック、パブリックIPの確認</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:最近SGやルートテーブルを変更した人を調べる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ(調査手順)</h2>
+<ol>
+<li><strong>ルートテーブル</strong>:サブネットに <code>0.0.0.0/0 → IGW</code> の経路があるか(<a href="../terms/route-table.html">ルートテーブル</a>)</li>
+<li><strong>IGW/NAT</strong>:IGWがVPCにアタッチされているか、NATゲートウェイが正常か</li>
+<li><strong>セキュリティグループ</strong>:80/443番のインバウンドが許可されているか</li>
+<li><strong>ネットワークACL</strong>:インバウンドに加えて、戻りのアウトバウンド(エフェメラルポート)も許可されているか</li>
+<li><strong>パブリックIP</strong>:EC2にパブリックIPまたはElastic IPが割り当てられているか</li>
+<li>VPCフローログを有効にし、Logs Insightsで <code>REJECT</code> の記録を確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>SGは<strong>ステートフル</strong>で戻りの通信は自動で許可。NACLは<strong>ステートレス</strong>で戻りの通信も許可が必要(<a href="../terms/nacl-security-group.html">NACLとSG</a>)。</li>
+<li>ルートテーブルは経路を決めるだけで、許可・拒否はしない。</li>
+<li>フローログで、インバウンドがACCEPTなのにアウトバウンドがREJECTなら、NACLのアウトバウンド(戻り)ルールが原因であることが多い。</li>
+<li>設定上の経路を自動で解析するには、VPC Reachability Analyzerも使える。</li>
+</ul></div>
+</section>

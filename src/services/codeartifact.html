@@ -1,0 +1,73 @@
+<!-- title: AWS CodeArtifact -->
+<!-- category: デベロッパーツール -->
+<!-- lead: ソフトウェアパッケージを保存・共有するリポジトリ -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS CodeArtifact</strong>は、<strong>ソフトウェアパッケージを保存・共有するためのリポジトリサービス</strong>です。開発で使うライブラリを組織内で共有・管理します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>対応するパッケージの例</h3>
+<ul>
+<li>Java:Mavenライブラリ</li>
+<li>Node.js:npmパッケージ</li>
+<li>Python:pipパッケージ</li>
+</ul>
+<ul>
+<li>npmjs.comやPyPIなどの公開リポジトリを<strong>上流(アップストリーム)</strong>として接続し、取得したパッケージをキャッシュできる。</li>
+<li>リポジトリは<strong>ドメイン</strong>単位でまとめて管理し、IAMでアクセスを制御する。</li>
+<li>社内で作った独自パッケージを公開・共有できる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node pub 0 0.5 blue "公開リポジトリ" "npmjs・PyPI など"
+node ca 1.4 0.5 accent "CodeArtifact" "ドメイン/リポジトリ"
+node dev 2.8 0 ok "開発者" "npm / pip / Maven"
+node cb 2.8 1 ok "CodeBuild" "依存を取得"
+node own 1.4 1.6 box "社内パッケージ" "公開・共有"
+edge pub ca "上流"
+edge ca dev
+edge ca cb
+edge own ca
+<figcaption>図1 CodeArtifactの構成。公開リポジトリを上流としてつなぎ、取得したパッケージをキャッシュする。社内で作ったパッケージも公開でき、開発者やCodeBuildが同じリポジトリから取得する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>社内共通ライブラリをチームで共有</li>
+<li><span>インターネットに出られないビルド環境で、承認済みのパッケージだけを使わせる</span></li>
+<li><span>CodeBuildの依存パッケージ取得元として利用</span></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>保存しているパッケージの容量、リクエスト数、データ転送量に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="codebuild.html">AWS CodeBuild</a>:ビルド時の依存取得</li>
+<li><a href="ecr.html">Amazon ECR</a>:コンテナイメージのリポジトリ</li>
+<li><a href="iam.html">AWS IAM</a>:アクセス制御</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>npm・pip・Mavenのパッケージを組織内で管理 → <strong>CodeArtifact</strong>。</li>
+<li>コンテナイメージの管理 → <strong>ECR</strong>(混同に注意)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CodeArtifactはMaven・npm・pipなどのパッケージを保存・共有するリポジトリ。</li>
+</ul>
+</section>

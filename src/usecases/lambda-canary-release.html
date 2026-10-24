@@ -1,0 +1,55 @@
+<!-- title: Lambdaを段階的にリリースする -->
+<!-- category: デプロイ・自動化 -->
+<!-- lead: SAMとCodeDeployのCanaryで、新バージョンへ少しずつトラフィックを移す -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>Lambda関数の新バージョンを、いきなり全トラフィックに出すのではなく、まず一部だけに流して様子を見たい。エラーが増えたら自動で元のバージョンに戻したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 160 85
+node sam 0 0.5 blue "SAMテンプレート" "AutoPublishAlias"
+node cd 1.25 0.5 accent "CodeDeploy" "10%を5分間"
+node alias 2.5 0.5 box "エイリアス live"
+node v1 3.75 0 box "旧バージョン" "90%"
+node v2 3.75 1 ok "新バージョン" "10% → 100%"
+node alarm 1.25 1.7 ng "CloudWatch\nアラーム" "エラー検知"
+edge sam cd
+edge cd alias
+edge alias v1
+edge alias v2
+edge alarm cd dash "ロールバック"
+<figcaption>図1 SAMでデプロイすると、CodeDeployがエイリアスの向き先を少しずつ新バージョンへ移す(この例では10%を5分間 → 100%)。CloudWatchアラームが発生したら自動でロールバックする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/sam.html">AWS SAM</a>:<code>AutoPublishAlias</code> と <code>DeploymentPreference</code> で段階的デプロイを設定する</li>
+<li><a href="../services/codedeploy.html">AWS CodeDeploy</a>:Canary/Linearでトラフィックを移す</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:バージョンとエイリアス</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:エラー数などのアラームでロールバックを判断する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>SAMテンプレートの関数に <code>AutoPublishAlias: live</code> を設定する</li>
+<li><code>DeploymentPreference</code> に <code>Type: Canary10Percent5Minutes</code> と、監視するCloudWatchアラームを設定する</li>
+<li>初回デプロイ後、コードを修正して再度 <code>sam deploy</code> する</li>
+<li>CodeDeployがトラフィックを段階的に移し、問題なければ100%に、アラームが鳴ればロールバックする</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>最初に少しだけ流してから一気に → <strong>Canary</strong>、一定間隔で少しずつ → <strong>Linear</strong>。</li>
+<li>イベントソースは<strong>エイリアスのARN</strong>を指定しておく(バージョンのARNだと切り替わらない)。</li>
+<li>切り替えの前後にテスト用のLambdaを実行する <code>PreTraffic</code>/<code>PostTraffic</code> フックも設定できる。</li>
+</ul></div>
+</section>

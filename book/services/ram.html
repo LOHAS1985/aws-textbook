@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Resource Access Manager | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">マネジメントとガバナンス</span>
+  <h1>AWS Resource Access Manager</h1>
+  <p class="lead">自アカウントのリソースを他アカウントや組織と共有</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Resource Access Manager(RAM)</strong>は、<strong>自アカウントのリソースを他のAWSアカウントや、Organizationsの組織・OUと共有</strong>するサービスです。共有したリソースの<strong>管理は共有元が行います</strong>。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>共有できる主なリソース</h3>
+<ul>
+<li>VPCサブネット</li>
+<li>Transit Gateway</li>
+<li>Route 53 Resolverルール</li>
+</ul>
+<p>VPCサブネットを共有すると、共有先のアカウントはそのサブネットにEC2やRDSなどを起動できます(VPCの共有)。ただし、VPCやサブネット自体の変更は共有元(所有者)しかできません。この他にもLicense Managerの設定、Aurora DBクラスター、プレフィックスリストなど多くのリソースを共有できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 696 221" style="max-width:696px;min-width:520px" role="img" aria-label="図1 RAMによるVPCサブネットの共有。ネットワーク管理用のアカウントがVPCを一元管理し、各アカウントは共有されたサブネットにリソースを起動する。サブネット自体の管理は共有元が行う。"><defs><marker id="dgservices-ram-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="498" y="13" width="174" height="184" rx="10" class="dg-group"/>
+<text x="508" y="28" class="dg-s">同じ組織(Organizations)</text>
+<rect x="34" y="80" width="150" height="68" rx="8" class="dg-accent"/>
+<text x="109" y="100" text-anchor="middle" class="dg-tb">ネットワーク</text>
+<text x="109" y="118" text-anchor="middle" class="dg-tb">アカウント</text>
+<text x="109" y="136" text-anchor="middle" class="dg-s">VPC・サブネットを所有</text>
+<rect x="272" y="88" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="110" text-anchor="middle" class="dg-t">RAM</text>
+<text x="347" y="128" text-anchor="middle" class="dg-s">リソース共有</text>
+<rect x="510" y="43" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="64" text-anchor="middle" class="dg-t">アプリアカウントA</text>
+<text x="585" y="82" text-anchor="middle" class="dg-s">共有サブネットにEC2</text>
+<rect x="510" y="133" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="154" text-anchor="middle" class="dg-t">アプリアカウントB</text>
+<text x="585" y="172" text-anchor="middle" class="dg-s">共有サブネットにRDS</text>
+<path d="M184.0,114.0 L272.0,114.0" class="dg-line" marker-end="url(#dgservices-ram-1)"/>
+<path d="M422.0,99.8 L510.0,83.2" class="dg-line" marker-end="url(#dgservices-ram-1)"/>
+<path d="M422.0,128.2 L510.0,144.8" class="dg-line" marker-end="url(#dgservices-ram-1)"/>
+</svg>
+</div>
+<figcaption>図1 RAMによるVPCサブネットの共有。ネットワーク管理用のアカウントがVPCを一元管理し、各アカウントは共有されたサブネットにリソースを起動する。サブネット自体の管理は共有元が行う。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ネットワーク管理アカウントでVPCを一元管理し、各アプリアカウントにサブネットを共有</li>
+<li>Transit Gatewayを組織全体で共有して、アカウント間のネットワークを接続</li>
+<li>Route 53 Resolverルールを共有し、全アカウントでオンプレミスのDNSを名前解決</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>RAM自体は追加料金なしで利用できます。共有したリソースの料金は、それぞれのサービスの料金体系に従います。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="organizations.html">AWS Organizations</a>:組織・OU単位での共有</li>
+<li><a href="vpc.html">Amazon VPC</a>:サブネットの共有</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:アカウント間で共有する代表的なリソース</li>
+<li><a href="route53.html">Amazon Route 53</a>:Resolverルールの共有</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「他アカウントとサブネット・Transit Gatewayを共有」→ <strong>RAM</strong>。</li>
+<li>共有したリソースの<strong>管理は共有元</strong>。</li>
+<li>Organizations内で共有すると、招待の承認なしで共有できる(組織での共有を有効化した場合)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>RAMはリソースをアカウント間・組織内で共有するサービス。管理は共有元が行う。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="service-catalog.html"><span class="label">← 前へ</span>AWS Service Catalog</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="managed-grafana.html"><span class="label">次へ →</span>Amazon Managed Grafana</a>
+</nav>
+</main>
+</body>
+</html>

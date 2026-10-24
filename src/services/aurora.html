@@ -1,0 +1,125 @@
+<!-- title: Amazon Aurora -->
+<!-- category: データベース -->
+<!-- lead: MySQL/PostgreSQL互換の高性能リレーショナルデータベース -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Aurora</strong>は、<strong>MySQL/PostgreSQL互換</strong>のリレーショナルデータベースです。RDSのDBエンジンの1つで、AWSが独自に設計したストレージにより高い性能と可用性を持ちます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>アーキテクチャの特徴</h3>
+<ul>
+<li><strong>共有クラスターボリューム</strong>:データは<strong>3つのAZにまたがって6コピー</strong>保持される。</li>
+<li><strong>インスタンス構成</strong>:1つのプライマリ(書き込み)と<strong>最大15のレプリカ</strong>(読み取り)。全インスタンスがボリュームを共有するため、レプリカのラグは通常ミリ秒レベル。</li>
+<li><strong>自己修復</strong>:ストレージ側でディスク障害を自動検出して修復する。</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 85
+node w 0 0 accent "プライマリ" "書き込み"
+node r1 1 0 box "レプリカ" "読み取り"
+node r2 2 0 box "レプリカ" "読み取り"
+node vol 0 1.2 ok "共有クラスターボリューム" "3つのAZに6コピー・自己修復" w=3
+edge w vol both
+edge r1 vol
+edge r2 vol
+<figcaption>図1 Auroraのアーキテクチャ。すべてのインスタンスが1つのクラスターボリュームを共有する。データは3つのAZに6コピー保存され、レプリカは最大15台まで追加できる。</figcaption>
+</figure>
+<h3>エンドポイント</h3>
+<div class="table-wrap"><table>
+<tr><th>エンドポイント</th><th>向き先</th></tr>
+<tr><td>クラスターエンドポイント</td><td>常にプライマリ(書き込み用)</td></tr>
+<tr><td>リーダーエンドポイント</td><td>レプリカへ負荷分散(読み取り用)</td></tr>
+<tr><td>カスタムエンドポイント</td><td>任意のインスタンスの組み合わせ</td></tr>
+<tr><td>インスタンスエンドポイント</td><td>特定のインスタンス</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 170 75
+node app 0 1 blue "アプリ"
+node ce 1.5 0 box "クラスター" "エンドポイント"
+node re 1.5 1.5 box "リーダー" "エンドポイント"
+node w 3 0 accent "プライマリ"
+node r1 3 1 box "レプリカ"
+node r2 3 2 box "レプリカ"
+edge app ce "書き込み"
+edge app re "読み取り"
+edge ce w
+edge re r1
+edge re r2
+<figcaption>図2 エンドポイントの使い分け。書き込みはクラスターエンドポイント(常にプライマリ)、読み取りはリーダーエンドポイント(レプリカに負荷分散)を使う。</figcaption>
+</figure>
+<h3>可用性とフェイルオーバー</h3>
+<ul>
+<li>プライマリに障害が起きると、<strong>レプリカが自動で昇格</strong>する。</li>
+<li>レプリカがない場合は新しいインスタンスを作成するため、復旧に時間がかかる。可用性を重視するなら<strong>別AZにレプリカを置く</strong>。</li>
+<li>通常のRDS Multi-AZと違い、スタンバイ専用インスタンスはなく、<strong>レプリカが読み取りとフェイルオーバーを兼ねる</strong>。</li>
+</ul>
+
+<h3>主な機能</h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>概要</th></tr>
+<tr><td>レプリカのオートスケーリング</td><td>負荷に応じてレプリカ数を増減する</td></tr>
+<tr><td>Aurora Serverless v2</td><td>負荷に応じてACU(Auroraキャパシティーユニット)を細かく自動調整する。変動の大きいワークロード向け</td></tr>
+<tr><td>Auroraグローバルデータベース</td><td>複数リージョンにレプリケートする。通常は1秒未満の遅延で、DRやグローバルな読み取りに使う</td></tr>
+<tr><td>バックトラック</td><td><strong>Aurora MySQLのみ</strong>。スナップショットから復元せず、クラスターを過去の時点へ巻き戻せる</td></tr>
+<tr><td>クローン</td><td>コピーオンライトで短時間に複製する。本番データを使ったテスト環境の作成に便利</td></tr>
+<tr><td>RDS Proxy</td><td>接続をプールし、フェイルオーバー時間の短縮と接続数の抑制に有効。Lambdaからの接続にも向く</td></tr>
+<tr><td>Database Activity Streams</td><td>データベースアクティビティをほぼリアルタイムでストリーミングする(監査用)</td></tr>
+</table></div>
+
+<h3>バックアップと復元</h3>
+<ul>
+<li><strong>継続的バックアップ</strong>:自動バックアップはS3に保存され、保持期間は<strong>1〜35日</strong>。ポイントインタイムリカバリが使える。</li>
+<li>復元は<strong>常に新しいクラスターとして作成</strong>される(既存クラスターは上書きされない)。</li>
+<li>手動スナップショットは削除するまで残り、リージョン間でコピーできる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>高い可用性・性能が必要な業務システムのDB</li>
+<li>読み取りが多いWebサービス(最大15レプリカ+リーダーエンドポイント)</li>
+<li>負荷の変動が大きいアプリ(Serverless v2)</li>
+<li>複数リージョンでの災害対策・グローバル読み取り(グローバルデータベース)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>インスタンスの稼働時間(Serverless v2ではACUの使用量)、ストレージの使用量、I/Oリクエスト、バックアップ容量で課金されます。ストレージは使った分だけ自動で拡張されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="rds.html">Amazon RDS</a>:Auroraを含むマネージドDBサービス</li>
+<li><a href="lambda.html">AWS Lambda</a>:RDS Proxy経由での接続</li>
+<li><a href="elasticache.html">Amazon ElastiCache</a>:前段のキャッシュ</li>
+<li><a href="backup.html">AWS Backup</a>:バックアップの一元管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>データは<strong>3AZに6コピー</strong>。レプリカは<strong>最大15</strong>。</li>
+<li>書き込み → <strong>クラスターエンドポイント</strong>、読み取り → <strong>リーダーエンドポイント</strong>。</li>
+<li>フェイルオーバーを速くしたい → <strong>別AZにレプリカ</strong>を置く。</li>
+<li>誤操作をすばやく戻したい(MySQL)→ <strong>バックトラック</strong>。</li>
+<li>本番データでテスト環境を素早く作る → <strong>クローン</strong>。</li>
+<li>リージョン障害対策 → <strong>グローバルデータベース</strong>。</li>
+<li>PITRやスナップショットからの復元は<strong>新しいクラスター</strong>になる(接続先の切り替えが必要)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AuroraはMySQL/PostgreSQL互換の高性能DB。共有ストレージで3AZ・6コピー。</li>
+<li>エンドポイントで書き込み・読み取りを使い分ける。</li>
+<li>Serverless v2、グローバルDB、バックトラック、クローンなど独自機能が豊富。</li>
+</ul>
+</section>

@@ -1,0 +1,124 @@
+<!-- title: Amazon SNS -->
+<!-- category: アプリケーション統合 -->
+<!-- lead: 複数の購読者へメッセージをプッシュ配信するPub/Subサービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon SNS(Simple Notification Service)</strong>は、<strong>メッセージングサービス</strong>です。<strong>プッシュ型(Pub/Sub)</strong>で、SNS自らが受信者にメッセージを送ります。保存されたメッセージはAWS KMSで暗号化できます。</p>
+<figure class="figure" data-diagram>
+grid 170 75
+node pub 0 1 blue "パブリッシャー" "アプリ・アラームなど"
+node topic 1.4 1 accent "SNSトピック"
+node s1 2.8 0 box "SQSキュー"
+node s2 2.8 1 box "Lambda"
+node s3 2.8 2 box "メール / SMS"
+edge pub topic "発行"
+edge topic s1
+edge topic s2
+edge topic s3
+<figcaption>図1 SNSのPub/Sub(プッシュ型)。トピックにパブリッシュされたメッセージを、購読しているすべての宛先へ同時に配信する(ファンアウト)。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>用語</h3>
+<ul>
+<li><strong>トピック</strong>:通信チャネルとして機能するアクセスポイント。
+  <ul>
+  <li><strong>FIFO</strong>:順序の保証、重複排除。<strong>SQS FIFOキューのみ</strong>に配信できる。</li>
+  <li><strong>標準</strong>:順序の保証なし、重複配信の可能性あり。</li>
+  </ul></li>
+<li><strong>パブリッシュ</strong>:メッセージをトピックに発行すること。</li>
+<li><strong>サブスクリプション</strong>:メッセージの受信者を登録すること。配信は<strong>デフォルトで3回再試行</strong>される(失敗するたびに再試行までの時間を調整する<strong>バックオフ</strong>。例:指数バックオフ)。</li>
+</ul>
+
+<h3>メッセージフィルタリング</h3>
+<p>購読者ごとに受信するメッセージを選別します。メッセージ属性(本文とは別に付けるキーと値)や本文で選別し、不要な配信を減らしてコストを下げます。</p>
+
+<h3>デッドレターキュー(DLQ)</h3>
+<p>配信に失敗し、再試行にも失敗したメッセージを保存します。<strong>サブスクリプション単位</strong>で設定し、<strong>実体はSQSキュー</strong>です。</p>
+<p><code>SNSトピック → 購読者へ配信 → 成功:通常処理/失敗:再試行 → 失敗が続く:SNS DLQ(SQS)</code></p>
+<p>保存後の調査手順:</p>
+<ol>
+<li>配信失敗のメトリクスを確認(<code>NumberOfMessagesPublished</code>=受け付けた数、<code>NumberOfNotificationsDelivered</code>=配信成功数、<code>NumberOfNotificationsFailed</code>=配信失敗数)</li>
+<li>購読者の状態を確認</li>
+<li>サブスクリプションの設定を確認</li>
+<li>メッセージを調査</li>
+</ol>
+
+<figure class="figure" data-diagram>
+grid 170 75
+node topic 0 1 accent "SNSトピック"
+node f1 1.4 0 box "購読A" "type=order のみ"
+node f2 1.4 1 box "購読B" "type=refund のみ"
+node f3 1.4 2 ng "購読C" "配信失敗"
+node dlq 2.8 2 ng "DLQ(SQS)" "失敗を保存"
+edge topic f1
+edge topic f2
+edge topic f3
+edge f3 dlq "再試行後"
+<figcaption>図2 メッセージフィルタリングとDLQ。購読ごとにフィルターポリシーで受け取るメッセージを絞れる。再試行しても配信できなかったメッセージは、購読ごとに設定したDLQ(実体はSQS)に保存される。</figcaption>
+</figure>
+<h3>EventBridgeとの使い分け</h3>
+<div class="table-wrap"><table>
+<tr><th>要件</th><th>適したサービス</th></tr>
+<tr><td>すべてのイベントを複数の購読者に配信/高速なファンアウト</td><td>SNS</td></tr>
+<tr><td>メールやSMSへの通知</td><td>SNS</td></tr>
+<tr><td>SQSやLambdaへの単純な通知</td><td>SNS</td></tr>
+<tr><td>条件に一致するイベントだけ処理/複雑な条件分岐</td><td>EventBridge</td></tr>
+<tr><td>AWSサービスイベントの標準的なルーティング</td><td>EventBridge</td></tr>
+<tr><td>イベントの変換/アーカイブ・リプレイ</td><td>EventBridge</td></tr>
+<tr><td>SaaSイベントとの統合</td><td>EventBridge</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<div class="table-wrap"><table>
+<tr><th>連携元</th><th>通知するイベント</th></tr>
+<tr><td>CloudWatchアラーム</td><td>CPU使用率の上昇や障害</td></tr>
+<tr><td>EventBridge</td><td>AWSサービスやアプリのイベント</td></tr>
+<tr><td>S3</td><td>オブジェクトの作成</td></tr>
+<tr><td>Lambda</td><td>処理結果や異常を後続システムへ</td></tr>
+<tr><td>Auto Scaling</td><td>インスタンスの増減</td></tr>
+<tr><td>CodePipeline</td><td>デプロイ結果</td></tr>
+</table></div>
+<p>代表的な構成に、1つのSNSトピックから複数のSQSキューへ同じメッセージを配る<strong>ファンアウト</strong>があります。</p>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>パブリッシュしたリクエスト数と、配信先の種類(HTTP、メール、SMS、モバイルプッシュなど)ごとの配信数で課金されます。SQSやLambdaへの配信は無料です。SMSは送信先の国によって料金が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="sqs.html">Amazon SQS</a>:ファンアウト先、DLQの実体</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:条件付きのイベントルーティング</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:アラームの通知先</li>
+<li><a href="lambda.html">AWS Lambda</a>:購読者</li>
+<li><a href="kms.html">AWS KMS</a>:メッセージの暗号化</li>
+<li><a href="ses.html">Amazon SES</a>:顧客向けのメール送信(SNSのメール通知は運用者向け)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>SNSはプッシュ型、SQSはプル型。</li>
+<li>1つのメッセージを複数の処理へ → <strong>SNS→複数SQSのファンアウト</strong>。</li>
+<li>購読者ごとに必要なメッセージだけ → <strong>メッセージフィルタリング</strong>。</li>
+<li>配信失敗の保存 → サブスクリプションに<strong>DLQ(SQS)</strong>。</li>
+<li>FIFOトピックの配信先は<strong>SQS FIFOキューのみ</strong>。</li>
+<li>メール・SMS通知 → SNS、複雑なルーティング・変換 → EventBridge。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>SNSはトピックへパブリッシュし、サブスクリプションへプッシュ配信するPub/Subサービス。</li>
+<li>フィルタリング・DLQ・FIFOトピックで配信を制御する。</li>
+</ul>
+</section>

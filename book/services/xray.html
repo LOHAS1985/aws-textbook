@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS X-Ray | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">デベロッパーツール</span>
+  <h1>AWS X-Ray</h1>
+  <p class="lead">分散アプリの処理の流れを可視化するトレーシングサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS X-Ray</strong>は、分散アプリケーションの<strong>処理の流れを可視化・分析</strong>し、性能問題やエラーの原因を特定するための<strong>トレーシングサービス</strong>です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 786 272" style="max-width:786px;min-width:520px" role="img" aria-label="図1 X-Rayのトレース。1つのリクエストが複数のサービスを通る流れを、トレースID(X-Amzn-Trace-Id ヘッダー)でつなぐ。サービスごとの処理がセグメント、内部の処理(DB呼び出しなど)がサブセグメント。"><defs><marker id="dgservices-xray-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="214" y="58" width="548" height="94" rx="10" class="dg-group dg-group-a"/>
+<text x="224" y="73" class="dg-s">1つのトレース</text>
+<rect x="34" y="88" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="110" text-anchor="middle" class="dg-t">リクエスト</text>
+<text x="104" y="128" text-anchor="middle" class="dg-s">トレースIDを付与</text>
+<rect x="226" y="88" width="140" height="52" rx="8" class="dg-box"/>
+<text x="296" y="110" text-anchor="middle" class="dg-t">API Gateway</text>
+<text x="296" y="128" text-anchor="middle" class="dg-s">セグメント</text>
+<rect x="418" y="88" width="140" height="52" rx="8" class="dg-box"/>
+<text x="488" y="110" text-anchor="middle" class="dg-t">Lambda</text>
+<text x="488" y="128" text-anchor="middle" class="dg-s">セグメント</text>
+<rect x="610" y="88" width="140" height="52" rx="8" class="dg-box"/>
+<text x="680" y="110" text-anchor="middle" class="dg-t">DynamoDB</text>
+<text x="680" y="128" text-anchor="middle" class="dg-s">サブセグメント</text>
+<rect x="418" y="196" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="488" y="218" text-anchor="middle" class="dg-tb">X-Ray</text>
+<text x="488" y="236" text-anchor="middle" class="dg-s">サービスマップ</text>
+<path d="M174.0,114.0 L226.0,114.0" class="dg-line" marker-end="url(#dgservices-xray-1)"/>
+<path d="M366.0,114.0 L418.0,114.0" class="dg-line" marker-end="url(#dgservices-xray-1)"/>
+<path d="M558.0,114.0 L610.0,114.0" class="dg-line" marker-end="url(#dgservices-xray-1)"/>
+<path d="M488.0,140.0 L488.0,196.0" class="dg-line dg-dash" marker-end="url(#dgservices-xray-1)"/>
+</svg>
+</div>
+<figcaption>図1 X-Rayのトレース。1つのリクエストが複数のサービスを通る流れを、トレースID(X-Amzn-Trace-Id ヘッダー)でつなぐ。サービスごとの処理がセグメント、内部の処理(DB呼び出しなど)がサブセグメント。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>用語</h3>
+<ul>
+<li><strong class="em">トレース</strong>:1つのユーザーリクエスト全体(例:API Gateway → Lambda → DynamoDB)。複数サービスをまたぐ流れを追跡するのが<strong>分散トレース</strong>。各サービスでアクティブトレースを有効にする。</li>
+<li><strong class="em">セグメント</strong>:各AWSサービス単位の処理(例:Lambdaの処理、EC2の処理)</li>
+<li><strong>サブセグメント</strong>:アプリ内部の処理(例:DBクエリ、外部API呼び出し)</li>
+<li><strong class="em">アノテーション</strong>:<strong>検索・フィルタできる</strong>情報(ユーザーID、リージョンなど)</li>
+<li><strong class="em">メタデータ</strong>:<strong>検索できない</strong>詳細データ(インデックス化されない。デバッグメモ、リクエスト本文など)</li>
+<li><strong>サービスマップ</strong>:トレースデータを視覚的に表したもの</li>
+</ul>
+<pre class="code"><code>Trace(1つのリクエスト全体)
+├─ Segment(API Gateway)
+│    ├─ Annotations: customerId=12345, plan=premium
+│    └─ Metadata:    requestBody, responseBody
+├─ Segment(Lambda)
+│    ├─ Annotations: customerId=12345, region=tokyo
+│    └─ Metadata:    debugInfo
+└─ Segment(RDS)
+     ├─ Annotations: db=mysql
+     └─ Metadata:    SQL文の詳細</code></pre>
+
+<h3>トレースの実装の流れ</h3>
+<ol>
+<li>アプリに<strong>X-Ray SDK</strong>を組み込む(Java、Node.js、Pythonなどに対応)</li>
+<li>サーバーやコンテナで<strong>X-Rayデーモン</strong>を起動</li>
+<li>リクエストにトレースIDを付け、各サービス呼び出しでセグメント/サブセグメントを記録
+  <ul>
+  <li>トレースID:<code>1-&lt;エポック秒(16進8桁)&gt;-&lt;ランダム(16進24桁)&gt;</code></li>
+  <li>セグメントID:16進16桁(64ビット)</li>
+  <li>サービス間の伝搬には <code>X-Amzn-Trace-Id</code> ヘッダーを使う</li>
+  </ul></li>
+<li>データがX-Rayに送信され、コンソールで可視化</li>
+</ol>
+
+<h3>サンプリング</h3>
+<p>すべてではなく一部のリクエストだけをトレースします。デフォルトでは、<strong>1秒ごとに最初の1リクエストは必ず</strong>トレースし、<strong>それ以降は5%</strong>をトレースします。</p>
+
+<h3>X-Rayデーモン</h3>
+<p>アプリのトレースデータをX-Rayへ送る中継プロセスです。アプリから<strong>UDP 2000番</strong>で受け取り、HTTPSでX-Ray APIへ送ります。<strong class="em">Lambdaでは不要</strong>です。</p>
+
+<h3 class="em">X-Ray SDK(OpenTelemetryへの移行が推奨)</h3>
+<p>EC2上のアプリなどに組み込んでトレースデータを生成し、デーモンへ送るためのライブラリです(SDK → デーモン → X-Ray)。</p>
+<ul>
+<li><code>AWS_XRAY_TRACING_NAME</code>:X-Ray上で表示されるサービス名</li>
+<li><code>AWS_XRAY_DAEMON_ADDRESS</code>:トレースデータの送信先</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 216" style="max-width:718px;min-width:520px" role="img" aria-label="図2 トレースデータの送り方。EC2やECSでは、SDKがUDP 2000番でX-Rayデーモンに送り、デーモンがHTTPSでX-Rayへ転送する。Lambdaはアクティブトレースを有効にするだけで送られる(デーモン不要)。"><defs><marker id="dgservices-xray-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="24" y="18" width="408" height="90" rx="10" class="dg-group"/>
+<text x="34" y="32" class="dg-s">EC2 / ECS</text>
+<rect x="34" y="46" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="67" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="109" y="85" text-anchor="middle" class="dg-s">X-Ray SDK</text>
+<rect x="272" y="46" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="67" text-anchor="middle" class="dg-t">X-Rayデーモン</text>
+<text x="347" y="85" text-anchor="middle" class="dg-s">常駐プロセス</text>
+<rect x="544" y="99" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="619" y="123" text-anchor="middle" class="dg-tb">X-Ray</text>
+<rect x="272" y="140" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="347" y="162" text-anchor="middle" class="dg-t">Lambda</text>
+<text x="347" y="180" text-anchor="middle" class="dg-s">アクティブトレース</text>
+<path d="M184.0,71.5 L272.0,71.5" class="dg-line" marker-end="url(#dgservices-xray-2)"/>
+<text x="228" y="76" text-anchor="middle" class="dg-s dg-halo">UDP 2000</text>
+<path d="M422.0,84.6 L544.0,105.9" class="dg-line" marker-end="url(#dgservices-xray-2)"/>
+<text x="483" y="99" text-anchor="middle" class="dg-s dg-halo">HTTPS</text>
+<path d="M422.0,153.4 L544.0,132.1" class="dg-line" marker-end="url(#dgservices-xray-2)"/>
+</svg>
+</div>
+<figcaption>図2 トレースデータの送り方。EC2やECSでは、SDKがUDP 2000番でX-Rayデーモンに送り、デーモンがHTTPSでX-Rayへ転送する。Lambdaはアクティブトレースを有効にするだけで送られる(デーモン不要)。</figcaption>
+</figure>
+<h3>他サービスとの連携</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>統合内容</th></tr>
+<tr><td>Lambda</td><td>アクティブトレースを有効にするだけで収集可能(デーモン不要)</td></tr>
+<tr><td>API Gateway</td><td>API呼び出しのトレースを有効化</td></tr>
+<tr><td>ELB</td><td>トレーシングヘッダー(<code>X-Amzn-Trace-Id</code>)を伝搬し、各サービスのトレースを関連付ける</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>マイクロサービスのどこで遅延が起きているかの特定</li>
+<li>エラーが発生しているサービスをサービスマップで発見</li>
+<li>特定ユーザー(アノテーション)のリクエストだけを検索して調査</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>記録したトレースの数と、取得・スキャンしたトレースの数に応じて課金されます(毎月の無料枠あり)。サンプリング率を調整するとコストを抑えられます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="lambda.html">AWS Lambda</a>/<a href="api-gateway.html">Amazon API Gateway</a>/<a href="elb.html">Elastic Load Balancing</a>:トレースの連携先</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:Application Signalsなどの監視</li>
+<li><a href="managed-grafana.html">Amazon Managed Grafana</a>:トレースの可視化</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ecs.html">Amazon ECS</a>:デーモンを動かす環境</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>トレースを<strong>検索・フィルタ</strong>したい値 → <strong>アノテーション</strong>。検索不要の詳細 → <strong>メタデータ</strong>。</li>
+<li>EC2/ECSでは<strong>X-Rayデーモン</strong>(UDP 2000)が必要。Lambdaは<strong>アクティブトレースを有効化</strong>するだけ。</li>
+<li>デーモンにデータが届かない → <code>AWS_XRAY_DAEMON_ADDRESS</code> やIAM権限を確認。</li>
+<li>サービス間の追跡は <code>X-Amzn-Trace-Id</code> ヘッダー。</li>
+<li>デフォルトのサンプリング:毎秒1件+5%。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>X-Rayはトレース・セグメント・サブセグメントで処理の流れを可視化する。</li>
+<li>アノテーションは検索可能、メタデータは検索不可。</li>
+<li>EC2などはSDK+デーモン、Lambdaは設定だけで使える。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="codeartifact.html"><span class="label">← 前へ</span>AWS CodeArtifact</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cloudshell.html"><span class="label">次へ →</span>AWS CloudShell</a>
+</nav>
+</main>
+</body>
+</html>

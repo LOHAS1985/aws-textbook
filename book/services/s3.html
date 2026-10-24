@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon S3 | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ストレージ</span>
+  <h1>Amazon S3</h1>
+  <p class="lead">容量無制限で使えるオブジェクトストレージ</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon S3(Simple Storage Service)</strong>は、ファイルを「オブジェクト」として保存する<strong>オブジェクトストレージサービス</strong>です。データは「バケット」に格納し、アクセス頻度に応じてストレージクラスを選んでコストを最適化します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 788 210" style="max-width:788px;min-width:520px" role="img" aria-label="図1 主なストレージクラス。右へ行くほど保存料金は安くなるが、取り出しに時間・料金がかかり、最低保存期間が長くなる。アクセス頻度が分からないときは Intelligent-Tiering が自動で階層を移す。"><defs><marker id="dgservices-s3-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="99" y="62" text-anchor="middle" class="dg-tb">Standard</text>
+<text x="99" y="80" text-anchor="middle" class="dg-s">即時・最低期間なし</text>
+<rect x="184" y="40" width="130" height="52" rx="8" class="dg-box"/>
+<text x="249" y="62" text-anchor="middle" class="dg-t">Standard-IA</text>
+<text x="249" y="80" text-anchor="middle" class="dg-s">即時・30日</text>
+<rect x="334" y="40" width="130" height="52" rx="8" class="dg-box"/>
+<text x="399" y="62" text-anchor="middle" class="dg-t">Glacier IR</text>
+<text x="399" y="80" text-anchor="middle" class="dg-s">即時・90日</text>
+<rect x="484" y="32" width="130" height="68" rx="8" class="dg-blue"/>
+<text x="549" y="53" text-anchor="middle" class="dg-t">Glacier</text>
+<text x="549" y="71" text-anchor="middle" class="dg-t">Flexible</text>
+<text x="549" y="89" text-anchor="middle" class="dg-s">分〜時間・90日</text>
+<rect x="634" y="40" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="699" y="62" text-anchor="middle" class="dg-t">Deep Archive</text>
+<text x="699" y="80" text-anchor="middle" class="dg-s">12〜48時間・180日</text>
+<rect x="34" y="134" width="730" height="52" rx="8" class="dg-ok"/>
+<text x="399" y="156" text-anchor="middle" class="dg-t">Intelligent-Tiering</text>
+<text x="399" y="174" text-anchor="middle" class="dg-s">アクセス頻度に応じて自動で階層を移動</text>
+<path d="M164.0,66.5 L184.0,66.5" class="dg-line" marker-end="url(#dgservices-s3-1)"/>
+<path d="M314.0,66.5 L334.0,66.5" class="dg-line" marker-end="url(#dgservices-s3-1)"/>
+<path d="M464.0,66.5 L484.0,66.5" class="dg-line" marker-end="url(#dgservices-s3-1)"/>
+<path d="M614.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgservices-s3-1)"/>
+</svg>
+</div>
+<figcaption>図1 主なストレージクラス。右へ行くほど保存料金は安くなるが、取り出しに時間・料金がかかり、最低保存期間が長くなる。アクセス頻度が分からないときは Intelligent-Tiering が自動で階層を移す。</figcaption>
+</figure>
+<h3>暗号化</h3>
+<p>保存時の暗号化方式は、<strong class="em">x-amz-server-side-encryption</strong> ヘッダーで指定します。</p>
+<div class="table-wrap"><table>
+<tr><th>区分</th><th>方式</th><th>鍵の管理者</th><th>特徴</th><th>主な用途</th></tr>
+<tr><td>サーバー</td><td>SSE-S3</td><td>AWS</td><td>S3が自動で鍵管理・暗号化</td><td>最も簡単・標準</td></tr>
+<tr><td>サーバー</td><td>SSE-KMS</td><td>ユーザー+AWS(KMS)</td><td><strong>AWS KMSで鍵管理し、監査可能</strong>(いつ・どこで・誰が利用したか確認できる)</td><td>セキュリティ重視</td></tr>
+<tr><td>サーバー</td><td>SSE-C</td><td>ユーザー</td><td>鍵をリクエストごとに指定</td><td>特殊要件</td></tr>
+<tr><td>クライアント</td><td>クライアントサイド暗号化</td><td>ユーザー</td><td>送信前にクライアント側で暗号化し、S3は暗号化データをそのまま保存</td><td>高セキュリティ</td></tr>
+</table></div>
+
+<h3>アクセス制御</h3>
+<ol>
+<li><strong>IAMポリシー</strong>:IAMユーザー/ロールに付与し、操作単位(GetObject、PutObjectなど)で制御する。<br>例:Cognito Identity Poolでユーザーに一時IAMロールを発行し、そのポリシーでS3の特定プレフィックスだけアクセスを許可する。</li>
+<li><strong>バケットポリシー</strong>:どのバケットに誰がアクセスできるかをバケットに直接設定する。他アカウントからのアクセスはバケットポリシーで許可する(他アカウント側のIAMポリシーでの許可も必要)。</li>
+<li><strong>ACL</strong>:現在は非推奨。</li>
+<li><strong>署名付きURL(Presigned URL)</strong>:期限付きでアクセスさせるURL。</li>
+</ol>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 274" style="max-width:480px;min-width:480px" role="img" aria-label="図2 S3へのアクセス制御。自アカウントはIAMポリシー、他アカウントはバケットポリシー+相手側のIAMポリシー、一時的な外部共有は署名付きURLで許可する。"><defs><marker id="dgservices-s3-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">IAMユーザー/ロール</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">IAMポリシーで許可</text>
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">他アカウント</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">相手側のIAMでも許可</text>
+<rect x="34" y="198" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="220" text-anchor="middle" class="dg-t">外部の利用者</text>
+<text x="109" y="238" text-anchor="middle" class="dg-s">署名付きURL(期限付き)</text>
+<rect x="306" y="38" width="150" height="212" rx="8" class="dg-accent"/>
+<text x="381" y="140" text-anchor="middle" class="dg-tb">S3バケット</text>
+<text x="381" y="158" text-anchor="middle" class="dg-s">バケットポリシー</text>
+<path d="M184.0,86.1 L306.0,121.9" class="dg-line" marker-end="url(#dgservices-s3-2)"/>
+<path d="M184.0,144.0 L306.0,144.0" class="dg-line" marker-end="url(#dgservices-s3-2)"/>
+<path d="M184.0,201.9 L306.0,166.1" class="dg-line" marker-end="url(#dgservices-s3-2)"/>
+</svg>
+</div>
+<figcaption>図2 S3へのアクセス制御。自アカウントはIAMポリシー、他アカウントはバケットポリシー+相手側のIAMポリシー、一時的な外部共有は署名付きURLで許可する。</figcaption>
+</figure>
+<h3>エンドポイント</h3>
+<ol>
+<li><strong>パブリックエンドポイント</strong>:インターネット経由でアクセス(例:<code>https://bucket-name.s3.region.amazonaws.com</code>)</li>
+<li><strong>VPCエンドポイント</strong>:インターネットを経由せずにプライベート接続
+  <ul>
+  <li><strong>ゲートウェイ型</strong>:VPCからのみ利用可能。<strong>無料</strong>。</li>
+  <li><strong>インターフェース型</strong>:オンプレミスやピアリングVPCからもアクセス可能。ENIにプライベートIPが割り当てられる。<strong>有料</strong>。</li>
+  </ul></li>
+</ol>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 280" style="max-width:684px;min-width:520px" role="img" aria-label="図3 S3への接続経路。VPCからはゲートウェイ型エンドポイント(無料)、オンプレミスやピアリングVPCからはインターフェース型エンドポイント(有料)を使うと、インターネットを経由せずに接続できる。"><defs><marker id="dgservices-s3-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">VPC内</text>
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">ゲートウェイ型</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">無料・VPCから</text>
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="147" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">VPN / DX</text>
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="347" y="147" text-anchor="middle" class="dg-t">インターフェース型</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">ENI・有料</text>
+<rect x="34" y="216" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="240" text-anchor="middle" class="dg-t">インターネット</text>
+<rect x="510" y="46" width="150" height="210" rx="8" class="dg-accent"/>
+<text x="585" y="156" text-anchor="middle" class="dg-tb">S3</text>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgservices-s3-3)"/>
+<path d="M419.8,92.5 L510.0,124.7" class="dg-line" marker-end="url(#dgservices-s3-3)"/>
+<path d="M184.0,151.5 L272.0,151.5" class="dg-line" marker-end="url(#dgservices-s3-3)"/>
+<path d="M422.0,151.5 L510.0,151.5" class="dg-line" marker-end="url(#dgservices-s3-3)"/>
+<path d="M184.0,223.1 L510.0,164.9" class="dg-line" marker-end="url(#dgservices-s3-3)"/>
+<text x="347" y="198" text-anchor="middle" class="dg-s dg-halo">パブリック</text>
+</svg>
+</div>
+<figcaption>図3 S3への接続経路。VPCからはゲートウェイ型エンドポイント(無料)、オンプレミスやピアリングVPCからはインターフェース型エンドポイント(有料)を使うと、インターネットを経由せずに接続できる。</figcaption>
+</figure>
+<h3>イベント通知</h3>
+<p>オブジェクトの状態変化をトリガーに、他サービスへ非同期にイベントを送る仕組みです。送信先は<strong>Lambda・SNS・SQS</strong>です。</p>
+<ul>
+<li>作成:<code>s3:ObjectCreated:Put/Post/Copy/CompleteMultipartUpload</code></li>
+<li>削除:<code>s3:ObjectRemoved:Delete/DeleteMarkerCreated</code></li>
+<li>復元:<code>s3:ObjectRestore:Post/Completed</code></li>
+<li>レプリケーション:<code>s3:Replication</code></li>
+</ul>
+<p><strong class="em">読み取り操作(GetObject)やリスト操作(ListObjects)などは対象外</strong>です。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:520px" role="img" aria-label="図4 イベント通知。オブジェクトの作成・削除などをきっかけに、Lambda・SNS・SQSへ非同期で通知する。読み取り(GetObject)やリスト操作では通知されない。"><defs><marker id="dgservices-s3-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">オブジェクト作成</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">Put / Post / Copy</text>
+<rect x="34" y="124" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="148" text-anchor="middle" class="dg-t">削除・復元など</text>
+<rect x="34" y="198" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="109" y="220" text-anchor="middle" class="dg-t">GetObject / List</text>
+<text x="109" y="238" text-anchor="middle" class="dg-s">通知の対象外</text>
+<rect x="272" y="38" width="150" height="212" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">S3バケット</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">イベント通知</text>
+<rect x="510" y="44" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="68" text-anchor="middle" class="dg-t">Lambda</text>
+<rect x="510" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="148" text-anchor="middle" class="dg-t">SNS</text>
+<rect x="510" y="204" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="228" text-anchor="middle" class="dg-t">SQS</text>
+<path d="M184.0,89.2 L272.0,118.8" class="dg-line" marker-end="url(#dgservices-s3-4)"/>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgservices-s3-4)"/>
+<path d="M422.0,118.8 L525.5,84.0" class="dg-line" marker-end="url(#dgservices-s3-4)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgservices-s3-4)"/>
+<path d="M422.0,169.2 L525.5,204.0" class="dg-line" marker-end="url(#dgservices-s3-4)"/>
+</svg>
+</div>
+<figcaption>図4 イベント通知。オブジェクトの作成・削除などをきっかけに、Lambda・SNS・SQSへ非同期で通知する。読み取り(GetObject)やリスト操作では通知されない。</figcaption>
+</figure>
+<h3>レプリケーション</h3>
+<ol>
+<li>送信元・送信先バケットの<strong>バージョニングを有効化</strong></li>
+<li>レプリケーション専用のIAMロールを作成</li>
+<li>送信元バケットにレプリケーションルールを設定(必要に応じてオーナーオーバーライドで所有権を移動)</li>
+</ol>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 114" style="max-width:684px;min-width:520px" role="img" aria-label="図5 レプリケーションの構成。送信元・送信先の両方でバージョニングを有効にし、レプリケーション用のIAMロールと、送信元バケットのルールを用意する。"><defs><marker id="dgservices-s3-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="60" text-anchor="middle" class="dg-tb">送信元バケット</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">バージョニング有効</text>
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">IAMロール</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">レプリケーション用</text>
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">送信先バケット</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">バージョニング有効</text>
+<path d="M184.0,64.0 L272.0,64.0" class="dg-line" marker-end="url(#dgservices-s3-5)"/>
+<text x="228" y="68" text-anchor="middle" class="dg-s dg-halo">ルール</text>
+<path d="M422.0,64.0 L510.0,64.0" class="dg-line" marker-end="url(#dgservices-s3-5)"/>
+<text x="466" y="68" text-anchor="middle" class="dg-s dg-halo">コピー</text>
+</svg>
+</div>
+<figcaption>図5 レプリケーションの構成。送信元・送信先の両方でバージョニングを有効にし、レプリケーション用のIAMロールと、送信元バケットのルールを用意する。</figcaption>
+</figure>
+<h3>その他の機能</h3>
+<ul>
+<li><strong>S3 Select</strong>:オブジェクト(CSV・JSON)からSQLで必要なデータだけを抽出。データ転送量を最大80%削減できる。</li>
+<li><strong>S3 Batch Operations</strong>:大量のオブジェクトに対して一括で操作を実行。</li>
+<li><strong>S3 Transfer Acceleration</strong>:クライアントに近いCloudFrontのエッジロケーションでデータを受け取り、AWSのバックボーン経由でバケットに転送して高速化する。バケット単位で有効化。</li>
+<li><strong class="em">S3 Object Lambda</strong>:データの取り出し時にデータを加工する(画像の動的リサイズ、機密データのマスキングなど)。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>静的ファイル・画像・ログ・バックアップの保存</li>
+<li>長期アーカイブ(Glacier系クラス)</li>
+<li>アップロードをトリガーにしたLambda処理(イベント通知)</li>
+<li>Athenaでのデータ分析の保存先(データレイク)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>料金はストレージクラスによって大きく変わります。安いクラスほど<strong>最低保存期間</strong>や取り出しの時間・料金がかかります。</p>
+<div class="table-wrap"><table>
+<tr><th>ストレージクラス</th><th>主用途</th><th>取り出し速度</th><th>可用性</th><th>最低保存期間</th><th>コスト</th></tr>
+<tr><td>Standard</td><td>頻繁なアクセス</td><td>即時</td><td>高</td><td>なし</td><td>高</td></tr>
+<tr><td>Standard-IA</td><td>低頻度アクセス</td><td>即時</td><td>高</td><td>30日</td><td>安</td></tr>
+<tr><td>One Zone-IA</td><td>低頻度+単一AZ</td><td>即時</td><td>中</td><td>30日</td><td>さらに安</td></tr>
+<tr><td>Express One Zone</td><td>最高性能(ディレクトリバケットを使用)</td><td>即時</td><td>中</td><td>なし</td><td>保存:高/取得:安</td></tr>
+<tr><td>Glacier Instant Retrieval</td><td>アーカイブだが即時取得</td><td>即時</td><td>高</td><td>90日</td><td>安</td></tr>
+<tr><td>Glacier Flexible Retrieval</td><td>長期アーカイブ</td><td>分〜時間</td><td>高</td><td>90日</td><td>非常に安</td></tr>
+<tr><td>Glacier Deep Archive</td><td>超長期保存</td><td><strong>Standard:12時間/Bulk:48時間</strong></td><td>高</td><td>180日</td><td>最安</td></tr>
+<tr><td>Intelligent-Tiering</td><td>アクセス頻度が不明</td><td>即時</td><td>高</td><td>30日</td><td>自動最適化</td></tr>
+<tr><td>Outposts</td><td>Outposts環境</td><td>即時</td><td>ローカル依存</td><td>なし</td><td>特殊</td></tr>
+</table></div>
+<p>※ディレクトリバケット:単一AZに保存し、S3 Standardと比べてデータアクセスが10倍高速。</p>
+<p>ストレージ料金のほか、リクエスト数やデータ転送(アウト)にも料金がかかります。ゲートウェイ型VPCエンドポイントは無料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="kms.html">AWS KMS</a>:SSE-KMSの鍵管理</li>
+<li><a href="lambda.html">AWS Lambda</a>/<a href="sns.html">Amazon SNS</a>/<a href="sqs.html">Amazon SQS</a>:イベント通知の送信先</li>
+<li><a href="cognito.html">Amazon Cognito</a>:ユーザーごとのプレフィックス制御</li>
+<li><a href="cloudfront.html">Amazon CloudFront</a>:配信、Transfer Acceleration</li>
+<li><a href="athena.html">Amazon Athena</a>:S3上のデータをSQLで分析</li>
+<li><a href="vpc.html">Amazon VPC</a>:VPCエンドポイント</li>
+<li><a href="macie.html">Amazon Macie</a>:S3内の機密データ検出</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>鍵の利用を<strong>監査</strong>したい → <strong>SSE-KMS</strong>。暗号化方式は <code>x-amz-server-side-encryption</code> ヘッダーで指定。</li>
+<li>他アカウントへのアクセス許可 → <strong>バケットポリシー</strong>+相手側のIAMポリシー。</li>
+<li>一時的に外部へ共有 → <strong>署名付きURL</strong>。</li>
+<li>VPCから無料でプライベート接続 → <strong>ゲートウェイ型</strong>。オンプレミスから → <strong>インターフェース型</strong>。</li>
+<li>イベント通知は<strong>GetObjectでは発火しない</strong>。</li>
+<li>レプリケーションには<strong>両バケットのバージョニング</strong>が必須。</li>
+<li>遠隔地からのアップロード高速化 → <strong>Transfer Acceleration</strong>。取り出し時の加工 → <strong>Object Lambda</strong>。</li>
+<li>Deep Archiveの取り出しはStandardで12時間、Bulkで48時間。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>S3はオブジェクトストレージ。ストレージクラスでコストと取り出し速度を選ぶ。</li>
+<li>暗号化はSSE-S3/SSE-KMS/SSE-C/クライアントサイドの4種類。</li>
+<li>アクセス制御はIAMポリシー・バケットポリシー・署名付きURLが中心。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="copilot.html"><span class="label">← 前へ</span>AWS Copilot</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="ebs.html"><span class="label">次へ →</span>Amazon EBS</a>
+</nav>
+</main>
+</body>
+</html>

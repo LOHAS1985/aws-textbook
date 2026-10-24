@@ -1,0 +1,70 @@
+<!-- title: AWS Database Encryption SDK -->
+<!-- category: ライブラリ -->
+<!-- lead: アプリ側でDBのデータを暗号化・復号するライブラリ -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Database Encryption SDK</strong>は、<strong>アプリケーション側でデータベースのデータを暗号化・復号</strong>するライブラリです(クライアント側暗号化)。主に<strong>DynamoDB</strong>用です。</p>
+<p>※サーバー側の暗号化には、KMSキーを使ったDBテーブルの暗号化を使います。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>暗号化の流れ</h3>
+<ol>
+<li>AWS KMSを使ってデータキーを生成</li>
+<li>データキーでデータを暗号化</li>
+<li>データキーをKMSで暗号化</li>
+<li>次の情報をDynamoDBに保存
+  <ul><li>暗号化データ</li><li>暗号化されたデータキー</li><li>メタデータ</li></ul></li>
+</ol>
+<p>この流れは<a href="kms.html">KMS</a>のエンベロープ暗号化と同じ考え方です。属性(カラム)ごとに「暗号化する/署名のみ/何もしない」を選べるため、検索に使うキーは暗号化せずに、機密な属性だけを暗号化できます。また、データに署名を付けて改ざんを検知できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 0.5 blue "アプリ" "SDKを組み込み"
+node kms 1.4 0 box "KMS" "データキーを生成"
+node enc 1.4 1 accent "暗号化" "属性ごとに暗号化"
+node ddb 2.8 1 ok "DynamoDB" "暗号化済みで保存"
+edge app kms "①"
+edge kms enc "②"
+edge enc ddb "③ 保存"
+<figcaption>図1 クライアント側暗号化の流れ。KMSで生成したデータキーを使ってアプリ側でデータを暗号化し、暗号化データ・暗号化されたデータキー・メタデータをDynamoDBに保存する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>DynamoDBに保存する個人情報やカード番号などを、アプリ側で暗号化してから保存したい</li>
+<li><span>DB管理者やAWS側からも平文が見えないようにしたい(エンドツーエンドの保護)</span></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ライブラリ自体は無料です。データキーの生成・復号に使うKMSのAPIリクエストとキーの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>:主な対象データベース</li>
+<li><a href="kms.html">AWS KMS</a>:データキーの生成・暗号化</li>
+<li><a href="sdk.html">AWS SDK</a>:アプリからのAWS操作</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>DynamoDBのデータを<strong>アプリ側(クライアント側)で暗号化</strong> → Database Encryption SDK。</li>
+<li>サーバー側(保存時)の暗号化 → KMSキーによるテーブルの暗号化。</li>
+<li>保存されるのは「暗号化データ+暗号化されたデータキー+メタデータ」。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Database Encryption SDKは、KMSのデータキーを使ってアプリ側でDBのデータを暗号化するライブラリ。</li>
+</ul>
+</section>

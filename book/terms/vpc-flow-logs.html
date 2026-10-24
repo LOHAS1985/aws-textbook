@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPCフローログ | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワーク</span>
+  <h1>VPCフローログ</h1>
+  <p class="lead">VPC内のネットワークインターフェイスを通る通信の記録(誰から誰へ・許可か拒否か)</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>VPCフローログ(VPC Flow Logs)</strong>は、<a href="../services/vpc.html">Amazon VPC</a>の機能の1つで、<strong>ネットワークインターフェイス(ENI)を通るIP通信の情報を記録</strong>します。「どこから・どこへ・どのポートで・どれだけ通信し、それが許可(ACCEPT)されたか拒否(REJECT)されたか」が分かるため、通信トラブルの調査やセキュリティの監査に使います。</p>
+<p>記録されるのは通信の<strong>メタデータ(ヘッダーの情報)だけ</strong>で、通信の中身(パケットの内容)は記録されません。中身まで必要な場合はトラフィックミラーリングを使います。</p>
+
+<h3>記録する範囲と送信先</h3>
+<p>フローログは次の単位で作成できます。上の単位で作ると、その中のすべてのENIが対象になります。</p>
+<ul>
+<li><strong>VPC</strong> → その中のすべてのサブネット・ENI</li>
+<li><strong>サブネット</strong> → その中のすべてのENI</li>
+<li><strong>ネットワークインターフェイス(ENI)</strong> → そのENIだけ</li>
+</ul>
+<p>Transit Gatewayを通る通信も、同じ仕組みのフローログで記録できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 274" style="max-width:698px;min-width:520px" role="img" aria-label="図1 VPCフローログの範囲と送信先。VPC・サブネット・ENIの単位で作成し、CloudWatch Logs・S3・Data Firehoseのいずれかに送る。CloudWatch Logsへ送るときは、書き込み用のIAMロールが必要。"><defs><marker id="dgterms-vpc-flow-logs-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="44" width="145" height="40" rx="8" class="dg-box"/>
+<text x="106" y="68" text-anchor="middle" class="dg-t">VPC</text>
+<rect x="34" y="124" width="145" height="40" rx="8" class="dg-box"/>
+<text x="106" y="148" text-anchor="middle" class="dg-t">サブネット</text>
+<rect x="34" y="204" width="145" height="40" rx="8" class="dg-box"/>
+<text x="106" y="228" text-anchor="middle" class="dg-t">ENI</text>
+<rect x="282" y="118" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="140" text-anchor="middle" class="dg-tb">フローログ</text>
+<text x="354" y="158" text-anchor="middle" class="dg-s">ACCEPT/REJECT</text>
+<rect x="529" y="38" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="60" text-anchor="middle" class="dg-t">CloudWatch Logs</text>
+<text x="602" y="78" text-anchor="middle" class="dg-s">Logs Insightsで検索</text>
+<rect x="529" y="118" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="140" text-anchor="middle" class="dg-t">S3</text>
+<text x="602" y="158" text-anchor="middle" class="dg-s">Athenaで分析</text>
+<rect x="529" y="198" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="220" text-anchor="middle" class="dg-t">Data Firehose</text>
+<text x="602" y="238" text-anchor="middle" class="dg-s">外部ツールへ</text>
+<path d="M168.4,84.0 L281.5,120.6" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-1)"/>
+<path d="M179.0,144.0 L281.5,144.0" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-1)"/>
+<path d="M168.4,204.0 L281.5,167.4" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-1)"/>
+<path d="M426.5,120.6 L529.0,87.4" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-1)"/>
+<path d="M426.5,144.0 L529.0,144.0" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-1)"/>
+<path d="M426.5,167.4 L529.0,200.6" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-1)"/>
+</svg>
+</div>
+<figcaption>図1 VPCフローログの範囲と送信先。VPC・サブネット・ENIの単位で作成し、CloudWatch Logs・S3・Data Firehoseのいずれかに送る。CloudWatch Logsへ送るときは、書き込み用のIAMロールが必要。</figcaption>
+</figure>
+
+<h3>レコードの見方</h3>
+<p>標準の形式では、1行に次の項目がスペース区切りで並びます。</p>
+<pre class="code"><code>2 123456789012 eni-0a1b2c3d 203.0.113.10 10.0.1.25 49152 22 6 10 840 1700000000 1700000060 REJECT OK</code></pre>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>例</th><th>意味</th></tr>
+<tr><td>version / account-id</td><td>2 / 123456789012</td><td>形式のバージョン / AWSアカウントID</td></tr>
+<tr><td>interface-id</td><td>eni-0a1b2c3d</td><td>通信したENI</td></tr>
+<tr><td>srcaddr / dstaddr</td><td>203.0.113.10 / 10.0.1.25</td><td>送信元IP / 宛先IP</td></tr>
+<tr><td>srcport / dstport</td><td>49152 / 22</td><td>送信元ポート / 宛先ポート(22はSSH)</td></tr>
+<tr><td>protocol</td><td>6</td><td>プロトコル番号(6=TCP、17=UDP、1=ICMP)</td></tr>
+<tr><td>packets / bytes</td><td>10 / 840</td><td>パケット数 / バイト数</td></tr>
+<tr><td>start / end</td><td>1700000000 / 1700000060</td><td>集計期間の開始・終了(UNIX時間)</td></tr>
+<tr><td>action</td><td>REJECT</td><td>セキュリティグループ・ネットワークACLで許可(ACCEPT)されたか拒否(REJECT)されたか</td></tr>
+<tr><td>log-status</td><td>OK</td><td>記録の状態(NODATA=通信なし、SKIPDATA=一部記録できず)</td></tr>
+</table></div>
+<p>この例は「外部の 203.0.113.10 から 10.0.1.25 へのSSH(22番)が拒否された」ことを表します。カスタム形式にすると、<code>vpc-id</code>、<code>subnet-id</code>、<code>tcp-flags</code>、<code>flow-direction</code>(通信の向き)、<code>pkt-srcaddr</code>(NATなどを経由する前の送信元)なども記録できます。</p>
+
+<h3>セキュリティグループとネットワークACLの切り分け</h3>
+<p>セキュリティグループは<strong>ステートフル</strong>(戻りの通信は自動で許可)、ネットワークACLは<strong>ステートレス</strong>(戻りの通信も個別に許可が必要)です。この違いを使って、フローログから原因を絞り込めます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1000 234" style="max-width:1000px;min-width:520px" role="img" aria-label="図2 フローログでの原因の切り分け。リクエストがACCEPTなのに戻りの通信がREJECTの場合、ステートフルなセキュリティグループではなく、ステートレスなネットワークACLのアウトバウンドルール(戻りに使うエフェメラルポート 1024〜65535 の許可漏れなど)が原因と判断できる。"><defs><marker id="dgterms-vpc-flow-logs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="84" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="112" y="108" text-anchor="middle" class="dg-t">インバウンドの記録</text>
+<rect x="296" y="38" width="155" height="52" rx="8" class="dg-ng"/>
+<text x="374" y="60" text-anchor="middle" class="dg-t">REJECT</text>
+<text x="374" y="78" text-anchor="middle" class="dg-s">SGまたはNACLで拒否</text>
+<rect x="296" y="124" width="155" height="40" rx="8" class="dg-ok"/>
+<text x="374" y="148" text-anchor="middle" class="dg-t">ACCEPT</text>
+<rect x="559" y="124" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="636" y="148" text-anchor="middle" class="dg-t">戻り(アウトバウンド)</text>
+<rect x="822" y="78" width="155" height="52" rx="8" class="dg-ng"/>
+<text x="899" y="100" text-anchor="middle" class="dg-t">REJECT</text>
+<text x="899" y="118" text-anchor="middle" class="dg-s">NACLのアウトバウンド</text>
+<rect x="822" y="158" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="899" y="180" text-anchor="middle" class="dg-t">ACCEPT</text>
+<text x="899" y="198" text-anchor="middle" class="dg-s">通信は成功</text>
+<path d="M189.0,92.2 L296.5,75.8" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-2)"/>
+<path d="M189.0,115.8 L296.5,132.2" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-2)"/>
+<path d="M451.5,144.0 L559.0,144.0" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-2)"/>
+<path d="M714.0,132.2 L821.5,115.8" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-2)"/>
+<path d="M714.0,155.8 L821.5,172.2" class="dg-line" marker-end="url(#dgterms-vpc-flow-logs-2)"/>
+</svg>
+</div>
+<figcaption>図2 フローログでの原因の切り分け。リクエストがACCEPTなのに戻りの通信がREJECTの場合、ステートフルなセキュリティグループではなく、ステートレスなネットワークACLのアウトバウンドルール(戻りに使うエフェメラルポート 1024〜65535 の許可漏れなど)が原因と判断できる。</figcaption>
+</figure>
+
+<h3>注意点</h3>
+<ul>
+<li><strong>リアルタイムではない</strong>:通信を一定期間(既定10分、または1分)ごとに集計して記録するため、反映まで数分かかる。</li>
+<li><strong>作成後に設定を変更できない</strong>:形式などを変えたいときは、削除して作り直す。</li>
+<li><strong>記録されない通信がある</strong>:Amazonが提供するDNSサーバー(Route 53 Resolver)への問い合わせ、インスタンスメタデータ(169.254.169.254)、Amazon Time Sync、DHCPなど。</li>
+<li>CloudWatch Logsへの送信量やS3の保存量に応じて料金がかかるため、必要な範囲・期間に絞る。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:ACCEPT/REJECTを判断する仕組み</li>
+<li><a href="route-table.html">ルートテーブル</a>:通信の転送先。フローログに記録がない場合は経路を確認する</li>
+<li><a href="inbound-traffic.html">インバウンド通信</a>/<a href="outbound-traffic.html">アウトバウンド通信</a>:記録される通信の向き</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:フローログを作成する対象</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Logs Insightsでの検索、メトリクスフィルターでのアラーム</li>
+<li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/athena.html">Amazon Athena</a>:長期保存とSQLでの分析</li>
+<li><a href="../services/transit-gateway.html">AWS Transit Gateway</a>:Transit Gatewayのフローログ</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="nacl-security-group.html"><span class="label">← 前へ</span>ネットワークACLとセキュリティグループ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="inbound-traffic.html"><span class="label">次へ →</span>インバウンド通信</a>
+</nav>
+</main>
+</body>
+</html>

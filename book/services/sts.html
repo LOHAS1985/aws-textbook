@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS STS | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">セキュリティ、アイデンティティ、コンプライアンス</span>
+  <h1>AWS STS</h1>
+  <p class="lead">一時的な認証情報を発行するサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS STS(Security Token Service)</strong>は、<strong>一時的な認証情報</strong>を発行するサービスです。短時間だけ有効なアクセスキーを発行するため、長期のキーを配る必要がありません。</p>
+<p>発行される認証情報:<strong>Access Key ID</strong>、<strong>Secret Access Key</strong>、<strong>Session Token</strong></p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>STS API</h3>
+<div class="table-wrap"><table>
+<tr><th>API</th><th>用途</th></tr>
+<tr><td><code>AssumeRole</code></td><td>クロスアカウント、ロール切り替え</td></tr>
+<tr><td><code>AssumeRoleWithSAML</code></td><td>SAML連携(SSO)</td></tr>
+<tr><td><code>AssumeRoleWithWebIdentity</code></td><td>OIDC連携(Googleログインなど)</td></tr>
+<tr><td><code>GetSessionToken</code></td><td>MFA付きの一時認証</td></tr>
+<tr><td><code>GetFederationToken</code></td><td>フェデレーション</td></tr>
+</table></div>
+
+<h3>AssumeRole</h3>
+<p>別の権限(ロール)を一時的に使います。ユーザー/サービスがSTSにリクエスト → STSが一時クレデンシャルを発行 → それを使ってAWSリソースにアクセス、という流れです。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 760 218" style="max-width:760px;min-width:520px" role="img" aria-label="図1 AssumeRoleによるクロスアカウントアクセス。①STSにロールの引き受けを要求し、②一時認証情報(キーID・シークレット・セッショントークン)を受け取り、③その権限でアカウントBのリソースを操作する。"><defs><marker id="dgservices-sts-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="170" height="52" rx="8" class="dg-blue"/>
+<text x="119" y="62" text-anchor="middle" class="dg-t">アカウントA</text>
+<text x="119" y="80" text-anchor="middle" class="dg-s">IAMユーザー/ロール</text>
+<rect x="300" y="40" width="170" height="52" rx="8" class="dg-accent"/>
+<text x="385" y="62" text-anchor="middle" class="dg-tb">STS</text>
+<text x="385" y="80" text-anchor="middle" class="dg-s">AssumeRole</text>
+<rect x="566" y="40" width="170" height="52" rx="8" class="dg-ok"/>
+<text x="651" y="62" text-anchor="middle" class="dg-t">一時認証情報</text>
+<text x="651" y="80" text-anchor="middle" class="dg-s">セッショントークン付き</text>
+<rect x="566" y="142" width="170" height="52" rx="8" class="dg-box"/>
+<text x="651" y="164" text-anchor="middle" class="dg-t">アカウントBのS3</text>
+<text x="651" y="182" text-anchor="middle" class="dg-s">ロールの権限で操作</text>
+<path d="M204.0,66.5 L300.0,66.5" class="dg-line" marker-end="url(#dgservices-sts-1)"/>
+<text x="252" y="70" text-anchor="middle" class="dg-s dg-halo">① 要求</text>
+<path d="M470.0,66.5 L566.0,66.5" class="dg-line" marker-end="url(#dgservices-sts-1)"/>
+<text x="518" y="70" text-anchor="middle" class="dg-s dg-halo">② 発行</text>
+<path d="M651.0,92.5 L651.0,142.5" class="dg-line" marker-end="url(#dgservices-sts-1)"/>
+<text x="651" y="122" text-anchor="middle" class="dg-s dg-halo">③ アクセス</text>
+</svg>
+</div>
+<figcaption>図1 AssumeRoleによるクロスアカウントアクセス。①STSにロールの引き受けを要求し、②一時認証情報(キーID・シークレット・セッショントークン)を受け取り、③その権限でアカウントBのリソースを操作する。</figcaption>
+</figure>
+<h3>AssumeRoleWithSAML</h3>
+<p>SAML認証の結果を使ってロールを引き受けます。</p>
+<ol>
+<li>ユーザーがIdP(例:会社の認証基盤)にログイン。IdP=本人確認を行い証明を発行するシステム</li>
+<li>IdPがSAMLアサーション(「認証済み」を証明するデータ)を発行</li>
+<li>IdPがブラウザ経由でAWSに送信</li>
+<li>STSが検証し、一時クレデンシャルを発行</li>
+</ol>
+
+<h3>AssumeRoleWithWebIdentity</h3>
+<p>Web/モバイルアプリの利用者向けに、OIDC/OAuth 2.0のIDプロバイダーのトークンを使ってロールを引き受けます。</p>
+<ol>
+<li>ユーザーがWeb IdP(Google、Facebookなど)でログイン</li>
+<li>IdPがIDトークン(JWT)を発行</li>
+<li>クライアントが、使いたい権限とIDトークンを送ってSTSを呼び出す</li>
+<li>STSが検証し、一時クレデンシャルを発行</li>
+</ol>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 760 202" style="max-width:760px;min-width:520px" role="img" aria-label="図2 フェデレーション。企業のIdP(SAML)のアサーション、またはWeb IdP(OIDC)のIDトークンをSTSに渡すと、IAMユーザーなしで一時認証情報を受け取れる。"><defs><marker id="dgservices-sts-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="170" height="52" rx="8" class="dg-blue"/>
+<text x="119" y="62" text-anchor="middle" class="dg-t">企業のIdP</text>
+<text x="119" y="80" text-anchor="middle" class="dg-s">SAML 2.0</text>
+<rect x="300" y="46" width="170" height="40" rx="8" class="dg-box"/>
+<text x="385" y="70" text-anchor="middle" class="dg-t">AssumeRoleWithSAML</text>
+<rect x="34" y="126" width="170" height="52" rx="8" class="dg-blue"/>
+<text x="119" y="147" text-anchor="middle" class="dg-t">Google など</text>
+<text x="119" y="165" text-anchor="middle" class="dg-s">OIDC(JWT)</text>
+<rect x="300" y="126" width="170" height="52" rx="8" class="dg-box"/>
+<text x="385" y="146" text-anchor="middle" class="dg-t">AssumeRole</text>
+<text x="385" y="164" text-anchor="middle" class="dg-t">WithWebIdentity</text>
+<rect x="566" y="89" width="170" height="40" rx="8" class="dg-ok"/>
+<text x="651" y="113" text-anchor="middle" class="dg-t">一時認証情報</text>
+<path d="M204.0,66.5 L300.0,66.5" class="dg-line" marker-end="url(#dgservices-sts-2)"/>
+<text x="252" y="70" text-anchor="middle" class="dg-s dg-halo">アサーション</text>
+<path d="M204.0,151.5 L300.0,151.5" class="dg-line" marker-end="url(#dgservices-sts-2)"/>
+<text x="252" y="156" text-anchor="middle" class="dg-s dg-halo">IDトークン</text>
+<path d="M470.0,80.1 L566.0,95.4" class="dg-line" marker-end="url(#dgservices-sts-2)"/>
+<path d="M470.0,137.9 L566.0,122.6" class="dg-line" marker-end="url(#dgservices-sts-2)"/>
+</svg>
+</div>
+<figcaption>図2 フェデレーション。企業のIdP(SAML)のアサーション、またはWeb IdP(OIDC)のIDトークンをSTSに渡すと、IAMユーザーなしで一時認証情報を受け取れる。</figcaption>
+</figure>
+<h3>3つのAPIの比較</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>AssumeRole</th><th>AssumeRoleWithSAML</th><th>AssumeRoleWithWebIdentity</th></tr>
+<tr><td>認証元</td><td>IAMユーザー/ロール</td><td>企業IdP(SAML)</td><td>Web IdP(OIDC)</td></tr>
+<tr><td>IdP</td><td>AWS IAM</td><td>SAML 2.0 IdP</td><td>OIDC/OAuth 2.0</td></tr>
+<tr><td>IAMユーザー</td><td>必須</td><td>不要</td><td>不要</td></tr>
+<tr><td>主な用途</td><td>AWS内/AWS間の連携</td><td>社内SSO</td><td>SPA/モバイル</td></tr>
+<tr><td>使用例</td><td><strong>クロスアカウント</strong></td><td>AD/Azure AD</td><td>Cognito+SPA</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ol>
+<li><strong>ロール切り替え</strong>:普段は一般ユーザーだが、作業時だけ管理者権限を使いたい</li>
+<li><strong>クロスアカウントアクセス</strong>:別のAWSアカウントのリソースに安全にアクセス</li>
+<li><strong>IDフェデレーション</strong>:社内IdPやGoogleアカウントでAWSを利用</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>STSは追加料金なしで利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="iam.html">AWS IAM</a>:引き受けるロールの定義</li>
+<li><a href="cognito.html">Amazon Cognito</a>:IDプールで内部的にSTSを利用</li>
+<li><a href="organizations.html">AWS Organizations</a>:マルチアカウント環境でのロール運用</li>
+<li><a href="directory-service.html">AWS Directory Service</a>:Active Directoryとの連携</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>別アカウントのリソースへアクセス → <strong>AssumeRole</strong>。</li>
+<li>社内AD/SAMLでSSO → <strong>AssumeRoleWithSAML</strong>。</li>
+<li>Googleなどのソーシャルログイン/OIDC → <strong>AssumeRoleWithWebIdentity</strong>(実際はCognito経由が推奨)。</li>
+<li>MFAを条件にした一時認証 → <strong>GetSessionToken</strong>。</li>
+<li>一時認証情報には<strong>Session Token</strong>が含まれる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>STSは一時的な認証情報(キーID・シークレット・セッショントークン)を発行する。</li>
+<li>認証元に応じてAssumeRole/WithSAML/WithWebIdentityを使い分ける。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="iam.html"><span class="label">← 前へ</span>AWS IAM</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="organizations.html"><span class="label">次へ →</span>AWS Organizations</a>
+</nav>
+</main>
+</body>
+</html>

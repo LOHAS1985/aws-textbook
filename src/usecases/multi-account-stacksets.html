@@ -1,0 +1,56 @@
+<!-- title: 複数アカウント・リージョンに共通設定を展開する -->
+<!-- category: デプロイ・自動化 -->
+<!-- lead: CloudFormation StackSetsとOrganizationsで、新しいアカウントにも自動で展開する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>組織内のすべてのアカウント・リージョンに、監視用のIAMロールやConfigルールなどの共通設定を同じ内容で作りたい。新しくアカウントを追加したときにも、自動で同じ設定が入るようにしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 160 80
+node tpl 0 1 blue "テンプレート" "共通の設定"
+node ss 1.25 1 accent "StackSets" "管理アカウント"
+node ou 2.5 1 box "OU: 本番" "展開先に指定"
+node a1 3.75 0 ok "アカウントA" "東京・大阪"
+node a2 3.75 1 ok "アカウントB" "東京・大阪"
+node a3 3.75 2 ok "新しいアカウント" "自動で展開"
+edge tpl ss
+edge ss ou
+edge ou a1
+edge ou a2
+edge ou a3
+<figcaption>図1 1つのテンプレートをStackSetsで、OU配下の全アカウント・指定リージョンに展開する。自動デプロイを有効にすると、OUに追加されたアカウントにも自動でスタックが作られる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:StackSetsで複数アカウント・リージョンへ一括展開する</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:展開先をOUで指定する</li>
+<li><a href="../services/config.html">AWS Config</a>/<a href="../services/iam.html">AWS IAM</a>:展開する設定の例(Configルール、運用用のロール)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>共通設定をCloudFormationテンプレートにする</li>
+<li>OrganizationsでStackSetsの信頼されたアクセスを有効にし、サービスマネージドのアクセス許可を使う</li>
+<li>管理アカウントでStackSetを作成し、展開先のOUとリージョンを指定する</li>
+<li>自動デプロイを有効にして、新しいアカウントにも自動で展開されるようにする</li>
+<li>同時に展開するアカウント数と、失敗の許容数を設定して少しずつ展開する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>複数アカウント・リージョンに同じスタック → <strong>StackSets</strong>。</li>
+<li>テンプレートにIAMリソースを含む場合は、<code>CAPABILITY_IAM</code> などの許可が必要。</li>
+<li>秘密情報はテンプレートに書かず、<strong>ダイナミックリファレンス</strong>で参照する。</li>
+<li>決まった構成を利用者自身に起動させたいなら<a href="../services/service-catalog.html">Service Catalog</a>も候補。</li>
+</ul></div>
+</section>

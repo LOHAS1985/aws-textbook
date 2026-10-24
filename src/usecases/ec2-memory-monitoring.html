@@ -1,0 +1,57 @@
+<!-- title: EC2のメモリ・ディスク使用率を監視する -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: CloudWatchエージェントでカスタムメトリクスを集め、しきい値を超えたら通知する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>EC2のメモリ使用率・ディスク使用率を監視し、80%を超えた状態が続いたら運用担当者にメールで通知したい。CPU使用率は標準メトリクスで取れますが、<strong>メモリとディスクの使用率は標準メトリクスにない</strong>ため、CloudWatchエージェントで送る必要があります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 85
+node ssm 0 0 blue "Parameter Store" "エージェント設定"
+node iam 1.4 0 box "IAMロール" "エージェント用ポリシー"
+node ec2 0 1.2 box "EC2" "エージェント導入"
+node cw 1.4 1.2 accent "CloudWatch" "mem_used_percent"
+node alarm 2.8 1.2 box "アラーム" "80%以上が5分続く"
+node sns 2.8 2.4 ok "SNS" "メール通知"
+edge ssm ec2 "設定を取得"
+edge iam ec2 dash
+edge ec2 cw "送信"
+edge cw alarm
+edge alarm sns
+<figcaption>図1 EC2にCloudWatchエージェントを入れてメモリ・ディスク使用率をカスタムメトリクスとして送り、アラームでしきい値を監視してSNSで通知する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:エージェントでメトリクスを収集し、アラームでしきい値を監視する</li>
+<li><a href="../services/iam.html">AWS IAM</a>:EC2のロールに <code>CloudWatchAgentServerPolicy</code> を付ける</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:エージェントの一括インストールや、設定ファイルをParameter Storeで共有する</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:アラーム発生時のメール通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>EC2のIAMロールに <code>CloudWatchAgentServerPolicy</code> をアタッチする</li>
+<li>CloudWatchエージェントをインストールする(多数のEC2にはSystems ManagerのRun CommandやDistributorで一括導入)</li>
+<li>設定ファイル(JSON)に <code>mem_used_percent</code>・<code>disk_used_percent</code> を指定する(Parameter Storeに置くと全EC2で同じ設定を使える)</li>
+<li>エージェントを起動し、メトリクスがCloudWatchに届くことを確認する</li>
+<li>メトリクスにアラーム(例:80%以上が5分間)を作成し、通知先にSNSトピックを指定する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>メモリ・ディスク使用率は<strong>詳細モニタリングを有効にしても取れない</strong>。エージェントが必要。</li>
+<li>メトリクスが届かない → <strong>IAMロール</strong>、エージェントの起動状態、設定ファイルを確認する。</li>
+<li>エージェントのメトリクスは、標準とは別の名前空間(<code>CWAgent</code>)に入る。</li>
+<li>同じエージェントでアプリのログファイルもCloudWatch Logsに送れる。</li>
+</ul></div>
+</section>

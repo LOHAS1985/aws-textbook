@@ -1,0 +1,47 @@
+<!-- title: SPF(Sender Policy Framework) -->
+<!-- category: セキュリティ・認証 -->
+<!-- lead: DNSに正当な送信元を宣言し、メールのなりすましを検知する技術 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>SPF(Sender Policy Framework)</strong>は、ドメインの所有者がDNSに<strong>正当な送信元のIPアドレスを宣言</strong>し、受信側がメールの送信元と照合して<strong>なりすましを検知</strong>する技術です。</p>
+<h3>動作の流れ</h3>
+<figure class="figure" data-diagram>
+grid 165 85
+node admin 0 0 blue "ドメイン管理者" "example.com"
+node r53 1.3 0 box "Route 53" "SPF(TXT)レコード"
+node ses 0 1.3 blue "SES" "メールを送信"
+node rcv 1.3 1.3 accent "受信メールサーバー"
+node ok 2.6 0.8 ok "一致" "受信する"
+node ng 2.6 1.8 ng "不一致" "拒否(なりすまし)"
+edge admin r53 "① 登録"
+edge ses rcv "② 送信"
+edge rcv r53 "③ 取得"
+edge rcv ok "④ 照合"
+edge rcv ng
+<figcaption>図1 SPFの仕組み。①ドメイン管理者がDNSに正当な送信元(SPFレコード)を登録し、②メールが送られると、③受信側がDNSからSPFレコードを取得して、④メールの送信元IPアドレスと照合する。一致しなければなりすましとして拒否できる。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>手順</th><th>誰が</th><th>何をするか</th></tr>
+<tr><td>1</td><td>送信者(example.comの管理者)</td><td>Route 53にSPF(TXT)レコードを登録する</td></tr>
+<tr><td>2</td><td>SES</td><td>example.comからのAPIリクエストをきっかけにメールを送信する</td></tr>
+<tr><td>3</td><td>受信メールサーバー</td><td>メール受信時に、example.comのDNSに問い合わせてSPFレコードを取得する</td></tr>
+<tr><td>4</td><td>受信メールサーバー</td><td>SPFの内容から許可されたIPを取得し、メールの送信元IPと比較・検証する。一致すれば受信、不一致(なりすまし)なら拒否</td></tr>
+</table></div>
+<p>SPFレコードの例:<code>"v=spf1 include:example.com ~all"</code>(example.comが許可する送信元からのメールを受け入れる。<code>~all</code> はそれ以外をソフトフェールにする指定)</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="dns-record-types.html">DNSレコードタイプ</a>:SPFはTXTレコードとして登録する</li>
+<li><a href="dns.html">DNS</a>:受信側がSPFレコードを問い合わせる仕組み</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/route53.html">Amazon Route 53</a>:SPF(TXT)レコードの登録先</li>
+</ul>
+<p><a href="../services/ses.html">Amazon SES(Simple Email Service)</a>:メール送信サービス。カスタムMAIL FROMドメインでSPFを設定する。</p>
+</section>

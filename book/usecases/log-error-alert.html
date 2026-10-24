@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アプリのエラーログを検知して通知する | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">監視・ログ・自動修復</span>
+  <h1>アプリのエラーログを検知して通知する</h1>
+  <p class="lead">CloudWatch Logsのメトリクスフィルターでエラーを数え、アラームで通知する</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>アプリケーションのログに「ERROR」が出力されたら、すぐに開発者へメールで知らせたい。原因調査のために、過去のログを条件で検索できるようにもしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 668 218" style="max-width:668px;min-width:520px" role="img" aria-label="図1 ロググループにメトリクスフィルターを設定して「ERROR」の出現回数をメトリクス化し、アラームでSNS通知する。原因の調査にはLogs Insightsでログを検索する。"><defs><marker id="dgusecases-log-error-alert-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="62" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="112" y="80" text-anchor="middle" class="dg-s">EC2 / Lambda</text>
+<rect x="262" y="40" width="155" height="52" rx="8" class="dg-box"/>
+<text x="339" y="62" text-anchor="middle" class="dg-t">ロググループ</text>
+<text x="339" y="80" text-anchor="middle" class="dg-s">CloudWatch Logs</text>
+<rect x="489" y="40" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="566" y="62" text-anchor="middle" class="dg-tb">メトリクスフィルター</text>
+<text x="566" y="80" text-anchor="middle" class="dg-s">ERROR を数える</text>
+<rect x="489" y="142" width="155" height="52" rx="8" class="dg-box"/>
+<text x="566" y="164" text-anchor="middle" class="dg-t">アラーム</text>
+<text x="566" y="182" text-anchor="middle" class="dg-s">1件以上で発報</text>
+<rect x="262" y="142" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="339" y="164" text-anchor="middle" class="dg-t">SNS</text>
+<text x="339" y="182" text-anchor="middle" class="dg-s">開発者へメール</text>
+<rect x="34" y="142" width="155" height="52" rx="8" class="dg-box"/>
+<text x="112" y="164" text-anchor="middle" class="dg-t">Logs Insights</text>
+<text x="112" y="182" text-anchor="middle" class="dg-s">原因をクエリで調査</text>
+<path d="M189.0,66.5 L261.5,66.5" class="dg-line" marker-end="url(#dgusecases-log-error-alert-1)"/>
+<text x="225" y="70" text-anchor="middle" class="dg-s dg-halo">ログ出力</text>
+<path d="M416.5,66.5 L489.0,66.5" class="dg-line" marker-end="url(#dgusecases-log-error-alert-1)"/>
+<path d="M566.5,92.5 L566.5,142.5" class="dg-line" marker-end="url(#dgusecases-log-error-alert-1)"/>
+<path d="M489.0,168.5 L416.5,168.5" class="dg-line" marker-end="url(#dgusecases-log-error-alert-1)"/>
+</svg>
+</div>
+<figcaption>図1 ロググループにメトリクスフィルターを設定して「ERROR」の出現回数をメトリクス化し、アラームでSNS通知する。原因の調査にはLogs Insightsでログを検索する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Logs(ログの保存)、メトリクスフィルター(ログの数値化)、アラーム、Logs Insights(検索・分析)</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:アラーム時のメール通知</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:ログを自動でCloudWatch Logsに出力する(EC2はエージェントで送る)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>アプリのログをCloudWatch Logsのロググループに送る(Lambdaは自動、EC2はCloudWatchエージェント)</li>
+<li>ロググループにメトリクスフィルターを作成し、フィルターパターンに <code>ERROR</code> を指定する</li>
+<li>フィルターが作ったメトリクスにアラーム(例:1分間に1件以上)を作成し、SNSトピックを通知先にする</li>
+<li>ロググループの保持期間を設定する(デフォルトは無期限)</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>ログの特定の文字列でアラーム → <strong>メトリクスフィルター</strong>。</li>
+<li>ログを即座に別の処理(Lambda・Firehoseなど)へ流したい → <strong>サブスクリプションフィルター</strong>。</li>
+<li>過去ログをSQLライクに調べる → <strong>Logs Insights</strong>。</li>
+<li>保持期間はデフォルト<strong>無期限</strong>。長期保存はS3に移してコストを下げる。</li>
+<li>ログに機密情報が含まれる場合は、データ保護ポリシーでマスキングできる。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="ec2-memory-monitoring.html"><span class="label">← 前へ</span>EC2のメモリ・ディスク使用率を監視する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="ec2-auto-recovery.html"><span class="label">次へ →</span>EC2の障害を検知して自動で復旧する</a>
+</nav>
+</main>
+</body>
+</html>

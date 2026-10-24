@@ -1,0 +1,73 @@
+<!-- title: AWS CDK -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: プログラミング言語でインフラを定義し、CloudFormationとしてデプロイ -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS CDK(Cloud Development Kit)</strong>は、<strong>プログラミング言語でインフラを定義</strong>し、テンプレートとしてデプロイするためのツールです。CloudFormationをコードで書けるようにしたもので、<strong>最終的にはCloudFormationテンプレートに変換</strong>されます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>サポート言語</h3>
+<p>TypeScript、JavaScript、Python、Java、C#、Go</p>
+
+<h3>Construct</h3>
+<p><strong class="em">AWSリソースや構成をオブジェクト化したもの</strong>です。Constructを組み合わせてインフラを定義します。</p>
+
+<h3 class="em">Aspects</h3>
+<p>CDKで作成された<strong>Construct群を検査・変更</strong>し、CDK全体へ共通ルールを適用する機能です。ルール違反やセキュリティのチェックに使います。</p>
+<p>主なCDKコマンド:<code>cdk init</code>(プロジェクト作成)、<code>cdk synth</code>(CloudFormationテンプレートを生成)、<code>cdk diff</code>(差分確認)、<code>cdk deploy</code>(デプロイ)、<code>cdk bootstrap</code>(デプロイに必要なS3バケットなどの準備)</p>
+<figure class="figure" data-diagram>
+grid 150 85
+node code 0 0.5 blue "CDKアプリ" "TypeScriptなど"
+node synth 1.3 0.5 box "cdk synth" "変換"
+node tpl 2.6 0.5 box "CloudFormation\nテンプレート"
+node stack 3.9 0.5 accent "スタック" "AWSリソース"
+node asp 0 1.6 ok "Aspects" "全Constructを検査"
+edge code synth
+edge synth tpl
+edge tpl stack "cdk deploy"
+edge asp code dash
+<figcaption>図1 CDKの流れ。プログラミング言語で書いたコードを cdk synth でCloudFormationテンプレートに変換し、cdk deploy でスタックとして作成する。Aspectsでアプリ内の全Constructに共通ルールを適用できる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ループや条件分岐を使って、似た構成のリソースを効率よく定義</li>
+<li>アプリと同じ言語でインフラも管理</li>
+<li>Aspectsで「全S3バケットが暗号化されているか」をチェック</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>CDK自体は無料のオープンソースツールです。作成されたリソースに料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:CDKの変換先・デプロイ先</li>
+<li><a href="sam.html">AWS SAM</a>:サーバーレス向けのIaC</li>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:CDKアプリのCI/CD</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>CDKは<strong>CloudFormationテンプレートに変換</strong>されてデプロイされる。</li>
+<li>全Constructに共通ルール・チェックを適用 → <strong>Aspects</strong>。</li>
+<li>プログラミング言語でIaC → CDK、YAML/JSON → CloudFormation。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CDKはプログラミング言語でインフラを書くツール。中身はCloudFormation。</li>
+<li>リソースはConstruct、共通チェックはAspects。</li>
+</ul>
+</section>

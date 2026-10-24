@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Site-to-Site VPN | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワークとコンテンツ配信</span>
+  <h1>AWS Site-to-Site VPN</h1>
+  <p class="lead">オンプレミスとVPCを、インターネット上の暗号化トンネル(IPsec)でつなぐ</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Site-to-Site VPN</strong>は、<strong>オンプレミスのネットワークとAWSのVPCを、インターネット上の暗号化された通信路(IPsec VPN)で接続する</strong>サービスです。専用線を引かずに、数分〜数時間ですぐに使い始められます。</p>
+<p>VPN(Virtual Private Network)は、共有のネットワークの上に、暗号化した仮想的な専用の通信路(トンネル)を作る技術です。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>カスタマーゲートウェイデバイス</td><td>オンプレミス側のVPNルーター(物理機器またはソフトウェア)</td></tr>
+<tr><td>カスタマーゲートウェイ(CGW)</td><td>オンプレミス側の機器の情報(パブリックIPアドレスなど)をAWSに登録したもの</td></tr>
+<tr><td>仮想プライベートゲートウェイ(VGW)</td><td>VPC側の終端。1つのVPCにアタッチする</td></tr>
+<tr><td><a href="transit-gateway.html">Transit Gateway</a></td><td>VGWの代わりの終端。多数のVPCとVPNをまとめて接続できる</td></tr>
+<tr><td>VPN接続</td><td>CGWとVGW(またはTGW)の間の接続。<strong>2本のトンネル</strong>を持つ</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1028 244" style="max-width:1028px;min-width:520px" role="img" aria-label="図1 Site-to-Site VPNの構成。1つのVPN接続にはAWS側の終端が異なる2本のトンネルがあり、片方が停止しても、もう片方で通信を続けられる。"><defs><marker id="dgservices-site-to-site-vpn-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="385" y="-20" width="318" height="240" rx="10" class="dg-group"/>
+<text x="395" y="-5" class="dg-s">インターネット</text>
+<rect x="34" y="83" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="104" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="106" y="122" text-anchor="middle" class="dg-s">社内サーバー</text>
+<rect x="248" y="75" width="145" height="68" rx="8" class="dg-box"/>
+<text x="321" y="96" text-anchor="middle" class="dg-t">カスタマー</text>
+<text x="321" y="114" text-anchor="middle" class="dg-t">ゲートウェイ</text>
+<text x="321" y="132" text-anchor="middle" class="dg-s">VPNルーター</text>
+<rect x="471" y="40" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="544" y="62" text-anchor="middle" class="dg-t">トンネル1</text>
+<text x="544" y="80" text-anchor="middle" class="dg-s">IPsec</text>
+<rect x="471" y="126" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="544" y="147" text-anchor="middle" class="dg-t">トンネル2</text>
+<text x="544" y="165" text-anchor="middle" class="dg-s">IPsec(冗長)</text>
+<rect x="694" y="83" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="766" y="104" text-anchor="middle" class="dg-tb">VGW</text>
+<text x="766" y="122" text-anchor="middle" class="dg-s">またはTGW</text>
+<rect x="892" y="83" width="112" height="52" rx="8" class="dg-box"/>
+<text x="948" y="104" text-anchor="middle" class="dg-t">VPC</text>
+<text x="948" y="122" text-anchor="middle" class="dg-s">サブネット</text>
+<path d="M179.0,109.0 L248.5,109.0" class="dg-line" marker-end="url(#dgservices-site-to-site-vpn-1)"/>
+<path d="M393.5,95.2 L471.2,80.3" class="dg-line" marker-end="url(#dgservices-site-to-site-vpn-1)"/>
+<path d="M393.5,122.8 L471.2,137.7" class="dg-line" marker-end="url(#dgservices-site-to-site-vpn-1)"/>
+<path d="M616.2,80.3 L694.0,95.2" class="dg-line" marker-end="url(#dgservices-site-to-site-vpn-1)"/>
+<path d="M616.2,137.7 L694.0,122.8" class="dg-line" marker-end="url(#dgservices-site-to-site-vpn-1)"/>
+<path d="M839.0,109.0 L892.0,109.0" class="dg-line" marker-end="url(#dgservices-site-to-site-vpn-1)"/>
+</svg>
+</div>
+<figcaption>図1 Site-to-Site VPNの構成。1つのVPN接続にはAWS側の終端が異なる2本のトンネルがあり、片方が停止しても、もう片方で通信を続けられる。</figcaption>
+</figure>
+
+<h3>ルーティング</h3>
+<ul>
+<li><strong>静的ルーティング</strong>:オンプレミスのCIDRを手動で登録する。</li>
+<li><strong>動的ルーティング(BGP)</strong>:BGPで経路を自動で交換する。トンネルの切り替えも自動で行えるため推奨。</li>
+<li>VPCのサブネットのルートテーブルで<strong>ルート伝播</strong>を有効にすると、VGWが学習したオンプレミスの経路が自動で追加される。</li>
+</ul>
+
+<h3>そのほかの特徴</h3>
+<ul>
+<li><strong>帯域</strong>:1トンネルあたり最大1.25Gbps。それ以上が必要なら、Transit Gatewayで複数のVPN接続に分散する(ECMP)。</li>
+<li><strong>高速化VPN(Accelerated VPN)</strong>:Global Acceleratorのネットワークを経由して、通信を安定・高速にする(Transit Gatewayで利用)。</li>
+<li><strong>VPN CloudHub</strong>:1つのVGWに複数拠点のVPNをつなぎ、拠点同士も通信できるようにする。</li>
+<li><strong>Direct Connectのバックアップ</strong>:専用線が切れたときの予備の経路として使う。</li>
+<li><strong>監視</strong>:CloudWatchの <code>TunnelState</code>(1=稼働、0=停止)や <code>TunnelDataIn</code>/<code>TunnelDataOut</code> を監視する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 646 194" style="max-width:646px;min-width:520px" role="img" aria-label="図2 Direct ConnectのバックアップとしてSite-to-Site VPNを使う構成。BGPで経路の優先度を設定し、専用線が停止したときにVPNへ自動で切り替える。"><defs><marker id="dgservices-site-to-site-vpn-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="84" width="140" height="40" rx="8" class="dg-blue"/>
+<text x="104" y="108" text-anchor="middle" class="dg-t">オンプレミス</text>
+<rect x="258" y="38" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="328" y="60" text-anchor="middle" class="dg-tb">Direct Connect</text>
+<text x="328" y="78" text-anchor="middle" class="dg-s">通常時(専用線)</text>
+<rect x="258" y="118" width="164" height="52" rx="8" class="dg-box"/>
+<text x="340" y="140" text-anchor="middle" class="dg-t">Site-to-Site VPN</text>
+<text x="340" y="158" text-anchor="middle" class="dg-s">障害時のバックアップ</text>
+<rect x="482" y="84" width="140" height="40" rx="8" class="dg-ok"/>
+<text x="552" y="108" text-anchor="middle" class="dg-t">VPC</text>
+<path d="M174.0,91.5 L258.0,76.5" class="dg-line" marker-end="url(#dgservices-site-to-site-vpn-2)"/>
+<path d="M174.0,115.9 L258.0,130.1" class="dg-line dg-dash" marker-end="url(#dgservices-site-to-site-vpn-2)"/>
+<path d="M398.0,76.5 L482.0,91.5" class="dg-line" marker-end="url(#dgservices-site-to-site-vpn-2)"/>
+<path d="M422.0,128.5 L482.0,117.2" class="dg-line dg-dash" marker-end="url(#dgservices-site-to-site-vpn-2)"/>
+</svg>
+</div>
+<figcaption>図2 Direct ConnectのバックアップとしてSite-to-Site VPNを使う構成。BGPで経路の優先度を設定し、専用線が停止したときにVPNへ自動で切り替える。</figcaption>
+</figure>
+
+<h3>AWS Client VPNとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Site-to-Site VPN</th><th>Client VPN</th></tr>
+<tr><td>接続するもの</td><td>拠点のネットワーク全体</td><td>個人のPC(在宅勤務など)</td></tr>
+<tr><td>接続元</td><td>拠点のVPNルーター</td><td>PCのVPNクライアントソフト(OpenVPNベース)</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>社内ネットワークとVPCを、すぐに・安く接続する</li>
+<li>Direct Connectを開通するまでの一時的な接続や、障害時のバックアップ</li>
+<li>複数の拠点をAWS経由で相互に接続する(VPN CloudHub)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p><strong>VPN接続ごとの時間料金</strong>と、AWSからオンプレミスへの<strong>データ転送(アウト)料金</strong>がかかります。Transit Gatewayを終端にする場合は、TGWのアタッチメント料金とデータ処理料金も加わります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>:接続先のネットワーク。VGWをアタッチする</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:多数のVPCとVPNの終端を集約</li>
+<li><a href="direct-connect.html">AWS Direct Connect</a>:専用線による接続。VPNはそのバックアップにもなる</li>
+<li><a href="global-accelerator.html">AWS Global Accelerator</a>:高速化VPNで使うネットワーク</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:トンネルの状態の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「すぐに」「低コストで」「暗号化して」オンプレミスと接続 → <strong>Site-to-Site VPN</strong>。「安定した帯域」「低レイテンシー」→ Direct Connect。</li>
+<li>トンネルの停止を検知したい → CloudWatchの <strong><code>TunnelState</code></strong> にアラームを設定する。</li>
+<li>VPN接続は確立したのに通信できない → サブネットのルートテーブル(<strong>ルート伝播</strong>)、セキュリティグループ、ネットワークACL、オンプレミス側のファイアウォールを確認する。</li>
+<li>トンネルが1本しか使われていない・冗長化したい → <strong>2本のトンネル</strong>を両方設定し、BGPで自動切り替えにする。</li>
+<li>1.25Gbpsを超える帯域が必要 → Transit Gateway+<strong>ECMP</strong>、またはDirect Connect。</li>
+<li>Direct Connectの経路を暗号化したい → Direct Connectの上でSite-to-Site VPNを使う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>インターネット上のIPsecトンネルで、オンプレミスとVPCを接続する。</li>
+<li>CGW・VGW(またはTGW)・2本のトンネルで構成し、BGPでの動的ルーティングが推奨。</li>
+<li>すぐ使えて安価。Direct Connectのバックアップにもなる。</li>
+<li>個人のPCから接続するのはClient VPN。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="transit-gateway.html"><span class="label">← 前へ</span>AWS Transit Gateway</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="direct-connect.html"><span class="label">次へ →</span>AWS Direct Connect</a>
+</nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!-- title: Amazon Managed Service for Prometheus -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: Prometheus互換の監視をマネージドで提供(AMP) -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Managed Service for Prometheus(AMP)</strong>は、オープンソースの監視ツール<strong>Prometheus</strong>のサーバー管理をAWSが担当するサービスです。</p>
+<ul>
+<li>サーバーの可用性維持</li>
+<li>保存領域の管理</li>
+<li>スケーリング</li>
+<li>パッチ適用</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>Prometheusとは</h3>
+<p>オープンソースのモニタリング・アラートツールキットです。</p>
+<ul>
+<li>用途:インフラ監視(CPU使用率・メモリ使用量)、アプリ監視(リクエスト数・レスポンスタイム)、Kubernetesクラスターの監視</li>
+<li><strong>時系列データベース</strong>に特化</li>
+<li><strong>プル型のデータ収集</strong>:監視対象が <code>/metrics</code> エンドポイントでメトリクスを公開し、Prometheusサーバーが定期的に取りに行く</li>
+<li>独自のクエリ言語 <strong>PromQL</strong></li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 155 85
+node app 0 0.5 blue "アプリ・EKS" "/metrics を公開"
+node prom 1.4 0.5 box "Prometheus" "プル型で収集"
+node amp 2.8 0.5 accent "AMP" "ワークスペース"
+node gf 4.2 0 ok "Grafana" "可視化"
+node am 4.2 1 ng "Alertmanager" "アラート通知"
+edge app prom "取得"
+edge prom amp "remote_write"
+edge amp gf "PromQL"
+edge amp am
+<figcaption>図1 AMPの構成。Prometheusが監視対象の /metrics から定期的に取得したメトリクスを、remote_write でAMPのワークスペースに保存する。PromQLでクエリしてGrafanaで可視化し、Alertmanagerで通知する。</figcaption>
+</figure>
+<h3>AMPワークスペース</h3>
+<p>メトリクスを管理するためのワークスペースです。エンドポイントには、<strong>remote_write</strong>(メトリクス送信用)、<strong>クエリ</strong>(PromQL実行用)、ルールやアラートの管理用があります。</p>
+<p><strong>Prometheus Remote Write</strong>:Prometheusが収集したメトリクスを、外部のリモートストレージ(AMP)に保存する仕組みです。</p>
+
+<h3>アラート・通知・自動修復</h3>
+<ul>
+<li><strong>Recording rule</strong>:クエリ結果を新しいメトリクスとして事前計算する</li>
+<li><strong>Alerting rule</strong>:条件を満たしたときにアラートを発生させる。<strong>Alertmanager</strong>がアラートを送る。</li>
+</ul>
+<p>例:10分間にコンテナが3回を超えて再起動し、その状態が5分以上続いたらアラート</p>
+<pre class="code"><code>groups:
+  - name: kubernetes-alerts
+    rules:
+      - alert: HighPodRestartRate
+        expr: increase(kube_pod_container_status_restarts_total[10m]) &gt; 3
+        for: 5m
+        labels:
+          severity: warning</code></pre>
+<p>自動修復の流れ:<code>AMP Alertmanager → SNS/EventBridge → Lambda/SSM Automation → Kubernetes API/AWS API</code></p>
+
+<h3>AWSサービスとの統合</h3>
+<div class="table-wrap"><table>
+<tr><th>目的</th><th>サービス</th></tr>
+<tr><td>メトリクス収集</td><td>Prometheus、EKS</td></tr>
+<tr><td>ダッシュボード</td><td>Managed Grafana</td></tr>
+<tr><td>通知</td><td>SNS</td></tr>
+<tr><td>自動修復</td><td>EventBridge、Lambda、Systems Manager Automation</td></tr>
+<tr><td>認証</td><td>IAM、AWS SigV4、IAM Identity Center</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>EKSクラスターのコンテナ監視</li>
+<li>既存のPrometheus環境のストレージをマネージドに置き換え(Remote Write)</li>
+<li>Pod再起動の多発を検知して自動修復</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>取り込んだメトリクスのサンプル数、保存量、クエリで処理したサンプル数に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="eks.html">Amazon EKS</a>:主な監視対象</li>
+<li><a href="managed-grafana.html">Amazon Managed Grafana</a>:可視化</li>
+<li><a href="sns.html">Amazon SNS</a>/<a href="eventbridge.html">Amazon EventBridge</a>:通知・自動化</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:AWS標準の監視サービス</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>Prometheus互換・PromQL・Kubernetes監視 → <strong>AMP</strong>。</li>
+<li>メトリクスの送信 → <strong>remote_write</strong>エンドポイント。</li>
+<li>アラートの送信 → <strong>Alertmanager</strong>。事前計算 → <strong>Recording rule</strong>。</li>
+<li>可視化は<strong>Managed Grafana</strong>と組み合わせる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AMPはPrometheusのサーバー管理をAWSに任せられるサービス。</li>
+<li>Remote Writeで送信し、PromQLでクエリ、Alertmanagerで通知する。</li>
+</ul>
+</section>

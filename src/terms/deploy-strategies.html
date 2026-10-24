@@ -1,0 +1,162 @@
+<!-- title: デプロイ戦略 -->
+<!-- category: 設計・運用 -->
+<!-- lead: 新しいバージョンを本番に反映する方法(Rolling・Blue/Green・Canaryなど) -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>デプロイ戦略</strong>は、新しいバージョンのアプリケーションをどのように本番環境へ反映するかの方法です。ダウンタイムの有無、ロールバックのしやすさ、必要なリソース量が戦略ごとに異なります。以下の図では、v1が旧バージョン、v2が新バージョンです。</p>
+
+<h3>In-place</h3>
+<p>現在の環境を停止・更新して、新バージョンを配置します。新旧は基本的に新のみで、更新が終わった時点で切り替わります。ダウンタイムが発生する場合があり、ロールバックはやや難しいです。主な用途は小規模システムや単純な更新です。</p>
+<figure class="figure" data-diagram>
+grid 165 90
+node s1 0 0 box "サーバー(v1)" "稼働中"
+node s2 1.3 0 ng "停止して更新" "ダウンタイムの可能性"
+node s3 2.6 0 ok "サーバー(v2)" "同じサーバーで稼働"
+group 0 0 2.6 0 "同じサーバーをその場で更新" pad=10
+edge s1 s2
+edge s2 s3
+<figcaption>図1 In-place。同じサーバーを止めて、その場で新バージョンに入れ替える。</figcaption>
+</figure>
+
+<h3>Recreate</h3>
+<p>旧環境を停止・削除してから、新環境を構築します。稼働するのは新のみで、新環境を構築した後に切り替わります。ダウンタイムが発生し、ロールバックは難しいです。主な用途は開発・検証環境です。</p>
+<figure class="figure" data-diagram>
+grid 165 90
+node o 0 0 box "旧環境(v1)" "稼働中"
+node d 1.3 0 ng "旧環境を削除" "サービス停止"
+node n 2.6 0 ok "新環境(v2)" "新しく構築"
+edge o d "停止"
+edge d n "構築"
+<figcaption>図2 Recreate。旧環境をすべて削除してから新環境を作り直すため、その間サービスが止まる。</figcaption>
+</figure>
+
+<h3>Rolling</h3>
+<p>複数のインスタンスを少しずつ新バージョンへ更新します。更新中は一時的に新旧が両方動き、インスタンス単位で切り替わります。ダウンタイムは基本的になく、ロールバックは比較的容易です。主な用途は一般的なWebサービスです。</p>
+<figure class="figure" data-diagram>
+grid 120 60
+node l0 0 0 plain "開始"
+node a1 1 0 box "v1"
+node a2 2 0 box "v1"
+node a3 3 0 box "v1"
+node a4 4 0 box "v1"
+node l1 0 1 plain "更新中"
+node b1 1 1 ok "v2"
+node b2 2 1 ok "v2"
+node b3 3 1 box "v1"
+node b4 4 1 box "v1"
+node l2 0 2 plain "完了"
+node c1 1 2 ok "v2"
+node c2 2 2 ok "v2"
+node c3 3 2 ok "v2"
+node c4 4 2 ok "v2"
+<figcaption>図3 Rolling。インスタンスを数台ずつ順番に更新する。更新中も残りのインスタンスがリクエストを処理するため、サービスは止まらない。</figcaption>
+</figure>
+
+<h3>Blue/Green</h3>
+<p>Blue(旧)とGreen(新)の2つの環境を用意し、トラフィックを一括で切り替えます。新旧が両方稼働しており、ダウンタイムはほぼありません。問題があればBlueに戻すだけなので、ロールバックは非常に容易です。主な用途は本番環境や重要なシステムです。</p>
+<figure class="figure" data-diagram>
+grid 165 90
+node u 0 0.5 blue "利用者"
+node lb 1.3 0.5 box "ロードバランサー" "またはDNS"
+node blue 2.6 0 box "Blue環境(v1)" "切り替え後は待機"
+node green 2.6 1 ok "Green環境(v2)" "切り替え後に本番"
+edge u lb
+edge lb blue dash "切替前"
+edge lb green "切替後"
+<figcaption>図4 Blue/Green。新しい環境(Green)を本番と別に用意してから、入口の向き先を一括で切り替える。Blueを残しておけば、すぐに戻せる。</figcaption>
+</figure>
+
+<h3>Canary</h3>
+<p>一部のユーザー・トラフィックだけを新バージョンへ移行し、少量から段階的に増やします。新旧が両方稼働し、ダウンタイムはなく、ロールバックも容易です。主な用途は、リスクを抑えた本番リリースです。</p>
+<figure class="figure" data-diagram>
+grid 165 90
+node u 0 0.5 blue "利用者"
+node lb 1.3 0.5 box "振り分け" "割合を設定"
+node v1 2.6 0 box "v1"
+node v2 2.6 1 ok "v2(カナリア)" "問題なければ増やす"
+edge u lb
+edge lb v1 "90%"
+edge lb v2 "10% → 100%"
+<figcaption>図5 Canary。まず少量(例: 10%)だけv2に流して様子を見て、問題がなければ割合を段階的に増やす。</figcaption>
+</figure>
+
+<h3>A/Bテスト</h3>
+<p>異なるバージョンをユーザー群ごとに提供して比較します。新旧が両方稼働し、ユーザー属性などで振り分けます。ダウンタイムはなく、ロールバックも容易です。主な用途は、UI・機能・マーケティングの比較です。</p>
+<figure class="figure" data-diagram>
+grid 165 90
+node ua 0 0 blue "ユーザー群A"
+node ub 0 1 blue "ユーザー群B"
+node lb 1.3 0.5 box "振り分け" "ユーザー属性で"
+node va 2.6 0 box "バージョンA"
+node vb 2.6 1 ok "バージョンB"
+node m 3.9 0.5 accent "効果を比較" "どちらが良いか"
+edge ua lb
+edge ub lb
+edge lb va "群A"
+edge lb vb "群B"
+edge va m dash
+edge vb m dash
+<figcaption>図6 A/Bテスト。ユーザーの属性などでグループを分け、それぞれに別のバージョンを見せて結果を比べる。Canaryが「安全なリリース」のためなのに対し、A/Bテストは「どちらが良いかの比較」が目的。</figcaption>
+</figure>
+
+<h3>Shadow/Mirroring</h3>
+<p>本番トラフィックを新環境にも複製しますが、新環境の応答はユーザーには返しません。新旧が両方稼働し、ダウンタイムはなく、ロールバックも容易です。主な用途は、新バージョンの本番負荷での動作検証です。</p>
+<figure class="figure" data-diagram>
+grid 165 90
+node u 0 0.5 blue "利用者"
+node p 1.3 0.5 box "プロキシ" "リクエストを複製"
+node v1 2.6 0 box "本番(v1)" "応答を返す"
+node v2 2.6 1 ok "新環境(v2)" "応答は捨てる"
+edge u p both
+edge p v1 both
+edge p v2 dash "コピー"
+<figcaption>図7 Shadow/Mirroring。本番と同じリクエストを新環境にも送って動作や負荷を確かめるが、ユーザーには本番(v1)の応答だけを返すため、影響を与えない。</figcaption>
+</figure>
+
+<h3>Feature Flag</h3>
+<p>新機能を含むアプリをデプロイしておき、機能のON/OFFを設定で制御します。同じ環境の中で複数の機能が共存し、フラグを変えるだけで切り替わります。ダウンタイムはなく、ロールバックは非常に容易です。主な用途は、段階的な機能リリースです。</p>
+<figure class="figure" data-diagram>
+grid 165 90
+node flag 0 0.5 box "フラグ設定" "AppConfig など"
+node app 1.3 0.5 accent "アプリ(v2)" "新機能のコードを含む"
+node on 2.6 0 ok "新機能 ON" "一部のユーザー"
+node off 2.6 1 box "新機能 OFF" "その他のユーザー"
+edge flag app "参照"
+edge app on
+edge app off
+<figcaption>図8 Feature Flag。新機能のコードは先にデプロイしておき、設定(フラグ)でONにする相手やタイミングを制御する。デプロイ(配置)とリリース(公開)を切り離せる。</figcaption>
+</figure>
+
+<h3>比較</h3>
+<div class="table-wrap"><table>
+<tr><th>戦略</th><th>概要</th><th>新旧の稼働</th><th>切り替え方</th><th>ダウンタイム</th><th>ロールバック</th><th>主な用途</th></tr>
+<tr><td><strong>In-place</strong></td><td>現在の環境を停止・更新して新バージョンを配置</td><td>基本的に新のみ</td><td>更新完了後</td><td>発生する場合あり</td><td>やや難しい</td><td>小規模システム、単純な更新</td></tr>
+<tr><td><strong>Recreate</strong></td><td>旧環境を停止・削除してから新環境を構築</td><td>新のみ</td><td>新環境の構築後</td><td>発生</td><td>難しい</td><td>開発・検証環境</td></tr>
+<tr><td><strong>Rolling</strong></td><td>複数インスタンスを少しずつ新バージョンへ更新</td><td>一時的に両方</td><td>インスタンス単位</td><td>基本的になし</td><td>比較的容易</td><td>一般的なWebサービス</td></tr>
+<tr><td><strong>Blue/Green</strong></td><td>Blue(旧)とGreen(新)の2環境を用意し、トラフィックを切り替える</td><td>両方</td><td>一括切り替え</td><td>ほぼなし</td><td>非常に容易</td><td>本番環境、重要システム</td></tr>
+<tr><td><strong>Canary</strong></td><td>一部のユーザー・トラフィックだけ新バージョンへ移行</td><td>両方</td><td>少量 → 段階的に増加</td><td>なし</td><td>容易</td><td>リスクを抑えた本番リリース</td></tr>
+<tr><td><strong>A/Bテスト</strong></td><td>異なるバージョンをユーザー群ごとに提供して比較</td><td>両方</td><td>ユーザー属性などで振り分け</td><td>なし</td><td>容易</td><td>UI・機能・マーケティングの比較</td></tr>
+<tr><td><strong>Shadow/Mirroring</strong></td><td>本番トラフィックを新環境にも複製するが、ユーザーへの応答には使わない</td><td>両方</td><td>実トラフィックを複製</td><td>なし</td><td>容易</td><td>新バージョンの本番負荷・動作検証</td></tr>
+<tr><td><strong>Feature Flag</strong></td><td>アプリはデプロイしておき、機能のON/OFFを設定で制御</td><td>同一環境内で複数機能</td><td>フラグの変更</td><td>なし</td><td>非常に容易</td><td>段階的な機能リリース</td></tr>
+</table></div>
+<p>AWSでは、CodeDeployがIn-place・Blue/Green・Canary・Linear(一定間隔で少しずつ)に、Elastic BeanstalkがRolling・Immutable・Blue/Greenに、Route 53の加重ルーティングがCanaryやA/Bテスト的な振り分けに、AppConfigがFeature Flag的な使い方に対応します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="circuit-breaker.html">サーキットブレーカー</a>:障害を広げないための設計パターン</li>
+<li><a href="dr-strategies.html">DR戦略</a>:災害時の復旧方式</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/codedeploy.html">AWS CodeDeploy</a>:In-place・Blue/Green・Canary・Linear</li>
+<li><a href="../services/elastic-beanstalk.html">AWS Elastic Beanstalk</a>:Rolling・Blue/Greenなど</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:エイリアスによるトラフィック分割</li>
+<li><a href="../services/route53.html">Amazon Route 53</a>:加重ルーティング</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:AppConfigによる設定の段階デプロイ</li>
+</ul>
+</section>

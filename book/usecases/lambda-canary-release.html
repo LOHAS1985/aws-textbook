@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lambdaを段階的にリリースする | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">デプロイ・自動化</span>
+  <h1>Lambdaを段階的にリリースする</h1>
+  <p class="lead">SAMとCodeDeployのCanaryで、新バージョンへ少しずつトラフィックを移す</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>Lambda関数の新バージョンを、いきなり全トラフィックに出すのではなく、まず一部だけに流して様子を見たい。エラーが増えたら自動で元のバージョンに戻したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 798 269" style="max-width:798px;min-width:520px" role="img" aria-label="図1 SAMでデプロイすると、CodeDeployがエイリアスの向き先を少しずつ新バージョンへ移す(この例では10%を5分間 → 100%)。CloudWatchアラームが発生したら自動でロールバックする。"><defs><marker id="dgusecases-lambda-canary-release-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="104" text-anchor="middle" class="dg-t">SAMテンプレート</text>
+<text x="104" y="122" text-anchor="middle" class="dg-s">AutoPublishAlias</text>
+<rect x="234" y="83" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="304" y="104" text-anchor="middle" class="dg-tb">CodeDeploy</text>
+<text x="304" y="122" text-anchor="middle" class="dg-s">10%を5分間</text>
+<rect x="434" y="89" width="140" height="40" rx="8" class="dg-box"/>
+<text x="504" y="113" text-anchor="middle" class="dg-t">エイリアス live</text>
+<rect x="634" y="40" width="140" height="52" rx="8" class="dg-box"/>
+<text x="704" y="62" text-anchor="middle" class="dg-t">旧バージョン</text>
+<text x="704" y="80" text-anchor="middle" class="dg-s">90%</text>
+<rect x="634" y="126" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="704" y="147" text-anchor="middle" class="dg-t">新バージョン</text>
+<text x="704" y="165" text-anchor="middle" class="dg-s">10% → 100%</text>
+<rect x="234" y="177" width="140" height="68" rx="8" class="dg-ng"/>
+<text x="304" y="198" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="304" y="216" text-anchor="middle" class="dg-t">アラーム</text>
+<text x="304" y="234" text-anchor="middle" class="dg-s">エラー検知</text>
+<path d="M174.0,109.0 L234.0,109.0" class="dg-line" marker-end="url(#dgusecases-lambda-canary-release-1)"/>
+<path d="M374.0,109.0 L434.0,109.0" class="dg-line" marker-end="url(#dgusecases-lambda-canary-release-1)"/>
+<path d="M574.0,94.1 L634.0,81.4" class="dg-line" marker-end="url(#dgusecases-lambda-canary-release-1)"/>
+<path d="M574.0,123.9 L634.0,136.6" class="dg-line" marker-end="url(#dgusecases-lambda-canary-release-1)"/>
+<path d="M304.0,177.0 L304.0,135.0" class="dg-line dg-dash" marker-end="url(#dgusecases-lambda-canary-release-1)"/>
+<text x="304" y="160" text-anchor="middle" class="dg-s dg-halo">ロールバック</text>
+</svg>
+</div>
+<figcaption>図1 SAMでデプロイすると、CodeDeployがエイリアスの向き先を少しずつ新バージョンへ移す(この例では10%を5分間 → 100%)。CloudWatchアラームが発生したら自動でロールバックする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/sam.html">AWS SAM</a>:<code>AutoPublishAlias</code> と <code>DeploymentPreference</code> で段階的デプロイを設定する</li>
+<li><a href="../services/codedeploy.html">AWS CodeDeploy</a>:Canary/Linearでトラフィックを移す</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:バージョンとエイリアス</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:エラー数などのアラームでロールバックを判断する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>SAMテンプレートの関数に <code>AutoPublishAlias: live</code> を設定する</li>
+<li><code>DeploymentPreference</code> に <code>Type: Canary10Percent5Minutes</code> と、監視するCloudWatchアラームを設定する</li>
+<li>初回デプロイ後、コードを修正して再度 <code>sam deploy</code> する</li>
+<li>CodeDeployがトラフィックを段階的に移し、問題なければ100%に、アラームが鳴ればロールバックする</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>最初に少しだけ流してから一気に → <strong>Canary</strong>、一定間隔で少しずつ → <strong>Linear</strong>。</li>
+<li>イベントソースは<strong>エイリアスのARN</strong>を指定しておく(バージョンのARNだと切り替わらない)。</li>
+<li>切り替えの前後にテスト用のLambdaを実行する <code>PreTraffic</code>/<code>PostTraffic</code> フックも設定できる。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="ec2-blue-green-pipeline.html"><span class="label">← 前へ</span>EC2のアプリをCI/CDでBlue/Greenデプロイする</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cross-account-access.html"><span class="label">次へ →</span>異なるAWSアカウントのリソースにアクセス</a>
+</nav>
+</main>
+</body>
+</html>

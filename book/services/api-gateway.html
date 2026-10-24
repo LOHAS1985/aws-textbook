@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon API Gateway | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワークとコンテンツ配信</span>
+  <h1>Amazon API Gateway</h1>
+  <p class="lead">APIの作成・公開・管理のためのサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon API Gateway</strong>は、<strong>APIの作成・公開・管理</strong>のためのサービスです。クライアントからのリクエストを受け付け、LambdaやHTTPサーバー、他のAWSサービスへ中継します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>APIの種類</h3>
+<ul>
+<li><strong>HTTP API</strong>:シンプルで低コストなAPI(実体はHTTPS)。</li>
+<li><strong>REST API</strong>:多機能なAPI。
+  <ul>
+  <li><strong>ステージ変数</strong>:API Gateway内部だけで使う変数。バックエンドや呼び出し先URL、環境固有の設定値を切り替える。<code>${stageVariables.xxx}</code> で値を参照する。<br>例:prodステージは <code>lambdaAlias="prod"</code>、testステージは <code>lambdaAlias="test"</code> とし、<code>arn:aws:lambda:ap-northeast-1:123456789012:function:MyFunction:${stageVariables.lambdaAlias}</code> で呼び出し先を切り替える。</li>
+  <li><strong>ステージレベルのキャッシュ</strong>:GET以外(POSTなど)にも対応。</li>
+  </ul></li>
+<li><strong>WebSocket API</strong>:双方向通信。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>パブリック</th><th>プライベート</th></tr>
+<tr><td>インターネットから到達</td><td>○</td><td>×</td></tr>
+<tr><td>認証設定</td><td>○</td><td>○</td></tr>
+<tr><td>社外ユーザーの利用</td><td>○</td><td>×</td></tr>
+<tr><td>VPCエンドポイント必須</td><td>×</td><td>○</td></tr>
+</table></div>
+
+<h3>リクエスト処理の流れ</h3>
+<ol>
+<li><strong>メソッドリクエスト</strong>:クライアントから受け取るリクエストの定義</li>
+<li><strong>統合リクエスト</strong>:バックエンドへ送る前の変換処理(Lambda・HTTPサーバー・他AWSサービス向けに変換)</li>
+<li><strong>統合レスポンス</strong>:バックエンドから返ってきたデータの変換処理</li>
+<li><strong>メソッドレスポンス</strong>:クライアントへ返すレスポンスの仕様</li>
+</ol>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 774 214" style="max-width:774px;min-width:520px" role="img" aria-label="図1 リクエスト処理の流れ。クライアントの要求をメソッドリクエストで受け、統合リクエストで変換してバックエンドへ送る。戻りは統合レスポンス → メソッドレスポンスの順に変換して返す。"><defs><marker id="dgservices-api-gateway-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="214" y="10" width="356" height="179" rx="10" class="dg-group"/>
+<text x="224" y="26" class="dg-s">API Gateway</text>
+<rect x="34" y="89" width="140" height="40" rx="8" class="dg-blue"/>
+<text x="104" y="113" text-anchor="middle" class="dg-t">クライアント</text>
+<rect x="226" y="40" width="140" height="52" rx="8" class="dg-box"/>
+<text x="296" y="62" text-anchor="middle" class="dg-t">メソッド</text>
+<text x="296" y="80" text-anchor="middle" class="dg-s">リクエスト</text>
+<rect x="418" y="40" width="140" height="52" rx="8" class="dg-box"/>
+<text x="488" y="62" text-anchor="middle" class="dg-t">統合</text>
+<text x="488" y="80" text-anchor="middle" class="dg-s">リクエスト</text>
+<rect x="610" y="83" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="680" y="104" text-anchor="middle" class="dg-tb">バックエンド</text>
+<text x="680" y="122" text-anchor="middle" class="dg-s">Lambda / HTTP</text>
+<rect x="418" y="126" width="140" height="52" rx="8" class="dg-box"/>
+<text x="488" y="147" text-anchor="middle" class="dg-t">統合</text>
+<text x="488" y="165" text-anchor="middle" class="dg-s">レスポンス</text>
+<rect x="226" y="126" width="140" height="52" rx="8" class="dg-box"/>
+<text x="296" y="147" text-anchor="middle" class="dg-t">メソッド</text>
+<text x="296" y="165" text-anchor="middle" class="dg-s">レスポンス</text>
+<path d="M174.0,93.5 L226.0,82.0" class="dg-line" marker-end="url(#dgservices-api-gateway-1)"/>
+<path d="M366.0,66.5 L418.0,66.5" class="dg-line" marker-end="url(#dgservices-api-gateway-1)"/>
+<path d="M558.0,82.0 L610.0,93.5" class="dg-line" marker-end="url(#dgservices-api-gateway-1)"/>
+<path d="M610.0,124.5 L558.0,136.0" class="dg-line" marker-end="url(#dgservices-api-gateway-1)"/>
+<path d="M418.0,151.5 L366.0,151.5" class="dg-line" marker-end="url(#dgservices-api-gateway-1)"/>
+<path d="M226.0,136.0 L174.0,124.5" class="dg-line" marker-end="url(#dgservices-api-gateway-1)"/>
+</svg>
+</div>
+<figcaption>図1 リクエスト処理の流れ。クライアントの要求をメソッドリクエストで受け、統合リクエストで変換してバックエンドへ送る。戻りは統合レスポンス → メソッドレスポンスの順に変換して返す。</figcaption>
+</figure>
+<h3>オーソライザー</h3>
+<p>APIを呼び出してよいかを判定する認証・認可の機能です。<strong class="em">キャッシュ機能があるため、直前の結果を引き継ぐ可能性</strong>があります。</p>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>認証方法</th><th>主な用途</th><th>特徴</th></tr>
+<tr><td>JWT</td><td>JWT</td><td>Web/モバイルAPI</td><td>HTTP APIの標準</td></tr>
+<tr><td>Lambda</td><td><strong>トークン(キャッシュ可)</strong>/リクエスト</td><td>カスタム認証</td><td>認可情報を返すときにcontextを返す設定(キャッシュの利用が可能に)</td></tr>
+<tr><td>IAM</td><td>SigV4</td><td>AWS内部のAPI</td><td>IAMで制御</td></tr>
+<tr><td>Cognito</td><td><strong>Cognito JWT</strong></td><td>ユーザー認証</td><td>マネージドな認証</td></tr>
+</table></div>
+
+<h3>統合タイプ</h3>
+<p>※マッピングテンプレート:リクエスト・レスポンスの形式を変換する仕組み</p>
+<div class="table-wrap"><table>
+<tr><th>統合タイプ</th><th>概要</th><th>接続先</th><th>マッピングテンプレート</th><th>主な用途</th></tr>
+<tr><td>MOCK</td><td>API Gateway自身がレスポンスを返す</td><td>なし</td><td>利用可能</td><td>テスト、スタブAPI、ヘルスチェック</td></tr>
+<tr><td>Lambdaプロキシ</td><td>リクエストをほぼそのままLambdaへ渡す</td><td>Lambda</td><td>不要</td><td>サーバーレスAPIの標準構成</td></tr>
+<tr><td>Lambda(非プロキシ)</td><td>API Gatewayで加工してLambdaへ渡す</td><td>Lambda</td><td>必要</td><td>Lambdaの入出力を細かく制御</td></tr>
+<tr><td>HTTPプロキシ</td><td>リクエストをほぼそのままHTTPバックエンドへ転送</td><td>Webサーバー、ALB、外部API</td><td>不要</td><td>リバースプロキシ</td></tr>
+<tr><td>HTTP</td><td>API Gatewayで加工してHTTPバックエンドへ渡す</td><td>Webサーバー、ALB、外部API</td><td>必要</td><td>既存システムとの連携</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 194" style="max-width:684px;min-width:520px" role="img" aria-label="図2 APIキーを使えるようにするまで。APIキーを作っただけでは使えず、使用量プランに関連付け(createUsagePlanKey)て初めて、制限付きで利用できるようになる。"><defs><marker id="dgservices-api-gateway-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">APIキー</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">createApiKey</text>
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">使用量プラン</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">レート制限・クォータ</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">関連付け</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">createUsagePlanKey</text>
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">APIを呼び出せる</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">プランの範囲内で利用</text>
+<path d="M184.0,76.6 L272.0,91.4" class="dg-line" marker-end="url(#dgservices-api-gateway-2)"/>
+<path d="M184.0,131.4 L272.0,116.6" class="dg-line" marker-end="url(#dgservices-api-gateway-2)"/>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgservices-api-gateway-2)"/>
+</svg>
+</div>
+<figcaption>図2 APIキーを使えるようにするまで。APIキーを作っただけでは使えず、使用量プランに関連付け(createUsagePlanKey)て初めて、制限付きで利用できるようになる。</figcaption>
+</figure>
+<h3>主なAPI操作</h3>
+<div class="table-wrap"><table>
+<tr><th>API/メソッド</th><th>用途</th><th>ポイント</th></tr>
+<tr><td><code>createDeployment</code></td><td>APIをデプロイ</td><td><strong>API変更後は再デプロイが必要</strong></td></tr>
+<tr><td><code>createStage</code>/<code>updateStage</code></td><td>ステージ作成/設定変更</td><td>dev/prodの管理、スロットリング・ログの変更</td></tr>
+<tr><td><code>createApiKey</code></td><td>APIキー作成</td><td><strong>キーを作るだけでは利用できない</strong></td></tr>
+<tr><td><code>importApiKeys</code></td><td>APIキーを一括インポート</td><td>既存キーの取り込み</td></tr>
+<tr><td><code>createUsagePlan</code></td><td>使用量プラン(API利用量の制限)を作成</td><td>レート制限・クォータ</td></tr>
+<tr><td><code>createUsagePlanKey</code></td><td><strong>APIキーを使用量プランに関連付け</strong></td><td>これでAPIキーが使えるようになる(超頻出)</td></tr>
+<tr><td><code>getUsage</code></td><td>使用量を取得</td><td>クォータの監視</td></tr>
+<tr><td><code>createAuthorizer</code>/<code>updateAuthorizer</code></td><td>オーソライザーの作成/更新</td><td>Cognito/Lambda/IAM</td></tr>
+<tr><td><code>putMethod</code>/<code>putIntegration</code></td><td>メソッド定義/バックエンド統合の設定</td><td>GET/POST、Lambda/HTTP</td></tr>
+<tr><td><code>putMethodResponse</code>/<code>putIntegrationResponse</code></td><td>レスポンス定義</td><td>ステータス・マッピング</td></tr>
+<tr><td><code>createResource</code></td><td>リソース(パス)を追加</td><td><code>/users</code> など</td></tr>
+<tr><td><code>flushStageCache</code></td><td>ステージのキャッシュを削除</td><td>キャッシュクリア</td></tr>
+<tr><td><code>deleteDeployment</code>/<code>updateRestApi</code></td><td>デプロイの削除/API全体の更新</td><td>古いデプロイの整理、設定変更</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>API Gateway+Lambda(プロキシ統合)によるサーバーレスAPI</li>
+<li>既存のHTTPシステムの前段にAPIの入り口を置く(HTTP統合)</li>
+<li>APIキーと使用量プランで、外部パートナーごとに利用量を制限</li>
+<li>チャットなどのリアルタイム双方向通信(WebSocket API)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>APIの呼び出し回数とデータ転送量で課金されます(WebSocketは接続時間とメッセージ数)。HTTP APIはREST APIより安価です。REST APIのキャッシュを有効にすると、キャッシュサイズに応じた時間料金が加わります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="lambda.html">AWS Lambda</a>:代表的なバックエンド、Lambdaオーソライザー</li>
+<li><a href="cognito.html">Amazon Cognito</a>:ユーザー認証(Cognitoオーソライザー)</li>
+<li><a href="iam.html">AWS IAM</a>:SigV4によるIAM認証</li>
+<li><a href="cloudfront.html">Amazon CloudFront</a>/<a href="acm.html">AWS Certificate Manager</a>:カスタムドメインと証明書</li>
+<li><a href="vpc.html">Amazon VPC</a>:プライベートAPIのVPCエンドポイント</li>
+<li><a href="xray.html">AWS X-Ray</a>:リクエストのトレース</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>APIを変更したら<strong>再デプロイ</strong>(<code>createDeployment</code>)しないと反映されない。</li>
+<li>APIキーは<strong>使用量プランに関連付け</strong>(<code>createUsagePlanKey</code>)て初めて使える。</li>
+<li>環境ごとにLambdaのエイリアスを切り替える → <strong>ステージ変数</strong>。</li>
+<li>オーソライザーの結果はキャッシュされる。権限変更がすぐ反映されないときはキャッシュを疑う。</li>
+<li>リクエストをそのまま渡す → <strong>プロキシ統合</strong>、変換が必要 → 非プロキシ+マッピングテンプレート。</li>
+<li>VPC内からのみ使わせたい → <strong>プライベートAPI</strong>(VPCエンドポイント必須)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>API GatewayはHTTP/REST/WebSocketのAPIを提供する。</li>
+<li>処理はメソッドリクエスト → 統合リクエスト → 統合レスポンス → メソッドレスポンス。</li>
+<li>認可はオーソライザー、利用制限はAPIキー+使用量プラン。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="global-accelerator.html"><span class="label">← 前へ</span>AWS Global Accelerator</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="iam.html"><span class="label">次へ →</span>AWS IAM</a>
+</nav>
+</main>
+</body>
+</html>

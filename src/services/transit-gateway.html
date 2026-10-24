@@ -1,0 +1,128 @@
+<!-- title: AWS Transit Gateway -->
+<!-- category: ネットワークとコンテンツ配信 -->
+<!-- lead: 多数のVPCとオンプレミスをハブ&スポークでつなぐ中継ルーター -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Transit Gateway(TGW)</strong>は、<strong>複数のVPCやオンプレミスのネットワークを1か所に集めて接続する、リージョン単位の中継ルーター</strong>です。各ネットワークをTransit Gatewayにつなぐだけで、つながったネットワーク同士が通信できるようになります(ハブ&スポーク型)。</p>
+<p>VPCピアリングは「1対1」の接続で、VPCが増えると接続の数が急に増えます。Transit Gatewayなら、接続はVPCの数だけで済みます。</p>
+<figure class="figure" data-diagram>
+grid 150 85
+node a1 0 0 box "VPC A"
+node b1 1.2 0 box "VPC B"
+node c1 0 1.4 box "VPC C"
+node d1 1.2 1.4 box "VPC D"
+edge a1 b1 both
+edge a1 c1 both
+edge b1 d1 both
+edge c1 d1 both
+edge a1 d1 both
+edge b1 c1 both
+label 0.6 2.05 "ピアリング:6本(VPCが増えると急増)"
+node a2 2.4 0 box "VPC A"
+node b2 4.4 0 box "VPC B"
+node t 3.4 0.7 accent "Transit Gateway" w=1.1
+node c2 2.4 1.4 box "VPC C"
+node d2 4.4 1.4 box "VPC D"
+edge a2 t both
+edge b2 t both
+edge c2 t both
+edge d2 t both
+label 3.4 2.05 "Transit Gateway:4本(VPCの数だけ)"
+<figcaption>図1 VPCピアリングとTransit Gatewayの違い。4つのVPCをすべてつなぐ場合、ピアリングは6本の接続が必要だが、Transit Gatewayなら4本で済む。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>アタッチメント(つなぐもの)</h3>
+<div class="table-wrap"><table>
+<tr><th>アタッチメント</th><th>内容</th></tr>
+<tr><td>VPC</td><td>VPCの各AZのサブネットにTGW用のネットワークインターフェイスを置いて接続する</td></tr>
+<tr><td><a href="site-to-site-vpn.html">Site-to-Site VPN</a></td><td>オンプレミスとIPsec VPNで接続する</td></tr>
+<tr><td><a href="direct-connect.html">Direct Connect</a> ゲートウェイ</td><td>専用線(トランジットVIF)で接続する</td></tr>
+<tr><td>ピアリング</td><td>別のTransit Gateway(別リージョンも可)と接続する</td></tr>
+<tr><td>Connect</td><td>SD-WANなどのネットワーク機器とGRE+BGPで接続する</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 165 85
+node v1 0 0 box "VPC(本番)"
+node v2 0 1 box "VPC(開発)"
+node v3 0 2 box "VPC(共有サービス)" w=1.1
+node tgw 1.6 1 accent "Transit Gateway" "リージョンのハブ"
+node vpn 3.2 0 blue "オンプレミス" "Site-to-Site VPN"
+node dx 3.2 1 blue "オンプレミス" "Direct Connect"
+node peer 3.2 2 box "別リージョンのTGW" "ピアリング"
+edge v1 tgw both
+edge v2 tgw both
+edge v3 tgw both
+edge tgw vpn both
+edge tgw dx both
+edge tgw peer both dash
+<figcaption>図2 Transit Gatewayのアタッチメント。VPC・VPN・Direct Connect・別リージョンのTransit Gatewayを1か所に集め、まとめてルーティングする。</figcaption>
+</figure>
+
+<h3>Transit Gatewayのルートテーブル</h3>
+<p>Transit Gatewayにも専用のルートテーブルがあり、「どのアタッチメントから来た通信を、どのアタッチメントへ送るか」を決めます。</p>
+<ul>
+<li><strong>関連付け(Association)</strong>:アタッチメントから入ってきた通信を、どのルートテーブルで判断するか。</li>
+<li><strong>伝播(Propagation)</strong>:アタッチメントのCIDRを、ルートテーブルに自動で登録するか。</li>
+</ul>
+<p>ルートテーブルを複数に分けると、「本番VPCと開発VPCは通信させない。どちらも共有サービスVPCとオンプレミスにはつなぐ」のような<strong>ネットワークの分離(セグメンテーション)</strong>ができます。</p>
+<p>あわせて、各VPCのサブネットのルートテーブルにも「相手のCIDR → Transit Gateway」の経路を追加する必要があります。</p>
+
+<h3>そのほかの特徴</h3>
+<ul>
+<li><strong>推移的なルーティング</strong>:A→TGW→B のように中継できる(VPCピアリングはできない)。</li>
+<li><strong>アカウント間の共有</strong>:<a href="ram.html">AWS RAM</a>でTransit Gatewayを他アカウントと共有し、各アカウントのVPCをつなげる。</li>
+<li><strong>VPNのECMP</strong>:複数のVPN接続に通信を分散し、帯域を増やせる(VGWではできない)。</li>
+<li><strong>アプライアンスモード</strong>:ファイアウォールなどの検査用VPCを通すとき、行きと帰りの通信が同じAZの機器を通るようにする。</li>
+<li><strong>フローログ</strong>:Transit Gatewayを通る通信を記録できる(<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>と同じ仕組み)。</li>
+<li>CIDRが重複しているVPC同士は、そのままではルーティングできない。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>数十〜数百のVPCとオンプレミスをまとめて接続する</li>
+<li>マルチアカウント環境で、共有サービス(認証・監視など)のVPCに各アカウントからつなぐ</li>
+<li>インターネットへの出口(NAT・ファイアウォール)を1つのVPCに集約する</li>
+<li>リージョン間ピアリングで、複数リージョンのネットワークをつなぐ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p><strong>アタッチメントごとの時間料金</strong>と、Transit Gatewayを通った<strong>データ量(GB)に応じた処理料金</strong>がかかります。VPCが2〜3個で通信量が多い場合は、データ処理料金のかからないVPCピアリングの方が安くなることがあります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>:接続するネットワーク。少数の接続ならVPCピアリング</li>
+<li><a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>/<a href="direct-connect.html">AWS Direct Connect</a>:オンプレミスとの接続</li>
+<li><a href="ram.html">AWS Resource Access Manager</a>:Transit Gatewayのアカウント間共有</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:通信量などのメトリクス</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「多数のVPC」「オンプレミスも含めて」「推移的に接続」→ <strong>Transit Gateway</strong>。2つのVPCだけなら<strong>VPCピアリング</strong>。</li>
+<li>他アカウントのVPCをつなぐ → <strong>RAM</strong>で共有する。</li>
+<li>通信できない → TGWのルートテーブル(関連付け・伝播)と、<strong>VPC側のルートテーブル</strong>の両方を確認する。セキュリティグループ・ネットワークACLも確認。</li>
+<li>VPNの帯域を増やしたい → TGW+複数VPN+<strong>ECMP</strong>。</li>
+<li>本番と開発を分離したい → TGWの<strong>ルートテーブルを分ける</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>リージョン単位の中継ルーターで、VPC・VPN・Direct Connectをハブ&スポークでつなぐ。</li>
+<li>ルートテーブルの関連付け・伝播で経路を管理し、分離もできる。</li>
+<li>RAMでアカウント間共有、ピアリングでリージョン間接続。</li>
+<li>料金はアタッチメント時間+データ処理量。</li>
+</ul>
+</section>

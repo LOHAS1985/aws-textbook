@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Simple Email Service(SES) | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ビジネスアプリケーション</span>
+  <h1>Amazon Simple Email Service(SES)</h1>
+  <p class="lead">アプリからメールを大量に送信・受信できるメールサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Simple Email Service(SES)</strong>は、<strong>アプリケーションからメールを送信・受信する</strong>ためのサービスです。会員登録の確認メールやパスワードの再設定メールなどの<strong>通知メール</strong>や、メールマガジンなどの<strong>大量配信</strong>に使います。</p>
+<p>自分でメールサーバーを立てて運用する必要がなく、迷惑メールと判定されにくくするための仕組み(送信ドメイン認証、評価の監視など)も用意されています。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 646 202" style="max-width:646px;min-width:520px" role="img" aria-label="図1 SESでのメール送信。アプリはAPIまたはSMTPでSESに送信を依頼し、SESが受信者のメールサーバーへ配信する。届かなかった(バウンス)、迷惑メールとして報告された(苦情)などの結果はイベントとして受け取れる。"><defs><marker id="dgservices-ses-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="104" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="104" y="122" text-anchor="middle" class="dg-s">EC2・Lambdaなど</text>
+<rect x="258" y="83" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="328" y="104" text-anchor="middle" class="dg-tb">Amazon SES</text>
+<text x="328" y="122" text-anchor="middle" class="dg-s">API/SMTP</text>
+<rect x="482" y="46" width="140" height="40" rx="8" class="dg-ok"/>
+<text x="552" y="70" text-anchor="middle" class="dg-t">受信者のサーバー</text>
+<rect x="482" y="126" width="140" height="52" rx="8" class="dg-box"/>
+<text x="552" y="147" text-anchor="middle" class="dg-t">イベント通知</text>
+<text x="552" y="165" text-anchor="middle" class="dg-s">SNS・CloudWatch</text>
+<path d="M174.0,109.0 L258.0,109.0" class="dg-line" marker-end="url(#dgservices-ses-1)"/>
+<text x="216" y="113" text-anchor="middle" class="dg-s dg-halo">送信依頼</text>
+<path d="M398.0,95.7 L482.0,79.8" class="dg-line" marker-end="url(#dgservices-ses-1)"/>
+<text x="440" y="92" text-anchor="middle" class="dg-s dg-halo">配信</text>
+<path d="M398.0,122.3 L482.0,138.2" class="dg-line dg-dash" marker-end="url(#dgservices-ses-1)"/>
+<text x="440" y="134" text-anchor="middle" class="dg-s dg-halo">バウンス・苦情</text>
+</svg>
+</div>
+<figcaption>図1 SESでのメール送信。アプリはAPIまたはSMTPでSESに送信を依頼し、SESが受信者のメールサーバーへ配信する。届かなかった(バウンス)、迷惑メールとして報告された(苦情)などの結果はイベントとして受け取れる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>送信の方法</h3>
+<ul>
+<li><strong>API</strong>:AWS SDKやCLIから <code>SendEmail</code> などのAPIを呼び出す。IAMで権限を管理する。</li>
+<li><strong>SMTPインターフェイス</strong>:既存のメールソフトやアプリから、SMTPで送信する。SES用の<strong>SMTP認証情報</strong>を作成して使う(IAMのアクセスキーとは別のもの)。</li>
+</ul>
+
+<h3>検証済みID</h3>
+<p>送信元として使うメールアドレスまたは<strong>ドメインを検証(所有の確認)</strong>してから送信します。ドメインを検証すると、そのドメインのどのアドレスからでも送信できます。</p>
+
+<h3>サンドボックス</h3>
+<p>SESを使い始めた直後のアカウントは<strong>サンドボックス</strong>という制限された状態になっています。</p>
+<ul>
+<li>送信先は<strong>検証済みのアドレス(またはドメイン)だけ</strong></li>
+<li>1日あたりの送信数と、1秒あたりの送信数に低い上限がある</li>
+</ul>
+<p>本番で任意の宛先に送るには、<strong>本番環境へのアクセス(サンドボックスの解除)を申請</strong>します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 682 154" style="max-width:682px;min-width:520px" role="img" aria-label="図2 サンドボックスの解除。最初は検証済みの宛先にしか送れないため、本番で使う前に申請して制限を外す。"><defs><marker id="dgservices-ses-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">サンドボックス</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">検証済みの宛先のみ</text>
+<rect x="273" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="346" y="100" text-anchor="middle" class="dg-t">本番アクセスを申請</text>
+<text x="346" y="118" text-anchor="middle" class="dg-s">用途・バウンス対策</text>
+<rect x="512" y="78" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">本番環境</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">任意の宛先に送信</text>
+<path d="M179.0,104.0 L273.2,104.0" class="dg-line" marker-end="url(#dgservices-ses-2)"/>
+<path d="M418.2,104.0 L512.5,104.0" class="dg-line" marker-end="url(#dgservices-ses-2)"/>
+</svg>
+</div>
+<figcaption>図2 サンドボックスの解除。最初は検証済みの宛先にしか送れないため、本番で使う前に申請して制限を外す。</figcaption>
+</figure>
+
+<h3>送信ドメイン認証</h3>
+<p>なりすましを防ぎ、迷惑メールと判定されにくくするために設定します。</p>
+<div class="table-wrap"><table>
+<tr><th>仕組み</th><th>内容</th><th>SESでの設定</th></tr>
+<tr><td><a href="../terms/spf.html">SPF</a></td><td>送信元のサーバーが正規のものかをDNSで確認する</td><td>カスタムMAIL FROMドメインを設定する</td></tr>
+<tr><td>DKIM</td><td>メールに電子署名を付け、改ざんされていないことを確認する</td><td>Easy DKIMでDNSにCNAMEレコードを追加する</td></tr>
+<tr><td>DMARC</td><td>SPF・DKIMに失敗したメールの扱い(拒否など)を受信側に伝える</td><td>DNSにTXTレコードを追加する</td></tr>
+</table></div>
+
+<h3>評価(レピュテーション)の管理</h3>
+<ul>
+<li><strong>バウンス</strong>(宛先不明などで届かない)と<strong>苦情</strong>(受信者が迷惑メールとして報告)の割合が高いと、送信が一時停止されることがある。</li>
+<li><strong>設定セット(Configuration Set)</strong>で、送信・配信・バウンス・苦情・開封などのイベントをSNS、CloudWatch、Data Firehose、EventBridgeへ送る。</li>
+<li><strong>抑制リスト</strong>:バウンスや苦情があったアドレスへの送信を自動で止める。</li>
+<li><strong>専用IPアドレス</strong>:自社だけが使う送信元IPで、評価を自分で管理する(標準は共有IP)。</li>
+</ul>
+
+<h3>メールの受信</h3>
+<p>受信ルールを設定すると、受け取ったメールをS3に保存したり、SNSで通知したり、Lambdaで処理したりできます(受信に対応しているリージョンのみ)。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>会員登録・パスワード再設定・注文確認などの通知メール(トランザクションメール)</li>
+<li>メールマガジン・キャンペーンの大量配信</li>
+<li>問い合わせ用アドレスに届いたメールを、S3に保存してLambdaで自動処理する</li>
+<li>Cognitoのユーザープールからのメール送信</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p><strong>送信したメールの通数(1,000通単位)</strong>と、添付ファイルなどの<strong>データ量</strong>に応じた従量課金です。受信も通数とデータ量で課金されます。専用IPアドレスなどのオプションは別料金です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="sns.html">Amazon SNS</a>:バウンス・苦情の通知先。SNSのメール通知はシステム管理者向けで、顧客向けのメールにはSESを使う</li>
+<li><a href="lambda.html">AWS Lambda</a>:メールの送信処理、受信したメールの処理</li>
+<li><a href="s3.html">Amazon S3</a>:受信したメールの保存先</li>
+<li><a href="route53.html">Amazon Route 53</a>:ドメインの検証・DKIM・SPFのDNSレコード</li>
+<li><a href="cognito.html">Amazon Cognito</a>:ユーザー向けのメールをSESから送る</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:送信数・バウンス率・苦情率の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>検証していない宛先に送れない → <strong>サンドボックス</strong>のまま。本番アクセスを申請する。</li>
+<li>迷惑メールに入る・なりすまし対策 → <strong>SPF・DKIM・DMARC</strong>を設定する。</li>
+<li>バウンス・苦情を把握したい → <strong>設定セット</strong>のイベント発行や、SNSへの通知を設定する。バウンス率・苦情率は <code>Reputation.BounceRate</code> などのメトリクスで監視する。</li>
+<li>SMTPで送るときは<strong>SMTP認証情報</strong>を使う。EC2からはポート25が制限されているため、587番などのポートを使う。</li>
+<li>アプリからユーザーへメールを送る → SES。運用者への通知 → SNS。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>APIまたはSMTPでメールを送信・受信できるメールサービス。</li>
+<li>送信元のIDを検証し、最初はサンドボックスの制限がある。</li>
+<li>SPF・DKIM・DMARCと、バウンス・苦情の管理で到達率を保つ。</li>
+<li>料金は送信通数とデータ量の従量課金。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="datasync.html"><span class="label">← 前へ</span>AWS DataSync</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <span class="next empty"></span>
+</nav>
+</main>
+</body>
+</html>

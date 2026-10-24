@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC2のメモリ・ディスク使用率を監視する | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">監視・ログ・自動修復</span>
+  <h1>EC2のメモリ・ディスク使用率を監視する</h1>
+  <p class="lead">CloudWatchエージェントでカスタムメトリクスを集め、しきい値を超えたら通知する</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>EC2のメモリ使用率・ディスク使用率を監視し、80%を超えた状態が続いたら運用担当者にメールで通知したい。CPU使用率は標準メトリクスで取れますが、<strong>メモリとディスクの使用率は標準メトリクスにない</strong>ため、CloudWatchエージェントで送る必要があります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 320" style="max-width:684px;min-width:520px" role="img" aria-label="図1 EC2にCloudWatchエージェントを入れてメモリ・ディスク使用率をカスタムメトリクスとして送り、アラームでしきい値を監視してSNSで通知する。"><defs><marker id="dgusecases-ec2-memory-monitoring-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">Parameter Store</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">エージェント設定</text>
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">IAMロール</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">エージェント用ポリシー</text>
+<rect x="34" y="142" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="164" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="182" text-anchor="middle" class="dg-s">エージェント導入</text>
+<rect x="272" y="142" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="164" text-anchor="middle" class="dg-tb">CloudWatch</text>
+<text x="347" y="182" text-anchor="middle" class="dg-s">mem_used_percent</text>
+<rect x="510" y="142" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="164" text-anchor="middle" class="dg-t">アラーム</text>
+<text x="585" y="182" text-anchor="middle" class="dg-s">80%以上が5分続く</text>
+<rect x="510" y="244" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="266" text-anchor="middle" class="dg-t">SNS</text>
+<text x="585" y="284" text-anchor="middle" class="dg-s">メール通知</text>
+<path d="M109.0,92.5 L109.0,142.5" class="dg-line" marker-end="url(#dgusecases-ec2-memory-monitoring-1)"/>
+<text x="109" y="122" text-anchor="middle" class="dg-s dg-halo">設定を取得</text>
+<path d="M286.3,92.5 L169.7,142.5" class="dg-line dg-dash" marker-end="url(#dgusecases-ec2-memory-monitoring-1)"/>
+<path d="M184.0,168.5 L272.0,168.5" class="dg-line" marker-end="url(#dgusecases-ec2-memory-monitoring-1)"/>
+<text x="228" y="172" text-anchor="middle" class="dg-s dg-halo">送信</text>
+<path d="M422.0,168.5 L510.0,168.5" class="dg-line" marker-end="url(#dgusecases-ec2-memory-monitoring-1)"/>
+<path d="M585.0,194.5 L585.0,244.5" class="dg-line" marker-end="url(#dgusecases-ec2-memory-monitoring-1)"/>
+</svg>
+</div>
+<figcaption>図1 EC2にCloudWatchエージェントを入れてメモリ・ディスク使用率をカスタムメトリクスとして送り、アラームでしきい値を監視してSNSで通知する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:エージェントでメトリクスを収集し、アラームでしきい値を監視する</li>
+<li><a href="../services/iam.html">AWS IAM</a>:EC2のロールに <code>CloudWatchAgentServerPolicy</code> を付ける</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:エージェントの一括インストールや、設定ファイルをParameter Storeで共有する</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:アラーム発生時のメール通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>EC2のIAMロールに <code>CloudWatchAgentServerPolicy</code> をアタッチする</li>
+<li>CloudWatchエージェントをインストールする(多数のEC2にはSystems ManagerのRun CommandやDistributorで一括導入)</li>
+<li>設定ファイル(JSON)に <code>mem_used_percent</code>・<code>disk_used_percent</code> を指定する(Parameter Storeに置くと全EC2で同じ設定を使える)</li>
+<li>エージェントを起動し、メトリクスがCloudWatchに届くことを確認する</li>
+<li>メトリクスにアラーム(例:80%以上が5分間)を作成し、通知先にSNSトピックを指定する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>メモリ・ディスク使用率は<strong>詳細モニタリングを有効にしても取れない</strong>。エージェントが必要。</li>
+<li>メトリクスが届かない → <strong>IAMロール</strong>、エージェントの起動状態、設定ファイルを確認する。</li>
+<li>エージェントのメトリクスは、標準とは別の名前空間(<code>CWAgent</code>)に入る。</li>
+<li>同じエージェントでアプリのログファイルもCloudWatch Logsに送れる。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="log-error-alert.html"><span class="label">次へ →</span>アプリのエラーログを検知して通知する</a>
+</nav>
+</main>
+</body>
+</html>

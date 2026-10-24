@@ -1,0 +1,56 @@
+<!-- title: 機密データを保存するS3を暗号化・監査する -->
+<!-- category: セキュリティ・コンプライアンス -->
+<!-- lead: SSE-KMSで暗号化し、CloudTrailで操作を記録し、Macieで機密データを検出する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>顧客の個人情報を含むファイルをS3に保存する。保存時の暗号化に加えて、「いつ・誰が鍵を使ってデータにアクセスしたか」を監査できるようにし、想定外の場所に個人情報が置かれていないかも定期的にチェックしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 90
+node app 0 0.5 blue "アプリ" "PutObject"
+node s3 1.3 0.5 accent "S3バケット" "SSE-KMSで暗号化"
+node kms 2.6 0 box "KMS" "カスタマー管理キー"
+node ct 2.6 1 box "CloudTrail" "データイベント"
+node mac 1.3 1.6 ok "Macie" "機密データを検出"
+edge app s3 "HTTPS"
+edge s3 kms "鍵を使用"
+edge s3 ct "操作を記録"
+edge mac s3 dash "分析"
+<figcaption>図1 S3はKMSのカスタマー管理キーで暗号化(SSE-KMS)し、キーの利用とオブジェクト操作をCloudTrailで記録する。Macieでバケット内の個人情報を検出する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/s3.html">Amazon S3</a>:SSE-KMSによる暗号化、バケットポリシーでのアクセス制御</li>
+<li><a href="../services/kms.html">AWS KMS</a>:カスタマー管理キー(キーポリシーで利用者を制御、利用を監査)</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:KMSキーの利用と、S3のデータイベント(オブジェクトの取得・削除)を記録する</li>
+<li><a href="../services/macie.html">Amazon Macie</a>:S3内の機密データ・個人情報を検出する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>KMSでカスタマー管理キーを作成し、キーポリシーで利用できるロールを限定する</li>
+<li>S3バケットのデフォルト暗号化をSSE-KMS(作成したキー)にする</li>
+<li>バケットポリシーで、HTTPS以外の通信や、指定した暗号化方式以外のアップロードを拒否する</li>
+<li>CloudTrailの証跡で、このバケットのデータイベントを有効にする</li>
+<li>Macieを有効にし、バケットを定期的に分析するジョブを作成する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>鍵の利用を<strong>監査</strong>したい → <strong>SSE-KMS</strong>(SSE-S3ではキーの利用履歴を追えない)。</li>
+<li>読み取る側にも <code>kms:Decrypt</code> の権限が必要。</li>
+<li>S3のオブジェクト操作の記録には<strong>データイベントの有効化</strong>が必要(管理イベントだけでは記録されない)。</li>
+<li>S3の個人情報の検出 → <strong>Macie</strong>、不正アクセスなどの脅威検出 → GuardDuty。</li>
+<li>KMSのリクエスト料金を抑えるには、S3バケットキーを有効にする。</li>
+</ul></div>
+</section>

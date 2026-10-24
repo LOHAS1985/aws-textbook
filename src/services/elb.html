@@ -1,0 +1,92 @@
+<!-- title: Elastic Load Balancing (ELB) -->
+<!-- category: ネットワークとコンテンツ配信 -->
+<!-- lead: 通信を複数のターゲットへ分散するロードバランサー群 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Elastic Load Balancing(ELB)</strong>は、受け取った通信を複数のサーバーへ分散する<strong>ロードバランサーのサービス群</strong>です。<strong>リージョンサービス</strong>で、通信を複数のAZへ分散します(リージョンをまたいだ分散はしません)。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>レイヤー</th><th>用途</th></tr>
+<tr><td>ALB(Application Load Balancer)</td><td>L7</td><td>HTTP/HTTPS用</td></tr>
+<tr><td>NLB(Network Load Balancer)</td><td>L4</td><td>TCP/UDP用。通信の高速転送</td></tr>
+<tr><td>GWLB(Gateway Load Balancer)</td><td>L3/L4</td><td>ネットワークセキュリティ機器用。通信をファイアウォールなどのセキュリティ機器群へ分散</td></tr>
+<tr><td>CLB(Classic Load Balancer)</td><td>-</td><td>旧世代</td></tr>
+</table></div>
+
+<h3>機能</h3>
+<ul>
+<li><strong>ヘルスチェック</strong>:ALBはHTTP/HTTPSのみ。NLBはUDP・HTTP/HTTPSに対応。</li>
+<li><strong>パスルーティング</strong>:URLによって転送先を変える(例:<code>https://api.example.com/users/list</code> の <code>api.example.com</code> がホスト、<code>/users/list</code> がパス)。
+  <ul><li>ホストベース:異なるホストへの分散</li><li>パスベース:同じドメイン内での分散</li></ul></li>
+<li><strong>HTTPS終端</strong>:HTTPSの復号をALBで行い、EC2の負担を軽減する。</li>
+</ul>
+<p>NLBのヘルスチェックはTCPにも対応しています。また、NLBは静的IP(Elastic IP)を割り当てられるのが特徴です。</p>
+
+<h3 class="em">リスナールール</h3>
+<p>受け取ったリクエストの処理ルールです。</p>
+<ol>
+<li><strong>IF(条件)</strong>:リクエストを判定する条件。例:パスベース、ホストベース、HTTPヘッダーなど</li>
+<li><strong>THEN(アクション)</strong>:条件に一致したときの動作。例:特定のターゲットグループへ転送、リダイレクト</li>
+</ol>
+<figure class="figure" data-diagram>
+grid 180 80
+node u 0 1 blue "利用者"
+node alb 1.4 1 accent "ALB" "HTTPS終端・ルール判定"
+node tg1 2.8 0.4 box "ターゲットグループA" "/api/* → APIサーバー"
+node tg2 2.8 1.6 box "ターゲットグループB" "/img/* → 画像サーバー"
+edge u alb "HTTPS"
+edge alb tg1
+edge alb tg2
+<figcaption>図1 ALBのリスナールール。HTTPSを終端したあと、条件(IF)に一致したターゲットグループへ転送(THEN)する。この例はパスベースのルーティング。ターゲットは複数のAZに分散して配置する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>複数AZのEC2/ECSへWebトラフィックを分散(ALB)</li>
+<li><code>/api/*</code> はAPIサーバー、<code>/images/*</code> は画像サーバーへ振り分け(パスベースルーティング)</li>
+<li>ゲームやIoTなどTCP/UDPの大量・高速通信(NLB)</li>
+<li>サードパーティ製ファイアウォールへの通信分散(GWLB)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ロードバランサーの稼働時間と、処理量の単位(ALBはLCU、NLBはNLCU)に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ecs.html">Amazon ECS</a>:代表的なターゲット</li>
+<li><a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:ターゲットの自動登録・ELBヘルスチェック</li>
+<li><a href="eks.html">Amazon EKS</a>:Ingress→ALB、Service→NLB</li>
+<li><a href="acm.html">AWS Certificate Manager</a>:HTTPS終端に使う証明書</li>
+<li><a href="global-accelerator.html">AWS Global Accelerator</a>:ALB/NLBの前段でグローバルに最適化</li>
+<li><a href="route53.html">Amazon Route 53</a>:エイリアスレコードでELBを指す</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>HTTP/HTTPSでパス・ホストによる振り分け → <strong>ALB</strong>。</li>
+<li>TCP/UDP・超高速・静的IP → <strong>NLB</strong>。</li>
+<li>セキュリティアプライアンスへの分散 → <strong>GWLB</strong>。</li>
+<li>EC2のSSL処理負荷を減らす → ALBで<strong>HTTPS終端</strong>。</li>
+<li>ELBはリージョン内の複数AZに分散する(リージョン間は Route 53 や Global Accelerator)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>ELBはALB(L7)・NLB(L4)・GWLB(L3/4)・CLB(旧)の4種類。</li>
+<li>ALBはリスナールール(IF/THEN)でホスト・パスごとに振り分ける。</li>
+</ul>
+</section>

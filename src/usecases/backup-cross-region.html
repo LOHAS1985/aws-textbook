@@ -1,0 +1,52 @@
+<!-- title: バックアップを一元管理して別リージョンに保管する -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: AWS Backupのプランとタグで自動バックアップし、別リージョンへコピーする -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>EC2・EBS・RDS・EFSなどのバックアップを、サービスごとにばらばらに設定するのではなく一元管理したい。新しく作ったリソースも自動で対象にし、リージョン障害に備えて別リージョンにもコピーを残したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 90
+node res 0 0.5 blue "EC2・EBS・RDS…" "タグ Backup=daily"
+node plan 1.4 0.5 accent "バックアッププラン" "毎日・35日保持"
+node v1 2.8 0 box "ボールト" "東京リージョン"
+node v2 2.8 1 ok "ボールト" "大阪リージョンへコピー"
+edge res plan "タグで選択"
+edge plan v1
+edge v1 v2 "コピー"
+<figcaption>図1 タグの付いたリソースをバックアッププランが自動でバックアップし、ボールトに保存する。プランのコピー設定で、別リージョンのボールトにも保管する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/backup.html">AWS Backup</a>:バックアッププラン(スケジュール・保持期間・コピー先)、リソースの割り当て(タグ/ARN)、ボールト</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:組織全体にバックアップポリシーを適用する</li>
+<li><a href="../services/kms.html">AWS KMS</a>:バックアップの暗号化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>バックアップボールトを作成する(コピー先のリージョンにも作成)</li>
+<li>バックアッププランを作成し、スケジュール・バックアップウィンドウ・保持期間・ライフサイクルを設定する</li>
+<li>プランのコピー先に、別リージョンのボールトを指定する</li>
+<li>リソースの割り当てで、対象をタグ(例:<code>Backup=daily</code>)で指定する</li>
+<li>定期的に復元をテストして、実際に戻せることを確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>複数サービスのバックアップを一元管理 → <strong>AWS Backup</strong>。</li>
+<li>対象を<strong>タグ</strong>で指定すると、新しく作ったリソースも自動で対象になる。</li>
+<li>リージョン障害への備え → <strong>別リージョンへのコピー</strong>(<a href="../terms/dr-strategies.html">DR戦略</a>の「バックアップと復元」)。</li>
+<li>バックアップを誰にも削除させたくない → <strong>ボールトロック</strong>。</li>
+</ul></div>
+</section>

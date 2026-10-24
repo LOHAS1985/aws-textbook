@@ -1,0 +1,108 @@
+<!-- title: Amazon VPC -->
+<!-- category: ネットワークとコンテンツ配信 -->
+<!-- lead: AWS上に論理的に分離された仮想ネットワークを作るサービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon VPC(Virtual Private Cloud)</strong>は、AWS上に<strong>論理的に分離された仮想ネットワーク</strong>を構築するサービスです。</p>
+<ul>
+<li>AWS内に自分専用のネットワーク空間を作成できる</li>
+<li>IPアドレス範囲(CIDR)を自由に定義できる</li>
+<li>サブネット単位でリソースを配置する</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 180 90
+node net 0 0 blue "インターネット"
+node igw 1.5 0 box "IGW" "インターネットGW"
+node web 1 1.3 box "Webサーバー" "パブリックIP"
+node nat 2 1.3 box "NATゲートウェイ"
+group 1 1.3 2 1.3 "パブリックサブネット" pad=8
+node app 1 2.6 accent "アプリ・DB" "プライベートIPのみ"
+node vpce 2 2.6 ok "VPCエンドポイント"
+group 1 2.6 2 2.6 "プライベートサブネット" pad=8
+group 1 1.3 2 2.6 "VPC" pad=30
+node s3 3.4 2.6 box "S3 など" "AWSサービス"
+edge net igw both
+edge igw web both
+edge igw nat
+edge app nat "外向きのみ"
+edge app vpce
+edge vpce s3
+<figcaption>図1 VPCの基本構成。パブリックサブネットはインターネットゲートウェイ経由で外部と通信できる。プライベートサブネットはNATゲートウェイ経由で外向きの通信だけを行い、VPCエンドポイントでAWSサービスにプライベート接続する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<div class="table-wrap"><table>
+<tr><th>構成要素</th><th>役割</th></tr>
+<tr><td>サブネット</td><td>VPC内のネットワークの分割単位</td></tr>
+<tr><td>ルートテーブル</td><td>通信経路の制御</td></tr>
+<tr><td>インターネットゲートウェイ</td><td>VPCとインターネットを接続(パブリックサブネットで利用)</td></tr>
+<tr><td>NATゲートウェイ</td><td>プライベートサブネットからインターネットへの<strong>アウトバウンド通信のみ</strong>許可(外部からのアクセスは不可)</td></tr>
+<tr><td>VPCエンドポイント</td><td>インターネットを経由せずにVPCからAWSサービスへプライベート接続する</td></tr>
+<tr><td>セキュリティグループ</td><td>アクセス制御。<strong>インスタンス単位</strong>、<strong>許可のみ</strong>設定可能</td></tr>
+<tr><td>ネットワークACL</td><td>アクセス制御。<strong>サブネット単位</strong>、<strong>許可/拒否の両方</strong>を設定可能</td></tr>
+</table></div>
+<p>セキュリティグループは<strong>ステートフル</strong>(戻りの通信は自動で許可)、ネットワークACLは<strong>ステートレス</strong>(戻りの通信も明示的に許可が必要)です。</p>
+<p>「パブリックサブネット」とは、ルートテーブルにインターネットゲートウェイへの経路(<code>0.0.0.0/0 → IGW</code>)があるサブネットのことです。</p>
+<figure class="figure" data-diagram>
+grid 175 90
+node in 0 0 blue "通信"
+node nacl 1.25 0 box "ネットワークACL" "許可/拒否・ステートレス"
+node sg 2.5 0 box "セキュリティグループ" "許可のみ・ステートフル"
+node ec2 3.75 0 accent "EC2"
+group 2.5 0 3.75 0 "サブネット" pad=10
+edge in nacl
+edge nacl sg
+edge sg ec2
+<figcaption>図2 通信がインスタンスに届くまで。サブネットの出入り口でネットワークACL(ステートレス)、インスタンスの手前でセキュリティグループ(ステートフル)がチェックする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Webサーバーはパブリックサブネット、DBはプライベートサブネットに配置する多層構成</li>
+<li>プライベートサブネットのサーバーからNATゲートウェイ経由でOSアップデートを取得</li>
+<li>VPCエンドポイントでS3などにインターネットを経由せずアクセス</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>VPC・サブネット・ルートテーブル・セキュリティグループ自体は無料です。NATゲートウェイ(時間+処理データ量)、インターフェース型VPCエンドポイント、パブリックIPv4アドレスなどは有料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:VPC内に配置する代表的なリソース</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:パブリックサブネットに置く入り口</li>
+<li><a href="s3.html">Amazon S3</a>:VPCエンドポイントの接続先</li>
+<li><a href="route53.html">Amazon Route 53</a>:プライベートホストゾーンでVPC内の名前解決</li>
+<li><a href="ram.html">AWS Resource Access Manager</a>:サブネットの共有</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:多数のVPC・オンプレミスをハブ&スポークで接続</li>
+<li><a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>/<a href="direct-connect.html">AWS Direct Connect</a>:オンプレミスとの接続</li>
+<li><a href="../terms/vpc-flow-logs.html">VPCフローログ</a>:VPC内の通信の記録</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>プライベートサブネットから外へ出たいが外から入らせない → <strong>NATゲートウェイ</strong>。</li>
+<li>特定のIPを<strong>拒否</strong>したい → <strong>ネットワークACL</strong>(セキュリティグループは許可のみ)。</li>
+<li>インスタンス単位の制御 → セキュリティグループ、サブネット単位 → ネットワークACL。</li>
+<li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>VPCはAWS上の自分専用ネットワーク。CIDRとサブネットで設計する。</li>
+<li>経路はルートテーブル、出入口はIGW/NAT/エンドポイント。</li>
+<li>アクセス制御はセキュリティグループ(許可のみ)とネットワークACL(許可/拒否)。</li>
+</ul>
+</section>

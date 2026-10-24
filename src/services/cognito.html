@@ -1,0 +1,140 @@
+<!-- title: Amazon Cognito -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: アプリにユーザー認証・認可の機能を提供するサービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Cognito</strong>は、Web/モバイルアプリに<strong>認証・認可の機能</strong>を提供するサービスです。「ユーザープール」と「IDプール」の2つの機能があります。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>ユーザープール</th><th>IDプール</th></tr>
+<tr><td>役割</td><td><strong class="em">認証(ログイン)</strong></td><td>認可(一時的なAWS権限の付与)</td></tr>
+<tr><td>主な目的</td><td>ユーザー管理</td><td>AWSへのアクセス</td></tr>
+<tr><td>機能</td><td>サインアップ、ログイン、MFA</td><td>STSの一時認証情報の取得</td></tr>
+<tr><td>発行するもの</td><td>JWTトークン</td><td>AWSクレデンシャル</td></tr>
+<tr><td>内部連携</td><td>アプリ認証</td><td>IAMロール/STS</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 0.5 blue "アプリ" "Web / モバイル"
+node up 1.4 0 accent "ユーザープール" "ログイン → JWT"
+node ip 1.4 1 box "IDプール" "JWT → AWS認証情報"
+node api 2.8 0 ok "API Gateway" "トークンで認可"
+node s3 2.8 1 ok "S3 など" "一時認証情報で直接"
+edge app up "① ログイン"
+edge app ip "② トークン"
+edge up api dash
+edge ip s3 "STS経由"
+<figcaption>図1 ユーザープールとIDプールの役割。ユーザープールでログインしてJWTトークンを受け取り、API Gatewayなどの認可に使う。IDプールはトークンをAWSの一時認証情報に交換し、S3などへ直接アクセスさせる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>ユーザープール(ユーザー認証)</h3>
+<ul>
+<li>サインアップ・サインイン(ソーシャルサインイン:Facebook・Googleなど/SAML・OIDC IDプロバイダー経由)</li>
+<li>ユーザーディレクトリ/プロファイル管理(ログイン情報+ユーザープロファイル+セキュリティ状態)</li>
+<li>多要素認証(MFA)などのセキュリティ機能</li>
+</ul>
+<p><strong>通常のサインインの流れ</strong></p>
+<ol>
+<li>クライアントがユーザー名/メールアドレスとパスワードを送信</li>
+<li>Cognitoがユーザーディレクトリを参照</li>
+<li>必要に応じてMFAなどを要求 → 認証成功</li>
+<li>トークンを発行(JWT=トークンのフォーマット)
+  <ul>
+  <li><strong>IDトークン(JWT)</strong>:ユーザー情報を含む(認証)</li>
+  <li><strong>アクセストークン(JWT)</strong>:スコープ・権限情報(認可)。API Gatewayに渡してアクセス可否を判断する</li>
+  <li><strong>リフレッシュトークン(非JWT)</strong>:ログインを維持する</li>
+  </ul></li>
+</ol>
+<p><strong>ソーシャル/SAML/OIDCの流れ</strong>:クライアントがCognitoにログインを依頼 → Cognitoが外部IdPへリダイレクト → 外部IdPでログイン → 外部IdPがCognitoに結果を渡す → Cognitoがユーザーを紐付け/新規作成 → トークン発行</p>
+
+<h3>IDプール(AWSサービスの利用権限を付与)</h3>
+<ol>
+<li>クライアントがログインしてトークンを取得</li>
+<li>クライアントがIDプールにトークンを渡す</li>
+<li>IDプールがトークンを検証(ユーザーを特定)</li>
+<li>IDプールがIAMロールを決定し、<strong>一時的なAWS資格情報を発行</strong>(トークン → AWS資格情報に変換)</li>
+<li>クライアントがそのロールでAWSリソースにアクセス</li>
+</ol>
+
+<h3>Lambdaトリガー</h3>
+<p>各処理の前後にLambdaを呼び出せます。</p>
+<div class="table-wrap"><table>
+<tr><th>トリガー</th><th>タイミング</th><th>用途例</th></tr>
+<tr><td>Pre Authentication</td><td>ログイン直前</td><td>ログイン拒否、追加チェック</td></tr>
+<tr><td><strong class="em">Post Authentication</strong></td><td>ログイン後</td><td><span>ログイン履歴の記録など</span></td></tr>
+<tr><td>Pre Sign-up</td><td>サインアップ前</td><td>メールドメインの制限、招待制の制御</td></tr>
+<tr><td>Post Confirmation</td><td>ユーザー登録完了後</td><td>初期データ作成、ウェルカムメール、DBユーザー作成</td></tr>
+<tr><td>Pre Token Generation</td><td><span>トークン発行前</span></td><td><span>トークンにカスタムの属性を追加</span></td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 150 95
+node e1 0 0 blue "サインアップ"
+node e2 1 0 blue "登録完了"
+node e3 2 0 blue "ログイン"
+node e4 3 0 blue "ログイン成功"
+node e5 4 0 blue "トークン発行"
+node t1 0 1 box "Pre Sign-up" "ドメイン制限"
+node t2 1 1 box "Post\nConfirmation" "初期データ作成"
+node t3 2 1 box "Pre\nAuthentication" "ログイン拒否"
+node t4 3 1 box "Post\nAuthentication" "ログイン後の処理"
+node t5 4 1 box "Pre Token\nGeneration" "属性を追加"
+edge e1 e2
+edge e2 e3
+edge e3 e4
+edge e4 e5
+edge e1 t1 dash
+edge e2 t2 dash
+edge e3 t3 dash
+edge e4 t4 dash
+edge e5 t5 dash
+<figcaption>図2 Lambdaトリガーが呼ばれるタイミング。サインアップ前・登録完了後・ログイン前後・トークン発行前に、Lambdaで独自の処理を挟める。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>モバイルアプリの会員登録・ログイン(ユーザープール)</li>
+<li>Googleアカウントでのソーシャルログイン</li>
+<li>ログインユーザーごとにS3の自分のフォルダ(プレフィックス)だけにアクセスさせる(IDプール+IAMポリシー)</li>
+<li>API Gatewayの認可(Cognitoオーソライザー)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ユーザープールは月間アクティブユーザー(MAU)数に応じて課金され、一定数までは無料枠があります。IDプール自体は無料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="api-gateway.html">Amazon API Gateway</a>:Cognitoオーソライザー</li>
+<li><a href="sts.html">AWS STS</a>/<a href="iam.html">AWS IAM</a>:IDプールの一時認証情報</li>
+<li><a href="s3.html">Amazon S3</a>:ユーザーごとのプレフィックス制御</li>
+<li><a href="lambda.html">AWS Lambda</a>:トリガー</li>
+<li><a href="amplify.html">AWS Amplify</a>:Cognitoを使った認証の組み込み</li>
+<li><a href="appsync.html">AWS AppSync</a>:GraphQL APIの認証</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>ログイン(認証)→ <strong>ユーザープール</strong>、AWSリソースへの直接アクセス(認可)→ <strong>IDプール</strong>。</li>
+<li>API Gatewayに渡すのは<strong>アクセストークン</strong>(またはIDトークン)。</li>
+<li>サインアップを特定のメールドメインに制限 → <strong>Pre Sign-up</strong>トリガー。</li>
+<li>登録完了後の初期処理 → <strong>Post Confirmation</strong>トリガー。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Cognitoはアプリの認証・認可サービス。</li>
+<li>ユーザープール=ログインとJWT発行、IDプール=AWS資格情報の発行。</li>
+<li>Lambdaトリガーで認証フローをカスタマイズできる。</li>
+</ul>
+</section>

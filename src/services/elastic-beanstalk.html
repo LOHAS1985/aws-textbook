@@ -1,0 +1,77 @@
+<!-- title: AWS Elastic Beanstalk -->
+<!-- category: コンピューティング -->
+<!-- lead: コードを渡すだけでアプリを簡単にデプロイ・運用できるPaaS -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Elastic Beanstalk</strong>は、バックエンドアプリケーションを簡単にデプロイ・運用するための<strong>PaaS</strong>です。開発者はアプリのコードを渡すだけで、AWSが実行環境を自動で構築してくれます。</p>
+<figure class="figure" data-diagram>
+grid 170 90
+node code 0 0.5 blue "アプリのコード"
+node ver 1.4 0.5 box "アプリケーション\nバージョン"
+node elb 2.8 0 box "ロードバランサー"
+node ec2 2.8 1 accent "EC2" "コードを配置"
+group 2.8 0 2.8 1 "Environment" pad=12
+edge code ver "登録"
+edge ver ec2 "デプロイ"
+edge elb ec2
+<figcaption>図1 Elastic Beanstalkの流れ。コードをアプリケーションバージョンとして登録し、Environmentにデプロイする。Environment内のリソースはBeanstalkが自動で作る。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>利用フロー</h3>
+<ol>
+<li>アプリケーションを作成</li>
+<li>デプロイ設定を定義</li>
+<li>アプリケーションバージョンを作成</li>
+<li>Environment(アプリを実行するAWS環境全体)へデプロイ
+  <ul><li>Beanstalkが内部でAWSリソースを操作する</li><li>EC2内にコードを配置する</li></ul></li>
+<li>ヘルスチェック</li>
+</ol>
+<p>デメリットは、ECS/EKSに比べて<strong>柔軟性が低い</strong>ことです。</p>
+<p>Beanstalkが自動で作るリソースには、EC2インスタンス、Auto Scalingグループ、ロードバランサーなどが含まれます。裏側ではCloudFormationが使われています。</p>
+<p>代表的なデプロイ方式として、All at once(一斉)、Rolling、Rolling with additional batch、Immutable、Blue/Green(環境URLのスワップ)があります。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>インフラの知識が少ないチームで、Webアプリを素早く公開したい</li>
+<li>Java・Python・Node.jsなどの一般的なWebアプリを、構成を作り込まずに運用したい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Elastic Beanstalk自体は無料です。作成されたEC2・ロードバランサー・EBSなどのリソースに対して、それぞれの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:アプリが配置される実行環境</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:環境のトラフィック分散</li>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:裏側で環境を構築する仕組み</li>
+<li><a href="ecs.html">Amazon ECS</a>/<a href="eks.html">Amazon EKS</a>:より柔軟なコンテナ実行の選択肢</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point">
+<ul>
+<li>「インフラ管理を最小限にしてアプリをデプロイしたい」→ Elastic Beanstalk。</li>
+<li>細かな制御や柔軟性が必要なら ECS/EKS を選ぶ。</li>
+<li>デプロイの単位は「アプリケーションバージョン」を「Environment」へ。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Elastic BeanstalkはコードだけでAWS環境を自動構築するPaaS。</li>
+<li>手軽さと引き換えに柔軟性は低い。</li>
+</ul>
+</section>

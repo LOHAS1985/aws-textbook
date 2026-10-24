@@ -1,0 +1,56 @@
+<!-- title: 多数のEC2に定期的にパッチを適用する -->
+<!-- category: デプロイ・自動化 -->
+<!-- lead: Systems ManagerのPatch Managerとメンテナンスウィンドウで、パッチ適用を自動化する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>数百台のEC2(とオンプレミスのサーバー)に、毎週決まった時間帯にOSのセキュリティパッチを自動で適用したい。本番と開発でタイミングを分け、適用状況(準拠しているか)を一覧で確認したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node bl 1.4 0 box "パッチベースライン" "承認するパッチ"
+node mw 0 1 blue "メンテナンス\nウィンドウ" "毎週日曜 2:00"
+node pm 1.4 1 accent "Patch Manager" "Run Commandで適用"
+node pg 1.4 2 box "パッチグループ" "タグで対象を分類"
+node ec2 2.8 1 ok "対象のEC2" "SSM Agent"
+node cmp 2.8 2 box "コンプライアンス" "適用状況を確認"
+edge mw pm "起動"
+edge bl pm dash
+edge pg pm dash
+edge pm ec2
+edge ec2 cmp
+<figcaption>図1 メンテナンスウィンドウの日時に、パッチベースライン(当てるパッチ)とパッチグループ(当てるノード)に従ってPatch Managerがパッチを適用する。結果はコンプライアンスで確認できる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Patch Manager、Maintenance Windows、Run Command、コンプライアンス</li>
+<li><a href="../services/iam.html">AWS IAM</a>:EC2のロールに <code>AmazonSSMManagedInstanceCore</code> を付ける</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:SSM Agentが動く管理対象ノード(オンプレミスはハイブリッドアクティベーションで登録)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>EC2にSSM AgentとIAMロールを用意し、Systems Managerの管理対象になっていることを確認する</li>
+<li>パッチベースラインで、承認するパッチ(例:重要度Critical、リリース7日後に自動承認)を定義する</li>
+<li>EC2にタグを付けてパッチグループ(例:本番・開発)に分ける</li>
+<li>メンテナンスウィンドウで実行日時を決め、ターゲットとタスク(パッチ適用のRun Command)を登録する</li>
+<li>コンプライアンスの画面で、適用できなかったノードを確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(またはVPCエンドポイント)</strong>を確認。</li>
+<li>業務時間外に実行 → <strong>メンテナンスウィンドウ</strong>。対象の分類 → <strong>パッチグループ(タグ)</strong>。</li>
+<li>まずは「スキャンのみ」で不足パッチを把握し、その後「インストール」を実行するのが安全。</li>
+<li>一度に全台へ適用せず、同時実行数とエラーのしきい値を設定して少しずつ進める。</li>
+</ul></div>
+</section>

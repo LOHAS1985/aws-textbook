@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS CodeDeploy | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">デベロッパーツール</span>
+  <h1>AWS CodeDeploy</h1>
+  <p class="lead">アプリを安全に各環境へ配布・更新するデプロイ自動化サービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS CodeDeploy</strong>は、アプリケーションを<strong>安全に各種環境へ配布・更新</strong>するためのデプロイ自動化サービスです。EC2・オンプレミス・ECS・Lambdaにデプロイできます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<ul>
+<li><strong>アプリケーション</strong>:デプロイ対象の論理単位</li>
+<li><strong>デプロイグループ</strong>:デプロイ先</li>
+<li><strong>フック</strong>:各段階で任意のスクリプトや処理を実行。※Blue/Greenのフックはネストスタック内で使用不可</li>
+<li><strong>AppSpecファイル</strong>:インスタンスごとのデプロイ手順を定義するファイル。アプリのソースの<strong>ルートディレクトリ</strong>に置く。</li>
+</ul>
+<pre class="code"><code>version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/www/html
+hooks:
+  AfterInstall:
+    - location: scripts/start.sh</code></pre>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図1 CodeDeployの構成要素。アプリケーション(デプロイ対象)を、デプロイグループ(デプロイ先)へ、appspec.ymlの手順とデプロイ設定に従って配布する。"><defs><marker id="dgservices-codedeploy-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">アプリケーション</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">appspec.yml を含む</text>
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">CodeDeploy</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">デプロイ設定</text>
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">デプロイグループ</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">EC2 / オンプレ</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">デプロイグループ</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">ECS / Lambda</text>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgservices-codedeploy-1)"/>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#dgservices-codedeploy-1)"/>
+<path d="M422.0,122.4 L510.0,138.1" class="dg-line" marker-end="url(#dgservices-codedeploy-1)"/>
+</svg>
+</div>
+<figcaption>図1 CodeDeployの構成要素。アプリケーション(デプロイ対象)を、デプロイグループ(デプロイ先)へ、appspec.ymlの手順とデプロイ設定に従って配布する。</figcaption>
+</figure>
+<h3>デプロイ設定(Deployment Configuration)</h3>
+<p>複数のインスタンスやトラフィックに対して、どう進めるかを決めます。</p>
+<div class="table-wrap"><table>
+<tr><th>対象</th><th>設定</th><th>内容</th></tr>
+<tr><td rowspan="3">EC2/オンプレミス</td><td>OneAtATime</td><td>インスタンスを1台ずつデプロイ</td></tr>
+<tr><td>HalfAtATime</td><td>インスタンスの半分ずつデプロイ</td></tr>
+<tr><td>AllAtOnce</td><td>全インスタンスに同時にデプロイ</td></tr>
+<tr><td rowspan="3">ECS/Lambda</td><td>AllAtOnce</td><td>全トラフィックを一度に新バージョンへ移行</td></tr>
+<tr><td>Linear</td><td>指定した割合のトラフィックを、指定した時間ごとに新バージョンへ移行</td></tr>
+<tr><td>Canary</td><td>最初に指定した割合を新バージョンへ移し、指定時間後に残りをすべて移行</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 688 243" style="max-width:688px;min-width:520px" role="img" aria-label="図2 ECS・Lambdaのトラフィック移行方式(新バージョンに流す割合の変化)。Canaryは少しだけ流して様子を見てから一気に、Linearは一定間隔で少しずつ、AllAtOnceは一度にすべて移す。"><defs><marker id="dgservices-codedeploy-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="39" width="110" height="40" rx="8" class="dg-accent"/>
+<text x="89" y="63" text-anchor="middle" class="dg-tb">Canary</text>
+<rect x="164" y="39" width="110" height="40" rx="8" class="dg-box"/>
+<text x="219" y="63" text-anchor="middle" class="dg-t">10%</text>
+<rect x="294" y="39" width="110" height="40" rx="8" class="dg-box"/>
+<text x="349" y="63" text-anchor="middle" class="dg-t">10%</text>
+<rect x="424" y="39" width="110" height="40" rx="8" class="dg-ok"/>
+<text x="479" y="63" text-anchor="middle" class="dg-t">100%</text>
+<rect x="34" y="109" width="110" height="40" rx="8" class="dg-accent"/>
+<text x="89" y="133" text-anchor="middle" class="dg-tb">Linear</text>
+<rect x="164" y="109" width="110" height="40" rx="8" class="dg-box"/>
+<text x="219" y="133" text-anchor="middle" class="dg-t">10%</text>
+<rect x="294" y="109" width="110" height="40" rx="8" class="dg-box"/>
+<text x="349" y="133" text-anchor="middle" class="dg-t">20%</text>
+<rect x="424" y="109" width="110" height="40" rx="8" class="dg-box"/>
+<text x="479" y="133" text-anchor="middle" class="dg-t">30%</text>
+<rect x="554" y="109" width="110" height="40" rx="8" class="dg-ok"/>
+<text x="609" y="133" text-anchor="middle" class="dg-t">… 100%</text>
+<rect x="34" y="179" width="110" height="40" rx="8" class="dg-accent"/>
+<text x="89" y="203" text-anchor="middle" class="dg-tb">AllAtOnce</text>
+<rect x="164" y="179" width="110" height="40" rx="8" class="dg-ok"/>
+<text x="219" y="203" text-anchor="middle" class="dg-t">100%</text>
+<path d="M274.0,59.0 L294.0,59.0" class="dg-line" marker-end="url(#dgservices-codedeploy-2)"/>
+<path d="M404.0,59.0 L424.0,59.0" class="dg-line" marker-end="url(#dgservices-codedeploy-2)"/>
+<path d="M274.0,129.0 L294.0,129.0" class="dg-line" marker-end="url(#dgservices-codedeploy-2)"/>
+<path d="M404.0,129.0 L424.0,129.0" class="dg-line" marker-end="url(#dgservices-codedeploy-2)"/>
+<path d="M534.0,129.0 L554.0,129.0" class="dg-line" marker-end="url(#dgservices-codedeploy-2)"/>
+</svg>
+</div>
+<figcaption>図2 ECS・Lambdaのトラフィック移行方式(新バージョンに流す割合の変化)。Canaryは少しだけ流して様子を見てから一気に、Linearは一定間隔で少しずつ、AllAtOnceは一度にすべて移す。</figcaption>
+</figure>
+<h3>デプロイの流れ(In-Placeデプロイ)</h3>
+<ol>
+<li><code>ApplicationStop</code>:既存アプリの停止</li>
+<li><code>BeforeInstall</code>:インストール前処理</li>
+<li><code>Install</code>:アプリの配置</li>
+<li><code>AfterInstall</code>:インストール後処理</li>
+<li><code>ApplicationStart</code>:アプリの起動</li>
+<li><code>ValidateService</code>:動作確認</li>
+</ol>
+<p>デプロイ方式には、既存のインスタンスを更新する<strong>In-Place</strong>と、新しい環境を用意してトラフィックを切り替える<strong>Blue/Green</strong>があります。EC2/オンプレミスで使うには、各インスタンスに<strong>CodeDeployエージェント</strong>が必要です。CloudWatchアラームと連携した<strong>自動ロールバック</strong>も設定できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 548 188" style="max-width:548px;min-width:520px" role="img" aria-label="図3 In-Placeデプロイのライフサイクルイベント(フック)の順番。appspec.ymlの hooks で、各タイミングに実行するスクリプトを指定する。"><defs><marker id="dgservices-codedeploy-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="44" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="68" text-anchor="middle" class="dg-t">ApplicationStop</text>
+<rect x="204" y="44" width="150" height="40" rx="8" class="dg-box"/>
+<text x="279" y="68" text-anchor="middle" class="dg-t">BeforeInstall</text>
+<rect x="374" y="44" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="449" y="68" text-anchor="middle" class="dg-tb">Install</text>
+<rect x="374" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="449" y="148" text-anchor="middle" class="dg-t">AfterInstall</text>
+<rect x="204" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="279" y="148" text-anchor="middle" class="dg-t">ApplicationStart</text>
+<rect x="34" y="124" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="109" y="148" text-anchor="middle" class="dg-t">ValidateService</text>
+<path d="M184.0,64.0 L204.0,64.0" class="dg-line" marker-end="url(#dgservices-codedeploy-3)"/>
+<path d="M354.0,64.0 L374.0,64.0" class="dg-line" marker-end="url(#dgservices-codedeploy-3)"/>
+<path d="M449.0,84.0 L449.0,124.0" class="dg-line" marker-end="url(#dgservices-codedeploy-3)"/>
+<path d="M374.0,144.0 L354.0,144.0" class="dg-line" marker-end="url(#dgservices-codedeploy-3)"/>
+<path d="M204.0,144.0 L184.0,144.0" class="dg-line" marker-end="url(#dgservices-codedeploy-3)"/>
+</svg>
+</div>
+<figcaption>図3 In-Placeデプロイのライフサイクルイベント(フック)の順番。appspec.ymlの hooks で、各タイミングに実行するスクリプトを指定する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>EC2のWebサーバー群へ1台ずつ安全にリリース</li>
+<li>Lambdaの新バージョンへ10%ずつトラフィックを移行(Canary/Linear)</li>
+<li>ECSサービスのBlue/Greenデプロイ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>EC2・Lambda・ECSへのデプロイは追加料金なしで使えます。オンプレミスのサーバーへのデプロイは、更新するインスタンス数に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:Deployステージ</li>
+<li><a href="codebuild.html">AWS CodeBuild</a>:デプロイ前のビルド</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ecs.html">Amazon ECS</a>/<a href="lambda.html">AWS Lambda</a>:デプロイ先</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:アラームによる自動ロールバック</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>デプロイ手順の定義 → <strong>appspec.yml</strong>(ルートに配置)。</li>
+<li>フックの順序:ApplicationStop → BeforeInstall → Install → AfterInstall → ApplicationStart → ValidateService。</li>
+<li>Lambda/ECSで少しずつ移行 → <strong>Canary</strong>(2段階)/<strong>Linear</strong>(一定間隔)。</li>
+<li>EC2で1台ずつ → <strong>OneAtATime</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CodeDeployはEC2・オンプレ・ECS・Lambdaへのデプロイを自動化する。</li>
+<li>手順はappspec、進め方はデプロイ設定(OneAtATime/Canary/Linearなど)で決める。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="codebuild.html"><span class="label">← 前へ</span>AWS CodeBuild</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="codeartifact.html"><span class="label">次へ →</span>AWS CodeArtifact</a>
+</nav>
+</main>
+</body>
+</html>

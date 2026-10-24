@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon EFS | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ストレージ</span>
+  <h1>Amazon EFS</h1>
+  <p class="lead">Linux向けのマネージド共有ファイルストレージ</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon EFS(Elastic File System)</strong>は、<strong>Linux向けの共有ファイルストレージ</strong>です。複数のサーバーから同時にマウントして、同じファイルを読み書きできます。Windows向けには<a href="fsx.html">Amazon FSx for Windows File Server</a>を使います。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li><strong>共有ストレージ</strong>:EC2・ECS・EKS・Lambdaから同時にマウントできる。</li>
+<li>オンプレミスからもDirect Connect・VPN経由で利用できる。</li>
+</ul>
+
+<h3>マウントターゲット</h3>
+<p>NFSで接続するための入り口で、実体はサブネット内のENIです。<strong>1つのファイルシステムにつき、AZごとに1つまで</strong>作成できます。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 616 299" style="max-width:616px;min-width:520px" role="img" aria-label="図1 EFSの構成。AZごとに1つマウントターゲット(サブネット内のENI)を作り、各AZのEC2・ECS・LambdaからNFSで同じファイルシステムを共有する。オンプレミスからも接続できる。"><defs><marker id="dgservices-efs-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="14" y="5" width="360" height="227" rx="10" class="dg-group"/>
+<text x="24" y="20" class="dg-s">VPC</text>
+<rect x="26" y="17" width="336" height="86" rx="10" class="dg-group"/>
+<text x="36" y="32" class="dg-s">AZ-a</text>
+<rect x="26" y="134" width="336" height="86" rx="10" class="dg-group"/>
+<text x="36" y="149" class="dg-s">AZ-c</text>
+<rect x="34" y="49" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="73" text-anchor="middle" class="dg-t">EC2</text>
+<rect x="204" y="43" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="279" y="64" text-anchor="middle" class="dg-t">マウントターゲット</text>
+<text x="279" y="82" text-anchor="middle" class="dg-s">ENI</text>
+<rect x="34" y="166" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="190" text-anchor="middle" class="dg-t">ECS / Lambda</text>
+<rect x="204" y="160" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="279" y="182" text-anchor="middle" class="dg-t">マウントターゲット</text>
+<text x="279" y="200" text-anchor="middle" class="dg-s">ENI</text>
+<rect x="442" y="102" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="517" y="123" text-anchor="middle" class="dg-tb">EFS</text>
+<text x="517" y="141" text-anchor="middle" class="dg-s">共有ファイルシステム</text>
+<rect x="442" y="223" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="517" y="244" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="517" y="262" text-anchor="middle" class="dg-s">DX / VPN</text>
+<path d="M184.0,69.0 L204.0,69.0" class="dg-line" marker-end="url(#dgservices-efs-1)"/>
+<path d="M184.0,186.0 L204.0,186.0" class="dg-line" marker-end="url(#dgservices-efs-1)"/>
+<path d="M354.0,87.4 L442.0,109.1" class="dg-line" marker-end="url(#dgservices-efs-1)"/>
+<path d="M354.0,167.6 L442.0,145.9" class="dg-line" marker-end="url(#dgservices-efs-1)"/>
+<path d="M517.0,223.0 L517.0,153.5" class="dg-line" marker-end="url(#dgservices-efs-1)"/>
+</svg>
+</div>
+<figcaption>図1 EFSの構成。AZごとに1つマウントターゲット(サブネット内のENI)を作り、各AZのEC2・ECS・LambdaからNFSで同じファイルシステムを共有する。オンプレミスからも接続できる。</figcaption>
+</figure>
+<h3>パフォーマンスモード(作成後に変更不可)</h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>汎用</th><th>最大I/O</th></tr>
+<tr><td>レイテンシー</td><td>低い</td><td>高い</td></tr>
+<tr><td>IOPSの上限</td><td>高い</td><td>最高</td></tr>
+<tr><td>用途</td><td>Webサーバー、CMSなど</td><td>複数インスタンスから同時アクセスされるビッグデータ分析、メディア処理など</td></tr>
+<tr><td>One Zone</td><td>利用可</td><td><strong class="em">利用不可</strong></td></tr>
+<tr><td>Elasticスループット</td><td>利用可</td><td><strong class="em">利用不可</strong></td></tr>
+</table></div>
+
+<h3>スループットモード(作成後に変更可能)</h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>Elastic</th><th>Provisioned</th><th>Bursting</th></tr>
+<tr><td>スループットの決まり方</td><td>ワークロードに応じて自動増減</td><td>指定した値を確保</td><td>容量に比例したベースライン+バースト</td></tr>
+<tr><td>課金</td><td>実際に転送したデータ量</td><td>プロビジョニングしたスループット</td><td>ストレージ料金に含まれる</td></tr>
+<tr><td>用途</td><td>負荷が不規則、スパイクがある</td><td>容量は小さいが高いスループットが必要</td><td>負荷が緩やかで容量が大きい</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>複数のWebサーバーでコンテンツを共有(CMSなど)</li>
+<li>ECS/EKSの複数タスク・複数AZからの共有ボリューム</li>
+<li>ビッグデータ分析・メディア処理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ストレージクラスでコストが変わります。</p>
+<div class="table-wrap"><table>
+<tr><th>クラス</th><th>AZ配置</th><th>用途</th><th>コスト・特徴</th></tr>
+<tr><td>Standard</td><td>複数</td><td>頻繁にアクセス</td><td>料金高・レイテンシー低</td></tr>
+<tr><td>Standard-IA</td><td>複数</td><td>たまにアクセス</td><td>料金安・読み取り時にアクセス料金</td></tr>
+<tr><td>Archive</td><td>複数</td><td>ほとんどアクセスしない</td><td>料金最安・アクセス料金はIAより高い</td></tr>
+<tr><td>One Zone</td><td>単一</td><td>頻繁にアクセス+AZ障害を許容</td><td>Standardより安い</td></tr>
+<tr><td>One Zone-IA</td><td>単一</td><td>たまにアクセス+AZ障害を許容</td><td>One Zoneよりさらに安い</td></tr>
+</table></div>
+<p>スループットはElasticなら転送量、Provisionedなら確保した値に対して課金されます。</p>
+<p>EFSは使った容量分だけ課金され、容量を事前に確保する必要はありません。ライフサイクル管理で、アクセスされないファイルを自動的にIA/Archiveへ移動できます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ecs.html">Amazon ECS</a>/<a href="eks.html">Amazon EKS</a>/<a href="lambda.html">AWS Lambda</a>:マウント元</li>
+<li><a href="ebs.html">Amazon EBS</a>:単一インスタンス向けのブロックストレージ</li>
+<li><a href="fsx.html">Amazon FSx</a>:Windows向けなどのファイルストレージ</li>
+<li><a href="datasync.html">AWS DataSync</a>:EFSへのデータ転送</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>Linuxで複数インスタンス・複数AZから共有 → <strong>EFS</strong>。Windows → <strong>FSx for Windows</strong>。</li>
+<li>マウントターゲットは<strong>AZごとに1つ</strong>。</li>
+<li>パフォーマンスモードは<strong>作成後に変更不可</strong>、スループットモードは<strong>変更可能</strong>。</li>
+<li>最大I/OモードではOne Zone・Elasticスループットが使えない。</li>
+<li>スパイクがある負荷 → Elastic、小容量で高スループット → Provisioned。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>EFSはLinux向けの共有ファイルストレージ(NFS)。</li>
+<li>接続口はAZごとのマウントターゲット。</li>
+<li>パフォーマンスモードは後から変えられないので作成時に決める。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="ebs.html"><span class="label">← 前へ</span>Amazon EBS</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="fsx.html"><span class="label">次へ →</span>Amazon FSx</a>
+</nav>
+</main>
+</body>
+</html>

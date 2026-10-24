@@ -1,0 +1,193 @@
+<!-- title: Amazon S3 -->
+<!-- category: ストレージ -->
+<!-- lead: 容量無制限で使えるオブジェクトストレージ -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon S3(Simple Storage Service)</strong>は、ファイルを「オブジェクト」として保存する<strong>オブジェクトストレージサービス</strong>です。データは「バケット」に格納し、アクセス頻度に応じてストレージクラスを選んでコストを最適化します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<figure class="figure" data-diagram>
+grid 150 85
+node std 0 0 accent "Standard" "即時・最低期間なし"
+node ia 1 0 box "Standard-IA" "即時・30日"
+node gir 2 0 box "Glacier IR" "即時・90日"
+node gfr 3 0 blue "Glacier\nFlexible" "分〜時間・90日"
+node gda 4 0 blue "Deep Archive" "12〜48時間・180日"
+edge std ia
+edge ia gir
+edge gir gfr
+edge gfr gda
+node it 0 1.1 ok "Intelligent-Tiering" "アクセス頻度に応じて自動で階層を移動" w=5
+<figcaption>図1 主なストレージクラス。右へ行くほど保存料金は安くなるが、取り出しに時間・料金がかかり、最低保存期間が長くなる。アクセス頻度が分からないときは Intelligent-Tiering が自動で階層を移す。</figcaption>
+</figure>
+<h3>暗号化</h3>
+<p>保存時の暗号化方式は、<strong class="em">x-amz-server-side-encryption</strong> ヘッダーで指定します。</p>
+<div class="table-wrap"><table>
+<tr><th>区分</th><th>方式</th><th>鍵の管理者</th><th>特徴</th><th>主な用途</th></tr>
+<tr><td>サーバー</td><td>SSE-S3</td><td>AWS</td><td>S3が自動で鍵管理・暗号化</td><td>最も簡単・標準</td></tr>
+<tr><td>サーバー</td><td>SSE-KMS</td><td>ユーザー+AWS(KMS)</td><td><strong>AWS KMSで鍵管理し、監査可能</strong>(いつ・どこで・誰が利用したか確認できる)</td><td>セキュリティ重視</td></tr>
+<tr><td>サーバー</td><td>SSE-C</td><td>ユーザー</td><td>鍵をリクエストごとに指定</td><td>特殊要件</td></tr>
+<tr><td>クライアント</td><td>クライアントサイド暗号化</td><td>ユーザー</td><td>送信前にクライアント側で暗号化し、S3は暗号化データをそのまま保存</td><td>高セキュリティ</td></tr>
+</table></div>
+
+<h3>アクセス制御</h3>
+<ol>
+<li><strong>IAMポリシー</strong>:IAMユーザー/ロールに付与し、操作単位(GetObject、PutObjectなど)で制御する。<br>例:Cognito Identity Poolでユーザーに一時IAMロールを発行し、そのポリシーでS3の特定プレフィックスだけアクセスを許可する。</li>
+<li><strong>バケットポリシー</strong>:どのバケットに誰がアクセスできるかをバケットに直接設定する。他アカウントからのアクセスはバケットポリシーで許可する(他アカウント側のIAMポリシーでの許可も必要)。</li>
+<li><strong>ACL</strong>:現在は非推奨。</li>
+<li><strong>署名付きURL(Presigned URL)</strong>:期限付きでアクセスさせるURL。</li>
+</ol>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node iam 0 0 blue "IAMユーザー/ロール" "IAMポリシーで許可"
+node other 0 1 blue "他アカウント" "相手側のIAMでも許可"
+node ext 0 2 box "外部の利用者" "署名付きURL(期限付き)"
+node b 1.6 0 accent "S3バケット" "バケットポリシー" h=3
+edge iam b
+edge other b
+edge ext b
+<figcaption>図2 S3へのアクセス制御。自アカウントはIAMポリシー、他アカウントはバケットポリシー+相手側のIAMポリシー、一時的な外部共有は署名付きURLで許可する。</figcaption>
+</figure>
+<h3>エンドポイント</h3>
+<ol>
+<li><strong>パブリックエンドポイント</strong>:インターネット経由でアクセス(例:<code>https://bucket-name.s3.region.amazonaws.com</code>)</li>
+<li><strong>VPCエンドポイント</strong>:インターネットを経由せずにプライベート接続
+  <ul>
+  <li><strong>ゲートウェイ型</strong>:VPCからのみ利用可能。<strong>無料</strong>。</li>
+  <li><strong>インターフェース型</strong>:オンプレミスやピアリングVPCからもアクセス可能。ENIにプライベートIPが割り当てられる。<strong>有料</strong>。</li>
+  </ul></li>
+</ol>
+
+<figure class="figure" data-diagram>
+grid 170 85
+node ec2 0 0 box "EC2" "VPC内"
+node gw 1.4 0 ok "ゲートウェイ型" "無料・VPCから"
+node onp 0 1 blue "オンプレミス" "VPN / DX"
+node ifc 1.4 1 blue "インターフェース型" "ENI・有料"
+node net 0 2 box "インターネット"
+node s3 2.8 0 accent "S3" h=3
+edge ec2 gw
+edge gw s3
+edge onp ifc
+edge ifc s3
+edge net s3 "パブリック"
+<figcaption>図3 S3への接続経路。VPCからはゲートウェイ型エンドポイント(無料)、オンプレミスやピアリングVPCからはインターフェース型エンドポイント(有料)を使うと、インターネットを経由せずに接続できる。</figcaption>
+</figure>
+<h3>イベント通知</h3>
+<p>オブジェクトの状態変化をトリガーに、他サービスへ非同期にイベントを送る仕組みです。送信先は<strong>Lambda・SNS・SQS</strong>です。</p>
+<ul>
+<li>作成:<code>s3:ObjectCreated:Put/Post/Copy/CompleteMultipartUpload</code></li>
+<li>削除:<code>s3:ObjectRemoved:Delete/DeleteMarkerCreated</code></li>
+<li>復元:<code>s3:ObjectRestore:Post/Completed</code></li>
+<li>レプリケーション:<code>s3:Replication</code></li>
+</ul>
+<p><strong class="em">読み取り操作(GetObject)やリスト操作(ListObjects)などは対象外</strong>です。</p>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node put 0 0 blue "オブジェクト作成" "Put / Post / Copy"
+node del 0 1 blue "削除・復元など"
+node get 0 2 ng "GetObject / List" "通知の対象外"
+node s3 1.4 0 accent "S3バケット" "イベント通知" h=3
+node lam 2.8 0 box "Lambda"
+node sns 2.8 1 box "SNS"
+node sqs 2.8 2 box "SQS"
+edge put s3
+edge del s3
+edge s3 lam
+edge s3 sns
+edge s3 sqs
+<figcaption>図4 イベント通知。オブジェクトの作成・削除などをきっかけに、Lambda・SNS・SQSへ非同期で通知する。読み取り(GetObject)やリスト操作では通知されない。</figcaption>
+</figure>
+<h3>レプリケーション</h3>
+<ol>
+<li>送信元・送信先バケットの<strong>バージョニングを有効化</strong></li>
+<li>レプリケーション専用のIAMロールを作成</li>
+<li>送信元バケットにレプリケーションルールを設定(必要に応じてオーナーオーバーライドで所有権を移動)</li>
+</ol>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node src 0 0 accent "送信元バケット" "バージョニング有効"
+node role 1.4 0 box "IAMロール" "レプリケーション用"
+node dst 2.8 0 ok "送信先バケット" "バージョニング有効"
+edge src role "ルール"
+edge role dst "コピー"
+<figcaption>図5 レプリケーションの構成。送信元・送信先の両方でバージョニングを有効にし、レプリケーション用のIAMロールと、送信元バケットのルールを用意する。</figcaption>
+</figure>
+<h3>その他の機能</h3>
+<ul>
+<li><strong>S3 Select</strong>:オブジェクト(CSV・JSON)からSQLで必要なデータだけを抽出。データ転送量を最大80%削減できる。</li>
+<li><strong>S3 Batch Operations</strong>:大量のオブジェクトに対して一括で操作を実行。</li>
+<li><strong>S3 Transfer Acceleration</strong>:クライアントに近いCloudFrontのエッジロケーションでデータを受け取り、AWSのバックボーン経由でバケットに転送して高速化する。バケット単位で有効化。</li>
+<li><strong class="em">S3 Object Lambda</strong>:データの取り出し時にデータを加工する(画像の動的リサイズ、機密データのマスキングなど)。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>静的ファイル・画像・ログ・バックアップの保存</li>
+<li>長期アーカイブ(Glacier系クラス)</li>
+<li>アップロードをトリガーにしたLambda処理(イベント通知)</li>
+<li>Athenaでのデータ分析の保存先(データレイク)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>料金はストレージクラスによって大きく変わります。安いクラスほど<strong>最低保存期間</strong>や取り出しの時間・料金がかかります。</p>
+<div class="table-wrap"><table>
+<tr><th>ストレージクラス</th><th>主用途</th><th>取り出し速度</th><th>可用性</th><th>最低保存期間</th><th>コスト</th></tr>
+<tr><td>Standard</td><td>頻繁なアクセス</td><td>即時</td><td>高</td><td>なし</td><td>高</td></tr>
+<tr><td>Standard-IA</td><td>低頻度アクセス</td><td>即時</td><td>高</td><td>30日</td><td>安</td></tr>
+<tr><td>One Zone-IA</td><td>低頻度+単一AZ</td><td>即時</td><td>中</td><td>30日</td><td>さらに安</td></tr>
+<tr><td>Express One Zone</td><td>最高性能(ディレクトリバケットを使用)</td><td>即時</td><td>中</td><td>なし</td><td>保存:高/取得:安</td></tr>
+<tr><td>Glacier Instant Retrieval</td><td>アーカイブだが即時取得</td><td>即時</td><td>高</td><td>90日</td><td>安</td></tr>
+<tr><td>Glacier Flexible Retrieval</td><td>長期アーカイブ</td><td>分〜時間</td><td>高</td><td>90日</td><td>非常に安</td></tr>
+<tr><td>Glacier Deep Archive</td><td>超長期保存</td><td><strong>Standard:12時間/Bulk:48時間</strong></td><td>高</td><td>180日</td><td>最安</td></tr>
+<tr><td>Intelligent-Tiering</td><td>アクセス頻度が不明</td><td>即時</td><td>高</td><td>30日</td><td>自動最適化</td></tr>
+<tr><td>Outposts</td><td>Outposts環境</td><td>即時</td><td>ローカル依存</td><td>なし</td><td>特殊</td></tr>
+</table></div>
+<p>※ディレクトリバケット:単一AZに保存し、S3 Standardと比べてデータアクセスが10倍高速。</p>
+<p>ストレージ料金のほか、リクエスト数やデータ転送(アウト)にも料金がかかります。ゲートウェイ型VPCエンドポイントは無料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="kms.html">AWS KMS</a>:SSE-KMSの鍵管理</li>
+<li><a href="lambda.html">AWS Lambda</a>/<a href="sns.html">Amazon SNS</a>/<a href="sqs.html">Amazon SQS</a>:イベント通知の送信先</li>
+<li><a href="cognito.html">Amazon Cognito</a>:ユーザーごとのプレフィックス制御</li>
+<li><a href="cloudfront.html">Amazon CloudFront</a>:配信、Transfer Acceleration</li>
+<li><a href="athena.html">Amazon Athena</a>:S3上のデータをSQLで分析</li>
+<li><a href="vpc.html">Amazon VPC</a>:VPCエンドポイント</li>
+<li><a href="macie.html">Amazon Macie</a>:S3内の機密データ検出</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>鍵の利用を<strong>監査</strong>したい → <strong>SSE-KMS</strong>。暗号化方式は <code>x-amz-server-side-encryption</code> ヘッダーで指定。</li>
+<li>他アカウントへのアクセス許可 → <strong>バケットポリシー</strong>+相手側のIAMポリシー。</li>
+<li>一時的に外部へ共有 → <strong>署名付きURL</strong>。</li>
+<li>VPCから無料でプライベート接続 → <strong>ゲートウェイ型</strong>。オンプレミスから → <strong>インターフェース型</strong>。</li>
+<li>イベント通知は<strong>GetObjectでは発火しない</strong>。</li>
+<li>レプリケーションには<strong>両バケットのバージョニング</strong>が必須。</li>
+<li>遠隔地からのアップロード高速化 → <strong>Transfer Acceleration</strong>。取り出し時の加工 → <strong>Object Lambda</strong>。</li>
+<li>Deep Archiveの取り出しはStandardで12時間、Bulkで48時間。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>S3はオブジェクトストレージ。ストレージクラスでコストと取り出し速度を選ぶ。</li>
+<li>暗号化はSSE-S3/SSE-KMS/SSE-C/クライアントサイドの4種類。</li>
+<li>アクセス制御はIAMポリシー・バケットポリシー・署名付きURLが中心。</li>
+</ul>
+</section>

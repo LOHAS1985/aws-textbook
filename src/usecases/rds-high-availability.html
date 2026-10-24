@@ -1,0 +1,57 @@
+<!-- title: データベースの高可用性と読み取り分散 -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: RDSのMulti-AZ・リードレプリカ・RDS Proxyを組み合わせる -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>データベースのAZ障害に備えて自動でフェイルオーバーさせたい。あわせて、レポート作成などの重い読み取り処理を本番の書き込みと分け、Lambdaからの大量接続にも耐えられるようにしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 90
+node app 0 0.65 blue "アプリ" "Lambda / EC2"
+node proxy 1.3 0 box "RDS Proxy" "接続を集約"
+node pri 2.6 0 accent "プライマリ" "AZ-a・読み書き"
+node stb 3.9 0 box "スタンバイ" "AZ-c・待機"
+node rr 2.6 1.3 ok "リードレプリカ" "読み取り専用"
+edge app proxy "書き込み"
+edge proxy pri
+edge pri stb "同期"
+edge pri rr "非同期"
+edge app rr "読み取り"
+<figcaption>図1 書き込みはRDS Proxy経由でプライマリへ、重い読み取りはリードレプリカへ。プライマリに障害が起きると、別AZのスタンバイへ自動でフェイルオーバーする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/rds.html">Amazon RDS</a>:Multi-AZ(障害対策)、リードレプリカ(読み取り分散)、自動バックアップ</li>
+<li>RDS Proxy:大量の接続を少数のDB接続に集約・再利用する(フェイルオーバー時間の短縮にも有効)</li>
+<li><a href="../services/secrets-manager.html">AWS Secrets Manager</a>:DBの認証情報の管理</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:<code>DatabaseConnections</code>・<code>FreeStorageSpace</code>・<code>CPUUtilization</code> の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>RDSインスタンスをMulti-AZで作成する(既存のインスタンスは変更で有効化できる)</li>
+<li>読み取り用にリードレプリカを作成し、レポート処理などの接続先をレプリカにする</li>
+<li>RDS Proxyを作成し、アプリの書き込みの接続先をProxyのエンドポイントにする</li>
+<li>自動バックアップの保持期間を設定する(最大35日)。それ以上残すものは手動スナップショット</li>
+<li>CloudWatchで接続数・空き容量のアラームを設定する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li><strong>Multi-AZのスタンバイは読み取りに使えない</strong>。読み取り性能を上げるのはリードレプリカ。</li>
+<li>リードレプリカは<strong>非同期</strong>なので、わずかに遅延がある(最新データが必要な処理はプライマリへ)。</li>
+<li>フェイルオーバーしてもエンドポイント名は変わらないため、アプリの接続先を変える必要はない。</li>
+<li>接続数の枯渇(<code>DatabaseConnections</code> の上昇)→ <strong>RDS Proxy</strong>。</li>
+<li>さらに高い可用性や読み取り性能が必要なら<a href="../services/aurora.html">Aurora</a>(3AZに6コピー、最大15レプリカ)を検討する。</li>
+</ul></div>
+</section>

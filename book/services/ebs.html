@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon EBS | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ストレージ</span>
+  <h1>Amazon EBS</h1>
+  <p class="lead">EC2にアタッチして使うブロックストレージ</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon EBS(Elastic Block Store)</strong>は、EC2にアタッチして使う<strong>ブロックストレージサービス</strong>です。PCの内蔵ディスクのように使え、EC2を停止してもデータは残ります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li><strong>EC2を停止してもEBSのデータは残る</strong>(インスタンスストアとの違い)。</li>
+<li><strong>マルチアタッチ</strong>:同一AZの別のEC2インスタンスへもアタッチできる。</li>
+<li><strong>暗号化</strong>に対応。</li>
+<li><strong>スナップショット</strong>を取得できる(S3に保存される)。</li>
+<li><strong>バーストクレジット</strong>:ベースラインの性能に加え、一時的にそれを超える性能を発揮するための「クレジット」が付与される仕組み。</li>
+</ul>
+<p>EBSボリュームは<strong>特定のAZ</strong>に作成され、同じAZのインスタンスにしかアタッチできません。マルチアタッチはプロビジョンドIOPS SSD(io1/io2)でのみ利用できます。別のAZで使う場合はスナップショットから復元します。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 730 221" style="max-width:730px;min-width:520px" role="img" aria-label="図1 EBSはAZ単位のストレージで、同じAZのEC2にアタッチする。別のAZで使うときは、スナップショット(S3に保存)から新しいボリュームを復元する。"><defs><marker id="dgservices-ebs-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="22" y="13" width="174" height="184" rx="10" class="dg-group"/>
+<text x="32" y="28" class="dg-s">AZ-a</text>
+<rect x="532" y="13" width="174" height="184" rx="10" class="dg-group"/>
+<text x="542" y="28" class="dg-s">AZ-c</text>
+<rect x="34" y="49" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="73" text-anchor="middle" class="dg-t">EC2</text>
+<rect x="34" y="139" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="109" y="163" text-anchor="middle" class="dg-tb">EBSボリューム</text>
+<rect x="289" y="133" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="364" y="154" text-anchor="middle" class="dg-t">スナップショット</text>
+<text x="364" y="172" text-anchor="middle" class="dg-s">S3に保存</text>
+<rect x="544" y="49" width="150" height="40" rx="8" class="dg-box"/>
+<text x="619" y="73" text-anchor="middle" class="dg-t">EC2</text>
+<rect x="544" y="133" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="154" text-anchor="middle" class="dg-t">EBSボリューム</text>
+<text x="619" y="172" text-anchor="middle" class="dg-s">復元したもの</text>
+<path d="M109.0,89.0 L109.0,139.0" class="dg-line" marker-end="url(#dgservices-ebs-1)" marker-start="url(#dgservices-ebs-1)"/>
+<path d="M184.0,159.0 L289.0,159.0" class="dg-line" marker-end="url(#dgservices-ebs-1)"/>
+<text x="236" y="163" text-anchor="middle" class="dg-s dg-halo">取得</text>
+<path d="M439.0,159.0 L544.0,159.0" class="dg-line" marker-end="url(#dgservices-ebs-1)"/>
+<text x="492" y="163" text-anchor="middle" class="dg-s dg-halo">復元</text>
+<path d="M619.0,89.0 L619.0,133.0" class="dg-line" marker-end="url(#dgservices-ebs-1)" marker-start="url(#dgservices-ebs-1)"/>
+</svg>
+</div>
+<figcaption>図1 EBSはAZ単位のストレージで、同じAZのEC2にアタッチする。別のAZで使うときは、スナップショット(S3に保存)から新しいボリュームを復元する。</figcaption>
+</figure>
+<h3>ボリュームの種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>媒体</th><th>特徴</th><th>主用途</th><th>ポイント</th></tr>
+<tr><td><code>gp3</code></td><td>SSD</td><td>汎用SSD。IOPS/スループットを容量と独立して調整可能</td><td>Web、アプリ</td><td>現在の標準推奨</td></tr>
+<tr><td><code>gp2</code></td><td>SSD</td><td>旧世代の汎用SSD。IOPSがサイズに依存</td><td>旧環境</td><td>gp3への移行が推奨</td></tr>
+<tr><td><code>io2</code></td><td>SSD</td><td>超高耐久・高IOPS</td><td>高性能DB</td><td>ミッションクリティカル</td></tr>
+<tr><td><code>io1</code></td><td>SSD</td><td>高IOPS</td><td>高性能DB</td><td>io2の旧世代</td></tr>
+<tr><td><code>st1</code></td><td>HDD</td><td>高スループット</td><td>ビッグデータ、ログ</td><td>順次読み書き向け</td></tr>
+<tr><td><code>sc1</code></td><td>HDD</td><td>超低コスト</td><td>アーカイブ</td><td>最低性能</td></tr>
+<tr><td><code>standard</code></td><td>HDD</td><td>旧世代の磁気ディスク</td><td>レガシー</td><td>ほぼ非推奨</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 779 126" style="max-width:779px;min-width:520px" role="img" aria-label="図2 ボリュームタイプの選び方。ランダムアクセスが多い用途はSSD、大きなファイルの順次読み書きはHDD。迷ったらgp3。(旧世代のgp2・io1・standardは省略)"><defs><marker id="dgservices-ebs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="24" y="12" width="340" height="90" rx="10" class="dg-group"/>
+<text x="34" y="28" class="dg-s">SSD(IOPS重視)</text>
+<rect x="415" y="12" width="340" height="90" rx="10" class="dg-group"/>
+<text x="425" y="28" class="dg-s">HDD(順次読み書き)</text>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="62" text-anchor="middle" class="dg-tb">gp3</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">汎用・まずはこれ</text>
+<rect x="204" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="279" y="62" text-anchor="middle" class="dg-t">io2</text>
+<text x="279" y="80" text-anchor="middle" class="dg-s">高IOPS・高耐久</text>
+<rect x="425" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="500" y="62" text-anchor="middle" class="dg-t">st1</text>
+<text x="500" y="80" text-anchor="middle" class="dg-s">高スループット</text>
+<rect x="595" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="670" y="62" text-anchor="middle" class="dg-t">sc1</text>
+<text x="670" y="80" text-anchor="middle" class="dg-s">最低コスト</text>
+</svg>
+</div>
+<figcaption>図2 ボリュームタイプの選び方。ランダムアクセスが多い用途はSSD、大きなファイルの順次読み書きはHDD。迷ったらgp3。(旧世代のgp2・io1・standardは省略)</figcaption>
+</figure>
+<h3>CloudWatchメトリクス</h3>
+<div class="table-wrap"><table>
+<tr><th>観点</th><th>メトリクス</th></tr>
+<tr><td>IOPS(1秒あたりのI/O操作数)</td><td><code>VolumeReadOps</code>、<code>VolumeWriteOps</code></td></tr>
+<tr><td>スループット(1秒あたりの転送量、MiB/s)</td><td><code>VolumeReadBytes</code>、<code>VolumeWriteBytes</code></td></tr>
+<tr><td>レイテンシー</td><td>1回のI/Oが完了するまでの時間</td></tr>
+<tr><td>アイドル時間</td><td><code>VolumeIdleTime</code></td></tr>
+<tr><td>バーストクレジットの残量</td><td><code>BurstBalance</code></td></tr>
+<tr><td>キューの深さ(完了待ちのI/O数)</td><td><code>VolumeQueueLength</code></td></tr>
+</table></div>
+
+<h3>ストレージの最適化</h3>
+<p>RAIDを構成できます。<strong>ストライピング(RAID 0)</strong>はデータを複数ボリュームに分散して並列処理し、性能を上げます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>OSディスク(Windows/Linux)</li>
+<li>データベースの保存領域(MySQL/PostgreSQL)</li>
+<li>アプリケーションのログ保存</li>
+<li>アップロードファイルなどの永続データ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>プロビジョニングした容量(GB/月)に対して課金され、gp3やio1/io2では追加のIOPS・スループットにも料金がかかります。EC2が停止中でもボリュームの料金は発生します。スナップショットは保存量に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:EBSをアタッチするインスタンス</li>
+<li><a href="s3.html">Amazon S3</a>:スナップショットの保存先</li>
+<li><a href="efs.html">Amazon EFS</a>:複数インスタンス・複数AZで共有できるファイルストレージ</li>
+<li><a href="backup.html">AWS Backup</a>:スナップショットの一元管理</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:メトリクスの監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>迷ったら<strong>gp3</strong>。高IOPSのDB → <strong>io2</strong>。大量の順次読み書き → <strong>st1</strong>。</li>
+<li>gp2で性能が落ちる → <code>BurstBalance</code>(バーストクレジット残量)を確認。</li>
+<li>I/Oが詰まっている → <code>VolumeQueueLength</code> を確認。</li>
+<li>性能を上げたい → RAID 0(ストライピング)。</li>
+<li>EBSはAZに紐づく。別AZへはスナップショット経由。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>EBSはEC2用の永続ブロックストレージ。停止してもデータは残る。</li>
+<li>標準はgp3、高性能はio2、HDDはst1/sc1。</li>
+<li>性能のトラブルはCloudWatchメトリクスで切り分ける。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="s3.html"><span class="label">← 前へ</span>Amazon S3</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="efs.html"><span class="label">次へ →</span>Amazon EFS</a>
+</nav>
+</main>
+</body>
+</html>

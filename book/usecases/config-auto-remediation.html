@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>公開されたS3バケットを検出して自動で修復する | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">セキュリティ・コンプライアンス</span>
+  <h1>公開されたS3バケットを検出して自動で修復する</h1>
+  <p class="lead">Configルールで非準拠を検出し、SSM Automationで設定を自動修正する</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>誰かが誤ってS3バケットを公開してしまっても、すぐに検出して自動で非公開に戻したい。違反の状況はSecurity Hubで一覧にし、担当者にも通知したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 798 209" style="max-width:798px;min-width:520px" role="img" aria-label="図1 Configルールが公開されたバケットを非準拠(NON_COMPLIANT)と判定すると、修復アクションでSSM Automationが設定を修正し、再評価で準拠(COMPLIANT)に戻る。検出結果はSecurity Hubに集約し、EventBridge経由でSNS通知する。"><defs><marker id="dgusecases-config-auto-remediation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="88" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="110" text-anchor="middle" class="dg-t">S3バケット</text>
+<text x="104" y="128" text-anchor="middle" class="dg-s">誤って公開</text>
+<rect x="234" y="88" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="304" y="110" text-anchor="middle" class="dg-tb">Configルール</text>
+<text x="304" y="128" text-anchor="middle" class="dg-s">公開を禁止するルール</text>
+<rect x="434" y="43" width="140" height="52" rx="8" class="dg-box"/>
+<text x="504" y="64" text-anchor="middle" class="dg-t">SSM Automation</text>
+<text x="504" y="82" text-anchor="middle" class="dg-s">公開設定を修正</text>
+<rect x="434" y="133" width="140" height="52" rx="8" class="dg-box"/>
+<text x="504" y="154" text-anchor="middle" class="dg-t">Security Hub</text>
+<text x="504" y="172" text-anchor="middle" class="dg-s">検出結果を集約</text>
+<rect x="634" y="43" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="704" y="64" text-anchor="middle" class="dg-t">準拠</text>
+<text x="704" y="82" text-anchor="middle" class="dg-s">再評価でCOMPLIANT</text>
+<rect x="634" y="133" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="704" y="154" text-anchor="middle" class="dg-t">SNS</text>
+<text x="704" y="172" text-anchor="middle" class="dg-s">担当者へ通知</text>
+<path d="M174.0,114.0 L234.0,114.0" class="dg-line" marker-end="url(#dgusecases-config-auto-remediation-1)"/>
+<text x="204" y="118" text-anchor="middle" class="dg-s dg-halo">評価</text>
+<path d="M374.0,98.2 L434.0,84.8" class="dg-line" marker-end="url(#dgusecases-config-auto-remediation-1)"/>
+<path d="M374.0,129.8 L434.0,143.2" class="dg-line" marker-end="url(#dgusecases-config-auto-remediation-1)"/>
+<path d="M574.0,69.0 L634.0,69.0" class="dg-line" marker-end="url(#dgusecases-config-auto-remediation-1)"/>
+<path d="M574.0,159.0 L634.0,159.0" class="dg-line" marker-end="url(#dgusecases-config-auto-remediation-1)"/>
+<text x="604" y="163" text-anchor="middle" class="dg-s dg-halo">通知</text>
+</svg>
+</div>
+<figcaption>図1 Configルールが公開されたバケットを非準拠(NON_COMPLIANT)と判定すると、修復アクションでSSM Automationが設定を修正し、再評価で準拠(COMPLIANT)に戻る。検出結果はSecurity Hubに集約し、EventBridge経由でSNS通知する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/config.html">AWS Config</a>:設定レコーダーで変更を記録し、Configルールで評価し、修復アクションを起動する</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Automationランブックで設定を修正する</li>
+<li><a href="../services/security-hub.html">AWS Security Hub</a>:セキュリティ基準のチェック結果を集約する</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>/<a href="../services/sns.html">Amazon SNS</a>:検出結果の通知</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:誰が公開設定にしたかを調べる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>AWS Configの設定レコーダーを有効にする</li>
+<li>S3のパブリックアクセスを禁止するAWSマネージドルールを追加する</li>
+<li>ルールに修復アクション(SSM Automationのランブック)を設定し、自動修復を有効にする。Automationが使うIAMロールも用意する</li>
+<li>Security Hubを有効にし、EventBridgeルールで重要な検出結果をSNSに通知する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>「設定が要件を満たしているか」を継続的に評価 → <strong>Config</strong>。「誰が変更したか」→ <strong>CloudTrail</strong>。</li>
+<li>非準拠の自動修復 → <strong>修復アクション+SSM Automation</strong>。</li>
+<li>複数のルールと修復をまとめて展開 → <strong>Conformance Packs</strong>。</li>
+<li>そもそも公開させない予防策として、アカウント単位の<strong>S3ブロックパブリックアクセス</strong>や、SCPでの禁止も併用する。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="cross-account-access.html"><span class="label">← 前へ</span>異なるAWSアカウントのリソースにアクセス</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="secrets-rotation.html"><span class="label">次へ →</span>DBのパスワードを自動でローテーションする</a>
+</nav>
+</main>
+</body>
+</html>

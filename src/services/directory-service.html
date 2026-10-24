@@ -1,0 +1,92 @@
+<!-- title: AWS Directory Service -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: クラウド上でActive Directoryによるユーザー管理・認証を提供 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Directory Service</strong>は、クラウド上で<strong>ユーザー管理・認証・権限管理を一元提供</strong>するサービスです。Active Directory(AD)を中心とした3種類があり、Windowsとの親和性が高いですが、Windows以外でも利用できます。</p>
+<ul>
+<li>Managed Microsoft AD</li>
+<li>Simple AD</li>
+<li>AD Connector</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>Managed Microsoft AD</h3>
+<p>クラウド上で企業の社内AD環境を再現します。</p>
+<ol>
+<li><strong>ユーザー/グループ管理</strong></li>
+<li><strong>認証</strong>
+  <ul>
+  <li>ログイン(SSO)</li>
+  <li>ユーザー情報の取得:<strong>LDAP</strong>(認証の役割もあるが、情報基盤としての役割がメイン)。高速な検索が強みで、複数システムで同じユーザー情報(ユーザーID、パスワード、メールアドレス、所属グループ、権限情報など)を使い回せる。</li>
+  </ul></li>
+<li><strong>グループポリシー</strong></li>
+</ol>
+
+<h3>Simple AD</h3>
+<p>低コストで使える<strong>簡易版のActive Directory</strong>(機能制限版)です。小規模・検証用での利用が推奨されます。</p>
+
+<h3>AD Connector</h3>
+<p>AWSと既存のActive Directoryを<strong>中継するだけ</strong>のサービスです。オンプレミスのADとAWSを接続します(AWS側にディレクトリのデータは持ちません)。</p>
+
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>ADの実体</th><th>向いているケース</th></tr>
+<tr><td>Managed Microsoft AD</td><td>AWS上に本物のMicrosoft AD</td><td>本格的なAD機能が必要、オンプレADとの信頼関係</td></tr>
+<tr><td>Simple AD</td><td>AWS上の簡易AD</td><td>小規模・検証用、低コスト</td></tr>
+<tr><td>AD Connector</td><td>オンプレミスの既存AD(AWSは中継のみ)</td><td>既存ADのユーザーでAWSを使いたい</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 180 85
+node m 0 0 accent "Managed\nMicrosoft AD" "AWS上に本物のAD"
+node s 0 1.2 box "Simple AD" "簡易版・低コスト"
+node c 0 2.3 blue "AD Connector" "中継のみ"
+node app 1.6 1.2 ok "AWSのサービス" "EC2・FSx など"
+node onp 1.6 2.3 box "オンプレミスのAD" "ユーザー情報の実体"
+edge app m
+edge app s
+edge app c
+edge c onp "転送"
+<figcaption>図1 Directory Serviceの3種類。Managed Microsoft ADとSimple ADはAWS上にディレクトリを持つ。AD Connectorはディレクトリを持たず、オンプレミスのADへ要求を中継する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>EC2のWindowsサーバーやFSx for WindowsをADドメインに参加させる</li>
+<li>社内ADのアカウントでAWSマネジメントコンソールやWorkSpacesにログイン(AD Connector)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ディレクトリの種類とサイズ(Small/Large、Standard/Enterprise)ごとの時間料金で課金されます。Simple ADが最も安価です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="fsx.html">Amazon FSx</a>:FSx for WindowsのAD連携</li>
+<li><a href="ec2.html">Amazon EC2</a>:Windowsインスタンスのドメイン参加</li>
+<li><a href="iam.html">AWS IAM</a>/<a href="sts.html">AWS STS</a>:ADユーザーへのAWS権限付与</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>オンプレミスのADをそのまま使い、AWSにデータを置きたくない → <strong>AD Connector</strong>。</li>
+<li>AWS上に本格的なADを構築 → <strong>Managed Microsoft AD</strong>。</li>
+<li>小規模・低コスト → <strong>Simple AD</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Directory ServiceはAD中心のユーザー管理・認証サービス。</li>
+<li>本格派=Managed Microsoft AD、簡易版=Simple AD、中継=AD Connector。</li>
+</ul>
+</section>

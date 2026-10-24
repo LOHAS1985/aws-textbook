@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC2に接続できない原因を調査する | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワーク・コンテンツ配信</span>
+  <h1>EC2に接続できない原因を調査する</h1>
+  <p class="lead">経路と許可を順番に確認し、VPCフローログで通信の拒否を特定する</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>インターネットからEC2上のWebサーバーにアクセスできない。どこで通信が止まっているのかを、順番に確認して特定したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 818 227" style="max-width:818px;min-width:520px" role="img" aria-label="図1 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。"><defs><marker id="dgusecases-network-troubleshooting-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="102" y="62" text-anchor="middle" class="dg-t">① ルートテーブル</text>
+<text x="102" y="80" text-anchor="middle" class="dg-s">経路はあるか</text>
+<rect x="190" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="258" y="62" text-anchor="middle" class="dg-t">② IGW / NAT</text>
+<text x="258" y="80" text-anchor="middle" class="dg-s">アタッチ状態</text>
+<rect x="346" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="414" y="62" text-anchor="middle" class="dg-t">③ SG</text>
+<text x="414" y="80" text-anchor="middle" class="dg-s">許可されているか</text>
+<rect x="502" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="570" y="62" text-anchor="middle" class="dg-t">④ NACL</text>
+<text x="570" y="80" text-anchor="middle" class="dg-s">戻りも許可?</text>
+<rect x="658" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="726" y="62" text-anchor="middle" class="dg-t">⑤ パブリックIP</text>
+<text x="726" y="80" text-anchor="middle" class="dg-s">割り当てはあるか</text>
+<rect x="190" y="151" width="136" height="52" rx="8" class="dg-accent"/>
+<text x="258" y="172" text-anchor="middle" class="dg-tb">VPCフローログ</text>
+<text x="258" y="190" text-anchor="middle" class="dg-s">ACCEPT / REJECT</text>
+<rect x="424" y="151" width="136" height="52" rx="8" class="dg-ok"/>
+<text x="492" y="172" text-anchor="middle" class="dg-t">Logs Insights</text>
+<text x="492" y="190" text-anchor="middle" class="dg-s">REJECTを検索</text>
+<path d="M170.0,66.5 L190.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M326.0,66.5 L346.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M482.0,66.5 L502.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M638.0,66.5 L658.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M326.0,177.0 L424.0,177.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+</svg>
+</div>
+<figcaption>図1 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:ルートテーブル、IGW、セキュリティグループ、ネットワークACL、<a href="../terms/vpc-flow-logs.html">VPCフローログ</a></li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:フローログの保存とLogs Insightsでの検索</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:ステータスチェック、パブリックIPの確認</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:最近SGやルートテーブルを変更した人を調べる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ(調査手順)</h2>
+<ol>
+<li><strong>ルートテーブル</strong>:サブネットに <code>0.0.0.0/0 → IGW</code> の経路があるか(<a href="../terms/route-table.html">ルートテーブル</a>)</li>
+<li><strong>IGW/NAT</strong>:IGWがVPCにアタッチされているか、NATゲートウェイが正常か</li>
+<li><strong>セキュリティグループ</strong>:80/443番のインバウンドが許可されているか</li>
+<li><strong>ネットワークACL</strong>:インバウンドに加えて、戻りのアウトバウンド(エフェメラルポート)も許可されているか</li>
+<li><strong>パブリックIP</strong>:EC2にパブリックIPまたはElastic IPが割り当てられているか</li>
+<li>VPCフローログを有効にし、Logs Insightsで <code>REJECT</code> の記録を確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>SGは<strong>ステートフル</strong>で戻りの通信は自動で許可。NACLは<strong>ステートレス</strong>で戻りの通信も許可が必要(<a href="../terms/nacl-security-group.html">NACLとSG</a>)。</li>
+<li>ルートテーブルは経路を決めるだけで、許可・拒否はしない。</li>
+<li>フローログで、インバウンドがACCEPTなのにアウトバウンドがREJECTなら、NACLのアウトバウンド(戻り)ルールが原因であることが多い。</li>
+<li>設定上の経路を自動で解析するには、VPC Reachability Analyzerも使える。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="hybrid-multi-vpc.html"><span class="label">← 前へ</span>複数のVPCとオンプレミスを接続する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <span class="next empty"></span>
+</nav>
+</main>
+</body>
+</html>

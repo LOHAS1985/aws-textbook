@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon EC2 Auto Scaling | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">コンピューティング</span>
+  <h1>Amazon EC2 Auto Scaling</h1>
+  <p class="lead">負荷や障害に合わせてEC2の台数を自動で増減・維持する</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon EC2 Auto Scaling</strong>は、<strong>EC2インスタンスの台数を自動で増減・維持</strong>するサービスです。インスタンスを「<strong>Auto Scalingグループ(ASG)</strong>」という単位でまとめ、次の2つを自動化します。</p>
+<ul>
+<li><strong>台数の維持(自己修復)</strong>:異常なインスタンスを終了し、代わりを起動して決めた台数を保つ。</li>
+<li><strong>スケーリング</strong>:負荷が上がったら台数を増やし(スケールアウト)、下がったら減らす(スケールイン)。</li>
+</ul>
+<p>ELBと組み合わせると、増えたインスタンスは自動でターゲットに登録され、減ったインスタンスは登録を解除されます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>Auto Scalingグループの3つの台数</h3>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>意味</th></tr>
+<tr><td>最小(Minimum)</td><td>これより少なくはしない台数</td></tr>
+<tr><td>希望(Desired)</td><td>今この台数で動かしたい、という目標の台数。スケーリングで変わる</td></tr>
+<tr><td>最大(Maximum)</td><td>これより多くはしない台数(コストの上限にもなる)</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 896 252" style="max-width:896px;min-width:520px" role="img" aria-label="図1 Auto Scalingグループの構成。起動テンプレートを元に複数AZへインスタンスを起動し、CloudWatchのメトリクスに応じて台数を変える。起動したインスタンスはELBのターゲットに自動で登録される。"><defs><marker id="dgservices-auto-scaling-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="104" text-anchor="middle" class="dg-t">起動テンプレート</text>
+<text x="106" y="122" text-anchor="middle" class="dg-s">AMI・タイプ・SG</text>
+<rect x="265" y="83" width="178" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="104" text-anchor="middle" class="dg-tb">Auto Scalingグループ</text>
+<text x="354" y="122" text-anchor="middle" class="dg-s">最小2・希望2・最大6</text>
+<rect x="512" y="46" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="70" text-anchor="middle" class="dg-t">EC2(AZ-a)</text>
+<rect x="512" y="132" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="156" text-anchor="middle" class="dg-t">EC2(AZ-c)</text>
+<rect x="265" y="176" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="338" y="198" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="338" y="216" text-anchor="middle" class="dg-s">CPU使用率など</text>
+<rect x="727" y="83" width="145" height="52" rx="8" class="dg-box"/>
+<text x="800" y="104" text-anchor="middle" class="dg-t">ELB</text>
+<text x="800" y="122" text-anchor="middle" class="dg-s">自動で登録</text>
+<path d="M179.0,109.0 L265.0,109.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-1)"/>
+<text x="222" y="113" text-anchor="middle" class="dg-s dg-halo">これを元に起動</text>
+<path d="M443.0,92.6 L512.5,79.8" class="dg-line" marker-end="url(#dgservices-auto-scaling-1)"/>
+<path d="M443.0,125.4 L512.5,138.2" class="dg-line" marker-end="url(#dgservices-auto-scaling-1)"/>
+<path d="M342.1,176.5 L349.4,135.0" class="dg-line dg-dash" marker-end="url(#dgservices-auto-scaling-1)"/>
+<text x="346" y="160" text-anchor="middle" class="dg-s dg-halo">スケーリング</text>
+<path d="M657.5,80.9 L727.0,94.6" class="dg-line dg-dash" marker-end="url(#dgservices-auto-scaling-1)"/>
+<path d="M657.5,137.1 L727.0,123.4" class="dg-line dg-dash" marker-end="url(#dgservices-auto-scaling-1)"/>
+</svg>
+</div>
+<figcaption>図1 Auto Scalingグループの構成。起動テンプレートを元に複数AZへインスタンスを起動し、CloudWatchのメトリクスに応じて台数を変える。起動したインスタンスはELBのターゲットに自動で登録される。</figcaption>
+</figure>
+
+<h3>起動テンプレート</h3>
+<p>起動するインスタンスの設定(AMI、インスタンスタイプ、キーペア、セキュリティグループ、IAMロール、ユーザーデータなど)をまとめたものです。バージョン管理ができ、オンデマンドとスポットを混ぜる設定(混合インスタンスポリシー)にも使えます。古い仕組みの「起動設定(Launch Configuration)」は非推奨のため、<strong>起動テンプレートを使います</strong>。</p>
+
+<h3>スケーリングの方法</h3>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>動き</th><th>向いている場面</th></tr>
+<tr><td><strong>ターゲット追跡</strong></td><td>「平均CPU使用率50%」のような目標値を保つように自動で増減する</td><td>まず検討する基本の方法</td></tr>
+<tr><td>ステップ</td><td>アラームの超過幅に応じて増減数を変える(例:70%超で+1、90%超で+3)</td><td>急な負荷に段階的に対応したい</td></tr>
+<tr><td>シンプル</td><td>アラームで決まった台数だけ増減し、クールダウン中は次の動作を待つ</td><td>古い方式。ステップの利用が推奨</td></tr>
+<tr><td><strong>スケジュール</strong></td><td>決めた日時に希望・最小・最大の台数を変える</td><td>毎朝9時のアクセス増など、時間で予測できる負荷</td></tr>
+<tr><td>予測</td><td>過去の負荷の傾向から需要を予測し、前もって台数を増やす</td><td>日・週単位で周期的な負荷</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 648 194" style="max-width:648px;min-width:520px" role="img" aria-label="図2 ターゲット追跡スケーリング。目標値(例:平均CPU使用率50%)を設定するだけで、必要なCloudWatchアラームが自動で作られ、目標値に近づくように台数が調整される。"><defs><marker id="dgservices-auto-scaling-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">メトリクス</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">平均CPU 80%</text>
+<rect x="257" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="329" y="100" text-anchor="middle" class="dg-tb">ターゲット追跡</text>
+<text x="329" y="118" text-anchor="middle" class="dg-s">目標:CPU 50%</text>
+<rect x="480" y="38" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="552" y="60" text-anchor="middle" class="dg-t">スケールアウト</text>
+<text x="552" y="78" text-anchor="middle" class="dg-s">目標超えで増やす</text>
+<rect x="480" y="118" width="145" height="52" rx="8" class="dg-box"/>
+<text x="552" y="140" text-anchor="middle" class="dg-t">スケールイン</text>
+<text x="552" y="158" text-anchor="middle" class="dg-s">目標未満で減らす</text>
+<path d="M179.0,104.0 L256.8,104.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-2)"/>
+<path d="M401.8,91.0 L479.5,77.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-2)"/>
+<path d="M401.8,117.0 L479.5,131.0" class="dg-line dg-dash" marker-end="url(#dgservices-auto-scaling-2)"/>
+</svg>
+</div>
+<figcaption>図2 ターゲット追跡スケーリング。目標値(例:平均CPU使用率50%)を設定するだけで、必要なCloudWatchアラームが自動で作られ、目標値に近づくように台数が調整される。</figcaption>
+</figure>
+
+<h3>ヘルスチェックと自己修復</h3>
+<ul>
+<li><strong>EC2ヘルスチェック</strong>(既定):EC2のステータスチェックで異常なら入れ替える。</li>
+<li><strong>ELBヘルスチェック</strong>:ロードバランサーのヘルスチェックに失敗した場合も入れ替える。アプリの異常も検知できるため、ELBと組み合わせるときは有効にする。</li>
+<li><strong>ヘルスチェックの猶予期間</strong>:起動直後はアプリの準備が終わっていないため、一定時間ヘルスチェックの結果を無視する。短すぎると「起動してすぐ終了される」を繰り返す。</li>
+</ul>
+
+<h3>ライフサイクルフック</h3>
+<p>インスタンスの起動時・終了時に<strong>一時停止(Pending:Wait/Terminating:Wait)</strong>させて、独自の処理を入れる仕組みです。例えば、起動時にソフトウェアの設定を終えてからサービスに入れる、終了前にログをS3へ退避する、といった使い方をします。待機時間を過ぎるか、完了の通知を送ると次へ進みます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 593 194" style="max-width:593px;min-width:520px" role="img" aria-label="図3 ライフサイクルフック。起動時(Pending:Wait)と終了時(Terminating:Wait)に一時停止させ、EventBridgeやLambda、Systems Managerなどで独自の処理を実行できる。"><defs><marker id="dgservices-auto-scaling-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="44" width="130" height="40" rx="8" class="dg-box"/>
+<text x="99" y="68" text-anchor="middle" class="dg-t">Pending</text>
+<rect x="214" y="38" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="279" y="60" text-anchor="middle" class="dg-tb">Pending:Wait</text>
+<text x="279" y="78" text-anchor="middle" class="dg-s">設定・初期化</text>
+<rect x="394" y="44" width="130" height="40" rx="8" class="dg-ok"/>
+<text x="459" y="68" text-anchor="middle" class="dg-t">InService</text>
+<rect x="394" y="118" width="175" height="52" rx="8" class="dg-accent"/>
+<text x="482" y="140" text-anchor="middle" class="dg-tb">Terminating:Wait</text>
+<text x="482" y="158" text-anchor="middle" class="dg-s">ログ退避など</text>
+<rect x="214" y="124" width="130" height="40" rx="8" class="dg-ng"/>
+<text x="279" y="148" text-anchor="middle" class="dg-t">Terminated</text>
+<path d="M164.0,64.0 L214.0,64.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
+<path d="M344.0,64.0 L394.0,64.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
+<path d="M464.6,84.0 L474.2,118.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
+<path d="M394.0,144.0 L344.0,144.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
+</svg>
+</div>
+<figcaption>図3 ライフサイクルフック。起動時(Pending:Wait)と終了時(Terminating:Wait)に一時停止させ、EventBridgeやLambda、Systems Managerなどで独自の処理を実行できる。</figcaption>
+</figure>
+
+<h3>そのほかの機能</h3>
+<ul>
+<li><strong>インスタンスの更新(Instance Refresh)</strong>:起動テンプレートを新しくしたとき、インスタンスを少しずつ入れ替える(ローリング更新)。</li>
+<li><strong>終了ポリシー</strong>:スケールインのとき、どのインスタンスから終了するかを決める。既定では、まずAZ間の台数のバランスを保ち、その中で古い起動テンプレートのインスタンスから終了する。</li>
+<li><strong>スケールイン保護</strong>:特定のインスタンスをスケールインで終了させない。</li>
+<li><strong>スタンバイ</strong>:インスタンスを一時的にグループのサービスから外し、調査や更新を行う。</li>
+<li><strong>プロセスの中断</strong>:<code>ReplaceUnhealthy</code> や <code>Terminate</code> などの処理を一時的に止める(障害調査中にインスタンスが入れ替わらないようにする、など)。</li>
+<li><strong>ウォームプール</strong>:初期化済みのインスタンスを停止状態で待機させ、スケールアウトを速くする。</li>
+</ul>
+
+<h3>関連する「Auto Scaling」</h3>
+<ul>
+<li><strong>Application Auto Scaling</strong>:EC2以外(ECSのタスク数、DynamoDBの読み書き容量、Auroraのレプリカ数、Lambdaのプロビジョニング済み同時実行数など)をスケーリングする仕組み。</li>
+<li><strong>AWS Auto Scaling(スケーリングプラン)</strong>:複数のリソースのスケーリングをまとめて設定する仕組み。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>アクセス数が変動するWebアプリを、ALBの後ろで必要な台数だけ動かす</li>
+<li>障害が起きたインスタンスを自動で入れ替え、常に最低台数を保つ(台数が1でも自己修復に使える)</li>
+<li>SQSキューのメッセージ数に応じて、ワーカーの台数を増減する</li>
+<li>夜間・休日は台数を減らしてコストを下げる(スケジュール)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>EC2 Auto Scaling自体は<strong>無料</strong>です。起動したEC2インスタンスやEBS、CloudWatch(詳細モニタリングや追加のアラーム)の料金がかかります。スポットインスタンスを混ぜたり、夜間の台数を減らしたりするとコストを下げられます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:スケーリングの対象</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:トラフィックの分散とヘルスチェック</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:スケーリングの判断に使うメトリクスとアラーム</li>
+<li><a href="sqs.html">Amazon SQS</a>:キューの長さに応じたスケーリング</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>/<a href="lambda.html">AWS Lambda</a>:ライフサイクルフックでの処理</li>
+<li><a href="codedeploy.html">AWS CodeDeploy</a>:Auto Scalingグループへのデプロイ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>まずは<strong>ターゲット追跡</strong>。時間で予測できる負荷は<strong>スケジュール</strong>、周期的な負荷は<strong>予測スケーリング</strong>。</li>
+<li>メモリ使用率でスケーリングしたい → <strong>CloudWatchエージェント</strong>でメモリのメトリクスを送る(標準では取れない)。</li>
+<li>アプリが応答しないのに入れ替わらない → ヘルスチェックの種類を<strong>ELB</strong>にする。</li>
+<li>起動してすぐ終了されるのを繰り返す → <strong>ヘルスチェックの猶予期間</strong>を延ばす。</li>
+<li>終了前にログを退避したい・起動時に設定を済ませたい → <strong>ライフサイクルフック</strong>。</li>
+<li>インスタンスが起動できない → AMI・キーペア・セキュリティグループの存在、vCPUのクォータ、AZの容量不足を確認する(アクティビティ履歴に理由が出る)。</li>
+<li>起動テンプレートを変えたあと既存インスタンスを入れ替えたい → <strong>インスタンスの更新</strong>。</li>
+<li>高可用性のため、ASGは<strong>複数AZ</strong>のサブネットにまたがるように設定する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>起動テンプレートとASG(最小・希望・最大)で、EC2の台数を自動で増減・維持する。</li>
+<li>スケーリングはターゲット追跡が基本。ステップ・スケジュール・予測も使い分ける。</li>
+<li>ELBヘルスチェック・猶予期間・ライフサイクルフックが運用のポイント。</li>
+<li>サービス自体は無料で、EC2などの料金だけがかかる。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="ec2.html"><span class="label">← 前へ</span>Amazon EC2</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="lambda.html"><span class="label">次へ →</span>AWS Lambda</a>
+</nav>
+</main>
+</body>
+</html>

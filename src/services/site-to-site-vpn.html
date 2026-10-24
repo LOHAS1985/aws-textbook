@@ -1,0 +1,120 @@
+<!-- title: AWS Site-to-Site VPN -->
+<!-- category: ネットワークとコンテンツ配信 -->
+<!-- lead: オンプレミスとVPCを、インターネット上の暗号化トンネル(IPsec)でつなぐ -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Site-to-Site VPN</strong>は、<strong>オンプレミスのネットワークとAWSのVPCを、インターネット上の暗号化された通信路(IPsec VPN)で接続する</strong>サービスです。専用線を引かずに、数分〜数時間ですぐに使い始められます。</p>
+<p>VPN(Virtual Private Network)は、共有のネットワークの上に、暗号化した仮想的な専用の通信路(トンネル)を作る技術です。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>カスタマーゲートウェイデバイス</td><td>オンプレミス側のVPNルーター(物理機器またはソフトウェア)</td></tr>
+<tr><td>カスタマーゲートウェイ(CGW)</td><td>オンプレミス側の機器の情報(パブリックIPアドレスなど)をAWSに登録したもの</td></tr>
+<tr><td>仮想プライベートゲートウェイ(VGW)</td><td>VPC側の終端。1つのVPCにアタッチする</td></tr>
+<tr><td><a href="transit-gateway.html">Transit Gateway</a></td><td>VGWの代わりの終端。多数のVPCとVPNをまとめて接続できる</td></tr>
+<tr><td>VPN接続</td><td>CGWとVGW(またはTGW)の間の接続。<strong>2本のトンネル</strong>を持つ</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 165 85
+node srv 0 0.5 blue "オンプレミス" "社内サーバー"
+node cgw 1.3 0.5 box "カスタマー\nゲートウェイ" "VPNルーター"
+node t1 2.65 0 ok "トンネル1" "IPsec"
+node t2 2.65 1 ok "トンネル2" "IPsec(冗長)"
+node vgw 4 0.5 accent "VGW" "またはTGW"
+node vpc 5.2 0.5 box "VPC" "サブネット" w=0.8
+edge srv cgw
+edge cgw t1
+edge cgw t2
+edge t1 vgw
+edge t2 vgw
+edge vgw vpc
+group 2.15 -0.45 3.15 1.45 "インターネット" pad=4
+<figcaption>図1 Site-to-Site VPNの構成。1つのVPN接続にはAWS側の終端が異なる2本のトンネルがあり、片方が停止しても、もう片方で通信を続けられる。</figcaption>
+</figure>
+
+<h3>ルーティング</h3>
+<ul>
+<li><strong>静的ルーティング</strong>:オンプレミスのCIDRを手動で登録する。</li>
+<li><strong>動的ルーティング(BGP)</strong>:BGPで経路を自動で交換する。トンネルの切り替えも自動で行えるため推奨。</li>
+<li>VPCのサブネットのルートテーブルで<strong>ルート伝播</strong>を有効にすると、VGWが学習したオンプレミスの経路が自動で追加される。</li>
+</ul>
+
+<h3>そのほかの特徴</h3>
+<ul>
+<li><strong>帯域</strong>:1トンネルあたり最大1.25Gbps。それ以上が必要なら、Transit Gatewayで複数のVPN接続に分散する(ECMP)。</li>
+<li><strong>高速化VPN(Accelerated VPN)</strong>:Global Acceleratorのネットワークを経由して、通信を安定・高速にする(Transit Gatewayで利用)。</li>
+<li><strong>VPN CloudHub</strong>:1つのVGWに複数拠点のVPNをつなぎ、拠点同士も通信できるようにする。</li>
+<li><strong>Direct Connectのバックアップ</strong>:専用線が切れたときの予備の経路として使う。</li>
+<li><strong>監視</strong>:CloudWatchの <code>TunnelState</code>(1=稼働、0=停止)や <code>TunnelDataIn</code>/<code>TunnelDataOut</code> を監視する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 160 80
+node on 0 0.5 blue "オンプレミス"
+node dx 1.4 0 accent "Direct Connect" "通常時(専用線)"
+node vpn 1.4 1 box "Site-to-Site VPN" "障害時のバックアップ" w=1.15
+node vpc 2.8 0.5 ok "VPC"
+edge on dx
+edge on vpn dash
+edge dx vpc
+edge vpn vpc dash
+<figcaption>図2 Direct ConnectのバックアップとしてSite-to-Site VPNを使う構成。BGPで経路の優先度を設定し、専用線が停止したときにVPNへ自動で切り替える。</figcaption>
+</figure>
+
+<h3>AWS Client VPNとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Site-to-Site VPN</th><th>Client VPN</th></tr>
+<tr><td>接続するもの</td><td>拠点のネットワーク全体</td><td>個人のPC(在宅勤務など)</td></tr>
+<tr><td>接続元</td><td>拠点のVPNルーター</td><td>PCのVPNクライアントソフト(OpenVPNベース)</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>社内ネットワークとVPCを、すぐに・安く接続する</li>
+<li>Direct Connectを開通するまでの一時的な接続や、障害時のバックアップ</li>
+<li>複数の拠点をAWS経由で相互に接続する(VPN CloudHub)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p><strong>VPN接続ごとの時間料金</strong>と、AWSからオンプレミスへの<strong>データ転送(アウト)料金</strong>がかかります。Transit Gatewayを終端にする場合は、TGWのアタッチメント料金とデータ処理料金も加わります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>:接続先のネットワーク。VGWをアタッチする</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:多数のVPCとVPNの終端を集約</li>
+<li><a href="direct-connect.html">AWS Direct Connect</a>:専用線による接続。VPNはそのバックアップにもなる</li>
+<li><a href="global-accelerator.html">AWS Global Accelerator</a>:高速化VPNで使うネットワーク</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:トンネルの状態の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「すぐに」「低コストで」「暗号化して」オンプレミスと接続 → <strong>Site-to-Site VPN</strong>。「安定した帯域」「低レイテンシー」→ Direct Connect。</li>
+<li>トンネルの停止を検知したい → CloudWatchの <strong><code>TunnelState</code></strong> にアラームを設定する。</li>
+<li>VPN接続は確立したのに通信できない → サブネットのルートテーブル(<strong>ルート伝播</strong>)、セキュリティグループ、ネットワークACL、オンプレミス側のファイアウォールを確認する。</li>
+<li>トンネルが1本しか使われていない・冗長化したい → <strong>2本のトンネル</strong>を両方設定し、BGPで自動切り替えにする。</li>
+<li>1.25Gbpsを超える帯域が必要 → Transit Gateway+<strong>ECMP</strong>、またはDirect Connect。</li>
+<li>Direct Connectの経路を暗号化したい → Direct Connectの上でSite-to-Site VPNを使う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>インターネット上のIPsecトンネルで、オンプレミスとVPCを接続する。</li>
+<li>CGW・VGW(またはTGW)・2本のトンネルで構成し、BGPでの動的ルーティングが推奨。</li>
+<li>すぐ使えて安価。Direct Connectのバックアップにもなる。</li>
+<li>個人のPCから接続するのはClient VPN。</li>
+</ul>
+</section>

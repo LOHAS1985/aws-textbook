@@ -1,0 +1,54 @@
+<!-- title: DNSレコードタイプ -->
+<!-- category: ネットワーク -->
+<!-- lead: DNSに登録する情報の種類(A・CNAME・MX・TXTなど) -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>DNSレコード</strong>は、<a href="dns.html">DNS</a>の権威サーバーに登録される個々の情報です。「このドメイン名はどのIPアドレスか」「メールはどのサーバーが受け取るか」など、用途ごとに<strong>レコードタイプ</strong>が分かれています。</p>
+<figure class="figure" data-diagram>
+grid 170 62
+node d 0 2 accent "example.com" h=2
+node a 1.4 0 box "A" "IPv4アドレス"
+node aaaa 1.4 1 box "AAAA" "IPv6アドレス"
+node cname 1.4 2 box "CNAME" "別のドメイン名"
+node mx 1.4 3 box "MX" "メールサーバー"
+node txt 1.4 4 box "TXT" "SPF・所有権の確認"
+node ns 1.4 5 box "NS" "権威DNSサーバー"
+edge d a
+edge d aaaa
+edge d cname
+edge d mx
+edge d txt
+edge d ns
+<figcaption>図1 主なレコードタイプ。1つのドメインに、用途ごとに複数のレコードを登録できる。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>タイプ</th><th>役割</th><th>主な用途</th><th>値の例</th></tr>
+<tr><td>A</td><td>ドメイン名をIPv4アドレスに対応付ける</td><td>WebサーバーなどのIPv4ホストを指定</td><td><code>example.com → 192.0.2.1</code></td></tr>
+<tr><td>AAAA</td><td>ドメイン名をIPv6アドレスに対応付ける</td><td>IPv6対応ホストを指定</td><td><code>example.com → 2001:db8::1</code></td></tr>
+<tr><td>CNAME</td><td>ドメイン名を別のドメイン名に別名(Canonical Name)として対応付ける</td><td>サブドメインを別ドメインへ向ける</td><td><code>www.example.com → example.com</code></td></tr>
+<tr><td>NS</td><td>そのドメイン(ゾーン)の権威DNSサーバーを指定する</td><td>DNSゾーン・サブドメインの委任</td><td><code>example.com → ns1.example.net</code></td></tr>
+<tr><td>MX</td><td>メールを受信するメールサーバーを指定する</td><td>ドメイン宛てメールの配送先</td><td><code>example.com → mail.example.com</code></td></tr>
+<tr><td>TXT</td><td>任意のテキスト情報を登録する</td><td>ドメイン所有権の確認、SPF、DKIMなど</td><td><code>"v=spf1 include:example.com ~all"</code>(example.comからのメールを受信。~all はソフトフェール)</td></tr>
+<tr><td>SOA</td><td>DNSゾーンの管理情報を定義する</td><td>ゾーンの管理者、シリアル番号、更新間隔など</td><td><code>ns1.example.com ...</code></td></tr>
+<tr><td>PTR</td><td>IPアドレスからドメイン名を引く(逆引き)</td><td>逆引きDNS(Reverse DNS)</td><td><code>192.0.2.1 → host.example.com</code></td></tr>
+<tr><td>SRV</td><td>特定のサービスを提供するホストとポートを指定する</td><td>SIP・XMPPなどのサービス検出</td><td><code>_sip._tcp.example.com → 5060</code></td></tr>
+<tr><td>CAA</td><td>そのドメインの証明書を発行できる認証局(CA)を指定する</td><td>TLS/SSL証明書の発行制御</td><td><code>0 issue "letsencrypt.org"</code></td></tr>
+</table></div>
+<p>Route 53には、DNS標準のレコードとは別に<strong>エイリアスレコード</strong>があります。ELBやCloudFrontなどのAWSリソースを直接指定でき、CNAMEと違ってドメインの頂点(<code>example.com</code> そのもの)にも設定できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="dns.html">DNS</a>:レコードを使った名前解決の仕組み</li>
+<li><a href="spf.html">SPF</a>:TXTレコードで正当なメール送信元を宣言する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/route53.html">Amazon Route 53</a>:ホストゾーンにレコードを登録する</li>
+<li><a href="../services/acm.html">AWS Certificate Manager</a>:CAAレコードやDNS検証と関係する</li>
+</ul>
+</section>

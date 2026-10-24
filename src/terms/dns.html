@@ -1,0 +1,89 @@
+<!-- title: DNS -->
+<!-- category: ネットワーク -->
+<!-- lead: ドメイン名をIPアドレスに変換する名前解決の仕組み -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>DNS(Domain Name System)</strong>は、<code>example.com</code> のようなドメイン名を、通信に使うIPアドレスに対応付ける仕組みです。</p>
+<p><code>example.com</code> → DNSで名前解決 → <code>93.184.216.34</code> → Webサーバーへ接続</p>
+<p>DNSは「ドメイン名を目的の情報へ変換するための<strong>分散型データベース・名前解決システム</strong>」であり、<a href="dns-record-types.html">DNSレコード</a>はそのデータベースに登録されている個々の情報です。</p>
+<h3>主要な登場人物</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>役割</th></tr>
+<tr><td>DNSクライアント</td><td>名前解決を要求する側。一般的にはOSやアプリケーション</td></tr>
+<tr><td>DNSリゾルバー(Recursive Resolver)</td><td>クライアントに代わってDNSサーバーへ問い合わせ、最終的な結果を取得する</td></tr>
+<tr><td>ルートDNSサーバー</td><td>DNS階層の最上位。TLD DNSサーバーへの案内を行う</td></tr>
+<tr><td>TLD DNSサーバー</td><td><code>.com</code>・<code>.jp</code> などのトップレベルドメイン(TLD=ドメイン末尾の区分)を管理し、権威DNSサーバーへの案内を行う</td></tr>
+<tr><td>権威DNSサーバー(Authoritative DNS)</td><td>特定のドメインのDNSレコードを正式に管理し、問い合わせに回答する</td></tr>
+</table></div>
+
+<h3>名前解決の流れ</h3>
+<figure class="figure" data-diagram>
+grid 170 80
+node cl 0 1 blue "クライアント" "ブラウザ・OS"
+node res 1.4 1 accent "DNSリゾルバー" "結果をキャッシュ"
+node root 2.8 0 box "ルートDNS" "→ .com はここ"
+node tld 2.8 1 box ".com TLD DNS" "→ 権威DNSはここ"
+node auth 2.8 2 ok "権威DNS" "example.com を管理"
+edge cl res both
+edge res root "②"
+edge res tld "③"
+edge res auth "④"
+<figcaption>図1 名前解決の流れ。クライアントはDNSリゾルバーに「最終的な答え」を求め(再帰問い合わせ)、リゾルバーはルート → TLD → 権威DNSの順に「次の問い合わせ先」を教えてもらいながら(反復問い合わせ)答えを得る。</figcaption>
+</figure>
+<p>ブラウザで <code>www.example.com</code> にアクセスすると、概ね次の流れで名前解決が行われます。</p>
+<ol>
+<li><strong>ブラウザのDNSキャッシュを確認</strong>:以前に取得した情報が残っていれば使う</li>
+<li><strong>OSなどのDNSキャッシュを確認</strong></li>
+<li><strong>DNSリゾルバーへ問い合わせ</strong>:キャッシュになければ、プロバイダなどが提供するリゾルバーへ問い合わせる</li>
+<li><strong>ルートDNSへ問い合わせ</strong>:<code>.com</code> などのTLDを管理するサーバーの情報が返る</li>
+<li><strong>TLD DNSへ問い合わせ</strong>:対象ドメインの権威DNSサーバーの情報が返る</li>
+<li><strong>権威DNSへ問い合わせ</strong>:AレコードやAAAAレコードなど、要求されたレコードが返る</li>
+<li><strong>リゾルバーが結果をクライアントへ返す</strong></li>
+<li><strong>ブラウザがそのIPアドレスへHTTP/HTTPSで接続</strong></li>
+</ol>
+
+<h3>再帰問い合わせと反復問い合わせ</h3>
+<ul>
+<li><strong>再帰問い合わせ(Recursive Query)</strong>:クライアントがリゾルバーに「最終的な答えを返してほしい」と要求する方式。クライアントとリゾルバーの間で使う。</li>
+<li><strong>反復問い合わせ(Iterative Query)</strong>:リゾルバーがDNSサーバーに問い合わせ、答えそのものではなく「次に問い合わせるべきサーバー」を案内してもらう方式。リゾルバーとルート・TLD・権威DNSの間で使う。</li>
+</ul>
+
+<h3>DNSの階層構造</h3>
+<figure class="figure" data-diagram>
+grid 160 80
+node root 1 0 accent "ルート(.)"
+node com 0.5 1 box ".com"
+node jp 1.5 1 box ".jp"
+node ex 0.5 2 box "example.com"
+node exjp 1.5 2 box "example.jp"
+node rec 0.5 3 ok "A / MX / TXT …" "権威DNSが管理"
+edge root com
+edge root jp
+edge com ex
+edge jp exjp
+edge ex rec
+<figcaption>図2 DNSの階層構造。上位のサーバーは下位のサーバーの場所を知っており、最終的なレコードは各ドメインの権威DNSサーバーが管理する。</figcaption>
+</figure>
+
+<h3>DNSキャッシュとTTL</h3>
+<p>問い合わせのたびにルートから権威DNSまでたどると負荷が大きいため、DNSでは結果を一定期間キャッシュします。レコードには<strong>TTL(Time To Live)</strong>が設定されており、キャッシュを保持する期間を指定します。例えばTTLが <code>3600</code> 秒なら、リゾルバーは原則として1時間ほど結果をキャッシュし、その間は権威DNSに問い合わせずに回答します。</p>
+
+<h3>AWSでのDNS</h3>
+<p>AWSでは主に<strong>Amazon Route 53</strong>を使います。ドメインのレコードを管理する<strong>ホストゾーン</strong>を作成し、A・AAAA・CNAME・MX・TXTなどを登録します。単純な名前解決だけでなく、<strong>ルーティングポリシー・ヘルスチェック・エイリアスレコード</strong>と組み合わせて、AWSリソースへのトラフィック制御にも使えます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="dns-record-types.html">DNSレコードタイプ</a>:権威DNSが管理する個々の情報(A・CNAME・MXなど)</li>
+<li><a href="spf.html">SPF</a>:DNS(TXTレコード)を使ったメールのなりすまし対策</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/route53.html">Amazon Route 53</a>:AWSのマネージドDNSサービス</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>/<a href="../services/elb.html">Elastic Load Balancing</a>:エイリアスレコードの向き先</li>
+</ul>
+</section>

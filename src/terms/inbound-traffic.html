@@ -1,0 +1,95 @@
+<!-- title: インバウンド通信 -->
+<!-- category: ネットワーク -->
+<!-- lead: 外部からVPC内のリソースへ入ってくる通信と、その4つの入口 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>インバウンド通信</strong>は、外部からVPC内のリソースへ入ってくる通信です。送信元の種類によって通る入口が異なり、いずれの場合も<strong>ルートテーブルに経路があること</strong>に加えて、<strong>セキュリティグループとNACLで許可されていること</strong>が必要です。</p>
+<figure class="figure" data-diagram>
+grid 165 80
+node inet 0 0.5 blue "インターネット"
+node onp 0 2 blue "オンプレミス"
+node ovpc 0 3 blue "他のVPC"
+node igw 1.25 0.5 box "IGW"
+node alb 2.5 1 box "ALB / NLB" "パブリックサブネット"
+node pub 3.75 0 accent "公開EC2" "パブリックサブネット"
+node prv 3.75 2 ok "プライベートEC2" "プライベートサブネット"
+node vgw 1.25 2 box "VGW / TGW" "VPN・DX"
+node pcx 1.25 3 box "ピアリング" "/ Transit Gateway"
+edge inet igw
+edge igw pub "①"
+edge igw alb "②"
+edge alb prv
+edge onp vgw
+edge vgw prv "③"
+edge ovpc pcx
+edge pcx prv "④"
+<figcaption>図1 インバウンド通信の4つの入口。①インターネットからIGW経由でパブリックサブネットのインスタンスへ、②ALB/NLBを前段に置いてプライベートサブネットへ、③オンプレミスからVPN/Direct Connect経由で、④他のVPCからピアリング/Transit Gateway経由で届く。</figcaption>
+</figure>
+
+<h3>① インターネット → パブリックサブネットのインスタンス(IGW)</h3>
+<ul>
+<li>経路:インターネット → IGW → インスタンス</li>
+<li>ルート:パブリックサブネットのルートテーブルで <code>0.0.0.0/0</code>(IPv6は <code>::/0</code>)→ IGW</li>
+<li>条件:IPv4ではパブリックIPv4アドレスまたはElastic IPが必要。IPv6ではグローバルに一意なIPv6アドレスで受信できる。</li>
+<li>特徴:インスタンスを直接公開するため、セキュリティグループで受け付けるポートを絞る。</li>
+</ul>
+
+<h3>② インターネット → プライベートサブネットのインスタンス(ALB/NLB)</h3>
+<ul>
+<li>経路:インターネット → IGW → ALB/NLB → インスタンス</li>
+<li>配置:ロードバランサーはパブリックサブネット、インスタンスはプライベートサブネットに置く。</li>
+<li>特徴:インスタンスにパブリックIPを持たせずに公開できる。インスタンスのSGでは、<strong>ロードバランサーのSGからの通信だけを許可</strong>する。</li>
+</ul>
+
+<h3>③ オンプレミス → プライベートサブネット(Site-to-Site VPN/Direct Connect)</h3>
+<ul>
+<li>経路:オンプレミス → Site-to-Site VPN または Direct Connect → インスタンス</li>
+<li>終端:仮想プライベートゲートウェイ(VGW)または Transit Gateway</li>
+<li>特徴:インターネットを経由せずプライベートIPで通信する。VPNはインターネット上を暗号化して通り、Direct Connectは専用線で接続する。</li>
+<li>ルート:サブネットのルートテーブルに、オンプレミスのCIDR向けの経路(またはVGWのルート伝播)が必要。</li>
+</ul>
+
+<h3>④ 他のVPC → プライベートサブネット(VPCピアリング/Transit Gateway)</h3>
+<ul>
+<li>経路:他のVPC → VPCピアリング または Transit Gateway → インスタンス</li>
+<li>特徴:プライベートIPでVPC間を接続する。<strong>VPCピアリングは1対1</strong>で推移的なルーティングはできない。<strong>Transit Gateway</strong>は多数のVPCやオンプレミスをハブ&スポークで接続できる。</li>
+<li>条件:双方のルートテーブルに相手側CIDR向けの経路が必要。<strong>CIDRが重複していると接続できない</strong>。</li>
+</ul>
+
+<h3>比較</h3>
+<div class="table-wrap"><table>
+<tr><th>送信元</th><th>入口</th><th>経由するもの</th><th>宛先</th><th>パブリックIP</th></tr>
+<tr><td>インターネット</td><td>IGW</td><td>なし</td><td>パブリックサブネットのインスタンス</td><td>必要</td></tr>
+<tr><td>インターネット</td><td>IGW</td><td>ALB/NLB</td><td>プライベートサブネットのインスタンス</td><td>不要</td></tr>
+<tr><td>オンプレミス</td><td>VPN/Direct Connect</td><td>なし</td><td>プライベートサブネットのインスタンス</td><td>不要</td></tr>
+<tr><td>他のVPC</td><td>VPCピアリング/Transit Gateway</td><td>なし</td><td>プライベートサブネットのインスタンス</td><td>不要</td></tr>
+</table></div>
+
+<h3>押さえておきたいポイント</h3>
+<div class="point"><ul>
+<li>SGはステートフルなので、許可したインバウンド通信の応答(アウトバウンド)は自動的に許可される。</li>
+<li>NACLはステートレスなので、インバウンドと応答のアウトバウンド(エフェメラルポート)の両方を明示的に許可する必要がある。</li>
+<li>通信が届かないときの確認順:ルートテーブル → IGWなどのアタッチ状態 → セキュリティグループ → NACL → パブリックIPの有無。</li>
+<li>インターネットから直接受けたくないリソースはプライベートサブネットに置き、ロードバランサーを前段に配置する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="outbound-traffic.html">アウトバウンド通信</a>:VPC内から外へ出ていく通信</li>
+<li><a href="route-table.html">ルートテーブル</a>:経路を決めるルール表</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:通信の許可・拒否</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:IGW・サブネット・ピアリング</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:プライベートなインスタンスの公開</li>
+<li><a href="../services/transit-gateway.html">AWS Transit Gateway</a>:多数のVPC・オンプレミスの接続</li>
+<li><a href="../services/site-to-site-vpn.html">AWS Site-to-Site VPN</a>/<a href="../services/direct-connect.html">AWS Direct Connect</a>:オンプレミスからの接続</li>
+<li><a href="../services/ram.html">AWS Resource Access Manager</a>:Transit Gatewayの共有</li>
+</ul>
+</section>

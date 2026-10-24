@@ -1,0 +1,111 @@
+<!-- title: AWS Config -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: リソースの設定状態を記録・評価し、違反を検出して修復 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Config</strong>は、AWSリソースの<strong>設定状態を記録・評価</strong>し、<strong>コンプライアンス違反を検出して修復</strong>するサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>設定レコーダー</h3>
+<p>有効にすると、対象リージョン・リソースの設定変更を記録します。</p>
+<ul>
+<li>設定内容:対象リソース、設定情報を保存するS3バケット、通知先のSNSトピック</li>
+<li>記録する情報:
+  <ul>
+  <li>リソースID(例:<code>i-0123456789abcdef0</code>)</li>
+  <li>リソースタイプ(例:<code>AWS::EC2::Instance</code>)</li>
+  <li>設定属性(インスタンスタイプ、サブネットIDなど現在の設定)</li>
+  <li>リレーションシップ(他リソースとの関係)</li>
+  <li>タグ(例:<code>Environment=Production</code>)</li>
+  <li>設定変更の時刻</li>
+  </ul></li>
+</ul>
+
+<h3>Configルール</h3>
+<p>リソースの設定が要件に適合しているかを評価します。</p>
+<ul>
+<li>種類:<strong>AWSマネージドルール</strong>(AWSが提供)、<strong>カスタムルール</strong>(Lambdaなどで作成)</li>
+<li>例:EBSボリュームが暗号化されているか/S3バケットのパブリックアクセスが禁止されているか</li>
+<li>評価結果:<code>COMPLIANT</code>(準拠)、<code>NON_COMPLIANT</code>(非準拠)、<code>NOT_APPLICABLE</code>(評価対象外)、<code>INSUFFICIENT_DATA</code>(情報不足)</li>
+</ul>
+
+<h3>コンプライアンス監視と修復</h3>
+<div class="table-wrap"><table>
+<tr><th>目的</th><th>サービス</th><th>用途</th></tr>
+<tr><td>変更イベントの通知</td><td>EventBridge</td><td>Configの変更・非準拠イベントを検出</td></tr>
+<tr><td>通知</td><td>SNS</td><td>管理者や運用チームへ通知</td></tr>
+<tr><td>自動処理</td><td>Lambda</td><td>独自の検査・修復ロジックを実行</td></tr>
+<tr><td>修復の自動化</td><td>Systems Manager Automation</td><td>定義済みのランブック(手順書)で設定を修復</td></tr>
+<tr><td>セキュリティ統合</td><td>Security Hub</td><td>セキュリティ・コンプライアンス結果を集約</td></tr>
+<tr><td>一括評価</td><td>Conformance Packs</td><td>複数のルールと修復処理をパッケージ化</td></tr>
+<tr><td>設定変更の証跡</td><td>S3</td><td>設定スナップショットや履歴を保存</td></tr>
+<tr><td>API操作の監査</td><td>CloudTrail</td><td>変更を実行したユーザーやロールを記録</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 165 85
+node res 0 0.5 blue "AWSリソース" "設定を変更"
+node rec 1.25 0.5 box "設定レコーダー" "変更を記録"
+node rule 2.5 0.5 accent "Configルール" "準拠を評価"
+node fix 3.75 0 ok "修復アクション" "SSM Automation"
+node nc 3.75 1 ng "通知" "EventBridge / SNS"
+edge res rec
+edge rec rule
+edge rule fix
+edge rule nc
+<figcaption>図1 Configの仕組み。設定レコーダーがリソースの変更を記録し、Configルールが要件に準拠しているか評価する。非準拠(NON_COMPLIANT)なら、SSM Automationなどで自動修復したり、EventBridge・SNSで通知したりする。</figcaption>
+</figure>
+<h3>自動修復の例</h3>
+<ol>
+<li>ConfigルールがS3バケットのパブリックアクセスを検出</li>
+<li>リソースが <code>NON_COMPLIANT</code> になる</li>
+<li>Configの修復アクションが起動</li>
+<li>Systems Manager AutomationまたはLambdaが設定を修正</li>
+<li>Configが再評価し、<code>COMPLIANT</code> になったことを確認</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>暗号化されていないEBSや公開されたS3バケットの検出</li>
+<li>「先月この時点でセキュリティグループはどう設定されていたか」の確認</li>
+<li>非準拠の設定の自動修復</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>記録した設定項目の数と、Configルールの評価回数に応じて課金されます。Conformance Packsも評価回数で課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:誰が変更したか</li>
+<li><a href="systems-manager.html">AWS Systems Manager</a>:Automationによる修復</li>
+<li><a href="security-hub.html">AWS Security Hub</a>:結果の集約</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>/<a href="sns.html">Amazon SNS</a>:通知</li>
+<li><a href="lambda.html">AWS Lambda</a>:カスタムルール</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「設定が要件に準拠しているか」「設定の変更履歴」→ <strong>Config</strong>。</li>
+<li>非準拠の自動修復 → <strong>修復アクション+SSM Automation</strong>。</li>
+<li>複数ルールをまとめて展開 → <strong>Conformance Packs</strong>。</li>
+<li>AWSに用意されていないチェック → <strong>カスタムルール(Lambda)</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Configは設定レコーダーで記録し、Configルールで評価する。</li>
+<li>非準拠はSSM AutomationやLambdaで自動修復できる。</li>
+</ul>
+</section>

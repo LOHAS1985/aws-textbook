@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS DataSync | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">移行と転送</span>
+  <h1>AWS DataSync</h1>
+  <p class="lead">オンプレミス⇔AWS、AWSストレージ間のデータ転送を自動化・高速化</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS DataSync</strong>は、<strong>オンプレミスとAWSの間、またはAWSのストレージサービス間でデータ転送を自動化・高速化</strong>するサービスです。</p>
+<div class="table-wrap"><table>
+<tr><th>区分</th><th>対応するストレージ</th></tr>
+<tr><td>オンプレミス/自己管理</td><td>NFS、SMB、HDFS、S3互換のオブジェクトストレージ</td></tr>
+<tr><td>AWS</td><td>S3、EFS、FSx</td></tr>
+<tr><td>他クラウド</td><td>Google Cloud Storage、Azure Blob Storageなど</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<ul>
+<li><strong>エージェント</strong>:オンプレミス/他クラウドのストレージにアクセスするために配置する。<strong>AWSのストレージ間の転送では不要</strong>。</li>
+<li><strong>ロケーション</strong>:転送元と転送先の定義</li>
+<li><strong>タスク</strong>:転送ジョブの定義(転送元・転送先・オプション・スケジュールをまとめる)</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 822 202" style="max-width:822px;min-width:520px" role="img" aria-label="図1 DataSyncの構成。オンプレミスのNFS/SMBからはエージェント経由で、AWSのストレージ間ではエージェントなしで、タスクに従って転送する。"><defs><marker id="dgservices-datasync-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="62" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="104" y="80" text-anchor="middle" class="dg-s">NFS / SMB</text>
+<rect x="242" y="40" width="140" height="52" rx="8" class="dg-box"/>
+<text x="312" y="62" text-anchor="middle" class="dg-t">エージェント</text>
+<text x="312" y="80" text-anchor="middle" class="dg-s">オンプレに配置</text>
+<rect x="242" y="126" width="140" height="52" rx="8" class="dg-box"/>
+<text x="312" y="147" text-anchor="middle" class="dg-t">別リージョンのS3</text>
+<text x="312" y="165" text-anchor="middle" class="dg-s">エージェント不要</text>
+<rect x="450" y="83" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="520" y="104" text-anchor="middle" class="dg-tb">DataSync</text>
+<text x="520" y="122" text-anchor="middle" class="dg-s">タスクで転送</text>
+<rect x="658" y="46" width="140" height="40" rx="8" class="dg-ok"/>
+<text x="728" y="70" text-anchor="middle" class="dg-t">S3</text>
+<rect x="658" y="132" width="140" height="40" rx="8" class="dg-ok"/>
+<text x="728" y="156" text-anchor="middle" class="dg-t">EFS / FSx</text>
+<path d="M174.0,66.5 L242.0,66.5" class="dg-line" marker-end="url(#dgservices-datasync-1)"/>
+<path d="M382.0,80.8 L450.0,94.7" class="dg-line" marker-end="url(#dgservices-datasync-1)"/>
+<text x="416" y="92" text-anchor="middle" class="dg-s dg-halo">TLS</text>
+<path d="M382.0,137.2 L450.0,123.3" class="dg-line" marker-end="url(#dgservices-datasync-1)"/>
+<path d="M590.0,94.7 L658.0,80.8" class="dg-line" marker-end="url(#dgservices-datasync-1)"/>
+<path d="M590.0,123.3 L658.0,137.2" class="dg-line" marker-end="url(#dgservices-datasync-1)"/>
+</svg>
+</div>
+<figcaption>図1 DataSyncの構成。オンプレミスのNFS/SMBからはエージェント経由で、AWSのストレージ間ではエージェントなしで、タスクに従って転送する。</figcaption>
+</figure>
+<h3>機能</h3>
+<ul>
+<li><strong>増分転送</strong>:初回は全データ、2回目以降は変更分だけを転送</li>
+<li><strong>スケジュール実行</strong>:最短1時間単位で定期実行</li>
+<li><strong>整合性の検証</strong>:転送後にチェックサムで検証</li>
+<li><strong>メタデータの保持</strong>:タイムスタンプ・所有者・権限などを引き継ぐ</li>
+<li><strong>暗号化</strong>:転送中はTLSを使用</li>
+</ul>
+
+<h3>ネットワーク接続</h3>
+<ul>
+<li><strong>パブリックエンドポイント</strong>:インターネット経由</li>
+<li><strong>VPCエンドポイント</strong>:Direct ConnectやSite-to-Site VPNと組み合わせ、インターネットを経由せずに転送</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>オンプレミスのファイルサーバー(NFS/SMB)からS3・EFS・FSxへのデータ移行</li>
+<li>オンプレミスとAWSの間での定期的なデータ同期(増分転送)</li>
+<li>リージョン間・ストレージサービス間のデータコピー</li>
+<li>他クラウドからAWSへのデータ移行</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>転送したデータ量(GB単位)に応じて課金されます。転送先のストレージ料金や、リージョン間・インターネットへのデータ転送料金は別途かかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>/<a href="efs.html">Amazon EFS</a>/<a href="fsx.html">Amazon FSx</a>:転送先のAWSストレージ</li>
+<li><a href="vpc.html">Amazon VPC</a>:VPCエンドポイントでのプライベート転送</li>
+<li><a href="backup.html">AWS Backup</a>:転送後のバックアップ管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>オンプレミスのNFS/SMBからAWSへ<strong>オンラインでデータ移行・同期</strong> → DataSync。</li>
+<li>オンプレミスから転送するときは<strong>エージェント</strong>が必要。AWSストレージ間は不要。</li>
+<li>インターネットを通さずに転送 → <strong>VPCエンドポイント+Direct Connect/VPN</strong>。</li>
+<li>2回目以降は<strong>増分転送</strong>、転送後は<strong>チェックサムで整合性を検証</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>DataSyncはエージェント・ロケーション・タスクで構成されるデータ転送サービス。</li>
+<li>増分転送・スケジュール・整合性検証・メタデータ保持に対応する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="opensearch.html"><span class="label">← 前へ</span>Amazon OpenSearch Service</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="ses.html"><span class="label">次へ →</span>Amazon Simple Email Service(SES)</a>
+</nav>
+</main>
+</body>
+</html>

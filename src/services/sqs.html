@@ -1,0 +1,127 @@
+<!-- title: Amazon SQS -->
+<!-- category: アプリケーション統合 -->
+<!-- lead: システム間でメッセージを受け渡すメッセージキュー -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon SQS(Simple Queue Service)</strong>は、<strong>メッセージキューイングサービス</strong>です。送信側と受信側の間にキューを置くことで、システム同士を疎結合にします。</p>
+<p><strong>プル型</strong>:受信者がキューをポーリングしてメッセージを取得します。</p>
+<figure class="figure" data-diagram>
+grid 170 90
+node p 0 0.5 blue "プロデューサー" "送信者"
+node q 1.4 0.5 accent "SQSキュー"
+node c 2.8 0.5 ok "コンシューマー" "ポーリングして受信"
+node dlq 1.4 1.6 ng "デッドレターキュー" "何度も失敗したもの"
+edge p q "送信"
+edge q c "受信"
+edge q dlq "maxReceiveCount超過"
+<figcaption>図1 SQSの基本。プロデューサーがキューにメッセージを送り、コンシューマーがポーリングして受け取る(プル型)。何度も処理に失敗したメッセージはデッドレターキューに移る。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>用語</h3>
+<ul>
+<li><strong>プロデューサー</strong>:送信者</li>
+<li><strong>コンシューマー</strong>:受信者</li>
+<li><strong>デッドレターキュー(DLQ)</strong>:処理に失敗したメッセージを別のキューに移す機能(分析や再処理に使う)。<code>StartMessageMoveTask</code> APIで、DLQから元のキューへメッセージを戻せる。</li>
+<li><strong>可視性タイムアウト</strong>:コンシューマーがメッセージを受信した後、他の受信者から見えなくなる期間。二重処理を防ぐ。</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 175 85
+node r 0 0.5 blue "コンシューマーA" "メッセージを受信"
+node inv 1.4 0.5 accent "可視性タイムアウト" "他から見えない"
+node del 2.8 0 ok "処理成功" "メッセージを削除"
+node re 2.8 1 ng "時間切れ" "再び見える → 再処理"
+edge r inv
+edge inv del "時間内"
+edge inv re "超過"
+<figcaption>図2 可視性タイムアウト。受信したメッセージは一定時間、ほかのコンシューマーから見えなくなる。時間内に処理して削除すれば完了。処理が長引いて時間切れになると再び見えるようになり、二重処理の原因になる。</figcaption>
+</figure>
+<h3>キューの種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>スループット</th><th>順序</th><th>重複</th></tr>
+<tr><td>標準キュー</td><td>ほぼ無制限</td><td>ベストエフォート</td><td>同じメッセージが届く可能性あり</td></tr>
+<tr><td>FIFOキュー</td><td><span>上限あり</span></td><td><strong>順序を保証</strong></td><td><strong>重複排除</strong></td></tr>
+</table></div>
+
+<h3>主な設定値</h3>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>内容</th></tr>
+<tr><td>Visibility Timeout</td><td>可視性タイムアウト</td></tr>
+<tr><td>DelaySeconds</td><td>メッセージを受け取ってから一定時間見えなくする(すぐ処理させたくないとき)。例:注文後5分以内ならキャンセル可能 → <code>DelaySeconds = 300</code></td></tr>
+<tr><td>Retention Period</td><td>メッセージの保持期間</td></tr>
+<tr><td>Receive Wait Time</td><td>キューが空のとき、受信APIに対してどれくらい待ってから応答するか(ロングポーリング)</td></tr>
+<tr><td>maxReceiveCount</td><td>何回失敗したらDLQに移動するか</td></tr>
+</table></div>
+
+<h3 class="em">イベントソースマッピング(Lambdaの機能)</h3>
+<p>SQSキューを監視し、どのようにメッセージを取得して関数を起動するかを定義します。<strong>Lambdaが</strong>SQSのポーリング、メッセージ取得、関数の起動を行います。</p>
+<ul>
+<li>対象SQSキュー:どのキューを読むか</li>
+<li>バッチサイズ:何件まとめて取得するか</li>
+<li>最大同時実行数:並列数(API呼び出し速度の制御、Lambdaが増えすぎるのを防ぐ)</li>
+<li>Enabled/Disabled:有効・無効</li>
+<li>バッチウィンドウ:どれくらい待ってバッチにまとめるか</li>
+<li>Failure Handling:失敗時の処理</li>
+</ul>
+
+<h3>暗号化</h3>
+<p>キュー内のメッセージ本文を <strong>SSE-SQS</strong> または <strong>SSE-KMS</strong> で暗号化できます。</p>
+<figure class="figure" data-diagram>
+grid 170 90
+node q 0 0 accent "SQSキュー"
+node esm 1.4 0 box "イベントソース\nマッピング" "Lambda側の機能"
+node fn 2.8 0 ok "Lambda関数" "バッチで実行"
+edge esm q "ポーリング"
+edge esm fn "起動"
+<figcaption>図3 イベントソースマッピング。Lambda側がSQSをポーリングしてメッセージをまとめて取得し(バッチサイズ・バッチウィンドウ)、関数を起動する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Webサーバーと重い処理(画像変換など)のワーカーの間に置いて非同期化</li>
+<li>アクセス急増時にリクエストをためておき、バックエンドを守る(バッファ)</li>
+<li>注文処理など順序が重要な処理(FIFOキュー)</li>
+<li>SNSからのファンアウト先</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>APIリクエスト数(送信・受信・削除など)に応じて課金されます。FIFOキューは標準キューより単価が高めです。空のキューへの無駄な受信リクエストは、ロングポーリング(Receive Wait Time)で減らせます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="lambda.html">AWS Lambda</a>:イベントソースマッピングでキューを処理</li>
+<li><a href="sns.html">Amazon SNS</a>:プッシュ型の通知。SNS→SQSのファンアウト</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:イベントのルーティング</li>
+<li><a href="kms.html">AWS KMS</a>:SSE-KMS</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:<code>ApproximateNumberOfMessagesVisible</code> でバックログ監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>順序保証・重複排除 → <strong>FIFOキュー</strong>。</li>
+<li>同じメッセージが二重処理される → <strong>可視性タイムアウト</strong>を処理時間より長くする。</li>
+<li>何度も失敗するメッセージ → <strong>DLQ</strong>(<code>maxReceiveCount</code>)。戻すときは <code>StartMessageMoveTask</code>。</li>
+<li>処理開始を遅らせる → <strong>DelaySeconds</strong>。</li>
+<li>空振りの受信を減らしコスト削減 → <strong>ロングポーリング</strong>(Receive Wait Time)。</li>
+<li>SQS→Lambdaのポーリングは<strong>Lambda側(イベントソースマッピング)</strong>が行う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>SQSはプル型のメッセージキュー。標準とFIFOの2種類。</li>
+<li>可視性タイムアウト・DLQ・DelaySeconds・ロングポーリングを使い分ける。</li>
+</ul>
+</section>

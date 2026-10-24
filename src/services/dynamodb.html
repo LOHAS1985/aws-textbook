@@ -1,0 +1,155 @@
+<!-- title: Amazon DynamoDB -->
+<!-- category: データベース -->
+<!-- lead: フルマネージドのキーバリュー型NoSQLデータベース -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon DynamoDB</strong>は、<strong>フルマネージドのキーバリューストア</strong>(NoSQLデータベース)です。サーバー管理が不要で、大量のアクセスにも低レイテンシーで応答します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>テーブルのキー</h3>
+<ul>
+<li><strong>プライマリキー</strong>:1つまたは2つの属性で構成される。</li>
+<li><strong>パーティションキー</strong>:どの物理パーティションに保存するかを決める。テーブル内で一意とは限らない。<strong>値に偏りがあると性能が劣化</strong>する。</li>
+<li><strong>ソートキー</strong>:同じパーティションキー内での並び順を決める。パーティションキーと組み合わせて一意になる。</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 75
+node i1 0 0 blue "UserID = u1" "OrderDate = 0401"
+node i2 0 1 blue "UserID = u1" "OrderDate = 0405"
+node i3 0 2 blue "UserID = u2" "OrderDate = 0402"
+node p1 1.6 0.5 accent "パーティションA" "u1 のアイテム"
+node p2 1.6 2 accent "パーティションB" "u2 のアイテム"
+edge i1 p1
+edge i2 p1
+edge i3 p2
+<figcaption>図1 パーティションキー(UserID)で保存先のパーティションが決まり、同じパーティション内はソートキー(OrderDate)の順に並ぶ。値が偏ると特定のパーティションに負荷が集中する。</figcaption>
+</figure>
+<h3>データの読み取り</h3>
+<p>1回のリクエストで取得できる最大データ容量は<strong>1MB</strong>です。</p>
+<ul>
+<li><code>GetItem</code>:主キーで1件取得</li>
+<li><code>BatchGetItem</code>:主キーで複数件取得</li>
+<li><code>Query</code>:パーティションキー・インデックスを条件に取得</li>
+<li><code>Scan</code>:全件走査</li>
+</ul>
+
+<h3>セカンダリインデックス</h3>
+<p>別のキー構成でクエリを実行するための仕組みです。</p>
+<ul>
+<li><strong>ローカル(LSI)</strong>:パーティションキーはそのままで、<strong>ソートキーを変えたい</strong>とき。例:UserID+OrderDate のテーブルで、UserID+OrderStatus で検索したい。</li>
+<li><strong>グローバル(GSI)</strong>:<strong>パーティションキーを変えたい</strong>とき。例:OrderID+OrderStatus で検索したい。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th></th><th>ローカル(LSI)</th><th>グローバル(GSI)</th></tr>
+<tr><td>対象</td><td>パーティションキーとソートキーを持つテーブル</td><td>任意</td></tr>
+<tr><td>作成タイミング</td><td><strong>テーブル作成時のみ</strong></td><td>テーブル作成時/作成後</td></tr>
+<tr><td>キャパシティユニット</td><td>テーブルと同じ</td><td>テーブルと異なる値を設定</td></tr>
+<tr><td>削除</td><td>インデックスのみの削除は不可</td><td>インデックスのみ削除可能</td></tr>
+<tr><td>読み取りの整合性</td><td>結果整合性/強い整合性</td><td><strong>結果整合性のみ</strong></td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 220 80
+node base 0 0.5 accent "テーブル" "PK=UserID・SK=OrderDate"
+node lsi 1.5 0 box "LSI" "PKはそのまま・SKを変更"
+node gsi 1.5 1 ok "GSI" "PKごと変更(例: OrderID)"
+edge base lsi "作成時のみ"
+edge base gsi "後から追加可"
+<figcaption>図2 LSIとGSI。LSIはパーティションキーをそのままにソートキーだけを変える(テーブル作成時のみ)。GSIはパーティションキーから変えられ、後から追加できる(結果整合性のみ)。</figcaption>
+</figure>
+<h3>読み取りの整合性</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>強い整合性</th><th>結果整合性</th></tr>
+<tr><td>最新データの保証</td><td>○</td><td>×</td></tr>
+<tr><td>書き込み直後の読み取り</td><td>必ず最新</td><td>古い可能性あり</td></tr>
+<tr><td>コスト</td><td>高い</td><td>安い</td></tr>
+<tr><td>レイテンシー</td><td>やや高い</td><td>低い</td></tr>
+<tr><td>デフォルト</td><td>×</td><td>○</td></tr>
+</table></div>
+
+<h3>TTL(Time To Live)</h3>
+<p>指定時刻を過ぎたアイテムを自動削除する機能です。TTL属性は<strong>Number型+UNIXエポック秒</strong>である必要があります。セッション管理・キャッシュ・一時URLや認証コードに使います。ただし<strong>削除までにラグが生じる</strong>ため、正確な時刻で処理したい場合はEventBridge+Lambdaを使います。</p>
+
+<h3>エラー処理</h3>
+<p><code>UnprocessedKeys</code> は、スロットリングやサイズ超過で未処理になったキーのリストです。<strong>指数バックオフでリトライ</strong>して再実行します。</p>
+
+<h3>関連機能</h3>
+<ul>
+<li><strong class="em">DynamoDB Accelerator(DAX)</strong>:インメモリキャッシュ。読み取りを<strong>マイクロ秒レベル</strong>に高速化。</li>
+<li><strong class="em">DynamoDB Streams</strong>:テーブルのデータ変更を記録し、外部処理に連携する。
+  <ul>
+  <li>Streams+Lambdaの流れ:アプリがテーブルを更新 → Streamsが変更イベントを記録 → Lambdaがポーリング(若干の遅延あり)→ まとめて取得して関数を実行</li>
+  <li>ビュータイプ:<code>KEYS_ONLY</code>(キーのみ)、<code>OLD_IMAGE</code>/<code>NEW_IMAGE</code>(更新前/後のデータ)</li>
+  </ul></li>
+<li><strong>DynamoDB Transactions</strong>:複数アイテムの更新を「全成功 or 全失敗」にするACIDトランザクション。<code>TransactWriteItems</code>(複数書き込み)、<code>TransactGetItems</code>(複数読み取り)。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 1 blue "アプリ"
+node dax 1.3 0 box "DAX" "キャッシュ(μ秒)"
+node ddb 1.3 1 accent "DynamoDB"
+node st 2.6 1 box "Streams" "変更を記録"
+node fn 3.9 1 ok "Lambda" "ポーリングして処理"
+edge app dax "読み取り"
+edge dax ddb
+edge app ddb "書き込み"
+edge ddb st
+edge st fn
+<figcaption>図3 DAXとDynamoDB Streams。DAXは読み取りをマイクロ秒レベルに高速化するキャッシュ。Streamsはテーブルの変更を記録し、Lambdaがポーリングして後続処理を行う(若干の遅延あり)。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>セッション管理・ユーザープロファイル(TTLで自動削除)</li>
+<li>大量アクセスのあるゲーム・EC・IoTのデータ保存</li>
+<li>変更をトリガーにした後続処理(Streams+Lambda)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>性能は<strong>キャパシティユニット</strong>で表し、テーブルが1秒間にどれだけ読み書きできるかを示します(1RCU/1WCU=1KB/秒が基準)。</p>
+<ul>
+<li><strong class="em">RCU(読み込みキャパシティユニット)</strong>:<strong>整合性の違いで消費量が変わる</strong>(強い整合性のほうが多く消費)。</li>
+<li><strong class="em">WCU(書き込みキャパシティユニット)</strong></li>
+</ul>
+<p>1RCUは「4KBまでのアイテムを強い整合性で1回/秒、結果整合性なら2回/秒」、1WCUは「1KBまでのアイテムを1回/秒」書き込めます。料金モードは、容量を事前に指定する<strong>プロビジョンド</strong>と、リクエスト数に応じて課金される<strong>オンデマンド</strong>の2種類です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="lambda.html">AWS Lambda</a>:DynamoDB Streamsの処理</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:正確な時刻での削除処理</li>
+<li><a href="elasticache.html">Amazon ElastiCache</a>:汎用的なキャッシュ</li>
+<li><a href="rds.html">Amazon RDS</a>:リレーショナルDBの選択肢</li>
+<li><a href="database-encryption-sdk.html">AWS Database Encryption SDK</a>:クライアント側での属性暗号化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>パーティションキーは<strong>値が分散するもの</strong>を選ぶ(偏るとホットパーティション)。</li>
+<li>後からインデックスを追加 → <strong>GSI</strong>のみ可能。LSIはテーブル作成時のみ。</li>
+<li>GSIは<strong>結果整合性のみ</strong>。強い整合性が必要ならベーステーブルかLSI。</li>
+<li>読み取りをマイクロ秒に → <strong>DAX</strong>。</li>
+<li>変更をトリガーに処理 → <strong>Streams+Lambda</strong>。</li>
+<li><code>UnprocessedKeys</code> → <strong>指数バックオフでリトライ</strong>。</li>
+<li>全件取得の <code>Scan</code> は高コスト。可能なら <code>Query</code>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>DynamoDBはキーバリュー型のフルマネージドNoSQL。</li>
+<li>キー設計(パーティションキー・ソートキー・LSI/GSI)が性能を左右する。</li>
+<li>DAX・Streams・TTL・Transactionsで機能を拡張できる。</li>
+</ul>
+</section>

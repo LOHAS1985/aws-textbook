@@ -1,0 +1,121 @@
+<!-- title: AWS Security Hub -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: セキュリティ検出結果を集約し、基準への準拠状況を一元管理 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Security Hub</strong>は、AWSアカウント単位で<strong>セキュリティの検出結果を集約</strong>し、<strong>コンプライアンス基準への準拠状況を一元管理</strong>するサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li><strong>リージョン単位で有効化</strong>が必要。</li>
+<li>Organizations全体を管理する場合は、<strong>委任管理者アカウント</strong>を使う。</li>
+</ul>
+<h3>集約する主なサービス</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>検出する内容</th></tr>
+<tr><td>GuardDuty</td><td>不審なAPI操作、マルウェア</td></tr>
+<tr><td>Inspector</td><td>EC2・ECR・Lambdaの脆弱性</td></tr>
+<tr><td>Macie</td><td>S3内の機密データや公開リスク</td></tr>
+<tr><td>Config</td><td>リソース設定の非準拠</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 170 70
+node gd 0 0 blue "GuardDuty" "脅威"
+node ins 0 1 blue "Inspector" "脆弱性"
+node mac 0 2 blue "Macie" "機密データ"
+node cfg 0 3 blue "Config" "設定の非準拠"
+node sh 1.5 1 accent "Security Hub" "集約・基準チェック" h=2
+edge gd sh
+edge ins sh
+edge mac sh
+edge cfg sh
+<figcaption>図1 Security Hubは各セキュリティサービスの検出結果を集約し、CISやPCI DSSなどの基準への準拠状況をまとめて確認できる。</figcaption>
+</figure>
+<h3>セキュリティチェック</h3>
+<ul>
+<li>代表的なセキュリティ基準:AWS基礎セキュリティのベストプラクティス、CIS AWS Foundations Benchmark、PCI DSS</li>
+<li>チェック内容の例:S3バケットが公開されていないか、CloudTrailが有効か、IAMユーザーにMFAが設定されているか</li>
+<li>評価結果:<code>COMPLIANT</code>(準拠)、<code>FAILED</code>/<code>NON_COMPLIANT</code>(非準拠)、<code>UNKNOWN</code>/<code>NOT_AVAILABLE</code>(確認不能)</li>
+</ul>
+
+<h3>Security Hub Insights</h3>
+<p>検出結果をグループ化して可視化する機能です。</p>
+
+<h3>インシデント対応の自動化</h3>
+<p>例:公開されたセキュリティグループの修復</p>
+<ol>
+<li>Security Hubが検出</li>
+<li>EventBridgeルールで重要度や種類を判定</li>
+<li>Systems Manager AutomationまたはLambdaを起動</li>
+<li>危険なインバウンドルールを削除</li>
+<li>Security Hubで再評価</li>
+</ol>
+
+<figure class="figure" data-diagram>
+grid 170 85
+node sh 0 0 accent "Security Hub" "問題を検出"
+node eb 1.3 0 box "EventBridge" "ルールで判定"
+node ssm 2.6 0 box "SSM Automation" "または Lambda"
+node fix 3.9 0 ok "設定を修復" "危険なルールを削除"
+edge sh eb
+edge eb ssm
+edge ssm fix
+<figcaption>図2 インシデント対応の自動化。検出結果をEventBridgeで受けてSSM AutomationやLambdaを起動し、問題の設定を修復する。修復後はSecurity Hubで再評価される。</figcaption>
+</figure>
+<h3>関連サービスとの役割分担(Audit Managerとの統合)</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>役割</th></tr>
+<tr><td>Security Hub</td><td>セキュリティ基準・コントロールに基づく継続的な評価</td></tr>
+<tr><td>Audit Manager</td><td>監査フレームワークに沿った証拠の収集・整理・レビュー</td></tr>
+<tr><td>AWS Config</td><td>リソース設定の記録とコンプライアンス評価</td></tr>
+<tr><td>CloudTrail</td><td>API操作の監査証跡</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>複数のセキュリティサービスの検出結果を1つの画面で確認</li>
+<li>CISやPCI DSSへの準拠状況の継続的なチェック</li>
+<li>組織全体のセキュリティ状況を管理アカウントに集約</li>
+<li>非準拠の設定の自動修復</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>セキュリティチェックの実行回数と、取り込んだ検出結果の数に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="macie.html">Amazon Macie</a>:S3の機密データ検出</li>
+<li><a href="config.html">AWS Config</a>:設定の準拠評価</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:API操作の証跡</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:自動対応のトリガー</li>
+<li><a href="systems-manager.html">AWS Systems Manager</a>:Automationによる修復</li>
+<li><a href="organizations.html">AWS Organizations</a>:委任管理者</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>複数のセキュリティサービスの結果を<strong>集約</strong> → Security Hub。</li>
+<li>有効化は<strong>リージョンごと</strong>。組織全体は<strong>委任管理者</strong>。</li>
+<li>自動修復 → <strong>EventBridge+SSM Automation/Lambda</strong>。</li>
+<li>監査の証拠集め → <strong>Audit Manager</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Security Hubはセキュリティ検出結果の集約と、基準への準拠チェックを行う。</li>
+<li>EventBridgeと組み合わせてインシデント対応を自動化できる。</li>
+</ul>
+</section>

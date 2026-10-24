@@ -1,0 +1,57 @@
+<!-- title: EC2の障害を検知して自動で復旧する -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: ステータスチェックの失敗をアラームで検知し、復旧・再起動を自動で行う -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>EC2が障害で応答しなくなったときに、人手を介さず自動で復旧させたい。物理ホストの障害とOS内の問題とで、適切な対処を分けたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 160 85
+node ec2 0 0.5 blue "EC2" "ステータスチェック"
+node cw 1.25 0.5 box "CloudWatch\nアラーム" "StatusCheckFailed"
+node rec 2.5 0 ok "復旧アクション" "別ホストで復旧"
+node eb 2.5 1 box "EventBridge" "アラームの状態変化"
+node sns 3.75 0 ok "SNS" "通知"
+node ssm 3.75 1 accent "SSM Automation" "再起動ランブック"
+edge ec2 cw
+edge cw rec "システム"
+edge cw eb "インスタンス"
+edge rec sns
+edge eb ssm
+<figcaption>図1 ステータスチェックの失敗をCloudWatchアラームで検知する。ハードウェア側の障害(システムステータスチェック)は復旧アクションで別の物理ホストに移し、OS側の問題(インスタンスステータスチェック)は再起動などで対処する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/ec2.html">Amazon EC2</a>:ステータスチェックのメトリクス(<code>StatusCheckFailed</code>)</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:アラームで障害を検知し、EC2のアクション(復旧・再起動)を実行する</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:アラームの状態変化をきっかけに自動処理を起動する</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Automationランブック(例:<code>AWS-RestartEC2Instance</code>)で復旧手順を実行する</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:復旧したことの通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li><code>StatusCheckFailed_System</code> にアラームを作成し、アクションに「インスタンスの復旧」を設定する</li>
+<li><code>StatusCheckFailed_Instance</code> にアラームを作成し、EventBridgeルールでアラームの状態変化を検知する</li>
+<li>EventBridgeのターゲットにSSM Automation(再起動のランブック)を指定する</li>
+<li>SNSで運用担当者に通知する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li><strong>システムステータスチェック</strong>の失敗はAWS側(ホスト)の問題 → 復旧アクション(停止・起動でも別ホストへ移る)。</li>
+<li><strong>インスタンスステータスチェック</strong>の失敗はOS・設定の問題 → 再起動や設定の修正が必要。</li>
+<li>復旧アクションではインスタンスID・プライベートIP・EBSのデータは引き継がれるが、<strong>インスタンスストアのデータは失われる</strong>。</li>
+<li>手順の多い復旧処理は、<strong>SSM Automation</strong>でランブック化しておく。</li>
+</ul></div>
+</section>

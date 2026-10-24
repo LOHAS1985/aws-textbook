@@ -1,0 +1,332 @@
+<!-- title: AWS Systems Manager -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: EC2・オンプレミスを含むシステム運用を一元管理・自動化する機能の集合体 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Systems Manager(SSM)</strong>は、EC2・オンプレミス・他クラウドのサーバーを含む<strong>システム運用を一元管理・自動化</strong>するためのサービスです。1つのサービスというより、<strong>「接続」「コマンド実行」「パッチ適用」「設定値の管理」「運用の自動化」などの機能の集合体</strong>です。</p>
+<p>機能は次の4つの分類に分かれています。このページでは、共通の仕組みを説明したあと、機能を1つずつ紹介します。</p>
+<div class="table-wrap"><table>
+<tr><th>分類</th><th>機能</th></tr>
+<tr><td>ノード管理</td><td><a href="#f-session">Session Manager</a>、<a href="#f-run">Run Command</a>、<a href="#f-state">State Manager</a>、<a href="#f-patch">Patch Manager</a>、<a href="#f-inventory">Inventory</a>、<a href="#f-compliance">Compliance</a>、<a href="#f-fleet">Fleet Manager</a>、<a href="#f-distributor">Distributor</a>、<a href="#f-hybrid">ハイブリッドアクティベーション</a></td></tr>
+<tr><td>変更管理</td><td><a href="#f-automation">Automation</a>、<a href="#f-mw">Maintenance Windows</a>、<a href="#f-change">Change Manager</a>、<a href="#f-calendar">Change Calendar</a></td></tr>
+<tr><td>アプリケーション管理</td><td><a href="#f-param">Parameter Store</a>、<a href="#f-appconfig">AppConfig</a></td></tr>
+<tr><td>運用管理</td><td><a href="#f-opscenter">OpsCenter</a>、<a href="#f-explorer">Explorer</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>共通の仕組み:SSM AgentとSSMドキュメント</h3>
+<p><strong>SSM Agent</strong>は、サーバーにインストールしてSystems Managerとの橋渡しをするソフトウェアです。Amazon Linux・Windows Serverなどの多くのAMIには最初から入っています。Agentの方からSystems Managerへ接続しに行く(ポーリングする)ため、<strong>サーバー側のインバウンドポートを開ける必要がありません</strong>。</p>
+<ol>
+<li>SSM AgentがSystems ManagerのエンドポイントへHTTPS(443)で接続し、指示を待つ</li>
+<li>Systems Managerからタスク(コマンド・パッチ適用など)が届く</li>
+<li>Agentがサーバー上で実行し、結果をSystems Managerへ返す</li>
+</ol>
+<figure class="figure" data-diagram>
+grid 170 85
+node admin 0 0.5 blue "管理者" "コンソール / CLI"
+node ssm 1.4 0.5 accent "Systems Manager"
+node ec2 2.8 0 box "EC2" "SSM Agent"
+node onp 2.8 1 box "オンプレミス" "SSM Agent"
+group 2.8 0 2.8 1 "管理対象ノード" pad=12
+edge admin ssm "IAMで認証"
+edge ec2 ssm "HTTPS"
+edge onp ssm "HTTPS"
+<figcaption>図1 Systems Managerの仕組み。各ノードのSSM AgentがSystems ManagerへHTTPSで接続し、届いたタスクを実行して結果を返す。インバウンドのポートを開ける必要はない。</figcaption>
+</figure>
+<p>Systems Managerで管理できるサーバーを<strong>管理対象ノード</strong>と呼びます。EC2を管理対象ノードにするには、次の3つがそろっている必要があります。</p>
+<ul>
+<li><strong>SSM Agent</strong>がインストールされ、起動している</li>
+<li>インスタンスのIAMロールに <code>AmazonSSMManagedInstanceCore</code> などの<strong>権限</strong>がある(またはアカウント全体の設定「デフォルトのホスト管理設定」を有効にする)</li>
+<li>Systems Managerのエンドポイントへの<strong>アウトバウンド通信</strong>ができる(NATゲートウェイ、または <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のVPCエンドポイント)</li>
+</ul>
+<p><strong>SSMドキュメント</strong>は、Systems Managerが実行する処理を定義したJSON/YAMLのファイルです。AWSが用意したもの(<code>AWS-</code> で始まる)をそのまま使うことも、自作することもできます。Run Command用の「コマンドドキュメント」、Automation用の「ランブック」などの種類があります。</p>
+
+<h3>ノード管理の機能</h3>
+
+<div class="feature" id="f-session">
+<h4>Session Manager</h4>
+<p>ブラウザやCLIから、<strong>SSH・RDPのポートを開けずに</strong>サーバーへ接続してシェルを操作できる機能です。</p>
+<dl>
+<dt>できること</dt><dd>シェルでの操作、ポートフォワーディング(手元のPCからRDSなどへ接続)、SSHのトンネル</dd>
+<dt>特徴</dt><dd>踏み台サーバー・SSHキー・パブリックIPが不要。誰が接続できるかはIAMで制御し、操作ログをS3やCloudWatch Logsに保存できる。通信はKMSで暗号化できる</dd>
+<dt>使いどころ</dt><dd>プライベートサブネットのEC2に安全にログインしたい</dd>
+</dl>
+<figure class="figure" data-diagram>
+grid 160 85
+node admin 0 0 blue "管理者" "ブラウザ / CLI"
+node sm 1.35 0 accent "Session Manager" "IAMで認可"
+node ec2 2.75 0 ok "EC2" "プライベート"
+node log 1.35 1.05 box "操作ログ" "S3・CloudWatch Logs" w=1.3
+edge admin sm
+edge ec2 sm "HTTPS(外向き)"
+edge sm log dash
+<figcaption>図2 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。</figcaption>
+</figure>
+</div>
+
+<div class="feature" id="f-run">
+<h4>Run Command</h4>
+<p>多数のサーバーに、<strong>コマンドやスクリプトを一括で実行</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>シェルスクリプト(<code>AWS-RunShellScript</code>)やPowerShell(<code>AWS-RunPowerShellScript</code>)の実行、ソフトウェアのインストール、サービスの再起動など</dd>
+<dt>特徴</dt><dd>対象はインスタンスIDのほか<strong>タグ</strong>やリソースグループで指定できる。<strong>同時実行数</strong>と<strong>エラーのしきい値</strong>で、少しずつ安全に実行できる。実行結果はS3・CloudWatch Logsに出力でき、SNSで完了を通知できる</dd>
+<dt>使いどころ</dt><dd>その場で1回だけ、複数台に同じ作業をしたい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-state">
+<h4>State Manager</h4>
+<p>サーバーを<strong>決めた状態に保ち続ける</strong>機能です。</p>
+<dl>
+<dt>できること</dt><dd><strong>関連付け(Association)</strong>で「どのノードに、どのドキュメントを、どのスケジュールで適用するか」を定義する。例:「タグ Role=Web のEC2に、30分ごとにApacheが起動していることを確認し、止まっていれば起動する」</dd>
+<dt>特徴</dt><dd>新しく起動したノードにも自動で適用される。設定がずれても(ドリフト)、次の実行で元に戻る</dd>
+<dt>使いどころ</dt><dd>CloudWatchエージェントやウイルス対策ソフトを、全サーバーで常に動かしておきたい</dd>
+</dl>
+<p>Run Commandが「1回だけ実行」なのに対し、State Managerは「繰り返し実行して状態を保つ」点が違います。</p>
+</div>
+
+<div class="feature" id="f-patch">
+<h4>Patch Manager</h4>
+<p>OS(と一部のアプリ)の<strong>パッチ適用を自動化</strong>する機能です。</p>
+<dl>
+<dt>構成要素</dt><dd><strong>パッチベースライン</strong>(どのパッチを承認するか。例:重要度Criticalのパッチをリリース7日後に自動承認)、<strong>パッチグループ</strong>(タグで対象ノードを分類)</dd>
+<dt>実行方法</dt><dd><code>AWS-RunPatchBaseline</code> ドキュメントを、Maintenance Windowsやパッチポリシー(Quick Setup)で定期的に実行する。<strong>Scan</strong>(不足パッチの確認のみ)と<strong>Install</strong>(適用)を選べる</dd>
+<dt>使いどころ</dt><dd>多数のサーバーに、決まった時間帯に計画的にパッチを当てたい</dd>
+</dl>
+<figure class="figure" data-diagram>
+grid 170 80
+node bl 1.4 0 box "パッチベースライン" "承認するパッチ"
+node mw 0 1 blue "メンテナンス\nウィンドウ" "日時を指定"
+node rc 1.4 1 accent "Run Command" "パッチ適用を実行"
+node pg 1.4 2 box "パッチグループ" "タグで対象を分類"
+node ec2 2.8 1 ok "対象のEC2"
+edge mw rc "起動"
+edge bl rc dash
+edge pg rc dash
+edge rc ec2
+<figcaption>図3 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。</figcaption>
+</figure>
+</div>
+
+<div class="feature" id="f-inventory">
+<h4>Inventory</h4>
+<p>サーバーの<strong>ソフトウェアや設定の情報を収集</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>OSのバージョン、インストール済みのアプリ、ネットワーク設定、Windowsの更新プログラムなどを定期的に収集する</dd>
+<dt>特徴</dt><dd><strong>リソースデータの同期</strong>で、複数アカウント・リージョンの情報をS3に集め、Athenaで分析できる</dd>
+<dt>使いどころ</dt><dd>「特定のバージョンのソフトが入っているサーバーはどれか」を調べたい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-compliance">
+<h4>Compliance</h4>
+<p>管理対象ノードが<strong>ルールに準拠しているか</strong>を一覧で確認する機能です。</p>
+<dl>
+<dt>できること</dt><dd>Patch Managerのパッチ適用状況と、State Managerの関連付けの適用状況を、「準拠/非準拠」で表示する</dd>
+<dt>使いどころ</dt><dd>パッチを当てられていないサーバーを見つけたい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-fleet">
+<h4>Fleet Manager</h4>
+<p>サーバーを<strong>コンソール上のGUIで管理</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>ファイルの閲覧、CPU・メモリなどの状態の確認、ログの確認、OSのユーザー管理、Windowsのレジストリ操作。WindowsにはブラウザからRDPで接続できる</dd>
+<dt>使いどころ</dt><dd>ログインせずに、サーバーの状態をまとめて確認したい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-distributor">
+<h4>Distributor</h4>
+<p>ソフトウェアを<strong>パッケージにして配布</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>AWSが用意したパッケージ(CloudWatchエージェントなど)や自社のソフトを、Run Command(1回)やState Manager(継続)でインストール・更新する</dd>
+<dt>使いどころ</dt><dd>社内の監視エージェントを全サーバーに配りたい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-hybrid">
+<h4>ハイブリッドアクティベーション</h4>
+<p><strong>オンプレミスや他クラウドのサーバー</strong>を、管理対象ノードとして登録する仕組みです。</p>
+<dl>
+<dt>手順</dt><dd>Systems Managerでアクティベーション(コードとID)を作成し、サーバーにSSM Agentを入れて登録する。登録されたサーバーは <code>mi-</code> で始まるIDで管理される</dd>
+<dt>使いどころ</dt><dd>EC2とオンプレミスのサーバーを、同じ方法でパッチ適用・コマンド実行したい</dd>
+</dl>
+</div>
+
+<h3>変更管理の機能</h3>
+
+<div class="feature" id="f-automation">
+<h4>Automation</h4>
+<p><strong>ランブック</strong>(複数のステップからなる手順書)に従って、運用作業を自動で実行する機能です。サーバーの中だけでなく、<strong>AWSのAPIを呼び出してリソースを操作</strong>できる点がRun Commandと違います。</p>
+<dl>
+<dt>ランブックの例</dt><dd><code>AWS-RestartEC2Instance</code>(インスタンスの再起動)、<code>AWS-StopEC2Instance</code>(停止)、<code>AWS-CreateImage</code>(AMIの作成)、<code>AWS-UpdateLinuxAmi</code>(パッチ適用済みのAMIの作成)、<code>AWS-DisablePublicAccessForSecurityGroup</code>(SGの公開設定の削除)</dd>
+<dt>実行のきっかけ</dt><dd>手動、EventBridgeのルール、<a href="config.html">AWS Config</a>の修復アクション、Maintenance Windows、CloudWatchアラーム</dd>
+<dt>特徴</dt><dd>途中に<strong>承認のステップ</strong>を入れられる。複数のアカウント・リージョンで一度に実行できる。同時実行数とエラーのしきい値を設定できる</dd>
+<dt>使いどころ</dt><dd>障害の復旧手順や、設定違反の自動修復を、毎回同じ手順で確実に行いたい</dd>
+</dl>
+<figure class="figure" data-diagram>
+grid 165 85
+node cfg 0 0 box "Config" "ルール違反を検出"
+node eb 0 1 box "EventBridge" "イベント・スケジュール"
+node au 1.45 0.5 accent "Automation" "ランブックを実行"
+node ap 2.9 0 blue "承認" "必要なら人が確認"
+node res 2.9 1 ok "AWSリソースを操作" "停止・修正・AMI作成" w=1.15
+edge cfg au "修復"
+edge eb au
+edge au ap dash
+edge au res
+<figcaption>図4 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。</figcaption>
+</figure>
+</div>
+
+<div class="feature" id="f-mw">
+<h4>Maintenance Windows</h4>
+<p>運用作業を実行してよい<strong>時間帯(メンテナンスウィンドウ)</strong>を決め、その時間に作業を自動で実行する機能です。</p>
+<dl>
+<dt>設定内容</dt><dd>スケジュール(cron式など)、時間の長さ、新しいタスクを開始しない締め切り時間、対象(ターゲット)、実行するタスク</dd>
+<dt>実行できるタスク</dt><dd>Run Command、Automation、Lambda関数、Step Functionsのステートマシン</dd>
+<dt>使いどころ</dt><dd>パッチ適用やバックアップを、業務時間外に実行したい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-change">
+<h4>Change Manager</h4>
+<p>本番環境への変更の<strong>申請・承認・実行</strong>を管理する機能です。</p>
+<dl>
+<dt>できること</dt><dd>変更テンプレートで、必要な承認者と実行するランブックを決めておく。申請が承認されると、Automationで変更が実行される</dd>
+<dt>使いどころ</dt><dd>本番環境の変更に、承認のワークフローを必ず通したい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-calendar">
+<h4>Change Calendar</h4>
+<p>変更を<strong>してよい期間・してはいけない期間</strong>をカレンダーで定義する機能です。</p>
+<dl>
+<dt>できること</dt><dd>期間を「OPEN(変更可)」「CLOSED(変更禁止)」で管理する。AutomationやChange Managerは、CLOSEDの期間には実行を止められる</dd>
+<dt>使いどころ</dt><dd>年末のセール期間中は本番環境を変更しないようにしたい</dd>
+</dl>
+</div>
+
+<h3>アプリケーション管理の機能</h3>
+
+<div class="feature" id="f-param">
+<h4>Parameter Store</h4>
+<p>アプリの<strong>設定値や機密情報を保存</strong>するキーバリューストアです。</p>
+<dl>
+<dt>パラメータの種類</dt><dd><code>String</code>(通常の文字列)、<code>StringList</code>(カンマ区切り)、<code>SecureString</code>(<strong>KMSで暗号化</strong>した機密情報)</dd>
+<dt>階層と履歴</dt><dd><code>/prod/db/endpoint</code> のように階層で整理し、IAMでパスごとにアクセスを制御できる。値を変更するとバージョンが残る</dd>
+<dt>標準とアドバンスト</dt><dd>標準は無料(1つ4KBまで)。アドバンストは有料で、8KBまでの値と、有効期限などのポリシーを使える</dd>
+<dt>使いどころ</dt><dd>DBの接続先やAPIキーを、コードから切り離して管理したい。CloudFormationやECS・Lambdaからも参照できる</dd>
+</dl>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Parameter Store</th><th><a href="secrets-manager.html">Secrets Manager</a></th></tr>
+<tr><td>主な用途</td><td>設定値全般(機密情報も可)</td><td>機密情報</td></tr>
+<tr><td>自動ローテーション</td><td>なし</td><td><strong>あり</strong>(RDSのパスワードなど)</td></tr>
+<tr><td>料金</td><td>標準パラメータは無料</td><td>シークレットごとに月額料金</td></tr>
+</table></div>
+</div>
+
+<div class="feature" id="f-appconfig">
+<h4>AppConfig</h4>
+<p>アプリの設定(機能フラグなど)の変更を、<strong>段階的に安全に配布</strong>する機能です。設定ミスが全員に一斉に反映されて障害になるのを防ぎます。</p>
+<dl>
+<dt>流れ</dt><dd>新しい設定のバージョンを作成 → Validator(JSONスキーマやLambda)で検証 → 一部のクライアントから段階的に配布 → CloudWatchアラームで監視し、異常なら<strong>自動でロールバック</strong></dd>
+<dt>使いどころ</dt><dd>アプリを再デプロイせずに、設定や機能のON/OFFを安全に切り替えたい</dd>
+</dl>
+<figure class="figure" data-diagram>
+grid 150 85
+node v 0 0 blue "新しい設定" "バージョン作成"
+node val 1 0 box "Validator" "型・必須キー"
+node dep 2 0 accent "段階デプロイ" "一部に配布"
+node mon 3 0 box "CloudWatch" "アラームで監視"
+node ok 4 0 ok "全体へ" "正常なら"
+node ng 3 1 ng "ロールバック" "異常なら"
+edge v val
+edge val dep
+edge dep mon
+edge mon ok
+edge mon ng
+<figcaption>図5 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。</figcaption>
+</figure>
+</div>
+
+<h3>運用管理の機能</h3>
+
+<div class="feature" id="f-opscenter">
+<h4>OpsCenter</h4>
+<p>運用上の問題を<strong>OpsItem</strong>として1か所に集め、調査・対応を管理する機能です。</p>
+<dl>
+<dt>できること</dt><dd>CloudWatchアラームやEventBridgeのイベントからOpsItemを自動で作成する。関連するリソースの情報やログをまとめて表示し、OpsItemから<strong>Automationのランブックを実行</strong>して対応できる</dd>
+<dt>使いどころ</dt><dd>アラートを一覧で管理し、決まった手順ですばやく対応したい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-explorer">
+<h4>Explorer</h4>
+<p>運用データを<strong>ダッシュボードで横断的に表示</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>OpsItemの件数、パッチの準拠状況、インスタンスの数などを、複数のアカウント・リージョンにまたがって表示する</dd>
+<dt>使いどころ</dt><dd>組織全体の運用状況をひと目で把握したい</dd>
+</dl>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>踏み台サーバーなしでプライベートサブネットのEC2にログインする(Session Manager)</li>
+<li>数百台のサーバーへ、毎週決まった時間にパッチを適用する(Patch Manager+Maintenance Windows)</li>
+<li>Configで検出した設定違反を自動で修復する(Automation)</li>
+<li>全サーバーでCloudWatchエージェントが動いている状態を保つ(State Manager+Distributor)</li>
+<li>アプリの設定値・パスワードを集中管理する(Parameter Store)</li>
+<li>機能フラグを段階的に有効にし、問題があれば自動で戻す(AppConfig)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Session Manager・Run Command・State Manager・Patch Manager・Inventory・Parameter Store(標準パラメータ)など、多くの機能は<strong>追加料金なし</strong>で使えます(EC2・S3・CloudWatch Logsなど、使ったほかのサービスの料金はかかります)。</p>
+<p>有料になるのは、Parameter Storeのアドバンストパラメータや高スループット設定、Automationのステップ実行、AppConfigの設定の取得、OpsCenterのOpsItem、オンプレミスのアドバンストインスタンス(Session Managerで接続する場合など)です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:管理対象ノード</li>
+<li><a href="iam.html">AWS IAM</a>:インスタンスのロール、Session Managerの接続権限</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>:自動ローテーションが必要な機密情報</li>
+<li><a href="kms.html">AWS KMS</a>:SecureStringやセッションの暗号化</li>
+<li><a href="config.html">AWS Config</a>/<a href="security-hub.html">AWS Security Hub</a>:Automationによる修復の起点</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:AutomationやOpsCenterのトリガー</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ログの保存先、AppConfigのロールバック条件</li>
+<li><a href="athena.html">Amazon Athena</a>:Inventoryのデータの分析</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(NATまたはVPCエンドポイント)</strong>を確認。</li>
+<li>ポート22を開けずに安全にログイン、操作ログも残したい → <strong>Session Manager</strong>。</li>
+<li>複数サーバーへ1回だけ一括でコマンド → <strong>Run Command</strong>。状態を保ち続ける → <strong>State Manager</strong>。</li>
+<li>定期的なパッチ適用 → <strong>Patch Manager+Maintenance Windows</strong>。適用状況の確認 → <strong>Compliance</strong>。</li>
+<li>AWSリソースの操作を含む復旧・修復の自動化 → <strong>Automationランブック</strong>(Configの修復アクションからも実行)。</li>
+<li>変更禁止期間を設けたい → <strong>Change Calendar</strong>。変更に承認を必須にしたい → <strong>Change Manager</strong>。</li>
+<li>設定値の保存 → <strong>Parameter Store</strong>。パスワードの自動ローテーション → <strong>Secrets Manager</strong>。</li>
+<li>設定変更の段階デプロイと自動ロールバック → <strong>AppConfig</strong>。</li>
+<li>オンプレミスのサーバーも管理したい → <strong>ハイブリッドアクティベーション</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Systems Managerは運用管理機能の集合体。SSM Agentを通じてサーバーを管理する。</li>
+<li>ノード管理:接続はSession Manager、コマンドはRun Command、状態維持はState Manager、パッチはPatch Manager。</li>
+<li>変更管理:手順の自動化はAutomation、時間帯はMaintenance Windows、承認・禁止期間はChange Manager・Change Calendar。</li>
+<li>アプリ管理:設定値はParameter Store、設定の安全な配布はAppConfig。運用管理はOpsCenter・Explorer。</li>
+</ul>
+</section>

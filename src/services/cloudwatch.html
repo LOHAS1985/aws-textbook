@@ -1,0 +1,171 @@
+<!-- title: Amazon CloudWatch -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: システムの状態を記録・監視・通知する統合監視サービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon CloudWatch</strong>は、AWS上のシステムの状態を<strong>記録・監視・通知</strong>するための統合監視サービスです。メトリクス(数値)とログの両方を扱います。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node ec2 0 0 blue "EC2・RDS など" "標準メトリクス"
+node agent 0 1 blue "エージェント" "メモリ・ログを送信"
+node app 0 2 blue "アプリ" "PutMetricData・ログ"
+node met 1.4 0.5 accent "メトリクス"
+node logs 1.4 1.5 accent "Logs" "ロググループ"
+group 1.4 0.5 1.4 1.5 "CloudWatch" pad=12
+node alarm 2.8 0.5 box "アラーム" "しきい値を監視"
+node act 2.8 1.5 ok "通知・スケール" "SNS / Auto Scaling"
+edge ec2 met
+edge agent met
+edge agent logs
+edge app logs
+edge logs met "数値化"
+edge met alarm
+edge alarm act
+<figcaption>図1 CloudWatchの全体像。各サービスの標準メトリクスに加え、エージェントやアプリからカスタムメトリクス・ログを送る。ログはメトリクスフィルターで数値化でき、アラームでしきい値を監視してSNS通知やAuto Scalingを実行する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>メトリクス・アラーム・ダッシュボード</h3>
+<ul>
+<li><strong>メトリクス</strong>:リソースの時系列の数値データ。
+  <ul>
+  <li>デフォルトは<strong>5分間隔</strong>(詳細モニタリングで1分間隔)。</li>
+  <li>アプリから<strong>カスタムメトリクス</strong>を送信できる(<code>PutMetricData</code> API)。カスタムメトリクス=標準にないメトリクス。<strong class="em">EC2のメモリ・ディスク使用率は標準メトリクスにない</strong>。</li>
+  </ul></li>
+<li><strong>アラーム</strong>:しきい値を設定し、異常時にアクションを実行。メトリクスを選択 → しきい値と比較演算子 → 評価期間を設定。連携先はSNS通知・Auto Scaling・EC2の再起動など。</li>
+<li><strong>ダッシュボード</strong>:クロスアカウント/クロスリージョンのメトリクスもまとめて表示できる。</li>
+</ul>
+
+<h3>主な標準メトリクス</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>メトリクス</th><th>意味</th><th>用途・ポイント</th></tr>
+<tr><td rowspan="3">EC2</td><td><code>CPUUtilization</code></td><td>CPU使用率</td><td>Auto Scalingのトリガー(例:70%以上でスケールアウト)</td></tr>
+<tr><td><code>StatusCheckFailed</code></td><td>インスタンス異常</td><td>インスタンス障害の検知</td></tr>
+<tr><td><code>NetworkIn</code>/<code>NetworkOut</code></td><td>通信量</td><td>異常トラフィックの検知</td></tr>
+<tr><td rowspan="4">Lambda</td><td><code>Invocations</code></td><td>実行回数</td><td>トラフィック量の把握</td></tr>
+<tr><td><code>Errors</code></td><td>エラー回数</td><td>異常検知</td></tr>
+<tr><td><code>Duration</code></td><td>実行時間</td><td>タイムアウト/性能問題</td></tr>
+<tr><td><code>Throttles</code></td><td>スロットリング回数</td><td>同時実行制限超過の検知</td></tr>
+<tr><td rowspan="3">ALB</td><td><code>RequestCount</code></td><td>リクエスト数</td><td>負荷状況の把握</td></tr>
+<tr><td><code>TargetResponseTime</code></td><td>応答時間</td><td>レイテンシー監視</td></tr>
+<tr><td><code>HTTPCode_Target_5XX_Count</code></td><td>ターゲットの5xx</td><td>アプリ側エラーの検知</td></tr>
+<tr><td rowspan="3">DynamoDB</td><td><code>ConsumedReadCapacityUnits</code></td><td>読み込み消費量</td><td>キャパシティ設計</td></tr>
+<tr><td><code>ConsumedWriteCapacityUnits</code></td><td>書き込み消費量</td><td>キャパシティ設計</td></tr>
+<tr><td><code>ThrottledRequests</code></td><td>スロットリング</td><td>キャパシティ不足の検知</td></tr>
+<tr><td rowspan="3">SQS</td><td><code>ApproximateNumberOfMessagesVisible</code></td><td>キュー内のメッセージ数</td><td>バックログ監視</td></tr>
+<tr><td><code>NumberOfMessagesSent</code></td><td>送信数</td><td>トラフィック量</td></tr>
+<tr><td><code>NumberOfMessagesDeleted</code></td><td>処理完了数</td><td>コンシューマーの処理能力</td></tr>
+<tr><td rowspan="3">API Gateway</td><td><code>Count</code></td><td>リクエスト数</td><td>API利用状況</td></tr>
+<tr><td><code>Latency</code></td><td>レイテンシー</td><td>パフォーマンス</td></tr>
+<tr><td><code>5XXError</code></td><td>サーバーエラー</td><td>バックエンド障害の検知</td></tr>
+<tr><td rowspan="3">RDS</td><td><code>CPUUtilization</code></td><td>CPU使用率</td><td>DB負荷監視</td></tr>
+<tr><td><code>DatabaseConnections</code></td><td>接続数</td><td>コネクション枯渇の検知</td></tr>
+<tr><td><code>FreeStorageSpace</code></td><td>空き容量</td><td>ストレージ枯渇の検知</td></tr>
+</table></div>
+
+<h3>CloudWatch Logs</h3>
+<p>ログの収集・保存・検索・分析を行います。</p>
+<ul>
+<li>用語:<strong>ロググループ</strong>(アプリ・サービス単位)、<strong>ログストリーム</strong>(インスタンスや実行単位)、<strong>ログイベント</strong>(実際のログ1行)</li>
+<li>収集方法:Lambda・API GatewayなどはAWSサービスから自動出力。EC2は<strong>CloudWatchエージェント</strong>をインストールして送信。</li>
+<li>分析
+  <ul>
+  <li><strong>Logs Insights</strong>:SQLライクなクエリでログを分析</li>
+  <li><strong class="em">メトリクスフィルター</strong>:ログからメトリクスを生成(例:"error"が出たらアラーム+SNSで通知)</li>
+  <li><strong class="em">サブスクリプションフィルター</strong>:ログを他サービスへリアルタイムにストリーミング</li>
+  </ul></li>
+<li><strong>データ保護ポリシー</strong>:ログに含まれる機密情報を検出してマスキング</li>
+<li><strong>保持期間</strong>:デフォルトは<strong>無期限</strong>(1日〜10年で指定可能)。短期・頻繁に検索するログはCloudWatch Logs、長期・たまに検索するログはS3(Standard-IA・Glacierなど)へ。</li>
+<li><strong>暗号化</strong>:KMSキーを関連付ける(<code>associate-kms-key</code>)</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 175 90
+node log 0 0.5 blue "アプリのログ" "ERROR を出力"
+node lg 1.2 0.5 accent "ロググループ"
+node mf 2.4 0 box "メトリクス\nフィルター" "ERRORを数える"
+node sf 2.4 1 box "サブスクリプション\nフィルター" "リアルタイム転送"
+node alarm 3.6 0 ok "アラーム → SNS" "メール通知"
+node dst 3.6 1 ok "Lambda / Firehose" "他サービスで処理"
+edge log lg
+edge lg mf
+edge lg sf
+edge mf alarm
+edge sf dst
+<figcaption>図2 CloudWatch Logsの活用。メトリクスフィルターはログから数値を作り、アラームで通知する。サブスクリプションフィルターはログをLambdaやFirehoseなどへリアルタイムに転送する。</figcaption>
+</figure>
+<h3>メトリクスフィルターの流れ(ERROR通知)</h3>
+<ol>
+<li>ログに"ERROR"が出力される</li>
+<li>メトリクスフィルターが検知してカウント</li>
+<li>アラーム条件を満たすとSNS通知を送信</li>
+<li>開発者へメール通知</li>
+</ol>
+
+<h3>CloudWatchエージェント</h3>
+<p>EC2やオンプレミスのサーバーから、詳細なメトリクスやログをCloudWatchへ送信します。</p>
+<ol>
+<li>CloudWatchエージェントをインストール</li>
+<li>エージェントの設定ファイル(JSON)を作成(例:メモリ使用率 <code>mem_used_percent</code> と <code>/var/log/app.log</code> を送信)</li>
+<li>EC2にIAMロール(<code>CloudWatchAgentServerPolicy</code>)をアタッチ</li>
+<li>エージェントを起動し、メトリクスがCloudWatchに送信される</li>
+</ol>
+
+<h3>その他の機能</h3>
+<ul>
+<li><strong>CloudWatch Synthetics</strong>:ユーザー視点で定期監視。実際のユーザーのようにアクセス・API呼び出し・ログイン・ボタン操作などを自動実行する。監視用スクリプトを<strong>Canary</strong>(中身はLambda関数)と呼ぶ。</li>
+<li><strong>Application Signals</strong>:アプリの性能と可用性を自動で計測・可視化。サービス単位・APIパス単位でメトリクスを確認できる。CloudWatchエージェントとADOT(AWS Distro for OpenTelemetry)が必要。</li>
+<li><strong class="em">Lambda Insights</strong>:Lambdaの詳細なパフォーマンス監視。有効化には<strong>拡張レイヤーの追加</strong>(収集用エージェントが入っている)と、IAMポリシー <code>CloudWatchLambdaInsightsExecutionRolePolicy</code> の付与が必要。</li>
+<li><strong class="em">Embedded Metric Format(EMF)</strong>:ログにメトリクス情報を埋め込み、CloudWatch Logsからメトリクスを生成する。アプリにEMF形式のログ出力を実装する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>CPU使用率が高くなったらAuto Scalingでスケールアウト</li>
+<li>EC2のメモリ使用率をエージェントで収集して監視</li>
+<li>アプリのログに"ERROR"が出たらメール通知</li>
+<li>Webサイトの外形監視(Synthetics)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>基本メトリクス(5分間隔)は無料です。詳細モニタリング、カスタムメトリクス、アラーム、ダッシュボード、ログの取り込み量・保存量、Logs Insightsのスキャン量などに応じて課金されます。古いログはS3へ移すとコストを下げられます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="sns.html">Amazon SNS</a>:アラームの通知先</li>
+<li><a href="ec2.html">Amazon EC2</a>:エージェントによるメトリクス収集</li>
+<li><a href="lambda.html">AWS Lambda</a>:Lambda Insights、Canary</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:CloudWatch Logsへの配信</li>
+<li><a href="xray.html">AWS X-Ray</a>:分散トレース</li>
+<li><a href="managed-grafana.html">Amazon Managed Grafana</a>:可視化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>EC2のメモリ・ディスク使用率 → <strong>CloudWatchエージェント</strong>でカスタムメトリクス。</li>
+<li>ログの特定文字列でアラーム → <strong>メトリクスフィルター</strong>。</li>
+<li>ログをリアルタイムに他サービスへ → <strong>サブスクリプションフィルター</strong>。</li>
+<li>1分間隔の監視 → <strong>詳細モニタリング</strong>。</li>
+<li>Lambdaの詳細監視 → <strong>Lambda Insights</strong>(拡張レイヤー+IAMポリシー)。</li>
+<li>ログ保持期間はデフォルト<strong>無期限</strong>。コストに注意。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CloudWatchはメトリクス・アラーム・ダッシュボード・ログの統合監視サービス。</li>
+<li>標準にない値はエージェントやPutMetricData、EMFで送る。</li>
+<li>ログはメトリクスフィルターでアラームに、サブスクリプションフィルターで連携に。</li>
+</ul>
+</section>

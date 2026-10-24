@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Managed Service for Prometheus | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">マネジメントとガバナンス</span>
+  <h1>Amazon Managed Service for Prometheus</h1>
+  <p class="lead">Prometheus互換の監視をマネージドで提供(AMP)</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Managed Service for Prometheus(AMP)</strong>は、オープンソースの監視ツール<strong>Prometheus</strong>のサーバー管理をAWSが担当するサービスです。</p>
+<ul>
+<li>サーバーの可用性維持</li>
+<li>保存領域の管理</li>
+<li>スケーリング</li>
+<li>パッチ適用</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>Prometheusとは</h3>
+<p>オープンソースのモニタリング・アラートツールキットです。</p>
+<ul>
+<li>用途:インフラ監視(CPU使用率・メモリ使用量)、アプリ監視(リクエスト数・レスポンスタイム)、Kubernetesクラスターの監視</li>
+<li><strong>時系列データベース</strong>に特化</li>
+<li><strong>プル型のデータ収集</strong>:監視対象が <code>/metrics</code> エンドポイントでメトリクスを公開し、Prometheusサーバーが定期的に取りに行く</li>
+<li>独自のクエリ言語 <strong>PromQL</strong></li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 844 202" style="max-width:844px;min-width:520px" role="img" aria-label="図1 AMPの構成。Prometheusが監視対象の /metrics から定期的に取得したメトリクスを、remote_write でAMPのワークスペースに保存する。PromQLでクエリしてGrafanaで可視化し、Alertmanagerで通知する。"><defs><marker id="dgservices-managed-prometheus-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="135" height="52" rx="8" class="dg-blue"/>
+<text x="102" y="104" text-anchor="middle" class="dg-t">アプリ・EKS</text>
+<text x="102" y="122" text-anchor="middle" class="dg-s">/metrics を公開</text>
+<rect x="251" y="83" width="135" height="52" rx="8" class="dg-box"/>
+<text x="318" y="104" text-anchor="middle" class="dg-t">Prometheus</text>
+<text x="318" y="122" text-anchor="middle" class="dg-s">プル型で収集</text>
+<rect x="468" y="83" width="135" height="52" rx="8" class="dg-accent"/>
+<text x="536" y="104" text-anchor="middle" class="dg-tb">AMP</text>
+<text x="536" y="122" text-anchor="middle" class="dg-s">ワークスペース</text>
+<rect x="685" y="40" width="135" height="52" rx="8" class="dg-ok"/>
+<text x="752" y="62" text-anchor="middle" class="dg-t">Grafana</text>
+<text x="752" y="80" text-anchor="middle" class="dg-s">可視化</text>
+<rect x="685" y="126" width="135" height="52" rx="8" class="dg-ng"/>
+<text x="752" y="147" text-anchor="middle" class="dg-t">Alertmanager</text>
+<text x="752" y="165" text-anchor="middle" class="dg-s">アラート通知</text>
+<path d="M169.0,109.0 L251.0,109.0" class="dg-line" marker-end="url(#dgservices-managed-prometheus-1)"/>
+<text x="210" y="113" text-anchor="middle" class="dg-s dg-halo">取得</text>
+<path d="M386.0,109.0 L468.0,109.0" class="dg-line" marker-end="url(#dgservices-managed-prometheus-1)"/>
+<text x="427" y="113" text-anchor="middle" class="dg-s dg-halo">remote_write</text>
+<path d="M603.0,95.8 L685.0,79.7" class="dg-line" marker-end="url(#dgservices-managed-prometheus-1)"/>
+<text x="644" y="92" text-anchor="middle" class="dg-s dg-halo">PromQL</text>
+<path d="M603.0,122.2 L685.0,138.3" class="dg-line" marker-end="url(#dgservices-managed-prometheus-1)"/>
+</svg>
+</div>
+<figcaption>図1 AMPの構成。Prometheusが監視対象の /metrics から定期的に取得したメトリクスを、remote_write でAMPのワークスペースに保存する。PromQLでクエリしてGrafanaで可視化し、Alertmanagerで通知する。</figcaption>
+</figure>
+<h3>AMPワークスペース</h3>
+<p>メトリクスを管理するためのワークスペースです。エンドポイントには、<strong>remote_write</strong>(メトリクス送信用)、<strong>クエリ</strong>(PromQL実行用)、ルールやアラートの管理用があります。</p>
+<p><strong>Prometheus Remote Write</strong>:Prometheusが収集したメトリクスを、外部のリモートストレージ(AMP)に保存する仕組みです。</p>
+
+<h3>アラート・通知・自動修復</h3>
+<ul>
+<li><strong>Recording rule</strong>:クエリ結果を新しいメトリクスとして事前計算する</li>
+<li><strong>Alerting rule</strong>:条件を満たしたときにアラートを発生させる。<strong>Alertmanager</strong>がアラートを送る。</li>
+</ul>
+<p>例:10分間にコンテナが3回を超えて再起動し、その状態が5分以上続いたらアラート</p>
+<pre class="code"><code>groups:
+  - name: kubernetes-alerts
+    rules:
+      - alert: HighPodRestartRate
+        expr: increase(kube_pod_container_status_restarts_total[10m]) &gt; 3
+        for: 5m
+        labels:
+          severity: warning</code></pre>
+<p>自動修復の流れ:<code>AMP Alertmanager → SNS/EventBridge → Lambda/SSM Automation → Kubernetes API/AWS API</code></p>
+
+<h3>AWSサービスとの統合</h3>
+<div class="table-wrap"><table>
+<tr><th>目的</th><th>サービス</th></tr>
+<tr><td>メトリクス収集</td><td>Prometheus、EKS</td></tr>
+<tr><td>ダッシュボード</td><td>Managed Grafana</td></tr>
+<tr><td>通知</td><td>SNS</td></tr>
+<tr><td>自動修復</td><td>EventBridge、Lambda、Systems Manager Automation</td></tr>
+<tr><td>認証</td><td>IAM、AWS SigV4、IAM Identity Center</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>EKSクラスターのコンテナ監視</li>
+<li>既存のPrometheus環境のストレージをマネージドに置き換え(Remote Write)</li>
+<li>Pod再起動の多発を検知して自動修復</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>取り込んだメトリクスのサンプル数、保存量、クエリで処理したサンプル数に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="eks.html">Amazon EKS</a>:主な監視対象</li>
+<li><a href="managed-grafana.html">Amazon Managed Grafana</a>:可視化</li>
+<li><a href="sns.html">Amazon SNS</a>/<a href="eventbridge.html">Amazon EventBridge</a>:通知・自動化</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:AWS標準の監視サービス</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>Prometheus互換・PromQL・Kubernetes監視 → <strong>AMP</strong>。</li>
+<li>メトリクスの送信 → <strong>remote_write</strong>エンドポイント。</li>
+<li>アラートの送信 → <strong>Alertmanager</strong>。事前計算 → <strong>Recording rule</strong>。</li>
+<li>可視化は<strong>Managed Grafana</strong>と組み合わせる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AMPはPrometheusのサーバー管理をAWSに任せられるサービス。</li>
+<li>Remote Writeで送信し、PromQLでクエリ、Alertmanagerで通知する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="managed-grafana.html"><span class="label">← 前へ</span>Amazon Managed Grafana</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="sqs.html"><span class="label">次へ →</span>Amazon SQS</a>
+</nav>
+</main>
+</body>
+</html>

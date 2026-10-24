@@ -1,0 +1,78 @@
+<!-- title: Amazon FSx -->
+<!-- category: ストレージ -->
+<!-- lead: 市販・オープンソースのファイルシステムをマネージドで提供 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon FSx</strong>は、Windowsファイルサーバーや Lustre など、<strong>市販・オープンソースのファイルシステムをマネージドで提供</strong>するサービスです。用途に合わせて4種類から選びます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>プロトコル</th><th>特徴</th></tr>
+<tr><td>FSx for Windows File Server</td><td>SMB</td><td><strong>Active Directory連携</strong>(ファイルアクセス制御はFSxが担当)。NTFSを使ったファイル管理</td></tr>
+<tr><td>FSx for Lustre</td><td>Lustre</td><td>ビッグデータ分析向け。高スループット・ミリ秒未満のレイテンシー。Linux向け</td></tr>
+<tr><td>FSx for NetApp ONTAP</td><td>NFS、SMB、iSCSI</td><td>オンプレミスのNetApp環境を拡張</td></tr>
+<tr><td>FSx for OpenZFS</td><td>NFS</td><td>OpenZFSファイルシステムをマネージドで提供。スナップショットやデータ圧縮に対応</td></tr>
+</table></div>
+<p>FSx for LustreはS3バケットと連携でき、S3上のデータを高速なファイルシステムとして処理できます。HPCや機械学習で使われます。</p>
+<figure class="figure" data-diagram>
+grid 200 70
+node r1 0 0 box "Windows・AD連携"
+node t1 1.4 0 accent "FSx for Windows" "File Server・SMB"
+node r2 0 1 box "HPC・機械学習"
+node t2 1.4 1 accent "FSx for Lustre" "Lustre・高スループット"
+node r3 0 2 box "NetApp環境の拡張"
+node t3 1.4 2 accent "FSx for ONTAP" "NFS・SMB・iSCSI"
+node r4 0 3 box "ZFSを使いたい"
+node t4 1.4 3 accent "FSx for OpenZFS" "NFS"
+edge r1 t1
+edge r2 t2
+edge r3 t3
+edge r4 t4
+<figcaption>図1 FSxの4種類と選び方。OS・用途・既存環境などの要件から種類を選ぶ。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Windowsアプリのファイル共有(Active Directoryでアクセス制御)→ for Windows File Server</li>
+<li>HPC・ビッグデータ分析・機械学習 → for Lustre</li>
+<li>オンプレミスのNetAppストレージをAWSへ拡張 → for NetApp ONTAP</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>種類ごとに、ストレージ容量・スループット容量・バックアップ容量に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="efs.html">Amazon EFS</a>:Linux向けの共有ファイルストレージ</li>
+<li><a href="directory-service.html">AWS Directory Service</a>:FSx for WindowsのActive Directory連携</li>
+<li><a href="s3.html">Amazon S3</a>:FSx for Lustreのデータ連携先</li>
+<li><a href="datasync.html">AWS DataSync</a>:オンプレミスからのデータ移行</li>
+<li><a href="backup.html">AWS Backup</a>:バックアップの一元管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>Windows・SMB・Active Directory → <strong>FSx for Windows File Server</strong>。</li>
+<li>HPC・高スループット・ミリ秒未満のレイテンシー → <strong>FSx for Lustre</strong>。</li>
+<li>NetApp・iSCSI → <strong>FSx for NetApp ONTAP</strong>。</li>
+<li>LinuxでNFS共有だけなら → <strong>EFS</strong>も候補。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>FSxは4種類のファイルシステムをマネージドで提供する。</li>
+<li>キーワード(Windows/AD、HPC、NetApp)で種類を選び分ける。</li>
+</ul>
+</section>

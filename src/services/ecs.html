@@ -1,0 +1,105 @@
+<!-- title: Amazon ECS -->
+<!-- category: コンテナ -->
+<!-- lead: AWS上でコンテナを実行・管理するオーケストレーションサービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon ECS(Elastic Container Service)</strong>は、AWS上でコンテナを実行・管理するための<strong>コンテナオーケストレーションサービス</strong>です。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<ul>
+<li><strong>クラスター</strong>:実行環境のまとまり。複数のアプリや環境をまとめるときに使う。</li>
+<li><strong class="em">タスク定義</strong>:コンテナを実行するときの設計書(Dockerfileはビルド時の設計書)。
+  <ul><li>使用するイメージ(Docker Image)</li><li>CPU/メモリ</li><li>ポート(Port Mapping)</li><li><strong>環境変数(Environment Variables)</strong></li></ul></li>
+<li><strong>タスク</strong>:タスク定義から起動された実体(コンテナ)。</li>
+<li><strong>サービス</strong>:タスクを常に指定数維持する仕組み。
+  <ul><li>起動数の維持(Desired Count)</li><li>自動増減(Auto Scaling)</li><li>ALB連携(Load Balancer)</li><li>無停止更新(Rolling Update)</li><li>異常タスクの交換(Health Check)</li></ul></li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node td 0 0.5 blue "タスク定義" "コンテナの設計書"
+node svc 1.4 0.5 accent "サービス" "タスク数を維持"
+node t1 2.6 0 box "タスク" "コンテナ"
+node t2 2.6 1 box "タスク" "コンテナ"
+group 1.4 0 2.6 1 "クラスター" pad=12
+node alb 4 0.5 blue "ALB" "利用者のアクセス"
+edge td svc "参照"
+edge svc t1
+edge svc t2
+edge alb t1
+edge alb t2
+<figcaption>図1 ECSの構成要素。サービスがタスク定義をもとにタスクを起動し、指定した数を維持する。ALBと連携してタスクにトラフィックを振り分ける。</figcaption>
+</figure>
+<h3>起動タイプ</h3>
+<div class="table-wrap"><table>
+<tr><th>起動タイプ</th><th>内容</th><th>特徴</th></tr>
+<tr><td>EC2起動タイプ</td><td>ユーザーがEC2を用意し、その上でコンテナを実行</td><td>柔軟だがサーバー管理が必要</td></tr>
+<tr><td>Fargate起動タイプ(現在の主流)</td><td>コンテナを指定するだけ</td><td>サーバー管理不要(ほぼサーバーレス)</td></tr>
+</table></div>
+
+<h3>キャパシティプロバイダー</h3>
+<p>ECSタスクを<strong>どの計算リソース上でどれだけ実行するか</strong>を管理します。</p>
+<ul>
+<li>計算リソース:<code>FARGATE</code>(通常)、<code>FARGATE_SPOT</code>(余剰リソースを安価に利用)、ASG Capacity Provider(ECSがEC2 Auto Scalingを管理)</li>
+<li>実行数:<strong>Base</strong>=最低保証タスク数、<strong>Weight</strong>=どれくらいの割合で配置するか</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 80
+node svc 0 0.5 accent "ECSサービス" "10タスク"
+node fg 1.6 0 blue "FARGATE" "Base=2 / Weight=1"
+node spot 1.6 1 ok "FARGATE_SPOT" "Weight=3"
+edge svc fg "4タスク"
+edge svc spot "6タスク"
+<figcaption>図2 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Webアプリ・APIをコンテナで常時稼働させる(サービス+ALB)</li>
+<li>FARGATE_SPOTを組み合わせたコスト重視のバッチ処理</li>
+<li>Lambdaの15分制限を超える長時間処理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ECS自体の利用料はかかりません。EC2起動タイプではEC2インスタンスの料金、Fargate起動タイプではタスクに割り当てたvCPU・メモリと実行時間に応じた料金がかかります。</p>
+<p>FARGATE_SPOTを使うと余剰リソースを安価に利用できます(中断される可能性あり)。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ecr.html">Amazon ECR</a>:コンテナイメージの保存先</li>
+<li><a href="eks.html">Amazon EKS</a>:Kubernetesベースのオーケストレーション</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:サービスとALBの連携</li>
+<li><a href="ec2.html">Amazon EC2</a>:EC2起動タイプの実行基盤</li>
+<li><a href="copilot.html">AWS Copilot</a>:ECSアプリの構築・デプロイを簡単にするCLI</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point">
+<ul>
+<li>コンテナの環境変数・CPU/メモリ・イメージは<strong>タスク定義</strong>で指定する。</li>
+<li>タスク数の維持・ALB連携・ローリング更新は<strong>サービス</strong>の役割。</li>
+<li>サーバー管理をしたくない → <strong>Fargate</strong>。</li>
+<li>Fargateと安価なFARGATE_SPOTの配分 → キャパシティプロバイダーの<strong>Base/Weight</strong>。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>ECSは「クラスター/タスク定義/タスク/サービス」で構成される。</li>
+<li>起動タイプはEC2とFargate。主流はFargate。</li>
+<li>キャパシティプロバイダーでリソースの配分を制御する。</li>
+</ul>
+</section>

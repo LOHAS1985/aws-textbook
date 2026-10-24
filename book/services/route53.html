@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Route 53 | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワークとコンテンツ配信</span>
+  <h1>Amazon Route 53</h1>
+  <p class="lead">マネージドDNSサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Route 53</strong>は、マネージド<strong>DNSサービス</strong>です。ドメイン名とIPアドレスを結びつける名前解決のほか、ドメイン登録やヘルスチェックもできます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li><strong>DNS解決</strong>(仕組みは用語「<a href="../terms/dns.html">DNS</a>」、レコードの種類は「<a href="../terms/dns-record-types.html">DNSレコードタイプ</a>」を参照)</li>
+<li><strong>ドメイン登録</strong></li>
+<li><strong>ヘルスチェック/可用性モニタリング</strong></li>
+</ul>
+
+<h3>ホストゾーン</h3>
+<p>DNSレコードを管理するコンテナです。</p>
+<ul>
+<li><strong>パブリックホストゾーン</strong>:インターネット上での名前解決</li>
+<li><strong>プライベートホストゾーン</strong>:指定したVPC内でのみ有効な名前解決</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 473 226" style="max-width:473px;min-width:473px" role="img" aria-label="図1 ホストゾーンの種類。パブリックホストゾーンはインターネット上で、プライベートホストゾーンは関連付けたVPC内でのみ名前解決できる。"><defs><marker id="dgservices-route53-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="24" y="112" width="425" height="90" rx="10" class="dg-group"/>
+<text x="34" y="128" class="dg-s">VPC</text>
+<rect x="34" y="52" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="76" text-anchor="middle" class="dg-t">外部の利用者</text>
+<rect x="289" y="46" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="67" text-anchor="middle" class="dg-tb">パブリック</text>
+<text x="364" y="85" text-anchor="middle" class="dg-s">ホストゾーン</text>
+<rect x="34" y="146" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="170" text-anchor="middle" class="dg-t">VPC内のEC2</text>
+<rect x="289" y="140" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="364" y="162" text-anchor="middle" class="dg-t">プライベート</text>
+<text x="364" y="180" text-anchor="middle" class="dg-s">ホストゾーン</text>
+<path d="M184.0,71.5 L289.0,71.5" class="dg-line" marker-end="url(#dgservices-route53-1)"/>
+<text x="236" y="76" text-anchor="middle" class="dg-s dg-halo">名前解決</text>
+<path d="M184.0,166.5 L289.0,166.5" class="dg-line" marker-end="url(#dgservices-route53-1)"/>
+<text x="236" y="170" text-anchor="middle" class="dg-s dg-halo">名前解決</text>
+</svg>
+</div>
+<figcaption>図1 ホストゾーンの種類。パブリックホストゾーンはインターネット上で、プライベートホストゾーンは関連付けたVPC内でのみ名前解決できる。</figcaption>
+</figure>
+<h3>ルーティングポリシー</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>概要</th><th>主な用途</th></tr>
+<tr><td>シンプル</td><td>複数の値を返せる基本的なルーティング</td><td>単純な名前解決</td></tr>
+<tr><td>加重(Weighted)</td><td>重みを指定してトラフィックを分散</td><td>A/Bテスト、段階的なリリース、負荷分散</td></tr>
+<tr><td>レイテンシー</td><td>最もレイテンシーが低いリージョンのリソースへルーティング</td><td>グローバルなWebサービスの高速化</td></tr>
+<tr><td>フェイルオーバー</td><td>プライマリが利用できない場合にセカンダリへ切り替え</td><td>可用性向上、DR構成</td></tr>
+<tr><td>位置情報(Geolocation)</td><td>ユーザーの地理的位置に基づいてルーティング</td><td>国・地域ごとのコンテンツ配信</td></tr>
+<tr><td>地理的近接性(Geoproximity)</td><td>ユーザーとリソースの地理的位置に基づく。バイアスで調整可能</td><td>地理的なトラフィック配分</td></tr>
+<tr><td>IPベース</td><td>クライアントのIPアドレスとCIDRの対応付けに基づく</td><td>特定ネットワーク・IP範囲からのトラフィック制御</td></tr>
+<tr><td>複数値回答</td><td>複数の正常なリソースの値を返し、クライアント側で選ぶ</td><td>シンプルな可用性向上</td></tr>
+<tr><td>トラフィックフロー</td><td>複数のポリシーを組み合わせた複雑な制御</td><td>複雑なグローバルルーティング</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 463 359" style="max-width:463px;min-width:463px" role="img" aria-label="図2 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。"><defs><marker id="dgservices-route53-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="73" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="94" text-anchor="middle" class="dg-tb">Route 53</text>
+<text x="109" y="112" text-anchor="middle" class="dg-s">加重ルーティング</text>
+<rect x="289" y="42" width="150" height="40" rx="8" class="dg-box"/>
+<text x="364" y="66" text-anchor="middle" class="dg-t">現行バージョン</text>
+<rect x="289" y="116" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="364" y="140" text-anchor="middle" class="dg-t">新バージョン</text>
+<rect x="34" y="246" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="267" text-anchor="middle" class="dg-tb">Route 53</text>
+<text x="109" y="285" text-anchor="middle" class="dg-s">フェイルオーバー</text>
+<rect x="289" y="208" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="230" text-anchor="middle" class="dg-t">プライマリ</text>
+<text x="364" y="248" text-anchor="middle" class="dg-s">ヘルスチェック</text>
+<rect x="289" y="283" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="364" y="304" text-anchor="middle" class="dg-t">セカンダリ</text>
+<text x="364" y="322" text-anchor="middle" class="dg-s">障害時に切り替え</text>
+<path d="M184.0,88.0 L289.0,72.5" class="dg-line" marker-end="url(#dgservices-route53-2)"/>
+<text x="236" y="84" text-anchor="middle" class="dg-s dg-halo">90%</text>
+<path d="M184.0,110.0 L289.0,125.5" class="dg-line" marker-end="url(#dgservices-route53-2)"/>
+<text x="236" y="122" text-anchor="middle" class="dg-s dg-halo">10%</text>
+<path d="M184.0,260.5 L289.0,245.0" class="dg-line" marker-end="url(#dgservices-route53-2)"/>
+<text x="236" y="257" text-anchor="middle" class="dg-s dg-halo">通常</text>
+<path d="M184.0,282.5 L289.0,298.0" class="dg-line dg-dash" marker-end="url(#dgservices-route53-2)"/>
+<text x="236" y="294" text-anchor="middle" class="dg-s dg-halo">障害時</text>
+</svg>
+</div>
+<figcaption>図2 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。</figcaption>
+</figure>
+<h3>Application Recovery Controller(ARC)</h3>
+<p>アプリケーションの可用性と復旧を安全・確実に行うための機能です。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>概要</th></tr>
+<tr><td>ルーティングコントロール</td><td>ルーティングをスイッチで切り替える</td></tr>
+<tr><td>セーフティルール</td><td>ルールを決めて誤操作を防ぐ</td></tr>
+<tr><td>ゾーンシフト</td><td>単一AZ障害に対し、そのAZへのトラフィックを数分で止める</td></tr>
+<tr><td>準備状況チェック</td><td>切り替え先が動く状態かを確認する</td></tr>
+<tr><td>リージョンスイッチ</td><td><span>複数リージョン間のフェイルオーバーを計画に沿って実行する</span></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>独自ドメインでWebサイトを公開</li>
+<li>フェイルオーバーで障害時に待機系サイトへ切り替え</li>
+<li>新バージョンへ10%だけトラフィックを流す(加重)</li>
+<li>VPC内の社内システムの名前解決(プライベートホストゾーン)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ホストゾーンごとの月額料金、DNSクエリ数、ヘルスチェック数、ドメイン登録料で課金されます。AWSリソース(ELB・CloudFrontなど)を指すエイリアスレコードへのクエリは無料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="elb.html">Elastic Load Balancing</a>/<a href="cloudfront.html">Amazon CloudFront</a>:エイリアスレコードの向き先</li>
+<li><a href="vpc.html">Amazon VPC</a>:プライベートホストゾーンの関連付け先</li>
+<li><a href="global-accelerator.html">AWS Global Accelerator</a>:DNSに依存しないグローバルなトラフィック制御</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ヘルスチェックのアラーム</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>A/Bテスト・段階リリース → <strong>加重</strong>。DR → <strong>フェイルオーバー</strong>。速いリージョンへ → <strong>レイテンシー</strong>。</li>
+<li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。</li>
+<li>VPC内だけで使う名前 → <strong>プライベートホストゾーン</strong>。</li>
+<li>AZ障害時にすばやくトラフィックを外す → ARCの<strong>ゾーンシフト</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Route 53はDNS・ドメイン登録・ヘルスチェックを提供する。</li>
+<li>ホストゾーンはパブリックとプライベートの2種類。</li>
+<li>ルーティングポリシーを目的に応じて選び分ける。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="direct-connect.html"><span class="label">← 前へ</span>AWS Direct Connect</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="elb.html"><span class="label">次へ →</span>Elastic Load Balancing (ELB)</a>
+</nav>
+</main>
+</body>
+</html>

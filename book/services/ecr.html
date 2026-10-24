@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon ECR | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">コンテナ</span>
+  <h1>Amazon ECR</h1>
+  <p class="lead">コンテナイメージを保存・管理するレジストリ</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon ECR(Elastic Container Registry)</strong>は、<strong>コンテナイメージを保存・管理する</strong>ためのサービスです。ECSやEKS、Lambdaはここからイメージを取得(プル)して起動します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li><strong>イメージの保存と管理</strong>:Dockerイメージをリポジトリ単位で管理し、バージョン管理ができる。</li>
+<li><strong>セキュリティ</strong>:IAMと統合し、プッシュ/プルを制御する。</li>
+</ul>
+<h3>コンテナ運用の流れ</h3>
+<ol>
+<li><strong>ビルド</strong>:アプリをコンテナ化</li>
+<li><strong>保管</strong>:ECRにイメージをプッシュ</li>
+<li><strong>実行</strong>:ECRからプルして起動</li>
+</ol>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 256" style="max-width:684px;min-width:520px" role="img" aria-label="図1 コンテナ運用の流れ。ビルドしたイメージをECRにプッシュし、ECS・EKS・Lambdaが実行時にプルする。プッシュ/プルの権限はIAMで制御する。"><defs><marker id="dgservices-ecr-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="110" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="132" text-anchor="middle" class="dg-t">ビルド</text>
+<text x="109" y="150" text-anchor="middle" class="dg-s">Dockerfileから作成</text>
+<rect x="272" y="110" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="132" text-anchor="middle" class="dg-tb">ECR</text>
+<text x="347" y="150" text-anchor="middle" class="dg-s">リポジトリ</text>
+<rect x="510" y="42" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="66" text-anchor="middle" class="dg-t">ECS</text>
+<rect x="510" y="116" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">EKS</text>
+<rect x="510" y="192" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="216" text-anchor="middle" class="dg-t">Lambda</text>
+<path d="M184.0,136.5 L272.0,136.5" class="dg-line" marker-end="url(#dgservices-ecr-1)"/>
+<text x="228" y="140" text-anchor="middle" class="dg-s dg-halo">プッシュ</text>
+<path d="M422.0,112.9 L521.5,81.5" class="dg-line" marker-end="url(#dgservices-ecr-1)"/>
+<text x="472" y="101" text-anchor="middle" class="dg-s dg-halo">プル</text>
+<path d="M422.0,136.5 L510.0,136.5" class="dg-line" marker-end="url(#dgservices-ecr-1)"/>
+<path d="M422.0,160.1 L521.5,191.5" class="dg-line" marker-end="url(#dgservices-ecr-1)"/>
+</svg>
+</div>
+<figcaption>図1 コンテナ運用の流れ。ビルドしたイメージをECRにプッシュし、ECS・EKS・Lambdaが実行時にプルする。プッシュ/プルの権限はIAMで制御する。</figcaption>
+</figure>
+<h3>タグ管理</h3>
+<p>タグはコンテナイメージの識別名です。</p>
+<ul>
+<li>形式:<code>リポジトリ:タグ</code>(例:<code>myapp:v1</code> = myappのv1版)</li>
+<li>保存の構造:リポジトリ → タグ → イメージダイジェスト(イメージ実体のハッシュ値)</li>
+<li>タグの例:<code>latest</code>(最新版)、<code>v1.0.0</code>(固定版)、<code>dev</code>(開発環境)、<code>staging</code>(ステージング)</li>
+</ul>
+<p>ECRには、プッシュ時のイメージの脆弱性スキャン、古いイメージを自動削除するライフサイクルポリシー、他リージョン・他アカウントへのレプリケーションなどの機能もあります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 249" style="max-width:684px;min-width:520px" role="img" aria-label="図2 リポジトリ・タグ・イメージダイジェストの関係。1つのイメージに複数のタグを付けられ、latest のように付け替わるタグもある。本番では固定のタグかダイジェストで指定すると安全。"><defs><marker id="dgservices-ecr-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="103" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="124" text-anchor="middle" class="dg-t">リポジトリ</text>
+<text x="109" y="142" text-anchor="middle" class="dg-s">myapp</text>
+<rect x="272" y="39" width="150" height="40" rx="8" class="dg-box"/>
+<text x="347" y="63" text-anchor="middle" class="dg-t">タグ v1.0.0</text>
+<rect x="272" y="109" width="150" height="40" rx="8" class="dg-box"/>
+<text x="347" y="133" text-anchor="middle" class="dg-t">タグ latest</text>
+<rect x="272" y="179" width="150" height="40" rx="8" class="dg-box"/>
+<text x="347" y="203" text-anchor="middle" class="dg-t">タグ dev</text>
+<rect x="510" y="68" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="90" text-anchor="middle" class="dg-tb">イメージ実体</text>
+<text x="585" y="108" text-anchor="middle" class="dg-s">sha256:aaa…</text>
+<rect x="510" y="173" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="194" text-anchor="middle" class="dg-tb">イメージ実体</text>
+<text x="585" y="212" text-anchor="middle" class="dg-s">sha256:bbb…</text>
+<path d="M184.0,106.9 L279.0,79.0" class="dg-line" marker-end="url(#dgservices-ecr-2)"/>
+<path d="M184.0,129.0 L272.0,129.0" class="dg-line" marker-end="url(#dgservices-ecr-2)"/>
+<path d="M184.0,151.1 L279.0,179.0" class="dg-line" marker-end="url(#dgservices-ecr-2)"/>
+<path d="M422.0,70.0 L510.0,83.0" class="dg-line" marker-end="url(#dgservices-ecr-2)"/>
+<path d="M422.0,118.0 L510.0,105.0" class="dg-line" marker-end="url(#dgservices-ecr-2)"/>
+<path d="M422.0,199.0 L510.0,199.0" class="dg-line" marker-end="url(#dgservices-ecr-2)"/>
+</svg>
+</div>
+<figcaption>図2 リポジトリ・タグ・イメージダイジェストの関係。1つのイメージに複数のタグを付けられ、latest のように付け替わるタグもある。本番では固定のタグかダイジェストで指定すると安全。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ECS/EKSで動かすアプリのイメージ置き場</li>
+<li>250MBを超えるLambda関数をコンテナイメージとしてデプロイ</li>
+<li>CI/CDパイプライン(CodeBuild)でビルドしたイメージの保管</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>保存しているイメージのストレージ容量と、データ転送量に応じて課金されます。不要なイメージはライフサイクルポリシーで削除するとコストを抑えられます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ecs.html">Amazon ECS</a>/<a href="eks.html">Amazon EKS</a>:イメージをプルして実行</li>
+<li><a href="lambda.html">AWS Lambda</a>:コンテナイメージによるデプロイ</li>
+<li><a href="iam.html">AWS IAM</a>:プッシュ/プルの権限制御</li>
+<li><a href="codebuild.html">AWS CodeBuild</a>:イメージのビルドとプッシュ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point">
+<ul>
+<li>プッシュ/プルの権限はIAMで制御する。</li>
+<li><code>latest</code> タグは中身が変わるため、本番では<strong>固定のバージョンタグ</strong>やダイジェストで指定すると安全。</li>
+<li>イメージの実体は<strong>ダイジェスト(ハッシュ値)</strong>で一意に識別される。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>ECRはコンテナイメージのレジストリ。ビルド → プッシュ → プルの流れで使う。</li>
+<li>イメージは「リポジトリ:タグ」で識別し、実体はダイジェストで管理される。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="eks.html"><span class="label">← 前へ</span>Amazon EKS</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="copilot.html"><span class="label">次へ →</span>AWS Copilot</a>
+</nav>
+</main>
+</body>
+</html>

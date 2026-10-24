@@ -1,0 +1,56 @@
+<!-- title: 負荷に応じて自動でスケールするWebシステム -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: ALBとAuto Scalingグループで、複数AZにまたがって台数を自動調整する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>アクセス数の増減に合わせてEC2の台数を自動で増減させたい。1つのAZで障害が起きてもサービスを継続し、異常なインスタンスは自動で入れ替えたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 90
+node u 0 0.5 blue "利用者"
+node alb 1.4 0.5 accent "ALB" "ヘルスチェック"
+node e1 2.8 0 box "EC2" "AZ-a"
+node e2 2.8 1 box "EC2" "AZ-c"
+group 2.8 0 2.8 1 "Auto Scalingグループ" pad=12
+node cw 1.4 1.7 ok "CloudWatch" "CPU 50%を維持"
+edge u alb
+edge alb e1
+edge alb e2
+edge cw e2 dash
+<figcaption>図1 ALBが複数AZのEC2にリクエストを分散し、Auto ScalingグループがCloudWatchのメトリクスに応じて台数を増減する。異常なインスタンスは自動で入れ替わる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/elb.html">Elastic Load Balancing(ALB)</a>:複数AZのインスタンスにトラフィックを分散し、ヘルスチェックで異常を検知する</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:アプリケーションを動かすインスタンス</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:起動テンプレートをもとにインスタンスを自動で起動・終了し、指定した台数(最小・最大・希望)を保つ</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:CPU使用率やリクエスト数などのメトリクスでスケーリングを判断する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>AMIとインスタンスタイプなどを指定した<strong>起動テンプレート</strong>を作成する</li>
+<li>複数AZのサブネットを指定してAuto Scalingグループを作成し、最小・最大・希望の台数を決める</li>
+<li>ALBとターゲットグループを作成し、Auto Scalingグループに関連付ける</li>
+<li><strong>ターゲット追跡スケーリング</strong>(例:平均CPU使用率50%を維持)を設定する</li>
+<li>Auto Scalingグループのヘルスチェックの種類を「ELB」にして、アプリの異常でも入れ替わるようにする</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>ELBはリージョン内の<strong>複数AZ</strong>に分散する。インスタンスも複数AZに配置して、AZ障害に備える。</li>
+<li>ヘルスチェックの種類がEC2のままだと、OSは動いているがアプリが落ちている状態を検知できない → <strong>ELBヘルスチェック</strong>を使う。</li>
+<li>決まった時間に負荷が増えるなら<strong>スケジュールされたスケーリング</strong>、指標を一定に保つなら<strong>ターゲット追跡</strong>。</li>
+<li>インスタンスのサイズ見直しには<a href="../services/compute-optimizer.html">Compute Optimizer</a>の推奨を使う。</li>
+</ul></div>
+</section>

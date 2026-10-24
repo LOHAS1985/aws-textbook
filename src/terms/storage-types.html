@@ -1,0 +1,84 @@
+<!-- title: ブロック・ファイル・オブジェクトストレージ -->
+<!-- category: ストレージ -->
+<!-- lead: 3種類のストレージの違い(EBS・EFS・S3) -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<ul>
+<li><strong>ブロック</strong>:ディスクとして使う(Amazon EBS)</li>
+<li><strong>ファイル</strong>:フォルダ+ファイルとして使う(Amazon EFS)</li>
+<li><strong>オブジェクト</strong>:データ+メタデータをオブジェクト単位で使う(Amazon S3)</li>
+</ul>
+<p>3種類とも最終的にはHDD/SSDなどの記憶媒体にデータを保存します。違いは「物理的に何に保存するか」ではなく、<strong>「利用者にどのような論理単位でストレージを提供するか」</strong>です。</p>
+<figure class="figure" data-diagram>
+grid 190 70
+node b 0 0 accent "ブロック" "Amazon EBS"
+node f 1 0 accent "ファイル" "Amazon EFS"
+node o 2 0 accent "オブジェクト" "Amazon S3"
+node b2 0 1.1 box "ディスクとして使う" "FSは利用者が構築"
+node f2 1 1.1 box "フォルダ+ファイル" "パスでアクセス"
+node o2 2 1.1 box "データ+メタデータ" "キーでアクセス"
+node b3 0 2.2 ok "例: PCのSSD"
+node f3 1 2.2 ok "例: NAS"
+node o3 2 2.2 ok "例: 写真の保管"
+edge b b2
+edge f f2
+edge o o2
+edge b2 b3
+edge f2 f3
+edge o2 o3
+<figcaption>図1 3種類のストレージの違い。どれも最終的にはHDD/SSDに保存されるが、「利用者にどんな単位で見せるか」が異なる。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th></th><th>ブロックストレージ</th><th>ファイルストレージ</th><th>オブジェクトストレージ</th></tr>
+<tr><td>管理単位</td><td><strong>ブロック</strong></td><td><strong>ファイル</strong></td><td><strong>オブジェクト</strong></td></tr>
+<tr><td>利用者から見えるもの</td><td>ディスク/ボリューム</td><td>ファイル・フォルダ</td><td>オブジェクト</td></tr>
+<tr><td>ファイルシステム</td><td>利用者側で構築する</td><td>ストレージ側が提供</td><td>基本的に使わない</td></tr>
+<tr><td>階層構造</td><td>基本なし</td><td><strong>あり</strong></td><td>基本はフラット(キーのプレフィックスで階層を表現できる)</td></tr>
+<tr><td>アクセスのイメージ</td><td>ディスクとして利用</td><td>パスでファイルにアクセス</td><td>オブジェクトキーでアクセス</td></tr>
+<tr><td>具体例</td><td>PCのSSD、外付けSSD、サーバーのディスク、RAID</td><td>NAS、Windowsファイルサーバー、Linux/NFSファイルサーバー</td><td>写真・動画・バックアップなどの保管</td></tr>
+<tr><td>AWSサービス</td><td><strong>Amazon EBS</strong></td><td><strong>Amazon EFS</strong></td><td><strong>Amazon S3</strong></td></tr>
+</table></div>
+
+<h3>ブロックストレージ</h3>
+<p>ストレージを<strong>ブロック単位の領域</strong>として提供します。PCのSSDでは、ユーザーには <code>C:\photo.jpg</code> のようなファイルとして見えますが、ストレージ上ではデータがブロックに分かれて管理されています。</p>
+<p>重要なのは、<strong>ブロックストレージにファイルシステムを作っただけで「ファイルストレージ」になるわけではない</strong>ことです。ブロックストレージの上に利用者がファイルシステムを構築し、ファイルとして使っています。</p>
+
+<h3>ファイルストレージ</h3>
+<p><strong>ファイルとフォルダという階層構造を利用者に提供する</strong>ストレージです。NASでは <code>\\NAS\写真\2026\photo01.jpg</code> のように<strong>ファイルパス</strong>でデータにアクセスします。</p>
+<p>裏側ではHDD/SSDにデータが保存されているので、「ファイルストレージはブロックを使わない」という意味ではありません。違いは、<strong>利用者にファイルシステムとファイル/フォルダというインターフェースを提供している</strong>ことです。</p>
+
+<h3>オブジェクトストレージ</h3>
+<p>データを<strong>オブジェクト</strong>という単位で管理します。オブジェクトは「データ+メタデータ+識別情報(キーなど)」で構成されます。例えば写真なら、Key: <code>photo.jpg</code>、Data: JPEGデータ、Metadata: Content-Type・サイズなど、という形です。</p>
+<p><strong>「メタデータがあるからオブジェクトストレージ」ではありません</strong>。NASのファイルにもサイズ・作成日時・所有者などのメタデータがありますが、NASはファイルストレージです。違いは<strong>データを何という単位で管理するか</strong>です。</p>
+
+<h3>S3にフォルダを作れるのに、なぜ「階層構造がない」のか</h3>
+<figure class="figure" data-diagram>
+grid 200 70
+node d1 0 0 box "photos/" "ディレクトリ"
+node d2 0 1 box "2026/" "ディレクトリ"
+node d3 0 2 ok "a.jpg" "ファイル"
+group 0 0 0 2 "ファイルストレージ(階層あり)" pad=12
+node obj 1.5 1 accent "オブジェクト" "Key: photos/2026/a.jpg"
+group 1.5 1 1.5 1 "S3(フラット)" pad=12
+edge d1 d2
+edge d2 d3
+<figcaption>図2 階層構造の違い。ファイルストレージには実際のディレクトリがある。S3はフラットで、「photos/2026/」はディレクトリではなく、キーの一部(プレフィックス)にすぎない。</figcaption>
+</figure>
+<p>S3のコンソールでは <code>photos/2026/trip/photo.jpg</code> がフォルダの中にあるように見えますが、<code>photos</code>・<code>2026</code>・<code>trip</code> というディレクトリが実在するわけではありません。実際には <code>Key = photos/2026/trip/photo.jpg</code> という<strong>1つのオブジェクトキー</strong>として管理されています。S3では <code>/</code> を使って階層を<strong>表現</strong>できますが、ファイルストレージの実際のディレクトリ階層とは異なります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li>本書の用語ページの中には、まだ関連する用語がありません。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/ebs.html">Amazon EBS</a>:ブロックストレージ</li>
+<li><a href="../services/efs.html">Amazon EFS</a>/<a href="../services/fsx.html">Amazon FSx</a>:ファイルストレージ</li>
+<li><a href="../services/s3.html">Amazon S3</a>:オブジェクトストレージ</li>
+</ul>
+</section>

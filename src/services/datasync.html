@@ -1,0 +1,95 @@
+<!-- title: AWS DataSync -->
+<!-- category: 移行と転送 -->
+<!-- lead: オンプレミス⇔AWS、AWSストレージ間のデータ転送を自動化・高速化 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS DataSync</strong>は、<strong>オンプレミスとAWSの間、またはAWSのストレージサービス間でデータ転送を自動化・高速化</strong>するサービスです。</p>
+<div class="table-wrap"><table>
+<tr><th>区分</th><th>対応するストレージ</th></tr>
+<tr><td>オンプレミス/自己管理</td><td>NFS、SMB、HDFS、S3互換のオブジェクトストレージ</td></tr>
+<tr><td>AWS</td><td>S3、EFS、FSx</td></tr>
+<tr><td>他クラウド</td><td>Google Cloud Storage、Azure Blob Storageなど</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<ul>
+<li><strong>エージェント</strong>:オンプレミス/他クラウドのストレージにアクセスするために配置する。<strong>AWSのストレージ間の転送では不要</strong>。</li>
+<li><strong>ロケーション</strong>:転送元と転送先の定義</li>
+<li><strong>タスク</strong>:転送ジョブの定義(転送元・転送先・オプション・スケジュールをまとめる)</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 160 85
+node nfs 0 0 blue "オンプレミス" "NFS / SMB"
+node agent 1.3 0 box "エージェント" "オンプレに配置"
+node other 1.3 1 box "別リージョンのS3" "エージェント不要"
+node ds 2.6 0.5 accent "DataSync" "タスクで転送"
+node s3 3.9 0 ok "S3"
+node efs 3.9 1 ok "EFS / FSx"
+edge nfs agent
+edge agent ds "TLS"
+edge other ds
+edge ds s3
+edge ds efs
+<figcaption>図1 DataSyncの構成。オンプレミスのNFS/SMBからはエージェント経由で、AWSのストレージ間ではエージェントなしで、タスクに従って転送する。</figcaption>
+</figure>
+<h3>機能</h3>
+<ul>
+<li><strong>増分転送</strong>:初回は全データ、2回目以降は変更分だけを転送</li>
+<li><strong>スケジュール実行</strong>:最短1時間単位で定期実行</li>
+<li><strong>整合性の検証</strong>:転送後にチェックサムで検証</li>
+<li><strong>メタデータの保持</strong>:タイムスタンプ・所有者・権限などを引き継ぐ</li>
+<li><strong>暗号化</strong>:転送中はTLSを使用</li>
+</ul>
+
+<h3>ネットワーク接続</h3>
+<ul>
+<li><strong>パブリックエンドポイント</strong>:インターネット経由</li>
+<li><strong>VPCエンドポイント</strong>:Direct ConnectやSite-to-Site VPNと組み合わせ、インターネットを経由せずに転送</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>オンプレミスのファイルサーバー(NFS/SMB)からS3・EFS・FSxへのデータ移行</li>
+<li>オンプレミスとAWSの間での定期的なデータ同期(増分転送)</li>
+<li>リージョン間・ストレージサービス間のデータコピー</li>
+<li>他クラウドからAWSへのデータ移行</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>転送したデータ量(GB単位)に応じて課金されます。転送先のストレージ料金や、リージョン間・インターネットへのデータ転送料金は別途かかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>/<a href="efs.html">Amazon EFS</a>/<a href="fsx.html">Amazon FSx</a>:転送先のAWSストレージ</li>
+<li><a href="vpc.html">Amazon VPC</a>:VPCエンドポイントでのプライベート転送</li>
+<li><a href="backup.html">AWS Backup</a>:転送後のバックアップ管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>オンプレミスのNFS/SMBからAWSへ<strong>オンラインでデータ移行・同期</strong> → DataSync。</li>
+<li>オンプレミスから転送するときは<strong>エージェント</strong>が必要。AWSストレージ間は不要。</li>
+<li>インターネットを通さずに転送 → <strong>VPCエンドポイント+Direct Connect/VPN</strong>。</li>
+<li>2回目以降は<strong>増分転送</strong>、転送後は<strong>チェックサムで整合性を検証</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>DataSyncはエージェント・ロケーション・タスクで構成されるデータ転送サービス。</li>
+<li>増分転送・スケジュール・整合性検証・メタデータ保持に対応する。</li>
+</ul>
+</section>

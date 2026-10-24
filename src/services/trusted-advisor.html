@@ -1,0 +1,78 @@
+<!-- title: AWS Trusted Advisor -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: AWS環境を自動チェックし、ベストプラクティスに沿った改善を提案 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Trusted Advisor</strong>は、AWS環境を<strong>自動でチェック</strong>し、<strong>ベストプラクティスに沿った改善を提案</strong>するサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>チェックの観点</h3>
+<div class="table-wrap"><table>
+<tr><th>観点</th><th>チェック例</th></tr>
+<tr><td>コスト最適化</td><td>使用率の低いEC2インスタンス、アイドル状態のELB、未使用のEBSボリューム</td></tr>
+<tr><td>パフォーマンス</td><td>高使用率のEC2インスタンス、EBSのプロビジョンドIOPSの過不足</td></tr>
+<tr><td>セキュリティ</td><td>ルートアカウントのMFA、セキュリティグループの無制限アクセス、S3バケットのパブリックアクセス</td></tr>
+<tr><td>耐障害性</td><td>RDSのマルチAZ未設定、EBSスナップショットの未取得</td></tr>
+<tr><td>サービスクォータ</td><td>上限に近づいているリソース(VPC、Elastic IP、EC2など)</td></tr>
+<tr><td>オペレーショナルエクセレンス</td><td><span>ログ設定など運用面のベストプラクティス</span></td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 80
+node ta 1 1 accent "Trusted Advisor"
+node cost 0 0 box "コスト最適化"
+node perf 1 0 box "パフォーマンス"
+node sec 2 0 box "セキュリティ"
+node ft 0 2 box "耐障害性"
+node sq 1 2 box "サービスクォータ"
+node ops 2 2 box "オペレーショナル\nエクセレンス"
+edge ta cost
+edge ta perf
+edge ta sec
+edge ta ft
+edge ta sq
+edge ta ops
+<figcaption>図1 Trusted Advisorがチェックする6つの観点。AWS環境を自動でチェックし、ベストプラクティスに沿った改善を提案する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>無駄なリソースを洗い出してコスト削減</li>
+<li>サービスクォータの上限到達を事前に検知</li>
+<li>セキュリティの基本設定(MFA、公開設定)の確認</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Trusted Advisor自体は無料で使えますが、利用できるチェック項目はサポートプランによって異なります。Basic/Developerサポートでは一部のコアチェックのみで、Business以上のサポートプランですべてのチェックが使えます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="health-dashboard.html">AWS Health Dashboard</a>:AWS側の障害・メンテナンスの影響を確認</li>
+<li><a href="compute-optimizer.html">AWS Compute Optimizer</a>:機械学習によるリソースサイズの推奨</li>
+<li><a href="security-hub.html">AWS Security Hub</a>:セキュリティチェックの集約</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:チェック結果の変化を通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「サービスクォータの上限に近い」→ <strong>Trusted Advisor</strong>のサービスクォータチェック。</li>
+<li>「未使用・低使用率のリソースでコスト削減」→ Trusted Advisorのコスト最適化。</li>
+<li>より詳細なサイズ推奨(機械学習)→ <strong>Compute Optimizer</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Trusted Advisorはコスト・パフォーマンス・セキュリティ・耐障害性・クォータ・運用の観点でAWS環境をチェックする。</li>
+</ul>
+</section>

@@ -1,0 +1,76 @@
+<!-- title: Amazon Macie -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: S3の機密データや個人情報(PII)を検出・分類 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Macie</strong>は、<strong>S3に保存された機密データや個人情報(PII)を検出・分類</strong>するサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>概要</th><th>主な用途</th></tr>
+<tr><td>機密データ検出</td><td>S3オブジェクトを分析し、クレジットカード番号・個人情報・認証情報などを検出</td><td>S3内の機密情報の発見・分類</td></tr>
+<tr><td>データ検出結果</td><td>検出した機密データの種類や場所を確認</td><td>どのオブジェクトに機密情報が含まれるかを把握</td></tr>
+<tr><td>バケットのセキュリティ・アクセス分析</td><td>バケットの設定やアクセス状況を分析し、リスクを検出</td><td>意図しない公開や過剰なアクセス権限の確認</td></tr>
+<tr><td>自動検出</td><td>S3のデータを継続的に分析</td><td>定期的なデータセキュリティ監視</td></tr>
+<tr><td>カスタムデータ識別子</td><td>独自のパターン(正規表現など)を定義して検出</td><td>社内固有のIDや顧客番号の検出</td></tr>
+</table></div>
+
+<h3>GuardDutyとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>主な対象</th><th>主な目的</th></tr>
+<tr><td>Amazon Macie</td><td>S3のデータ</td><td>機密データやS3のデータセキュリティリスクを検出</td></tr>
+<tr><td>Amazon GuardDuty</td><td>AWSアカウント・ワークロード</td><td>不正アクセスやマルウェアなどの脅威を検出</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 80
+node s3 0 0.5 blue "S3バケット"
+node macie 1.4 0.5 accent "Macie" "機密データを検出"
+node f1 2.8 0 box "検出結果" "カード番号・PIIなど"
+node sh 2.8 1 ok "Security Hub" "EventBridgeで通知"
+edge s3 macie "分析"
+edge macie f1
+edge macie sh
+<figcaption>図1 Macieの流れ。S3のオブジェクトやバケット設定を分析して機密データや公開リスクを検出し、結果をSecurity HubやEventBridgeに連携できる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>S3に個人情報が保存されていないかの定期チェック</li>
+<li>公開されているバケットや過剰な権限の発見</li>
+<li>社員番号・顧客番号など独自形式のデータの検出</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>監視対象のバケット数と、機密データ検出でスキャンしたデータ量に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:検査の対象</li>
+<li><a href="security-hub.html">AWS Security Hub</a>:検出結果の集約</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:検出結果をトリガーに自動対応</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「S3」「個人情報(PII)」「機密データの検出」→ <strong>Macie</strong>。</li>
+<li>「不正アクセス」「マルウェア」「脅威検出」→ <strong>GuardDuty</strong>。</li>
+<li>独自形式のデータ → <strong>カスタムデータ識別子</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>MacieはS3の機密データ検出サービス。GuardDutyは脅威検出サービス。</li>
+</ul>
+</section>

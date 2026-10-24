@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS CodeArtifact | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">デベロッパーツール</span>
+  <h1>AWS CodeArtifact</h1>
+  <p class="lead">ソフトウェアパッケージを保存・共有するリポジトリ</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS CodeArtifact</strong>は、<strong>ソフトウェアパッケージを保存・共有するためのリポジトリサービス</strong>です。開発で使うライブラリを組織内で共有・管理します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>対応するパッケージの例</h3>
+<ul>
+<li>Java:Mavenライブラリ</li>
+<li>Node.js:npmパッケージ</li>
+<li>Python:pipパッケージ</li>
+</ul>
+<ul>
+<li>npmjs.comやPyPIなどの公開リポジトリを<strong>上流(アップストリーム)</strong>として接続し、取得したパッケージをキャッシュできる。</li>
+<li>リポジトリは<strong>ドメイン</strong>単位でまとめて管理し、IAMでアクセスを制御する。</li>
+<li>社内で作った独自パッケージを公開・共有できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 252" style="max-width:684px;min-width:520px" role="img" aria-label="図1 CodeArtifactの構成。公開リポジトリを上流としてつなぎ、取得したパッケージをキャッシュする。社内で作ったパッケージも公開でき、開発者やCodeBuildが同じリポジトリから取得する。"><defs><marker id="dgservices-codeartifact-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">公開リポジトリ</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">npmjs・PyPI など</text>
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">CodeArtifact</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">ドメイン/リポジトリ</text>
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">開発者</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">npm / pip / Maven</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">CodeBuild</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">依存を取得</text>
+<rect x="272" y="176" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="198" text-anchor="middle" class="dg-t">社内パッケージ</text>
+<text x="347" y="216" text-anchor="middle" class="dg-s">公開・共有</text>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgservices-codeartifact-1)"/>
+<text x="228" y="113" text-anchor="middle" class="dg-s dg-halo">上流</text>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#dgservices-codeartifact-1)"/>
+<path d="M422.0,122.4 L510.0,138.1" class="dg-line" marker-end="url(#dgservices-codeartifact-1)"/>
+<path d="M347.0,176.5 L347.0,135.0" class="dg-line" marker-end="url(#dgservices-codeartifact-1)"/>
+</svg>
+</div>
+<figcaption>図1 CodeArtifactの構成。公開リポジトリを上流としてつなぎ、取得したパッケージをキャッシュする。社内で作ったパッケージも公開でき、開発者やCodeBuildが同じリポジトリから取得する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>社内共通ライブラリをチームで共有</li>
+<li><span>インターネットに出られないビルド環境で、承認済みのパッケージだけを使わせる</span></li>
+<li><span>CodeBuildの依存パッケージ取得元として利用</span></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>保存しているパッケージの容量、リクエスト数、データ転送量に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="codebuild.html">AWS CodeBuild</a>:ビルド時の依存取得</li>
+<li><a href="ecr.html">Amazon ECR</a>:コンテナイメージのリポジトリ</li>
+<li><a href="iam.html">AWS IAM</a>:アクセス制御</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>npm・pip・Mavenのパッケージを組織内で管理 → <strong>CodeArtifact</strong>。</li>
+<li>コンテナイメージの管理 → <strong>ECR</strong>(混同に注意)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CodeArtifactはMaven・npm・pipなどのパッケージを保存・共有するリポジトリ。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="codedeploy.html"><span class="label">← 前へ</span>AWS CodeDeploy</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="xray.html"><span class="label">次へ →</span>AWS X-Ray</a>
+</nav>
+</main>
+</body>
+</html>

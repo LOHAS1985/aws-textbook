@@ -1,0 +1,59 @@
+<!-- title: 複数のVPCとオンプレミスを接続する -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: Transit Gatewayをハブにして、多数のVPCと社内ネットワークをつなぐ -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>本番・開発・共有サービスなど複数のVPCと、オンプレミスのデータセンターを、インターネットを経由せずにプライベートIPで相互に通信させたい。VPCが今後増えても、接続の管理が複雑にならないようにしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 160 80
+node onp 0 1 blue "オンプレミス" "データセンター"
+node vpn 1.25 1 box "VPN / DX" "暗号化・専用線"
+node tgw 2.5 1 accent "Transit Gateway" "ハブ"
+node v1 3.75 0 ok "VPC A" "本番"
+node v2 3.75 1 ok "VPC B" "開発"
+node v3 3.75 2 ok "VPC C" "共有サービス"
+node ram 2.5 2.2 box "RAM" "他アカウントへ共有"
+edge onp vpn
+edge vpn tgw
+edge tgw v1
+edge tgw v2
+edge tgw v3
+edge ram tgw dash
+<figcaption>図1 Transit Gatewayをハブにして、各VPCとオンプレミス(Site-to-Site VPN/Direct Connect)をハブ&スポークで接続する。別アカウントのVPCには、RAMでTransit Gatewayを共有する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/transit-gateway.html">AWS Transit Gateway</a>:多数のVPC・オンプレミスをハブ&スポークで接続する(<a href="../terms/inbound-traffic.html">インバウンド通信</a>参照)</li>
+<li><a href="../services/site-to-site-vpn.html">AWS Site-to-Site VPN</a>/<a href="../services/direct-connect.html">AWS Direct Connect</a>:オンプレミスとの接続(VPNはインターネット上を暗号化、DXは専用線)</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:各VPCのルートテーブルに、相手のCIDR向けの経路を追加する</li>
+<li><a href="../services/ram.html">AWS Resource Access Manager</a>:Transit Gatewayを組織内の他アカウントと共有する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>各VPC・オンプレミスのCIDRが重複していないことを確認する</li>
+<li>Transit Gatewayを作成し、各VPCをアタッチする(別アカウントのVPCはRAMで共有してからアタッチ)</li>
+<li>オンプレミスとSite-to-Site VPN(またはDirect Connect)で接続し、Transit Gatewayにアタッチする</li>
+<li>各VPCのサブネットのルートテーブルに、他のVPC・オンプレミスのCIDR → Transit Gateway のルートを追加する</li>
+<li>セキュリティグループ・NACLで、必要な通信だけを許可する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li><strong>VPCピアリングは1対1</strong>で推移的なルーティングができない。VPCが多いなら<strong>Transit Gateway</strong>。</li>
+<li><strong>CIDRが重複していると接続できない</strong>。最初にアドレス設計をしておく。</li>
+<li>通信できないときは、<strong>双方のルートテーブル</strong>に相手側CIDRの経路があるかを確認する。</li>
+<li>暗号化が必要で帯域・安定性も欲しい場合は、Direct Connectの上でVPNを使う構成もある。</li>
+</ul></div>
+</section>

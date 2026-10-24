@@ -1,0 +1,140 @@
+<!-- title: AWS SAM -->
+<!-- category: フレームワーク -->
+<!-- lead: サーバーレスアプリの開発・デプロイを支援するフレームワーク -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS SAM(Serverless Application Model)</strong>は、<strong>サーバーレスアプリケーションの開発・デプロイを支援するフレームワーク</strong>です。CloudFormationのサーバーレス版で、CloudFormationだと長くなる記述を簡単に書けます。<strong>最終的にはCloudFormationに変換</strong>されます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>SAMテンプレート</h3>
+<p>対象リソース:Lambda関数/レイヤー、API Gateway、DynamoDBテーブル、Step Functions など</p>
+<pre class="code"><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  HelloFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs18.x
+      Handler: app.handler
+      CodeUri: src/
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get</code></pre>
+<p><code>Transform: AWS::Serverless-2016-10-31</code> がSAMテンプレートの目印です。</p>
+
+<figure class="figure" data-diagram>
+grid 150 85
+node tpl 0 0.5 blue "SAMテンプレート" "短く書ける"
+node cfn 1.3 0.5 box "CloudFormation\nテンプレート"
+node st 2.6 0.5 accent "スタック"
+node fn 3.9 0 ok "Lambda"
+node api 3.9 1 ok "API Gateway"
+edge tpl cfn "変換"
+edge cfn st
+edge st fn
+edge st api
+<figcaption>図1 SAMの仕組み。短く書いたSAMテンプレートは、Transformによって通常のCloudFormationテンプレートに変換され、LambdaやAPI Gatewayなどのリソースが作られる。</figcaption>
+</figure>
+<h3>SAM CLIのコマンド</h3>
+<div class="table-wrap"><table>
+<tr><th>コマンド</th><th>内容</th></tr>
+<tr><td><code>sam init</code></td><td>プロジェクトのひな形を生成(ランタイム、アーキテクチャ、API有無、サンプルコードなど)</td></tr>
+<tr><td><code>sam build</code></td><td>ビルドして成果物を生成</td></tr>
+<tr><td><strong class="em"><code>sam local invoke</code></strong></td><td>Lambdaを単体でローカル実行(Lambdaの単体テスト)</td></tr>
+<tr><td><strong class="em"><code>sam local start-api</code></strong></td><td>API Gateway+Lambdaをローカル実行(<code>http://127.0.0.1:3000</code>)。リクエスト・レスポンスの検証</td></tr>
+<tr><td><strong class="em"><code>sam local start-lambda</code></strong></td><td>Lambdaエンドポイントをローカルに起動(<code>http://127.0.0.1:3001</code>)。他のLambdaやAWSサービスから正しく呼ばれるかを確認</td></tr>
+<tr><td><code>sam local generate-event</code></td><td>テストイベントを生成</td></tr>
+<tr><td><code>sam package</code></td><td>成果物をS3などにアップロードし、クラウドから参照できる状態にする</td></tr>
+<tr><td><code>sam deploy</code></td><td>デプロイ</td></tr>
+<tr><td><strong class="em"><code>sam sync --watch</code></strong></td><td>変更内容を高速にクラウドへ反映(既存リソースへの差分同期が目的)</td></tr>
+</table></div>
+
+<h3 class="em">設定ファイル samconfig.toml</h3>
+<p>複数環境で設定を変える場合などに使います。<code>stack_name</code>(スタック名)、<code>region</code>(リージョン)、<code>capabilities</code>(IAM作成の許可)、<code>s3_bucket</code>(パッケージの保存先)などを設定します。</p>
+
+<figure class="figure" data-diagram>
+grid 150 85
+node init 0 0 blue "sam init" "ひな形"
+node build 1 0 box "sam build" "成果物"
+node local 1 1 ok "sam local" "ローカルで試す"
+node pkg 2 0 box "sam package" "S3へ"
+node dep 3 0 accent "sam deploy" "CFnで作成"
+node sync 3 1 ok "sam sync" "差分を高速反映"
+edge init build
+edge build local dash
+edge build pkg
+edge pkg dep
+edge sync dep "開発中"
+<figcaption>図2 SAM CLIの基本的な流れ。init でひな形を作り、build でビルド、local でローカル実行して確認し、package / deploy でクラウドへ反映する。開発中の変更は sync で素早く反映できる。</figcaption>
+</figure>
+<h3>段階的デプロイ</h3>
+<ol>
+<li>SAMテンプレートに次の2つを記述:<strong class="em"><code>AutoPublishAlias: live</code></strong>、<strong class="em"><code>DeploymentPreference: Type: Canary10Percent5Minutes</code></strong></li>
+<li>初回デプロイ</li>
+<li>コードを修正して再デプロイ</li>
+<li>段階的な移行が開始される(内部ではCodeDeployを使用)</li>
+</ol>
+
+<h3>SAMでデプロイするまでの流れ</h3>
+<ol>
+<li>SAMテンプレートを作成し、Lambda・API・DynamoDBなどを定義</li>
+<li><code>sam build</code> でビルド</li>
+<li><code>sam package</code>/<code>sam deploy</code> でCloudFormationへ</li>
+<li>CloudFormationがAWSリソースを作成</li>
+</ol>
+<div class="table-wrap"><table>
+<tr><th>コマンド</th><th>インプット</th><th>処理内容</th><th>アウトプット</th></tr>
+<tr><td><code>sam build</code></td><td>ソースコード、<code>template.yaml</code>、依存関係の定義(<code>requirements.txt</code>、<code>pom.xml</code>など)</td><td>依存関係を解決し、Lambda実行用の成果物を作成</td><td>ビルド成果物</td></tr>
+<tr><td><code>sam package</code></td><td><code>.aws-sam/build/</code> の成果物、<code>template.yaml</code></td><td>成果物をZIP化してS3へアップロードし、<code>CodeUri</code> をS3パスに置き換え</td><td>パッケージ済みテンプレート(<code>packaged.yaml</code> など)</td></tr>
+<tr><td><code>sam deploy</code></td><td>パッケージ済みテンプレート</td><td>CloudFormationスタックを作成・更新</td><td>Lambda関数・API GatewayなどのAWSリソース</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>API Gateway+Lambda+DynamoDBのサーバーレスAPIを少ない記述で構築</li>
+<li>ローカルでLambdaやAPIをテストしてからデプロイ</li>
+<li>Lambdaの新バージョンをCanaryで段階的にリリース</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>SAM自体は無料のオープンソースフレームワークです。作成されたLambdaなどのリソースや、パッケージを置くS3に料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:SAMの変換先</li>
+<li><a href="lambda.html">AWS Lambda</a>/<a href="api-gateway.html">Amazon API Gateway</a>/<a href="dynamodb.html">Amazon DynamoDB</a>/<a href="step-functions.html">AWS Step Functions</a>:SAMで定義する主なリソース</li>
+<li><a href="codedeploy.html">AWS CodeDeploy</a>:段階的デプロイの実行</li>
+<li><a href="cdk.html">AWS CDK</a>:プログラミング言語によるIaC</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>SAMテンプレートの目印 → <code>Transform: AWS::Serverless-2016-10-31</code>。</li>
+<li>Lambda単体のローカルテスト → <code>sam local invoke</code>。APIとしてローカル実行 → <code>sam local start-api</code>。</li>
+<li>開発中に変更をすばやく反映 → <code>sam sync --watch</code>。</li>
+<li>Canaryで段階的デプロイ → <code>AutoPublishAlias</code>+<code>DeploymentPreference</code>。</li>
+<li>環境ごとの設定 → <strong>samconfig.toml</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>SAMはサーバーレス向けにCloudFormationを簡単に書けるフレームワーク。</li>
+<li>SAM CLIでビルド・ローカル実行・デプロイ・同期ができる。</li>
+</ul>
+</section>

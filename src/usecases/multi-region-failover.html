@@ -1,0 +1,59 @@
+<!-- title: リージョン障害に備えて別リージョンへ切り替える -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: Route 53のフェイルオーバーとAuroraグローバルデータベースで、ウォームスタンバイを構成する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>東京リージョン全体に障害が起きても、数分〜数十分で大阪リージョンでサービスを再開したい(<a href="../terms/dr-strategies.html">DR戦略</a>のウォームスタンバイ)。データの損失はできるだけ小さくしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 160 85
+node u 0 1 blue "利用者"
+node r53 1.25 1 accent "Route 53" "フェイルオーバー"
+node p 2.5 0 box "東京(プライマリ)" "ALB + EC2"
+node s 2.5 2 box "大阪(セカンダリ)" "縮小構成で待機"
+node db1 3.75 0 ok "Aurora" "プライマリ"
+node db2 3.75 2 ok "Aurora" "セカンダリ"
+edge u r53
+edge r53 p "正常時"
+edge r53 s dash "障害時"
+edge p db1
+edge s db2
+edge db1 db2 "レプリケート"
+<figcaption>図1 Route 53がプライマリのヘルスチェックを監視し、失敗したらセカンダリ(大阪)へ切り替える。データはAuroraグローバルデータベースで、通常1秒未満の遅延で大阪にレプリケートしておく。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/route53.html">Amazon Route 53</a>:フェイルオーバールーティングとヘルスチェック</li>
+<li><a href="../services/aurora.html">Amazon Aurora</a>:グローバルデータベースで別リージョンにレプリケート</li>
+<li><a href="../services/s3.html">Amazon S3</a>:クロスリージョンレプリケーションで静的ファイルを複製</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:両リージョンに同じ構成を作る(StackSets)</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>/<a href="../services/ec2.html">Amazon EC2</a>:各リージョンのアプリ層</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>CloudFormationで、大阪にも同じ構成(縮小版)を作成する</li>
+<li>Auroraグローバルデータベースを作成し、大阪をセカンダリリージョンにする</li>
+<li>S3バケットはクロスリージョンレプリケーションを設定する(両方でバージョニングを有効化)</li>
+<li>Route 53でプライマリ(東京)とセカンダリ(大阪)のフェイルオーバーレコードを作り、プライマリにヘルスチェックを付ける</li>
+<li>障害時の手順(DBの昇格、台数の拡張)をランブック化して訓練しておく</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>復旧時間(RTO)とコストのバランスで、<strong>バックアップと復元/パイロットライト/ウォームスタンバイ/マルチサイト</strong>から選ぶ。</li>
+<li>リージョン障害対策のDB → <strong>Auroraグローバルデータベース</strong>。</li>
+<li>切り替えを安全・確実に行いたい → Route 53 <strong>Application Recovery Controller</strong>(ルーティングコントロール・準備状況チェック)。</li>
+<li>DNSのキャッシュに左右されずに切り替えたい場合は<a href="../services/global-accelerator.html">Global Accelerator</a>も候補。</li>
+</ul></div>
+</section>

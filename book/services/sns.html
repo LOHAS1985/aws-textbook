@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon SNS | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">アプリケーション統合</span>
+  <h1>Amazon SNS</h1>
+  <p class="lead">複数の購読者へメッセージをプッシュ配信するPub/Subサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon SNS(Simple Notification Service)</strong>は、<strong>メッセージングサービス</strong>です。<strong>プッシュ型(Pub/Sub)</strong>で、SNS自らが受信者にメッセージを送ります。保存されたメッセージはAWS KMSで暗号化できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 256" style="max-width:684px;min-width:520px" role="img" aria-label="図1 SNSのPub/Sub(プッシュ型)。トピックにパブリッシュされたメッセージを、購読しているすべての宛先へ同時に配信する(ファンアウト)。"><defs><marker id="dgservices-sns-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="110" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="132" text-anchor="middle" class="dg-t">パブリッシャー</text>
+<text x="109" y="150" text-anchor="middle" class="dg-s">アプリ・アラームなど</text>
+<rect x="272" y="116" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">SNSトピック</text>
+<rect x="510" y="42" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="66" text-anchor="middle" class="dg-t">SQSキュー</text>
+<rect x="510" y="116" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">Lambda</text>
+<rect x="510" y="192" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="216" text-anchor="middle" class="dg-t">メール / SMS</text>
+<path d="M184.0,136.5 L272.0,136.5" class="dg-line" marker-end="url(#dgservices-sns-1)"/>
+<text x="228" y="140" text-anchor="middle" class="dg-s dg-halo">発行</text>
+<path d="M410.5,116.5 L521.5,81.5" class="dg-line" marker-end="url(#dgservices-sns-1)"/>
+<path d="M422.0,136.5 L510.0,136.5" class="dg-line" marker-end="url(#dgservices-sns-1)"/>
+<path d="M410.5,156.5 L521.5,191.5" class="dg-line" marker-end="url(#dgservices-sns-1)"/>
+</svg>
+</div>
+<figcaption>図1 SNSのPub/Sub(プッシュ型)。トピックにパブリッシュされたメッセージを、購読しているすべての宛先へ同時に配信する(ファンアウト)。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>用語</h3>
+<ul>
+<li><strong>トピック</strong>:通信チャネルとして機能するアクセスポイント。
+  <ul>
+  <li><strong>FIFO</strong>:順序の保証、重複排除。<strong>SQS FIFOキューのみ</strong>に配信できる。</li>
+  <li><strong>標準</strong>:順序の保証なし、重複配信の可能性あり。</li>
+  </ul></li>
+<li><strong>パブリッシュ</strong>:メッセージをトピックに発行すること。</li>
+<li><strong>サブスクリプション</strong>:メッセージの受信者を登録すること。配信は<strong>デフォルトで3回再試行</strong>される(失敗するたびに再試行までの時間を調整する<strong>バックオフ</strong>。例:指数バックオフ)。</li>
+</ul>
+
+<h3>メッセージフィルタリング</h3>
+<p>購読者ごとに受信するメッセージを選別します。メッセージ属性(本文とは別に付けるキーと値)や本文で選別し、不要な配信を減らしてコストを下げます。</p>
+
+<h3>デッドレターキュー(DLQ)</h3>
+<p>配信に失敗し、再試行にも失敗したメッセージを保存します。<strong>サブスクリプション単位</strong>で設定し、<strong>実体はSQSキュー</strong>です。</p>
+<p><code>SNSトピック → 購読者へ配信 → 成功:通常処理/失敗:再試行 → 失敗が続く:SNS DLQ(SQS)</code></p>
+<p>保存後の調査手順:</p>
+<ol>
+<li>配信失敗のメトリクスを確認(<code>NumberOfMessagesPublished</code>=受け付けた数、<code>NumberOfNotificationsDelivered</code>=配信成功数、<code>NumberOfNotificationsFailed</code>=配信失敗数)</li>
+<li>購読者の状態を確認</li>
+<li>サブスクリプションの設定を確認</li>
+<li>メッセージを調査</li>
+</ol>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 262" style="max-width:684px;min-width:520px" role="img" aria-label="図2 メッセージフィルタリングとDLQ。購読ごとにフィルターポリシーで受け取るメッセージを絞れる。再試行しても配信できなかったメッセージは、購読ごとに設定したDLQ(実体はSQS)に保存される。"><defs><marker id="dgservices-sns-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="116" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="109" y="140" text-anchor="middle" class="dg-tb">SNSトピック</text>
+<rect x="272" y="36" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="57" text-anchor="middle" class="dg-t">購読A</text>
+<text x="347" y="75" text-anchor="middle" class="dg-s">type=order のみ</text>
+<rect x="272" y="110" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="132" text-anchor="middle" class="dg-t">購読B</text>
+<text x="347" y="150" text-anchor="middle" class="dg-s">type=refund のみ</text>
+<rect x="272" y="186" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="347" y="207" text-anchor="middle" class="dg-t">購読C</text>
+<text x="347" y="225" text-anchor="middle" class="dg-s">配信失敗</text>
+<rect x="510" y="186" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="585" y="207" text-anchor="middle" class="dg-t">DLQ(SQS)</text>
+<text x="585" y="225" text-anchor="middle" class="dg-s">失敗を保存</text>
+<path d="M172.5,116.5 L272.0,85.1" class="dg-line" marker-end="url(#dgservices-sns-2)"/>
+<path d="M184.0,136.5 L272.0,136.5" class="dg-line" marker-end="url(#dgservices-sns-2)"/>
+<path d="M172.5,156.5 L272.0,187.9" class="dg-line" marker-end="url(#dgservices-sns-2)"/>
+<path d="M422.0,211.5 L510.0,211.5" class="dg-line" marker-end="url(#dgservices-sns-2)"/>
+<text x="466" y="216" text-anchor="middle" class="dg-s dg-halo">再試行後</text>
+</svg>
+</div>
+<figcaption>図2 メッセージフィルタリングとDLQ。購読ごとにフィルターポリシーで受け取るメッセージを絞れる。再試行しても配信できなかったメッセージは、購読ごとに設定したDLQ(実体はSQS)に保存される。</figcaption>
+</figure>
+<h3>EventBridgeとの使い分け</h3>
+<div class="table-wrap"><table>
+<tr><th>要件</th><th>適したサービス</th></tr>
+<tr><td>すべてのイベントを複数の購読者に配信/高速なファンアウト</td><td>SNS</td></tr>
+<tr><td>メールやSMSへの通知</td><td>SNS</td></tr>
+<tr><td>SQSやLambdaへの単純な通知</td><td>SNS</td></tr>
+<tr><td>条件に一致するイベントだけ処理/複雑な条件分岐</td><td>EventBridge</td></tr>
+<tr><td>AWSサービスイベントの標準的なルーティング</td><td>EventBridge</td></tr>
+<tr><td>イベントの変換/アーカイブ・リプレイ</td><td>EventBridge</td></tr>
+<tr><td>SaaSイベントとの統合</td><td>EventBridge</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<div class="table-wrap"><table>
+<tr><th>連携元</th><th>通知するイベント</th></tr>
+<tr><td>CloudWatchアラーム</td><td>CPU使用率の上昇や障害</td></tr>
+<tr><td>EventBridge</td><td>AWSサービスやアプリのイベント</td></tr>
+<tr><td>S3</td><td>オブジェクトの作成</td></tr>
+<tr><td>Lambda</td><td>処理結果や異常を後続システムへ</td></tr>
+<tr><td>Auto Scaling</td><td>インスタンスの増減</td></tr>
+<tr><td>CodePipeline</td><td>デプロイ結果</td></tr>
+</table></div>
+<p>代表的な構成に、1つのSNSトピックから複数のSQSキューへ同じメッセージを配る<strong>ファンアウト</strong>があります。</p>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>パブリッシュしたリクエスト数と、配信先の種類(HTTP、メール、SMS、モバイルプッシュなど)ごとの配信数で課金されます。SQSやLambdaへの配信は無料です。SMSは送信先の国によって料金が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="sqs.html">Amazon SQS</a>:ファンアウト先、DLQの実体</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:条件付きのイベントルーティング</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:アラームの通知先</li>
+<li><a href="lambda.html">AWS Lambda</a>:購読者</li>
+<li><a href="kms.html">AWS KMS</a>:メッセージの暗号化</li>
+<li><a href="ses.html">Amazon SES</a>:顧客向けのメール送信(SNSのメール通知は運用者向け)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>SNSはプッシュ型、SQSはプル型。</li>
+<li>1つのメッセージを複数の処理へ → <strong>SNS→複数SQSのファンアウト</strong>。</li>
+<li>購読者ごとに必要なメッセージだけ → <strong>メッセージフィルタリング</strong>。</li>
+<li>配信失敗の保存 → サブスクリプションに<strong>DLQ(SQS)</strong>。</li>
+<li>FIFOトピックの配信先は<strong>SQS FIFOキューのみ</strong>。</li>
+<li>メール・SMS通知 → SNS、複雑なルーティング・変換 → EventBridge。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>SNSはトピックへパブリッシュし、サブスクリプションへプッシュ配信するPub/Subサービス。</li>
+<li>フィルタリング・DLQ・FIFOトピックで配信を制御する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="sqs.html"><span class="label">← 前へ</span>Amazon SQS</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="eventbridge.html"><span class="label">次へ →</span>Amazon EventBridge</a>
+</nav>
+</main>
+</body>
+</html>

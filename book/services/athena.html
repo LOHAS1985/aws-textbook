@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Athena | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">分析</span>
+  <h1>Amazon Athena</h1>
+  <p class="lead">S3上のデータを標準SQLで直接分析するサーバーレスなクエリサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Athena</strong>は、<strong>S3に保存されたデータを標準SQLで直接分析</strong>できる<strong>サーバーレス</strong>なクエリサービスです。データベースにデータを読み込む必要がなく、サーバーの管理も不要です。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li>CSV、JSON、Parquet、ORCなどの形式に対応。</li>
+<li>テーブル定義(スキーマ)は<strong>AWS Glue データカタログ</strong>で管理する。</li>
+<li>クエリ結果はS3に出力される。</li>
+<li><strong>パーティション</strong>(日付ごとのフォルダ分けなど)や<strong>列指向形式(Parquet/ORC)</strong>・圧縮を使うと、スキャン量が減り高速・低コストになる。</li>
+<li>ワークグループで、チームごとにクエリの実行やスキャン量の上限を管理できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 252" style="max-width:684px;min-width:520px" role="img" aria-label="図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。"><defs><marker id="dgservices-athena-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">S3</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">CSV・Parquetなど</text>
+<rect x="34" y="176" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="198" text-anchor="middle" class="dg-t">Glueデータカタログ</text>
+<text x="109" y="216" text-anchor="middle" class="dg-s">テーブル定義</text>
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">Athena</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">SQLを実行</text>
+<rect x="510" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="104" text-anchor="middle" class="dg-t">クエリ結果</text>
+<text x="585" y="122" text-anchor="middle" class="dg-s">S3に出力</text>
+<rect x="510" y="182" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="585" y="206" text-anchor="middle" class="dg-t">分析者・BI</text>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgservices-athena-1)"/>
+<text x="228" y="113" text-anchor="middle" class="dg-s dg-halo">スキャン</text>
+<path d="M175.2,176.5 L280.8,135.0" class="dg-line dg-dash" marker-end="url(#dgservices-athena-1)"/>
+<path d="M422.0,109.0 L510.0,109.0" class="dg-line" marker-end="url(#dgservices-athena-1)"/>
+<path d="M534.1,182.5 L413.2,135.0" class="dg-line" marker-end="url(#dgservices-athena-1)"/>
+<text x="474" y="163" text-anchor="middle" class="dg-s dg-halo">SQL</text>
+</svg>
+</div>
+<figcaption>図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>S3に出力されたCloudTrail・ALB・VPCフローログのアドホックな分析</li>
+<li>データレイク(S3)に対する集計クエリ</li>
+<li>BIツール(QuickSightなど)のデータソース</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p><strong>クエリでスキャンしたデータ量</strong>に応じて課金されます。パーティション分割・列指向形式・圧縮でスキャン量を減らすと、コストを大きく下げられます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:分析対象のデータの保存先</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:S3に出力したログの分析</li>
+<li><a href="kinesis.html">Amazon Kinesis</a>:Firehose経由でS3にデータを蓄積</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:全文検索・リアルタイム分析</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「S3のデータ」「SQL」「サーバーレス」「アドホック分析」→ <strong>Athena</strong>。</li>
+<li>コスト削減 → <strong>パーティション+Parquet/ORC+圧縮</strong>でスキャン量を減らす。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AthenaはS3のデータをSQLで直接分析するサーバーレスサービス。料金はスキャン量で決まる。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="database-encryption-sdk.html"><span class="label">← 前へ</span>AWS Database Encryption SDK</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="kinesis.html"><span class="label">次へ →</span>Amazon Kinesis</a>
+</nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!-- title: AWS CodeDeploy -->
+<!-- category: デベロッパーツール -->
+<!-- lead: アプリを安全に各環境へ配布・更新するデプロイ自動化サービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS CodeDeploy</strong>は、アプリケーションを<strong>安全に各種環境へ配布・更新</strong>するためのデプロイ自動化サービスです。EC2・オンプレミス・ECS・Lambdaにデプロイできます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<ul>
+<li><strong>アプリケーション</strong>:デプロイ対象の論理単位</li>
+<li><strong>デプロイグループ</strong>:デプロイ先</li>
+<li><strong>フック</strong>:各段階で任意のスクリプトや処理を実行。※Blue/Greenのフックはネストスタック内で使用不可</li>
+<li><strong>AppSpecファイル</strong>:インスタンスごとのデプロイ手順を定義するファイル。アプリのソースの<strong>ルートディレクトリ</strong>に置く。</li>
+</ul>
+<pre class="code"><code>version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/www/html
+hooks:
+  AfterInstall:
+    - location: scripts/start.sh</code></pre>
+
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 0.5 blue "アプリケーション" "appspec.yml を含む"
+node cd 1.4 0.5 accent "CodeDeploy" "デプロイ設定"
+node dg1 2.8 0 box "デプロイグループ" "EC2 / オンプレ"
+node dg2 2.8 1 box "デプロイグループ" "ECS / Lambda"
+edge app cd
+edge cd dg1
+edge cd dg2
+<figcaption>図1 CodeDeployの構成要素。アプリケーション(デプロイ対象)を、デプロイグループ(デプロイ先)へ、appspec.ymlの手順とデプロイ設定に従って配布する。</figcaption>
+</figure>
+<h3>デプロイ設定(Deployment Configuration)</h3>
+<p>複数のインスタンスやトラフィックに対して、どう進めるかを決めます。</p>
+<div class="table-wrap"><table>
+<tr><th>対象</th><th>設定</th><th>内容</th></tr>
+<tr><td rowspan="3">EC2/オンプレミス</td><td>OneAtATime</td><td>インスタンスを1台ずつデプロイ</td></tr>
+<tr><td>HalfAtATime</td><td>インスタンスの半分ずつデプロイ</td></tr>
+<tr><td>AllAtOnce</td><td>全インスタンスに同時にデプロイ</td></tr>
+<tr><td rowspan="3">ECS/Lambda</td><td>AllAtOnce</td><td>全トラフィックを一度に新バージョンへ移行</td></tr>
+<tr><td>Linear</td><td>指定した割合のトラフィックを、指定した時間ごとに新バージョンへ移行</td></tr>
+<tr><td>Canary</td><td>最初に指定した割合を新バージョンへ移し、指定時間後に残りをすべて移行</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 130 70
+node lc 0 0 accent "Canary"
+node c1 1 0 box "10%"
+node c2 2 0 box "10%"
+node c3 3 0 ok "100%"
+node ll 0 1 accent "Linear"
+node l1 1 1 box "10%"
+node l2 2 1 box "20%"
+node l3 3 1 box "30%"
+node l4 4 1 ok "… 100%"
+node la 0 2 accent "AllAtOnce"
+node a1 1 2 ok "100%"
+edge c1 c2
+edge c2 c3
+edge l1 l2
+edge l2 l3
+edge l3 l4
+<figcaption>図2 ECS・Lambdaのトラフィック移行方式(新バージョンに流す割合の変化)。Canaryは少しだけ流して様子を見てから一気に、Linearは一定間隔で少しずつ、AllAtOnceは一度にすべて移す。</figcaption>
+</figure>
+<h3>デプロイの流れ(In-Placeデプロイ)</h3>
+<ol>
+<li><code>ApplicationStop</code>:既存アプリの停止</li>
+<li><code>BeforeInstall</code>:インストール前処理</li>
+<li><code>Install</code>:アプリの配置</li>
+<li><code>AfterInstall</code>:インストール後処理</li>
+<li><code>ApplicationStart</code>:アプリの起動</li>
+<li><code>ValidateService</code>:動作確認</li>
+</ol>
+<p>デプロイ方式には、既存のインスタンスを更新する<strong>In-Place</strong>と、新しい環境を用意してトラフィックを切り替える<strong>Blue/Green</strong>があります。EC2/オンプレミスで使うには、各インスタンスに<strong>CodeDeployエージェント</strong>が必要です。CloudWatchアラームと連携した<strong>自動ロールバック</strong>も設定できます。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node n1 0 0 box "ApplicationStop"
+node n2 1 0 box "BeforeInstall"
+node n3 2 0 accent "Install"
+node n4 2 1 box "AfterInstall"
+node n5 1 1 box "ApplicationStart"
+node n6 0 1 ok "ValidateService"
+edge n1 n2
+edge n2 n3
+edge n3 n4
+edge n4 n5
+edge n5 n6
+<figcaption>図3 In-Placeデプロイのライフサイクルイベント(フック)の順番。appspec.ymlの hooks で、各タイミングに実行するスクリプトを指定する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>EC2のWebサーバー群へ1台ずつ安全にリリース</li>
+<li>Lambdaの新バージョンへ10%ずつトラフィックを移行(Canary/Linear)</li>
+<li>ECSサービスのBlue/Greenデプロイ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>EC2・Lambda・ECSへのデプロイは追加料金なしで使えます。オンプレミスのサーバーへのデプロイは、更新するインスタンス数に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:Deployステージ</li>
+<li><a href="codebuild.html">AWS CodeBuild</a>:デプロイ前のビルド</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ecs.html">Amazon ECS</a>/<a href="lambda.html">AWS Lambda</a>:デプロイ先</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:アラームによる自動ロールバック</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>デプロイ手順の定義 → <strong>appspec.yml</strong>(ルートに配置)。</li>
+<li>フックの順序:ApplicationStop → BeforeInstall → Install → AfterInstall → ApplicationStart → ValidateService。</li>
+<li>Lambda/ECSで少しずつ移行 → <strong>Canary</strong>(2段階)/<strong>Linear</strong>(一定間隔)。</li>
+<li>EC2で1台ずつ → <strong>OneAtATime</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CodeDeployはEC2・オンプレ・ECS・Lambdaへのデプロイを自動化する。</li>
+<li>手順はappspec、進め方はデプロイ設定(OneAtATime/Canary/Linearなど)で決める。</li>
+</ul>
+</section>

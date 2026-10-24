@@ -1,0 +1,119 @@
+<!-- title: AWS STS -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: 一時的な認証情報を発行するサービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS STS(Security Token Service)</strong>は、<strong>一時的な認証情報</strong>を発行するサービスです。短時間だけ有効なアクセスキーを発行するため、長期のキーを配る必要がありません。</p>
+<p>発行される認証情報:<strong>Access Key ID</strong>、<strong>Secret Access Key</strong>、<strong>Session Token</strong></p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>STS API</h3>
+<div class="table-wrap"><table>
+<tr><th>API</th><th>用途</th></tr>
+<tr><td><code>AssumeRole</code></td><td>クロスアカウント、ロール切り替え</td></tr>
+<tr><td><code>AssumeRoleWithSAML</code></td><td>SAML連携(SSO)</td></tr>
+<tr><td><code>AssumeRoleWithWebIdentity</code></td><td>OIDC連携(Googleログインなど)</td></tr>
+<tr><td><code>GetSessionToken</code></td><td>MFA付きの一時認証</td></tr>
+<tr><td><code>GetFederationToken</code></td><td>フェデレーション</td></tr>
+</table></div>
+
+<h3>AssumeRole</h3>
+<p>別の権限(ロール)を一時的に使います。ユーザー/サービスがSTSにリクエスト → STSが一時クレデンシャルを発行 → それを使ってAWSリソースにアクセス、という流れです。</p>
+
+<figure class="figure" data-diagram>
+grid 190 85
+node user 0 0 blue "アカウントA" "IAMユーザー/ロール"
+node sts 1.4 0 accent "STS" "AssumeRole"
+node creds 2.8 0 ok "一時認証情報" "セッショントークン付き"
+node res 2.8 1.2 box "アカウントBのS3" "ロールの権限で操作"
+edge user sts "① 要求"
+edge sts creds "② 発行"
+edge creds res "③ アクセス"
+<figcaption>図1 AssumeRoleによるクロスアカウントアクセス。①STSにロールの引き受けを要求し、②一時認証情報(キーID・シークレット・セッショントークン)を受け取り、③その権限でアカウントBのリソースを操作する。</figcaption>
+</figure>
+<h3>AssumeRoleWithSAML</h3>
+<p>SAML認証の結果を使ってロールを引き受けます。</p>
+<ol>
+<li>ユーザーがIdP(例:会社の認証基盤)にログイン。IdP=本人確認を行い証明を発行するシステム</li>
+<li>IdPがSAMLアサーション(「認証済み」を証明するデータ)を発行</li>
+<li>IdPがブラウザ経由でAWSに送信</li>
+<li>STSが検証し、一時クレデンシャルを発行</li>
+</ol>
+
+<h3>AssumeRoleWithWebIdentity</h3>
+<p>Web/モバイルアプリの利用者向けに、OIDC/OAuth 2.0のIDプロバイダーのトークンを使ってロールを引き受けます。</p>
+<ol>
+<li>ユーザーがWeb IdP(Google、Facebookなど)でログイン</li>
+<li>IdPがIDトークン(JWT)を発行</li>
+<li>クライアントが、使いたい権限とIDトークンを送ってSTSを呼び出す</li>
+<li>STSが検証し、一時クレデンシャルを発行</li>
+</ol>
+
+<figure class="figure" data-diagram>
+grid 190 85
+node idp1 0 0 blue "企業のIdP" "SAML 2.0"
+node sts1 1.4 0 box "AssumeRoleWithSAML"
+node idp2 0 1 blue "Google など" "OIDC(JWT)"
+node sts2 1.4 1 box "AssumeRole\nWithWebIdentity"
+node cred 2.8 0.5 ok "一時認証情報"
+edge idp1 sts1 "アサーション"
+edge idp2 sts2 "IDトークン"
+edge sts1 cred
+edge sts2 cred
+<figcaption>図2 フェデレーション。企業のIdP(SAML)のアサーション、またはWeb IdP(OIDC)のIDトークンをSTSに渡すと、IAMユーザーなしで一時認証情報を受け取れる。</figcaption>
+</figure>
+<h3>3つのAPIの比較</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>AssumeRole</th><th>AssumeRoleWithSAML</th><th>AssumeRoleWithWebIdentity</th></tr>
+<tr><td>認証元</td><td>IAMユーザー/ロール</td><td>企業IdP(SAML)</td><td>Web IdP(OIDC)</td></tr>
+<tr><td>IdP</td><td>AWS IAM</td><td>SAML 2.0 IdP</td><td>OIDC/OAuth 2.0</td></tr>
+<tr><td>IAMユーザー</td><td>必須</td><td>不要</td><td>不要</td></tr>
+<tr><td>主な用途</td><td>AWS内/AWS間の連携</td><td>社内SSO</td><td>SPA/モバイル</td></tr>
+<tr><td>使用例</td><td><strong>クロスアカウント</strong></td><td>AD/Azure AD</td><td>Cognito+SPA</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ol>
+<li><strong>ロール切り替え</strong>:普段は一般ユーザーだが、作業時だけ管理者権限を使いたい</li>
+<li><strong>クロスアカウントアクセス</strong>:別のAWSアカウントのリソースに安全にアクセス</li>
+<li><strong>IDフェデレーション</strong>:社内IdPやGoogleアカウントでAWSを利用</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>STSは追加料金なしで利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="iam.html">AWS IAM</a>:引き受けるロールの定義</li>
+<li><a href="cognito.html">Amazon Cognito</a>:IDプールで内部的にSTSを利用</li>
+<li><a href="organizations.html">AWS Organizations</a>:マルチアカウント環境でのロール運用</li>
+<li><a href="directory-service.html">AWS Directory Service</a>:Active Directoryとの連携</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>別アカウントのリソースへアクセス → <strong>AssumeRole</strong>。</li>
+<li>社内AD/SAMLでSSO → <strong>AssumeRoleWithSAML</strong>。</li>
+<li>Googleなどのソーシャルログイン/OIDC → <strong>AssumeRoleWithWebIdentity</strong>(実際はCognito経由が推奨)。</li>
+<li>MFAを条件にした一時認証 → <strong>GetSessionToken</strong>。</li>
+<li>一時認証情報には<strong>Session Token</strong>が含まれる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>STSは一時的な認証情報(キーID・シークレット・セッショントークン)を発行する。</li>
+<li>認証元に応じてAssumeRole/WithSAML/WithWebIdentityを使い分ける。</li>
+</ul>
+</section>

@@ -1,0 +1,108 @@
+<!-- title: Amazon Managed Grafana -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: 可視化・分析プラットフォーム「Grafana」のマネージドサービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Managed Grafana</strong>は、可視化・分析プラットフォーム<strong>「Grafana」</strong>をマネージドで提供するサービスです。メトリクス・ログ・トレースをダッシュボードで可視化します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li><strong>変数</strong>:環境やインスタンスごとにダッシュボードを作り直さずに済む。</li>
+<li>AWSサービス以外のオープンソース・商用のデータソースにも接続できる(Prometheus、OpenSearch、PostgreSQL、Redisなど)。</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 70
+node cw 0 0 blue "CloudWatch"
+node xr 0 1 blue "X-Ray"
+node amp 0 2 blue "Prometheus" "AMP"
+node os 0 3 blue "OpenSearch など"
+node gf 1.4 1 accent "Managed Grafana" "ダッシュボード" h=2
+node u 2.8 1 box "利用者" "閲覧・編集・管理"
+node sso 2.8 2 ok "Identity Center" "認証(推奨)"
+edge cw gf
+edge xr gf
+edge amp gf
+edge os gf
+edge u gf "閲覧"
+edge sso u dash
+<figcaption>図1 Managed Grafanaの構成。CloudWatch・X-Ray・Prometheus・OpenSearchなど複数のデータソースを1つのダッシュボードで可視化する。利用者はIAM Identity Center(推奨)やSAMLで認証し、Viewer・Editor・Adminのロールで権限を分ける。</figcaption>
+</figure>
+<h3>Grafanaワークスペースの作成</h3>
+<ol>
+<li>ワークスペースの作成を選択</li>
+<li>ワークスペース名・バージョンを指定</li>
+<li>認証方式を選択(IAM Identity Center/SAML 2.0)</li>
+<li>アクセス許可タイプを選択(サービスマネージド/カスタマーマネージドのIAMロール)</li>
+<li>連携するAWSデータソースを選択(CloudWatch、X-Rayなど)</li>
+</ol>
+
+<h3>モニタリング</h3>
+<ul>
+<li>連携するAWSサービス:<strong>CloudWatch</strong>(メトリクス・ログ)、<strong>X-Ray</strong>(分散トレーシング)、<strong>Managed Service for Prometheus</strong></li>
+<li>アラートと通知:しきい値ベースのアラート(例:エラーレートが5%を超えた)を設定し、SNSトピックなどへ通知</li>
+</ul>
+
+<h3>ユーザーとアクセス許可</h3>
+<ol>
+<li><strong>AWS側の認証</strong>:IAM Identity Center(推奨)、SAML 2.0</li>
+<li><strong>Grafanaのロール</strong>
+  <ul>
+  <li><strong>Viewer</strong>:ダッシュボードの表示のみ</li>
+  <li><strong>Editor</strong>:ダッシュボード・パネルの作成・変更</li>
+  <li><strong>Admin</strong>:ユーザー権限・データソース設定・組織設定の管理</li>
+  </ul></li>
+</ol>
+
+<h3>データクエリの最適化</h3>
+<p>大量のメトリクス・ログを扱う場合は、パフォーマンスとコストへの対策が必要です。</p>
+<ul>
+<li><strong>キャッシュ</strong>:データソースのクエリキャッシュを有効にし、同じダッシュボードを複数人が開いたときの重複クエリを抑える</li>
+<li><strong>集約期間</strong>:時間範囲に応じた自動解像度を設定し、取得するデータポイント数を制限</li>
+<li><strong>AWSとのすみ分け</strong>:個別にメトリクスを取得せず、AWS側で集約してから取得</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>CloudWatch・Prometheus・X-Rayのデータを1つのダッシュボードで可視化</li>
+<li>EKSクラスターの監視ダッシュボード</li>
+<li>AWS以外のデータソースも含めた統合監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ワークスペースごとの、アクティブなEditor/AdminユーザーとViewerユーザーの数に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="managed-prometheus.html">Amazon Managed Service for Prometheus</a>:メトリクスの保存先</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:メトリクス・ログ</li>
+<li><a href="xray.html">AWS X-Ray</a>:分散トレース</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:ログ検索のデータソース</li>
+<li><a href="sns.html">Amazon SNS</a>:アラートの通知先</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>Grafanaのダッシュボードをマネージドで → <strong>Managed Grafana</strong>。</li>
+<li>認証は<strong>IAM Identity Center(推奨)</strong>またはSAML 2.0。</li>
+<li>閲覧のみ → <strong>Viewer</strong>、編集 → <strong>Editor</strong>、管理 → <strong>Admin</strong>。</li>
+<li>クエリ負荷の軽減 → <strong>クエリキャッシュ</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Managed Grafanaはマネージドな可視化サービス。AWS内外の多様なデータソースに接続できる。</li>
+</ul>
+</section>

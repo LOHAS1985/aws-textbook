@@ -1,0 +1,70 @@
+<!-- title: Amazon Athena -->
+<!-- category: 分析 -->
+<!-- lead: S3上のデータを標準SQLで直接分析するサーバーレスなクエリサービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Athena</strong>は、<strong>S3に保存されたデータを標準SQLで直接分析</strong>できる<strong>サーバーレス</strong>なクエリサービスです。データベースにデータを読み込む必要がなく、サーバーの管理も不要です。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li>CSV、JSON、Parquet、ORCなどの形式に対応。</li>
+<li>テーブル定義(スキーマ)は<strong>AWS Glue データカタログ</strong>で管理する。</li>
+<li>クエリ結果はS3に出力される。</li>
+<li><strong>パーティション</strong>(日付ごとのフォルダ分けなど)や<strong>列指向形式(Parquet/ORC)</strong>・圧縮を使うと、スキャン量が減り高速・低コストになる。</li>
+<li>ワークグループで、チームごとにクエリの実行やスキャン量の上限を管理できる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node s3 0 0.5 blue "S3" "CSV・Parquetなど"
+node glue 0 1.6 box "Glueデータカタログ" "テーブル定義"
+node ath 1.4 0.5 accent "Athena" "SQLを実行"
+node res 2.8 0.5 ok "クエリ結果" "S3に出力"
+node user 2.8 1.6 blue "分析者・BI"
+edge s3 ath "スキャン"
+edge glue ath dash
+edge ath res
+edge user ath "SQL"
+<figcaption>図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>S3に出力されたCloudTrail・ALB・VPCフローログのアドホックな分析</li>
+<li>データレイク(S3)に対する集計クエリ</li>
+<li>BIツール(QuickSightなど)のデータソース</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p><strong>クエリでスキャンしたデータ量</strong>に応じて課金されます。パーティション分割・列指向形式・圧縮でスキャン量を減らすと、コストを大きく下げられます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:分析対象のデータの保存先</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:S3に出力したログの分析</li>
+<li><a href="kinesis.html">Amazon Kinesis</a>:Firehose経由でS3にデータを蓄積</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:全文検索・リアルタイム分析</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「S3のデータ」「SQL」「サーバーレス」「アドホック分析」→ <strong>Athena</strong>。</li>
+<li>コスト削減 → <strong>パーティション+Parquet/ORC+圧縮</strong>でスキャン量を減らす。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AthenaはS3のデータをSQLで直接分析するサーバーレスサービス。料金はスキャン量で決まる。</li>
+</ul>
+</section>

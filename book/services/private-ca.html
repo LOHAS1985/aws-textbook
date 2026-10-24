@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Private CA | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">セキュリティ、アイデンティティ、コンプライアンス</span>
+  <h1>AWS Private CA</h1>
+  <p class="lead">組織内で使うプライベート証明書を発行する認証局</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Private CA(Private Certificate Authority)</strong>は、組織内だけで使う<strong>プライベート証明書を発行するための認証局(CA)</strong>をマネージドで提供するサービスです。インターネットに公開しない社内システムや、サービス間の通信の認証に使います。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li>ルートCA・下位CAの階層を作成・運用できる。CAの秘密鍵はAWSが管理するHSMで保護される。</li>
+<li>ACMと連携し、プライベート証明書をALBなどに配置したり、自動更新したりできる。</li>
+<li>証明書失効リスト(CRL)やOCSPによる失効管理に対応。</li>
+<li>相互TLS(mTLS)で、クライアント側も証明書で認証できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 650 194" style="max-width:650px;min-width:520px" role="img" aria-label="図1 Private CAの階層。ルートCAが署名した下位CAで、社内向けのサーバー証明書やmTLS用のクライアント証明書を発行する。"><defs><marker id="dgservices-private-ca-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="84" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="109" y="108" text-anchor="middle" class="dg-tb">ルートCA</text>
+<rect x="255" y="84" width="150" height="40" rx="8" class="dg-box"/>
+<text x="330" y="108" text-anchor="middle" class="dg-t">下位CA</text>
+<rect x="476" y="44" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="551" y="68" text-anchor="middle" class="dg-t">社内サイトの証明書</text>
+<rect x="476" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="551" y="140" text-anchor="middle" class="dg-t">クライアント証明書</text>
+<text x="551" y="158" text-anchor="middle" class="dg-s">mTLS</text>
+<path d="M184.0,104.0 L255.0,104.0" class="dg-line" marker-end="url(#dgservices-private-ca-1)"/>
+<text x="220" y="108" text-anchor="middle" class="dg-s dg-halo">署名</text>
+<path d="M405.0,90.4 L476.0,77.6" class="dg-line" marker-end="url(#dgservices-private-ca-1)"/>
+<path d="M405.0,117.6 L476.0,130.4" class="dg-line" marker-end="url(#dgservices-private-ca-1)"/>
+</svg>
+</div>
+<figcaption>図1 Private CAの階層。ルートCAが署名した下位CAで、社内向けのサーバー証明書やmTLS用のクライアント証明書を発行する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>社内向けWebサイト・APIのHTTPS化</li>
+<li>マイクロサービス間・IoTデバイスのmTLS認証</li>
+<li>オンプレミスの自前CAの運用負荷をなくしたい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>CAごとの月額料金と、発行した証明書の枚数に応じて課金されます。ACMのパブリック証明書(無料)と違い、有料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="acm.html">AWS Certificate Manager</a>:パブリック証明書の発行、プライベート証明書の配布</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:証明書の配置先</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>インターネットに公開しない社内向けの証明書 → <strong>Private CA</strong>。</li>
+<li>公開Webサイトの証明書 → <strong>ACMのパブリック証明書</strong>(無料)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Private CAは組織内向けのプライベート証明書を発行するマネージドCA。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="acm.html"><span class="label">← 前へ</span>AWS Certificate Manager</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="macie.html"><span class="label">次へ →</span>Amazon Macie</a>
+</nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!-- title: Amazon MemoryDB -->
+<!-- category: データベース -->
+<!-- lead: Redis互換の永続的なインメモリデータベース -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon MemoryDB</strong>は、<strong>Redis(Valkey)互換</strong>の<strong>耐久性のあるインメモリデータベース</strong>です。インメモリならではの高速な応答と、データを失わない耐久性を両立し、キャッシュではなく<strong>メインのデータベース</strong>として使えます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li>データは<strong>マルチAZのトランザクションログ</strong>に書き込まれ、ノード障害でも失われない。</li>
+<li>読み取りはマイクロ秒、書き込みは1桁ミリ秒のレイテンシー。</li>
+<li>Redisのデータ構造・APIをそのまま使える。</li>
+<li>シャーディングとレプリカでスケールし、障害時は自動フェイルオーバー。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 180 80
+node app 0 0 blue "アプリ"
+node mem 1.4 0 accent "MemoryDB" "インメモリで高速"
+node log 2.8 0 ok "トランザクションログ" "マルチAZで永続化"
+edge app mem "Redis API"
+edge mem log "記録"
+<figcaption>図1 MemoryDBの仕組み。インメモリで高速に応答しつつ、書き込みをマルチAZのトランザクションログに記録してデータを失わない。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>超低レイテンシーが必要なアプリのプライマリDB(ゲームのリーダーボード、セッション、在庫など)</li>
+<li>「キャッシュ+DB」の2層構成を1つにまとめたい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ノードのタイプと稼働時間、書き込みデータ量、スナップショットの保存量で課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="elasticache.html">Amazon ElastiCache</a>:キャッシュ用途のインメモリサービス</li>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>:キーバリュー型NoSQL</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>Redis互換で<strong>耐久性が必要なプライマリDB</strong> → MemoryDB。</li>
+<li>DBの前段に置く<strong>キャッシュ</strong> → ElastiCache。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>MemoryDBは、高速なインメモリと耐久性を両立したRedis互換DB。</li>
+</ul>
+</section>

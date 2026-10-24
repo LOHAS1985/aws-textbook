@@ -1,0 +1,108 @@
+<!-- title: AWS Organizations -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: 複数のAWSアカウントをまとめて管理するサービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Organizations</strong>は、<strong>複数のAWSアカウントをまとめて管理</strong>するサービスです。アカウントをグループに分け、組織全体に共通のルールを適用できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>用語</h3>
+<ul>
+<li><strong>OU(組織単位)</strong>:アカウントのグループ。</li>
+<li><strong>SCP(サービスコントロールポリシー)</strong>:権限の制御(拒否が中心)。<strong>IAMで許可しても、SCPで拒否されていれば拒否</strong>される。</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 160 85
+node mgmt 1.5 0 accent "管理アカウント" "SCP・一括請求"
+node ou1 0.5 1.2 box "OU: 本番"
+node ou2 2.5 1.2 box "OU: 開発"
+node a1 0 2.4 ok "本番アカウント"
+node a2 1 2.4 ok "共有サービス"
+node a3 2 2.4 ok "開発アカウント"
+node a4 3 2.4 ok "テストアカウント"
+group 0 1.2 1 2.4 "SCPを適用" pad=10 accent
+edge mgmt ou1
+edge mgmt ou2
+edge ou1 a1
+edge ou1 a2
+edge ou2 a3
+edge ou2 a4
+<figcaption>図1 Organizationsの構造。アカウントをOUにまとめ、OUにSCPを適用すると配下の全アカウントに権限の上限がかかる。</figcaption>
+</figure>
+<h3>SCPの利用イメージ</h3>
+<p>Organizationsの管理アカウント側の管理者が設定します。</p>
+<ul>
+<li>組織全体の権限の管理 → <strong>SCP</strong></li>
+<li>個々の権限の管理 → <strong>IAM</strong></li>
+</ul>
+<pre class="code"><code>AWS Organizations
+├── SCP
+│    ├── 使用可能リージョンを制限
+│    ├── CloudTrail停止を禁止
+│    └── Organizations操作を禁止
+├── IAM Identity Center
+│    ├── 開発者 → Developer権限
+│    ├── 運用者 → Administrator権限
+│    └── 監査者 → ReadOnly権限
+└── 各AWSアカウント
+     ├── Production
+     ├── Development
+     └── Test</code></pre>
+<p>SCPは権限を「与える」ものではなく、<strong>上限(ガードレール)</strong>を決めるものです。実際の操作には、SCPで禁止されていないことに加えて、IAMでの許可が必要です。また、SCPは管理アカウントには適用されません。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node scp 0 0 box "SCPで許可" "組織としての上限"
+node iam 0 1 box "IAMで許可" "個々の権限"
+node ok 1.5 0.5 ok "実行できる" "両方で許可されたもの"
+edge scp ok
+edge iam ok
+<figcaption>図2 実際に使える権限は、SCPとIAMの両方で許可された範囲だけ。IAMで許可しても、SCPで拒否されていれば実行できない。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>本番・開発・テストのアカウントを分けて管理</li>
+<li>全アカウントで使用できるリージョンを制限</li>
+<li>CloudTrailの停止など、セキュリティ設定の変更を全アカウントで禁止</li>
+<li>IAM Identity Centerで、複数アカウントへのログインを一元化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Organizations自体は無料です。複数アカウントの請求をまとめる一括請求(コンソリデーティッドビリング)により、ボリュームディスカウントやリザーブドインスタンスの共有の恩恵も受けられます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="iam.html">AWS IAM</a>:個々の権限管理(パーミッションセット)</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:組織全体の証跡</li>
+<li><a href="config.html">AWS Config</a>:組織全体のルール評価</li>
+<li><a href="ram.html">AWS Resource Access Manager</a>:組織内でのリソース共有</li>
+<li><a href="security-hub.html">AWS Security Hub</a>:組織全体のセキュリティ状況の集約</li>
+<li><a href="backup.html">AWS Backup</a>:組織全体のバックアップポリシー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>IAMで許可しても<strong>SCPで拒否されたら拒否</strong>。</li>
+<li>全アカウントで特定の操作・リージョンを禁止 → <strong>SCP</strong>をOUやルートに適用。</li>
+<li>アカウントのグループ化 → <strong>OU</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Organizationsは複数アカウントの管理サービス。</li>
+<li>OUでアカウントをまとめ、SCPで組織全体の権限の上限を決める。</li>
+</ul>
+</section>

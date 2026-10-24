@@ -1,0 +1,78 @@
+<!-- title: AWS Backup -->
+<!-- category: ストレージ -->
+<!-- lead: AWSサービスのバックアップを一元管理 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Backup</strong>は、さまざまなAWSサービスの<strong>バックアップを一元管理</strong>するサービスです。サービスごとに別々に設定していたバックアップを、1つのプランでまとめて管理できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>対象サービス</h3>
+<ul>
+<li>EC2</li>
+<li>EBS/EFS/FSx/S3</li>
+<li>RDS/Aurora/DynamoDB</li>
+<li>DocumentDB/Neptune</li>
+<li>Storage Gateway</li>
+</ul>
+<h3>構成要素</h3>
+<ul>
+<li><strong>バックアッププラン</strong>:スケジュール、バックアップウィンドウ、保持期間、ライフサイクル、コピー先を定義する。</li>
+<li><strong>リソースの割り当て</strong>:対象リソースを<strong>タグ</strong>または<strong>ARN</strong>で指定する。</li>
+<li><strong>バックアップボールト</strong>:バックアップの保管場所。</li>
+</ul>
+<p>コピー先に別リージョンや別アカウントのボールトを指定することで、災害対策(DR)にも使えます。バックアップボールトロックを使うと、バックアップの削除を防ぐ(WORM)設定ができます。</p>
+<figure class="figure" data-diagram>
+grid 180 85
+node plan 0 0 blue "バックアッププラン" "スケジュール・保持期間"
+node assign 0 1 blue "リソースの割り当て" "タグ / ARNで指定"
+node res 1.5 0.5 box "対象リソース" "EC2・EBS・RDS・EFS…"
+node vault 3 0.5 accent "ボールト" "バックアップの保管場所"
+node vault2 3 1.5 ok "別リージョン" "ボールトへコピー"
+edge plan res dash
+edge assign res dash
+edge res vault "バックアップ"
+edge vault vault2 "コピー"
+<figcaption>図1 AWS Backupの構成。プラン(いつ・どれだけ残すか)と割り当て(どのリソースか)を決めると、バックアップがボールトに保存される。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>複数サービスのバックアップを1つのポリシーで統一したい</li>
+<li>タグ(例:<code>Backup=daily</code>)を付けたリソースを自動でバックアップ対象にしたい</li>
+<li>別リージョンにバックアップをコピーして災害対策をしたい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>保存しているバックアップの容量、復元したデータ量、リージョン間のコピーのデータ転送量に応じて課金されます。ライフサイクルでコールドストレージに移すとコストを下げられます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ebs.html">Amazon EBS</a>/<a href="efs.html">Amazon EFS</a>/<a href="fsx.html">Amazon FSx</a>/<a href="s3.html">Amazon S3</a></li>
+<li><a href="rds.html">Amazon RDS</a>/<a href="aurora.html">Amazon Aurora</a>/<a href="dynamodb.html">Amazon DynamoDB</a></li>
+<li><a href="organizations.html">AWS Organizations</a>:複数アカウントへのバックアップポリシー適用</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「複数サービスのバックアップを一元管理」→ <strong>AWS Backup</strong>。</li>
+<li>対象リソースは<strong>タグ</strong>で指定すると、新しいリソースも自動で対象になる。</li>
+<li>保持期間・スケジュール・コピー先は<strong>バックアッププラン</strong>で定義する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS Backupは「プラン(いつ・どれだけ)」「割り当て(何を)」「ボールト(どこに)」で構成される。</li>
+</ul>
+</section>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Compute Optimizer | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">マネジメントとガバナンス</span>
+  <h1>AWS Compute Optimizer</h1>
+  <p class="lead">機械学習でリソースの使用状況を分析し、最適な設定を推奨</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Compute Optimizer</strong>は、<strong>機械学習</strong>を使ってリソースの使用状況を分析し、コスト削減・パフォーマンス向上につながる<strong>最適なリソース設定を推奨</strong>するサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<p><strong>CloudWatchの過去のメトリクス</strong>を分析して推奨事項を提示します。</p>
+<ul>
+<li><strong class="em">デフォルトでは無効</strong>。Organizations/アカウントで有効化が必要。</li>
+<li><strong>分析期間</strong>:デフォルトは<strong>14日間</strong>(最大93日間)。</li>
+</ul>
+<h3>分析対象のリソース</h3>
+<ul>
+<li>EC2インスタンス</li>
+<li>Auto Scalingグループ</li>
+<li>EBSボリューム</li>
+<li>Lambda関数</li>
+<li>ECS on Fargateサービス</li>
+<li>RDS</li>
+</ul>
+<h3>推奨事項</h3>
+<ul>
+<li><strong>サイズが過大(Over-provisioned)</strong>:コスト削減のためにダウンサイジングを推奨</li>
+<li><strong>サイズが過少(Under-provisioned)</strong>:パフォーマンス改善のためにアップサイジングを推奨</li>
+</ul>
+<p>EC2のメモリ使用率を分析に含めたい場合は、CloudWatchエージェントでメモリのメトリクスを送信しておく必要があります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 202" style="max-width:718px;min-width:520px" role="img" aria-label="図1 Compute Optimizerの仕組み。CloudWatchの過去のメトリクス(デフォルト14日、最大93日)を機械学習で分析し、過大なリソースにはダウンサイジング、過少なリソースにはアップサイジングを推奨する。"><defs><marker id="dgservices-compute-optimizer-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">過去のメトリクス</text>
+<rect x="289" y="75" width="150" height="68" rx="8" class="dg-accent"/>
+<text x="364" y="96" text-anchor="middle" class="dg-tb">Compute</text>
+<text x="364" y="114" text-anchor="middle" class="dg-tb">Optimizer</text>
+<text x="364" y="132" text-anchor="middle" class="dg-s">機械学習で分析</text>
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">サイズが過大</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">ダウンサイジング</text>
+<rect x="544" y="126" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="619" y="147" text-anchor="middle" class="dg-t">サイズが過少</text>
+<text x="619" y="165" text-anchor="middle" class="dg-s">アップサイジング</text>
+<path d="M184.0,109.0 L289.0,109.0" class="dg-line" marker-end="url(#dgservices-compute-optimizer-1)"/>
+<text x="236" y="113" text-anchor="middle" class="dg-s dg-halo">14〜93日分</text>
+<path d="M439.0,96.5 L544.0,79.0" class="dg-line" marker-end="url(#dgservices-compute-optimizer-1)"/>
+<path d="M439.0,121.5 L544.0,139.0" class="dg-line" marker-end="url(#dgservices-compute-optimizer-1)"/>
+</svg>
+</div>
+<figcaption>図1 Compute Optimizerの仕組み。CloudWatchの過去のメトリクス(デフォルト14日、最大93日)を機械学習で分析し、過大なリソースにはダウンサイジング、過少なリソースにはアップサイジングを推奨する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>過剰なスペックのEC2インスタンスを見つけてダウンサイジング</li>
+<li>Lambdaのメモリ設定の最適化</li>
+<li>EBSボリュームのタイプ・サイズの見直し</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>基本的な推奨は無料で利用できます。分析期間を延ばす「拡張インフラストラクチャメトリクス」は有料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:分析に使うメトリクス</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ebs.html">Amazon EBS</a>/<a href="lambda.html">AWS Lambda</a>/<a href="ecs.html">Amazon ECS</a>/<a href="rds.html">Amazon RDS</a>:分析対象</li>
+<li><a href="trusted-advisor.html">AWS Trusted Advisor</a>:幅広い観点のチェック</li>
+<li><a href="organizations.html">AWS Organizations</a>:組織全体での有効化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「機械学習で」「最適なインスタンスタイプ・サイズを推奨」→ <strong>Compute Optimizer</strong>。</li>
+<li>デフォルトでは<strong>無効</strong>。使う前に有効化(オプトイン)が必要。</li>
+<li>分析期間はデフォルト<strong>14日</strong>、最大<strong>93日</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Compute OptimizerはCloudWatchの履歴から、過大・過少なリソースを見つけて推奨する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="health-dashboard.html"><span class="label">← 前へ</span>AWS Health Dashboard</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="service-catalog.html"><span class="label">次へ →</span>AWS Service Catalog</a>
+</nav>
+</main>
+</body>
+</html>

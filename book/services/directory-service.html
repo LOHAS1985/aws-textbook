@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Directory Service | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">セキュリティ、アイデンティティ、コンプライアンス</span>
+  <h1>AWS Directory Service</h1>
+  <p class="lead">クラウド上でActive Directoryによるユーザー管理・認証を提供</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Directory Service</strong>は、クラウド上で<strong>ユーザー管理・認証・権限管理を一元提供</strong>するサービスです。Active Directory(AD)を中心とした3種類があり、Windowsとの親和性が高いですが、Windows以外でも利用できます。</p>
+<ul>
+<li>Managed Microsoft AD</li>
+<li>Simple AD</li>
+<li>AD Connector</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>Managed Microsoft AD</h3>
+<p>クラウド上で企業の社内AD環境を再現します。</p>
+<ol>
+<li><strong>ユーザー/グループ管理</strong></li>
+<li><strong>認証</strong>
+  <ul>
+  <li>ログイン(SSO)</li>
+  <li>ユーザー情報の取得:<strong>LDAP</strong>(認証の役割もあるが、情報基盤としての役割がメイン)。高速な検索が強みで、複数システムで同じユーザー情報(ユーザーID、パスワード、メールアドレス、所属グループ、権限情報など)を使い回せる。</li>
+  </ul></li>
+<li><strong>グループポリシー</strong></li>
+</ol>
+
+<h3>Simple AD</h3>
+<p>低コストで使える<strong>簡易版のActive Directory</strong>(機能制限版)です。小規模・検証用での利用が推奨されます。</p>
+
+<h3>AD Connector</h3>
+<p>AWSと既存のActive Directoryを<strong>中継するだけ</strong>のサービスです。オンプレミスのADとAWSを接続します(AWS側にディレクトリのデータは持ちません)。</p>
+
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>ADの実体</th><th>向いているケース</th></tr>
+<tr><td>Managed Microsoft AD</td><td>AWS上に本物のMicrosoft AD</td><td>本格的なAD機能が必要、オンプレADとの信頼関係</td></tr>
+<tr><td>Simple AD</td><td>AWS上の簡易AD</td><td>小規模・検証用、低コスト</td></tr>
+<tr><td>AD Connector</td><td>オンプレミスの既存AD(AWSは中継のみ)</td><td>既存ADのユーザーでAWSを使いたい</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 506 312" style="max-width:506px;min-width:506px" role="img" aria-label="図1 Directory Serviceの3種類。Managed Microsoft ADとSimple ADはAWS上にディレクトリを持つ。AD Connectorはディレクトリを持たず、オンプレミスのADへ要求を中継する。"><defs><marker id="dgservices-directory-service-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="32" width="160" height="68" rx="8" class="dg-accent"/>
+<text x="114" y="53" text-anchor="middle" class="dg-tb">Managed</text>
+<text x="114" y="71" text-anchor="middle" class="dg-tb">Microsoft AD</text>
+<text x="114" y="89" text-anchor="middle" class="dg-s">AWS上に本物のAD</text>
+<rect x="34" y="142" width="160" height="52" rx="8" class="dg-box"/>
+<text x="114" y="164" text-anchor="middle" class="dg-t">Simple AD</text>
+<text x="114" y="182" text-anchor="middle" class="dg-s">簡易版・低コスト</text>
+<rect x="34" y="236" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="258" text-anchor="middle" class="dg-t">AD Connector</text>
+<text x="114" y="276" text-anchor="middle" class="dg-s">中継のみ</text>
+<rect x="322" y="142" width="160" height="52" rx="8" class="dg-ok"/>
+<text x="402" y="164" text-anchor="middle" class="dg-t">AWSのサービス</text>
+<text x="402" y="182" text-anchor="middle" class="dg-s">EC2・FSx など</text>
+<rect x="322" y="236" width="160" height="52" rx="8" class="dg-box"/>
+<text x="402" y="258" text-anchor="middle" class="dg-t">オンプレミスのAD</text>
+<text x="402" y="276" text-anchor="middle" class="dg-s">ユーザー情報の実体</text>
+<path d="M328.6,142.5 L194.0,94.8" class="dg-line" marker-end="url(#dgservices-directory-service-1)"/>
+<path d="M322.0,168.5 L194.0,168.5" class="dg-line" marker-end="url(#dgservices-directory-service-1)"/>
+<path d="M322.0,194.5 L194.0,236.0" class="dg-line" marker-end="url(#dgservices-directory-service-1)"/>
+<path d="M194.0,262.0 L322.0,262.0" class="dg-line" marker-end="url(#dgservices-directory-service-1)"/>
+<text x="258" y="266" text-anchor="middle" class="dg-s dg-halo">転送</text>
+</svg>
+</div>
+<figcaption>図1 Directory Serviceの3種類。Managed Microsoft ADとSimple ADはAWS上にディレクトリを持つ。AD Connectorはディレクトリを持たず、オンプレミスのADへ要求を中継する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>EC2のWindowsサーバーやFSx for WindowsをADドメインに参加させる</li>
+<li>社内ADのアカウントでAWSマネジメントコンソールやWorkSpacesにログイン(AD Connector)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ディレクトリの種類とサイズ(Small/Large、Standard/Enterprise)ごとの時間料金で課金されます。Simple ADが最も安価です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="fsx.html">Amazon FSx</a>:FSx for WindowsのAD連携</li>
+<li><a href="ec2.html">Amazon EC2</a>:Windowsインスタンスのドメイン参加</li>
+<li><a href="iam.html">AWS IAM</a>/<a href="sts.html">AWS STS</a>:ADユーザーへのAWS権限付与</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>オンプレミスのADをそのまま使い、AWSにデータを置きたくない → <strong>AD Connector</strong>。</li>
+<li>AWS上に本格的なADを構築 → <strong>Managed Microsoft AD</strong>。</li>
+<li>小規模・低コスト → <strong>Simple AD</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Directory ServiceはAD中心のユーザー管理・認証サービス。</li>
+<li>本格派=Managed Microsoft AD、簡易版=Simple AD、中継=AD Connector。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="organizations.html"><span class="label">← 前へ</span>AWS Organizations</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cognito.html"><span class="label">次へ →</span>Amazon Cognito</a>
+</nav>
+</main>
+</body>
+</html>

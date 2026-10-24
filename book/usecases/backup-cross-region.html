@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>バックアップを一元管理して別リージョンに保管する | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">信頼性・事業継続</span>
+  <h1>バックアップを一元管理して別リージョンに保管する</h1>
+  <p class="lead">AWS Backupのプランとタグで自動バックアップし、別リージョンへコピーする</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>EC2・EBS・RDS・EFSなどのバックアップを、サービスごとにばらばらに設定するのではなく一元管理したい。新しく作ったリソースも自動で対象にし、リージョン障害に備えて別リージョンにもコピーを残したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 209" style="max-width:684px;min-width:520px" role="img" aria-label="図1 タグの付いたリソースをバックアッププランが自動でバックアップし、ボールトに保存する。プランのコピー設定で、別リージョンのボールトにも保管する。"><defs><marker id="dgusecases-backup-cross-region-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="88" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="110" text-anchor="middle" class="dg-t">EC2・EBS・RDS…</text>
+<text x="109" y="128" text-anchor="middle" class="dg-s">タグ Backup=daily</text>
+<rect x="272" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="110" text-anchor="middle" class="dg-tb">バックアッププラン</text>
+<text x="347" y="128" text-anchor="middle" class="dg-s">毎日・35日保持</text>
+<rect x="510" y="43" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="64" text-anchor="middle" class="dg-t">ボールト</text>
+<text x="585" y="82" text-anchor="middle" class="dg-s">東京リージョン</text>
+<rect x="510" y="133" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="154" text-anchor="middle" class="dg-t">ボールト</text>
+<text x="585" y="172" text-anchor="middle" class="dg-s">大阪リージョンへコピー</text>
+<path d="M184.0,114.0 L272.0,114.0" class="dg-line" marker-end="url(#dgusecases-backup-cross-region-1)"/>
+<text x="228" y="118" text-anchor="middle" class="dg-s dg-halo">タグで選択</text>
+<path d="M422.0,99.8 L510.0,83.2" class="dg-line" marker-end="url(#dgusecases-backup-cross-region-1)"/>
+<path d="M585.0,95.0 L585.0,133.0" class="dg-line" marker-end="url(#dgusecases-backup-cross-region-1)"/>
+<text x="585" y="118" text-anchor="middle" class="dg-s dg-halo">コピー</text>
+</svg>
+</div>
+<figcaption>図1 タグの付いたリソースをバックアッププランが自動でバックアップし、ボールトに保存する。プランのコピー設定で、別リージョンのボールトにも保管する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/backup.html">AWS Backup</a>:バックアッププラン(スケジュール・保持期間・コピー先)、リソースの割り当て(タグ/ARN)、ボールト</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:組織全体にバックアップポリシーを適用する</li>
+<li><a href="../services/kms.html">AWS KMS</a>:バックアップの暗号化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>バックアップボールトを作成する(コピー先のリージョンにも作成)</li>
+<li>バックアッププランを作成し、スケジュール・バックアップウィンドウ・保持期間・ライフサイクルを設定する</li>
+<li>プランのコピー先に、別リージョンのボールトを指定する</li>
+<li>リソースの割り当てで、対象をタグ(例:<code>Backup=daily</code>)で指定する</li>
+<li>定期的に復元をテストして、実際に戻せることを確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>複数サービスのバックアップを一元管理 → <strong>AWS Backup</strong>。</li>
+<li>対象を<strong>タグ</strong>で指定すると、新しく作ったリソースも自動で対象になる。</li>
+<li>リージョン障害への備え → <strong>別リージョンへのコピー</strong>(<a href="../terms/dr-strategies.html">DR戦略</a>の「バックアップと復元」)。</li>
+<li>バックアップを誰にも削除させたくない → <strong>ボールトロック</strong>。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="rds-high-availability.html"><span class="label">← 前へ</span>データベースの高可用性と読み取り分散</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="multi-region-failover.html"><span class="label">次へ →</span>リージョン障害に備えて別リージョンへ切り替える</a>
+</nav>
+</main>
+</body>
+</html>

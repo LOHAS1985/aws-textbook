@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Direct Connect | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワークとコンテンツ配信</span>
+  <h1>AWS Direct Connect</h1>
+  <p class="lead">オンプレミスとAWSを、インターネットを通らない専用線でつなぐ</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Direct Connect(DX)</strong>は、<strong>オンプレミスのデータセンターとAWSを、インターネットを経由しない専用の回線で接続する</strong>サービスです。インターネットの混雑に左右されないため、<strong>帯域が安定し、レイテンシーも一定</strong>になります。</p>
+<p>接続は、AWSが用意している<strong>Direct Connectロケーション</strong>(データセンター事業者の施設)で、オンプレミス側の回線とAWSのネットワークをつなぐことで実現します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 694 202" style="max-width:694px;min-width:520px" role="img" aria-label="図1 Direct Connectの接続。オンプレミスからDirect Connectロケーションまで専用線を引き、そこでAWSのネットワークに接続する。仮想インターフェイス(VIF)で接続先を分ける。"><defs><marker id="dgservices-direct-connect-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="104" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="104" y="122" text-anchor="middle" class="dg-s">データセンター</text>
+<rect x="274" y="83" width="172" height="52" rx="8" class="dg-box"/>
+<text x="360" y="104" text-anchor="middle" class="dg-t">DXロケーション</text>
+<text x="360" y="122" text-anchor="middle" class="dg-s">顧客ルーター⇔AWSルーター</text>
+<rect x="530" y="40" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="600" y="62" text-anchor="middle" class="dg-tb">VPC</text>
+<text x="600" y="80" text-anchor="middle" class="dg-s">プライベートVIF</text>
+<rect x="530" y="126" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="600" y="147" text-anchor="middle" class="dg-t">S3など</text>
+<text x="600" y="165" text-anchor="middle" class="dg-s">パブリックVIF</text>
+<path d="M174.0,109.0 L274.0,109.0" class="dg-line" marker-end="url(#dgservices-direct-connect-1)"/>
+<text x="224" y="113" text-anchor="middle" class="dg-s dg-halo">専用線</text>
+<path d="M446.0,93.8 L530.0,78.9" class="dg-line" marker-end="url(#dgservices-direct-connect-1)"/>
+<path d="M446.0,124.2 L530.0,139.1" class="dg-line" marker-end="url(#dgservices-direct-connect-1)"/>
+</svg>
+</div>
+<figcaption>図1 Direct Connectの接続。オンプレミスからDirect Connectロケーションまで専用線を引き、そこでAWSのネットワークに接続する。仮想インターフェイス(VIF)で接続先を分ける。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>接続の種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>内容</th></tr>
+<tr><td>専用接続(Dedicated)</td><td>1つの物理ポートを専有する。1/10/100/400Gbps</td></tr>
+<tr><td>ホスト型接続(Hosted)</td><td>Direct Connectパートナーが提供する回線を利用する。50Mbps〜25Gbps。小さい帯域から始められる</td></tr>
+</table></div>
+<p>開通までに<strong>数週間〜数か月</strong>かかることがあります。すぐに接続したいときはSite-to-Site VPNを使います。</p>
+
+<h3>仮想インターフェイス(VIF)</h3>
+<p>1本の回線の上に、接続先ごとの論理的なインターフェイスを作ります。</p>
+<div class="table-wrap"><table>
+<tr><th>VIF</th><th>接続先</th></tr>
+<tr><td><strong>プライベートVIF</strong></td><td>VPC(VGWまたはDirect Connectゲートウェイ経由)。プライベートIPで通信する</td></tr>
+<tr><td><strong>パブリックVIF</strong></td><td>S3やDynamoDBなど、パブリックなエンドポイントを持つAWSのサービス</td></tr>
+<tr><td><strong>トランジットVIF</strong></td><td><a href="transit-gateway.html">Transit Gateway</a>(Direct Connectゲートウェイ経由)</td></tr>
+</table></div>
+
+<h3>Direct Connectゲートウェイ</h3>
+<p>1つのDirect Connect接続から、<strong>複数のリージョン・複数のアカウントのVPC</strong>(VGWやTransit Gateway)へ接続するためのグローバルなリソースです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 863 274" style="max-width:863px;min-width:520px" role="img" aria-label="図2 Direct Connectゲートウェイ。1本の接続から、複数のリージョン・アカウントのVGWやTransit Gatewayへつなげられる。"><defs><marker id="dgservices-direct-connect-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="124" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="148" text-anchor="middle" class="dg-t">オンプレミス</text>
+<rect x="248" y="118" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="140" text-anchor="middle" class="dg-t">DX接続</text>
+<text x="321" y="158" text-anchor="middle" class="dg-s">プライベートVIF</text>
+<rect x="463" y="118" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="536" y="140" text-anchor="middle" class="dg-tb">DXゲートウェイ</text>
+<text x="536" y="158" text-anchor="middle" class="dg-s">グローバル</text>
+<rect x="694" y="38" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="766" y="60" text-anchor="middle" class="dg-t">VPC(東京)</text>
+<text x="766" y="78" text-anchor="middle" class="dg-s">VGW</text>
+<rect x="694" y="118" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="766" y="140" text-anchor="middle" class="dg-t">VPC(大阪)</text>
+<text x="766" y="158" text-anchor="middle" class="dg-s">VGW</text>
+<rect x="694" y="198" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="766" y="220" text-anchor="middle" class="dg-t">TGW(米国)</text>
+<text x="766" y="238" text-anchor="middle" class="dg-s">トランジットVIF</text>
+<path d="M179.0,144.0 L248.5,144.0" class="dg-line" marker-end="url(#dgservices-direct-connect-2)"/>
+<path d="M393.5,144.0 L463.0,144.0" class="dg-line" marker-end="url(#dgservices-direct-connect-2)"/>
+<path d="M608.0,118.9 L694.0,89.1" class="dg-line" marker-end="url(#dgservices-direct-connect-2)"/>
+<path d="M608.0,144.0 L694.0,144.0" class="dg-line" marker-end="url(#dgservices-direct-connect-2)"/>
+<path d="M608.0,169.1 L694.0,198.9" class="dg-line" marker-end="url(#dgservices-direct-connect-2)"/>
+</svg>
+</div>
+<figcaption>図2 Direct Connectゲートウェイ。1本の接続から、複数のリージョン・アカウントのVGWやTransit Gatewayへつなげられる。</figcaption>
+</figure>
+
+<h3>冗長化</h3>
+<p>1本の回線だけでは、回線やロケーションの障害で通信が止まります。重要なシステムでは冗長化します。</p>
+<ul>
+<li><strong>最大の回復性</strong>:2つのロケーションに、それぞれ2本ずつ接続する。</li>
+<li><strong>高い回復性</strong>:2つのロケーションに、1本ずつ接続する。</li>
+<li><strong>VPNをバックアップにする</strong>:DX1本+Site-to-Site VPN。低コストだが、障害時は帯域が下がる。</li>
+<li><strong>LAG(リンクアグリゲーショングループ)</strong>:同じロケーションの複数の接続を束ねて、1本の太い回線として使う。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 646 194" style="max-width:646px;min-width:520px" role="img" aria-label="図3 最大の回復性の構成。2つのロケーションにそれぞれ2本ずつ接続し、回線・機器・ロケーションのどれが止まっても通信を続けられる。"><defs><marker id="dgservices-direct-connect-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="84" width="140" height="40" rx="8" class="dg-blue"/>
+<text x="104" y="108" text-anchor="middle" class="dg-t">オンプレミス</text>
+<rect x="258" y="38" width="140" height="52" rx="8" class="dg-box"/>
+<text x="328" y="60" text-anchor="middle" class="dg-t">ロケーション1</text>
+<text x="328" y="78" text-anchor="middle" class="dg-s">接続×2</text>
+<rect x="258" y="118" width="140" height="52" rx="8" class="dg-box"/>
+<text x="328" y="140" text-anchor="middle" class="dg-t">ロケーション2</text>
+<text x="328" y="158" text-anchor="middle" class="dg-s">接続×2</text>
+<rect x="482" y="84" width="140" height="40" rx="8" class="dg-accent"/>
+<text x="552" y="108" text-anchor="middle" class="dg-tb">AWS</text>
+<path d="M174.0,91.5 L258.0,76.5" class="dg-line" marker-end="url(#dgservices-direct-connect-3)"/>
+<path d="M174.0,116.5 L258.0,131.5" class="dg-line" marker-end="url(#dgservices-direct-connect-3)"/>
+<path d="M398.0,76.5 L482.0,91.5" class="dg-line" marker-end="url(#dgservices-direct-connect-3)"/>
+<path d="M398.0,131.5 L482.0,116.5" class="dg-line" marker-end="url(#dgservices-direct-connect-3)"/>
+</svg>
+</div>
+<figcaption>図3 最大の回復性の構成。2つのロケーションにそれぞれ2本ずつ接続し、回線・機器・ロケーションのどれが止まっても通信を続けられる。</figcaption>
+</figure>
+
+<h3>暗号化</h3>
+<p>Direct Connectは専用線ですが、<strong>標準では通信は暗号化されません</strong>。暗号化が必要な場合は次のいずれかを使います。</p>
+<ul>
+<li><strong>MACsec</strong>:対応する専用接続(10/100/400Gbps)で、回線上の通信を暗号化する。</li>
+<li><strong>DXの上でSite-to-Site VPN</strong>:IPsecで暗号化する(パブリックVIF経由、またはTransit GatewayでのプライベートIP VPN)。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>大量のデータを継続的にオンプレミスとAWSの間で転送する</li>
+<li>帯域とレイテンシーが安定している必要がある業務システム(基幹系・金融など)</li>
+<li>ハイブリッド構成で、データ転送料金を抑えたい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p><strong>ポートの時間料金</strong>(接続の帯域で決まる)と、AWSから外への<strong>データ転送(アウト)料金</strong>がかかります。DX経由のデータ転送料金はインターネット経由より安く設定されています。ほかに、ロケーションまでの回線費用(通信事業者やパートナーへの支払い)が別にかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>:接続先のネットワーク(VGW)</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:トランジットVIFで多数のVPCに接続</li>
+<li><a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>:DXのバックアップ、DX上での暗号化</li>
+<li><a href="datasync.html">AWS DataSync</a>:DX経由でのデータ転送</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:<code>ConnectionState</code> などで接続の状態を監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「安定した帯域」「一定のレイテンシー」「インターネットを経由しない」→ <strong>Direct Connect</strong>。「すぐに」「安く」→ Site-to-Site VPN。</li>
+<li>DXは<strong>標準では暗号化されない</strong>。暗号化が必要なら<strong>MACsec</strong>か<strong>DX上のVPN</strong>。</li>
+<li>VPCへはプライベートVIF、S3などへはパブリックVIF、Transit GatewayへはトランジットVIF。</li>
+<li>複数リージョン・複数アカウントのVPCにつなぐ → <strong>Direct Connectゲートウェイ</strong>。</li>
+<li>低コストで冗長化 → DX+<strong>Site-to-Site VPN</strong>。高い可用性 → 複数ロケーションでDXを冗長化。</li>
+<li>開通まで時間がかかるため、急ぎの要件ではまずVPNを使う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>オンプレミスとAWSを専用線でつなぎ、安定した帯域とレイテンシーを得る。</li>
+<li>VIF(プライベート・パブリック・トランジット)で接続先を分ける。</li>
+<li>DXゲートウェイで複数リージョン・アカウントへ接続できる。</li>
+<li>標準では暗号化されない。冗長化(複数ロケーション、VPNのバックアップ)も考える。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="site-to-site-vpn.html"><span class="label">← 前へ</span>AWS Site-to-Site VPN</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="route53.html"><span class="label">次へ →</span>Amazon Route 53</a>
+</nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!-- title: AWS Certificate Manager -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: SSL/TLS証明書の発行・管理・自動更新 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Certificate Manager(ACM)</strong>は、<strong>SSL/TLS証明書の発行・管理・自動更新</strong>を行うサービスです。</p>
+<ul>
+<li><strong>SSL/TLS証明書</strong>:HTTPS通信で「そのサーバーが本物である」ことを証明する電子証明書(SSLは旧規格)。</li>
+<li><strong>ACM証明書</strong>:ACMで使われるTLS証明書。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li><strong class="em">リージョンサービス</strong>:証明書はリージョンごとに発行が必要。</li>
+<li><strong class="em">CloudFrontはus-east-1のACM証明書のみ参照可能</strong>。</li>
+</ul>
+<h3>証明書の発行・管理</h3>
+<ul>
+<li>発行:<strong>パブリック証明書は無料</strong></li>
+<li>配布:対応サービスにアタッチ</li>
+<li>更新:期限前に<strong>自動で更新</strong></li>
+<li>失効・状態管理</li>
+</ul>
+
+<h3>証明書の配置</h3>
+<p>証明書は<strong>TLS終端</strong>に配置します。ALBやCloudFrontなど、クライアントからアクセスされるサーバー側の入り口に置くことが多く、通信開始時に証明書がクライアントに送られます。</p>
+
+<figure class="figure" data-diagram>
+grid 175 85
+node u 0 0.5 blue "ブラウザ"
+node cf 1.4 0 accent "CloudFront" "us-east-1の証明書"
+node alb 1.4 1 accent "ALB" "同じリージョンの証明書"
+node origin 2.8 0 box "オリジン"
+node ec2 2.8 1 box "EC2"
+edge u cf "HTTPS"
+edge u alb "HTTPS"
+edge cf origin
+edge alb ec2 "HTTP"
+<figcaption>図1 証明書はTLS終端(クライアントが最初に接続する入り口)に配置する。CloudFrontはus-east-1の証明書、ALBは同じリージョンの証明書を使う。ALBでHTTPSを終端すると、後ろのEC2の暗号化処理の負担が減る。</figcaption>
+</figure>
+<h3>SSL/TLS証明書の役割</h3>
+<ol>
+<li><strong>サーバーの身元証明(認証)</strong>:なりすまし対策。接続先が正当なサーバーかを証明する(証明書にはドメイン名や発行者が含まれる)。</li>
+<li><strong>通信の暗号化(機密性)</strong></li>
+<li><strong>改ざん検知(完全性)</strong></li>
+</ol>
+
+<h3>HTTPS通信が始まるまでの流れ</h3>
+<ol>
+<li>クライアントがサーバーに接続要求を送信(ClientHello)</li>
+<li>サーバーがクライアントに証明書を送信</li>
+<li>クライアントが証明書を検証</li>
+<li>クライアントとサーバーがセッション鍵(データの暗号化・復号に使う鍵)を安全に共有</li>
+<li>暗号化通信の開始</li>
+</ol>
+
+<h3>イベント</h3>
+<p><strong class="em">Certificate Approaching Expiration</strong>:証明書の有効期限が近いことを通知するイベントです(EventBridgeで受け取れる)。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ALBでHTTPS終端し、Webサイトを独自ドメインで公開</li>
+<li>CloudFrontでの独自ドメインHTTPS配信(us-east-1で発行)</li>
+<li>API Gatewayのカスタムドメイン</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ACMの<strong>パブリック証明書は無料</strong>です。</p>
+<p>プライベート証明書を発行する場合は、AWS Private CAの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="elb.html">Elastic Load Balancing</a>:HTTPS終端</li>
+<li><a href="cloudfront.html">Amazon CloudFront</a>:us-east-1の証明書を使用</li>
+<li><a href="api-gateway.html">Amazon API Gateway</a>:カスタムドメイン</li>
+<li><a href="private-ca.html">AWS Private CA</a>:プライベート証明書の発行</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:期限切れ間近の通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>CloudFrontで使う証明書は<strong>us-east-1</strong>で発行。</li>
+<li>ALBで使う証明書は<strong>ALBと同じリージョン</strong>で発行(リージョンサービス)。</li>
+<li>パブリック証明書は無料で<strong>自動更新</strong>。</li>
+<li>有効期限の監視 → <strong>Certificate Approaching Expiration</strong>イベント。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>ACMはSSL/TLS証明書の発行・管理・自動更新サービス。</li>
+<li>証明書はTLS終端(ALB・CloudFrontなど)に配置する。</li>
+<li>リージョンサービスで、CloudFront用はus-east-1。</li>
+</ul>
+</section>

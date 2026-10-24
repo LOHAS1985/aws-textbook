@@ -1,0 +1,47 @@
+<!-- title: サーキットブレーカー -->
+<!-- category: 設計・運用 -->
+<!-- lead: 呼び出し先の障害時に呼び出しを止め、障害の連鎖を防ぐ設計パターン -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>サーキットブレーカー</strong>は、呼び出し先の障害を検知したときに<strong>一定時間呼び出しを止めて、障害が周囲に広がるのを防ぐ</strong>設計パターンです。電気のブレーカーが過電流で回路を遮断するのと同じ考え方です。</p>
+<figure class="figure" data-diagram>
+grid 180 85
+node a 0 0 blue "呼び出し元" "サービスA"
+node cb 1.4 0 accent "サーキットブレーカー"
+node b 2.8 0 ng "呼び出し先" "障害発生中"
+node fb 1.4 1.2 ok "すぐにエラーを返す" "待たずに失敗させる"
+edge a cb
+edge cb b dash "止める"
+edge cb fb
+<figcaption>図1 サーキットブレーカーの役割。呼び出し先に障害が起きている間は呼び出しを止め、すぐにエラー(または代替の応答)を返す。</figcaption>
+</figure>
+<p>障害が起きているサービスを呼び続けると、呼び出し元はタイムアウトを待つ間にスレッドや接続を使い切り、呼び出し元まで止まってしまいます。これが連鎖すると、システム全体が停止します(カスケード障害)。サーキットブレーカーで呼び出しを早めに打ち切ることで、この連鎖を防ぎます。</p>
+<figure class="figure" data-diagram>
+grid 170 90
+node c 0 0 ok "Closed" "通常どおり呼ぶ"
+node o 1.6 0 ng "Open" "呼び出しを止める"
+node h 0.8 1.2 box "Half-Open" "試しに少し呼ぶ"
+edge c o "失敗が続く"
+edge o h "一定時間後"
+edge h c "成功"
+<figcaption>図2 状態の移り変わり。通常はClosed。失敗が続くとOpenにして呼び出しを止め、一定時間後にHalf-Openで試しに呼んでみて、成功すればClosedに戻す(失敗すればOpenに戻る)。</figcaption>
+</figure>
+<p>AWSでは、ECSのデプロイサーキットブレーカー(デプロイが失敗し続けたら自動で止めてロールバックする機能)や、Step FunctionsのRetry/Catch、SDKのリトライ設定などが、関連する考え方です。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="deploy-strategies.html">デプロイ戦略</a>:安全に新バージョンへ切り替える方式</li>
+<li><a href="dr-strategies.html">DR戦略</a>:大規模障害からの復旧方式</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/ecs.html">Amazon ECS</a>:デプロイサーキットブレーカー</li>
+<li><a href="../services/step-functions.html">AWS Step Functions</a>:Retry・Catchによるエラー処理</li>
+<li><a href="../services/sqs.html">Amazon SQS</a>:非同期化による障害の分離</li>
+</ul>
+</section>

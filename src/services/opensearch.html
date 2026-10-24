@@ -1,0 +1,81 @@
+<!-- title: Amazon OpenSearch Service -->
+<!-- category: 分析 -->
+<!-- lead: 全文検索・ログ分析のための検索・分析サービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon OpenSearch Service</strong>は、<strong>検索・分析サービス</strong>です。</p>
+<ul>
+<li>通常のデータベース:IDや主キーで検索する</li>
+<li>OpenSearch:<strong>全文検索、あいまい検索、ログ分析、リアルタイム集計</strong>ができる。例:「ワイヤレスイヤホン」で検索したとき、Bluetooth・ノイズキャンセルなどの関連語でもヒットさせる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>DynamoDBとの比較</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>DynamoDB</th><th>OpenSearch</th></tr>
+<tr><td>主な目的</td><td>データ保存</td><td>検索</td></tr>
+<tr><td>主キー検索</td><td>◎</td><td>○</td></tr>
+<tr><td>全文検索</td><td>×</td><td>◎</td></tr>
+<tr><td>あいまい検索</td><td>×</td><td>◎</td></tr>
+<tr><td>集計分析</td><td>△</td><td>◎</td></tr>
+<tr><td>トランザクション</td><td>○</td><td>×</td></tr>
+</table></div>
+<p>OpenSearchはオープンソースの検索エンジン(Elasticsearchから派生)で、可視化ツールの<strong>OpenSearch Dashboards</strong>が付属します。ドメイン(クラスター)を作成して使うほか、サーバー管理が不要な<strong>OpenSearch Serverless</strong>もあります。高可用性のためには複数AZへのノード配置や専用マスターノードを使います。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node ddb 0 0 blue "DynamoDB など" "データ保存"
+node logs 0 1 blue "ログ" "Firehose など"
+node os 1.4 0.5 accent "OpenSearch" "インデックス化"
+node search 2.8 0 ok "全文検索" "あいまい・類義語"
+node dash 2.8 1 ok "Dashboards" "ログ分析・集計"
+edge ddb os
+edge logs os
+edge os search
+edge os dash
+<figcaption>図1 OpenSearch Serviceの使われ方。データを取り込んでインデックス化し、全文検索・あいまい検索や、ログ分析・集計に使う。データの保存はDynamoDBなどに任せ、検索用にOpenSearchへ取り込む構成が多い。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ECサイトの商品検索(全文検索・あいまい検索)</li>
+<li>アプリ・インフラのログ分析(CloudWatch LogsやFirehoseから取り込み)</li>
+<li>リアルタイムの集計・ダッシュボード</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ドメインの場合は、インスタンス(ノード)の稼働時間とストレージ(EBS)容量で課金されます。Serverlessの場合は、使用したコンピューティングユニット(OCU)とストレージ量で課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>:データ保存(検索は苦手)</li>
+<li><a href="kinesis.html">Amazon Kinesis</a>:Firehoseでのデータ取り込み</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ログのストリーミング元</li>
+<li><a href="managed-grafana.html">Amazon Managed Grafana</a>:データソースとして可視化</li>
+<li><a href="athena.html">Amazon Athena</a>:S3データのSQL分析</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「全文検索」「あいまい検索」「ログ分析」→ <strong>OpenSearch</strong>。</li>
+<li>主キーでの高速な読み書き・トランザクション → <strong>DynamoDB</strong>。</li>
+<li>DynamoDBのデータを検索したい → DynamoDB StreamsなどでOpenSearchへ同期する構成。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>OpenSearch Serviceは全文検索・あいまい検索・ログ分析のための検索エンジン。</li>
+<li>保存はDynamoDB、検索はOpenSearchと使い分ける。</li>
+</ul>
+</section>

@@ -1,0 +1,82 @@
+<!-- title: AWS Global Accelerator -->
+<!-- category: ネットワークとコンテンツ配信 -->
+<!-- lead: AWSのグローバルネットワークで通信経路を最適化 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Global Accelerator</strong>は、AWSのグローバルネットワークを使って、<strong>ユーザーからアプリケーションまでの通信経路を最適化</strong>するサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>仕組み</h3>
+<ol>
+<li><strong>2つの静的Anycast IPアドレス</strong>が割り当てられ、エッジロケーションで受け付ける。
+  <ul><li>Anycast IP:1つのIPアドレスを複数のエッジロケーションに設定する方式</li><li>2つある理由:可用性(冗長性)のため</li></ul></li>
+<li>ユーザーの通信は最寄りのエッジロケーションに入り、インターネットではなく<strong>AWSのバックボーンネットワーク</strong>でリージョン内のエンドポイントへ転送される。</li>
+<li>エンドポイントのヘルスチェックを行い、異常時は正常なエンドポイントへ<strong>自動でフェイルオーバー</strong>する。</li>
+</ol>
+<figure class="figure" data-diagram>
+grid 170 85
+node u1 0 0 blue "ユーザー(日本)"
+node u2 0 1 blue "ユーザー(欧州)"
+node e1 1.3 0 box "エッジ" "Anycast IP"
+node e2 1.3 1 box "エッジ" "Anycast IP"
+node ep1 2.8 0 accent "ALB(東京)" "正常"
+node ep2 2.8 1 ng "ALB(米国)" "障害時の切替先"
+edge u1 e1
+edge u2 e2
+edge e1 ep1 "バックボーン"
+edge e2 ep1
+edge e2 ep2 dash
+<figcaption>図1 Global Acceleratorの仕組み。2つの固定Anycast IPで最寄りのエッジに入り、インターネットではなくAWSのバックボーンでエンドポイントへ届ける。ヘルスチェックで異常を検知すると、正常なエンドポイントへ自動で切り替える。</figcaption>
+</figure>
+<h3>対応エンドポイント</h3>
+<ul><li>ALB/NLB</li><li>EC2インスタンス</li><li>Elastic IPアドレス</li></ul>
+
+<h3>CloudFrontとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Global Accelerator</th><th>CloudFront</th></tr>
+<tr><td>目的</td><td>通信経路の最適化</td><td>コンテンツのキャッシュ配信</td></tr>
+<tr><td>プロトコル</td><td>TCP/UDP</td><td>HTTP/HTTPS/WebSocket</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ゲーム・VoIP・IoTなど、TCP/UDPでレイテンシーを下げたいアプリ</li>
+<li>固定IPアドレスでの接続が必要(取引先のファイアウォールで許可リスト登録など)</li>
+<li>複数リージョン間のすばやいフェイルオーバー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>アクセラレーターごとの時間料金と、転送データ量に応じた料金(DT-Premium)がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cloudfront.html">Amazon CloudFront</a>:HTTPのキャッシュ配信</li>
+<li><a href="elb.html">Elastic Load Balancing</a>/<a href="ec2.html">Amazon EC2</a>:エンドポイント</li>
+<li><a href="route53.html">Amazon Route 53</a>:DNSベースのルーティング</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「<strong>静的IP</strong>」「<strong>TCP/UDP</strong>」「グローバルにレイテンシー改善」→ Global Accelerator。</li>
+<li>「キャッシュ」「HTTP」→ CloudFront。</li>
+<li>DNSのキャッシュに左右されずにフェイルオーバーしたい → Global Accelerator。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>2つの静的Anycast IP+AWSバックボーンで通信経路を最適化する。</li>
+<li>CloudFrontはキャッシュ、Global Acceleratorは経路最適化。</li>
+</ul>
+</section>

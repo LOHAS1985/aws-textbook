@@ -1,0 +1,55 @@
+<!-- title: S3とCloudFrontで静的サイトを安全に配信する -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: 独自ドメイン・HTTPS・OACで、S3を公開せずに高速配信する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>会社のWebサイト(HTML・画像などの静的ファイル)を、独自ドメインとHTTPSで世界中に高速配信したい。S3バケット自体は公開せず、CloudFront経由のアクセスだけを許可したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 160 90
+node u 0 0 blue "利用者" "www.example.com"
+node r53 1.25 0 box "Route 53" "エイリアスレコード"
+node cf 2.5 0 accent "CloudFront" "HTTPS・キャッシュ"
+node s3 3.75 0 ok "S3バケット" "非公開・OACのみ許可"
+node acm 2.5 1.2 box "ACM" "us-east-1の証明書"
+edge u r53 "名前解決"
+edge r53 cf
+edge cf s3 "OAC"
+edge acm cf dash
+<figcaption>図1 Route 53のエイリアスレコードで独自ドメインをCloudFrontに向け、us-east-1のACM証明書でHTTPS化する。オリジンのS3はOACでCloudFrontからのアクセスだけを許可する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/s3.html">Amazon S3</a>:静的ファイルの保存先(オリジン)</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:エッジでキャッシュして高速配信、OACでS3へアクセス</li>
+<li><a href="../services/acm.html">AWS Certificate Manager</a>:独自ドメインの証明書(CloudFront用は<strong>us-east-1</strong>)</li>
+<li><a href="../services/route53.html">Amazon Route 53</a>:独自ドメインをCloudFrontに向ける(<a href="../terms/dns-record-types.html">エイリアスレコード</a>)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>S3バケットにファイルを置き、ブロックパブリックアクセスを有効にしたままにする</li>
+<li>us-east-1のACMで独自ドメインの証明書を発行する</li>
+<li>CloudFrontのディストリビューションを作成し、オリジンにS3、OACを設定する。代替ドメイン名と証明書を指定し、Viewer Protocol PolicyでHTTPSにリダイレクトする</li>
+<li>S3のバケットポリシーで、そのディストリビューション(OAC)からの読み取りだけを許可する</li>
+<li>Route 53でドメインをCloudFrontに向けるエイリアスレコードを作成する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>S3への直接アクセスを禁止 → <strong>OAC</strong>。</li>
+<li>CloudFrontで使うACM証明書は<strong>us-east-1</strong>で発行する。</li>
+<li>利用者側をHTTPSに強制 → <strong>Viewer Protocol Policy</strong>。</li>
+<li>ファイルを更新してもキャッシュが残って古い内容が表示される → キャッシュの無効化(インバリデーション)を実行するか、TTLを短くする。</li>
+</ul></div>
+</section>

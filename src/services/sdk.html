@@ -1,0 +1,92 @@
+<!-- title: AWS SDK -->
+<!-- category: フレームワーク -->
+<!-- lead: アプリからAWSサービスを操作するための公式ライブラリ群 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS SDK(Software Development Kit)</strong>は、<strong>アプリケーションからAWSサービスを操作するための公式ライブラリ群</strong>です。REST APIを直接呼ぶ代わりに、SDKのメソッドを使います。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li>プログラムからAWSを操作するには認証情報(IAMユーザーのアクセスキーなど)が必要。</li>
+</ul>
+<p>実務では、アクセスキーをコードに書くのではなく、EC2のインスタンスプロファイルやLambdaの実行ロールなど<strong>IAMロール</strong>の一時認証情報を使うのが推奨です。SDKは決められた優先順位で認証情報を自動的に探します(<a href="iam.html">AWS IAM</a>の「認証情報の優先順位」を参照)。</p>
+
+<figure class="figure" data-diagram>
+grid 170 85
+node code 0 0.5 blue "アプリのコード" "s3.put_object()"
+node sdk 1.4 0.5 accent "AWS SDK" "Boto3 など"
+node cred 1.4 1.6 box "認証情報" "IAMロールなど"
+node api 2.8 0.5 ok "AWSのAPI" "S3・DynamoDBなど"
+edge code sdk
+edge sdk api "HTTPS"
+edge cred sdk dash
+<figcaption>図1 SDKの役割。アプリはSDKのメソッドを呼ぶだけでよく、SDKが認証情報を探して署名付きのAPIリクエストを送る。</figcaption>
+</figure>
+<h3>対応言語</h3>
+<ul>
+<li>Java:AWS SDK for Java</li>
+<li>JavaScript:AWS SDK for JavaScript</li>
+<li>Python:<strong>Boto3</strong>(Python用の公式SDK)</li>
+<li>.NET、Go(AWS SDK for Go)、Ruby、PHPなど</li>
+</ul>
+
+<h3>メソッドの例(Python)</h3>
+<pre class="code"><code># S3:オブジェクトのアップロード
+s3.put_object(Bucket="my-bucket", Key="sample.txt", Body="hello")
+
+# DynamoDB:アイテムの登録
+table.put_item(Item={"userId": "u001", "name": "Taro"})</code></pre>
+
+<h3>クライアントの初期化</h3>
+<p>AWSサービスへアクセスするためのオブジェクトを生成・設定します。Lambdaでは<strong>ハンドラーの外で初期化</strong>すると、実行環境が再利用されたときに毎回初期化しなくて済みます。</p>
+<pre class="code"><code>import boto3
+
+# ハンドラー外で初期化
+s3 = boto3.client('s3')
+
+def lambda_handler(event, context):
+    response = s3.list_buckets()
+    return response</code></pre>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>アプリからS3へのファイルアップロード、DynamoDBへの読み書き</li>
+<li>Lambda関数内から他のAWSサービスを呼び出す</li>
+<li>運用スクリプトでのリソース操作の自動化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>SDK自体は無料です。SDKから呼び出したAWSサービスの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="iam.html">AWS IAM</a>:認証情報と優先順位</li>
+<li><a href="lambda.html">AWS Lambda</a>:ハンドラー外での初期化</li>
+<li><a href="s3.html">Amazon S3</a>/<a href="dynamodb.html">Amazon DynamoDB</a>:よく操作されるサービス</li>
+<li><a href="xray.html">AWS X-Ray</a>:SDKの呼び出しのトレース</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>PythonのSDK → <strong>Boto3</strong>。</li>
+<li>Lambdaでは、SDKクライアントやDB接続を<strong>ハンドラーの外</strong>で初期化して再利用する。</li>
+<li>認証情報はコードに書かず、<strong>IAMロール</strong>を使う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS SDKは各言語向けのAWS操作ライブラリ。Lambdaではクライアントをハンドラー外で初期化する。</li>
+</ul>
+</section>

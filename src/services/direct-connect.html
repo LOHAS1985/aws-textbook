@@ -1,0 +1,132 @@
+<!-- title: AWS Direct Connect -->
+<!-- category: ネットワークとコンテンツ配信 -->
+<!-- lead: オンプレミスとAWSを、インターネットを通らない専用線でつなぐ -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Direct Connect(DX)</strong>は、<strong>オンプレミスのデータセンターとAWSを、インターネットを経由しない専用の回線で接続する</strong>サービスです。インターネットの混雑に左右されないため、<strong>帯域が安定し、レイテンシーも一定</strong>になります。</p>
+<p>接続は、AWSが用意している<strong>Direct Connectロケーション</strong>(データセンター事業者の施設)で、オンプレミス側の回線とAWSのネットワークをつなぐことで実現します。</p>
+<figure class="figure" data-diagram>
+grid 160 85
+node dc 0 0.5 blue "オンプレミス" "データセンター"
+node loc 1.5 0.5 box "DXロケーション" "顧客ルーター⇔AWSルーター" w=1.2
+node vpc 3.1 0 accent "VPC" "プライベートVIF"
+node pub 3.1 1 ok "S3など" "パブリックVIF"
+edge dc loc "専用線"
+edge loc vpc
+edge loc pub
+<figcaption>図1 Direct Connectの接続。オンプレミスからDirect Connectロケーションまで専用線を引き、そこでAWSのネットワークに接続する。仮想インターフェイス(VIF)で接続先を分ける。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>接続の種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>内容</th></tr>
+<tr><td>専用接続(Dedicated)</td><td>1つの物理ポートを専有する。1/10/100/400Gbps</td></tr>
+<tr><td>ホスト型接続(Hosted)</td><td>Direct Connectパートナーが提供する回線を利用する。50Mbps〜25Gbps。小さい帯域から始められる</td></tr>
+</table></div>
+<p>開通までに<strong>数週間〜数か月</strong>かかることがあります。すぐに接続したいときはSite-to-Site VPNを使います。</p>
+
+<h3>仮想インターフェイス(VIF)</h3>
+<p>1本の回線の上に、接続先ごとの論理的なインターフェイスを作ります。</p>
+<div class="table-wrap"><table>
+<tr><th>VIF</th><th>接続先</th></tr>
+<tr><td><strong>プライベートVIF</strong></td><td>VPC(VGWまたはDirect Connectゲートウェイ経由)。プライベートIPで通信する</td></tr>
+<tr><td><strong>パブリックVIF</strong></td><td>S3やDynamoDBなど、パブリックなエンドポイントを持つAWSのサービス</td></tr>
+<tr><td><strong>トランジットVIF</strong></td><td><a href="transit-gateway.html">Transit Gateway</a>(Direct Connectゲートウェイ経由)</td></tr>
+</table></div>
+
+<h3>Direct Connectゲートウェイ</h3>
+<p>1つのDirect Connect接続から、<strong>複数のリージョン・複数のアカウントのVPC</strong>(VGWやTransit Gateway)へ接続するためのグローバルなリソースです。</p>
+<figure class="figure" data-diagram>
+grid 165 80
+node on 0 1 blue "オンプレミス"
+node dx 1.3 1 box "DX接続" "プライベートVIF"
+node dxgw 2.6 1 accent "DXゲートウェイ" "グローバル"
+node v1 4 0 ok "VPC(東京)" "VGW"
+node v2 4 1 ok "VPC(大阪)" "VGW"
+node t 4 2 ok "TGW(米国)" "トランジットVIF"
+edge on dx
+edge dx dxgw
+edge dxgw v1
+edge dxgw v2
+edge dxgw t
+<figcaption>図2 Direct Connectゲートウェイ。1本の接続から、複数のリージョン・アカウントのVGWやTransit Gatewayへつなげられる。</figcaption>
+</figure>
+
+<h3>冗長化</h3>
+<p>1本の回線だけでは、回線やロケーションの障害で通信が止まります。重要なシステムでは冗長化します。</p>
+<ul>
+<li><strong>最大の回復性</strong>:2つのロケーションに、それぞれ2本ずつ接続する。</li>
+<li><strong>高い回復性</strong>:2つのロケーションに、1本ずつ接続する。</li>
+<li><strong>VPNをバックアップにする</strong>:DX1本+Site-to-Site VPN。低コストだが、障害時は帯域が下がる。</li>
+<li><strong>LAG(リンクアグリゲーショングループ)</strong>:同じロケーションの複数の接続を束ねて、1本の太い回線として使う。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 160 80
+node on 0 0.5 blue "オンプレミス"
+node l1 1.4 0 box "ロケーション1" "接続×2"
+node l2 1.4 1 box "ロケーション2" "接続×2"
+node aws 2.8 0.5 accent "AWS"
+edge on l1
+edge on l2
+edge l1 aws
+edge l2 aws
+<figcaption>図3 最大の回復性の構成。2つのロケーションにそれぞれ2本ずつ接続し、回線・機器・ロケーションのどれが止まっても通信を続けられる。</figcaption>
+</figure>
+
+<h3>暗号化</h3>
+<p>Direct Connectは専用線ですが、<strong>標準では通信は暗号化されません</strong>。暗号化が必要な場合は次のいずれかを使います。</p>
+<ul>
+<li><strong>MACsec</strong>:対応する専用接続(10/100/400Gbps)で、回線上の通信を暗号化する。</li>
+<li><strong>DXの上でSite-to-Site VPN</strong>:IPsecで暗号化する(パブリックVIF経由、またはTransit GatewayでのプライベートIP VPN)。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>大量のデータを継続的にオンプレミスとAWSの間で転送する</li>
+<li>帯域とレイテンシーが安定している必要がある業務システム(基幹系・金融など)</li>
+<li>ハイブリッド構成で、データ転送料金を抑えたい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p><strong>ポートの時間料金</strong>(接続の帯域で決まる)と、AWSから外への<strong>データ転送(アウト)料金</strong>がかかります。DX経由のデータ転送料金はインターネット経由より安く設定されています。ほかに、ロケーションまでの回線費用(通信事業者やパートナーへの支払い)が別にかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>:接続先のネットワーク(VGW)</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:トランジットVIFで多数のVPCに接続</li>
+<li><a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>:DXのバックアップ、DX上での暗号化</li>
+<li><a href="datasync.html">AWS DataSync</a>:DX経由でのデータ転送</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:<code>ConnectionState</code> などで接続の状態を監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「安定した帯域」「一定のレイテンシー」「インターネットを経由しない」→ <strong>Direct Connect</strong>。「すぐに」「安く」→ Site-to-Site VPN。</li>
+<li>DXは<strong>標準では暗号化されない</strong>。暗号化が必要なら<strong>MACsec</strong>か<strong>DX上のVPN</strong>。</li>
+<li>VPCへはプライベートVIF、S3などへはパブリックVIF、Transit GatewayへはトランジットVIF。</li>
+<li>複数リージョン・複数アカウントのVPCにつなぐ → <strong>Direct Connectゲートウェイ</strong>。</li>
+<li>低コストで冗長化 → DX+<strong>Site-to-Site VPN</strong>。高い可用性 → 複数ロケーションでDXを冗長化。</li>
+<li>開通まで時間がかかるため、急ぎの要件ではまずVPNを使う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>オンプレミスとAWSを専用線でつなぎ、安定した帯域とレイテンシーを得る。</li>
+<li>VIF(プライベート・パブリック・トランジット)で接続先を分ける。</li>
+<li>DXゲートウェイで複数リージョン・アカウントへ接続できる。</li>
+<li>標準では暗号化されない。冗長化(複数ロケーション、VPNのバックアップ)も考える。</li>
+</ul>
+</section>

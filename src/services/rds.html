@@ -1,0 +1,103 @@
+<!-- title: Amazon RDS -->
+<!-- category: データベース -->
+<!-- lead: リレーショナルデータベースの構築・運用を任せられるマネージドDB -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon RDS(Relational Database Service)</strong>は、リレーショナルデータベース(SQL)の構築・運用を提供するマネージドサービスです。パッチ適用やバックアップなどの面倒な運用作業をAWSに任せられます。</p>
+<p>対応DBエンジン:<strong>MySQL、PostgreSQL、MariaDB、Oracle Database、Microsoft SQL Server、Amazon Aurora</strong></p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>RDSが代行するDB運用タスク</h3>
+<ul>
+<li><strong>プロビジョニング</strong>:DBサーバーの起動</li>
+<li><strong>パッチ適用</strong>:OS/DBエンジン</li>
+<li><strong>バックアップ</strong>
+  <ul>
+  <li>自動バックアップ:保持期間は<strong>最大35日</strong></li>
+  <li>手動スナップショット:<strong>無期限</strong>(削除するまで残る)</li>
+  <li>ポイントインタイムリカバリ:特定時点のデータに復元</li>
+  </ul></li>
+<li><strong>障害時のフェイルオーバー</strong>:Multi-AZ構成</li>
+<li><strong>スケーリング</strong>:スペック変更、リードレプリカ(プライマリから<strong>非同期</strong>でレプリケーションするため<strong class="em">わずかな遅延が発生</strong>)</li>
+</ul>
+<p>Multi-AZは別AZにスタンバイを置く<strong>可用性</strong>のための仕組みで、スタンバイは読み取りに使えません(同期レプリケーション)。リードレプリカは<strong>読み取り性能</strong>を上げる仕組みです。目的の違いを区別しましょう。</p>
+
+<figure class="figure" data-diagram>
+grid 170 90
+node app 0 1 blue "アプリ"
+node pri 1.5 0.5 accent "プライマリ" "読み書き"
+node stb 3 0 box "スタンバイ" "別AZ・読めない"
+node rr 3 1.5 ok "リードレプリカ" "読み取り専用"
+edge app pri "書き込み"
+edge app rr "読み取り"
+edge pri stb "同期"
+edge pri rr "非同期"
+<figcaption>図1 Multi-AZとリードレプリカの違い。スタンバイは障害時に引き継ぐための待機系(同期・読み取りには使えない)、リードレプリカは読み取りを分散するためのコピー(非同期・わずかに遅延)。</figcaption>
+</figure>
+<h3>RDS Proxy</h3>
+<p>大量のクライアントからのアクセスを、<strong>少数のDB接続に集約・再利用</strong>する仕組みです。</p>
+<ul>
+<li>前提:DBクエリの時間は短く、DB接続を行うのはアプリサーバー。</li>
+<li>例:アプリサーバーから1万人がDBにアクセスしても、実際に同時にクエリを投げているのは一部。RDS Proxyは<strong>50接続を1万人で使い回す</strong>。Proxyがないと1万接続を使い、接続数の上限を超える可能性が高い。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 75
+node l1 0 0 blue "Lambda"
+node l2 0 1 blue "Lambda"
+node l3 0 2 blue "アプリサーバー"
+node proxy 1.4 0 accent "RDS Proxy" "接続を集約・再利用" h=3
+node db 2.8 1 box "RDS" "少数の接続で済む"
+edge l1 proxy
+edge l2 proxy
+edge l3 proxy
+edge proxy db
+<figcaption>図2 RDS Proxy。大量のクライアントからの接続を少数のDB接続にまとめて使い回し、DBの最大接続数を超えないようにする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Webアプリの業務データベース</li>
+<li>既存のMySQL/Oracle/SQL ServerをAWSへ移行</li>
+<li>Lambdaなど接続数が急増しやすい環境からのDB接続(RDS Proxy)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>DBインスタンスの稼働時間(インスタンスクラス)、ストレージ容量、バックアップ容量、データ転送量で課金されます。Multi-AZはスタンバイ分の料金も加わります。リザーブドインスタンスで割引も可能です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="aurora.html">Amazon Aurora</a>:AWSが開発した高性能なRDSエンジン</li>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>:NoSQLの選択肢</li>
+<li><a href="elasticache.html">Amazon ElastiCache</a>:DBの前段のキャッシュ</li>
+<li><a href="lambda.html">AWS Lambda</a>:RDS Proxyと相性の良い接続元</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>:DB認証情報の管理・ローテーション</li>
+<li><a href="backup.html">AWS Backup</a>:バックアップの一元管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>自動バックアップは<strong>最大35日</strong>。それ以上残したい → <strong>手動スナップショット</strong>。</li>
+<li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
+<li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。</li>
+<li>特定時点に戻したい → <strong>ポイントインタイムリカバリ</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>RDSはリレーショナルDBのマネージドサービス。運用タスクをAWSが代行する。</li>
+<li>バックアップは自動(最大35日)と手動(無期限)。</li>
+<li>可用性はMulti-AZ、読み取り拡張はリードレプリカ、接続集約はRDS Proxy。</li>
+</ul>
+</section>

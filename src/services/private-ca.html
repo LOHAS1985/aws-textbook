@@ -1,0 +1,65 @@
+<!-- title: AWS Private CA -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: 組織内で使うプライベート証明書を発行する認証局 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Private CA(Private Certificate Authority)</strong>は、組織内だけで使う<strong>プライベート証明書を発行するための認証局(CA)</strong>をマネージドで提供するサービスです。インターネットに公開しない社内システムや、サービス間の通信の認証に使います。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li>ルートCA・下位CAの階層を作成・運用できる。CAの秘密鍵はAWSが管理するHSMで保護される。</li>
+<li>ACMと連携し、プライベート証明書をALBなどに配置したり、自動更新したりできる。</li>
+<li>証明書失効リスト(CRL)やOCSPによる失効管理に対応。</li>
+<li>相互TLS(mTLS)で、クライアント側も証明書で認証できる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 80
+node root 0 0.5 accent "ルートCA"
+node sub 1.3 0.5 box "下位CA"
+node c1 2.6 0 ok "社内サイトの証明書"
+node c2 2.6 1 ok "クライアント証明書" "mTLS"
+edge root sub "署名"
+edge sub c1
+edge sub c2
+<figcaption>図1 Private CAの階層。ルートCAが署名した下位CAで、社内向けのサーバー証明書やmTLS用のクライアント証明書を発行する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>社内向けWebサイト・APIのHTTPS化</li>
+<li>マイクロサービス間・IoTデバイスのmTLS認証</li>
+<li>オンプレミスの自前CAの運用負荷をなくしたい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>CAごとの月額料金と、発行した証明書の枚数に応じて課金されます。ACMのパブリック証明書(無料)と違い、有料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="acm.html">AWS Certificate Manager</a>:パブリック証明書の発行、プライベート証明書の配布</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:証明書の配置先</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>インターネットに公開しない社内向けの証明書 → <strong>Private CA</strong>。</li>
+<li>公開Webサイトの証明書 → <strong>ACMのパブリック証明書</strong>(無料)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Private CAは組織内向けのプライベート証明書を発行するマネージドCA。</li>
+</ul>
+</section>
