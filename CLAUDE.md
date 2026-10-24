@@ -16,6 +16,12 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/{services,terms,usecases}/index.html … 各コレクションの目次(カテゴリ別)
 - book/{services,terms,usecases}/{slug}.html … 各ページ(生成物。直接編集しない)
 - book/css/style.css … 共通スタイル(全ページで共有。これは直接編集する)
+- deploy.sh … `sh deploy.sh "メッセージ"` でビルド→コミット→push し、book/ を gh-pages ブランチに公開する
+
+## 公開(GitHub Pages)
+- リポジトリ: https://github.com/LOHAS1985/aws-textbook (public)
+- 公開URL: https://lohas1985.github.io/aws-textbook/ (gh-pages ブランチ = book/ の中身。push 後1〜2分で反映)
+- ページを追加・修正したら deploy.sh で公開する。gh は "C:\Program Files\GitHub CLI\gh.exe"
 
 ## 本文ファイルのメタ情報(先頭に書く)
     <!-- title: ページ名 -->
