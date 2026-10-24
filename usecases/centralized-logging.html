@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>複数アカウントのログを集約して分析する | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">監視・ログ・自動修復</span>
+  <h1>複数アカウントのログを集約して分析する</h1>
+  <p class="lead">各アカウントのログを1つのS3に集め、長期保存とSQL分析を行う</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>組織内の複数アカウントのアプリログやAPI操作の記録(CloudTrail)を、ログ集約用のアカウントに集めて長期保存したい。監査のときにはSQLで横断的に検索したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 286" style="max-width:684px;min-width:520px" role="img" aria-label="図1 各アカウントのCloudWatch Logsをサブスクリプションフィルター → Data Firehoseで、CloudTrailは組織の証跡で、集約アカウントのS3に保存する。分析はAthenaでS3を直接SQLで検索する。"><defs><marker id="dgusecases-centralized-logging-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">アカウントA</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">CloudWatch Logs</text>
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="147" text-anchor="middle" class="dg-t">アカウントB</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">CloudWatch Logs</text>
+<rect x="34" y="210" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="232" text-anchor="middle" class="dg-t">CloudTrail</text>
+<text x="109" y="250" text-anchor="middle" class="dg-s">組織の証跡</text>
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="104" text-anchor="middle" class="dg-t">Data Firehose</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">サブスクリプション経由</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="147" text-anchor="middle" class="dg-tb">ログ用S3</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">集約アカウント</text>
+<rect x="272" y="210" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="347" y="232" text-anchor="middle" class="dg-t">Athena</text>
+<text x="347" y="250" text-anchor="middle" class="dg-s">SQLで分析</text>
+<path d="M184.0,79.9 L272.0,95.6" class="dg-line" marker-end="url(#dgusecases-centralized-logging-1)"/>
+<path d="M184.0,138.1 L272.0,122.4" class="dg-line" marker-end="url(#dgusecases-centralized-logging-1)"/>
+<path d="M422.0,122.4 L510.0,138.1" class="dg-line" marker-end="url(#dgusecases-centralized-logging-1)"/>
+<path d="M184.0,223.1 L510.0,164.9" class="dg-line" marker-end="url(#dgusecases-centralized-logging-1)"/>
+<path d="M419.8,210.5 L512.2,177.5" class="dg-line dg-dash" marker-end="url(#dgusecases-centralized-logging-1)"/>
+<text x="466" y="198" text-anchor="middle" class="dg-s dg-halo">クエリ</text>
+</svg>
+</div>
+<figcaption>図1 各アカウントのCloudWatch Logsをサブスクリプションフィルター → Data Firehoseで、CloudTrailは組織の証跡で、集約アカウントのS3に保存する。分析はAthenaでS3を直接SQLで検索する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:サブスクリプションフィルターでログをリアルタイムに転送する</li>
+<li><a href="../services/kinesis.html">Amazon Kinesis(Data Firehose)</a>:ログをS3へ配送する</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:組織全体のAPI操作を1つの証跡で記録する</li>
+<li><a href="../services/s3.html">Amazon S3</a>:ログの長期保存(ライフサイクルでGlacierへ)</li>
+<li><a href="../services/athena.html">Amazon Athena</a>:S3のログをSQLで分析する</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:組織の証跡、アカウントの管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>集約アカウントにログ用のS3バケットを作り、バケットポリシーで各アカウントからの書き込みを許可する</li>
+<li>管理アカウントでCloudTrailの組織の証跡を作成し、保存先に集約バケットを指定する</li>
+<li>Data Firehoseの配信ストリームを作り、各アカウントのロググループにサブスクリプションフィルターを設定する</li>
+<li>S3のライフサイクルルールで、古いログをGlacierなどへ移す</li>
+<li>Athenaでテーブルを定義し、SQLで検索する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>短期・頻繁に検索するログはCloudWatch Logs、<strong>長期・たまに検索するログはS3</strong>。</li>
+<li>CloudTrailのログの改ざん検知 → <strong>ログファイルの整合性検証</strong>。</li>
+<li>Athenaのコスト削減 → パーティション分割・列指向形式。</li>
+<li>ログを削除させないために、S3オブジェクトロックやバケットポリシーで削除を制限する。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="ec2-auto-recovery.html"><span class="label">← 前へ</span>EC2の障害を検知して自動で復旧する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="auto-scaling-web.html"><span class="label">次へ →</span>負荷に応じて自動でスケールするWebシステム</a>
+</nav>
+</main>
+</body>
+</html>

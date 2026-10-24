@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon ECS | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">コンテナ</span>
+  <h1>Amazon ECS</h1>
+  <p class="lead">AWS上でコンテナを実行・管理するオーケストレーションサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon ECS(Elastic Container Service)</strong>は、AWS上でコンテナを実行・管理するための<strong>コンテナオーケストレーションサービス</strong>です。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<ul>
+<li><strong>クラスター</strong>:実行環境のまとまり。複数のアプリや環境をまとめるときに使う。</li>
+<li><strong class="em">タスク定義</strong>:コンテナを実行するときの設計書(Dockerfileはビルド時の設計書)。
+  <ul><li>使用するイメージ(Docker Image)</li><li>CPU/メモリ</li><li>ポート(Port Mapping)</li><li><strong>環境変数(Environment Variables)</strong></li></ul></li>
+<li><strong>タスク</strong>:タスク定義から起動された実体(コンテナ)。</li>
+<li><strong>サービス</strong>:タスクを常に指定数維持する仕組み。
+  <ul><li>起動数の維持(Desired Count)</li><li>自動増減(Auto Scaling)</li><li>ALB連携(Load Balancer)</li><li>無停止更新(Rolling Update)</li><li>異常タスクの交換(Health Check)</li></ul></li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 888 206" style="max-width:888px;min-width:520px" role="img" aria-label="図1 ECSの構成要素。サービスがタスク定義をもとにタスクを起動し、指定した数を維持する。ALBと連携してタスクにトラフィックを振り分ける。"><defs><marker id="dgservices-ecs-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="260" y="8" width="378" height="174" rx="10" class="dg-group"/>
+<text x="270" y="23" class="dg-s">クラスター</text>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">タスク定義</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">コンテナの設計書</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">サービス</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">タスク数を維持</text>
+<rect x="476" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="551" y="60" text-anchor="middle" class="dg-t">タスク</text>
+<text x="551" y="78" text-anchor="middle" class="dg-s">コンテナ</text>
+<rect x="476" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="551" y="140" text-anchor="middle" class="dg-t">タスク</text>
+<text x="551" y="158" text-anchor="middle" class="dg-s">コンテナ</text>
+<rect x="714" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="789" y="100" text-anchor="middle" class="dg-t">ALB</text>
+<text x="789" y="118" text-anchor="middle" class="dg-s">利用者のアクセス</text>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgservices-ecs-1)"/>
+<text x="228" y="108" text-anchor="middle" class="dg-s dg-halo">参照</text>
+<path d="M422.0,89.3 L476.0,78.7" class="dg-line" marker-end="url(#dgservices-ecs-1)"/>
+<path d="M422.0,118.7 L476.0,129.3" class="dg-line" marker-end="url(#dgservices-ecs-1)"/>
+<path d="M714.0,91.4 L626.0,76.6" class="dg-line" marker-end="url(#dgservices-ecs-1)"/>
+<path d="M714.0,116.6 L626.0,131.4" class="dg-line" marker-end="url(#dgservices-ecs-1)"/>
+</svg>
+</div>
+<figcaption>図1 ECSの構成要素。サービスがタスク定義をもとにタスクを起動し、指定した数を維持する。ALBと連携してタスクにトラフィックを振り分ける。</figcaption>
+</figure>
+<h3>起動タイプ</h3>
+<div class="table-wrap"><table>
+<tr><th>起動タイプ</th><th>内容</th><th>特徴</th></tr>
+<tr><td>EC2起動タイプ</td><td>ユーザーがEC2を用意し、その上でコンテナを実行</td><td>柔軟だがサーバー管理が必要</td></tr>
+<tr><td>Fargate起動タイプ(現在の主流)</td><td>コンテナを指定するだけ</td><td>サーバー管理不要(ほぼサーバーレス)</td></tr>
+</table></div>
+
+<h3>キャパシティプロバイダー</h3>
+<p>ECSタスクを<strong>どの計算リソース上でどれだけ実行するか</strong>を管理します。</p>
+<ul>
+<li>計算リソース:<code>FARGATE</code>(通常)、<code>FARGATE_SPOT</code>(余剰リソースを安価に利用)、ASG Capacity Provider(ECSがEC2 Auto Scalingを管理)</li>
+<li>実行数:<strong>Base</strong>=最低保証タスク数、<strong>Weight</strong>=どれくらいの割合で配置するか</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 194" style="max-width:480px;min-width:480px" role="img" aria-label="図2 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。"><defs><marker id="dgservices-ecs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="100" text-anchor="middle" class="dg-tb">ECSサービス</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">10タスク</text>
+<rect x="306" y="38" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="381" y="60" text-anchor="middle" class="dg-t">FARGATE</text>
+<text x="381" y="78" text-anchor="middle" class="dg-s">Base=2 / Weight=1</text>
+<rect x="306" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="140" text-anchor="middle" class="dg-t">FARGATE_SPOT</text>
+<text x="381" y="158" text-anchor="middle" class="dg-s">Weight=3</text>
+<path d="M184.0,93.0 L306.0,75.0" class="dg-line" marker-end="url(#dgservices-ecs-2)"/>
+<text x="245" y="88" text-anchor="middle" class="dg-s dg-halo">4タスク</text>
+<path d="M184.0,115.0 L306.0,133.0" class="dg-line" marker-end="url(#dgservices-ecs-2)"/>
+<text x="245" y="128" text-anchor="middle" class="dg-s dg-halo">6タスク</text>
+</svg>
+</div>
+<figcaption>図2 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Webアプリ・APIをコンテナで常時稼働させる(サービス+ALB)</li>
+<li>FARGATE_SPOTを組み合わせたコスト重視のバッチ処理</li>
+<li>Lambdaの15分制限を超える長時間処理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ECS自体の利用料はかかりません。EC2起動タイプではEC2インスタンスの料金、Fargate起動タイプではタスクに割り当てたvCPU・メモリと実行時間に応じた料金がかかります。</p>
+<p>FARGATE_SPOTを使うと余剰リソースを安価に利用できます(中断される可能性あり)。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ecr.html">Amazon ECR</a>:コンテナイメージの保存先</li>
+<li><a href="eks.html">Amazon EKS</a>:Kubernetesベースのオーケストレーション</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:サービスとALBの連携</li>
+<li><a href="ec2.html">Amazon EC2</a>:EC2起動タイプの実行基盤</li>
+<li><a href="copilot.html">AWS Copilot</a>:ECSアプリの構築・デプロイを簡単にするCLI</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point">
+<ul>
+<li>コンテナの環境変数・CPU/メモリ・イメージは<strong>タスク定義</strong>で指定する。</li>
+<li>タスク数の維持・ALB連携・ローリング更新は<strong>サービス</strong>の役割。</li>
+<li>サーバー管理をしたくない → <strong>Fargate</strong>。</li>
+<li>Fargateと安価なFARGATE_SPOTの配分 → キャパシティプロバイダーの<strong>Base/Weight</strong>。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>ECSは「クラスター/タスク定義/タスク/サービス」で構成される。</li>
+<li>起動タイプはEC2とFargate。主流はFargate。</li>
+<li>キャパシティプロバイダーでリソースの配分を制御する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="elastic-beanstalk.html"><span class="label">← 前へ</span>AWS Elastic Beanstalk</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="eks.html"><span class="label">次へ →</span>Amazon EKS</a>
+</nav>
+</main>
+</body>
+</html>

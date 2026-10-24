@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS KMS | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">セキュリティ、アイデンティティ、コンプライアンス</span>
+  <h1>AWS KMS</h1>
+  <p class="lead">暗号化キーを安全に作成・管理・使用するサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS KMS(Key Management Service)</strong>は、データの暗号化に使う<strong>暗号化キーを安全に作成・管理・使用</strong>できるサービスです。S3・EBS・RDSなど多くのAWSサービスの暗号化に使われます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<ul>
+<li><strong class="em">キーの自動ローテーションは対称暗号キーのみ対応</strong>(対称キー=暗号化・復号に同じ鍵を使う)</li>
+</ul>
+
+<h3>キーの種類</h3>
+<ul>
+<li><strong>CMK(カスタマーマスターキー/KMSキー)</strong>:データキーを生成・暗号化する。</li>
+<li><strong>データキー</strong>:実データを暗号化する。</li>
+<li><strong>HMACキー</strong>:改ざん検知用の鍵。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>AWS所有キー</th><th>AWS管理キー</th><th>カスタマー管理キー</th></tr>
+<tr><td>作成者</td><td>AWS</td><td>AWS</td><td>ユーザー</td></tr>
+<tr><td>アカウントに表示</td><td>されない</td><td>される</td><td>される</td></tr>
+<tr><td>キーポリシーの編集</td><td>不可</td><td>不可</td><td>可能</td></tr>
+<tr><td>有効/無効化</td><td>不可</td><td>不可</td><td>可能</td></tr>
+<tr><td>削除</td><td>不可</td><td>不可</td><td>可能</td></tr>
+<tr><td>ローテーション設定</td><td>不可</td><td>AWSが管理</td><td>設定可能</td></tr>
+<tr><td>IAMでの細かな権限制御</td><td>不可</td><td>制限あり</td><td>可能</td></tr>
+<tr><td>クロスアカウント利用</td><td>不可</td><td>不可</td><td><strong class="em">可能</strong></td></tr>
+<tr><td>監査要件への対応</td><td>低</td><td>中</td><td>高</td></tr>
+<tr><td>主な用途</td><td>AWS内部処理</td><td>一般的なAWSサービスの暗号化</td><td>厳格なアクセス制御・共有</td></tr>
+</table></div>
+
+<h3>暗号化の流れ(エンベロープ暗号化)</h3>
+<ol>
+<li>アプリがKMSにデータキーの生成をリクエスト(<code>GenerateDataKey</code> API)</li>
+<li>KMSがデータキーを生成し、CMKでそのデータキーを暗号化</li>
+<li>KMSが<strong>平文のデータキー</strong>と<strong>暗号化されたデータキー</strong>をアプリに渡す</li>
+<li>アプリが平文のデータキーでデータを暗号化し、平文のデータキーは破棄</li>
+<li>暗号化データと暗号化データキーを一緒に保存</li>
+</ol>
+<p>※小さなデータ(4KBまで)は、<strong class="em">KMSの <code>Encrypt</code> API</strong> で直接暗号化します。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 696 221" style="max-width:696px;min-width:520px" role="img" aria-label="図1 エンベロープ暗号化(GenerateDataKey)。①KMSにデータキーの生成を依頼し、②平文と暗号化済みのデータキーを受け取り、③平文のデータキーでデータを暗号化して、平文キーは破棄する。暗号化データと暗号化データキーを一緒に保存する。"><defs><marker id="dgservices-kms-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="498" y="13" width="174" height="184" rx="10" class="dg-group"/>
+<text x="508" y="28" class="dg-s">一緒に保存</text>
+<rect x="34" y="94" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="118" text-anchor="middle" class="dg-t">アプリ</text>
+<rect x="272" y="43" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="64" text-anchor="middle" class="dg-tb">KMS</text>
+<text x="347" y="82" text-anchor="middle" class="dg-s">CMKで管理</text>
+<rect x="272" y="133" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="154" text-anchor="middle" class="dg-t">平文データキー</text>
+<text x="347" y="172" text-anchor="middle" class="dg-s">使用後に破棄</text>
+<rect x="510" y="49" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="73" text-anchor="middle" class="dg-t">暗号化データキー</text>
+<rect x="510" y="139" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="163" text-anchor="middle" class="dg-t">暗号化データ</text>
+<path d="M184.0,99.8 L272.0,83.2" class="dg-line" marker-end="url(#dgservices-kms-1)"/>
+<text x="228" y="96" text-anchor="middle" class="dg-s dg-halo">①</text>
+<path d="M347.0,95.0 L347.0,133.0" class="dg-line" marker-end="url(#dgservices-kms-1)"/>
+<text x="347" y="118" text-anchor="middle" class="dg-s dg-halo">②</text>
+<path d="M422.0,69.0 L510.0,69.0" class="dg-line" marker-end="url(#dgservices-kms-1)"/>
+<text x="466" y="73" text-anchor="middle" class="dg-s dg-halo">②</text>
+<path d="M422.0,159.0 L510.0,159.0" class="dg-line" marker-end="url(#dgservices-kms-1)"/>
+<text x="466" y="163" text-anchor="middle" class="dg-s dg-halo">③ 暗号化</text>
+</svg>
+</div>
+<figcaption>図1 エンベロープ暗号化(GenerateDataKey)。①KMSにデータキーの生成を依頼し、②平文と暗号化済みのデータキーを受け取り、③平文のデータキーでデータを暗号化して、平文キーは破棄する。暗号化データと暗号化データキーを一緒に保存する。</figcaption>
+</figure>
+<h3>復号の流れ</h3>
+<ol>
+<li>アプリが保存先から暗号化データと暗号化データキーを取得</li>
+<li>アプリがKMSに復号をリクエスト(<code>Decrypt</code> API。入力=暗号化データキー)</li>
+<li>KMSがCMKで暗号化データキーを復号し、平文のデータキーを返す</li>
+<li>アプリが平文のデータキーでデータを復号し、平文のデータキーは破棄</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>S3(SSE-KMS)・EBS・RDSなどの保存データの暗号化</li>
+<li>アプリでの大きなデータのエンベロープ暗号化</li>
+<li>別アカウントと暗号化データを共有(カスタマー管理キー+キーポリシー)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>AWS所有キーは無料、AWS管理キーは利用料(APIリクエスト)のみ、<strong>カスタマー管理キーはキーごとの月額料金+利用料</strong>がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>/<a href="ebs.html">Amazon EBS</a>/<a href="rds.html">Amazon RDS</a>:KMSで暗号化するサービス</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>:シークレットをKMSで暗号化</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:キー利用の監査ログ</li>
+<li><a href="iam.html">AWS IAM</a>:<code>kms:Decrypt</code> などの権限</li>
+<li><a href="database-encryption-sdk.html">AWS Database Encryption SDK</a>:KMSを使ったクライアント側暗号化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>大きなデータ → <code>GenerateDataKey</code> で<strong>エンベロープ暗号化</strong>。4KB以下 → <code>Encrypt</code>。</li>
+<li>キーポリシーの編集・クロスアカウント共有・キーの無効化が必要 → <strong>カスタマー管理キー</strong>。</li>
+<li>自動ローテーションは<strong>対称キーのみ</strong>。</li>
+<li>復号には <code>kms:Decrypt</code> 権限が必要(S3のSSE-KMSオブジェクトの取得でも必要)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>KMSは暗号化キーの管理サービス。キーはAWS所有・AWS管理・カスタマー管理の3種類。</li>
+<li>CMKでデータキーを暗号化し、データキーで実データを暗号化する(エンベロープ暗号化)。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="cognito.html"><span class="label">← 前へ</span>Amazon Cognito</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="secrets-manager.html"><span class="label">次へ →</span>AWS Secrets Manager</a>
+</nav>
+</main>
+</body>
+</html>

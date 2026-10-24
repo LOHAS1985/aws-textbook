@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS CloudFormation | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">マネジメントとガバナンス</span>
+  <h1>AWS CloudFormation</h1>
+  <p class="lead">AWSリソースをテンプレート(コード)で定義し、自動構築・管理</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS CloudFormation</strong>は、AWSリソースを<strong>コード(テンプレート)として定義</strong>し、自動で構築・管理するサービスです(Infrastructure as Code)。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<ul>
+<li><strong>テンプレート</strong>:インフラの設計図(YAML/JSON形式)</li>
+<li><strong>スタック</strong>:テンプレートから作られるリソースの集合(環境そのもののイメージ)</li>
+<li><strong>ネストスタック</strong>:スタックを入れ子構造にする</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 740 214" style="max-width:740px;min-width:520px" role="img" aria-label="図1 CloudFormationの基本。テンプレート(設計図)を渡すと、CloudFormationがリソースをまとめて作成し、スタックとして管理する。更新・削除もスタック単位で行う。"><defs><marker id="dgservices-cloudformation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="412" y="10" width="304" height="179" rx="10" class="dg-group"/>
+<text x="422" y="26" class="dg-s">スタック</text>
+<rect x="34" y="83" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="104" text-anchor="middle" class="dg-t">テンプレート</text>
+<text x="99" y="122" text-anchor="middle" class="dg-s">YAML / JSON</text>
+<rect x="229" y="89" width="130" height="40" rx="8" class="dg-accent"/>
+<text x="294" y="113" text-anchor="middle" class="dg-tb">CloudFormation</text>
+<rect x="424" y="46" width="130" height="40" rx="8" class="dg-box"/>
+<text x="489" y="70" text-anchor="middle" class="dg-t">VPC</text>
+<rect x="574" y="46" width="130" height="40" rx="8" class="dg-box"/>
+<text x="639" y="70" text-anchor="middle" class="dg-t">EC2</text>
+<rect x="424" y="132" width="130" height="40" rx="8" class="dg-box"/>
+<text x="489" y="156" text-anchor="middle" class="dg-t">RDS</text>
+<rect x="574" y="132" width="130" height="40" rx="8" class="dg-box"/>
+<text x="639" y="156" text-anchor="middle" class="dg-t">S3</text>
+<path d="M164.0,109.0 L229.0,109.0" class="dg-line" marker-end="url(#dgservices-cloudformation-1)"/>
+<path d="M359.0,94.8 L424.0,80.7" class="dg-line" marker-end="url(#dgservices-cloudformation-1)"/>
+<path d="M359.0,123.2 L424.0,137.3" class="dg-line" marker-end="url(#dgservices-cloudformation-1)"/>
+</svg>
+</div>
+<figcaption>図1 CloudFormationの基本。テンプレート(設計図)を渡すと、CloudFormationがリソースをまとめて作成し、スタックとして管理する。更新・削除もスタック単位で行う。</figcaption>
+</figure>
+<h3>主な機能</h3>
+<ul>
+<li><strong>構文の拡張</strong>:サーバーレス用に <a href="sam.html">AWS SAM</a> がある。</li>
+<li><strong class="em">Transformセクション</strong>:デプロイ前にテンプレートを別のテンプレートへ変換する。例:<code>Transform: AWS::Serverless-2016-10-31</code>(SAM)</li>
+<li><strong>カスタムリソース</strong>:実行時の独自処理を作成(ほとんどの場合Lambdaを使う)。例:RDSのDBユーザー作成、Slack通知のWebhook登録</li>
+<li><strong>DeletionPolicy</strong>:リソース削除時の扱い。<strong class="em">Delete(削除する。デフォルト)</strong>/Retain(残す)/Snapshot(スナップショットを取ってから削除)</li>
+<li><strong>NoEcho</strong>:機密情報を画面・ログに表示しない</li>
+<li><strong>変更セット</strong>:実行中のリソースに変更がどう影響するかを事前に確認する。<strong class="em">S3のオブジェクトキーやVersionIdが変わらないと、コードの変更を検知しない</strong>。</li>
+<li><strong>ドリフト検出</strong>:テンプレート(理想の状態)と実際のリソースのズレを検出</li>
+<li><strong>スタックポリシー</strong>:スタック更新時に特定のリソースの変更を禁止する</li>
+<li><strong class="em">ダイナミックリファレンス</strong>:テンプレート内でSecrets Manager/Parameter Storeの値を実行時に参照し、秘密情報を直書きしない。記述は <code>{{resolve:xxxx:...}}</code>。xxxxは <code>ssm</code>(Parameter Store)、<code>ssm-secure</code>(SecureString)、<code>secretsmanager</code>(Secrets Manager)。</li>
+<li><strong class="em">StackSets</strong>:複数のAWSアカウント・リージョンへスタックを一括展開する</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:520px" role="img" aria-label="図2 変更セットとドリフト検出。変更セットは更新の前に「何が変わるか」を確認する。ドリフト検出は、コンソールなどで手動変更されて生じたテンプレートとのズレを見つける。"><defs><marker id="dgservices-cloudformation-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="44" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="68" text-anchor="middle" class="dg-t">新しいテンプレート</text>
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">変更セット</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">影響を事前に確認</text>
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="100" text-anchor="middle" class="dg-tb">スタック</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">実際のリソース</text>
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="140" text-anchor="middle" class="dg-t">ドリフト検出</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">テンプレートとのズレ</text>
+<rect x="272" y="198" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="347" y="220" text-anchor="middle" class="dg-t">手動での変更</text>
+<text x="347" y="238" text-anchor="middle" class="dg-s">コンソールなど</text>
+<path d="M184.0,64.0 L272.0,64.0" class="dg-line" marker-end="url(#dgservices-cloudformation-2)"/>
+<path d="M422.0,76.6 L510.0,91.4" class="dg-line" marker-end="url(#dgservices-cloudformation-2)"/>
+<text x="466" y="88" text-anchor="middle" class="dg-s dg-halo">実行</text>
+<path d="M422.0,131.4 L510.0,116.6" class="dg-line" marker-end="url(#dgservices-cloudformation-2)"/>
+<text x="466" y="128" text-anchor="middle" class="dg-s dg-halo">比較</text>
+<path d="M398.6,198.0 L533.4,130.0" class="dg-line dg-dash" marker-end="url(#dgservices-cloudformation-2)"/>
+</svg>
+</div>
+<figcaption>図2 変更セットとドリフト検出。変更セットは更新の前に「何が変わるか」を確認する。ドリフト検出は、コンソールなどで手動変更されて生じたテンプレートとのズレを見つける。</figcaption>
+</figure>
+<h3>AWS CLIのコマンドとオプション</h3>
+<div class="table-wrap"><table>
+<tr><th>コマンド</th><th>内容</th></tr>
+<tr><td><code>create-stack</code></td><td>新規作成</td></tr>
+<tr><td><code>update-stack</code></td><td>更新</td></tr>
+<tr><td><code>delete-stack</code></td><td>削除</td></tr>
+<tr><td><code>describe-stacks</code></td><td>状態確認</td></tr>
+<tr><td><code>deploy</code></td><td>作成/更新</td></tr>
+</table></div>
+<p>主なオプション:<code>--template-file</code>(テンプレート指定)、<code>--stack-name</code>(スタック名)、<code>--parameter-overrides</code>(パラメータ上書き)、<code>--capabilities</code>(IAMリソース作成の許可)、<code>--tags</code>、<code>--region</code>、<code>--role-arn</code>(実行ロール)、<code>--disable-rollback</code>(ロールバック無効)</p>
+
+<h3>テンプレートの例(S3バケットの作成)</h3>
+<ul>
+<li><strong>Parameters</strong>:パラメータ(バケット名、バージョニングのON/OFF。<code>AllowedValues</code> で値の候補を限定)</li>
+<li><strong>Resources</strong>:本体(<code>Properties</code> で設定)</li>
+<li><strong>Conditions</strong>:条件分岐</li>
+<li><strong>Outputs</strong>:外部へ返す情報(<code>!Ref</code> などの組み込み関数で値を取得)</li>
+</ul>
+<pre class="code"><code>AWSTemplateFormatVersion: '2010-09-09'
+Description: Create an S3 bucket with parameters and outputs
+
+Parameters:
+  BucketName:
+    Type: String
+  VersioningEnabled:
+    Type: String
+    AllowedValues: [true, false]
+    Default: false
+
+Conditions:
+  EnableVersioning: !Equals [ !Ref VersioningEnabled, true ]
+
+Resources:
+  MyS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: !If [ EnableVersioning, Enabled, Suspended ]
+
+Outputs:
+  BucketNameOutput:
+    Value: !Ref MyS3Bucket
+  BucketURL:
+    Value: !Sub "https://${MyS3Bucket}.s3.amazonaws.com"</code></pre>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 463 262" style="max-width:463px;min-width:463px" role="img" aria-label="図3 StackSets。1つのテンプレートから、複数のアカウント・リージョンへ同じスタックを一括で展開する。"><defs><marker id="dgservices-cloudformation-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="110" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="132" text-anchor="middle" class="dg-tb">StackSets</text>
+<text x="109" y="150" text-anchor="middle" class="dg-s">管理アカウント</text>
+<rect x="289" y="36" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="364" y="57" text-anchor="middle" class="dg-t">アカウントA</text>
+<text x="364" y="75" text-anchor="middle" class="dg-s">東京リージョン</text>
+<rect x="289" y="110" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="364" y="132" text-anchor="middle" class="dg-t">アカウントA</text>
+<text x="364" y="150" text-anchor="middle" class="dg-s">大阪リージョン</text>
+<rect x="289" y="186" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="364" y="207" text-anchor="middle" class="dg-t">アカウントB</text>
+<text x="364" y="225" text-anchor="middle" class="dg-s">東京リージョン</text>
+<path d="M184.0,114.4 L289.0,83.6" class="dg-line" marker-end="url(#dgservices-cloudformation-3)"/>
+<path d="M184.0,136.5 L289.0,136.5" class="dg-line" marker-end="url(#dgservices-cloudformation-3)"/>
+<path d="M184.0,158.6 L289.0,189.4" class="dg-line" marker-end="url(#dgservices-cloudformation-3)"/>
+</svg>
+</div>
+<figcaption>図3 StackSets。1つのテンプレートから、複数のアカウント・リージョンへ同じスタックを一括で展開する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>開発・ステージング・本番で同じ構成の環境を再現</li>
+<li>複数アカウントへ共通のセキュリティ設定を展開(StackSets)</li>
+<li>本番のDBを誤って削除しないよう保護(DeletionPolicy: Retain/Snapshot、スタックポリシー)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>CloudFormation自体は(AWSリソースを扱う範囲では)無料です。作成されたリソースに料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cdk.html">AWS CDK</a>:プログラミング言語で書いてCloudFormationに変換</li>
+<li><a href="sam.html">AWS SAM</a>:サーバーレス向けの拡張</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>/<a href="systems-manager.html">Parameter Store</a>:ダイナミックリファレンス</li>
+<li><a href="lambda.html">AWS Lambda</a>:カスタムリソース</li>
+<li><a href="service-catalog.html">AWS Service Catalog</a>:テンプレートを製品として配布</li>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:CI/CDでのデプロイ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>スタック削除時にリソースを残す → <strong>DeletionPolicy: Retain</strong>(デフォルトはDelete)。</li>
+<li>パスワードを直書きしない → <strong>ダイナミックリファレンス</strong>/<strong>NoEcho</strong>。</li>
+<li>変更の影響を事前確認 → <strong>変更セット</strong>。手動変更によるズレ → <strong>ドリフト検出</strong>。</li>
+<li>複数アカウント・リージョンへ展開 → <strong>StackSets</strong>。</li>
+<li>IAMリソースを作るテンプレート → <code>--capabilities CAPABILITY_IAM</code> が必要。</li>
+<li>Lambdaのコードを更新したのに反映されない → <strong>S3キーかVersionIdを変える</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CloudFormationはテンプレートからスタックを作るIaCサービス。</li>
+<li>DeletionPolicy・変更セット・ドリフト検出・スタックポリシーで安全に運用する。</li>
+<li>秘密情報はダイナミックリファレンス、マルチアカウントはStackSets。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="systems-manager.html"><span class="label">← 前へ</span>AWS Systems Manager</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cdk.html"><span class="label">次へ →</span>AWS CDK</a>
+</nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アウトバウンド通信 | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワーク</span>
+  <h1>アウトバウンド通信</h1>
+  <p class="lead">VPC内のリソースから外へ出ていく通信と、その4つのパターン</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>アウトバウンド通信</strong>は、VPC内のリソースから外部へ出ていく通信です。経路は、サブネットに関連付けられた<a href="route-table.html">ルートテーブル</a>のターゲットで決まります。インスタンスは宛先に最も具体的に一致するルート(ロンゲストマッチ)を選び、そのターゲットを経由して宛先へ到達します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 354" style="max-width:846px;min-width:520px" role="img" aria-label="図1 アウトバウンド通信の4つのパターン。パブリックサブネットはIGW、プライベートサブネットのIPv4はNAT Gateway(→ IGW)、IPv6はEgress-only IGWを通る。AWSサービス宛てはVPCエンドポイントで、インターネットを経由せずに届く。"><defs><marker id="dgterms-outbound-traffic-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="60" text-anchor="middle" class="dg-t">パブリックEC2</text>
+<text x="106" y="78" text-anchor="middle" class="dg-s">パブリックIPあり</text>
+<rect x="34" y="118" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="140" text-anchor="middle" class="dg-t">プライベートEC2</text>
+<text x="106" y="158" text-anchor="middle" class="dg-s">IPv4</text>
+<rect x="34" y="198" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="220" text-anchor="middle" class="dg-t">プライベートEC2</text>
+<text x="106" y="238" text-anchor="middle" class="dg-s">IPv6</text>
+<rect x="34" y="278" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="300" text-anchor="middle" class="dg-t">プライベートEC2</text>
+<text x="106" y="318" text-anchor="middle" class="dg-s">AWSサービス宛て</text>
+<rect x="248" y="118" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="140" text-anchor="middle" class="dg-t">NAT Gateway</text>
+<text x="321" y="158" text-anchor="middle" class="dg-s">パブリックサブネット</text>
+<rect x="463" y="84" width="145" height="40" rx="8" class="dg-box"/>
+<text x="536" y="108" text-anchor="middle" class="dg-t">IGW</text>
+<rect x="463" y="204" width="145" height="40" rx="8" class="dg-box"/>
+<text x="536" y="228" text-anchor="middle" class="dg-t">Egress-only IGW</text>
+<rect x="463" y="284" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="536" y="308" text-anchor="middle" class="dg-t">VPCエンドポイント</text>
+<rect x="678" y="144" width="145" height="40" rx="8" class="dg-accent"/>
+<text x="750" y="168" text-anchor="middle" class="dg-tb">インターネット</text>
+<rect x="678" y="278" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="750" y="300" text-anchor="middle" class="dg-t">S3 など</text>
+<text x="750" y="318" text-anchor="middle" class="dg-s">AWSサービス</text>
+<path d="M179.0,70.8 L463.0,97.2" class="dg-line" marker-end="url(#dgterms-outbound-traffic-1)"/>
+<path d="M179.0,144.0 L248.5,144.0" class="dg-line" marker-end="url(#dgterms-outbound-traffic-1)"/>
+<path d="M393.5,130.5 L463.0,117.5" class="dg-line" marker-end="url(#dgterms-outbound-traffic-1)"/>
+<path d="M607.0,124.0 L678.5,144.0" class="dg-line" marker-end="url(#dgterms-outbound-traffic-1)"/>
+<path d="M179.0,224.0 L463.0,224.0" class="dg-line" marker-end="url(#dgterms-outbound-traffic-1)"/>
+<path d="M607.0,204.0 L678.5,184.0" class="dg-line" marker-end="url(#dgterms-outbound-traffic-1)"/>
+<path d="M179.0,304.0 L463.0,304.0" class="dg-line" marker-end="url(#dgterms-outbound-traffic-1)"/>
+<path d="M608.0,304.0 L677.5,304.0" class="dg-line" marker-end="url(#dgterms-outbound-traffic-1)"/>
+</svg>
+</div>
+<figcaption>図1 アウトバウンド通信の4つのパターン。パブリックサブネットはIGW、プライベートサブネットのIPv4はNAT Gateway(→ IGW)、IPv6はEgress-only IGWを通る。AWSサービス宛てはVPCエンドポイントで、インターネットを経由せずに届く。</figcaption>
+</figure>
+
+<h3>1. パブリックサブネット(IGW)</h3>
+<ul>
+<li>経路:インスタンス → IGW → インターネット</li>
+<li>ルート:<code>0.0.0.0/0</code>(IPv6は <code>::/0</code>)→ IGW</li>
+<li>条件:IPv4ではパブリックIPv4アドレスまたはElastic IPが必要。IPv6ではグローバルに一意なIPv6アドレスで通信できる。</li>
+<li>特徴:アウトバウンドに加え、インターネットからのインバウンドも可能(SGとNACLで制御)。</li>
+</ul>
+
+<h3>2. プライベートサブネット(IPv4):NAT Gateway</h3>
+<ul>
+<li>経路:インスタンス → NAT Gateway → IGW → インターネット</li>
+<li>ルート(プライベートサブネット):<code>0.0.0.0/0</code> → NAT Gateway</li>
+<li>ルート(NAT Gatewayを置くパブリックサブネット):<code>0.0.0.0/0</code> → IGW</li>
+<li>特徴:インターネットからの新規のインバウンドは受け付けない。<strong>NAT Gatewayはパブリックサブネットに配置</strong>する。</li>
+</ul>
+
+<h3>3. プライベートサブネット(IPv6):Egress-only IGW</h3>
+<ul>
+<li>経路:インスタンス → Egress-only IGW → インターネット</li>
+<li>ルート:<code>::/0</code> → Egress-only IGW</li>
+<li>特徴:アウトバウンドのみ許可し、インターネットからの新規インバウンドは遮断する。<strong>IPv6専用</strong>でIPv4には使えない。IPv6ではNATによる変換は不要。</li>
+</ul>
+
+<h3>4. AWSサービス宛て:VPCエンドポイント</h3>
+<ul>
+<li>経路:インスタンス → VPCエンドポイント → AWSサービス(インターネットを経由しない)</li>
+<li><strong>ゲートウェイ型</strong>:S3とDynamoDBが対象。ルートテーブルにエントリを追加する。</li>
+<li><strong>インターフェース型</strong>:多くのAWSサービスが対象。サブネットにENIが作成される。</li>
+<li>特徴:NAT Gatewayのデータ処理料金を削減でき、セキュリティ面でも有利。</li>
+</ul>
+
+<h3>比較</h3>
+<div class="table-wrap"><table>
+<tr><th>パターン</th><th>経路</th><th>インターネットからのインバウンド</th><th>主な用途</th></tr>
+<tr><td>IGW</td><td>インスタンス → IGW → インターネット</td><td>可</td><td>パブリックサブネットのリソース</td></tr>
+<tr><td>NAT Gateway</td><td>インスタンス → NAT Gateway → IGW → インターネット</td><td>不可</td><td>プライベートサブネットのIPv4アウトバウンド</td></tr>
+<tr><td>Egress-only IGW</td><td>インスタンス → Egress-only IGW → インターネット</td><td>不可</td><td>プライベートサブネットのIPv6アウトバウンド</td></tr>
+<tr><td>VPCエンドポイント</td><td>インスタンス → VPCエンドポイント → AWSサービス</td><td>該当なし</td><td>AWSサービスへのプライベート接続</td></tr>
+</table></div>
+
+<h3>押さえておきたいポイント</h3>
+<div class="point"><ul>
+<li>戻りの通信は、SGがステートフルなため自動で許可される。NACLはステートレスなため、戻りの通信(エフェメラルポート)も明示的な許可が必要。</li>
+<li>通信できない場合の確認順:ルートテーブル → IGW/NAT Gatewayの状態 → セキュリティグループ → NACL → パブリックIPの有無。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="inbound-traffic.html">インバウンド通信</a>:外からVPC内へ入ってくる通信</li>
+<li><a href="route-table.html">ルートテーブル</a>:ターゲットで経路が決まる</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:戻りの通信の扱いが異なる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:IGW・NAT Gateway・VPCエンドポイント</li>
+<li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/dynamodb.html">Amazon DynamoDB</a>:ゲートウェイ型エンドポイントの対象</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="inbound-traffic.html"><span class="label">← 前へ</span>インバウンド通信</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="oidc.html"><span class="label">次へ →</span>OIDC(OpenID Connect)</a>
+</nav>
+</main>
+</body>
+</html>

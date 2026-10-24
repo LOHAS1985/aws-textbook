@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS IAM | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">セキュリティ、アイデンティティ、コンプライアンス</span>
+  <h1>AWS IAM</h1>
+  <p class="lead">AWSの認証・認可を管理するサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS IAM(Identity and Access Management)</strong>は、AWSの<strong>認証・認可</strong>を管理するサービスです。</p>
+<ul>
+<li><strong>認証</strong>:ユーザーが「誰か」を確認する</li>
+<li><strong>認可</strong>:ユーザーが「何をしてよいか」を決める</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>用語</h3>
+<ul>
+<li><strong>ルートユーザー</strong>:アカウント作成時に作られる、全権限を持つユーザー。日常の運用での使用は非推奨。</li>
+<li><strong>IAMユーザー・グループ</strong>:日常業務で必要な権限はポリシーで付与し、一時的に必要な権限はロールを使う権限を付与する。</li>
+<li><strong>IAMロール</strong>:ポリシーを持たせて特定の権限を一時的に付与する仕組み。<strong class="em">信頼ポリシー(誰が引き受けられるか)と権限ポリシー(何ができるか)の両方の設定が必要</strong>。</li>
+<li><strong>IAMポリシー</strong>:アイデンティティベースの権限設定。IAMユーザー・グループ・ロールに設定してリソースへのアクセスを制御する。<br>※リソースベースのポリシー:リソース側から見てアクセスを制御する(S3バケットポリシーなど)。</li>
+<li><strong class="em">パーミッションセット</strong>:ユーザー/グループに付与する権限のテンプレート。IAMポリシーを再利用可能なセットにしたもの。</li>
+</ul>
+<p>パーミッションセットは、複数アカウントへのシングルサインオンを管理する <strong>IAM Identity Center</strong> の機能です。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 738 290" style="max-width:738px;min-width:520px" role="img" aria-label="図1 IAMの基本構造。ユーザーやグループにはIAMポリシーで権限を与える。ロールは信頼ポリシーで「誰が引き受けられるか」、権限ポリシーで「何ができるか」を決め、EC2などのサービスやユーザーが一時的に引き受ける。"><defs><marker id="dgservices-iam-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="44" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="112" y="68" text-anchor="middle" class="dg-t">IAMユーザー</text>
+<rect x="34" y="124" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="112" y="148" text-anchor="middle" class="dg-t">IAMグループ</text>
+<rect x="34" y="214" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="236" text-anchor="middle" class="dg-t">EC2 / Lambda</text>
+<text x="112" y="254" text-anchor="middle" class="dg-s">AWSサービス</text>
+<rect x="296" y="78" width="155" height="52" rx="8" class="dg-box"/>
+<text x="374" y="100" text-anchor="middle" class="dg-t">IAMポリシー</text>
+<text x="374" y="118" text-anchor="middle" class="dg-s">何ができるか</text>
+<rect x="296" y="214" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="374" y="236" text-anchor="middle" class="dg-tb">IAMロール</text>
+<text x="374" y="254" text-anchor="middle" class="dg-s">権限ポリシーを持つ</text>
+<rect x="559" y="146" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="636" y="168" text-anchor="middle" class="dg-t">AWSリソース</text>
+<text x="636" y="186" text-anchor="middle" class="dg-s">S3・DynamoDBなど</text>
+<path d="M189.0,75.8 L296.5,92.2" class="dg-line" marker-end="url(#dgservices-iam-1)"/>
+<path d="M189.0,132.2 L296.5,115.8" class="dg-line" marker-end="url(#dgservices-iam-1)"/>
+<path d="M189.0,240.0 L296.5,240.0" class="dg-line" marker-end="url(#dgservices-iam-1)"/>
+<text x="243" y="244" text-anchor="middle" class="dg-s dg-halo">信頼ポリシー</text>
+<path d="M451.5,124.1 L559.0,151.9" class="dg-line" marker-end="url(#dgservices-iam-1)"/>
+<text x="505" y="142" text-anchor="middle" class="dg-s dg-halo">許可</text>
+<path d="M451.5,219.9 L559.0,192.1" class="dg-line" marker-end="url(#dgservices-iam-1)"/>
+<text x="505" y="210" text-anchor="middle" class="dg-s dg-halo">許可</text>
+</svg>
+</div>
+<figcaption>図1 IAMの基本構造。ユーザーやグループにはIAMポリシーで権限を与える。ロールは信頼ポリシーで「誰が引き受けられるか」、権限ポリシーで「何ができるか」を決め、EC2などのサービスやユーザーが一時的に引き受ける。</figcaption>
+</figure>
+<h3>よく使うIAMアクション</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>アクション</th><th>概要</th></tr>
+<tr><td>Lambda</td><td><code>lambda:InvokeFunction</code></td><td>Lambda関数を実行する</td></tr>
+<tr><td>DynamoDB</td><td><code>dynamodb:GetItem</code></td><td>テーブルから1件取得する</td></tr>
+<tr><td>S3</td><td><code>s3:GetObject</code></td><td>オブジェクトをダウンロードする</td></tr>
+<tr><td>SQS</td><td><code>sqs:SendMessage</code></td><td>キューへメッセージを送信する</td></tr>
+<tr><td>SNS</td><td><code>sns:Publish</code></td><td>トピックへメッセージを配信する</td></tr>
+<tr><td>KMS</td><td><code>kms:Decrypt</code></td><td>KMSキーで暗号化データを復号する</td></tr>
+<tr><td>Secrets Manager</td><td><code>secretsmanager:GetSecretValue</code></td><td>シークレットを取得する</td></tr>
+<tr><td>STS</td><td><code>sts:AssumeRole</code></td><td>別のIAMロールを引き受け、一時認証情報を取得する</td></tr>
+<tr><td>CloudWatch Logs</td><td><code>logs:PutLogEvents</code></td><td>ログを書き込む</td></tr>
+</table></div>
+
+<h3>OIDCとの連携</h3>
+<p>IAMにOIDC IdP(プロバイダーURL、クライアントID=IdPが発行するトークンの受信者)を登録します。</p>
+<ol>
+<li>アプリがOIDC IdPからIDトークンを取得</li>
+<li>アプリがトークンを持って、STSの <code>AssumeRoleWithWebIdentity</code> を呼び出す</li>
+<li>STSが、IAMに登録したIdP情報をもとにトークンの署名・発行者を検証</li>
+<li>検証に通り、IAMロールの信頼ポリシーが許可していれば、一時的な認証情報を発行</li>
+</ol>
+
+<h3 class="em">認証情報の優先順位(AWS CLI/SDK)</h3>
+<div class="table-wrap"><table>
+<tr><th>優先順位</th><th>認証情報</th></tr>
+<tr><td>1</td><td>コード内で明示的に指定した認証情報</td></tr>
+<tr><td>2</td><td>環境変数(<code>AWS_ACCESS_KEY_ID</code> など)</td></tr>
+<tr><td>3</td><td><code>~/.aws/credentials</code></td></tr>
+<tr><td>4</td><td><code>~/.aws/config</code> のプロファイル</td></tr>
+<tr><td>5</td><td>ECSタスクロール</td></tr>
+<tr><td>6</td><td>EC2インスタンスプロファイル(IAMロール)</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 548 194" style="max-width:548px;min-width:520px" role="img" aria-label="図2 AWS CLI/SDKが認証情報を探す順番。上位で見つかった認証情報が使われるため、環境変数にキーが残っていると、EC2のロールより優先されてしまう。"><defs><marker id="dgservices-iam-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="44" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="109" y="68" text-anchor="middle" class="dg-tb">① コード内で指定</text>
+<rect x="204" y="44" width="150" height="40" rx="8" class="dg-box"/>
+<text x="279" y="68" text-anchor="middle" class="dg-t">② 環境変数</text>
+<rect x="374" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="449" y="60" text-anchor="middle" class="dg-t">③ credentials</text>
+<text x="449" y="78" text-anchor="middle" class="dg-s">~/.aws/credentials</text>
+<rect x="374" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="449" y="140" text-anchor="middle" class="dg-t">④ config</text>
+<text x="449" y="158" text-anchor="middle" class="dg-s">~/.aws/config</text>
+<rect x="204" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="279" y="148" text-anchor="middle" class="dg-t">⑤ ECSタスクロール</text>
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">⑥ EC2のロール</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">プロファイル経由</text>
+<path d="M184.0,64.0 L204.0,64.0" class="dg-line" marker-end="url(#dgservices-iam-2)"/>
+<path d="M354.0,64.0 L374.0,64.0" class="dg-line" marker-end="url(#dgservices-iam-2)"/>
+<path d="M449.0,90.0 L449.0,118.0" class="dg-line" marker-end="url(#dgservices-iam-2)"/>
+<path d="M374.0,144.0 L354.0,144.0" class="dg-line" marker-end="url(#dgservices-iam-2)"/>
+<path d="M204.0,144.0 L184.0,144.0" class="dg-line" marker-end="url(#dgservices-iam-2)"/>
+</svg>
+</div>
+<figcaption>図2 AWS CLI/SDKが認証情報を探す順番。上位で見つかった認証情報が使われるため、環境変数にキーが残っていると、EC2のロールより優先されてしまう。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>開発者ごとにIAMユーザーを作り、グループで権限を管理</li>
+<li>EC2・Lambda・ECSにIAMロールを付けて、アクセスキーなしでAWSサービスを利用</li>
+<li>別アカウントのリソースへロールを引き受けてアクセス(クロスアカウント)</li>
+<li>GitHub ActionsなどのOIDC連携で、アクセスキーを使わずにデプロイ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>IAMは無料で利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="sts.html">AWS STS</a>:ロールの一時認証情報を発行</li>
+<li><a href="organizations.html">AWS Organizations</a>:複数アカウントの権限上限(SCP)</li>
+<li><a href="ec2.html">Amazon EC2</a>:インスタンスプロファイル</li>
+<li><a href="cognito.html">Amazon Cognito</a>:アプリユーザーへの一時的なAWS権限</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:APIの操作履歴</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>ルートユーザーは日常で使わない。</li>
+<li>ロールは<strong>信頼ポリシー+権限ポリシー</strong>の両方が必要。AssumeRoleできないときは信頼ポリシーを確認。</li>
+<li>アクセスキーをコードやインスタンスに置かず、<strong>ロール</strong>を使う。</li>
+<li>環境変数のキーが、インスタンスプロファイルより<strong>優先</strong>される。意図しない権限で動くときは優先順位を確認。</li>
+<li>他アカウントからのS3アクセスは、バケットポリシー(リソースベース)と相手側IAMポリシーの両方で許可。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>IAMは「誰か(認証)」と「何ができるか(認可)」を管理する。</li>
+<li>ユーザー・グループ・ロール・ポリシーの役割を区別する。</li>
+<li>認証情報は優先順位に従って選ばれる。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="api-gateway.html"><span class="label">← 前へ</span>Amazon API Gateway</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="sts.html"><span class="label">次へ →</span>AWS STS</a>
+</nav>
+</main>
+</body>
+</html>

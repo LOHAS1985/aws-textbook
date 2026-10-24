@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Database Encryption SDK | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ライブラリ</span>
+  <h1>AWS Database Encryption SDK</h1>
+  <p class="lead">アプリ側でDBのデータを暗号化・復号するライブラリ</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Database Encryption SDK</strong>は、<strong>アプリケーション側でデータベースのデータを暗号化・復号</strong>するライブラリです(クライアント側暗号化)。主に<strong>DynamoDB</strong>用です。</p>
+<p>※サーバー側の暗号化には、KMSキーを使ったDBテーブルの暗号化を使います。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>暗号化の流れ</h3>
+<ol>
+<li>AWS KMSを使ってデータキーを生成</li>
+<li>データキーでデータを暗号化</li>
+<li>データキーをKMSで暗号化</li>
+<li>次の情報をDynamoDBに保存
+  <ul><li>暗号化データ</li><li>暗号化されたデータキー</li><li>メタデータ</li></ul></li>
+</ol>
+<p>この流れは<a href="kms.html">KMS</a>のエンベロープ暗号化と同じ考え方です。属性(カラム)ごとに「暗号化する/署名のみ/何もしない」を選べるため、検索に使うキーは暗号化せずに、機密な属性だけを暗号化できます。また、データに署名を付けて改ざんを検知できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図1 クライアント側暗号化の流れ。KMSで生成したデータキーを使ってアプリ側でデータを暗号化し、暗号化データ・暗号化されたデータキー・メタデータをDynamoDBに保存する。"><defs><marker id="dgservices-database-encryption-sdk-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">SDKを組み込み</text>
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">KMS</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">データキーを生成</text>
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="147" text-anchor="middle" class="dg-tb">暗号化</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">属性ごとに暗号化</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">DynamoDB</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">暗号化済みで保存</text>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#dgservices-database-encryption-sdk-1)"/>
+<text x="228" y="92" text-anchor="middle" class="dg-s dg-halo">①</text>
+<path d="M347.0,92.5 L347.0,125.5" class="dg-line" marker-end="url(#dgservices-database-encryption-sdk-1)"/>
+<text x="347" y="113" text-anchor="middle" class="dg-s dg-halo">②</text>
+<path d="M422.0,151.5 L510.0,151.5" class="dg-line" marker-end="url(#dgservices-database-encryption-sdk-1)"/>
+<text x="466" y="156" text-anchor="middle" class="dg-s dg-halo">③ 保存</text>
+</svg>
+</div>
+<figcaption>図1 クライアント側暗号化の流れ。KMSで生成したデータキーを使ってアプリ側でデータを暗号化し、暗号化データ・暗号化されたデータキー・メタデータをDynamoDBに保存する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>DynamoDBに保存する個人情報やカード番号などを、アプリ側で暗号化してから保存したい</li>
+<li><span>DB管理者やAWS側からも平文が見えないようにしたい(エンドツーエンドの保護)</span></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ライブラリ自体は無料です。データキーの生成・復号に使うKMSのAPIリクエストとキーの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>:主な対象データベース</li>
+<li><a href="kms.html">AWS KMS</a>:データキーの生成・暗号化</li>
+<li><a href="sdk.html">AWS SDK</a>:アプリからのAWS操作</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>DynamoDBのデータを<strong>アプリ側(クライアント側)で暗号化</strong> → Database Encryption SDK。</li>
+<li>サーバー側(保存時)の暗号化 → KMSキーによるテーブルの暗号化。</li>
+<li>保存されるのは「暗号化データ+暗号化されたデータキー+メタデータ」。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Database Encryption SDKは、KMSのデータキーを使ってアプリ側でDBのデータを暗号化するライブラリ。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="sdk.html"><span class="label">← 前へ</span>AWS SDK</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="athena.html"><span class="label">次へ →</span>Amazon Athena</a>
+</nav>
+</main>
+</body>
+</html>

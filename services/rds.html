@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon RDS | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">データベース</span>
+  <h1>Amazon RDS</h1>
+  <p class="lead">リレーショナルデータベースの構築・運用を任せられるマネージドDB</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon RDS(Relational Database Service)</strong>は、リレーショナルデータベース(SQL)の構築・運用を提供するマネージドサービスです。パッチ適用やバックアップなどの面倒な運用作業をAWSに任せられます。</p>
+<p>対応DBエンジン:<strong>MySQL、PostgreSQL、MariaDB、Oracle Database、Microsoft SQL Server、Amazon Aurora</strong></p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>RDSが代行するDB運用タスク</h3>
+<ul>
+<li><strong>プロビジョニング</strong>:DBサーバーの起動</li>
+<li><strong>パッチ適用</strong>:OS/DBエンジン</li>
+<li><strong>バックアップ</strong>
+  <ul>
+  <li>自動バックアップ:保持期間は<strong>最大35日</strong></li>
+  <li>手動スナップショット:<strong>無期限</strong>(削除するまで残る)</li>
+  <li>ポイントインタイムリカバリ:特定時点のデータに復元</li>
+  </ul></li>
+<li><strong>障害時のフェイルオーバー</strong>:Multi-AZ構成</li>
+<li><strong>スケーリング</strong>:スペック変更、リードレプリカ(プライマリから<strong>非同期</strong>でレプリケーションするため<strong class="em">わずかな遅延が発生</strong>)</li>
+</ul>
+<p>Multi-AZは別AZにスタンバイを置く<strong>可用性</strong>のための仕組みで、スタンバイは読み取りに使えません(同期レプリケーション)。リードレプリカは<strong>読み取り性能</strong>を上げる仕組みです。目的の違いを区別しましょう。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 254" style="max-width:718px;min-width:520px" role="img" aria-label="図1 Multi-AZとリードレプリカの違い。スタンバイは障害時に引き継ぐための待機系(同期・読み取りには使えない)、リードレプリカは読み取りを分散するためのコピー(非同期・わずかに遅延)。"><defs><marker id="dgservices-rds-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="139" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="163" text-anchor="middle" class="dg-t">アプリ</text>
+<rect x="289" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="110" text-anchor="middle" class="dg-tb">プライマリ</text>
+<text x="364" y="128" text-anchor="middle" class="dg-s">読み書き</text>
+<rect x="544" y="43" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="64" text-anchor="middle" class="dg-t">スタンバイ</text>
+<text x="619" y="82" text-anchor="middle" class="dg-s">別AZ・読めない</text>
+<rect x="544" y="178" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="200" text-anchor="middle" class="dg-t">リードレプリカ</text>
+<text x="619" y="218" text-anchor="middle" class="dg-s">読み取り専用</text>
+<path d="M184.0,145.8 L289.0,127.2" class="dg-line" marker-end="url(#dgservices-rds-1)"/>
+<text x="236" y="140" text-anchor="middle" class="dg-s dg-halo">書き込み</text>
+<path d="M184.0,165.6 L544.0,197.4" class="dg-line" marker-end="url(#dgservices-rds-1)"/>
+<text x="364" y="186" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
+<path d="M439.0,100.8 L544.0,82.2" class="dg-line" marker-end="url(#dgservices-rds-1)"/>
+<text x="492" y="96" text-anchor="middle" class="dg-s dg-halo">同期</text>
+<path d="M437.7,140.0 L545.3,178.0" class="dg-line" marker-end="url(#dgservices-rds-1)"/>
+<text x="492" y="163" text-anchor="middle" class="dg-s dg-halo">非同期</text>
+</svg>
+</div>
+<figcaption>図1 Multi-AZとリードレプリカの違い。スタンバイは障害時に引き継ぐための待機系(同期・読み取りには使えない)、リードレプリカは読み取りを分散するためのコピー(非同期・わずかに遅延)。</figcaption>
+</figure>
+<h3>RDS Proxy</h3>
+<p>大量のクライアントからのアクセスを、<strong>少数のDB接続に集約・再利用</strong>する仕組みです。</p>
+<ul>
+<li>前提:DBクエリの時間は短く、DB接続を行うのはアプリサーバー。</li>
+<li>例:アプリサーバーから1万人がDBにアクセスしても、実際に同時にクエリを投げているのは一部。RDS Proxyは<strong>50接続を1万人で使い回す</strong>。Proxyがないと1万接続を使い、接続数の上限を超える可能性が高い。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 262" style="max-width:684px;min-width:520px" role="img" aria-label="図2 RDS Proxy。大量のクライアントからの接続を少数のDB接続にまとめて使い回し、DBの最大接続数を超えないようにする。"><defs><marker id="dgservices-rds-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="42" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="66" text-anchor="middle" class="dg-t">Lambda</text>
+<rect x="34" y="116" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">Lambda</text>
+<rect x="34" y="192" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="216" text-anchor="middle" class="dg-t">アプリサーバー</text>
+<rect x="272" y="36" width="150" height="202" rx="8" class="dg-accent"/>
+<text x="347" y="132" text-anchor="middle" class="dg-tb">RDS Proxy</text>
+<text x="347" y="150" text-anchor="middle" class="dg-s">接続を集約・再利用</text>
+<rect x="510" y="110" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="132" text-anchor="middle" class="dg-t">RDS</text>
+<text x="585" y="150" text-anchor="middle" class="dg-s">少数の接続で済む</text>
+<path d="M172.5,81.5 L272.0,112.9" class="dg-line" marker-end="url(#dgservices-rds-2)"/>
+<path d="M184.0,136.5 L272.0,136.5" class="dg-line" marker-end="url(#dgservices-rds-2)"/>
+<path d="M172.5,191.5 L272.0,160.1" class="dg-line" marker-end="url(#dgservices-rds-2)"/>
+<path d="M422.0,136.5 L510.0,136.5" class="dg-line" marker-end="url(#dgservices-rds-2)"/>
+</svg>
+</div>
+<figcaption>図2 RDS Proxy。大量のクライアントからの接続を少数のDB接続にまとめて使い回し、DBの最大接続数を超えないようにする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Webアプリの業務データベース</li>
+<li>既存のMySQL/Oracle/SQL ServerをAWSへ移行</li>
+<li>Lambdaなど接続数が急増しやすい環境からのDB接続(RDS Proxy)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>DBインスタンスの稼働時間(インスタンスクラス)、ストレージ容量、バックアップ容量、データ転送量で課金されます。Multi-AZはスタンバイ分の料金も加わります。リザーブドインスタンスで割引も可能です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="aurora.html">Amazon Aurora</a>:AWSが開発した高性能なRDSエンジン</li>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>:NoSQLの選択肢</li>
+<li><a href="elasticache.html">Amazon ElastiCache</a>:DBの前段のキャッシュ</li>
+<li><a href="lambda.html">AWS Lambda</a>:RDS Proxyと相性の良い接続元</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>:DB認証情報の管理・ローテーション</li>
+<li><a href="backup.html">AWS Backup</a>:バックアップの一元管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>自動バックアップは<strong>最大35日</strong>。それ以上残したい → <strong>手動スナップショット</strong>。</li>
+<li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
+<li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。</li>
+<li>特定時点に戻したい → <strong>ポイントインタイムリカバリ</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>RDSはリレーショナルDBのマネージドサービス。運用タスクをAWSが代行する。</li>
+<li>バックアップは自動(最大35日)と手動(無期限)。</li>
+<li>可用性はMulti-AZ、読み取り拡張はリードレプリカ、接続集約はRDS Proxy。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="backup.html"><span class="label">← 前へ</span>AWS Backup</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="aurora.html"><span class="label">次へ →</span>Amazon Aurora</a>
+</nav>
+</main>
+</body>
+</html>

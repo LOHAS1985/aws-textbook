@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>機密データを保存するS3を暗号化・監査する | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">セキュリティ・コンプライアンス</span>
+  <h1>機密データを保存するS3を暗号化・監査する</h1>
+  <p class="lead">SSE-KMSで暗号化し、CloudTrailで操作を記録し、Macieで機密データを検出する</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>顧客の個人情報を含むファイルをS3に保存する。保存時の暗号化に加えて、「いつ・誰が鍵を使ってデータにアクセスしたか」を監査できるようにし、想定外の場所に個人情報が置かれていないかも定期的にチェックしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 632 263" style="max-width:632px;min-width:520px" role="img" aria-label="図1 S3はKMSのカスタマー管理キーで暗号化(SSE-KMS)し、キーの利用とオブジェクト操作をCloudTrailで記録する。Macieでバケット内の個人情報を検出する。"><defs><marker id="dgusecases-s3-encryption-audit-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="88" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="110" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="106" y="128" text-anchor="middle" class="dg-s">PutObject</text>
+<rect x="248" y="88" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="321" y="110" text-anchor="middle" class="dg-tb">S3バケット</text>
+<text x="321" y="128" text-anchor="middle" class="dg-s">SSE-KMSで暗号化</text>
+<rect x="463" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="64" text-anchor="middle" class="dg-t">KMS</text>
+<text x="536" y="82" text-anchor="middle" class="dg-s">カスタマー管理キー</text>
+<rect x="463" y="133" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="154" text-anchor="middle" class="dg-t">CloudTrail</text>
+<text x="536" y="172" text-anchor="middle" class="dg-s">データイベント</text>
+<rect x="248" y="187" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="321" y="208" text-anchor="middle" class="dg-t">Macie</text>
+<text x="321" y="226" text-anchor="middle" class="dg-s">機密データを検出</text>
+<path d="M179.0,114.0 L248.5,114.0" class="dg-line" marker-end="url(#dgusecases-s3-encryption-audit-1)"/>
+<text x="214" y="118" text-anchor="middle" class="dg-s dg-halo">HTTPS</text>
+<path d="M393.5,98.8 L463.0,84.2" class="dg-line" marker-end="url(#dgusecases-s3-encryption-audit-1)"/>
+<text x="428" y="96" text-anchor="middle" class="dg-s dg-halo">鍵を使用</text>
+<path d="M393.5,129.2 L463.0,143.8" class="dg-line" marker-end="url(#dgusecases-s3-encryption-audit-1)"/>
+<text x="428" y="140" text-anchor="middle" class="dg-s dg-halo">操作を記録</text>
+<path d="M321.0,187.0 L321.0,140.0" class="dg-line dg-dash" marker-end="url(#dgusecases-s3-encryption-audit-1)"/>
+<text x="321" y="168" text-anchor="middle" class="dg-s dg-halo">分析</text>
+</svg>
+</div>
+<figcaption>図1 S3はKMSのカスタマー管理キーで暗号化(SSE-KMS)し、キーの利用とオブジェクト操作をCloudTrailで記録する。Macieでバケット内の個人情報を検出する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/s3.html">Amazon S3</a>:SSE-KMSによる暗号化、バケットポリシーでのアクセス制御</li>
+<li><a href="../services/kms.html">AWS KMS</a>:カスタマー管理キー(キーポリシーで利用者を制御、利用を監査)</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:KMSキーの利用と、S3のデータイベント(オブジェクトの取得・削除)を記録する</li>
+<li><a href="../services/macie.html">Amazon Macie</a>:S3内の機密データ・個人情報を検出する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>KMSでカスタマー管理キーを作成し、キーポリシーで利用できるロールを限定する</li>
+<li>S3バケットのデフォルト暗号化をSSE-KMS(作成したキー)にする</li>
+<li>バケットポリシーで、HTTPS以外の通信や、指定した暗号化方式以外のアップロードを拒否する</li>
+<li>CloudTrailの証跡で、このバケットのデータイベントを有効にする</li>
+<li>Macieを有効にし、バケットを定期的に分析するジョブを作成する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>鍵の利用を<strong>監査</strong>したい → <strong>SSE-KMS</strong>(SSE-S3ではキーの利用履歴を追えない)。</li>
+<li>読み取る側にも <code>kms:Decrypt</code> の権限が必要。</li>
+<li>S3のオブジェクト操作の記録には<strong>データイベントの有効化</strong>が必要(管理イベントだけでは記録されない)。</li>
+<li>S3の個人情報の検出 → <strong>Macie</strong>、不正アクセスなどの脅威検出 → GuardDuty。</li>
+<li>KMSのリクエスト料金を抑えるには、S3バケットキーを有効にする。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="org-guardrails.html"><span class="label">← 前へ</span>組織全体にセキュリティのガードレールを設ける</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="bastionless-access.html"><span class="label">次へ →</span>踏み台サーバーなしでプライベートなEC2を操作する</a>
+</nav>
+</main>
+</body>
+</html>

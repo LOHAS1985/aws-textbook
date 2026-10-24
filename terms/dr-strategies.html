@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DR戦略 | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">設計・運用</span>
+  <h1>DR戦略</h1>
+  <p class="lead">災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>DR(Disaster Recovery:災害復旧)戦略</strong>は、リージョン障害などの災害に備えて、別の場所(DRサイト)をどの程度準備しておくかの方式です。準備を厚くするほど早く復旧できますが、コストが上がります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 186" style="max-width:698px;min-width:520px" role="img" aria-label="図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。"><defs><marker id="dgterms-dr-strategies-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="64" text-anchor="middle" class="dg-t">バックアップと復元</text>
+<text x="106" y="82" text-anchor="middle" class="dg-s">バックアップのみ</text>
+<rect x="199" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="272" y="64" text-anchor="middle" class="dg-t">パイロットライト</text>
+<text x="272" y="82" text-anchor="middle" class="dg-s">データ層だけ稼働</text>
+<rect x="364" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="436" y="64" text-anchor="middle" class="dg-t">ウォームスタンバイ</text>
+<text x="436" y="82" text-anchor="middle" class="dg-s">縮小版が常時稼働</text>
+<rect x="529" y="43" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="602" y="64" text-anchor="middle" class="dg-tb">マルチサイト</text>
+<text x="602" y="82" text-anchor="middle" class="dg-s">本番と同規模で稼働</text>
+<text x="106" y="132" text-anchor="middle" class="dg-t">数時間</text>
+<text x="106" y="150" text-anchor="middle" class="dg-s">コスト: 最小</text>
+<text x="272" y="132" text-anchor="middle" class="dg-t">数十分〜数時間</text>
+<text x="272" y="150" text-anchor="middle" class="dg-s">コスト: 低</text>
+<text x="436" y="132" text-anchor="middle" class="dg-t">数分〜数十分</text>
+<text x="436" y="150" text-anchor="middle" class="dg-s">コスト: 中</text>
+<text x="602" y="132" text-anchor="middle" class="dg-t">ほぼゼロ</text>
+<text x="602" y="150" text-anchor="middle" class="dg-s">コスト: 最大</text>
+<path d="M179.0,69.0 L199.0,69.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-1)"/>
+<path d="M344.0,69.0 L364.0,69.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-1)"/>
+<path d="M509.0,69.0 L529.0,69.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-1)"/>
+</svg>
+</div>
+<figcaption>図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>名称</th><th>DR側の状態</th><th>RTO/RPO</th><th>コスト</th></tr>
+<tr><td>バックアップと復元</td><td>バックアップのみ保管</td><td>数時間</td><td>最小</td></tr>
+<tr><td>パイロットライト</td><td>データ層のみ稼働、アプリは停止</td><td>数十分〜数時間</td><td>低</td></tr>
+<tr><td>ウォームスタンバイ</td><td>縮小版の全構成が常時稼働</td><td>数分〜数十分</td><td>中</td></tr>
+<tr><td>マルチサイト(アクティブ/アクティブ)</td><td>本番と同規模で常時稼働</td><td>ほぼゼロ</td><td>最大</td></tr>
+</table></div>
+<ul>
+<li><strong>RTO(目標復旧時間)</strong>:障害発生からサービスを再開するまでに許容できる時間。</li>
+<li><strong>RPO(目標復旧時点)</strong>:どの時点までのデータを復旧できればよいか(許容できるデータ損失の量)。</li>
+<li>AWSでは、バックアップと復元にAWS Backupのクロスリージョンコピー、パイロットライトやウォームスタンバイにAuroraグローバルデータベースやRoute 53のフェイルオーバールーティング、などを組み合わせる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="deploy-strategies.html">デプロイ戦略</a>:Blue/Greenなど、新旧環境の切り替え方式</li>
+<li><a href="circuit-breaker.html">サーキットブレーカー</a>:障害を広げないための設計パターン</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/backup.html">AWS Backup</a>:別リージョンへのバックアップコピー</li>
+<li><a href="../services/aurora.html">Amazon Aurora</a>:グローバルデータベース</li>
+<li><a href="../services/route53.html">Amazon Route 53</a>:フェイルオーバールーティング、ARC</li>
+<li><a href="../services/s3.html">Amazon S3</a>:クロスリージョンレプリケーション</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="deploy-strategies.html"><span class="label">← 前へ</span>デプロイ戦略</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="circuit-breaker.html"><span class="label">次へ →</span>サーキットブレーカー</a>
+</nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多数のEC2に定期的にパッチを適用する | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">デプロイ・自動化</span>
+  <h1>多数のEC2に定期的にパッチを適用する</h1>
+  <p class="lead">Systems ManagerのPatch Managerとメンテナンスウィンドウで、パッチ適用を自動化する</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>数百台のEC2(とオンプレミスのサーバー)に、毎週決まった時間帯にOSのセキュリティパッチを自動で適用したい。本番と開発でタイミングを分け、適用状況(準拠しているか)を一覧で確認したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:520px" role="img" aria-label="図1 メンテナンスウィンドウの日時に、パッチベースライン(当てるパッチ)とパッチグループ(当てるノード)に従ってPatch Managerがパッチを適用する。結果はコンプライアンスで確認できる。"><defs><marker id="dgusecases-patch-management-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">パッチベースライン</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">承認するパッチ</text>
+<rect x="34" y="110" width="150" height="68" rx="8" class="dg-blue"/>
+<text x="109" y="130" text-anchor="middle" class="dg-t">メンテナンス</text>
+<text x="109" y="148" text-anchor="middle" class="dg-t">ウィンドウ</text>
+<text x="109" y="166" text-anchor="middle" class="dg-s">毎週日曜 2:00</text>
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">Patch Manager</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">Run Commandで適用</text>
+<rect x="272" y="198" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="220" text-anchor="middle" class="dg-t">パッチグループ</text>
+<text x="347" y="238" text-anchor="middle" class="dg-s">タグで対象を分類</text>
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">対象のEC2</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">SSM Agent</text>
+<rect x="510" y="198" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="220" text-anchor="middle" class="dg-t">コンプライアンス</text>
+<text x="585" y="238" text-anchor="middle" class="dg-s">適用状況を確認</text>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgusecases-patch-management-1)"/>
+<text x="228" y="148" text-anchor="middle" class="dg-s dg-halo">起動</text>
+<path d="M347.0,90.0 L347.0,118.0" class="dg-line dg-dash" marker-end="url(#dgusecases-patch-management-1)"/>
+<path d="M347.0,198.0 L347.0,170.0" class="dg-line dg-dash" marker-end="url(#dgusecases-patch-management-1)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgusecases-patch-management-1)"/>
+<path d="M585.0,170.0 L585.0,198.0" class="dg-line" marker-end="url(#dgusecases-patch-management-1)"/>
+</svg>
+</div>
+<figcaption>図1 メンテナンスウィンドウの日時に、パッチベースライン(当てるパッチ)とパッチグループ(当てるノード)に従ってPatch Managerがパッチを適用する。結果はコンプライアンスで確認できる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Patch Manager、Maintenance Windows、Run Command、コンプライアンス</li>
+<li><a href="../services/iam.html">AWS IAM</a>:EC2のロールに <code>AmazonSSMManagedInstanceCore</code> を付ける</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:SSM Agentが動く管理対象ノード(オンプレミスはハイブリッドアクティベーションで登録)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>EC2にSSM AgentとIAMロールを用意し、Systems Managerの管理対象になっていることを確認する</li>
+<li>パッチベースラインで、承認するパッチ(例:重要度Critical、リリース7日後に自動承認)を定義する</li>
+<li>EC2にタグを付けてパッチグループ(例:本番・開発)に分ける</li>
+<li>メンテナンスウィンドウで実行日時を決め、ターゲットとタスク(パッチ適用のRun Command)を登録する</li>
+<li>コンプライアンスの画面で、適用できなかったノードを確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(またはVPCエンドポイント)</strong>を確認。</li>
+<li>業務時間外に実行 → <strong>メンテナンスウィンドウ</strong>。対象の分類 → <strong>パッチグループ(タグ)</strong>。</li>
+<li>まずは「スキャンのみ」で不足パッチを把握し、その後「インストール」を実行するのが安全。</li>
+<li>一度に全台へ適用せず、同時実行数とエラーのしきい値を設定して少しずつ進める。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="multi-region-failover.html"><span class="label">← 前へ</span>リージョン障害に備えて別リージョンへ切り替える</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="multi-account-stacksets.html"><span class="label">次へ →</span>複数アカウント・リージョンに共通設定を展開する</a>
+</nav>
+</main>
+</body>
+</html>

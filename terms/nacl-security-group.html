@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ネットワークACLとセキュリティグループ | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワーク</span>
+  <h1>ネットワークACLとセキュリティグループ</h1>
+  <p class="lead">VPCで通信を許可・拒否する2つの仕組み</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>VPCでのネットワークアクセス制御には、主に<strong>ネットワークACL(NACL)</strong>と<strong>セキュリティグループ(SG)</strong>があります。</p>
+<ul>
+<li><strong>ネットワークACL</strong>:<strong>サブネット単位</strong>で通信を制御する</li>
+<li><strong>セキュリティグループ</strong>:ENI(Elastic Network Interface)に関連付けて、<strong>リソース単位</strong>で通信を制御する</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 807 129" style="max-width:807px;min-width:520px" role="img" aria-label="図1 2つの仕組みの位置関係。通信はサブネットの出入口でNACL、リソースの手前でSGのチェックを受ける。NACLとSGの両方で許可される必要がある。"><defs><marker id="dgterms-nacl-security-group-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="420" y="15" width="363" height="90" rx="10" class="dg-group"/>
+<text x="430" y="30" class="dg-s">サブネット</text>
+<rect x="34" y="49" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="73" text-anchor="middle" class="dg-t">クライアント</text>
+<rect x="232" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="304" y="64" text-anchor="middle" class="dg-t">ネットワークACL</text>
+<text x="304" y="82" text-anchor="middle" class="dg-s">サブネットの出入口</text>
+<rect x="430" y="35" width="145" height="68" rx="8" class="dg-box"/>
+<text x="502" y="56" text-anchor="middle" class="dg-t">セキュリティ</text>
+<text x="502" y="74" text-anchor="middle" class="dg-t">グループ</text>
+<text x="502" y="92" text-anchor="middle" class="dg-s">ENIごと</text>
+<rect x="628" y="49" width="145" height="40" rx="8" class="dg-accent"/>
+<text x="700" y="73" text-anchor="middle" class="dg-tb">EC2</text>
+<path d="M179.0,69.0 L232.0,69.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-1)"/>
+<path d="M377.0,69.0 L430.0,69.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-1)"/>
+<path d="M575.0,69.0 L628.0,69.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-1)"/>
+</svg>
+</div>
+<figcaption>図1 2つの仕組みの位置関係。通信はサブネットの出入口でNACL、リソースの手前でSGのチェックを受ける。NACLとSGの両方で許可される必要がある。</figcaption>
+</figure>
+
+<h3>比較</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>ネットワークACL(NACL)</th><th>セキュリティグループ(SG)</th></tr>
+<tr><td>適用単位</td><td>サブネット</td><td>ENI/リソース</td></tr>
+<tr><td>ステート</td><td>ステートレス</td><td>ステートフル</td></tr>
+<tr><td>ルール</td><td>インバウンド・アウトバウンドをそれぞれ設定</td><td>インバウンド・アウトバウンドを同時に設定</td></tr>
+<tr><td>ルールの評価</td><td>ルール番号の小さい順に評価し、最初に一致したルールを適用</td><td>すべての許可ルールを評価</td></tr>
+<tr><td>許可/拒否</td><td>許可・拒否の両方を設定可能</td><td>許可のみ</td></tr>
+<tr><td>デフォルト</td><td>デフォルトNACLはイン・アウトとも許可。カスタムNACLは原則拒否</td><td>インバウンドは原則拒否、アウトバウンドは原則許可</td></tr>
+</table></div>
+
+<h3>ネットワークACL(NACL)</h3>
+<ul>
+<li>サブネットに関連付けるアクセス制御リスト。</li>
+<li><strong>ステートレス</strong>なので、戻りの通信も別途許可する必要がある。</li>
+<li>ルールには番号があり、<strong>番号の小さい順</strong>に評価され、最初に一致したルールが適用される。</li>
+<li><code>ALLOW</code> と <code>DENY</code> の両方を設定でき、特定のIPやCIDRからの通信を明示的に拒否したい場合に有用。</li>
+</ul>
+<p>例:Webサーバー用サブネットで、<code>10.0.0.0/16</code> からのTCP 80を許可、<code>203.0.113.0/24</code> からのTCP 80を拒否、その他を拒否。拒否ルールが許可ルールより先に評価されるよう、ルール番号を小さくする必要があります。</p>
+
+<h3>セキュリティグループ(SG)</h3>
+<ul>
+<li>EC2などのリソースに紐づく仮想ファイアウォール。</li>
+<li><strong>ステートフル</strong>なので、許可した通信の戻りの通信は自動的に許可される。</li>
+<li><code>ALLOW</code> ルールのみ設定でき、<code>DENY</code> ルールは設定できない。</li>
+<li>1つのENIに複数のSGを関連付けられ、<strong>いずれかのSGで許可されれば通信が許可</strong>される。</li>
+<li>別のセキュリティグループを送信元として指定することもできる。</li>
+</ul>
+<p>例:TCP 443を <code>0.0.0.0/0</code> から許可、TCP 22を管理用IP <code>203.0.113.10/32</code> から許可 → HTTPSは全世界から、SSHは管理端末からだけ接続できる。</p>
+
+<h3>ステートフルとステートレスの違い(試験で重要)</h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 722 210" style="max-width:722px;min-width:520px" role="img" aria-label="図2 SGは許可したリクエストの戻りの通信を自動で許可する。NACLは戻りの通信もアウトバウンドルールで許可する必要がある。"><defs><marker id="dgterms-nacl-security-group-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="60" text-anchor="middle" class="dg-t">リクエスト</text>
+<text x="114" y="78" text-anchor="middle" class="dg-s">TCP 443</text>
+<rect x="286" y="38" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="366" y="60" text-anchor="middle" class="dg-tb">SG(ステートフル)</text>
+<text x="366" y="78" text-anchor="middle" class="dg-s">インバウンドを許可</text>
+<rect x="538" y="38" width="160" height="52" rx="8" class="dg-ok"/>
+<text x="618" y="60" text-anchor="middle" class="dg-t">戻りの通信</text>
+<text x="618" y="78" text-anchor="middle" class="dg-s">自動で許可</text>
+<rect x="34" y="134" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="156" text-anchor="middle" class="dg-t">リクエスト</text>
+<text x="114" y="174" text-anchor="middle" class="dg-s">TCP 443</text>
+<rect x="286" y="134" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="366" y="156" text-anchor="middle" class="dg-tb">NACL(ステートレス)</text>
+<text x="366" y="174" text-anchor="middle" class="dg-s">インバウンドを許可</text>
+<rect x="538" y="134" width="160" height="52" rx="8" class="dg-ng"/>
+<text x="618" y="156" text-anchor="middle" class="dg-t">戻りの通信</text>
+<text x="618" y="174" text-anchor="middle" class="dg-s">別途許可が必要</text>
+<path d="M194.0,64.0 L286.0,64.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-2)"/>
+<path d="M446.0,64.0 L538.0,64.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-2)"/>
+<path d="M194.0,160.0 L286.0,160.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-2)"/>
+<path d="M446.0,160.0 L538.0,160.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-2)"/>
+</svg>
+</div>
+<figcaption>図2 SGは許可したリクエストの戻りの通信を自動で許可する。NACLは戻りの通信もアウトバウンドルールで許可する必要がある。</figcaption>
+</figure>
+<p><code>SG = 戻りの通信を意識しなくてよい</code>、<code>NACL = 戻りの通信もルールで考える</code> と覚えるとよいでしょう。</p>
+
+<h3>試験でよく問われるポイント</h3>
+<div class="point"><ul>
+<li>特定のIPアドレスからの通信だけを明示的に拒否したい → <strong>ネットワークACL</strong>。</li>
+<li>EC2へのHTTPSを許可したとき、戻りの通信のルールは必要か → <strong>SGなら不要</strong>(ステートフル)。</li>
+<li>サブネット全体に対してアクセス制御したい → <strong>ネットワークACL</strong>。</li>
+<li>SGで明示的なDENYルールを設定したい → <strong>できない</strong>(許可ルールのみ)。</li>
+<li>NACLで許可したのに通信できない → SG、NACLの反対方向のルール、ルートテーブル、ゲートウェイなども確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="route-table.html">ルートテーブル</a>:通信の経路を決める(許可・拒否はしない)</li>
+<li><a href="vpc-flow-logs.html">VPCフローログ</a>:SG・NACLで許可(ACCEPT)・拒否(REJECT)された通信の記録</li>
+<li><a href="inbound-traffic.html">インバウンド通信</a>/<a href="outbound-traffic.html">アウトバウンド通信</a>:SG・NACLが関わる通信パターン</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:NACL・SGを設定するネットワーク</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:SGを関連付ける代表的なリソース</li>
+<li><a href="../services/config.html">AWS Config</a>/<a href="../services/security-hub.html">AWS Security Hub</a>:危険なSG設定の検出</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="route-table.html"><span class="label">← 前へ</span>ルートテーブル</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="vpc-flow-logs.html"><span class="label">次へ →</span>VPCフローログ</a>
+</nav>
+</main>
+</body>
+</html>

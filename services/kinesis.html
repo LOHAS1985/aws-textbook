@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Kinesis | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">分析</span>
+  <h1>Amazon Kinesis</h1>
+  <p class="lead">ストリーミングデータを収集・処理・配信するサービス群</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Kinesis</strong>は、<strong>ストリーミングデータを扱うサービス群</strong>です。</p>
+<ul>
+<li>ストリーミング動画・データストリームの処理・保存</li>
+<li>AWSのデータストアへデータストリームをロード:<strong>Kinesis Data Firehose</strong></li>
+<li>データストリームの分析:<strong>Kinesis Data Analytics</strong></li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 614 252" style="max-width:614px;min-width:520px" role="img" aria-label="図1 Kinesisの主なサービス。Data Streamsはシャードで並列に受け取り、Lambdaなど自作の処理でリアルタイムに処理する。Data Firehoseはコードをほぼ書かずに、S3やOpenSearchなどへ配送・保存する。"><defs><marker id="dgservices-kinesis-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="126" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="147" text-anchor="middle" class="dg-t">データ送信元</text>
+<text x="104" y="165" text-anchor="middle" class="dg-s">IoT・ログ・クリック</text>
+<rect x="242" y="83" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="312" y="104" text-anchor="middle" class="dg-tb">Data Streams</text>
+<text x="312" y="122" text-anchor="middle" class="dg-s">シャードで並列処理</text>
+<rect x="450" y="83" width="140" height="52" rx="8" class="dg-box"/>
+<text x="520" y="104" text-anchor="middle" class="dg-t">Lambda / アプリ</text>
+<text x="520" y="122" text-anchor="middle" class="dg-s">リアルタイム処理</text>
+<rect x="242" y="176" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="312" y="198" text-anchor="middle" class="dg-tb">Data Firehose</text>
+<text x="312" y="216" text-anchor="middle" class="dg-s">配送・変換</text>
+<rect x="450" y="176" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="520" y="198" text-anchor="middle" class="dg-t">S3・OpenSearch</text>
+<text x="520" y="216" text-anchor="middle" class="dg-s">保存先</text>
+<path d="M174.0,137.2 L242.0,123.3" class="dg-line" marker-end="url(#dgservices-kinesis-1)"/>
+<path d="M174.0,168.7 L242.0,185.3" class="dg-line" marker-end="url(#dgservices-kinesis-1)"/>
+<path d="M382.0,109.0 L450.0,109.0" class="dg-line" marker-end="url(#dgservices-kinesis-1)"/>
+<path d="M382.0,202.5 L450.0,202.5" class="dg-line" marker-end="url(#dgservices-kinesis-1)"/>
+</svg>
+</div>
+<figcaption>図1 Kinesisの主なサービス。Data Streamsはシャードで並列に受け取り、Lambdaなど自作の処理でリアルタイムに処理する。Data Firehoseはコードをほぼ書かずに、S3やOpenSearchなどへ配送・保存する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>用語</h3>
+<p><strong>シャード</strong>:データを処理するレーンのようなもの(1本あたりの性能は固定)。シャードを増減することでスケーリングします。</p>
+
+<h3 class="em">Kinesis Data Streams(リアルタイムのストリーム処理)</h3>
+<p>ストリームデータを処理するアプリを独自に構築します。必要なキャパシティを設定してストリームを作成するだけで使えます。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>プロビジョンド</th><th>オンデマンド</th></tr>
+<tr><td>スケーリングの主体</td><td>ユーザーが管理</td><td>AWSが自動管理</td></tr>
+<tr><td>シャード管理</td><td>手動で指定</td><td>自動で増減</td></tr>
+<tr><td>初期設定</td><td>シャード数を決める必要あり</td><td>設定不要</td></tr>
+<tr><td>スループット上限</td><td>シャード数に依存</td><td>トラフィックに応じて自動拡張</td></tr>
+<tr><td>コストモデル</td><td>シャード時間課金+PUTペイロード</td><td>使用量ベース</td></tr>
+<tr><td>高負荷・安定した負荷</td><td>コスト効率が良い</td><td>割高になりやすい</td></tr>
+<tr><td>ホットシャード対策</td><td>必須</td><td>依然として必要(重要)</td></tr>
+<tr><td>シャードの見え方</td><td>明示的に見える</td><td>論理的に非表示</td></tr>
+<tr><td>典型的なユースケース</td><td>安定した大量のストリーム</td><td>不規則・予測できないトラフィック</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 463 243" style="max-width:463px;min-width:463px" role="img" aria-label="図2 シャードとパーティションキー。レコードはパーティションキーでシャードに振り分けられる。シャード1本の性能は固定なので、キーが偏ると特定のシャードに負荷が集中する(ホットシャード)。シャードを増やすとスループットが上がる。"><defs><marker id="dgservices-kinesis-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="39" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="63" text-anchor="middle" class="dg-t">pk=user-A</text>
+<rect x="34" y="109" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="133" text-anchor="middle" class="dg-t">pk=user-B</text>
+<rect x="34" y="179" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="203" text-anchor="middle" class="dg-t">pk=user-C</text>
+<rect x="289" y="68" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="364" y="90" text-anchor="middle" class="dg-t">シャード1</text>
+<text x="364" y="108" text-anchor="middle" class="dg-s">偏るとホットシャード</text>
+<rect x="289" y="179" width="150" height="40" rx="8" class="dg-box"/>
+<text x="364" y="203" text-anchor="middle" class="dg-t">シャード2</text>
+<path d="M184.0,69.3 L289.0,83.7" class="dg-line" marker-end="url(#dgservices-kinesis-2)"/>
+<path d="M184.0,118.7 L289.0,104.3" class="dg-line" marker-end="url(#dgservices-kinesis-2)"/>
+<path d="M184.0,199.0 L289.0,199.0" class="dg-line" marker-end="url(#dgservices-kinesis-2)"/>
+</svg>
+</div>
+<figcaption>図2 シャードとパーティションキー。レコードはパーティションキーでシャードに振り分けられる。シャード1本の性能は固定なので、キーが偏ると特定のシャードに負荷が集中する(ホットシャード)。シャードを増やすとスループットが上がる。</figcaption>
+</figure>
+<h3 class="em">Kinesis Data Firehose(データの配送・変換・保存)</h3>
+<ul>
+<li>ストリームデータを <strong>S3、Redshift、OpenSearch Service</strong> などへ配信する。</li>
+<li><strong>Lambdaを呼び出してレコードを変換</strong>できる。</li>
+</ul>
+<p>Data Streamsは自分でコンシューマー(Lambda・アプリなど)を作ってリアルタイムに処理するサービス、Firehoseはコードをほぼ書かずに保存先へ届けるフルマネージドな配送サービスです。Firehoseはバッファリングしてまとめて配信するため、ほぼリアルタイム(数十秒〜数分の遅延)になります。現在の正式名称は「Amazon Data Firehose」です。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>IoTデバイスやアプリのクリックストリームのリアルタイム処理(Data Streams+Lambda)</li>
+<li>大量のログをS3やOpenSearchへ自動で配信・蓄積(Firehose)</li>
+<li>リアルタイムのダッシュボード・異常検知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Data Streamsは、<strong>プロビジョンドならシャード時間+PUTペイロード</strong>、<strong>オンデマンドなら使用量ベース</strong>で課金されます。安定した高負荷ならプロビジョンド、不規則な負荷ならオンデマンドが向いています。</p>
+<p>Firehoseは取り込んだデータ量に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="lambda.html">AWS Lambda</a>:Data Streamsのコンシューマー、Firehoseでの変換</li>
+<li><a href="s3.html">Amazon S3</a>/<a href="opensearch.html">Amazon OpenSearch Service</a>:Firehoseの配信先</li>
+<li><a href="athena.html">Amazon Athena</a>:S3に蓄積したデータの分析</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:Pipesのソースとして利用</li>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>:DynamoDB Streamsとの違いに注意</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>独自処理でリアルタイム → <strong>Data Streams</strong>。S3などへそのまま配信 → <strong>Firehose</strong>。</li>
+<li>スループット不足 → <strong>シャードを増やす</strong>(プロビジョンド)か<strong>オンデマンド</strong>に。</li>
+<li>特定のシャードに偏る(ホットシャード)→ <strong>パーティションキー</strong>を分散させる。</li>
+<li>Firehoseでのデータ変換 → <strong>Lambda</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Kinesisはストリーミングデータのサービス群。シャードでスケールする。</li>
+<li>Data Streamsはリアルタイム処理、Firehoseは配送・変換・保存。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="athena.html"><span class="label">← 前へ</span>Amazon Athena</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="opensearch.html"><span class="label">次へ →</span>Amazon OpenSearch Service</a>
+</nav>
+</main>
+</body>
+</html>

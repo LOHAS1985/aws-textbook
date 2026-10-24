@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Step Functions | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">アプリケーション統合</span>
+  <h1>AWS Step Functions</h1>
+  <p class="lead">複数の処理をつなぎ合わせてワークフローを作る</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Step Functions</strong>は、<strong>複数の処理をつなぎ合わせてワークフローを作成</strong>するサービスです。Lambdaや各種AWSサービスの呼び出しを、順番・分岐・並列・リトライを含めて定義できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>用語</h3>
+<ul>
+<li><strong>ステートマシン</strong>:ワークフロー全体を定義するもの</li>
+<li><strong>ステート</strong>:ワークフロー内の1つ1つの処理ステップ</li>
+<li><strong>状態遷移</strong>:各ステート間のつながり</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 788 250" style="max-width:788px;min-width:520px" role="img" aria-label="図1 ステートマシンの例。Taskで在庫を確認し、Choiceで分岐して、在庫があればParallelで決済と発送準備を並列に実行する。TaskにはRetryを設定でき、一時的なエラーなら自動で再実行される。"><defs><marker id="dgservices-step-functions-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="118" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="140" text-anchor="middle" class="dg-t">開始</text>
+<text x="99" y="158" text-anchor="middle" class="dg-s">StartAt</text>
+<rect x="184" y="118" width="130" height="52" rx="8" class="dg-box"/>
+<text x="249" y="140" text-anchor="middle" class="dg-t">Task</text>
+<text x="249" y="158" text-anchor="middle" class="dg-s">在庫確認・Retry</text>
+<rect x="334" y="118" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="140" text-anchor="middle" class="dg-tb">Choice</text>
+<text x="399" y="158" text-anchor="middle" class="dg-s">在庫あり?</text>
+<rect x="484" y="62" width="130" height="52" rx="8" class="dg-box"/>
+<text x="549" y="84" text-anchor="middle" class="dg-t">Parallel</text>
+<text x="549" y="102" text-anchor="middle" class="dg-s">決済と発送準備</text>
+<rect x="484" y="174" width="130" height="52" rx="8" class="dg-ng"/>
+<text x="549" y="196" text-anchor="middle" class="dg-t">Fail</text>
+<text x="549" y="214" text-anchor="middle" class="dg-s">在庫なし</text>
+<rect x="634" y="68" width="130" height="40" rx="8" class="dg-ok"/>
+<text x="699" y="92" text-anchor="middle" class="dg-t">Succeed</text>
+<path d="M164.0,144.0 L184.0,144.0" class="dg-line" marker-end="url(#dgservices-step-functions-1)"/>
+<path d="M314.0,144.0 L334.0,144.0" class="dg-line" marker-end="url(#dgservices-step-functions-1)"/>
+<path d="M464.0,119.7 L484.0,112.3" class="dg-line" marker-end="url(#dgservices-step-functions-1)"/>
+<text x="474" y="120" text-anchor="middle" class="dg-s dg-halo">あり</text>
+<path d="M464.0,168.3 L484.0,175.7" class="dg-line" marker-end="url(#dgservices-step-functions-1)"/>
+<text x="474" y="176" text-anchor="middle" class="dg-s dg-halo">なし</text>
+<path d="M614.0,88.0 L634.0,88.0" class="dg-line" marker-end="url(#dgservices-step-functions-1)"/>
+</svg>
+</div>
+<figcaption>図1 ステートマシンの例。Taskで在庫を確認し、Choiceで分岐して、在庫があればParallelで決済と発送準備を並列に実行する。TaskにはRetryを設定でき、一時的なエラーなら自動で再実行される。</figcaption>
+</figure>
+<h3>ステートマシンの属性</h3>
+<ul>
+<li><code>StartAt</code>:開始ステート</li>
+<li><code>TimeoutSeconds</code>:全体の最大実行時間</li>
+<li><code>DefinitionSubstitutions</code>:デプロイ時に差し込む動的な値(API GatewayのURLなど)</li>
+</ul>
+
+<h3>ステート共通の属性</h3>
+<ul>
+<li><code>Type</code>:ステートの種類(Task/Pass/Choiceなど)</li>
+<li><code>InputPath</code>/<code>OutputPath</code>:入出力のフィルタリング</li>
+<li><code>ResultPath</code>:結果のマージ先</li>
+<li><strong class="em">Retry</strong>(失敗時のリトライ):
+  <ul>
+  <li><code>ErrorEquals</code>:対象のエラーの種類(配列で指定)</li>
+  <li><code>IntervalSeconds</code>:リトライまでの待機時間</li>
+  <li><code>MaxAttempts</code>:最大リトライ回数</li>
+  <li><code>BackoffRate</code>:待機時間の増加倍率</li>
+  </ul></li>
+</ul>
+<p>AWSの仕様では <code>MaxAttempts</code> は「初回実行を含まないリトライ回数」です(MaxAttempts=3なら、初回+最大3回のリトライ)。また、失敗後の遷移先は <code>Catch</code>(<code>ErrorEquals</code>・<code>Next</code>・<code>ResultPath</code>)で指定します。</p>
+
+<h3>ステートの種類</h3>
+<div class="table-wrap"><table>
+<tr><th>ステート</th><th>役割</th><th>主な属性</th></tr>
+<tr><td>Task</td><td>Lambda関数や別サービスを呼び出す</td><td><code>Resource</code>(実行対象)、<code>TimeoutSeconds</code>、<code>HeartbeatSeconds</code>(生存確認)、<code>ResultPath</code>(エラー情報の格納先)、<code>Next</code>(次の処理)</td></tr>
+<tr><td>Choice</td><td>条件分岐</td><td><code>Choices</code>(条件)、<code>Default</code>(どれにも当てはまらない場合)</td></tr>
+<tr><td>Wait</td><td>指定時間待機</td><td>-</td></tr>
+<tr><td>Parallel</td><td>複数の処理を並列実行</td><td>-</td></tr>
+<tr><td>Fail/Succeed</td><td>終了(エラー/成功)</td><td>-</td></tr>
+</table></div>
+
+<h3>APIアクション(外部サービスの直接呼び出し)</h3>
+<ol>
+<li><strong>AWS SDK統合</strong>:Lambdaを使わずに、各サービスのAPIをSDKで直接呼び出す</li>
+<li><strong>サービス統合(最適化された統合)</strong>:特定のサービス向けに最適化されたStep Functions専用のAPI(内部ではSDKを使用)</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>注文処理(在庫確認 → 決済 → 発送)のように複数ステップの業務フロー</li>
+<li>失敗時のリトライ・エラー処理を含むバッチ処理</li>
+<li>Lambdaの15分制限を超える長い処理を、小さなステップに分割</li>
+<li>人の承認待ちを含むワークフロー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Standardワークフローは<strong>状態遷移の回数</strong>、Expressワークフローは<strong>実行回数と実行時間・メモリ</strong>に応じて課金されます。Standardは最大1年の長時間実行向け、Expressは大量・短時間の処理向けです。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="lambda.html">AWS Lambda</a>:Taskステートの代表的な実行対象</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:ワークフローの起動</li>
+<li><a href="api-gateway.html">Amazon API Gateway</a>:APIからワークフローを起動</li>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>/<a href="sqs.html">Amazon SQS</a>/<a href="sns.html">Amazon SNS</a>:サービス統合で直接呼び出し</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>複数のLambdaの順序制御・分岐・並列・リトライ → <strong>Step Functions</strong>。</li>
+<li>一時的なエラーで再実行 → <strong>Retry</strong>(<code>BackoffRate</code>で指数バックオフ)。</li>
+<li>失敗時に別の処理へ → <strong>Catch</strong>。</li>
+<li>Lambdaを書かずにDynamoDBなどを呼ぶ → <strong>SDK統合/サービス統合</strong>。</li>
+<li>入出力の加工 → <code>InputPath</code>/<code>ResultPath</code>/<code>OutputPath</code>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Step Functionsはステートマシンでワークフローを定義するサービス。</li>
+<li>Task・Choice・Wait・Parallel・Fail/Succeedのステートを組み合わせる。</li>
+<li>Retryで自動リトライ、SDK統合でLambdaなしにAWSサービスを呼べる。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="eventbridge.html"><span class="label">← 前へ</span>Amazon EventBridge</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="appsync.html"><span class="label">次へ →</span>AWS AppSync</a>
+</nav>
+</main>
+</body>
+</html>

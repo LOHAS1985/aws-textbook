@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルートテーブル | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワーク</span>
+  <h1>ルートテーブル</h1>
+  <p class="lead">宛先ごとに通信の転送先を決めるルール表</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>ルートテーブル(Route Table)</strong>は、<strong>通信をどこへ転送するかを決めるルール表</strong>です。AWSでは主にVPC内のサブネットに関連付けて使います。「この宛先IPアドレスなら、このターゲットへ送る」という対応表だと考えると分かりやすいです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 703 262" style="max-width:703px;min-width:520px" role="img" aria-label="図1 ルートテーブルの働き。宛先IPアドレスに一致するルートのうち、最も具体的なもの(ロンゲストマッチ)を選び、そのターゲットへ通信を送る。0.0.0.0/0 は、ほかのどれにも当てはまらない宛先を受け止めるデフォルトルート。"><defs><marker id="dgterms-route-table-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="116" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="112" y="140" text-anchor="middle" class="dg-t">サブネット内のEC2</text>
+<rect x="279" y="110" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="356" y="132" text-anchor="middle" class="dg-tb">ルートテーブル</text>
+<text x="356" y="150" text-anchor="middle" class="dg-s">ロンゲストマッチ</text>
+<rect x="524" y="36" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="57" text-anchor="middle" class="dg-t">Local</text>
+<text x="602" y="75" text-anchor="middle" class="dg-s">10.0.0.0/16</text>
+<rect x="524" y="110" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="132" text-anchor="middle" class="dg-t">VPC Peering</text>
+<text x="602" y="150" text-anchor="middle" class="dg-s">172.16.0.0/16</text>
+<rect x="524" y="186" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="207" text-anchor="middle" class="dg-t">Internet Gateway</text>
+<text x="602" y="225" text-anchor="middle" class="dg-s">0.0.0.0/0</text>
+<path d="M189.0,136.5 L279.0,136.5" class="dg-line" marker-end="url(#dgterms-route-table-1)"/>
+<path d="M434.0,112.8 L524.0,85.2" class="dg-line" marker-end="url(#dgterms-route-table-1)"/>
+<path d="M434.0,136.5 L524.0,136.5" class="dg-line" marker-end="url(#dgterms-route-table-1)"/>
+<path d="M434.0,160.2 L524.0,187.8" class="dg-line" marker-end="url(#dgterms-route-table-1)"/>
+</svg>
+</div>
+<figcaption>図1 ルートテーブルの働き。宛先IPアドレスに一致するルートのうち、最も具体的なもの(ロンゲストマッチ)を選び、そのターゲットへ通信を送る。0.0.0.0/0 は、ほかのどれにも当てはまらない宛先を受け止めるデフォルトルート。</figcaption>
+</figure>
+
+<h3>基本構造</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>意味</th></tr>
+<tr><td>Destination(宛先)</td><td>通信の宛先となるIPアドレス範囲(CIDR)</td></tr>
+<tr><td>Target(ターゲット)</td><td>その宛先へ通信を転送する先</td></tr>
+</table></div>
+<div class="table-wrap"><table>
+<tr><th>Destination</th><th>Target</th><th>意味</th></tr>
+<tr><td><code>10.0.0.0/16</code></td><td>Local</td><td>VPC内の <code>10.0.0.0/16</code> 宛てはVPC内で通信</td></tr>
+<tr><td><code>172.16.0.0/16</code></td><td>VPC Peering</td><td><code>172.16.0.0/16</code> 宛てはVPCピアリング経由</td></tr>
+<tr><td><code>0.0.0.0/0</code></td><td>Internet Gateway</td><td>上記以外の宛先はインターネットゲートウェイ経由</td></tr>
+</table></div>
+
+<h3>Destination(宛先)</h3>
+<p>どのIPアドレス範囲への通信かをCIDR形式で指定します。例えば <code>172.16.0.0/16</code> なら <code>172.16.0.0</code>〜<code>172.16.255.255</code> が対象です。宛先がプライベートかグローバルかに関係なく、CIDRで範囲を指定します。</p>
+<div class="table-wrap"><table>
+<tr><th>CIDR</th><th>意味</th></tr>
+<tr><td><code>10.0.0.0/8</code></td><td>プライベートIPv4アドレス範囲</td></tr>
+<tr><td><code>172.16.0.0/12</code></td><td>プライベートIPv4アドレス範囲</td></tr>
+<tr><td><code>192.168.0.0/16</code></td><td>プライベートIPv4アドレス範囲</td></tr>
+<tr><td><code>0.0.0.0/0</code></td><td>すべてのIPv4アドレス</td></tr>
+</table></div>
+
+<h3>Target(ターゲット)</h3>
+<ul>
+<li><strong>Local</strong>:同じVPC内</li>
+<li><strong>Internet Gateway</strong>:インターネットとの通信</li>
+<li><strong>NAT Gateway</strong>:プライベートサブネットからインターネットへの通信</li>
+<li><strong>VPC Peering</strong>:別のVPCとの通信</li>
+<li><strong>Transit Gateway</strong>:複数のVPC・オンプレミスなどを接続</li>
+<li><strong>Virtual Private Gateway</strong>:VPN経由の通信</li>
+</ul>
+
+<h3>ルートの選び方(ロンゲストマッチ)</h3>
+<p>複数のルートに当てはまる場合、AWSは<strong>宛先IPに最も具体的に一致するルート(Longest Prefix Match)</strong>を選びます。</p>
+<pre class="code"><code>10.0.0.0/16 → Local
+10.0.1.0/24 → 別のターゲット</code></pre>
+<p><code>10.0.1.50</code> 宛ての通信はどちらにも含まれますが、<code>/24</code> のほうが <code>/16</code> より具体的なので、<code>10.0.1.0/24</code> のルートが選ばれます。</p>
+
+<h3>デフォルトルート</h3>
+<p><code>0.0.0.0/0</code> は<strong>すべてのIPv4アドレスに一致する</strong>ルートです。<code>0.0.0.0/0 → Internet Gateway</code> とすると、より具体的なルートがない宛先への通信はインターネットゲートウェイへ送られます。</p>
+<div class="point"><p>ただし、<strong>インターネットゲートウェイへのルートがあるだけで、EC2がインターネットと通信できるとは限りません</strong>。EC2のパブリックIP、セキュリティグループ、ネットワークACLなども関係します。</p></div>
+
+<h3>セキュリティグループ・NACLとの違い</h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 788 116" style="max-width:788px;min-width:520px" role="img" aria-label="図2 ルートテーブルは「どこへ送るか(経路)」を決めるもので、ファイアウォールではない。通信を許可するかどうかは、その経路上のNACLとセキュリティグループが判断する。"><defs><marker id="dgterms-route-table-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="46" width="130" height="40" rx="8" class="dg-blue"/>
+<text x="99" y="70" text-anchor="middle" class="dg-t">インターネット</text>
+<rect x="184" y="40" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="249" y="62" text-anchor="middle" class="dg-tb">ルートテーブル</text>
+<text x="249" y="80" text-anchor="middle" class="dg-s">どこへ送るか</text>
+<rect x="334" y="40" width="130" height="52" rx="8" class="dg-box"/>
+<text x="399" y="62" text-anchor="middle" class="dg-t">NACL</text>
+<text x="399" y="80" text-anchor="middle" class="dg-s">許可 / 拒否</text>
+<rect x="484" y="40" width="130" height="52" rx="8" class="dg-box"/>
+<text x="549" y="62" text-anchor="middle" class="dg-t">SG</text>
+<text x="549" y="80" text-anchor="middle" class="dg-s">許可 / 拒否</text>
+<rect x="634" y="46" width="130" height="40" rx="8" class="dg-ok"/>
+<text x="699" y="70" text-anchor="middle" class="dg-t">EC2</text>
+<path d="M164.0,66.5 L184.0,66.5" class="dg-line" marker-end="url(#dgterms-route-table-2)"/>
+<path d="M314.0,66.5 L334.0,66.5" class="dg-line" marker-end="url(#dgterms-route-table-2)"/>
+<path d="M464.0,66.5 L484.0,66.5" class="dg-line" marker-end="url(#dgterms-route-table-2)"/>
+<path d="M614.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgterms-route-table-2)"/>
+</svg>
+</div>
+<figcaption>図2 ルートテーブルは「どこへ送るか(経路)」を決めるもので、ファイアウォールではない。通信を許可するかどうかは、その経路上のNACLとセキュリティグループが判断する。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>役割</th><th>判断するもの</th></tr>
+<tr><td>ルートテーブル</td><td>通信をどこへ送るか決める</td><td><strong>経路</strong></td></tr>
+<tr><td>セキュリティグループ</td><td>通信を許可するか決める</td><td><strong>許可</strong></td></tr>
+<tr><td>ネットワークACL</td><td>サブネットへの通信を許可/拒否する</td><td><strong>許可/拒否</strong></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="vpc-flow-logs.html">VPCフローログ</a>:経路やSG・NACLのトラブル調査に使う通信の記録</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:通信の許可・拒否を判断する仕組み</li>
+<li><a href="outbound-traffic.html">アウトバウンド通信</a>/<a href="inbound-traffic.html">インバウンド通信</a>:ルートテーブルのターゲットごとの通信パターン</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:ルートテーブルを関連付けるサブネット・ゲートウェイ</li>
+<li><a href="../services/transit-gateway.html">AWS Transit Gateway</a>:VPC・オンプレミスへの経路のターゲット</li>
+<li><a href="../services/ram.html">AWS Resource Access Manager</a>:Transit Gatewayの共有</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="dns-record-types.html"><span class="label">← 前へ</span>DNSレコードタイプ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="nacl-security-group.html"><span class="label">次へ →</span>ネットワークACLとセキュリティグループ</a>
+</nav>
+</main>
+</body>
+</html>

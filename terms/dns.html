@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNS | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワーク</span>
+  <h1>DNS</h1>
+  <p class="lead">ドメイン名をIPアドレスに変換する名前解決の仕組み</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>DNS(Domain Name System)</strong>は、<code>example.com</code> のようなドメイン名を、通信に使うIPアドレスに対応付ける仕組みです。</p>
+<p><code>example.com</code> → DNSで名前解決 → <code>93.184.216.34</code> → Webサーバーへ接続</p>
+<p>DNSは「ドメイン名を目的の情報へ変換するための<strong>分散型データベース・名前解決システム</strong>」であり、<a href="dns-record-types.html">DNSレコード</a>はそのデータベースに登録されている個々の情報です。</p>
+<h3>主要な登場人物</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>役割</th></tr>
+<tr><td>DNSクライアント</td><td>名前解決を要求する側。一般的にはOSやアプリケーション</td></tr>
+<tr><td>DNSリゾルバー(Recursive Resolver)</td><td>クライアントに代わってDNSサーバーへ問い合わせ、最終的な結果を取得する</td></tr>
+<tr><td>ルートDNSサーバー</td><td>DNS階層の最上位。TLD DNSサーバーへの案内を行う</td></tr>
+<tr><td>TLD DNSサーバー</td><td><code>.com</code>・<code>.jp</code> などのトップレベルドメイン(TLD=ドメイン末尾の区分)を管理し、権威DNSサーバーへの案内を行う</td></tr>
+<tr><td>権威DNSサーバー(Authoritative DNS)</td><td>特定のドメインのDNSレコードを正式に管理し、問い合わせに回答する</td></tr>
+</table></div>
+
+<h3>名前解決の流れ</h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:520px" role="img" aria-label="図1 名前解決の流れ。クライアントはDNSリゾルバーに「最終的な答え」を求め(再帰問い合わせ)、リゾルバーはルート → TLD → 権威DNSの順に「次の問い合わせ先」を教えてもらいながら(反復問い合わせ)答えを得る。"><defs><marker id="dgterms-dns-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">クライアント</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">ブラウザ・OS</text>
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">DNSリゾルバー</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">結果をキャッシュ</text>
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">ルートDNS</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">→ .com はここ</text>
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">.com TLD DNS</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">→ 権威DNSはここ</text>
+<rect x="510" y="198" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="220" text-anchor="middle" class="dg-t">権威DNS</text>
+<text x="585" y="238" text-anchor="middle" class="dg-s">example.com を管理</text>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgterms-dns-1)" marker-start="url(#dgterms-dns-1)"/>
+<path d="M422.0,118.8 L510.0,89.2" class="dg-line" marker-end="url(#dgterms-dns-1)"/>
+<text x="466" y="108" text-anchor="middle" class="dg-s dg-halo">②</text>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgterms-dns-1)"/>
+<text x="466" y="148" text-anchor="middle" class="dg-s dg-halo">③</text>
+<path d="M422.0,169.2 L510.0,198.8" class="dg-line" marker-end="url(#dgterms-dns-1)"/>
+<text x="466" y="188" text-anchor="middle" class="dg-s dg-halo">④</text>
+</svg>
+</div>
+<figcaption>図1 名前解決の流れ。クライアントはDNSリゾルバーに「最終的な答え」を求め(再帰問い合わせ)、リゾルバーはルート → TLD → 権威DNSの順に「次の問い合わせ先」を教えてもらいながら(反復問い合わせ)答えを得る。</figcaption>
+</figure>
+<p>ブラウザで <code>www.example.com</code> にアクセスすると、概ね次の流れで名前解決が行われます。</p>
+<ol>
+<li><strong>ブラウザのDNSキャッシュを確認</strong>:以前に取得した情報が残っていれば使う</li>
+<li><strong>OSなどのDNSキャッシュを確認</strong></li>
+<li><strong>DNSリゾルバーへ問い合わせ</strong>:キャッシュになければ、プロバイダなどが提供するリゾルバーへ問い合わせる</li>
+<li><strong>ルートDNSへ問い合わせ</strong>:<code>.com</code> などのTLDを管理するサーバーの情報が返る</li>
+<li><strong>TLD DNSへ問い合わせ</strong>:対象ドメインの権威DNSサーバーの情報が返る</li>
+<li><strong>権威DNSへ問い合わせ</strong>:AレコードやAAAAレコードなど、要求されたレコードが返る</li>
+<li><strong>リゾルバーが結果をクライアントへ返す</strong></li>
+<li><strong>ブラウザがそのIPアドレスへHTTP/HTTPSで接続</strong></li>
+</ol>
+
+<h3>再帰問い合わせと反復問い合わせ</h3>
+<ul>
+<li><strong>再帰問い合わせ(Recursive Query)</strong>:クライアントがリゾルバーに「最終的な答えを返してほしい」と要求する方式。クライアントとリゾルバーの間で使う。</li>
+<li><strong>反復問い合わせ(Iterative Query)</strong>:リゾルバーがDNSサーバーに問い合わせ、答えそのものではなく「次に問い合わせるべきサーバー」を案内してもらう方式。リゾルバーとルート・TLD・権威DNSの間で使う。</li>
+</ul>
+
+<h3>DNSの階層構造</h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 438 354" style="max-width:438px;min-width:438px" role="img" aria-label="図2 DNSの階層構造。上位のサーバーは下位のサーバーの場所を知っており、最終的なレコードは各ドメインの権威DNSサーバーが管理する。"><defs><marker id="dgterms-dns-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="194" y="44" width="140" height="40" rx="8" class="dg-accent"/>
+<text x="264" y="68" text-anchor="middle" class="dg-tb">ルート(.)</text>
+<rect x="114" y="124" width="140" height="40" rx="8" class="dg-box"/>
+<text x="184" y="148" text-anchor="middle" class="dg-t">.com</text>
+<rect x="274" y="124" width="140" height="40" rx="8" class="dg-box"/>
+<text x="344" y="148" text-anchor="middle" class="dg-t">.jp</text>
+<rect x="114" y="204" width="140" height="40" rx="8" class="dg-box"/>
+<text x="184" y="228" text-anchor="middle" class="dg-t">example.com</text>
+<rect x="274" y="204" width="140" height="40" rx="8" class="dg-box"/>
+<text x="344" y="228" text-anchor="middle" class="dg-t">example.jp</text>
+<rect x="114" y="278" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="184" y="300" text-anchor="middle" class="dg-t">A / MX / TXT …</text>
+<text x="184" y="318" text-anchor="middle" class="dg-s">権威DNSが管理</text>
+<path d="M244.0,84.0 L204.0,124.0" class="dg-line" marker-end="url(#dgterms-dns-2)"/>
+<path d="M284.0,84.0 L324.0,124.0" class="dg-line" marker-end="url(#dgterms-dns-2)"/>
+<path d="M184.0,164.0 L184.0,204.0" class="dg-line" marker-end="url(#dgterms-dns-2)"/>
+<path d="M344.0,164.0 L344.0,204.0" class="dg-line" marker-end="url(#dgterms-dns-2)"/>
+<path d="M184.0,244.0 L184.0,278.0" class="dg-line" marker-end="url(#dgterms-dns-2)"/>
+</svg>
+</div>
+<figcaption>図2 DNSの階層構造。上位のサーバーは下位のサーバーの場所を知っており、最終的なレコードは各ドメインの権威DNSサーバーが管理する。</figcaption>
+</figure>
+
+<h3>DNSキャッシュとTTL</h3>
+<p>問い合わせのたびにルートから権威DNSまでたどると負荷が大きいため、DNSでは結果を一定期間キャッシュします。レコードには<strong>TTL(Time To Live)</strong>が設定されており、キャッシュを保持する期間を指定します。例えばTTLが <code>3600</code> 秒なら、リゾルバーは原則として1時間ほど結果をキャッシュし、その間は権威DNSに問い合わせずに回答します。</p>
+
+<h3>AWSでのDNS</h3>
+<p>AWSでは主に<strong>Amazon Route 53</strong>を使います。ドメインのレコードを管理する<strong>ホストゾーン</strong>を作成し、A・AAAA・CNAME・MX・TXTなどを登録します。単純な名前解決だけでなく、<strong>ルーティングポリシー・ヘルスチェック・エイリアスレコード</strong>と組み合わせて、AWSリソースへのトラフィック制御にも使えます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="dns-record-types.html">DNSレコードタイプ</a>:権威DNSが管理する個々の情報(A・CNAME・MXなど)</li>
+<li><a href="spf.html">SPF</a>:DNS(TXTレコード)を使ったメールのなりすまし対策</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/route53.html">Amazon Route 53</a>:AWSのマネージドDNSサービス</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>/<a href="../services/elb.html">Elastic Load Balancing</a>:エイリアスレコードの向き先</li>
+</ul>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="dns-record-types.html"><span class="label">次へ →</span>DNSレコードタイプ</a>
+</nav>
+</main>
+</body>
+</html>

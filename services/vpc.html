@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon VPC | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワークとコンテンツ配信</span>
+  <h1>Amazon VPC</h1>
+  <p class="lead">AWS上に論理的に分離された仮想ネットワークを作るサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon VPC(Virtual Private Cloud)</strong>は、AWS上に<strong>論理的に分離された仮想ネットワーク</strong>を構築するサービスです。</p>
+<ul>
+<li>AWS内に自分専用のネットワーク空間を作成できる</li>
+<li>IPアドレス範囲(CIDR)を自由に定義できる</li>
+<li>サブネット単位でリソースを配置する</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 830 383" style="max-width:830px;min-width:520px" role="img" aria-label="図1 VPCの基本構成。パブリックサブネットはインターネットゲートウェイ経由で外部と通信できる。プライベートサブネットはNATゲートウェイ経由で外向きの通信だけを行い、VPCエンドポイントでAWSサービスにプライベート接続する。"><defs><marker id="dgservices-vpc-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="184" y="112" width="400" height="247" rx="10" class="dg-group"/>
+<text x="194" y="127" class="dg-s">VPC</text>
+<rect x="206" y="134" width="356" height="86" rx="10" class="dg-group"/>
+<text x="216" y="149" class="dg-s">パブリックサブネット</text>
+<rect x="206" y="251" width="356" height="86" rx="10" class="dg-group"/>
+<text x="216" y="266" class="dg-s">プライベートサブネット</text>
+<rect x="34" y="49" width="160" height="40" rx="8" class="dg-blue"/>
+<text x="114" y="73" text-anchor="middle" class="dg-t">インターネット</text>
+<rect x="304" y="43" width="160" height="52" rx="8" class="dg-box"/>
+<text x="384" y="64" text-anchor="middle" class="dg-t">IGW</text>
+<text x="384" y="82" text-anchor="middle" class="dg-s">インターネットGW</text>
+<rect x="214" y="160" width="160" height="52" rx="8" class="dg-box"/>
+<text x="294" y="182" text-anchor="middle" class="dg-t">Webサーバー</text>
+<text x="294" y="200" text-anchor="middle" class="dg-s">パブリックIP</text>
+<rect x="394" y="166" width="160" height="40" rx="8" class="dg-box"/>
+<text x="474" y="190" text-anchor="middle" class="dg-t">NATゲートウェイ</text>
+<rect x="214" y="277" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="294" y="298" text-anchor="middle" class="dg-tb">アプリ・DB</text>
+<text x="294" y="316" text-anchor="middle" class="dg-s">プライベートIPのみ</text>
+<rect x="394" y="283" width="160" height="40" rx="8" class="dg-ok"/>
+<text x="474" y="307" text-anchor="middle" class="dg-t">VPCエンドポイント</text>
+<rect x="646" y="277" width="160" height="52" rx="8" class="dg-box"/>
+<text x="726" y="298" text-anchor="middle" class="dg-t">S3 など</text>
+<text x="726" y="316" text-anchor="middle" class="dg-s">AWSサービス</text>
+<path d="M194.0,69.0 L304.0,69.0" class="dg-line" marker-end="url(#dgservices-vpc-1)" marker-start="url(#dgservices-vpc-1)"/>
+<path d="M364.0,95.0 L314.0,160.0" class="dg-line" marker-end="url(#dgservices-vpc-1)" marker-start="url(#dgservices-vpc-1)"/>
+<path d="M404.0,95.0 L458.6,166.0" class="dg-line" marker-end="url(#dgservices-vpc-1)"/>
+<path d="M334.0,277.0 L443.2,206.0" class="dg-line" marker-end="url(#dgservices-vpc-1)"/>
+<text x="389" y="246" text-anchor="middle" class="dg-s dg-halo">外向きのみ</text>
+<path d="M374.0,303.0 L394.0,303.0" class="dg-line" marker-end="url(#dgservices-vpc-1)"/>
+<path d="M554.0,303.0 L646.0,303.0" class="dg-line" marker-end="url(#dgservices-vpc-1)"/>
+</svg>
+</div>
+<figcaption>図1 VPCの基本構成。パブリックサブネットはインターネットゲートウェイ経由で外部と通信できる。プライベートサブネットはNATゲートウェイ経由で外向きの通信だけを行い、VPCエンドポイントでAWSサービスにプライベート接続する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<div class="table-wrap"><table>
+<tr><th>構成要素</th><th>役割</th></tr>
+<tr><td>サブネット</td><td>VPC内のネットワークの分割単位</td></tr>
+<tr><td>ルートテーブル</td><td>通信経路の制御</td></tr>
+<tr><td>インターネットゲートウェイ</td><td>VPCとインターネットを接続(パブリックサブネットで利用)</td></tr>
+<tr><td>NATゲートウェイ</td><td>プライベートサブネットからインターネットへの<strong>アウトバウンド通信のみ</strong>許可(外部からのアクセスは不可)</td></tr>
+<tr><td>VPCエンドポイント</td><td>インターネットを経由せずにVPCからAWSサービスへプライベート接続する</td></tr>
+<tr><td>セキュリティグループ</td><td>アクセス制御。<strong>インスタンス単位</strong>、<strong>許可のみ</strong>設定可能</td></tr>
+<tr><td>ネットワークACL</td><td>アクセス制御。<strong>サブネット単位</strong>、<strong>許可/拒否の両方</strong>を設定可能</td></tr>
+</table></div>
+<p>セキュリティグループは<strong>ステートフル</strong>(戻りの通信は自動で許可)、ネットワークACLは<strong>ステートレス</strong>(戻りの通信も明示的に許可が必要)です。</p>
+<p>「パブリックサブネット」とは、ルートテーブルにインターネットゲートウェイへの経路(<code>0.0.0.0/0 → IGW</code>)があるサブネットのことです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 879 129" style="max-width:879px;min-width:520px" role="img" aria-label="図2 通信がインスタンスに届くまで。サブネットの出入り口でネットワークACL(ステートレス)、インスタンスの手前でセキュリティグループ(ステートフル)がチェックする。"><defs><marker id="dgservices-vpc-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="462" y="15" width="394" height="90" rx="10" class="dg-group"/>
+<text x="472" y="30" class="dg-s">サブネット</text>
+<rect x="34" y="49" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="112" y="73" text-anchor="middle" class="dg-t">通信</text>
+<rect x="253" y="43" width="155" height="52" rx="8" class="dg-box"/>
+<text x="330" y="64" text-anchor="middle" class="dg-t">ネットワークACL</text>
+<text x="330" y="82" text-anchor="middle" class="dg-s">許可/拒否・ステートレス</text>
+<rect x="472" y="43" width="155" height="52" rx="8" class="dg-box"/>
+<text x="549" y="64" text-anchor="middle" class="dg-t">セキュリティグループ</text>
+<text x="549" y="82" text-anchor="middle" class="dg-s">許可のみ・ステートフル</text>
+<rect x="690" y="49" width="155" height="40" rx="8" class="dg-accent"/>
+<text x="768" y="73" text-anchor="middle" class="dg-tb">EC2</text>
+<path d="M189.0,69.0 L252.8,69.0" class="dg-line" marker-end="url(#dgservices-vpc-2)"/>
+<path d="M407.8,69.0 L471.5,69.0" class="dg-line" marker-end="url(#dgservices-vpc-2)"/>
+<path d="M626.5,69.0 L690.2,69.0" class="dg-line" marker-end="url(#dgservices-vpc-2)"/>
+</svg>
+</div>
+<figcaption>図2 通信がインスタンスに届くまで。サブネットの出入り口でネットワークACL(ステートレス)、インスタンスの手前でセキュリティグループ(ステートフル)がチェックする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Webサーバーはパブリックサブネット、DBはプライベートサブネットに配置する多層構成</li>
+<li>プライベートサブネットのサーバーからNATゲートウェイ経由でOSアップデートを取得</li>
+<li>VPCエンドポイントでS3などにインターネットを経由せずアクセス</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>VPC・サブネット・ルートテーブル・セキュリティグループ自体は無料です。NATゲートウェイ(時間+処理データ量)、インターフェース型VPCエンドポイント、パブリックIPv4アドレスなどは有料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:VPC内に配置する代表的なリソース</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:パブリックサブネットに置く入り口</li>
+<li><a href="s3.html">Amazon S3</a>:VPCエンドポイントの接続先</li>
+<li><a href="route53.html">Amazon Route 53</a>:プライベートホストゾーンでVPC内の名前解決</li>
+<li><a href="ram.html">AWS Resource Access Manager</a>:サブネットの共有</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:多数のVPC・オンプレミスをハブ&スポークで接続</li>
+<li><a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>/<a href="direct-connect.html">AWS Direct Connect</a>:オンプレミスとの接続</li>
+<li><a href="../terms/vpc-flow-logs.html">VPCフローログ</a>:VPC内の通信の記録</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>プライベートサブネットから外へ出たいが外から入らせない → <strong>NATゲートウェイ</strong>。</li>
+<li>特定のIPを<strong>拒否</strong>したい → <strong>ネットワークACL</strong>(セキュリティグループは許可のみ)。</li>
+<li>インスタンス単位の制御 → セキュリティグループ、サブネット単位 → ネットワークACL。</li>
+<li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>VPCはAWS上の自分専用ネットワーク。CIDRとサブネットで設計する。</li>
+<li>経路はルートテーブル、出入口はIGW/NAT/エンドポイント。</li>
+<li>アクセス制御はセキュリティグループ(許可のみ)とネットワークACL(許可/拒否)。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="memorydb.html"><span class="label">← 前へ</span>Amazon MemoryDB</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="transit-gateway.html"><span class="label">次へ →</span>AWS Transit Gateway</a>
+</nav>
+</main>
+</body>
+</html>

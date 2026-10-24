@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Elastic Beanstalk | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">コンピューティング</span>
+  <h1>AWS Elastic Beanstalk</h1>
+  <p class="lead">コードを渡すだけでアプリを簡単にデプロイ・運用できるPaaS</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Elastic Beanstalk</strong>は、バックエンドアプリケーションを簡単にデプロイ・運用するための<strong>PaaS</strong>です。開発者はアプリのコードを渡すだけで、AWSが実行環境を自動で構築してくれます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 696 221" style="max-width:696px;min-width:520px" role="img" aria-label="図1 Elastic Beanstalkの流れ。コードをアプリケーションバージョンとして登録し、Environmentにデプロイする。Environment内のリソースはBeanstalkが自動で作る。"><defs><marker id="dgservices-elastic-beanstalk-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="498" y="13" width="174" height="184" rx="10" class="dg-group"/>
+<text x="508" y="28" class="dg-s">Environment</text>
+<rect x="34" y="94" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="118" text-anchor="middle" class="dg-t">アプリのコード</text>
+<rect x="272" y="88" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="109" text-anchor="middle" class="dg-t">アプリケーション</text>
+<text x="347" y="127" text-anchor="middle" class="dg-t">バージョン</text>
+<rect x="510" y="49" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="73" text-anchor="middle" class="dg-t">ロードバランサー</text>
+<rect x="510" y="133" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="154" text-anchor="middle" class="dg-tb">EC2</text>
+<text x="585" y="172" text-anchor="middle" class="dg-s">コードを配置</text>
+<path d="M184.0,114.0 L272.0,114.0" class="dg-line" marker-end="url(#dgservices-elastic-beanstalk-1)"/>
+<text x="228" y="118" text-anchor="middle" class="dg-s dg-halo">登録</text>
+<path d="M422.0,128.2 L510.0,144.8" class="dg-line" marker-end="url(#dgservices-elastic-beanstalk-1)"/>
+<text x="466" y="140" text-anchor="middle" class="dg-s dg-halo">デプロイ</text>
+<path d="M585.0,89.0 L585.0,133.0" class="dg-line" marker-end="url(#dgservices-elastic-beanstalk-1)"/>
+</svg>
+</div>
+<figcaption>図1 Elastic Beanstalkの流れ。コードをアプリケーションバージョンとして登録し、Environmentにデプロイする。Environment内のリソースはBeanstalkが自動で作る。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>利用フロー</h3>
+<ol>
+<li>アプリケーションを作成</li>
+<li>デプロイ設定を定義</li>
+<li>アプリケーションバージョンを作成</li>
+<li>Environment(アプリを実行するAWS環境全体)へデプロイ
+  <ul><li>Beanstalkが内部でAWSリソースを操作する</li><li>EC2内にコードを配置する</li></ul></li>
+<li>ヘルスチェック</li>
+</ol>
+<p>デメリットは、ECS/EKSに比べて<strong>柔軟性が低い</strong>ことです。</p>
+<p>Beanstalkが自動で作るリソースには、EC2インスタンス、Auto Scalingグループ、ロードバランサーなどが含まれます。裏側ではCloudFormationが使われています。</p>
+<p>代表的なデプロイ方式として、All at once(一斉)、Rolling、Rolling with additional batch、Immutable、Blue/Green(環境URLのスワップ)があります。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>インフラの知識が少ないチームで、Webアプリを素早く公開したい</li>
+<li>Java・Python・Node.jsなどの一般的なWebアプリを、構成を作り込まずに運用したい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Elastic Beanstalk自体は無料です。作成されたEC2・ロードバランサー・EBSなどのリソースに対して、それぞれの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:アプリが配置される実行環境</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:環境のトラフィック分散</li>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:裏側で環境を構築する仕組み</li>
+<li><a href="ecs.html">Amazon ECS</a>/<a href="eks.html">Amazon EKS</a>:より柔軟なコンテナ実行の選択肢</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point">
+<ul>
+<li>「インフラ管理を最小限にしてアプリをデプロイしたい」→ Elastic Beanstalk。</li>
+<li>細かな制御や柔軟性が必要なら ECS/EKS を選ぶ。</li>
+<li>デプロイの単位は「アプリケーションバージョン」を「Environment」へ。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Elastic BeanstalkはコードだけでAWS環境を自動構築するPaaS。</li>
+<li>手軽さと引き換えに柔軟性は低い。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="lambda.html"><span class="label">← 前へ</span>AWS Lambda</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="ecs.html"><span class="label">次へ →</span>Amazon ECS</a>
+</nav>
+</main>
+</body>
+</html>

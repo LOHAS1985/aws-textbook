@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Global Accelerator | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワークとコンテンツ配信</span>
+  <h1>AWS Global Accelerator</h1>
+  <p class="lead">AWSのグローバルネットワークで通信経路を最適化</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Global Accelerator</strong>は、AWSのグローバルネットワークを使って、<strong>ユーザーからアプリケーションまでの通信経路を最適化</strong>するサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>仕組み</h3>
+<ol>
+<li><strong>2つの静的Anycast IPアドレス</strong>が割り当てられ、エッジロケーションで受け付ける。
+  <ul><li>Anycast IP:1つのIPアドレスを複数のエッジロケーションに設定する方式</li><li>2つある理由:可用性(冗長性)のため</li></ul></li>
+<li>ユーザーの通信は最寄りのエッジロケーションに入り、インターネットではなく<strong>AWSのバックボーンネットワーク</strong>でリージョン内のエンドポイントへ転送される。</li>
+<li>エンドポイントのヘルスチェックを行い、異常時は正常なエンドポイントへ<strong>自動でフェイルオーバー</strong>する。</li>
+</ol>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図1 Global Acceleratorの仕組み。2つの固定Anycast IPで最寄りのエッジに入り、インターネットではなくAWSのバックボーンでエンドポイントへ届ける。ヘルスチェックで異常を検知すると、正常なエンドポイントへ自動で切り替える。"><defs><marker id="dgservices-global-accelerator-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="70" text-anchor="middle" class="dg-t">ユーザー(日本)</text>
+<rect x="34" y="132" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="156" text-anchor="middle" class="dg-t">ユーザー(欧州)</text>
+<rect x="255" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="330" y="62" text-anchor="middle" class="dg-t">エッジ</text>
+<text x="330" y="80" text-anchor="middle" class="dg-s">Anycast IP</text>
+<rect x="255" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="330" y="147" text-anchor="middle" class="dg-t">エッジ</text>
+<text x="330" y="165" text-anchor="middle" class="dg-s">Anycast IP</text>
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="62" text-anchor="middle" class="dg-tb">ALB(東京)</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">正常</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">ALB(米国)</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">障害時の切替先</text>
+<path d="M184.0,66.5 L255.0,66.5" class="dg-line" marker-end="url(#dgservices-global-accelerator-1)"/>
+<path d="M184.0,151.5 L255.0,151.5" class="dg-line" marker-end="url(#dgservices-global-accelerator-1)"/>
+<path d="M405.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgservices-global-accelerator-1)"/>
+<text x="458" y="70" text-anchor="middle" class="dg-s dg-halo">バックボーン</text>
+<path d="M405.0,126.5 L510.0,91.5" class="dg-line" marker-end="url(#dgservices-global-accelerator-1)"/>
+<path d="M405.0,151.5 L510.0,151.5" class="dg-line dg-dash" marker-end="url(#dgservices-global-accelerator-1)"/>
+</svg>
+</div>
+<figcaption>図1 Global Acceleratorの仕組み。2つの固定Anycast IPで最寄りのエッジに入り、インターネットではなくAWSのバックボーンでエンドポイントへ届ける。ヘルスチェックで異常を検知すると、正常なエンドポイントへ自動で切り替える。</figcaption>
+</figure>
+<h3>対応エンドポイント</h3>
+<ul><li>ALB/NLB</li><li>EC2インスタンス</li><li>Elastic IPアドレス</li></ul>
+
+<h3>CloudFrontとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Global Accelerator</th><th>CloudFront</th></tr>
+<tr><td>目的</td><td>通信経路の最適化</td><td>コンテンツのキャッシュ配信</td></tr>
+<tr><td>プロトコル</td><td>TCP/UDP</td><td>HTTP/HTTPS/WebSocket</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ゲーム・VoIP・IoTなど、TCP/UDPでレイテンシーを下げたいアプリ</li>
+<li>固定IPアドレスでの接続が必要(取引先のファイアウォールで許可リスト登録など)</li>
+<li>複数リージョン間のすばやいフェイルオーバー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>アクセラレーターごとの時間料金と、転送データ量に応じた料金(DT-Premium)がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cloudfront.html">Amazon CloudFront</a>:HTTPのキャッシュ配信</li>
+<li><a href="elb.html">Elastic Load Balancing</a>/<a href="ec2.html">Amazon EC2</a>:エンドポイント</li>
+<li><a href="route53.html">Amazon Route 53</a>:DNSベースのルーティング</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「<strong>静的IP</strong>」「<strong>TCP/UDP</strong>」「グローバルにレイテンシー改善」→ Global Accelerator。</li>
+<li>「キャッシュ」「HTTP」→ CloudFront。</li>
+<li>DNSのキャッシュに左右されずにフェイルオーバーしたい → Global Accelerator。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>2つの静的Anycast IP+AWSバックボーンで通信経路を最適化する。</li>
+<li>CloudFrontはキャッシュ、Global Acceleratorは経路最適化。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="cloudfront.html"><span class="label">← 前へ</span>Amazon CloudFront</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="api-gateway.html"><span class="label">次へ →</span>Amazon API Gateway</a>
+</nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>負荷に応じて自動でスケールするWebシステム | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">信頼性・事業継続</span>
+  <h1>負荷に応じて自動でスケールするWebシステム</h1>
+  <p class="lead">ALBとAuto Scalingグループで、複数AZにまたがって台数を自動調整する</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>アクセス数の増減に合わせてEC2の台数を自動で増減させたい。1つのAZで障害が起きてもサービスを継続し、異常なインスタンスは自動で入れ替えたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 696 272" style="max-width:696px;min-width:520px" role="img" aria-label="図1 ALBが複数AZのEC2にリクエストを分散し、Auto ScalingグループがCloudWatchのメトリクスに応じて台数を増減する。異常なインスタンスは自動で入れ替わる。"><defs><marker id="dgusecases-auto-scaling-web-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="498" y="13" width="174" height="184" rx="10" class="dg-group"/>
+<text x="508" y="28" class="dg-s">Auto Scalingグループ</text>
+<rect x="34" y="94" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="118" text-anchor="middle" class="dg-t">利用者</text>
+<rect x="272" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="110" text-anchor="middle" class="dg-tb">ALB</text>
+<text x="347" y="128" text-anchor="middle" class="dg-s">ヘルスチェック</text>
+<rect x="510" y="43" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="64" text-anchor="middle" class="dg-t">EC2</text>
+<text x="585" y="82" text-anchor="middle" class="dg-s">AZ-a</text>
+<rect x="510" y="133" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="154" text-anchor="middle" class="dg-t">EC2</text>
+<text x="585" y="172" text-anchor="middle" class="dg-s">AZ-c</text>
+<rect x="272" y="196" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="347" y="218" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="347" y="236" text-anchor="middle" class="dg-s">CPU 50%を維持</text>
+<path d="M184.0,114.0 L272.0,114.0" class="dg-line" marker-end="url(#dgusecases-auto-scaling-web-1)"/>
+<path d="M422.0,99.8 L510.0,83.2" class="dg-line" marker-end="url(#dgusecases-auto-scaling-web-1)"/>
+<path d="M422.0,128.2 L510.0,144.8" class="dg-line" marker-end="url(#dgusecases-auto-scaling-web-1)"/>
+<path d="M422.0,202.1 L510.0,178.9" class="dg-line dg-dash" marker-end="url(#dgusecases-auto-scaling-web-1)"/>
+</svg>
+</div>
+<figcaption>図1 ALBが複数AZのEC2にリクエストを分散し、Auto ScalingグループがCloudWatchのメトリクスに応じて台数を増減する。異常なインスタンスは自動で入れ替わる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/elb.html">Elastic Load Balancing(ALB)</a>:複数AZのインスタンスにトラフィックを分散し、ヘルスチェックで異常を検知する</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:アプリケーションを動かすインスタンス</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:起動テンプレートをもとにインスタンスを自動で起動・終了し、指定した台数(最小・最大・希望)を保つ</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:CPU使用率やリクエスト数などのメトリクスでスケーリングを判断する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>AMIとインスタンスタイプなどを指定した<strong>起動テンプレート</strong>を作成する</li>
+<li>複数AZのサブネットを指定してAuto Scalingグループを作成し、最小・最大・希望の台数を決める</li>
+<li>ALBとターゲットグループを作成し、Auto Scalingグループに関連付ける</li>
+<li><strong>ターゲット追跡スケーリング</strong>(例:平均CPU使用率50%を維持)を設定する</li>
+<li>Auto Scalingグループのヘルスチェックの種類を「ELB」にして、アプリの異常でも入れ替わるようにする</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>ELBはリージョン内の<strong>複数AZ</strong>に分散する。インスタンスも複数AZに配置して、AZ障害に備える。</li>
+<li>ヘルスチェックの種類がEC2のままだと、OSは動いているがアプリが落ちている状態を検知できない → <strong>ELBヘルスチェック</strong>を使う。</li>
+<li>決まった時間に負荷が増えるなら<strong>スケジュールされたスケーリング</strong>、指標を一定に保つなら<strong>ターゲット追跡</strong>。</li>
+<li>インスタンスのサイズ見直しには<a href="../services/compute-optimizer.html">Compute Optimizer</a>の推奨を使う。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="centralized-logging.html"><span class="label">← 前へ</span>複数アカウントのログを集約して分析する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="rds-high-availability.html"><span class="label">次へ →</span>データベースの高可用性と読み取り分散</a>
+</nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC2のアプリをCI/CDでBlue/Greenデプロイする | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">デプロイ・自動化</span>
+  <h1>EC2のアプリをCI/CDでBlue/Greenデプロイする</h1>
+  <p class="lead">CodePipelineで自動化し、CodeDeployのBlue/Greenで安全に切り替える</p>
+</div>
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>GitHubへのプッシュをきっかけに、ビルド・テストから本番デプロイまでを自動化したい。本番への切り替えはダウンタイムなしで行い、問題があればすぐ元に戻したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 798 312" style="max-width:798px;min-width:520px" role="img" aria-label="図1 CodePipelineがビルド・テスト・手動承認を経てCodeDeployを起動する。CodeDeployは新しいAuto Scalingグループ(Green)にアプリを配置し、ALBの向き先をBlueからGreenへ切り替える。"><defs><marker id="dgusecases-ec2-blue-green-pipeline-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="62" text-anchor="middle" class="dg-t">GitHub</text>
+<text x="104" y="80" text-anchor="middle" class="dg-s">プッシュ</text>
+<rect x="234" y="46" width="140" height="40" rx="8" class="dg-accent"/>
+<text x="304" y="70" text-anchor="middle" class="dg-tb">CodePipeline</text>
+<rect x="434" y="40" width="140" height="52" rx="8" class="dg-box"/>
+<text x="504" y="62" text-anchor="middle" class="dg-t">CodeBuild</text>
+<text x="504" y="80" text-anchor="middle" class="dg-s">ビルド・テスト</text>
+<rect x="634" y="46" width="140" height="40" rx="8" class="dg-box"/>
+<text x="704" y="70" text-anchor="middle" class="dg-t">手動承認</text>
+<rect x="634" y="142" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="704" y="164" text-anchor="middle" class="dg-tb">CodeDeploy</text>
+<text x="704" y="182" text-anchor="middle" class="dg-s">Blue/Green</text>
+<rect x="434" y="142" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="504" y="164" text-anchor="middle" class="dg-t">Green</text>
+<text x="504" y="182" text-anchor="middle" class="dg-s">新しいASG</text>
+<rect x="434" y="236" width="140" height="52" rx="8" class="dg-box"/>
+<text x="504" y="258" text-anchor="middle" class="dg-t">Blue</text>
+<text x="504" y="276" text-anchor="middle" class="dg-s">旧ASG</text>
+<rect x="234" y="189" width="140" height="52" rx="8" class="dg-box"/>
+<text x="304" y="211" text-anchor="middle" class="dg-t">ALB</text>
+<text x="304" y="229" text-anchor="middle" class="dg-s">向き先を切替</text>
+<rect x="34" y="195" width="140" height="40" rx="8" class="dg-blue"/>
+<text x="104" y="219" text-anchor="middle" class="dg-t">利用者</text>
+<path d="M174.0,66.5 L234.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M374.0,66.5 L434.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M574.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M704.0,86.5 L704.0,142.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M634.0,168.5 L574.0,168.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<text x="604" y="172" text-anchor="middle" class="dg-s dg-halo">デプロイ</text>
+<path d="M174.0,215.2 L234.0,215.2" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M374.0,198.9 L434.0,184.9" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<text x="404" y="196" text-anchor="middle" class="dg-s dg-halo">切替後</text>
+<path d="M374.0,231.6 L434.0,245.6" class="dg-line dg-dash" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<text x="404" y="243" text-anchor="middle" class="dg-s dg-halo">切替前</text>
+</svg>
+</div>
+<figcaption>図1 CodePipelineがビルド・テスト・手動承認を経てCodeDeployを起動する。CodeDeployは新しいAuto Scalingグループ(Green)にアプリを配置し、ALBの向き先をBlueからGreenへ切り替える。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/codepipeline.html">AWS CodePipeline</a>:Source → Build → Approval → Deploy の流れを自動化する</li>
+<li><a href="../services/codebuild.html">AWS CodeBuild</a>:buildspec.ymlに従ってビルド・テストする</li>
+<li><a href="../services/codedeploy.html">AWS CodeDeploy</a>:appspec.ymlに従ってEC2にデプロイし、Blue/Greenで切り替える</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:BlueとGreenの切り替え</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:アラームによる自動ロールバック</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>ソースにbuildspec.yml(ビルド手順)とappspec.yml(デプロイ手順・フック)を置く</li>
+<li>CodeDeployのアプリケーションとデプロイグループを作成し、デプロイ方式をBlue/Greenにする</li>
+<li>CodePipelineでSource(GitHub)・Build(CodeBuild)・Approval(手動承認)・Deploy(CodeDeploy)のステージを作る</li>
+<li>CloudWatchアラーム(エラー率など)をデプロイグループに設定し、自動ロールバックを有効にする</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>本番前に人の確認を入れる → <strong>Manual Approval Action</strong>。</li>
+<li>Blue/Greenは旧環境(Blue)を残しておけるので、<strong>ロールバックが非常に容易</strong>(<a href="../terms/deploy-strategies.html">デプロイ戦略</a>)。</li>
+<li>デプロイ後の動作確認は、appspec.ymlの <code>ValidateService</code> などのフックで行う。</li>
+<li>リソースを増やしたくない場合はIn-place(OneAtATimeなど)も選べるが、更新中は台数が減る。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="multi-account-stacksets.html"><span class="label">← 前へ</span>複数アカウント・リージョンに共通設定を展開する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="lambda-canary-release.html"><span class="label">次へ →</span>Lambdaを段階的にリリースする</a>
+</nav>
+</main>
+</body>
+</html>

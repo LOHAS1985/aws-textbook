@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS CodeBuild | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">デベロッパーツール</span>
+  <h1>AWS CodeBuild</h1>
+  <p class="lead">CI/CDパイプラインのビルド・テストを実行するサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS CodeBuild</strong>は、CI/CDパイプラインで<strong>ビルド・テストを実行</strong>するフルマネージドなサービスです。ビルドサーバーを自分で用意する必要がありません。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>ビルドの手順(buildspec)</h3>
+<p>ビルドの内容は <strong class="em">buildspec.yml</strong> に記載します。</p>
+<ol>
+<li>依存関係のインストール</li>
+<li>ビルド前処理</li>
+<li>コンパイル・テスト</li>
+<li>後処理</li>
+<li>成果物(アーティファクト)の出力</li>
+</ol>
+<p>buildspec.ymlのフェーズ名は <code>install</code> → <code>pre_build</code> → <code>build</code> → <code>post_build</code> で、成果物は <code>artifacts</code>、キャッシュは <code>cache</code> セクションで指定します。ファイルはソースのルートディレクトリに置くのが標準です。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 614 252" style="max-width:614px;min-width:520px" role="img" aria-label="図1 CodeBuildの流れ。buildspec.ymlの手順(依存のインストール → ビルド → テスト → 後処理)で実行し、成果物とテストレポートを出力する。キャッシュを使うと依存ファイルを再利用でき、高速になる。"><defs><marker id="dgservices-codebuild-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="104" text-anchor="middle" class="dg-t">ソースコード</text>
+<text x="104" y="122" text-anchor="middle" class="dg-s">buildspec.yml</text>
+<rect x="242" y="83" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="312" y="104" text-anchor="middle" class="dg-tb">CodeBuild</text>
+<text x="312" y="122" text-anchor="middle" class="dg-s">install → build</text>
+<rect x="450" y="40" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="520" y="62" text-anchor="middle" class="dg-t">成果物</text>
+<text x="520" y="80" text-anchor="middle" class="dg-s">S3 など</text>
+<rect x="450" y="132" width="140" height="40" rx="8" class="dg-box"/>
+<text x="520" y="156" text-anchor="middle" class="dg-t">テストレポート</text>
+<rect x="242" y="176" width="140" height="52" rx="8" class="dg-box"/>
+<text x="312" y="198" text-anchor="middle" class="dg-t">キャッシュ</text>
+<text x="312" y="216" text-anchor="middle" class="dg-s">依存ファイル</text>
+<path d="M174.0,109.0 L242.0,109.0" class="dg-line" marker-end="url(#dgservices-codebuild-1)"/>
+<path d="M382.0,94.7 L450.0,80.8" class="dg-line" marker-end="url(#dgservices-codebuild-1)"/>
+<path d="M382.0,123.3 L450.0,137.2" class="dg-line" marker-end="url(#dgservices-codebuild-1)"/>
+<path d="M312.0,176.5 L312.0,135.0" class="dg-line" marker-end="url(#dgservices-codebuild-1)"/>
+<text x="312" y="160" text-anchor="middle" class="dg-s dg-halo">再利用</text>
+</svg>
+</div>
+<figcaption>図1 CodeBuildの流れ。buildspec.ymlの手順(依存のインストール → ビルド → テスト → 後処理)で実行し、成果物とテストレポートを出力する。キャッシュを使うと依存ファイルを再利用でき、高速になる。</figcaption>
+</figure>
+<h3>ローカルキャッシュ</h3>
+<p>前回のビルドの依存ファイルや中間成果物を再利用して<strong>ビルドを高速化</strong>します。buildspec.ymlにキャッシュするフォルダのパスを追加します。</p>
+
+<h3>テストレポート</h3>
+<p>テストの結果を可視化できます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>CodePipelineのBuildステージでのコンパイル・単体テスト</li>
+<li>Dockerイメージをビルドして<a href="ecr.html">ECR</a>へプッシュ</li>
+<li>テスト結果のレポート化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>選んだコンピューティングタイプでビルドを実行した時間(分単位)に応じて課金されます。ビルドしていない時間は料金がかかりません。キャッシュでビルド時間を短くするとコストも下がります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:パイプラインのBuildステージ</li>
+<li><a href="codedeploy.html">AWS CodeDeploy</a>:ビルド後のデプロイ</li>
+<li><a href="ecr.html">Amazon ECR</a>:イメージのプッシュ先</li>
+<li><a href="codeartifact.html">AWS CodeArtifact</a>:依存パッケージの取得元</li>
+<li><a href="s3.html">Amazon S3</a>:成果物の保存先</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>ビルド手順の定義ファイル → <strong>buildspec.yml</strong>(CodeDeployのappspecと混同しない)。</li>
+<li>ビルドが遅い → <strong>ローカルキャッシュ</strong>を設定。</li>
+<li>テスト結果の可視化 → <strong>テストレポート</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CodeBuildはマネージドなビルド・テスト実行サービス。手順はbuildspec.ymlに書く。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="codepipeline.html"><span class="label">← 前へ</span>AWS CodePipeline</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="codedeploy.html"><span class="label">次へ →</span>AWS CodeDeploy</a>
+</nav>
+</main>
+</body>
+</html>

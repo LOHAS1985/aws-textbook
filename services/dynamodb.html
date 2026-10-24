@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon DynamoDB | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">データベース</span>
+  <h1>Amazon DynamoDB</h1>
+  <p class="lead">フルマネージドのキーバリュー型NoSQLデータベース</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon DynamoDB</strong>は、<strong>フルマネージドのキーバリューストア</strong>(NoSQLデータベース)です。サーバー管理が不要で、大量のアクセスにも低レイテンシーで応答します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>テーブルのキー</h3>
+<ul>
+<li><strong>プライマリキー</strong>:1つまたは2つの属性で構成される。</li>
+<li><strong>パーティションキー</strong>:どの物理パーティションに保存するかを決める。テーブル内で一意とは限らない。<strong>値に偏りがあると性能が劣化</strong>する。</li>
+<li><strong>ソートキー</strong>:同じパーティションキー内での並び順を決める。パーティションキーと組み合わせて一意になる。</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 262" style="max-width:480px;min-width:480px" role="img" aria-label="図1 パーティションキー(UserID)で保存先のパーティションが決まり、同じパーティション内はソートキー(OrderDate)の順に並ぶ。値が偏ると特定のパーティションに負荷が集中する。"><defs><marker id="dgservices-dynamodb-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="36" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="57" text-anchor="middle" class="dg-t">UserID = u1</text>
+<text x="109" y="75" text-anchor="middle" class="dg-s">OrderDate = 0401</text>
+<rect x="34" y="110" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="132" text-anchor="middle" class="dg-t">UserID = u1</text>
+<text x="109" y="150" text-anchor="middle" class="dg-s">OrderDate = 0405</text>
+<rect x="34" y="186" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="207" text-anchor="middle" class="dg-t">UserID = u2</text>
+<text x="109" y="225" text-anchor="middle" class="dg-s">OrderDate = 0402</text>
+<rect x="306" y="73" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="94" text-anchor="middle" class="dg-tb">パーティションA</text>
+<text x="381" y="112" text-anchor="middle" class="dg-s">u1 のアイテム</text>
+<rect x="306" y="186" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="207" text-anchor="middle" class="dg-tb">パーティションB</text>
+<text x="381" y="225" text-anchor="middle" class="dg-s">u2 のアイテム</text>
+<path d="M184.0,71.8 L306.0,88.7" class="dg-line" marker-end="url(#dgservices-dynamodb-1)"/>
+<path d="M184.0,126.2 L306.0,109.3" class="dg-line" marker-end="url(#dgservices-dynamodb-1)"/>
+<path d="M184.0,211.5 L306.0,211.5" class="dg-line" marker-end="url(#dgservices-dynamodb-1)"/>
+</svg>
+</div>
+<figcaption>図1 パーティションキー(UserID)で保存先のパーティションが決まり、同じパーティション内はソートキー(OrderDate)の順に並ぶ。値が偏ると特定のパーティションに負荷が集中する。</figcaption>
+</figure>
+<h3>データの読み取り</h3>
+<p>1回のリクエストで取得できる最大データ容量は<strong>1MB</strong>です。</p>
+<ul>
+<li><code>GetItem</code>:主キーで1件取得</li>
+<li><code>BatchGetItem</code>:主キーで複数件取得</li>
+<li><code>Query</code>:パーティションキー・インデックスを条件に取得</li>
+<li><code>Scan</code>:全件走査</li>
+</ul>
+
+<h3>セカンダリインデックス</h3>
+<p>別のキー構成でクエリを実行するための仕組みです。</p>
+<ul>
+<li><strong>ローカル(LSI)</strong>:パーティションキーはそのままで、<strong>ソートキーを変えたい</strong>とき。例:UserID+OrderDate のテーブルで、UserID+OrderStatus で検索したい。</li>
+<li><strong>グローバル(GSI)</strong>:<strong>パーティションキーを変えたい</strong>とき。例:OrderID+OrderStatus で検索したい。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th></th><th>ローカル(LSI)</th><th>グローバル(GSI)</th></tr>
+<tr><td>対象</td><td>パーティションキーとソートキーを持つテーブル</td><td>任意</td></tr>
+<tr><td>作成タイミング</td><td><strong>テーブル作成時のみ</strong></td><td>テーブル作成時/作成後</td></tr>
+<tr><td>キャパシティユニット</td><td>テーブルと同じ</td><td>テーブルと異なる値を設定</td></tr>
+<tr><td>削除</td><td>インデックスのみの削除は不可</td><td>インデックスのみ削除可能</td></tr>
+<tr><td>読み取りの整合性</td><td>結果整合性/強い整合性</td><td><strong>結果整合性のみ</strong></td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 588 194" style="max-width:588px;min-width:520px" role="img" aria-label="図2 LSIとGSI。LSIはパーティションキーをそのままにソートキーだけを変える(テーブル作成時のみ)。GSIはパーティションキーから変えられ、後から追加できる(結果整合性のみ)。"><defs><marker id="dgservices-dynamodb-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="200" height="52" rx="8" class="dg-accent"/>
+<text x="134" y="100" text-anchor="middle" class="dg-tb">テーブル</text>
+<text x="134" y="118" text-anchor="middle" class="dg-s">PK=UserID・SK=OrderDate</text>
+<rect x="364" y="38" width="200" height="52" rx="8" class="dg-box"/>
+<text x="464" y="60" text-anchor="middle" class="dg-t">LSI</text>
+<text x="464" y="78" text-anchor="middle" class="dg-s">PKはそのまま・SKを変更</text>
+<rect x="364" y="118" width="200" height="52" rx="8" class="dg-ok"/>
+<text x="464" y="140" text-anchor="middle" class="dg-t">GSI</text>
+<text x="464" y="158" text-anchor="middle" class="dg-s">PKごと変更(例: OrderID)</text>
+<path d="M234.0,91.9 L364.0,76.1" class="dg-line" marker-end="url(#dgservices-dynamodb-2)"/>
+<text x="299" y="88" text-anchor="middle" class="dg-s dg-halo">作成時のみ</text>
+<path d="M234.0,116.1 L364.0,131.9" class="dg-line" marker-end="url(#dgservices-dynamodb-2)"/>
+<text x="299" y="128" text-anchor="middle" class="dg-s dg-halo">後から追加可</text>
+</svg>
+</div>
+<figcaption>図2 LSIとGSI。LSIはパーティションキーをそのままにソートキーだけを変える(テーブル作成時のみ)。GSIはパーティションキーから変えられ、後から追加できる(結果整合性のみ)。</figcaption>
+</figure>
+<h3>読み取りの整合性</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>強い整合性</th><th>結果整合性</th></tr>
+<tr><td>最新データの保証</td><td>○</td><td>×</td></tr>
+<tr><td>書き込み直後の読み取り</td><td>必ず最新</td><td>古い可能性あり</td></tr>
+<tr><td>コスト</td><td>高い</td><td>安い</td></tr>
+<tr><td>レイテンシー</td><td>やや高い</td><td>低い</td></tr>
+<tr><td>デフォルト</td><td>×</td><td>○</td></tr>
+</table></div>
+
+<h3>TTL(Time To Live)</h3>
+<p>指定時刻を過ぎたアイテムを自動削除する機能です。TTL属性は<strong>Number型+UNIXエポック秒</strong>である必要があります。セッション管理・キャッシュ・一時URLや認証コードに使います。ただし<strong>削除までにラグが生じる</strong>ため、正確な時刻で処理したい場合はEventBridge+Lambdaを使います。</p>
+
+<h3>エラー処理</h3>
+<p><code>UnprocessedKeys</code> は、スロットリングやサイズ超過で未処理になったキーのリストです。<strong>指数バックオフでリトライ</strong>して再実行します。</p>
+
+<h3>関連機能</h3>
+<ul>
+<li><strong class="em">DynamoDB Accelerator(DAX)</strong>:インメモリキャッシュ。読み取りを<strong>マイクロ秒レベル</strong>に高速化。</li>
+<li><strong class="em">DynamoDB Streams</strong>:テーブルのデータ変更を記録し、外部処理に連携する。
+  <ul>
+  <li>Streams+Lambdaの流れ:アプリがテーブルを更新 → Streamsが変更イベントを記録 → Lambdaがポーリング(若干の遅延あり)→ まとめて取得して関数を実行</li>
+  <li>ビュータイプ:<code>KEYS_ONLY</code>(キーのみ)、<code>OLD_IMAGE</code>/<code>NEW_IMAGE</code>(更新前/後のデータ)</li>
+  </ul></li>
+<li><strong>DynamoDB Transactions</strong>:複数アイテムの更新を「全成功 or 全失敗」にするACIDトランザクション。<code>TransactWriteItems</code>(複数書き込み)、<code>TransactGetItems</code>(複数読み取り)。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 871 202" style="max-width:871px;min-width:520px" role="img" aria-label="図3 DAXとDynamoDB Streams。DAXは読み取りをマイクロ秒レベルに高速化するキャッシュ。Streamsはテーブルの変更を記録し、Lambdaがポーリングして後続処理を行う(若干の遅延あり)。"><defs><marker id="dgservices-dynamodb-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="132" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="156" text-anchor="middle" class="dg-t">アプリ</text>
+<rect x="255" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="330" y="62" text-anchor="middle" class="dg-t">DAX</text>
+<text x="330" y="80" text-anchor="middle" class="dg-s">キャッシュ(μ秒)</text>
+<rect x="255" y="132" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="330" y="156" text-anchor="middle" class="dg-tb">DynamoDB</text>
+<rect x="476" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="551" y="147" text-anchor="middle" class="dg-t">Streams</text>
+<text x="551" y="165" text-anchor="middle" class="dg-s">変更を記録</text>
+<rect x="697" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="772" y="147" text-anchor="middle" class="dg-t">Lambda</text>
+<text x="772" y="165" text-anchor="middle" class="dg-s">ポーリングして処理</text>
+<path d="M161.0,131.5 L262.4,92.5" class="dg-line" marker-end="url(#dgservices-dynamodb-3)"/>
+<text x="212" y="116" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
+<path d="M330.0,92.5 L330.0,131.5" class="dg-line" marker-end="url(#dgservices-dynamodb-3)"/>
+<path d="M184.0,151.5 L255.0,151.5" class="dg-line" marker-end="url(#dgservices-dynamodb-3)"/>
+<text x="220" y="156" text-anchor="middle" class="dg-s dg-halo">書き込み</text>
+<path d="M405.0,151.5 L476.0,151.5" class="dg-line" marker-end="url(#dgservices-dynamodb-3)"/>
+<path d="M626.0,151.5 L697.0,151.5" class="dg-line" marker-end="url(#dgservices-dynamodb-3)"/>
+</svg>
+</div>
+<figcaption>図3 DAXとDynamoDB Streams。DAXは読み取りをマイクロ秒レベルに高速化するキャッシュ。Streamsはテーブルの変更を記録し、Lambdaがポーリングして後続処理を行う(若干の遅延あり)。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>セッション管理・ユーザープロファイル(TTLで自動削除)</li>
+<li>大量アクセスのあるゲーム・EC・IoTのデータ保存</li>
+<li>変更をトリガーにした後続処理(Streams+Lambda)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>性能は<strong>キャパシティユニット</strong>で表し、テーブルが1秒間にどれだけ読み書きできるかを示します(1RCU/1WCU=1KB/秒が基準)。</p>
+<ul>
+<li><strong class="em">RCU(読み込みキャパシティユニット)</strong>:<strong>整合性の違いで消費量が変わる</strong>(強い整合性のほうが多く消費)。</li>
+<li><strong class="em">WCU(書き込みキャパシティユニット)</strong></li>
+</ul>
+<p>1RCUは「4KBまでのアイテムを強い整合性で1回/秒、結果整合性なら2回/秒」、1WCUは「1KBまでのアイテムを1回/秒」書き込めます。料金モードは、容量を事前に指定する<strong>プロビジョンド</strong>と、リクエスト数に応じて課金される<strong>オンデマンド</strong>の2種類です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="lambda.html">AWS Lambda</a>:DynamoDB Streamsの処理</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:正確な時刻での削除処理</li>
+<li><a href="elasticache.html">Amazon ElastiCache</a>:汎用的なキャッシュ</li>
+<li><a href="rds.html">Amazon RDS</a>:リレーショナルDBの選択肢</li>
+<li><a href="database-encryption-sdk.html">AWS Database Encryption SDK</a>:クライアント側での属性暗号化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>パーティションキーは<strong>値が分散するもの</strong>を選ぶ(偏るとホットパーティション)。</li>
+<li>後からインデックスを追加 → <strong>GSI</strong>のみ可能。LSIはテーブル作成時のみ。</li>
+<li>GSIは<strong>結果整合性のみ</strong>。強い整合性が必要ならベーステーブルかLSI。</li>
+<li>読み取りをマイクロ秒に → <strong>DAX</strong>。</li>
+<li>変更をトリガーに処理 → <strong>Streams+Lambda</strong>。</li>
+<li><code>UnprocessedKeys</code> → <strong>指数バックオフでリトライ</strong>。</li>
+<li>全件取得の <code>Scan</code> は高コスト。可能なら <code>Query</code>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>DynamoDBはキーバリュー型のフルマネージドNoSQL。</li>
+<li>キー設計(パーティションキー・ソートキー・LSI/GSI)が性能を左右する。</li>
+<li>DAX・Streams・TTL・Transactionsで機能を拡張できる。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="aurora.html"><span class="label">← 前へ</span>Amazon Aurora</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="elasticache.html"><span class="label">次へ →</span>Amazon ElastiCache</a>
+</nav>
+</main>
+</body>
+</html>

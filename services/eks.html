@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon EKS | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">コンテナ</span>
+  <h1>Amazon EKS</h1>
+  <p class="lead">Kubernetesをマネージドで運用するサービス</p>
+</div>
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon EKS(Elastic Kubernetes Service)</strong>は、<strong>Kubernetesをマネージドで運用</strong>できるサービスです。Kubernetesの頭脳にあたるコントロールプレーンをAWSが管理し、利用者はアプリ(Pod)の実行に集中できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>基本用語</h3>
+<div class="table-wrap"><table>
+<tr><th>用語</th><th>意味</th></tr>
+<tr><td>クラスター</td><td>Kubernetes全体のまとまり。コントロールプレーンとノードで構成される</td></tr>
+<tr><td>ノード</td><td>Podを実行するサーバー。EKSではEC2インスタンス、またはFargate</td></tr>
+<tr><td>Pod</td><td>Kubernetesの最小のデプロイ単位。1つ以上のコンテナをまとめたもの。同じPod内のコンテナはIPアドレスとストレージを共有する</td></tr>
+<tr><td>コンテナ</td><td>アプリケーションの実行単位。イメージ(ECRなどに保存)から起動される</td></tr>
+<tr><td>名前空間(Namespace)</td><td>クラスター内のリソースを論理的に分ける区画。環境やチームごとの分離に使う</td></tr>
+<tr><td>マニフェスト</td><td>リソースの望ましい状態を書いたYAMLファイル。<code>kubectl apply -f</code> で適用する</td></tr>
+<tr><td>etcd</td><td>クラスターの状態(Pod/Deployment/Serviceの一覧、レプリカ数、イメージ、ConfigMap、Secret、ノード情報など)を保存するデータベース</td></tr>
+</table></div>
+
+<h3>アーキテクチャ</h3>
+<div class="table-wrap"><table>
+<tr><th>層</th><th>内容</th><th>管理者</th></tr>
+<tr><td>コントロールプレーン</td><td>APIサーバー、etcdなど。複数AZに分散して配置される</td><td>AWS</td></tr>
+<tr><td>データプレーン</td><td>Podが動くコンピューティング(EC2またはFargate)</td><td>利用者(Auto ModeではAWSが一部管理)</td></tr>
+</table></div>
+<p>コントロールプレーンはAWSが管理するVPCに配置され、利用者のVPCとはENI経由で接続されます。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 770 221" style="max-width:770px;min-width:520px" role="img" aria-label="図1 EKSのアーキテクチャ。コントロールプレーンはAWSが管理し、Podが動くデータプレーン(ノード)は利用者のVPCに置かれる。"><defs><marker id="dgservices-eks-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="292" y="58" width="184" height="94" rx="10" class="dg-group"/>
+<text x="302" y="73" class="dg-s">AWS管理のVPC(複数AZ)</text>
+<rect x="562" y="13" width="184" height="184" rx="10" class="dg-group"/>
+<text x="572" y="28" class="dg-s">利用者のVPC</text>
+<rect x="34" y="88" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="110" text-anchor="middle" class="dg-t">kubectl</text>
+<text x="114" y="128" text-anchor="middle" class="dg-s">開発者・運用者</text>
+<rect x="304" y="88" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="384" y="110" text-anchor="middle" class="dg-tb">コントロールプレーン</text>
+<text x="384" y="128" text-anchor="middle" class="dg-s">APIサーバー・etcd</text>
+<rect x="574" y="43" width="160" height="52" rx="8" class="dg-box"/>
+<text x="654" y="64" text-anchor="middle" class="dg-t">ノード(EC2)</text>
+<text x="654" y="82" text-anchor="middle" class="dg-s">Pod / Pod</text>
+<rect x="574" y="133" width="160" height="52" rx="8" class="dg-box"/>
+<text x="654" y="154" text-anchor="middle" class="dg-t">ノード(Fargate)</text>
+<text x="654" y="172" text-anchor="middle" class="dg-s">Pod</text>
+<path d="M194.0,114.0 L304.0,114.0" class="dg-line" marker-end="url(#dgservices-eks-1)"/>
+<text x="249" y="118" text-anchor="middle" class="dg-s dg-halo">API</text>
+<path d="M464.0,100.7 L574.0,82.3" class="dg-line" marker-end="url(#dgservices-eks-1)"/>
+<text x="519" y="96" text-anchor="middle" class="dg-s dg-halo">ENI経由</text>
+<path d="M464.0,127.3 L574.0,145.7" class="dg-line" marker-end="url(#dgservices-eks-1)"/>
+</svg>
+</div>
+<figcaption>図1 EKSのアーキテクチャ。コントロールプレーンはAWSが管理し、Podが動くデータプレーン(ノード)は利用者のVPCに置かれる。</figcaption>
+</figure>
+<h3>データプレーンの選択肢</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>概要</th><th>向いているケース</th></tr>
+<tr><td>マネージド型ノードグループ</td><td>ノード(EC2)のプロビジョニングとライフサイクル管理をEKSが自動化</td><td>標準的な運用。ノードの更新を楽にしたい</td></tr>
+<tr><td>セルフマネージド型ノード</td><td>EC2を自分で構築・管理</td><td>AMIやノード構成を細かく制御したい</td></tr>
+<tr><td>AWS Fargate</td><td>サーバーレスでPodを実行。ノード管理が不要</td><td>ノード運用を避けたい</td></tr>
+<tr><td>EKS Auto Mode</td><td>ノードの管理や一部のアドオンまでAWSに任せる</td><td>運用負荷を最小限にしたい</td></tr>
+</table></div>
+<p><strong>Fargateの注意点</strong>:Fargateプロファイルで、Fargateで動かすPod(名前空間やラベル)を指定します。Podはプライベートサブネットで実行され、<strong>DaemonSetは使えず、特権コンテナも実行できません</strong>。</p>
+
+<h3>ネットワーク</h3>
+<ul>
+<li><strong>Amazon VPC CNIプラグイン</strong>により、PodにはVPCのプライベートIPアドレスが割り当てられる。</li>
+<li>Podが多いと<strong>サブネットのIPアドレスが枯渇</strong>しやすい。サブネットのサイズやCIDRの設計に注意する。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>クラスターエンドポイントの設定</th><th>動作</th></tr>
+<tr><td>パブリックのみ</td><td>インターネットからAPIサーバーに接続できる(アクセス元のCIDRを制限可能)</td></tr>
+<tr><td>パブリックとプライベート</td><td>VPC内からはプライベート経由、外部からはパブリック経由で接続できる</td></tr>
+<tr><td>プライベートのみ</td><td>VPC内(VPNやDirect Connectを含む)からのみ接続できる</td></tr>
+</table></div>
+
+<h3>認証と認可</h3>
+<ul>
+<li>認証はIAMで行い、クラスター内での認可はKubernetesの<strong>RBAC</strong>で決まる。IAMの権限があっても、クラスター側で許可されていなければ操作できない。</li>
+<li>IAMプリンシパルとクラスター権限の対応付けには、<strong>アクセスエントリ(推奨)</strong>か、従来の <code>aws-auth</code> ConfigMapを使う。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>Podに AWSの権限を与える方法</th><th>概要</th></tr>
+<tr><td>IRSA(IAM Roles for Service Accounts)</td><td>OIDCプロバイダーを使い、サービスアカウントにIAMロールを紐付ける</td></tr>
+<tr><td>EKS Pod Identity</td><td>より簡単な設定で、PodにIAMロールを割り当てる</td></tr>
+</table></div>
+<p>ノードのIAMロールに広い権限を付けるのではなく、<strong>Pod単位で最小権限</strong>を与えます。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 896 218" style="max-width:896px;min-width:520px" role="img" aria-label="図2 上段: クラスターの操作は「IAMで認証 → RBAC(アクセスエントリ)で認可」の2段階。下段: PodにはIRSAまたはEKS Pod IdentityでIAMロールを割り当て、Pod単位で最小権限にする。"><defs><marker id="dgservices-eks-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="46" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="112" y="70" text-anchor="middle" class="dg-t">IAMユーザー/ロール</text>
+<rect x="262" y="40" width="155" height="52" rx="8" class="dg-box"/>
+<text x="339" y="62" text-anchor="middle" class="dg-t">認証</text>
+<text x="339" y="80" text-anchor="middle" class="dg-s">IAM</text>
+<rect x="489" y="40" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="566" y="62" text-anchor="middle" class="dg-tb">認可</text>
+<text x="566" y="80" text-anchor="middle" class="dg-s">RBAC・アクセスエントリ</text>
+<rect x="716" y="46" width="155" height="40" rx="8" class="dg-ok"/>
+<text x="794" y="70" text-anchor="middle" class="dg-t">クラスターを操作</text>
+<rect x="34" y="142" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="164" text-anchor="middle" class="dg-t">Pod</text>
+<text x="112" y="182" text-anchor="middle" class="dg-s">サービスアカウント</text>
+<rect x="262" y="142" width="155" height="52" rx="8" class="dg-box"/>
+<text x="339" y="164" text-anchor="middle" class="dg-t">IAMロール</text>
+<text x="339" y="182" text-anchor="middle" class="dg-s">IRSA / Pod Identity</text>
+<rect x="489" y="142" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="566" y="164" text-anchor="middle" class="dg-t">S3 など</text>
+<text x="566" y="182" text-anchor="middle" class="dg-s">AWSサービス</text>
+<path d="M189.0,66.5 L261.5,66.5" class="dg-line" marker-end="url(#dgservices-eks-2)"/>
+<path d="M416.5,66.5 L489.0,66.5" class="dg-line" marker-end="url(#dgservices-eks-2)"/>
+<path d="M644.0,66.5 L716.5,66.5" class="dg-line" marker-end="url(#dgservices-eks-2)"/>
+<path d="M189.0,168.5 L261.5,168.5" class="dg-line" marker-end="url(#dgservices-eks-2)"/>
+<path d="M416.5,168.5 L489.0,168.5" class="dg-line" marker-end="url(#dgservices-eks-2)"/>
+</svg>
+</div>
+<figcaption>図2 上段: クラスターの操作は「IAMで認証 → RBAC(アクセスエントリ)で認可」の2段階。下段: PodにはIRSAまたはEKS Pod IdentityでIAMロールを割り当て、Pod単位で最小権限にする。</figcaption>
+</figure>
+<h3>kubectl</h3>
+<p>Kubernetesを操作するためのコマンドラインツールです。</p>
+<ul>
+<li><code>kubectl get pods</code>:Podの一覧を見る</li>
+<li><code>kubectl apply -f app.yaml</code>:YAMLの内容をクラスターに反映する</li>
+<li><code>kubectl logs &lt;Pod名&gt;</code>:ログを見る</li>
+</ul>
+
+<h3>ロードバランシング</h3>
+<p><strong>AWS Load Balancer Controller</strong>を導入すると、KubernetesのリソースからAWSのロードバランサーを作成できます。</p>
+<div class="table-wrap"><table>
+<tr><th>Kubernetesのリソース</th><th>作成されるロードバランサー</th></tr>
+<tr><td>Ingress</td><td>ALB</td></tr>
+<tr><td>Service</td><td>NLB</td></tr>
+</table></div>
+
+<h3>ストレージ</h3>
+<ul>
+<li><strong>EBS CSIドライバー</strong>:EBSボリュームをPodの永続ボリュームとして使う。<strong>単一AZに紐付く</strong>。</li>
+<li><strong>EFS CSIドライバー</strong>:<strong>複数Pod・複数AZから共有</strong>できるファイルストレージとして使う。</li>
+<li>CSIドライバーはEKSアドオンとして導入する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>既存のKubernetes資産(マニフェスト・ツール)をAWSで動かしたい</li>
+<li>マルチクラウドやオンプレミスとKubernetesで運用を揃えたい</li>
+<li>多数のマイクロサービスを名前空間で分けて運用したい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>料金は<strong>クラスターごとの時間課金</strong>と、<strong>データプレーンのコンピューティング料金</strong>(EC2またはFargate)で構成されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ecs.html">Amazon ECS</a>:AWS独自のコンテナオーケストレーション</li>
+<li><a href="ecr.html">Amazon ECR</a>:コンテナイメージの保存先</li>
+<li><a href="iam.html">AWS IAM</a>:クラスターの認証、IRSA/Pod Identity</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:Ingress→ALB、Service→NLB</li>
+<li><a href="ebs.html">Amazon EBS</a>/<a href="efs.html">Amazon EFS</a>:永続ボリューム</li>
+<li><a href="vpc.html">Amazon VPC</a>:Pod IPの割り当て元</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point">
+<ul>
+<li>Podに権限を渡す → <strong>IRSA</strong>または<strong>EKS Pod Identity</strong>(ノードロールに広い権限を付けない)。</li>
+<li>IAMで認証できても、<strong>RBAC/アクセスエントリ</strong>で許可されていないと操作できない。</li>
+<li>Podが増えてIPが足りない → VPC CNIの仕様。<strong>サブネットのCIDR設計</strong>を見直す。</li>
+<li>FargateではDaemonSet・特権コンテナが使えない。</li>
+<li>複数AZのPodで共有したい → <strong>EFS CSIドライバー</strong>。EBSは単一AZ。</li>
+<li>APIサーバーをVPC内からだけ使わせたい → エンドポイントを<strong>プライベートのみ</strong>に。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>EKSはコントロールプレーンをAWSが管理するKubernetesサービス。</li>
+<li>データプレーンはマネージド型ノードグループ/セルフマネージド/Fargate/Auto Modeから選ぶ。</li>
+<li>認証はIAM、認可はRBAC。Podの権限はIRSAかPod Identityで最小権限に。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="ecs.html"><span class="label">← 前へ</span>Amazon ECS</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="ecr.html"><span class="label">次へ →</span>Amazon ECR</a>
+</nav>
+</main>
+</body>
+</html>
