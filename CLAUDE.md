@@ -16,6 +16,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/{services,terms,usecases}/index.html … 各コレクションの目次(カテゴリ別)
 - book/{services,terms,usecases}/{slug}.html … 各ページ(生成物。直接編集しない)
 - book/css/style.css … 共通スタイル(全ページで共有。これは直接編集する)
+- book/icons/・book/manifest.webmanifest … ホーム画面用アイコンとWebアプリ設定(アイコンは `python tools/make_icons.py book/icons` で再生成)
 - deploy.sh … `sh deploy.sh "メッセージ"` でビルド→コミット→push し、book/ を gh-pages ブランチに公開する
 
 ## 公開(GitHub Pages)
