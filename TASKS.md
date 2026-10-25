@@ -5,14 +5,14 @@ SOA-C03で頻出なのに説明が薄い10ページに、仕組みの説明を�
 終わった項目は `[x]` にし、ページの項目がすべて終わったら `sh deploy.sh "○○ページを加筆"` で公開する。
 
 ## 1. VPC(src/services/vpc.html)
-- [ ] サブネットの予約IP(5つ)と「1サブネット=1AZ」(詳細は用語ページ cidr へリンク)
-- [ ] Elastic IP(詳細は用語ページ eni-elastic-ip へリンク)
-- [ ] VPCピアリング(詳細は用語ページ vpc-peering へリンク)
-- [ ] VPCエンドポイントの2種類(詳細は用語ページ vpc-endpoint へリンク)
-- [ ] NATゲートウェイはAZ単位のため、AZごとに作って冗長化する
-- [ ] セキュリティグループ同士の参照(送信元にSGを指定)
-- [ ] エフェメラルポート(ネットワークACLの戻り通信)
-- [ ] Reachability Analyzer(到達性の分析)
+- [x] サブネットの予約IP(5つ)と「1サブネット=1AZ」(詳細は用語ページ cidr へリンク)
+- [x] Elastic IP(詳細は用語ページ eni-elastic-ip へリンク)
+- [x] VPCピアリング(詳細は用語ページ vpc-peering へリンク)
+- [x] VPCエンドポイントの2種類(詳細は用語ページ vpc-endpoint へリンク)
+- [x] NATゲートウェイはAZ単位のため、AZごとに作って冗長化する
+- [x] セキュリティグループ同士の参照(送信元にSGを指定)
+- [x] エフェメラルポート(ネットワークACLの戻り通信)
+- [x] Reachability Analyzer(到達性の分析)
 
 ## 2. ELB(src/services/elb.html)
 - [ ] ターゲットグループとターゲットタイプ(インスタンス/IP/Lambda/ALB)
