@@ -68,13 +68,13 @@ SOA-C03で頻出なのに説明が薄い10ページに、仕組みの説明を�
 - [x] 停止は最大7日(過ぎると自動で起動)
 
 ## 7. CloudFront(src/services/cloudfront.html)
-- [ ] ビヘイビア(パスごとのオリジン・設定)
-- [ ] キャッシュキーとキャッシュポリシー(オリジンリクエストポリシーも)
-- [ ] 無効化(Invalidation)
-- [ ] 署名付きURL/署名付きCookie
-- [ ] 地理的制限
-- [ ] オリジンフェイルオーバー(オリジングループ)
-- [ ] CloudFront FunctionsとLambda@Edgeの比較
+- [x] ビヘイビア(パスごとのオリジン・設定)
+- [x] キャッシュキーとキャッシュポリシー(オリジンリクエストポリシーも)
+- [x] 無効化(Invalidation)
+- [x] 署名付きURL/署名付きCookie
+- [x] 地理的制限
+- [x] オリジンフェイルオーバー(オリジングループ)
+- [x] CloudFront FunctionsとLambda@Edgeの比較
 
 ## 8. CloudFormation(src/services/cloudformation.html)
 - [ ] 組み込み関数(!Ref・!GetAtt・!Sub・!FindInMap・!Join など)

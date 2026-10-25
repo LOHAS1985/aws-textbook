@@ -70,6 +70,120 @@
 </div>
 <figcaption>図1 CloudFrontの仕組み。初回はエッジからオリジンへ取りに行き、エッジにキャッシュを残す。2回目以降は近くのエッジが応答するため高速。オリジンシールドを使うと、オリジンへのリクエストをさらにまとめられる。</figcaption>
 </figure>
+<h3>ビヘイビア(パスごとのオリジン・設定)</h3>
+<p><strong>ビヘイビア(キャッシュビヘイビア)</strong>は、リクエストのパスに応じて「<strong>どのオリジンに送るか</strong>」「<strong>どうキャッシュするか</strong>」を決める設定です。1つのディストリビューションに複数のビヘイビアを作り、パスパターンで振り分けます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 722 274" style="max-width:722px;min-width:520px" role="img" aria-label="図2 ビヘイビアによる振り分け。パスパターンごとにオリジンとキャッシュの設定を変え、どれにも一致しないリクエストは既定のビヘイビア(*)で処理する。"><defs><marker id="dgservices-cloudfront-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="124" width="160" height="40" rx="8" class="dg-blue"/>
+<text x="114" y="148" text-anchor="middle" class="dg-t">ユーザー</text>
+<rect x="268" y="118" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="348" y="140" text-anchor="middle" class="dg-tb">CloudFront</text>
+<text x="348" y="158" text-anchor="middle" class="dg-s">ビヘイビアで判定</text>
+<rect x="538" y="38" width="160" height="52" rx="8" class="dg-box"/>
+<text x="618" y="60" text-anchor="middle" class="dg-t">/api/*</text>
+<text x="618" y="78" text-anchor="middle" class="dg-s">ALB・キャッシュなし</text>
+<rect x="538" y="118" width="160" height="52" rx="8" class="dg-box"/>
+<text x="618" y="140" text-anchor="middle" class="dg-t">/images/*</text>
+<text x="618" y="158" text-anchor="middle" class="dg-s">S3・長くキャッシュ</text>
+<rect x="538" y="198" width="160" height="52" rx="8" class="dg-box"/>
+<text x="618" y="220" text-anchor="middle" class="dg-t">既定(*)</text>
+<text x="618" y="238" text-anchor="middle" class="dg-s">S3</text>
+<path d="M194.0,144.0 L268.0,144.0" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+<path d="M428.0,120.3 L538.0,87.7" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+<path d="M428.0,144.0 L538.0,144.0" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+<path d="M428.0,167.7 L538.0,200.3" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+</svg>
+</div>
+<figcaption>図2 ビヘイビアによる振り分け。パスパターンごとにオリジンとキャッシュの設定を変え、どれにも一致しないリクエストは既定のビヘイビア(*)で処理する。</figcaption>
+</figure>
+<ul>
+<li>パスパターンの例:<code>/api/*</code>、<code>/images/*</code>、<code>*.jpg</code>。上から順(優先順位の順)に評価され、最初に一致したものが使われる。どれにも一致しなければ<strong>既定のビヘイビア(<code>*</code>)</strong></li>
+<li>ビヘイビアごとに設定するもの:オリジン(またはオリジングループ)、Viewer Protocol Policy、許可するHTTPメソッド、キャッシュポリシー・オリジンリクエストポリシー、関連付ける関数、署名付きURL/Cookieの要求</li>
+<li>静的ファイルはS3から長めのTTLで、APIはALBからキャッシュなしで、のように1つのドメインで静的・動的コンテンツをまとめて配信できる</li>
+</ul>
+
+<h3>キャッシュキーとキャッシュポリシー</h3>
+<p><strong>キャッシュキー</strong>は、エッジがキャッシュを見分けるための値です。同じキャッシュキーのリクエストには同じキャッシュを返します。既定ではドメイン名とURLのパスだけがキャッシュキーで、クエリ文字列・ヘッダー・Cookieは含まれません。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>決めるもの</th><th>例</th></tr>
+<tr><td><strong>キャッシュポリシー</strong></td><td>キャッシュキーに含めるクエリ文字列・ヘッダー・Cookieと、<strong>TTL</strong>(最小・既定・最大)</td><td><code>?lang=ja</code> の違いで別のキャッシュにする。マネージドポリシー「CachingOptimized」「CachingDisabled」</td></tr>
+<tr><td><strong>オリジンリクエストポリシー</strong></td><td>キャッシュキーには含めないが、<strong>オリジンには転送する</strong>値</td><td>ログ用のヘッダーや、オリジンで使うCookieをオリジンに渡す</td></tr>
+<tr><td>レスポンスヘッダーポリシー</td><td>ユーザーへの応答に付けるヘッダー</td><td>セキュリティヘッダー、CORSヘッダーの追加</td></tr>
+</table></div>
+<p>キャッシュキーに含める値が多いほどキャッシュが細かく分かれ、<strong>キャッシュヒット率が下がります</strong>。表示内容を変える値だけをキャッシュキーに含め、オリジンが必要なだけの値はオリジンリクエストポリシーで渡すのが基本です。キャッシュヒット率はCloudWatchのメトリクスやレポートで確認できます。</p>
+
+<h3>無効化(Invalidation)</h3>
+<p>オリジンのファイルを更新しても、エッジのキャッシュはTTLが切れるまで古いままです。すぐに反映したい場合は<strong>無効化(Invalidation)</strong>で、指定したパスのキャッシュを全エッジから削除します。</p>
+<ul>
+<li>パスを指定する(例:<code>/index.html</code>、<code>/images/*</code>、全体なら <code>/*</code>)。ワイルドカードを含むパスも1パスと数える</li>
+<li>毎月<strong>最初の1,000パスまで無料</strong>、それ以降はパスごとに課金される</li>
+<li>反映には数分かかる</li>
+</ul>
+<p>頻繁に更新するファイルは、無効化に頼るより<strong>ファイル名にバージョンを付ける</strong>(<code>app.v2.js</code>、<code>style.3f9a.css</code> など)方が確実で安くなります。新しい名前のファイルは新しいキャッシュとして扱われるためです。</p>
+
+<h3>署名付きURL/署名付きCookie</h3>
+<p>会員向けの動画や有料コンテンツなど、<strong>許可された人だけに配信</strong>したいときは、ビヘイビアで「署名付きリクエストを要求」し、<strong>署名付きURL</strong>か<strong>署名付きCookie</strong>でアクセスさせます。</p>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>向いている場面</th></tr>
+<tr><td>署名付きURL</td><td><strong>1つのファイル</strong>へのアクセス(ダウンロードリンクなど)。Cookieに対応していないクライアント</td></tr>
+<tr><td>署名付きCookie</td><td><strong>複数のファイル</strong>へのアクセス(動画配信の分割ファイル、会員エリア全体など)。URLを変えたくないとき</td></tr>
+</table></div>
+<ul>
+<li>CloudFrontに<strong>公開鍵</strong>を登録して<strong>信頼されたキーグループ</strong>を作り、アプリが対応する<strong>秘密鍵</strong>で署名する</li>
+<li>ポリシーで有効期限を指定する。カスタムポリシーなら開始日時・アクセス元のIP範囲・ワイルドカードでの対象パスも指定できる</li>
+<li>S3の署名付きURLとは別の仕組み。CloudFront経由で配信し、S3はOACで直接アクセスを防ぐ組み合わせにする</li>
+</ul>
+
+<h3>地理的制限</h3>
+<p><strong>地理的制限</strong>を設定すると、<strong>国単位</strong>でコンテンツへのアクセスを制限できます。許可する国の一覧(許可リスト)か、拒否する国の一覧(ブロックリスト)のどちらかを指定し、制限された国からのアクセスには <strong>403(Forbidden)</strong> を返します。配信権利が国ごとに決まっている動画などで使います。</p>
+<p>国より細かい条件(特定のIP範囲、国+パスの組み合わせなど)で制御したい場合は、AWS WAFのルール(地理的一致の条件)を使います。</p>
+
+<h3>オリジンフェイルオーバー(オリジングループ)</h3>
+<p><strong>オリジングループ</strong>にプライマリとセカンダリの2つのオリジンを登録すると、プライマリが失敗したときに<strong>自動でセカンダリに切り替えて</strong>取得し直します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 704 202" style="max-width:704px;min-width:520px" role="img" aria-label="図3 オリジンフェイルオーバー。プライマリが指定したステータスコードを返すか接続できない場合、同じリクエストをセカンダリに送り直す。"><defs><marker id="dgservices-cloudfront-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="89" width="160" height="40" rx="8" class="dg-blue"/>
+<text x="114" y="113" text-anchor="middle" class="dg-t">ユーザー</text>
+<rect x="268" y="83" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="348" y="104" text-anchor="middle" class="dg-tb">CloudFront</text>
+<text x="348" y="122" text-anchor="middle" class="dg-s">オリジングループ</text>
+<rect x="520" y="40" width="160" height="52" rx="8" class="dg-ng"/>
+<text x="600" y="62" text-anchor="middle" class="dg-t">プライマリ</text>
+<text x="600" y="80" text-anchor="middle" class="dg-s">S3(東京)・5xx</text>
+<rect x="520" y="126" width="160" height="52" rx="8" class="dg-ok"/>
+<text x="600" y="147" text-anchor="middle" class="dg-t">セカンダリ</text>
+<text x="600" y="165" text-anchor="middle" class="dg-s">S3(大阪)</text>
+<path d="M194.0,109.0 L268.0,109.0" class="dg-line" marker-end="url(#dgservices-cloudfront-3)"/>
+<path d="M428.0,95.5 L520.0,80.0" class="dg-line" marker-end="url(#dgservices-cloudfront-3)"/>
+<text x="474" y="92" text-anchor="middle" class="dg-s dg-halo">①</text>
+<path d="M428.0,122.5 L520.0,138.0" class="dg-line" marker-end="url(#dgservices-cloudfront-3)"/>
+<text x="474" y="134" text-anchor="middle" class="dg-s dg-halo">② 再試行</text>
+</svg>
+</div>
+<figcaption>図3 オリジンフェイルオーバー。プライマリが指定したステータスコードを返すか接続できない場合、同じリクエストをセカンダリに送り直す。</figcaption>
+</figure>
+<ul>
+<li>切り替える条件:指定したHTTPステータスコード(500・502・503・504・403・404など)や、接続の失敗・タイムアウト</li>
+<li>対象はGET・HEAD・OPTIONSのリクエスト</li>
+<li>S3のクロスリージョンレプリケーションで別リージョンにコピーしたバケットをセカンダリにすると、リージョン障害にも備えられる</li>
+</ul>
+
+<h3>CloudFront FunctionsとLambda@Edge</h3>
+<p>どちらもエッジでコードを動かし、リクエストやレスポンスを加工する機能です。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>CloudFront Functions</th><th>Lambda@Edge</th></tr>
+<tr><td>言語</td><td>JavaScript</td><td>Node.js・Python</td></tr>
+<tr><td>実行場所</td><td>エッジロケーション</td><td>リージョナルエッジキャッシュ</td></tr>
+<tr><td>実行できるタイミング</td><td><strong>ビューワーリクエスト・ビューワーレスポンスのみ</strong></td><td>ビューワーリクエスト・レスポンス+<strong>オリジンリクエスト・レスポンス</strong></td></tr>
+<tr><td>実行時間</td><td><strong>1ミリ秒未満</strong></td><td>ビューワー側5秒、オリジン側30秒まで</td></tr>
+<tr><td>ネットワーク・外部サービスへのアクセス</td><td>不可</td><td>可能</td></tr>
+<tr><td>料金</td><td>安い(Lambda@Edgeの約6分の1)</td><td>高め</td></tr>
+<tr><td>主な用途</td><td>ヘッダーの追加・変更、URLのリダイレクト・書き換え、キャッシュキーの正規化、トークンの簡単な検証</td><td>外部APIやDBを使う認証、画像の加工、リクエスト内容に応じたオリジンの切り替え</td></tr>
+</table></div>
+<p>軽くて大量に呼ばれる処理はCloudFront Functions、ネットワークアクセスや長い処理が必要ならLambda@Edgeを選びます。Lambda@Edgeの関数は<strong>us-east-1</strong>で作成し、CloudFrontが各地に複製します。</p>
+
 <h3>オリジンシールド</h3>
 <p>複数のエッジロケーションからオリジンへのリクエストをまとめ、<strong>オリジンへのリクエスト数を減らす</strong>機能です。リージョナルエッジキャッシュを1つにまとめるイメージです。</p>
 
@@ -93,7 +207,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図2 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="dgservices-cloudfront-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="dgservices-cloudfront-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="70" text-anchor="middle" class="dg-t">ユーザー</text>
 <rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
@@ -105,14 +219,14 @@
 <rect x="272" y="126" width="150" height="52" rx="8" class="dg-ng"/>
 <text x="347" y="147" text-anchor="middle" class="dg-t">S3へ直接アクセス</text>
 <text x="347" y="165" text-anchor="middle" class="dg-s">拒否される</text>
-<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
 <text x="228" y="70" text-anchor="middle" class="dg-s dg-halo">Viewer側</text>
-<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
 <text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">Origin側</text>
-<path d="M419.8,125.5 L512.2,92.5" class="dg-line dg-dash" marker-end="url(#dgservices-cloudfront-2)"/>
+<path d="M419.8,125.5 L512.2,92.5" class="dg-line dg-dash" marker-end="url(#dgservices-cloudfront-4)"/>
 </svg>
 </div>
-<figcaption>図2 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
+<figcaption>図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
 </figure>
 <h3>独自ドメインで配信する(代替ドメイン名と証明書)</h3>
 <p>CloudFrontのディストリビューションには <code>d111111abcdef8.cloudfront.net</code> のようなドメイン名が付きます。<code>www.example.com</code> などの独自ドメインで配信するには、次の手順で設定します。</p>
@@ -159,6 +273,13 @@
 <li>オリジンの負荷を減らしたい → <strong>オリジンシールド</strong>、TTLを長くする。</li>
 <li>POST/PUTなどはキャッシュされない(キャッシュはGET/HEAD/OPTIONSのみ)。</li>
 <li>機密項目だけを暗号化 → <strong>フィールドレベル暗号化</strong>。</li>
+<li>パスごとにオリジンやキャッシュの設定を変える → <strong>ビヘイビア</strong>(どれにも一致しなければ既定の <code>*</code>)。</li>
+<li>キャッシュヒット率が低い → キャッシュポリシーで<strong>キャッシュキー</strong>に含めるヘッダー・Cookie・クエリ文字列を減らす。オリジンに渡すだけなら<strong>オリジンリクエストポリシー</strong>。</li>
+<li>更新したファイルをすぐ反映 → <strong>無効化</strong>(月1,000パスまで無料)。頻繁な更新ならファイル名にバージョンを付ける。</li>
+<li>有料コンテンツの配信 → 1ファイルなら<strong>署名付きURL</strong>、複数ファイル・URLを変えたくないなら<strong>署名付きCookie</strong>。</li>
+<li>特定の国からのアクセスを拒否 → <strong>地理的制限</strong>(403を返す)。</li>
+<li>オリジンの障害時に別のオリジンへ → <strong>オリジングループ</strong>によるオリジンフェイルオーバー。</li>
+<li>ヘッダー操作やリダイレクトなどの軽い処理 → <strong>CloudFront Functions</strong>。オリジン側のイベントや外部へのアクセスが必要 → <strong>Lambda@Edge</strong>。</li>
 </ul></div>
 </section>
 
