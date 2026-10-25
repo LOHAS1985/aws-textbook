@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Inspector | AWS教科書</title>
+<meta name="description" content="EC2・コンテナイメージ・Lambdaのソフトウェアの脆弱性とネットワークの露出を継続的にスキャン">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#DD344C">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/inspector.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">セキュリティ、アイデンティティ、コンプライアンス</a>
+  <h1>Amazon Inspector</h1>
+  <p class="lead">EC2・コンテナイメージ・Lambdaのソフトウェアの脆弱性とネットワークの露出を継続的にスキャン</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Inspector</strong>は、<strong>EC2インスタンス・ECRのコンテナイメージ・Lambda関数</strong>を自動で見つけ、ソフトウェアの<strong>脆弱性(CVE)</strong>や意図しないネットワークの露出を継続的にスキャンする脆弱性管理サービスです。</p>
+<p>スキャンの予定を組む必要はありません。パッケージのインストールやパッチの適用、新しいCVEの公開などをきっかけに、自動で再スキャンします。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">スキャンの種類<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>対象</th><th>調べる内容</th><th>しくみ</th></tr>
+<tr><td>EC2インスタンス</td><td>OS・パッケージの脆弱性、インターネットから到達できるポート</td><td>SSMエージェントで情報を集める方式と、EBSスナップショットを読むエージェントレス方式がある</td></tr>
+<tr><td>ECRのコンテナイメージ</td><td>イメージ内のOS・言語パッケージの脆弱性</td><td>プッシュ時と、新しいCVEの公開時に再スキャン</td></tr>
+<tr><td>Lambda関数</td><td>依存パッケージの脆弱性(標準)、コード自体の欠陥(コードスキャン)</td><td>関数のデプロイ・更新時にスキャン</td></tr>
+</table></div>
+<p>EC2のエージェント方式では、インスタンスが<strong>Systems Managerのマネージドノード</strong>になっている必要があります(SSMエージェントとIAMロールが必要)。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 256" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Inspectorの仕組み。対象を自動で見つけて脆弱性データベースと照合し、検出結果を出す。結果はSecurity HubやEventBridgeに送られる。修正されると検出結果は自動で閉じられる。"><defs><marker id="dgservices-inspector-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="36" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="57" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="75" text-anchor="middle" class="dg-s">SSMエージェント</text>
+<rect x="34" y="116" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">ECRイメージ</text>
+<rect x="34" y="192" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="216" text-anchor="middle" class="dg-t">Lambda関数</text>
+<rect x="272" y="110" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="132" text-anchor="middle" class="dg-tb">Inspector</text>
+<text x="347" y="150" text-anchor="middle" class="dg-s">CVEと照合</text>
+<rect x="510" y="73" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="585" y="94" text-anchor="middle" class="dg-t">検出結果</text>
+<text x="585" y="112" text-anchor="middle" class="dg-s">Inspectorスコア</text>
+<rect x="510" y="148" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="170" text-anchor="middle" class="dg-t">Security Hub</text>
+<text x="585" y="188" text-anchor="middle" class="dg-s">EventBridge</text>
+<path d="M184.0,85.1 L272.0,112.9" class="dg-line" marker-end="url(#dgservices-inspector-1)"/>
+<path d="M184.0,136.5 L272.0,136.5" class="dg-line" marker-end="url(#dgservices-inspector-1)"/>
+<path d="M172.5,191.5 L272.0,160.1" class="dg-line" marker-end="url(#dgservices-inspector-1)"/>
+<path d="M422.0,124.7 L510.0,110.8" class="dg-line" marker-end="url(#dgservices-inspector-1)"/>
+<path d="M422.0,148.3 L510.0,162.2" class="dg-line" marker-end="url(#dgservices-inspector-1)"/>
+</svg>
+</div>
+<figcaption>図1 Inspectorの仕組み。対象を自動で見つけて脆弱性データベースと照合し、検出結果を出す。結果はSecurity HubやEventBridgeに送られる。修正されると検出結果は自動で閉じられる。</figcaption>
+</figure>
+
+<h3 id="c2-2">Inspectorリスクスコア<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>公開されている脆弱性の基本スコア(CVSS)を、実際の環境に合わせて調整したスコアです。例えば、ネットワーク経由で悪用される脆弱性でも、インターネットへの経路がないインスタンスではスコアが下がります。</p>
+
+<h3 id="c2-3">そのほかの機能<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>ソフトウェア部品表(SBOM)の出力</li>
+<li>CISベンチマークに沿ったOS設定のチェック(EC2)</li>
+<li>抑制ルールで対象外の検出結果を非表示にする</li>
+<li>Organizations の<strong>委任管理者</strong>で組織全体を一括で有効化し、新しいアカウントにも自動で有効化できる</li>
+</ul>
+
+<h3 id="c2-4">似たサービスとの違い<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>見つけるもの</th></tr>
+<tr><td>Inspector</td><td>ソフトウェアの脆弱性、ネットワークの露出</td></tr>
+<tr><td>GuardDuty</td><td>実際に起きている不審な動き(脅威)</td></tr>
+<tr><td>Macie</td><td>S3の機密データ</td></tr>
+<tr><td>Systems Manager Patch Manager</td><td>(見つけるのではなく)パッチを適用する</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>全EC2インスタンスの脆弱性を継続的に把握し、重大なものから対応する</li>
+<li>ECRにプッシュしたイメージに重大な脆弱性があれば、EventBridge経由で通知してデプロイを止める</li>
+<li>検出結果をもとに Patch Manager でパッチを適用し、修正されたことをInspectorで確認する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>スキャン対象の数で課金されます。EC2はスキャンしたインスタンス数(月平均)、ECRはスキャンしたイメージ数、Lambdaはスキャンした関数数が基準です。新しいアカウントには15日間の無料試用があります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ecr.html">Amazon ECR</a>/<a href="lambda.html">AWS Lambda</a>:スキャン対象</li>
+<li><a href="systems-manager.html">AWS Systems Manager</a>:EC2の情報収集(SSMエージェント)とパッチ適用</li>
+<li><a href="security-hub.html">AWS Security Hub</a>:検出結果の集約</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:検出結果をトリガーにした自動対応</li>
+<li><a href="guardduty.html">Amazon GuardDuty</a>:脅威の検出</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「脆弱性」「CVE」「コンテナイメージのスキャン」→ <strong class="em">Inspector</strong>。</li>
+<li>EC2のエージェント方式は <strong>SSMエージェント</strong>が前提。スキャンされないときは、マネージドノードになっているかを確認する。</li>
+<li>スキャンは自動・継続的。手動でスケジュールを組む必要はない。</li>
+<li>見つけるのはInspector、直すのは Patch Manager。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>InspectorはEC2・ECR・Lambdaの脆弱性を継続的にスキャンするサービス。</li>
+<li>環境に合わせたリスクスコアで、優先して直すべきものが分かる。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="guardduty.html"><span class="label">← 前へ</span>Amazon GuardDuty</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="macie.html"><span class="label">次へ →</span>Amazon Macie</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
