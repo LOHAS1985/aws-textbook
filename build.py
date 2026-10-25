@@ -205,6 +205,31 @@ def load_pages(col, warnings, updated):
     return pages
 
 
+# 被リンクの一覧を付けるページ:(リンク先のコレクション, リンク元のコレクション, 見出し)
+BACKLINKS = [
+    ("services", ["usecases"], "このサービスが登場するユースケース"),
+    ("terms", ["services", "usecases"], "この用語が出てくるページ"),
+]
+
+
+def add_backlinks(loaded):
+    """サービス・用語のページの末尾に、そのページへリンクしている他のコレクションのページの一覧を付ける。"""
+    labels = {c["key"]: c["label"] for c in COLLECTIONS}
+    for target, sources, heading in BACKLINKS:
+        for p in loaded.get(target, []):
+            href = f'href="../{target}/{p["slug"]}.html'
+            refs = [(key, q) for key in sources for q in loaded.get(key, []) if href in q["body"]]
+            if not refs:
+                continue
+            items = "".join(
+                f'<li><a href="../{key}/{q["slug"]}.html"><span class="title">{html.escape(q["title"])}</span>'
+                + (f'<span class="kind">{labels[key]}</span>' if len(sources) > 1 else "")
+                + (f'<span class="desc">{q["lead"]}</span>' if q["lead"] else "") + "</a></li>\n"
+                for key, q in refs)
+            p["body"] += (f'\n<section class="chapter backlinks">\n<h2>{heading}</h2>\n'
+                          f'<ul class="backlink-list">\n{items}</ul>\n</section>\n')
+
+
 def grouped(col, pages):
     cats = list(col["categories"])
     for p in pages:
@@ -398,11 +423,7 @@ def render_collection_index(col, pages):
     descs = col.get("category_desc", {})
     compact = col.get("compact")
     if compact:
-        # カテゴリへのジャンプ(スクロールを減らすため)
-        parts.append('<nav class="cat-jump" aria-label="カテゴリへ移動">\n'
-                     + "".join(f'<a href="#cat{i}"{cat_style(col, c)}>{html.escape(c.split("、")[0])}</a>'
-                               for i, (c, _) in enumerate(groups, 1))
-                     + '\n</nav>\n<div class="svc-columns">\n')
+        parts.append('<div class="svc-columns">\n')
     for i, (category, items) in enumerate(groups, 1):
         if compact:
             # カテゴリごとのカード(折りたたみ可)。説明文はカテゴリ名にマウスを重ねたときだけ出す
@@ -603,9 +624,11 @@ def main():
     warnings, counts, loaded = [], {}, {}
     updated = git_updated()
     for col in COLLECTIONS:
-        pages = load_pages(col, warnings, updated)
+        loaded[col["key"]] = load_pages(col, warnings, updated)
+    add_backlinks(loaded)
+    for col in COLLECTIONS:
+        pages = loaded[col["key"]]
         counts[col["key"]] = len(pages)
-        loaded[col["key"]] = pages
         out_dir = OUT / col["key"]
         if out_dir.exists():
             shutil.rmtree(out_dir)
