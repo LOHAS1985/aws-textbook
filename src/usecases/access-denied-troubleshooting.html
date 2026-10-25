@@ -1,0 +1,58 @@
+<!-- title: 「AccessDenied」の原因を調べ、最小権限に直す -->
+<!-- category: セキュリティ・コンプライアンス -->
+<!-- lead: CloudTrailのエラー記録とポリシーの評価順から拒否の原因を特定し、Access Analyzerで必要な権限だけに絞る -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>アプリのIAMロールにS3の権限を付けたのに、オブジェクトの取得で <code>AccessDenied</code> になる。どのポリシーが拒否しているのかを調べて直したい。また、とりあえず広い権限を付けたロールが多いので、<strong>実際に使っている権限だけに絞りたい</strong>。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node req 0 1 blue "リクエスト" "GetObject"
+node scp 1.4 0 box "SCP・RCP" "組織の上限"
+node id 1.4 1 box "IAMポリシー" "許可境界"
+node rp 1.4 2 box "リソースベース" "バケット・キーの方針"
+node ok 2.8 1 ok "許可" "すべて満たす"
+node ng 2.8 2 ng "拒否" "明示的なDeny"
+edge req scp
+edge req id
+edge req rp
+edge id ok
+edge rp ng dash
+<figcaption>図1 拒否の原因の候補。SCP・RCP、IAMのポリシーと許可境界、バケットポリシーやKMSキーポリシーなどのリソースベースのポリシーが評価され、どこかに明示的なDenyがあれば拒否、必要な許可がそろわなければ暗黙的に拒否される。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:拒否されたAPI呼び出し(<code>errorCode: AccessDenied</code>)と呼び出し元の記録</li>
+<li><a href="../services/iam.html">AWS IAM</a>:ポリシーシミュレーター、IAM Access Analyzer(ポリシーの生成・未使用のアクセスの検出・外部アクセスの検出)、最終アクセス情報</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:SCP・RCPによる制限の確認</li>
+<li><a href="../services/kms.html">AWS KMS</a>:暗号化されたデータを読むためのキーポリシー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>CloudTrailのイベント履歴(またはAthena)で、拒否されたAPI・呼び出し元のロール・対象のリソースを特定する。エラーメッセージにどの種類のポリシーで拒否されたかが出ることもある</li>
+<li>ポリシーシミュレーターで、そのロールが該当の操作を許可されているかを確認する</li>
+<li>ポリシーの評価順に確認する:SCP・RCPに拒否はないか → 許可境界・セッションポリシーで制限されていないか → バケットポリシーに明示的なDenyはないか → <strong>SSE-KMSのキーポリシー</strong>で <code>kms:Decrypt</code> が許可されているか</li>
+<li>原因のポリシーを直す。別のアカウントのリソースなら、IAMポリシーとリソースベースのポリシーの<strong>両方</strong>で許可する</li>
+<li>Access Analyzerで、CloudTrailの記録から<strong>実際に使った操作だけのポリシーを生成</strong>し、未使用の権限・ロールを見つけて削除する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>評価の原則:<strong class="em">明示的なDenyが最優先</strong>、何も許可がなければ暗黙的に拒否。</li>
+<li>IAMポリシーで許可しても、SCP・許可境界の範囲外なら拒否される(実際の権限は重なった部分だけ)。</li>
+<li>KMSで暗号化されたS3のオブジェクトは、S3の権限に加えて<strong>KMSキーの権限</strong>が必要。</li>
+<li>クロスアカウントのアクセスは、呼び出し元のIAMポリシーと、相手側のリソースベースのポリシー(またはロールの信頼ポリシー)の両方が必要。</li>
+<li>最小権限への絞り込み → <strong>Access Analyzer</strong>のポリシー生成・未使用のアクセスの検出、IAMの最終アクセス情報。</li>
+</ul></div>
+</section>

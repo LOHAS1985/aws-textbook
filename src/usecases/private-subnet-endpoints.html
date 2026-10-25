@@ -1,0 +1,58 @@
+<!-- title: プライベートサブネットからNATなしでAWSのサービスを使う -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: ゲートウェイ型・インターフェイス型のVPCエンドポイントで、インターネットを通らずにS3やSSMなどへ接続する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>プライベートサブネットのEC2から、S3への大量のデータの読み書きや、Systems Manager・Secrets Managerの利用をしている。今はNATゲートウェイ経由のため、<strong>データ処理料金が高く</strong>、通信がインターネット側に出るのもセキュリティ上避けたい。特定のバケット以外にはアクセスさせたくない。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node ec2 0 0.5 blue "EC2" "プライベートサブネット"
+node gw 1.5 0 accent "ゲートウェイ型" "ルートテーブルに追加"
+node if 1.5 1 accent "インターフェイス型" "ENI+プライベートDNS"
+node s3 3 0 ok "S3・DynamoDB"
+node ssm 3 1 ok "SSM・Secrets" "Manager など"
+node nat 1.5 2 ng "NATゲートウェイ" "使わない"
+edge ec2 gw
+edge ec2 if
+edge gw s3
+edge if ssm
+edge ec2 nat dash
+<figcaption>図1 VPCエンドポイントによる接続。S3とDynamoDBはゲートウェイ型(無料)で、ルートテーブルに経路を追加する。その他のサービスはインターフェイス型で、サブネットにENIを置き、プライベートDNSで通常のエンドポイント名のまま接続する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>(ゲートウェイ型・インターフェイス型)、エンドポイントポリシー、ルートテーブル</li>
+<li><a href="../services/s3.html">Amazon S3</a>:バケットポリシーで、特定のVPCエンドポイント経由のアクセスだけを許可(<code>aws:SourceVpce</code>)</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>/<a href="../services/secrets-manager.html">AWS Secrets Manager</a>:インターフェイス型エンドポイントの接続先</li>
+<li><a href="../services/cost-explorer.html">AWS Cost Explorer</a>:NATゲートウェイのデータ処理料金の削減効果の確認</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>S3の<strong>ゲートウェイ型エンドポイント</strong>を作り、プライベートサブネットのルートテーブルに関連付ける</li>
+<li>SSMには <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>、Secrets Managerには <code>secretsmanager</code> の<strong>インターフェイス型エンドポイント</strong>を、各AZのサブネットに作る</li>
+<li>インターフェイス型エンドポイントのセキュリティグループで、VPC内からのHTTPS(443番)を許可する。VPCの「DNS解決」「DNSホスト名」を有効にし、プライベートDNSを有効にする</li>
+<li>エンドポイントポリシーで、使ってよいバケットだけに絞る。バケット側でも <code>aws:SourceVpce</code> の条件で、エンドポイント経由以外を拒否する</li>
+<li>NATゲートウェイを通る通信が減ったことを、フローログやCost Explorerで確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>S3・DynamoDB → <strong class="em">ゲートウェイ型</strong>(無料、ルートテーブルで経路を追加)。その他のサービス → <strong class="em">インターフェイス型</strong>(PrivateLink、時間とデータ量の料金)。</li>
+<li>ゲートウェイ型はオンプレミスやピアリング先のVPCからは使えない。オンプレミスからS3に私的に接続するならS3のインターフェイス型エンドポイントを使う。</li>
+<li>インターフェイス型で名前解決がエンドポイントに向かない → VPCのDNS設定とプライベートDNSの有効化を確認する。</li>
+<li>大量のS3の通信をNAT経由にしていると、NATゲートウェイのデータ処理料金がかさむ。</li>
+<li>ゲートウェイ型エンドポイントは同じリージョンのS3にだけ使える。</li>
+</ul></div>
+</section>

@@ -1,0 +1,57 @@
+<!-- title: 組織全体のVPCのIPアドレスを重ならないように払い出す -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: VPC IPAMのプールをRAMで共有し、各アカウントのVPCに重ならないCIDRを自動で割り当てる -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>アカウントごとにチームが自由にVPCを作った結果、CIDRが重なり、Transit GatewayやオンプレミスとつなげないVPCが出てきた。これから作るVPCは、<strong>決められたアドレス範囲から重ならないCIDRを自動で割り当て</strong>、使用状況も1か所で把握したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node ipam 0 0.5 accent "IPAM" "委任管理者"
+node pl 1.4 0.5 box "本番プール" "10.0.0.0/12"
+node ram 2.8 0.5 box "RAM" "OUへ共有"
+node v1 4.2 0 ok "VPC(A)" "/20を自動割当"
+node v2 4.2 1 ok "VPC(B)" "/20を自動割当"
+edge ipam pl
+edge pl ram
+edge ram v1
+edge ram v2
+<figcaption>図1 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/ipam.html">Amazon VPC IP Address Manager(IPAM)</a>:プールの階層、割り当てルール、使用状況・重複の監視</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:IPAMの委任管理者、組織全体のリソースの検出</li>
+<li><a href="../services/ram.html">AWS RAM</a>:プールの共有</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:VPCのテンプレートでIPAMプールを指定(StackSetsで各アカウントへ展開)</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:プールの使用率のアラーム</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>Organizationsの管理アカウントで、IPAMの委任管理者アカウントを指定する(高度なティアを使う)</li>
+<li>委任管理者でIPAMを作り、管理するリージョンを指定する。最上位のプール(例:<code>10.0.0.0/8</code>)の下に、リージョン・環境ごとのプールを作る</li>
+<li>各プールに割り当てルール(CIDRのサイズの最小・最大・既定、必須のタグ)を設定する</li>
+<li>RAMで、プールを対象のOU・アカウントに共有する</li>
+<li>各アカウントでは、VPCの作成時(またはCloudFormationの <code>Ipv4IpamPoolId</code>)にプールとネットマスクを指定する。既存のVPCの重複や非準拠は、IPAMのリソースの一覧で確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>組織全体のVPCのCIDRの重複を防ぐ・一元管理する → <strong class="em">IPAM</strong>。他のアカウントへのプールの共有 → <strong>RAM</strong>。</li>
+<li>CIDRが重なったVPCどうしは、ピアリングやTransit Gatewayで正しくルーティングできない。後から直すのは大変なので、作る前に計画する。</li>
+<li>プールの使用率をCloudWatchで監視し、枯渇の前にCIDRを追加する。</li>
+<li>VPCのCIDRは後から追加(セカンダリCIDR)できるが、元のCIDRは変更できない。</li>
+<li>プライベートのプールや他のアカウントへの割り当てには、IPAMの<strong>高度なティア</strong>が必要。</li>
+</ul></div>
+</section>

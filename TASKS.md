@@ -143,3 +143,12 @@ PC幅(1000px)とスマホ幅(375px)で表示を確認して見つけた、デザ
 - [x] マネジメントとガバナンス:AWS Control Tower、AWS DevOps Agent
 - [x] デベロッパーツール:Kiro
 - [x] 機械学習と人工知能:Amazon Bedrock
+
+# 残タスク(ユースケースを各グループ10件に増やす)※完了
+
+SOA-C03の出題範囲(タスクステートメント)に沿った、運用担当者の視点のユースケースを追加する。
+- [x] 監視・ログ・自動修復:外形監視と誤報の少ないアラーム、AWS Healthイベントへの対応、コンテナの監視、分散トレース、EC2・EBSの性能改善、RDSの性能改善
+- [x] 信頼性・事業継続:SQSによる分離、キャッシュ、AZの切り離し(ゾーンシフト)、DynamoDBのスケーリングとPITR、RDSのPITR、S3のデータ保護
+- [x] デプロイ・自動化:State Managerによる構成管理、ゴールデンAMI、CloudFormationの安全な更新、ドリフト検出、ECSの安全なデプロイ、定時の停止・起動
+- [x] セキュリティ・コンプライアンス:Identity CenterによるSSO、AccessDeniedの調査と最小権限、脆弱性管理、GuardDutyによる自動隔離、WAFによるWebの保護
+- [x] ネットワーク・コンテンツ配信:IPAMによるCIDRの払い出し、VPCエンドポイント、外向き通信の制限、ハイブリッドDNS、Client VPN、Route 53のルーティングポリシー

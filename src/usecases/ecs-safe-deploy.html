@@ -1,0 +1,57 @@
+<!-- title: ECSのサービスを止めずに更新し、失敗したら自動で戻す -->
+<!-- category: デプロイ・自動化 -->
+<!-- lead: ローリング更新の割合を調整し、デプロイサーキットブレーカーとアラームで失敗時に自動ロールバックする -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>ECS(Fargate)で動くWebアプリの新しいバージョンを、<strong>サービスを止めずに</strong>リリースしたい。新しいタスクが起動に失敗し続けたり、リリース後にエラーが増えたりした場合は、人が気づく前に<strong>自動で前のバージョンに戻したい</strong>。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node ecr 0 0.5 blue "ECR" "新しいイメージ"
+node svc 1.3 0.5 accent "ECSサービス" "タスク定義を更新"
+node old 2.6 0 box "旧タスク" "順に停止"
+node new 2.6 1 ok "新タスク" "ヘルスチェック"
+node cb 3.9 1 ng "失敗を検知" "起動失敗・アラーム"
+edge ecr svc
+edge svc old
+edge svc new
+edge new cb dash
+edge cb old "旧に戻す" dash
+<figcaption>図1 ECSの安全なデプロイ。新しいタスク定義でサービスを更新すると、新しいタスクを起動してから古いタスクを止める。タスクの起動が失敗し続けたり、指定したアラームが鳴ったりすると、前のデプロイに自動で戻る。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/ecs.html">Amazon ECS</a>:ローリング更新(<code>minimumHealthyPercent</code>・<code>maximumPercent</code>)、デプロイサーキットブレーカー、ブルー/グリーンデプロイ</li>
+<li><a href="../services/ecr.html">Amazon ECR</a>:コンテナイメージの保存</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:新しいタスクのヘルスチェックと通信の切り替え</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:デプロイの失敗を判定するアラーム(5xxエラー率など)</li>
+<li><a href="../services/codepipeline.html">AWS CodePipeline</a>:ビルドからデプロイまでの自動化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>新しいイメージをECRにプッシュし、そのイメージを使う新しいタスク定義のリビジョンを作る</li>
+<li>サービスのデプロイ設定で <code>minimumHealthyPercent</code>(例:100)と <code>maximumPercent</code>(例:200)を決める。100/200なら、台数を減らさずに新しいタスクを先に起動する</li>
+<li><strong>デプロイサーキットブレーカー</strong>をロールバックありで有効にする(新しいタスクが起動・ヘルスチェックに失敗し続けると、デプロイを失敗とみなして戻す)</li>
+<li>5xxエラー率などのCloudWatchアラームをデプロイの監視対象に指定し、アラームが鳴ったらロールバックするよう設定する</li>
+<li>アプリの起動に時間がかかる場合は、ヘルスチェックの猶予期間を設定する。一気に切り替えて素早く戻したい場合は、ECSのブルー/グリーンデプロイを使う</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>起動に失敗し続けるデプロイを自動で止めて戻す → <strong class="em">デプロイサーキットブレーカー</strong>。リリース後のエラー増加で戻す → <strong>CloudWatchアラーム</strong>によるロールバック。</li>
+<li><code>minimumHealthyPercent</code> を下げると、追加の容量なしで更新できるが、更新中の処理能力が下がる。</li>
+<li>新旧の環境を並べ、ALBの通信を一度に切り替える → ブルー/グリーンデプロイ。少しずつ移す → カナリア・リニア。</li>
+<li>新しいタスクがすぐ止まる → 「停止したタスク」の停止理由、コンテナのログ、イメージの取得権限(タスク実行ロール)を確認する。</li>
+</ul></div>
+</section>

@@ -1,0 +1,59 @@
+<!-- title: 乗っ取られたEC2を自動で隔離する -->
+<!-- category: セキュリティ・コンプライアンス -->
+<!-- lead: GuardDutyの検出結果をEventBridgeで受け、隔離用のセキュリティグループへの付け替えと証拠の保全を自動で行う -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>EC2が乗っ取られ、暗号資産のマイニングや外部への攻撃に使われた場合に、<strong>すぐにネットワークから切り離したい</strong>。調査のために、インスタンスを削除せずにディスクの状態を保存し、担当者にも通知したい。夜間でも自動で対応したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node gd 0 0.5 accent "GuardDuty" "重要度:高"
+node eb 1.3 0.5 box "EventBridge" "種類・重要度で判定"
+node au 2.6 0.5 box "SSM Automation" "またはLambda"
+node sg 3.9 0 ng "隔離用SG" "通信をすべて遮断"
+node snap 3.9 1 ok "スナップショット" "証拠を保全"
+node sns 1.3 1.6 ok "SNS" "担当者へ通知"
+edge gd eb
+edge eb au
+edge eb sns
+edge au sg
+edge au snap
+<figcaption>図1 侵害されたEC2の自動隔離。GuardDutyの検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、EBSのスナップショットを取って証拠を残す。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/guardduty.html">Amazon GuardDuty</a>:不審な通信・マイニング・認証情報の悪用などの検出</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:検出結果(<code>GuardDuty Finding</code>)を種類・重要度で絞り込んで自動処理を起動</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>/<a href="../services/lambda.html">AWS Lambda</a>:隔離・スナップショット・タグ付けの処理</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:隔離用セキュリティグループ、終了保護、EBSスナップショット</li>
+<li><a href="../services/security-hub.html">AWS Security Hub</a>:検出結果の集約と対応状況の管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>組織の全アカウント・全リージョンでGuardDutyを有効にする(委任管理者を使う)</li>
+<li>インバウンド・アウトバウンドのルールが何もない<strong>隔離用セキュリティグループ</strong>を用意する</li>
+<li>EventBridgeで、GuardDutyの検出結果のうち重要度が高く、EC2が対象のものに一致するルールを作る</li>
+<li>ターゲットの自動処理で、インスタンスの終了保護を有効にし、EBSのスナップショットを取り、セキュリティグループを隔離用に付け替える。Auto Scalingグループからは切り離す</li>
+<li>SNSで担当者に通知し、隔離したインスタンスを調査する。漏えいした可能性のある認証情報(IAMロールの一時認証情報など)は無効化する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>GuardDutyの検出結果への自動対応 → <strong class="em">EventBridge</strong>ルール+Lambda/SSM Automation。</li>
+<li>調査のため、すぐに<strong>終了しない</strong>。終了保護をかけ、スナップショットで証拠を残す。</li>
+<li>セキュリティグループを付け替えても、<strong>既に確立している通信</strong>は追跡されていると切れないことがある。ネットワークACLでの遮断も併用する。</li>
+<li>Auto Scalingグループに入ったままだと、ヘルスチェックで置き換えられて証拠が消えるので、先にグループから切り離す。</li>
+<li>GuardDutyは<strong>リージョンごと</strong>に有効化が必要。使っていないリージョンも有効にしておく。</li>
+</ul></div>
+</section>

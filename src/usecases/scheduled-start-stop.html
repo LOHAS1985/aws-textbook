@@ -1,0 +1,56 @@
+<!-- title: 開発環境を夜間・休日に自動で停止して費用を下げる -->
+<!-- category: デプロイ・自動化 -->
+<!-- lead: EventBridge SchedulerとSSM Automationで、タグの付いたEC2・RDSを決まった時刻に停止・起動する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>開発・検証用のEC2やRDSが、誰も使わない夜間や休日も動き続けて費用がかかっている。<strong>平日の9時に起動し、20時に停止</strong>するよう自動化したい。対象は「Schedule=office-hours」のタグを付けたリソースだけにしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node sch 0 0.5 accent "Scheduler" "平日9時・20時"
+node au 1.4 0.5 box "SSM Automation" "起動・停止の手順"
+node ec2 2.8 0 ok "EC2" "タグで選択"
+node rds 2.8 1 ok "RDS" "タグで選択"
+node asg 1.4 1.6 box "Auto Scaling" "スケジュールで0台"
+edge sch au
+edge au ec2
+edge au rds
+<figcaption>図1 定時の停止・起動。EventBridge Schedulerが決まった時刻にSSM Automationを起動し、タグで選んだEC2・RDSを停止・起動する。Auto Scalingグループは、スケジュールされたアクションで台数を0にする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:Scheduler(cron式・タイムゾーン指定)で決まった時刻に処理を起動</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Automationランブック(<code>AWS-StopEC2Instance</code>・<code>AWS-StartEC2Instance</code>・<code>AWS-StopRdsInstance</code> など)をタグの対象に実行</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>/<a href="../services/rds.html">Amazon RDS</a>:停止・起動の対象</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:スケジュールされたアクションで希望容量を変更</li>
+<li><a href="../services/cost-explorer.html">AWS Cost Explorer</a>:タグ別の費用で効果を確認</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>対象のリソースにタグ(例:<code>Schedule=office-hours</code>)を付ける</li>
+<li>Automationの実行用IAMロール(EC2・RDSの停止・起動の権限)を作る</li>
+<li>EventBridge Schedulerで、平日20時(タイムゾーンを Asia/Tokyo に指定)に停止のランブックを、タグを対象に実行するスケジュールを作る。同様に9時の起動も作る</li>
+<li>Auto Scalingグループは、ランブックではなく<strong>スケジュールされたアクション</strong>で、夜間は最小・希望容量を0、朝に元の値へ戻す(グループ内のインスタンスを直接止めると、Auto Scalingが置き換えてしまう)</li>
+<li>Cost Explorerでタグ別の費用を確認し、効果を測る</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>決まった時刻に処理を起動 → <strong class="em">EventBridge Scheduler</strong>(cron式とタイムゾーン)。</li>
+<li>Auto Scalingのインスタンスを止めたい → インスタンスを止めるのではなく、<strong>スケジュールされたアクション</strong>で台数を変える。</li>
+<li>RDSを停止できるのは<strong>最大7日</strong>。7日を過ぎると自動で起動するので、長く止めるなら毎週止め直すか、スナップショットを取って削除する。</li>
+<li>EC2を停止しても、EBSボリュームとElastic IPの料金はかかる。インスタンスストアのデータは消える。</li>
+<li>多数のアカウントでまとめて管理したいなら、AWSが公開している Instance Scheduler on AWS のソリューションも使える。</li>
+</ul></div>
+</section>

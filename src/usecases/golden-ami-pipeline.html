@@ -1,0 +1,57 @@
+<!-- title: パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する -->
+<!-- category: デプロイ・自動化 -->
+<!-- lead: Image Builderでゴールデンイメージを自動作成し、起動テンプレートの更新とインスタンスの更新で入れ替える -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>Auto Scalingで動くWebサーバーは、起動のたびに最新のパッチや社内の監視エージェントを入れているため、起動が遅く、手順のばらつきもある。<strong>必要なものを入れ終えたAMI(ゴールデンイメージ)を毎月自動で作り</strong>、各リージョン・アカウントに配って、動いているインスタンスも順番に新しいAMIに入れ替えたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 160 80
+node sch 0 0.5 blue "スケジュール" "毎月・パッチ公開時"
+node ib 1.25 0.5 accent "Image Builder" "ビルド・テスト"
+node ami 2.5 0.5 box "新しいAMI" "他リージョンへ配布"
+node lt 3.75 0 box "起動テンプレート" "新バージョン"
+node asg 3.75 1 ok "Auto Scaling" "インスタンスの更新"
+edge sch ib
+edge ib ami
+edge ami lt
+edge lt asg
+<figcaption>図1 ゴールデンAMIのパイプライン。Image Builderがパッチ適用・ソフトの導入・テストを行ってAMIを作り、起動テンプレートの新しいバージョンに反映する。Auto Scalingのインスタンスの更新で、動いているインスタンスを順に入れ替える。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/image-builder.html">Amazon EC2 Image Builder</a>:イメージレシピ・コンポーネント・テスト・配布(リージョン・アカウント)</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:起動テンプレートのバージョン指定、インスタンスの更新(ローリングでの入れ替え)</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:ビルド用インスタンスの操作、Parameter Storeに最新のAMI IDを保存</li>
+<li><a href="../services/inspector.html">Amazon Inspector</a>:作ったAMIの脆弱性スキャン</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:パイプラインの完了・失敗の通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>コンポーネント(パッチ適用・エージェントの導入・設定)と、起動後の確認を行うテストのコンポーネントを用意する</li>
+<li>ベースイメージとコンポーネントでイメージレシピを作る。インフラストラクチャ設定にインスタンスプロファイル(SSMの権限を含む)・サブネット・ログの出力先を指定する</li>
+<li>ディストリビューション設定で、配布先のリージョン・共有先のアカウントと、更新する<strong>起動テンプレート</strong>を指定する</li>
+<li>パイプラインを作り、スケジュール(毎月など)を設定する</li>
+<li>新しいAMIができたら、Auto Scalingグループの<strong>インスタンスの更新</strong>を開始し、最小正常率(例:90%)を保ちながら入れ替える</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>パッチ適用済みのAMIを定期的に自動作成 → <strong class="em">EC2 Image Builder</strong>。</li>
+<li>Auto Scalingのインスタンスを新しいAMIに入れ替える → 起動テンプレートの更新+<strong class="em">インスタンスの更新</strong>(Instance Refresh)。</li>
+<li>AMIはリージョンごとのリソース。他リージョンで使うには<strong>コピー</strong>が必要(ディストリビューション設定で自動化できる)。</li>
+<li>暗号化されたAMIを他のアカウントと共有するときは、KMSキーのポリシーでそのアカウントに使用を許可する(AWS管理キーで暗号化したものは共有できない)。</li>
+<li>起動テンプレートのバージョンを <code>$Latest</code> にすると、テンプレートの更新がそのまま新しく起動するインスタンスに使われる。</li>
+</ul></div>
+</section>

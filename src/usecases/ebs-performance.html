@@ -1,0 +1,56 @@
+<!-- title: EC2・EBSの性能不足を見つけて改善する -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: CloudWatchのメトリクスとCompute Optimizerでボトルネックを特定し、止めずに性能を上げる -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>EC2上のアプリやDBで、ディスクの読み書きが遅いという問い合わせがある。原因がEBSボリュームの性能不足なのか、インスタンス側の上限なのかを切り分け、<strong>サービスを止めずに</strong>性能を上げたい。逆に、性能を持て余しているリソースは小さくして費用を下げたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node ec2 0 0.5 blue "EC2" "EBSボリューム"
+node cw 1.4 0.5 accent "CloudWatch" "EBS・EC2の指標"
+node co 1.4 1.6 box "Compute\nOptimizer" "推奨を提示"
+node ev 2.8 0 ok "Elastic Volumes" "gp3でIOPS追加"
+node it 2.8 1 ok "インスタンス変更" "EBS帯域の大きい型"
+edge ec2 cw
+edge ec2 co dash
+edge cw ev "ボリューム側"
+edge cw it "インスタンス側"
+<figcaption>図1 性能改善の流れ。CloudWatchのメトリクスで、ボトルネックがボリュームかインスタンスかを切り分ける。ボリューム側ならElastic Volumesで止めずにタイプやIOPSを変え、インスタンス側ならEBS帯域の大きいインスタンスタイプに変える。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:<code>VolumeQueueLength</code>・<code>VolumeReadOps</code>/<code>VolumeWriteOps</code>・インスタンスのEBS関連の指標の確認とアラーム</li>
+<li><a href="../services/ebs.html">Amazon EBS</a>:Elastic Volumesでボリュームのタイプ・IOPS・スループット・サイズをオンラインで変更</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:インスタンスタイプの変更(EBS最適化・EBS帯域の大きいタイプ)</li>
+<li><a href="../services/compute-optimizer.html">AWS Compute Optimizer</a>:EC2・EBSの過不足の推奨</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>CloudWatchで、ボリュームの読み書き回数(IOPS)・スループット・<code>VolumeQueueLength</code> を確認する。IOPSやスループットがボリュームの上限に張り付き、キューが溜まっていればボリューム側が原因</li>
+<li>ボリュームに余裕があるのに遅い場合は、インスタンスの <code>EBSIOBalance%</code>・<code>EBSByteBalance%</code> などで、インスタンス側のEBS帯域の上限を確認する</li>
+<li>ボリューム側:Elastic Volumesで gp2 → <strong>gp3</strong> に変える、gp3のIOPS・スループットを追加する、さらに高い性能が必要なら io2 にする</li>
+<li>インスタンス側:EBS帯域の大きいインスタンスタイプに変更する(停止・起動が必要)</li>
+<li>Compute Optimizerの推奨で、過剰なリソースは小さくし、変更後もアラームで監視を続ける</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>I/Oが詰まっている → <code>VolumeQueueLength</code>。ボリュームの性能を止めずに上げる → <strong class="em">Elastic Volumes</strong>。</li>
+<li>gp3はサイズに関係なく3,000IOPS・125MiB/sが付き、IOPS・スループットを個別に追加できる。gp2はサイズに比例するので、性能のために容量を増やす必要があった。</li>
+<li>同じボリュームの再変更は<strong>6時間</strong>空ける。サイズを増やしたら、OS側でパーティションとファイルシステムを拡張する。</li>
+<li>ボリュームを速くしても、<strong>インスタンスのEBS帯域の上限</strong>で頭打ちになることがある。</li>
+<li>スナップショットから復元した直後のボリュームは、初回アクセスが遅い。すぐに最大性能が必要なら高速スナップショット復元(FSR)を使う。</li>
+</ul></div>
+</section>

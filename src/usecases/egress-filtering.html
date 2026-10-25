@@ -1,0 +1,59 @@
+<!-- title: 外向きの通信を許可したドメインだけに制限する -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: Network FirewallとRoute 53 Resolver DNS Firewallで、サーバーから不正な宛先への通信と名前解決を止める -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>プライベートサブネットのサーバーは、NATゲートウェイ経由でインターネットのどこにでもつながってしまう。マルウェアに感染した場合に、外部の指令サーバーへの接続やデータの持ち出しをされないよう、<strong>OSのアップデートなど必要な宛先(ドメイン)だけ</strong>に外向きの通信を絞りたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node ec2 0 0.5 blue "EC2" "プライベート"
+node dns 0 1.6 box "DNS Firewall" "不正ドメインを拒否"
+node nat 1.3 0.5 box "NATゲートウェイ"
+node fw 2.6 0.5 accent "Network\nFirewall" "許可ドメインのみ"
+node igw 3.9 0 ok "インターネット" "許可した宛先"
+node bad 3.9 1 ng "その他の宛先" "ブロック"
+edge ec2 nat
+edge ec2 dns "名前解決" dash
+edge nat fw
+edge fw igw
+edge fw bad dash
+<figcaption>図1 外向きの通信の制限。DNS Firewallで不正なドメインの名前解決を止め、Network Firewallで許可したドメイン以外への通信を止める。ルートテーブルで、インターネットへの通信がファイアウォールのエンドポイントを通るようにする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/network-firewall.html">AWS Network Firewall</a>:ステートフルルールのドメインリスト(TLSのSNI・HTTPのHostヘッダーで判定)で許可リスト方式の制限</li>
+<li><a href="../services/dns-firewall.html">Route 53 Resolver DNS Firewall</a>:AWS管理のドメインリストで、マルウェアなどのドメインの名前解決をブロック</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:ファイアウォール用サブネットとルートテーブル、NATゲートウェイ</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:ファイアウォールのアラートログ・Resolverクエリログの保存と検索</li>
+<li><a href="../services/guardduty.html">Amazon GuardDuty</a>:不審な通信の検出</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>各AZにファイアウォール用のサブネットを作り、Network Firewallのエンドポイントを置く</li>
+<li>ルートテーブルを設定する:ワークロード → NATゲートウェイ → ファイアウォールエンドポイント → インターネットゲートウェイの順に通り、戻りの通信もファイアウォールを通るようにする</li>
+<li>ステートフルルールグループに、許可するドメイン(例:<code>.amazonaws.com</code>、OSのリポジトリ)の<strong>許可リスト</strong>を作り、それ以外を拒否する</li>
+<li>DNS FirewallのルールグループにAWS管理のドメインリスト(マルウェア・ボットネット)をブロックとして設定し、VPCに関連付ける</li>
+<li>アラートログとResolverクエリログをCloudWatch Logsに出し、ブロックされた通信を確認しながら許可リストを調整する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>ドメイン名で外向きの通信を絞る、IDS/IPS → <strong class="em">Network Firewall</strong>。DNSの問い合わせの段階で止める → <strong class="em">DNS Firewall</strong>。</li>
+<li>Network Firewallは、<strong>ルートテーブル</strong>で通信をエンドポイントに通さないと検査されない。行きと戻りの経路を対称にする。</li>
+<li>セキュリティグループ・ネットワークACLはIPアドレスとポートでしか制御できず、ドメイン名では絞れない。</li>
+<li>DNS Firewallは、インスタンスが外部のDNSサーバーを直接使うと迂回される。53番ポートの外向き通信もファイアウォールで止める。</li>
+<li>ファイアウォールのエンドポイントはAZごとに置き、そのAZのサブネットの通信は同じAZのエンドポイントを通す。</li>
+</ul></div>
+</section>

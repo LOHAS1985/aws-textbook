@@ -1,0 +1,55 @@
+<!-- title: DynamoDBを負荷に合わせてスケールし、誤操作から復旧する -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: キャパシティモードと自動スケーリングでスロットリングを防ぎ、PITRで任意の時点に戻せるようにする -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>DynamoDBのテーブルで、アクセスの急増時に <code>ProvisionedThroughputExceededException</code>(スロットリング)が出る。負荷に合わせて容量が増減するようにしたい。また、バグで大量のデータを上書きしてしまったときに、<strong>直前の状態に戻せる</strong>ようにしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node app 0 0.5 blue "アプリ" "再試行あり"
+node t 1.4 0.5 accent "DynamoDB" "テーブル"
+node as 2.8 0 box "自動スケーリング" "使用率70%を維持"
+node pitr 2.8 1 ok "PITR" "35日以内の秒単位"
+node nt 4.1 1 ok "新しいテーブル" "そこに復元"
+edge app t
+edge as t "容量を調整"
+edge t pitr
+edge pitr nt
+<figcaption>図1 DynamoDBのスケーリングと復旧。プロビジョンドモードでは自動スケーリングが使用率を目標に保つ。PITRを有効にしておくと、過去35日以内の任意の時点の状態を新しいテーブルとして復元できる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:キャパシティモード(オンデマンド/プロビジョンド)、自動スケーリング、PITR、オンデマンドバックアップ、グローバルテーブル</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:<code>ThrottledRequests</code>・消費キャパシティの監視</li>
+<li><a href="../services/backup.html">AWS Backup</a>:バックアップの一元管理・別リージョン/アカウントへのコピー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>アクセスが予測できない・急増する → <strong>オンデマンドモード</strong>にする。予測できて安定している → プロビジョンドモード+<strong>自動スケーリング</strong>(目標の使用率を設定)</li>
+<li>グローバルセカンダリインデックス(GSI)にも容量の設定が必要。GSIのスロットリングは元のテーブルへの書き込みも止める</li>
+<li>特定のキーにアクセスが集中しないよう、パーティションキーを分散させる。アプリ側はエクスポネンシャルバックオフで再試行する(AWS SDKは自動)</li>
+<li>テーブルの<strong>ポイントインタイムリカバリ(PITR)</strong>を有効にする。長期保管が必要ならAWS Backupでもバックアップを取る</li>
+<li>リージョン障害にも備えるなら、<strong>グローバルテーブル</strong>で別リージョンにレプリカを置く</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>予測できない急増 → <strong class="em">オンデマンドモード</strong>。自動スケーリングは反応に数分かかり、瞬間的な急増には間に合わないことがある。</li>
+<li>特定のキーにアクセスが集中する(ホットパーティション)と、全体の容量に余裕があってもスロットリングする。</li>
+<li>PITRの復元先は<strong>新しいテーブル</strong>。復元後にアプリの接続先を切り替えるか、データを戻す。自動スケーリングの設定・IAMポリシー・アラームなどは引き継がれない。</li>
+<li>PITRは過去<strong>35日以内</strong>(設定で1〜35日)の秒単位の時点に戻せる。</li>
+<li>読み取りの高速化・負荷の軽減 → DAX。マルチリージョンでの読み書き・リージョン障害への備え → グローバルテーブル。</li>
+</ul></div>
+</section>

@@ -1,0 +1,61 @@
+<!-- title: コンテナ(ECS・EKS)の性能を監視する -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: Container Insightsでタスク・Pod単位のメトリクスとログを集め、異常をアラームで知らせる -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>ECSやEKSで動くアプリについて、クラスター全体だけでなく<strong>サービス・タスク・Pod単位</strong>のCPU・メモリ・再起動回数を監視したい。メモリ不足でタスクが落ちる、Podが再起動を繰り返す、といった問題を早く見つけて通知したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node ecs 0 0 blue "ECS" "Container Insights"
+node eks 0 1 blue "EKS" "CloudWatchアドオン"
+node cw 1.4 0.5 accent "CloudWatch" "メトリクス・ログ"
+node al 2.8 0 box "アラーム" "メモリ使用率など"
+node sns 4.1 0 ok "SNS" "通知"
+node amp 1.4 1.6 box "Prometheus" "アプリのメトリクス"
+node amg 2.8 1.6 ok "Grafana" "ダッシュボード"
+edge ecs cw
+edge eks cw
+edge cw al
+edge al sns
+edge eks amp dash
+edge amp amg
+<figcaption>図1 コンテナの監視の構成。ECSはクラスター単位でContainer Insightsを有効にし、EKSはCloudWatch Observabilityアドオンでエージェントを入れる。アプリ独自のPrometheus形式のメトリクスは、Managed Service for Prometheusに集めてGrafanaで見る。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Container Insightsによるタスク・Pod単位のメトリクスとパフォーマンスログ、アラーム</li>
+<li><a href="../services/ecs.html">Amazon ECS</a>:クラスターの設定でContainer Insightsを有効化。コンテナのログは <code>awslogs</code> ログドライバーでCloudWatch Logsへ</li>
+<li><a href="../services/eks.html">Amazon EKS</a>:<strong>Amazon CloudWatch Observability</strong> アドオン(CloudWatchエージェント+Fluent Bit)でメトリクスとログを収集</li>
+<li><a href="../services/managed-prometheus.html">Amazon Managed Service for Prometheus</a>/<a href="../services/managed-grafana.html">Amazon Managed Grafana</a>:Prometheus形式のメトリクスの保存と可視化</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:アラームの通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>ECS:クラスターでContainer Insights(オブザーバビリティ強化版)を有効にする。新しいクラスターで常に有効にするなら、アカウントの設定 <code>containerInsights</code> を有効にする</li>
+<li>ECS:タスク定義のログ設定を <code>awslogs</code> にし、ロググループを指定する。タスク実行ロールにログを書く権限を付ける</li>
+<li>EKS:CloudWatch Observabilityアドオンを追加し、ノードのIAMロール(またはPod Identity)に <code>CloudWatchAgentServerPolicy</code> を付ける</li>
+<li>メモリ使用率・実行中のタスク数・Podの再起動回数などにアラームを作り、SNSで通知する</li>
+<li>アプリのPrometheusメトリクスは、Managed Prometheusのマネージドコレクター(またはADOT)で収集し、Grafanaでダッシュボードを作る</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>ECSの標準のメトリクスはサービス単位のCPU・メモリだけ。タスク・コンテナ単位の詳細は<strong class="em">Container Insights</strong>を有効にして初めて見られる。</li>
+<li>EKSには標準のノード・Podのメトリクスがない → <strong>CloudWatchエージェント</strong>(Observabilityアドオン)が必要。</li>
+<li>Container Insightsの詳細データはCloudWatch Logsのパフォーマンスログとして保存され、Logs Insightsで調べられる。保存量に応じて費用がかかる。</li>
+<li>タスクが <code>OutOfMemoryError</code> で止まる → タスク定義のメモリの上限を見直す。停止の理由はECSの「停止したタスク」で確認できる。</li>
+<li>負荷に応じたタスク数の増減は、ECSサービスの自動スケーリング(ターゲット追跡)で行う。</li>
+</ul></div>
+</section>

@@ -1,0 +1,57 @@
+<!-- title: オンプレミスとVPCで互いの名前を解決する -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: Route 53 Resolverのインバウンド・アウトバウンドエンドポイントと転送ルールで、ハイブリッド環境の名前解決をつなぐ -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>Direct ConnectでオンプレミスとVPCをつないでいる。VPC内のEC2から社内のDNSで管理する <code>corp.example.com</code> の名前を引きたい。逆に、オンプレミスのサーバーから、VPCのプライベートホストゾーン <code>aws.example.com</code> の名前を引きたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node ec2 0 0 blue "EC2" "corp.example.com"
+node res 1.4 0.5 accent "Route 53" "Resolver"
+node out 2.8 0 box "アウトバウンド" "転送ルール"
+node inb 2.8 1 box "インバウンド" "IPアドレスで受付"
+node onp 4.4 0.5 blue "社内のDNS" "条件付き転送"
+edge ec2 res
+edge res out
+edge out onp "Direct Connect"
+edge onp inb
+edge inb res
+<figcaption>図1 ハイブリッドの名前解決。VPCからオンプレミスの名前は、アウトバウンドエンドポイントの転送ルールで社内のDNSへ送る。オンプレミスからVPCの名前は、社内のDNSの条件付き転送でインバウンドエンドポイントに送る。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/route53.html">Amazon Route 53</a>:Resolver(VPCのDNS)、インバウンド/アウトバウンドエンドポイント、転送ルール、プライベートホストゾーン</li>
+<li><a href="../services/direct-connect.html">AWS Direct Connect</a>/<a href="../services/site-to-site-vpn.html">AWS Site-to-Site VPN</a>:DNSの問い合わせが通る経路</li>
+<li><a href="../services/ram.html">AWS RAM</a>:転送ルールを他のアカウントと共有</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:エンドポイントを置くサブネットとセキュリティグループ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>2つ以上のAZのサブネットに、<strong>アウトバウンドエンドポイント</strong>と<strong>インバウンドエンドポイント</strong>を作る。セキュリティグループでDNS(TCP/UDP 53番)を許可する</li>
+<li>アウトバウンド:<code>corp.example.com</code> を社内のDNSサーバーのIPアドレスに転送する<strong>転送ルール</strong>を作り、VPCに関連付ける</li>
+<li>インバウンド:社内のDNSサーバーに、<code>aws.example.com</code> をインバウンドエンドポイントのIPアドレスへ送る条件付き転送を設定する</li>
+<li>プライベートホストゾーン <code>aws.example.com</code> をVPCに関連付ける</li>
+<li>複数のアカウントのVPCで同じルールを使うなら、RAMで転送ルールを共有し、各VPCに関連付ける</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>VPC → オンプレミスの名前解決 → <strong class="em">アウトバウンドエンドポイント</strong>+転送ルール。</li>
+<li>オンプレミス → VPC(プライベートホストゾーン)の名前解決 → <strong class="em">インバウンドエンドポイント</strong>。</li>
+<li>VPCのResolver(VPCのCIDR+2のアドレス)には、オンプレミスから直接問い合わせできない。だからインバウンドエンドポイントが必要。</li>
+<li>VPCの「DNS解決」「DNSホスト名」の設定を有効にしておく。</li>
+<li>エンドポイントは複数のAZに置いて冗長化する。オンプレミス側のファイアウォールでも53番ポートを許可する。</li>
+</ul></div>
+</section>

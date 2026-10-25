@@ -1,0 +1,60 @@
+<!-- title: Webアプリを攻撃や大量アクセスから守る -->
+<!-- category: セキュリティ・コンプライアンス -->
+<!-- lead: CloudFront+WAFのマネージドルールとレートベースルールで攻撃を防ぎ、ShieldでDDoSに備える -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>公開しているWebアプリに、SQLインジェクションを狙ったリクエストや、ログイン画面への大量の試行が来ている。アプリを改修せずに<strong>前段で攻撃を止め</strong>、DDoSにも備えたい。どのリクエストをブロックしたかの記録も残したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node u 0 0 blue "利用者"
+node atk 0 1 ng "攻撃者" "SQLi・大量試行"
+node cf 1.3 0.5 accent "CloudFront" "WAF・Shield"
+node alb 2.6 0.5 box "ALB" "CloudFrontからのみ"
+node app 3.9 0.5 ok "アプリ"
+node log 1.3 1.6 box "WAFログ" "S3・Logs"
+edge u cf
+edge atk cf "ブロック" dash
+edge cf alb
+edge alb app
+edge cf log dash
+<figcaption>図1 Webアプリの保護。CloudFrontにWeb ACLを関連付け、攻撃や大量アクセスをエッジで止める。ALBはCloudFrontからの通信だけを受け付け、WAFを迂回した直接のアクセスを防ぐ。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/waf.html">AWS WAF</a>:マネージドルール(SQLインジェクション・既知の悪い入力・IP評価リスト)、レートベースルール、ジオマッチ、ログ</li>
+<li><a href="../services/shield.html">AWS Shield</a>:Standard(自動)によるL3/L4のDDoS対策、必要ならAdvanced</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:エッジでの受付とキャッシュ</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:オリジンのALB</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:ルールごとのブロック件数の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>CloudFront用のWeb ACLを作る(CloudFront用は<strong>us-east-1</strong>で作成)</li>
+<li>AWSマネージドルール(コアルールセット・SQLデータベース・既知の悪い入力・Amazon IP評価リスト)を追加する</li>
+<li>ログインのパスに、IPごとの<strong>レートベースルール</strong>を追加する。必要に応じて国のジオマッチやBot Controlを加える</li>
+<li>まずは新しいルールを <strong>Count</strong> で動かし、正常な通信を誤ってブロックしていないかログで確かめてから Block にする</li>
+<li>ALBのセキュリティグループで、CloudFrontのマネージドプレフィックスリストからの通信だけを許可する(またはCloudFrontのVPCオリジンを使う)</li>
+<li>WAFのログを有効にし(ロググループ名は <code>aws-waf-logs-</code> で始める)、ブロック件数にアラームを設定する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>アプリ層の攻撃(SQLi・XSS)→ <strong class="em">WAF</strong>。同じIPからの大量アクセス → <strong class="em">レートベースルール</strong>。</li>
+<li>CloudFrontのWeb ACLは<strong>us-east-1</strong>で作る。ALB用はALBと同じリージョン。</li>
+<li>WAFは NLB・EC2に直接付けられない。CloudFront・ALB・API Gatewayなどの前段に付ける。</li>
+<li>オリジンに直接アクセスされるとWAFを迂回されるので、ALBへの経路をCloudFrontからだけに絞る。</li>
+<li>大規模なDDoSへの24時間の支援や費用の保護が必要 → Shield Advanced。複数アカウントへ同じルールを展開 → Firewall Manager。</li>
+</ul></div>
+</section>

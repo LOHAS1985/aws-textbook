@@ -1,0 +1,56 @@
+<!-- title: キャッシュでDBの読み取り負荷を下げる -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: ElastiCacheとCloudFrontで同じデータの読み取りを肩代わりし、DBの負荷と応答時間を下げる -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>セール中などにアクセスが急増すると、同じ商品情報を何度もDBから読むため、RDSのCPUが上がって応答が遅くなる。DBを大きくせずに、<strong>よく読まれるデータをキャッシュ</strong>して負荷に強くしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node u 0 0.5 blue "利用者"
+node cf 1.3 0.5 box "CloudFront" "画像・静的ページ"
+node app 2.6 0.5 box "アプリ" "EC2・Lambda"
+node ec 3.9 0 accent "ElastiCache" "まずここを読む"
+node db 3.9 1 box "RDS" "キャッシュにない時"
+edge u cf
+edge cf app "動的な要求"
+edge app ec "①"
+edge app db "②ミス時" dash
+<figcaption>図1 キャッシュの構成。静的なコンテンツはCloudFrontのエッジで返す。アプリはまずElastiCacheを読み(①)、なければDBから読んでキャッシュに書き込む(②、遅延読み込み)。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/elasticache.html">Amazon ElastiCache</a>:インメモリのキャッシュ(Valkey・Redis OSS・Memcached)</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:画像・静的ファイル・キャッシュできるAPIの応答をエッジで返す</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:元のデータ(キャッシュの裏側)。読み取りの分散にはリードレプリカも使える</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:キャッシュのヒット率(<code>CacheHitRate</code>)・メモリ・追い出し(<code>Evictions</code>)の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>ElastiCacheをアプリと同じVPCのプライベートサブネットに作成する。止まると困るならレプリカを置いてMulti-AZ・自動フェイルオーバーを有効にする(Valkey・Redis OSS)</li>
+<li>アプリに、キャッシュを先に読み、なければDBから読んでキャッシュに入れる処理(<strong>遅延読み込み</strong>)を実装する</li>
+<li>データの古さをどこまで許すかで <strong>TTL(有効期限)</strong>を決める。更新が多いデータは、DBへの書き込み時にキャッシュも更新する(<strong>ライトスルー</strong>)</li>
+<li>CloudFrontのキャッシュポリシーで、静的ファイルとキャッシュ可能なAPIの応答をエッジに置く</li>
+<li>ヒット率・追い出しの回数を監視し、ノードのサイズやTTLを調整する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>「同じデータの繰り返しの読み取りでDBが重い」→ <strong class="em">ElastiCache</strong>。静的コンテンツ・地理的に分散した利用者 → CloudFront。</li>
+<li>遅延読み込みは必要なデータだけキャッシュするが、初回は必ずミスし、データが古くなりうる。ライトスルーは常に新しいが、使われないデータもキャッシュする。</li>
+<li><code>Evictions</code> が多い → メモリ不足。ノードを大きくするか、シャードを増やす。</li>
+<li>ElastiCacheを増やすのは読み取りの対策。<strong>書き込み</strong>が多い場合は、DBのスケールアップやDynamoDBなどの検討が必要。</li>
+<li>DynamoDBの読み取りをマイクロ秒にしたいなら <strong>DAX</strong>。</li>
+</ul></div>
+</section>

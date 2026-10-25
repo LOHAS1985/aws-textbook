@@ -1,0 +1,56 @@
+<!-- title: 複数アカウントへのログインをシングルサインオンにまとめる -->
+<!-- category: セキュリティ・コンプライアンス -->
+<!-- lead: IAM Identity Centerとパーミッションセットで、社員の権限をグループ単位・アカウント単位で一元管理する -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>アカウントが20個に増え、それぞれにIAMユーザーを作っているため、異動・退職のたびに全アカウントで作業が必要で、消し忘れも起きている。社内のIDで<strong>一度ログインすれば、権限のあるアカウントに切り替えて使える</strong>ようにし、長期のアクセスキーもなくしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node idp 0 0.5 blue "社内のIdP" "Entra IDなど"
+node ic 1.4 0.5 accent "Identity Center" "グループ×権限"
+node a1 2.8 0 ok "本番アカウント" "ReadOnly"
+node a2 2.8 1 ok "開発アカウント" "Admin"
+node cli 1.4 1.6 box "CLI" "aws sso login"
+edge idp ic "SAML・SCIM"
+edge ic a1
+edge ic a2
+edge cli ic dash
+<figcaption>図1 Identity Centerによるシングルサインオン。社内のIdPと連携し、グループごとに「どのアカウントで、どのパーミッションセット(権限)を使えるか」を割り当てる。各アカウントにはIAMロールが自動で作られ、一時的な認証情報で操作する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/identity-center.html">AWS IAM Identity Center</a>:シングルサインオン、パーミッションセット、アカウントへの割り当て、MFA</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:対象のアカウント群。Identity Centerは管理アカウント(または委任管理者)で有効化</li>
+<li><a href="../services/iam.html">AWS IAM</a>:パーミッションセットから自動で作られるロール</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:誰がどのアカウントで何をしたかの記録</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>Organizationsの管理アカウントでIdentity Centerを有効にし、日常の管理は委任管理者アカウントで行う</li>
+<li>IDソースを決める:Identity Center内のディレクトリ、Active Directory、または外部のIdP(SAML 2.0で連携し、SCIMでユーザー・グループを自動同期)</li>
+<li><strong>パーミッションセット</strong>(AWS管理ポリシー・カスタマー管理ポリシー・インラインポリシー、セッションの長さ)を作る</li>
+<li>「グループ × アカウント × パーミッションセット」の割り当てを作る(例:開発者グループ → 本番は読み取り専用、開発は管理者)</li>
+<li>MFAを必須にし、各アカウントのIAMユーザーとアクセスキーを廃止する。CLIは <code>aws configure sso</code> と <code>aws sso login</code> で一時的な認証情報を使う</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>多数のアカウントへのシングルサインオンと権限の一元管理 → <strong class="em">IAM Identity Center</strong>。</li>
+<li>権限は<strong>パーミッションセット</strong>で定義し、割り当てると各アカウントにIAMロールが自動で作られる。そのロールを直接編集しない(パーミッションセットの更新で上書きされる)。</li>
+<li>退職者はIdPで無効にすれば、すべてのアカウントに入れなくなる。</li>
+<li>アカウントごとのリソースのARNを含むポリシーは、カスタマー管理ポリシーを各アカウントに同じ名前で用意して参照する。</li>
+<li>組織全体で禁止したい操作は、Identity Centerではなく<strong>SCP</strong>で制限する。</li>
+</ul></div>
+</section>

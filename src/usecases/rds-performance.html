@@ -1,0 +1,58 @@
+<!-- title: RDSの遅いクエリと接続数の問題を解消する -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: Performance Insightsとスロークエリログで原因を特定し、RDS Proxyやリードレプリカで負荷を下げる -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>RDSのCPU使用率が高く、アプリの応答が遅い。また、アクセスが増えると「接続数が多すぎる(Too many connections)」エラーが出る。<strong>どのSQLが負荷の原因か</strong>を特定し、接続数の問題も含めて解消したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node app 0 0.5 blue "Lambda・アプリ" "接続が急増"
+node px 1.3 0.5 accent "RDS Proxy" "接続を集約"
+node db 2.6 0.5 box "RDS" "書き込み"
+node rr 2.6 1.5 ok "リードレプリカ" "読み取りを分散"
+node pi 3.9 0 box "Performance" "Insights"
+node lg 3.9 1 box "CloudWatch Logs" "スロークエリログ"
+edge app px
+edge px db
+edge app rr dash
+edge db pi
+edge db lg
+<figcaption>図1 DBの負荷対策の構成。Performance Insightsとスロークエリログで重いSQLを見つける。接続数の急増はRDS Proxyで吸収し、読み取りの多い処理はリードレプリカに逃がす。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/rds.html">Amazon RDS</a>:Performance Insights(SQL別・待機イベント別の負荷)、拡張モニタリング(OSの詳細)、リードレプリカ、RDS Proxy</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:<code>CPUUtilization</code>・<code>DatabaseConnections</code>・<code>ReadLatency</code> などの監視、スロークエリログの保存と検索(Logs Insights)</li>
+<li><a href="../services/secrets-manager.html">AWS Secrets Manager</a>:RDS ProxyがDBに接続するための認証情報</li>
+<li><a href="../services/elasticache.html">Amazon ElastiCache</a>:よく読まれるデータのキャッシュ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>Performance Insightsを有効にし、DBの負荷(平均アクティブセッション数)が多い<strong>SQL文と待機イベント</strong>を確認する</li>
+<li>パラメータグループでスロークエリログ(MySQLの <code>slow_query_log</code>・<code>long_query_time</code> など)を有効にし、CloudWatch Logsに発行する</li>
+<li>重いSQLにインデックスを追加するなど、クエリを改善する</li>
+<li>接続数の問題には RDS Proxy を作成し、アプリの接続先をProxyのエンドポイントに変える(認証情報はSecrets Managerに保存)</li>
+<li>読み取りが多い場合はリードレプリカを追加し、読み取り処理の接続先を分ける。それでも足りなければインスタンスクラスを上げる</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>「どのSQLが負荷をかけているか」→ <strong class="em">Performance Insights</strong>。OSのプロセスやメモリの詳細 → 拡張モニタリング。</li>
+<li>Lambdaなどで接続数が急増する・接続が枯渇する → <strong class="em">RDS Proxy</strong>(フェイルオーバー時間の短縮にもなる)。</li>
+<li>ログをCloudWatch Logsに出すには、パラメータグループでの出力設定と、DBインスタンスの<strong>ログのエクスポート</strong>設定の両方が必要。</li>
+<li>リードレプリカは非同期なので、直後の読み取りに古いデータが返ることがある。高可用性はMulti-AZ、読み取りの分散はリードレプリカ。</li>
+<li>パラメータの変更には、すぐ反映されるもの(動的)と、再起動が必要なもの(静的)がある。</li>
+</ul></div>
+</section>

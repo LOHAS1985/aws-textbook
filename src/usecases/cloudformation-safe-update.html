@@ -1,0 +1,55 @@
+<!-- title: CloudFormationで本番環境を安全に更新する -->
+<!-- category: デプロイ・自動化 -->
+<!-- lead: 変更セット・スタックポリシー・削除ポリシー・ロールバックトリガーで、意図しない置き換えや削除を防ぐ -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>本番のCloudFormationスタックを更新したところ、プロパティの変更でRDSが<strong>置き換え(作り直し)</strong>になり、データが消えかけた。スタックの更新が失敗したまま止まってしまったこともある。本番のスタックを、事前に影響を確かめたうえで安全に更新し、失敗しても元に戻せるようにしたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node tp 0 0.5 blue "新テンプレート"
+node cs 1.3 0.5 accent "変更セット" "影響を確認"
+node rv 2.6 0.5 box "レビュー" "置換・削除はないか"
+node ex 3.9 0 ok "実行" "更新成功"
+node rb 3.9 1 ng "ロールバック" "アラームで発動"
+edge tp cs
+edge cs rv
+edge rv ex
+edge ex rb "失敗・アラーム" dash
+<figcaption>図1 安全な更新の流れ。変更セットで何が変更・置換・削除されるかを確かめてから実行する。更新中や直後にアラームが鳴ったり失敗したりすると、前の状態にロールバックされる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:変更セット、スタックポリシー、DeletionPolicy・UpdateReplacePolicy、終了保護、ロールバックトリガー</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:ロールバックトリガーに使うアラーム</li>
+<li><a href="../services/iam.html">AWS IAM</a>:CloudFormationが使うサービスロール、スタックを操作できる人の制限</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>重要なリソース(RDS・S3など)に <code>DeletionPolicy: Snapshot</code>(または <code>Retain</code>)と <code>UpdateReplacePolicy</code> を設定する</li>
+<li><strong>スタックポリシー</strong>で、本番DBなどの置き換え・削除を伴う更新を拒否する。スタックには<strong>終了保護</strong>を有効にする</li>
+<li>更新は直接行わず、<strong>変更セット</strong>を作って、各リソースが変更・<strong>置換(Replacement)</strong>・削除のどれになるかを確認する</li>
+<li>エラー率などのCloudWatchアラームを<strong>ロールバックトリガー</strong>に設定し、監視時間内にアラームが鳴ったら自動でロールバックさせる</li>
+<li>変更セットを実行する。EC2の起動処理の完了を待つ必要があれば、<code>CreationPolicy</code> と <code>cfn-signal</code> を使う</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>更新の影響を事前に確認 → <strong class="em">変更セット</strong>。DBの名前など、変更すると置換になるプロパティがある。</li>
+<li>特定のリソースの更新・置換を禁止 → <strong class="em">スタックポリシー</strong>。スタックの削除を防ぐ → 終了保護。</li>
+<li>スタックを消してもリソースを残す・スナップショットを取る → <strong>DeletionPolicy</strong>(Retain/Snapshot)。</li>
+<li>ロールバックも失敗して <code>UPDATE_ROLLBACK_FAILED</code> になった → 原因を直して「更新のロールバックを続行」。必要なら問題のリソースをスキップする。</li>
+<li>テンプレートの外でリソースを手で変更すると、更新が失敗する原因になる(ドリフト)。</li>
+</ul></div>
+</section>

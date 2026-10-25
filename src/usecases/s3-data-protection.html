@@ -1,0 +1,56 @@
+<!-- title: S3のデータを誤削除やリージョン障害から守る -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: バージョニング・レプリケーション・Object Lock・ライフサイクルを組み合わせてデータを守る -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>S3に保存した業務データについて、<strong>誤って上書き・削除</strong>しても元に戻せるようにしたい。リージョンの障害に備えて別リージョンにもコピーを置き、ランサムウェアなどで削除されないよう、一定期間は誰も消せないようにもしたい。古いバージョンが増え続けて費用がかさむのも防ぎたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node app 0 0.5 blue "アプリ"
+node src 1.4 0.5 accent "S3(東京)" "バージョニング"
+node dst 2.8 0.5 ok "S3(大阪)" "レプリカ"
+node lc 1.4 1.6 box "ライフサイクル" "旧バージョンを整理"
+node ol 2.8 1.6 box "Object Lock" "期間中は削除不可"
+edge app src
+edge src dst "CRR"
+edge src lc dash
+edge dst ol dash
+<figcaption>図1 S3のデータ保護。バージョニングで上書き・削除を元に戻せるようにし、クロスリージョンレプリケーション(CRR)で別リージョンにコピーする。Object Lockで消せない期間を設け、ライフサイクルで古いバージョンを整理する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/s3.html">Amazon S3</a>:バージョニング、レプリケーション(CRR/SRR)、Object Lock、ライフサイクルルール、MFA Delete</li>
+<li><a href="../services/iam.html">AWS IAM</a>:レプリケーション用のIAMロール</li>
+<li><a href="../services/kms.html">AWS KMS</a>:暗号化されたオブジェクトのレプリケーション</li>
+<li><a href="../services/backup.html">AWS Backup</a>:S3のバックアップ(特定時点への復元)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>コピー元・コピー先の両方のバケットで<strong>バージョニング</strong>を有効にする(レプリケーションの前提)</li>
+<li>レプリケーションルールを作り、コピー先のバケットとIAMロールを指定する。必要ならS3 Replication Time Control(15分以内の複製を目標)を有効にする</li>
+<li>既にあるオブジェクトもコピーするなら、<strong>S3バッチレプリケーション</strong>を実行する(ルールの作成後に追加されたものだけが自動で複製される)</li>
+<li>改ざん・削除を防ぐ必要があるバケットは、Object Lock(コンプライアンスモード/ガバナンスモード)と保持期間を設定する</li>
+<li>ライフサイクルルールで、古いバージョン(非現行バージョン)を一定日数後に安いストレージクラスへ移す・削除する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>誤削除・上書きからの復旧 → <strong class="em">バージョニング</strong>。削除は「削除マーカー」が付くだけなので、マーカーを消すと元に戻る。</li>
+<li>レプリケーションには<strong>両方のバケットのバージョニング</strong>が必要。既存のオブジェクトはバッチレプリケーションで複製する。</li>
+<li>既定では削除マーカーは複製されない(ルールで有効にできる)。バージョンIDを指定した削除は複製されないので、コピー元での悪意ある削除からは守られる。</li>
+<li>誰も(rootユーザーも)消せないようにする → Object Lockの<strong class="em">コンプライアンスモード</strong>。特別な権限があれば解除できる → ガバナンスモード。</li>
+<li>バージョニングを有効にすると旧バージョンにも料金がかかる → 非現行バージョンのライフサイクルルールで整理する。</li>
+</ul></div>
+</section>

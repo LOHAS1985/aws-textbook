@@ -1,0 +1,54 @@
+<!-- title: 誤操作したRDSのデータを特定の時点に戻す -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: 自動バックアップのポイントインタイムリカバリ(PITR)で、誤操作の直前の状態のDBを作り直す -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>運用中のRDSで、14時05分に誤ってテーブルのデータを削除してしまった。<strong>14時04分の状態</strong>に戻して業務を再開したい。また、こうした事態に備えて、バックアップの保持期間や別リージョンへのバックアップも整えておきたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node db 0 0.5 ng "本番DB" "14:05に誤削除"
+node bk 1.4 0.5 box "自動バックアップ" "スナップショット+ログ"
+node nw 2.8 0.5 ok "新しいDB" "14:04の状態"
+node app 4.1 0.5 blue "アプリ" "接続先を切替"
+edge db bk
+edge bk nw "PITR"
+edge app nw
+<figcaption>図1 ポイントインタイムリカバリ。日次のスナップショットとトランザクションログから、指定した時点の状態の新しいDBインスタンスを作る。元のDBは上書きされないので、アプリの接続先を切り替える。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/rds.html">Amazon RDS</a>:自動バックアップ(保持期間1〜35日)、PITR、手動スナップショット、自動バックアップのリージョン間レプリケーション</li>
+<li><a href="../services/aurora.html">Amazon Aurora</a>:バックトラック(Aurora MySQL。同じクラスターを数秒〜数分で過去に巻き戻す)</li>
+<li><a href="../services/backup.html">AWS Backup</a>:バックアップの一元管理・別アカウントへのコピー</li>
+<li><a href="../services/route53.html">Amazon Route 53</a>:アプリの接続先をCNAMEで切り替えやすくする</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>(事前)自動バックアップの保持期間を要件に合わせて設定する(0にすると無効)。長期保管は手動スナップショットかAWS Backupで行う</li>
+<li>誤操作が起きたら、コンソールの「特定時点への復元」で、誤操作の直前の時刻を指定して<strong>新しいDBインスタンス</strong>を作る(最新の復元可能時刻は通常、現在の約5分前)</li>
+<li>復元したDBに、元と同じセキュリティグループ・パラメータグループ・オプショングループが付いているかを確認する</li>
+<li>アプリの接続先を新しいエンドポイントに変える。または、元のインスタンスと新しいインスタンスの<strong>名前を入れ替えて</strong>エンドポイントを引き継ぐ</li>
+<li>問題がなければ元のインスタンスを削除する(必要なら最終スナップショットを取る)</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>特定の時刻に戻す → <strong class="em">PITR</strong>。復元先は<strong>新しいDBインスタンス</strong>(エンドポイントが変わる)。</li>
+<li>スナップショットからの復元も同じく新しいインスタンスになる。元のインスタンスが上書きされることはない。</li>
+<li>Aurora MySQLで、新しいクラスターを作らずにすばやく戻す → <strong>バックトラック</strong>(最大72時間)。</li>
+<li>自動バックアップはDBインスタンスを削除すると既定で消える。手動スナップショットは削除するまで残る。</li>
+<li>リージョン障害への備え → スナップショットの<strong>リージョン間コピー</strong>や、自動バックアップのリージョン間レプリケーション。</li>
+</ul></div>
+</section>

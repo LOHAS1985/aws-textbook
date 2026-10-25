@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する | AWS教科書</title>
+<meta name="description" content="Image Builderでゴールデンイメージを自動作成し、起動テンプレートの更新とインスタンスの更新で入れ替える">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">デプロイ・自動化</a>
+  <h1>パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</h1>
+  <p class="lead">Image Builderでゴールデンイメージを自動作成し、起動テンプレートの更新とインスタンスの更新で入れ替える</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Auto Scalingで動くWebサーバーは、起動のたびに最新のパッチや社内の監視エージェントを入れているため、起動が遅く、手順のばらつきもある。<strong>必要なものを入れ終えたAMI(ゴールデンイメージ)を毎月自動で作り</strong>、各リージョン・アカウントに配って、動いているインスタンスも順番に新しいAMIに入れ替えたい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 798 194" style="max-width:798px;min-width:638px" role="img" aria-label="図1 ゴールデンAMIのパイプライン。Image Builderがパッチ適用・ソフトの導入・テストを行ってAMIを作り、起動テンプレートの新しいバージョンに反映する。Auto Scalingのインスタンスの更新で、動いているインスタンスを順に入れ替える。"><defs><marker id="dgusecases-golden-ami-pipeline-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="100" text-anchor="middle" class="dg-t">スケジュール</text>
+<text x="104" y="118" text-anchor="middle" class="dg-s">毎月・パッチ公開時</text>
+<rect x="234" y="78" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="304" y="100" text-anchor="middle" class="dg-tb">Image Builder</text>
+<text x="304" y="118" text-anchor="middle" class="dg-s">ビルド・テスト</text>
+<rect x="434" y="78" width="140" height="52" rx="8" class="dg-box"/>
+<text x="504" y="100" text-anchor="middle" class="dg-t">新しいAMI</text>
+<text x="504" y="118" text-anchor="middle" class="dg-s">他リージョンへ配布</text>
+<rect x="634" y="38" width="140" height="52" rx="8" class="dg-box"/>
+<text x="704" y="60" text-anchor="middle" class="dg-t">起動テンプレート</text>
+<text x="704" y="78" text-anchor="middle" class="dg-s">新バージョン</text>
+<rect x="634" y="118" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="704" y="140" text-anchor="middle" class="dg-t">Auto Scaling</text>
+<text x="704" y="158" text-anchor="middle" class="dg-s">インスタンスの更新</text>
+<path d="M174.0,104.0 L234.0,104.0" class="dg-line" marker-end="url(#dgusecases-golden-ami-pipeline-1)"/>
+<path d="M374.0,104.0 L434.0,104.0" class="dg-line" marker-end="url(#dgusecases-golden-ami-pipeline-1)"/>
+<path d="M574.0,90.0 L634.0,78.0" class="dg-line" marker-end="url(#dgusecases-golden-ami-pipeline-1)"/>
+<path d="M704.0,90.0 L704.0,118.0" class="dg-line" marker-end="url(#dgusecases-golden-ami-pipeline-1)"/>
+</svg>
+</div>
+<figcaption>図1 ゴールデンAMIのパイプライン。Image Builderがパッチ適用・ソフトの導入・テストを行ってAMIを作り、起動テンプレートの新しいバージョンに反映する。Auto Scalingのインスタンスの更新で、動いているインスタンスを順に入れ替える。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/image-builder.html">Amazon EC2 Image Builder</a>:イメージレシピ・コンポーネント・テスト・配布(リージョン・アカウント)</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:起動テンプレートのバージョン指定、インスタンスの更新(ローリングでの入れ替え)</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:ビルド用インスタンスの操作、Parameter Storeに最新のAMI IDを保存</li>
+<li><a href="../services/inspector.html">Amazon Inspector</a>:作ったAMIの脆弱性スキャン</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:パイプラインの完了・失敗の通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>コンポーネント(パッチ適用・エージェントの導入・設定)と、起動後の確認を行うテストのコンポーネントを用意する</li>
+<li>ベースイメージとコンポーネントでイメージレシピを作る。インフラストラクチャ設定にインスタンスプロファイル(SSMの権限を含む)・サブネット・ログの出力先を指定する</li>
+<li>ディストリビューション設定で、配布先のリージョン・共有先のアカウントと、更新する<strong>起動テンプレート</strong>を指定する</li>
+<li>パイプラインを作り、スケジュール(毎月など)を設定する</li>
+<li>新しいAMIができたら、Auto Scalingグループの<strong>インスタンスの更新</strong>を開始し、最小正常率(例:90%)を保ちながら入れ替える</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>パッチ適用済みのAMIを定期的に自動作成 → <strong class="em">EC2 Image Builder</strong>。</li>
+<li>Auto Scalingのインスタンスを新しいAMIに入れ替える → 起動テンプレートの更新+<strong class="em">インスタンスの更新</strong>(Instance Refresh)。</li>
+<li>AMIはリージョンごとのリソース。他リージョンで使うには<strong>コピー</strong>が必要(ディストリビューション設定で自動化できる)。</li>
+<li>暗号化されたAMIを他のアカウントと共有するときは、KMSキーのポリシーでそのアカウントに使用を許可する(AWS管理キーで暗号化したものは共有できない)。</li>
+<li>起動テンプレートのバージョンを <code>$Latest</code> にすると、テンプレートの更新がそのまま新しく起動するインスタンスに使われる。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="patch-management.html"><span class="label">← 前へ</span>多数のEC2に定期的にパッチを適用する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cloudformation-safe-update.html"><span class="label">次へ →</span>CloudFormationで本番環境を安全に更新する</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

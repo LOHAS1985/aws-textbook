@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>キューで処理を分離し、急増や障害に強くする | AWS教科書</title>
+<meta name="description" content="SQSで受付と処理を切り離し、キューの長さに応じて処理側をスケールし、失敗したメッセージをDLQに隔離する">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">信頼性・事業継続</a>
+  <h1>キューで処理を分離し、急増や障害に強くする</h1>
+  <p class="lead">SQSで受付と処理を切り離し、キューの長さに応じて処理側をスケールし、失敗したメッセージをDLQに隔離する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>注文を受け付けると同時に、重い処理(在庫の引き当て・帳票の作成など)を行っているため、アクセスが急増すると受付まで遅くなる。処理側が止まると注文も失われる。<strong>受付と処理を切り離し</strong>、処理側が追いつかなくても注文を失わないようにしたい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 632 242" style="max-width:632px;min-width:520px" role="img" aria-label="図1 SQSによる分離。受付はキューに入れるだけですぐ応答し、処理側は自分のペースで取り出す。キューの長さに応じて処理側の台数を増減し、何度も失敗するメッセージはデッドレターキュー(DLQ)に移す。"><defs><marker id="dgusecases-sqs-decoupling-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">受付</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">API・Webサーバー</text>
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="321" y="100" text-anchor="middle" class="dg-tb">SQSキュー</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">注文をためる</text>
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">処理側</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">Auto Scaling</text>
+<rect x="248" y="166" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="321" y="188" text-anchor="middle" class="dg-t">DLQ</text>
+<text x="321" y="206" text-anchor="middle" class="dg-s">失敗を隔離</text>
+<rect x="463" y="166" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="188" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="536" y="206" text-anchor="middle" class="dg-s">キューの長さ</text>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<text x="428" y="108" text-anchor="middle" class="dg-s dg-halo">取得・削除</text>
+<path d="M321.0,130.0 L321.0,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<text x="321" y="152" text-anchor="middle" class="dg-s dg-halo">最大受信回数超え</text>
+<path d="M384.4,130.0 L472.1,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<path d="M535.5,166.0 L535.5,130.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<text x="536" y="152" text-anchor="middle" class="dg-s dg-halo">台数を調整</text>
+</svg>
+</div>
+<figcaption>図1 SQSによる分離。受付はキューに入れるだけですぐ応答し、処理側は自分のペースで取り出す。キューの長さに応じて処理側の台数を増減し、何度も失敗するメッセージはデッドレターキュー(DLQ)に移す。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/sqs.html">Amazon SQS</a>:メッセージを保持するキュー、可視性タイムアウト、デッドレターキュー</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:キューの長さに応じた処理側のスケーリング(ECSやLambdaでもよい)</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:<code>ApproximateNumberOfMessagesVisible</code>・<code>ApproximateAgeOfOldestMessage</code> の監視</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:イベントソースマッピングでキューを処理する場合</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:1つのイベントを複数のキューに配る(ファンアウト)場合</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>SQSキューを作る。順序と重複排除が必要ならFIFOキュー、そうでなければ標準キューにする</li>
+<li><strong>可視性タイムアウト</strong>を処理時間より長くする(処理中に他の処理側が同じメッセージを受け取らないように)</li>
+<li>デッドレターキューを作り、<strong>最大受信回数</strong>を設定する(この回数失敗したメッセージをDLQへ移す)</li>
+<li>処理側は、処理が終わったらメッセージを削除する。ロングポーリング(受信待ち時間を最大20秒)で空振りの受信を減らす</li>
+<li>「処理側1台あたりのキューの長さ」を目標にしたターゲット追跡スケーリングで、処理側の台数を増減する。DLQのメッセージ数にはアラームを設定する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>受付と処理を切り離して急増を吸収する(疎結合)→ <strong class="em">SQS</strong>。</li>
+<li>同じメッセージが二重に処理される → <strong>可視性タイムアウト</strong>が処理時間より短い。標準キューは「少なくとも1回」の配信なので、処理側は同じメッセージが来ても問題ないように作る。</li>
+<li>何度も失敗する「毒メッセージ」でキューが詰まる → <strong class="em">デッドレターキュー</strong>。原因を直したらDLQの再処理(redrive)で元のキューに戻す。</li>
+<li>メッセージの保持期間は既定4日・最大14日。処理側が長く止まる場合も考えて設定する。</li>
+<li>スケーリングの指標は、キューの長さそのものより「1台あたりのバックログ」が適している。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="auto-scaling-web.html"><span class="label">← 前へ</span>負荷に応じて自動でスケールするWebシステム</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cache-read-offload.html"><span class="label">次へ →</span>キャッシュでDBの読み取り負荷を下げる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

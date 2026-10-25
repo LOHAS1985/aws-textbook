@@ -1,0 +1,59 @@
+<!-- title: 外形監視と、誤報の少ないアラームを作る -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: Synthetics Canaryで利用者の視点から監視し、異常検出と複合アラームで本当に必要な通知だけを送る -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>サーバーのメトリクスは正常でも、利用者からは「ログインできない」ことがある。<strong>利用者と同じ操作を定期的に試して</strong>問題に気づきたい。また、固定のしきい値のアラームでは、夜間の少ないアクセスや月末の多いアクセスで誤報が多く、通知が多すぎて重要なものが埋もれている。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node cn 0 0 blue "Canary" "ログインを試す"
+node m1 0 1 blue "リクエスト数" "異常検出バンド"
+node a1 1.3 0 box "アラームA" "成功率 < 90%"
+node a2 1.3 1 box "アラームB" "バンドの外"
+node ca 2.6 0.5 accent "複合アラーム" "A AND B"
+node sns 3.9 0.5 ok "SNS" "通知は1件"
+edge cn a1
+edge m1 a2
+edge a1 ca
+edge a2 ca
+edge ca sns
+<figcaption>図1 外形監視と誤報の少ないアラーム。Canaryの成功率と、異常検出のアラームを複合アラームでまとめ、両方が異常のときだけ通知する。個々のアラームは通知せず、複合アラームの材料として使う。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Synthetics(Canary)、異常検出、複合アラーム</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:通知</li>
+<li><a href="../services/s3.html">Amazon S3</a>:Canaryの実行結果(スクリーンショット・HARファイル・ログ)の保存先</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:Canaryの実体(実行環境)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>CloudWatch Syntheticsで、ログインなどの操作を行うCanaryを作り、数分おきに実行する(ブループリントのAPI監視・リンク切れチェックなども使える)</li>
+<li>Canaryの <code>SuccessPercent</code> にアラームを作る</li>
+<li>曜日や時間帯で変わるメトリクス(リクエスト数・レイテンシーなど)には、<strong>異常検出</strong>のアラームを作る(過去のデータから「普段の範囲」のバンドを学習する)</li>
+<li>複数のアラームを AND・OR で組み合わせた<strong>複合アラーム</strong>を作り、SNSへの通知は複合アラームだけに設定する</li>
+<li>メンテナンス中は、複合アラームのアクションを抑制する設定で通知を止める</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>利用者の視点での定期的な確認(外形監視)→ <strong class="em">CloudWatch Synthetics</strong>のCanary。</li>
+<li>時間帯や曜日で変動するメトリクスのしきい値 → <strong class="em">異常検出</strong>。</li>
+<li>通知が多すぎる(アラート疲れ)→ <strong class="em">複合アラーム</strong>で条件を組み合わせる。</li>
+<li>アラームの「M out of N」(N回中M回の超過で発報)で、一時的な跳ね上がりによる誤報を減らせる。</li>
+<li>データが届かないとき(欠落データ)の扱い(missing/breaching/notBreaching/ignore)を決めておく。</li>
+<li>VPC内の非公開のサイトを監視するときは、CanaryをVPC内で動かすよう設定する。</li>
+</ul></div>
+</section>

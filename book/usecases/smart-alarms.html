@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>外形監視と、誤報の少ないアラームを作る | AWS教科書</title>
+<meta name="description" content="Synthetics Canaryで利用者の視点から監視し、異常検出と複合アラームで本当に必要な通知だけを送る">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">監視・ログ・自動修復</a>
+  <h1>外形監視と、誤報の少ないアラームを作る</h1>
+  <p class="lead">Synthetics Canaryで利用者の視点から監視し、異常検出と複合アラームで本当に必要な通知だけを送る</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>サーバーのメトリクスは正常でも、利用者からは「ログインできない」ことがある。<strong>利用者と同じ操作を定期的に試して</strong>問題に気づきたい。また、固定のしきい値のアラームでは、夜間の少ないアクセスや月末の多いアクセスで誤報が多く、通知が多すぎて重要なものが埋もれている。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 194" style="max-width:846px;min-width:677px" role="img" aria-label="図1 外形監視と誤報の少ないアラーム。Canaryの成功率と、異常検出のアラームを複合アラームでまとめ、両方が異常のときだけ通知する。個々のアラームは通知せず、複合アラームの材料として使う。"><defs><marker id="dgusecases-smart-alarms-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="60" text-anchor="middle" class="dg-t">Canary</text>
+<text x="106" y="78" text-anchor="middle" class="dg-s">ログインを試す</text>
+<rect x="34" y="118" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="140" text-anchor="middle" class="dg-t">リクエスト数</text>
+<text x="106" y="158" text-anchor="middle" class="dg-s">異常検出バンド</text>
+<rect x="248" y="38" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="60" text-anchor="middle" class="dg-t">アラームA</text>
+<text x="321" y="78" text-anchor="middle" class="dg-s">成功率 &lt; 90%</text>
+<rect x="248" y="118" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="140" text-anchor="middle" class="dg-t">アラームB</text>
+<text x="321" y="158" text-anchor="middle" class="dg-s">バンドの外</text>
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="536" y="100" text-anchor="middle" class="dg-tb">複合アラーム</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">A AND B</text>
+<rect x="678" y="78" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="750" y="100" text-anchor="middle" class="dg-t">SNS</text>
+<text x="750" y="118" text-anchor="middle" class="dg-s">通知は1件</text>
+<path d="M179.0,64.0 L248.5,64.0" class="dg-line" marker-end="url(#dgusecases-smart-alarms-1)"/>
+<path d="M179.0,144.0 L248.5,144.0" class="dg-line" marker-end="url(#dgusecases-smart-alarms-1)"/>
+<path d="M393.5,77.5 L463.0,90.5" class="dg-line" marker-end="url(#dgusecases-smart-alarms-1)"/>
+<path d="M393.5,130.5 L463.0,117.5" class="dg-line" marker-end="url(#dgusecases-smart-alarms-1)"/>
+<path d="M608.0,104.0 L677.5,104.0" class="dg-line" marker-end="url(#dgusecases-smart-alarms-1)"/>
+</svg>
+</div>
+<figcaption>図1 外形監視と誤報の少ないアラーム。Canaryの成功率と、異常検出のアラームを複合アラームでまとめ、両方が異常のときだけ通知する。個々のアラームは通知せず、複合アラームの材料として使う。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Synthetics(Canary)、異常検出、複合アラーム</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:通知</li>
+<li><a href="../services/s3.html">Amazon S3</a>:Canaryの実行結果(スクリーンショット・HARファイル・ログ)の保存先</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:Canaryの実体(実行環境)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>CloudWatch Syntheticsで、ログインなどの操作を行うCanaryを作り、数分おきに実行する(ブループリントのAPI監視・リンク切れチェックなども使える)</li>
+<li>Canaryの <code>SuccessPercent</code> にアラームを作る</li>
+<li>曜日や時間帯で変わるメトリクス(リクエスト数・レイテンシーなど)には、<strong>異常検出</strong>のアラームを作る(過去のデータから「普段の範囲」のバンドを学習する)</li>
+<li>複数のアラームを AND・OR で組み合わせた<strong>複合アラーム</strong>を作り、SNSへの通知は複合アラームだけに設定する</li>
+<li>メンテナンス中は、複合アラームのアクションを抑制する設定で通知を止める</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>利用者の視点での定期的な確認(外形監視)→ <strong class="em">CloudWatch Synthetics</strong>のCanary。</li>
+<li>時間帯や曜日で変動するメトリクスのしきい値 → <strong class="em">異常検出</strong>。</li>
+<li>通知が多すぎる(アラート疲れ)→ <strong class="em">複合アラーム</strong>で条件を組み合わせる。</li>
+<li>アラームの「M out of N」(N回中M回の超過で発報)で、一時的な跳ね上がりによる誤報を減らせる。</li>
+<li>データが届かないとき(欠落データ)の扱い(missing/breaching/notBreaching/ignore)を決めておく。</li>
+<li>VPC内の非公開のサイトを監視するときは、CanaryをVPC内で動かすよう設定する。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="log-error-alert.html"><span class="label">← 前へ</span>アプリのエラーログを検知して通知する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="ec2-auto-recovery.html"><span class="label">次へ →</span>EC2の障害を検知して自動で復旧する</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!-- title: AWSの予定メンテナンスや障害の通知に自動で対応する -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: AWS HealthのイベントをEventBridgeで受け取り、通知や自動対応につなげる -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>「EC2のインスタンスがハードウェアの都合で廃止(リタイア)される予定」「このリージョンのサービスで障害が起きている」といったAWS側の情報を、コンソールを見に行かなくても<strong>すぐに担当者に知らせ</strong>、可能なものは自動で対応したい。組織の全アカウント分をまとめて受け取りたい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node h 0 0.5 blue "AWS Health" "予定・障害イベント"
+node eb 1.4 0.5 accent "EventBridge" "ルールで絞り込み"
+node sns 2.8 0 ok "SNS・チャット" "担当者へ通知"
+node ssm 2.8 1 ok "SSM Automation" "停止・起動で移動"
+edge h eb
+edge eb sns
+edge eb ssm
+<figcaption>図1 AWS Healthイベントへの対応。イベントはEventBridgeに送られるので、ルールでサービスや種類を絞って通知や自動処理を起動する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/health-dashboard.html">AWS Health Dashboard</a>:自分のアカウントに影響するイベント(予定メンテナンス・障害・アカウントへの通知)</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:<code>aws.health</code> のイベントをルールで受け取る</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:メールやチャットへの通知(Amazon Q Developer in chat applications でSlack・Teamsにも送れる)</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Automationで対応手順を自動実行</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:組織ビューで全アカウントのイベントを集約</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>EventBridgeでイベントパターン <code>"source": ["aws.health"]</code> のルールを作り、必要に応じてサービス(<code>EC2</code> など)やイベントの種類で絞り込む</li>
+<li>ターゲットにSNSトピックを指定して、担当者へ通知する</li>
+<li>EC2のリタイア予定(<code>AWS_EC2_INSTANCE_RETIREMENT_SCHEDULED</code> など)には、SSM Automation で該当インスタンスを<strong>停止・起動</strong>して別のホストに移す処理をつなぐ</li>
+<li>Organizationsの管理アカウント(または委任管理者)で Health の<strong>組織ビュー</strong>を有効にし、全アカウントのイベントを1か所で確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>自分のアカウントに影響するAWS側のイベント → <strong class="em">AWS Health</strong>(全体の稼働状況は Service Health Dashboard)。</li>
+<li>Healthイベントへの自動対応 → <strong>EventBridge</strong>ルール+SNS/Lambda/SSM Automation。</li>
+<li>EBS-backedのEC2は<strong>停止→起動</strong>で別の物理ホストに移る(再起動では移らない)。インスタンスストアのデータは消える。</li>
+<li>Health APIを使うにはビジネス以上のサポートプランが必要。EventBridge経由の受信はどのプランでも使える。</li>
+<li>Healthイベントはリージョンごとに発生する。グローバルなイベントは us-east-1 に届く。</li>
+</ul></div>
+</section>

@@ -1,0 +1,58 @@
+<!-- title: マイクロサービスの遅延の原因をトレースで特定する -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: X-Rayのトレースで、どのサービス・どの処理が遅いか・エラーを出しているかを突き止める -->
+<section class="chapter">
+<h2>1. やりたいこと</h2>
+<p>API Gateway → Lambda → DynamoDB や外部APIなど、複数のサービスをまたぐ処理で「ときどき応答が遅い」「一部のリクエストがエラーになる」。どの区間で時間がかかっているのかを、ログを1つずつ見ずに特定したい。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 構成図</h2>
+<figure class="figure" data-diagram>
+grid 160 80
+node u 0 0.5 blue "利用者"
+node api 1.2 0.5 box "API Gateway" "トレース有効"
+node fn 2.4 0.5 box "Lambda" "アクティブトレース"
+node db 3.6 0 box "DynamoDB" "サブセグメント"
+node ext 3.6 1 ng "外部API" "ここが遅い"
+node xr 2.4 1.7 accent "X-Ray" "トレースマップ"
+edge u api
+edge api fn
+edge fn db
+edge fn ext
+edge fn xr dash
+<figcaption>図1 X-Rayによる分散トレース。リクエストごとに各サービスの処理時間(セグメント)が記録され、トレースマップでどこが遅いか・どこでエラーが出ているかが一目で分かる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>3. 使うサービスと役割</h2>
+<ul>
+<li><a href="../services/xray.html">AWS X-Ray</a>:トレースの収集・トレースマップ・分析</li>
+<li><a href="../services/api-gateway.html">Amazon API Gateway</a>:ステージの設定でX-Rayトレースを有効化</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:アクティブトレースを有効化し、コードを計測(OpenTelemetry/ADOT)</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Application Signalsでのサービス単位の指標とSLO、ログとトレースの関連付け</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 構築の流れ</h2>
+<ol>
+<li>API Gatewayのステージで X-Ray トレースを有効にする</li>
+<li>Lambda関数でアクティブトレースを有効にし、実行ロールに <code>AWSXRayDaemonWriteAccess</code> を付ける</li>
+<li>アプリをOpenTelemetry(ADOT)で計測し、DynamoDBや外部APIの呼び出しを<strong>サブセグメント</strong>として記録する。検索したい値(顧客IDなど)は<strong>注釈</strong>に入れる</li>
+<li>EC2・ECSのアプリは、CloudWatchエージェント(またはADOTコレクター)を通してトレースを送る</li>
+<li>トレースマップで遅い・エラーの多いノードを見つけ、該当するトレースを注釈で絞り込んで調べる</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2>5. ポイント・注意点</h2>
+<div class="point"><ul>
+<li>「複数サービスをまたぐ処理のボトルネック」「サービス間の依存関係の可視化」→ <strong class="em">X-Ray</strong>。</li>
+<li>検索・絞り込みに使う値は<strong>注釈(annotation)</strong>、検索しない付加情報はメタデータ。</li>
+<li>既定のサンプリングは毎秒1件+5%。全件は記録されないので、費用と詳しさの兼ね合いでサンプリングルールを調整する。</li>
+<li>トレースが届かない → 実行ロールの権限、トレースの有効化、エージェント(デーモン)の起動と UDP 2000番ポートを確認する。</li>
+<li>X-Ray SDKからOpenTelemetry(ADOT)への移行が推奨されている。</li>
+</ul></div>
+</section>
