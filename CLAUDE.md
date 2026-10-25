@@ -13,6 +13,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - build.py … `python build.py` で src/ から book/ を生成する(コレクションの並び順・カテゴリ順もここで定義)
 - diagrams.py … 本文中の図の記法をSVGに変換する
 - book/index.html … トップ(サービス・用語・ユースケース・リンク集への入口)
+- book/icons/services/{slug}.svg … サービスのアイコン(AWS公式の Architecture Icons 2026年7月版の48px SVGを、改変せずファイル名だけ slug にしたもの)。サービス一覧・各サービスページの見出し・リンク集・トップの検索結果に build.py が表示する。サービスを追加したら公式パッケージ(https://aws.amazon.com/jp/architecture/icons/)から同じ形でコピーする。専用アイコンがないサービス(Copilot・Database Encryption SDK・STS・SAM)は所属カテゴリの公式カテゴリアイコンを使っている
 - src/links.html・src/links.json … リンク集(book/links.html)の本文と、サービスごとの公式ページ(製品ページ・ドキュメント)のパス。サービスを追加したら links.json にも追加する(URLは実際にアクセスして確認する)
 - book/{services,terms,usecases}/index.html … 各コレクションの目次(カテゴリ別)
 - book/{services,terms,usecases}/{slug}.html … 各ページ(生成物。直接編集しない)

@@ -287,6 +287,17 @@ def stack_tables(body):
     return re.sub(r"<table((?:\s[^>]*)?)>(.*?)</table>", sub, body, flags=re.S)
 
 
+ICON_DIR = OUT / "icons" / "services"  # AWS公式アイコン(Architecture Icons)をサービスのslug名で置く
+
+
+def service_icon(slug, prefix, size):
+    """サービスのアイコン(なければ空文字)。名前と並べて表示するので alt は空にする。"""
+    if not (ICON_DIR / f"{slug}.svg").exists():
+        return ""
+    return (f'<img class="svc-icon" src="{prefix}icons/services/{slug}.svg" alt="" '
+            f'width="{size}" height="{size}" loading="lazy">')
+
+
 def fmt_date(ts):
     return time.strftime("%Y-%m-%d", time.localtime(ts))
 
@@ -333,7 +344,8 @@ def render_page(col, pages, i):
             + header("../", col["key"])
             + "<main>\n<div class=\"page-head\">\n"
             + f'  <a class="category" href="index.html#cat{cat_no}">{html.escape(p["category"])}</a>\n'
-            + f'  <h1>{html.escape(p["title"])}</h1>\n'
+            + f'  <h1>{service_icon(p["slug"], "../", 40) if col["key"] == "services" else ""}'
+            + f'{html.escape(p["title"])}</h1>\n'
             + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
             + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
             + f'{fmt_date(p["updated"])}</time></p>\n'
@@ -353,23 +365,37 @@ def render_collection_index(col, pages):
                      '  <span class="toc-hits" id="toc-hits"></span>\n</div>\n')
     descs = col.get("category_desc", {})
     compact = col.get("compact")
+    if compact:
+        parts.append('<div class="svc-columns">\n')
     for i, (category, items) in enumerate(groups, 1):
-        parts.append(f'<section class="toc-category" id="cat{i}">\n<h2>{html.escape(category)} '
-                     f'<span class="count">({len(items)})</span></h2>\n')
-        if category in descs:
-            parts.append(f'<p class="cat-desc">{html.escape(descs[category])}</p>\n')
-        parts.append(f'<ul class="{"chip-list" if compact else "card-list"}">\n')
+        if compact:
+            # カテゴリごとのカード(折りたたみ可)。説明文はカテゴリ名にマウスを重ねたときだけ出す
+            tip = f' title="{html.escape(descs[category])}"' if category in descs else ""
+            parts.append(f'<section class="toc-category svc-card" id="cat{i}">\n<details open>\n'
+                         f'<summary{tip}><h2>{html.escape(category)} '
+                         f'<span class="count">({len(items)})</span></h2></summary>\n<ul class="svc-list">\n')
+        else:
+            parts.append(f'<section class="toc-category" id="cat{i}">\n<h2>{html.escape(category)} '
+                         f'<span class="count">({len(items)})</span></h2>\n')
+            if category in descs:
+                parts.append(f'<p class="cat-desc">{html.escape(descs[category])}</p>\n')
+            parts.append('<ul class="card-list">\n')
         for p in items:
             # 一覧には表示しない lead・カテゴリも検索対象に含める
             keys = " ".join([p["title"], p["slug"], category, re.sub(r"<[^>]+>", "", p["lead"])])
             if compact:
-                inner = f'<span class="name">{html.escape(p["title"])}</span>'
+                tip = html.escape(p["title"] + (":" + plain(p["lead"]) if p["lead"] else ""))
+                inner = (f'{service_icon(p["slug"], "../", 24)}'
+                         f'<span class="name">{html.escape(p["title"])}</span>')
+                parts.append(f'  <li data-keys="{html.escape(keys.lower())}"><a href="{p["slug"]}.html" '
+                             f'title="{tip}">{inner}</a></li>\n')
             else:
                 inner = (f'<span class="name">{html.escape(p["title"])}</span>'
                          f'<span class="desc">{p["lead"]}</span>')
-            tip = f' title="{html.escape(plain(p["lead"]))}"' if compact and p["lead"] else ""
-            parts.append(f'  <li data-keys="{html.escape(keys.lower())}"><a href="{p["slug"]}.html"{tip}>{inner}</a></li>\n')
-        parts.append("</ul>\n</section>\n")
+                parts.append(f'  <li data-keys="{html.escape(keys.lower())}"><a href="{p["slug"]}.html">{inner}</a></li>\n')
+        parts.append("</ul>\n</details>\n</section>\n" if compact else "</ul>\n</section>\n")
+    if compact:
+        parts.append("</div>\n")
     if col.get("search") and pages:
         parts.append('<p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>\n'
                      + SEARCH_SCRIPT)
@@ -397,6 +423,8 @@ SEARCH_SCRIPT = """<script>
         if (ok) n++;
       });
       sec.hidden = n === 0;
+      var det = sec.querySelector("details");
+      if (det && words.length && n) det.open = true;
       sec.querySelector("h2 .count").textContent = "(" + n + ")";
       shown += n;
     });
@@ -420,7 +448,9 @@ def render_top(loaded):
     for c in COLLECTIONS:
         for p in loaded[c["key"]]:
             h3 = " ".join(plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S))
+            icon = c["key"] == "services" and (ICON_DIR / f'{p["slug"]}.svg').exists()
             index.append({"t": p["title"], "c": c["label"], "u": f'{c["key"]}/{p["slug"]}.html',
+                          "i": f'icons/services/{p["slug"]}.svg' if icon else "",
                           "d": plain(p["lead"]),
                           "k": " ".join([p["title"], p["slug"], p["category"], plain(p["lead"]), h3]).lower()})
     parts.append('<div class="toc-search site-search">\n'
@@ -483,7 +513,8 @@ SITE_SEARCH_SCRIPT = """<script>
     });
     hits.textContent = found.length + "件";
     list.innerHTML = found.slice(0, 30).map(function (p) {
-      return '<li><a href="' + p.u + '"><span class="badge">' + esc(p.c) + '</span><span class="name">' +
+      var icon = p.i ? '<img class="svc-icon" src="' + p.i + '" alt="" width="20" height="20">' : "";
+      return '<li><a href="' + p.u + '"><span class="badge">' + esc(p.c) + '</span>' + icon + '<span class="name">' +
         esc(p.t) + '</span><span class="desc">' + esc(p.d) + '</span></a></li>';
     }).join("") || '<li class="empty-state">該当するページがありません。</li>';
     list.hidden = false;
@@ -518,7 +549,8 @@ def render_links(services, warnings):
             product, docs = data.get(p["slug"], [None, None])
             cells = [f'<a href="{official_url(k, v)}" target="_blank" rel="noopener">公式</a>' if v else "—"
                      for k, v in (("product", product), ("docs", docs))]
-            rows.append(f'<tr><td><a href="services/{p["slug"]}.html">{html.escape(p["title"])}</a></td>'
+            rows.append(f'<tr><td><a class="svc-link" href="services/{p["slug"]}.html">'
+                        f'{service_icon(p["slug"], "", 20)}{html.escape(p["title"])}</a></td>'
                         f'<td>{cells[0]}</td><td>{cells[1]}</td></tr>\n')
         rows.append("</table></div>\n")
     body = META_RE.sub("", text).strip().replace("<!-- SERVICE_LINKS -->", "".join(rows))
