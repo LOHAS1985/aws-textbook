@@ -32,9 +32,13 @@
 <h2>2. 主な機能・特徴</h2>
 <h3>テーブルのキー</h3>
 <ul>
-<li><strong>プライマリキー</strong>:1つまたは2つの属性で構成される。</li>
-<li><strong>パーティションキー</strong>:どの物理パーティションに保存するかを決める。テーブル内で一意とは限らない。<strong>値に偏りがあると性能が劣化</strong>する。</li>
-<li><strong>ソートキー</strong>:同じパーティションキー内での並び順を決める。パーティションキーと組み合わせて一意になる。</li>
+<li><strong>プライマリキー</strong>:アイテムを一意に識別するキー。次の2通りがある。
+  <ul>
+  <li><strong>パーティションキーのみ</strong>:パーティションキーの値がテーブル内で<strong>一意</strong>でなければならない。</li>
+  <li><strong>パーティションキー+ソートキー</strong>:同じパーティションキーの値を複数のアイテムが持てる。<strong>2つの組み合わせ</strong>がテーブル内で一意になる。</li>
+  </ul></li>
+<li><strong>パーティションキー</strong>:どの物理パーティションに保存するかを決める。<strong>値に偏りがあると性能が劣化</strong>する。</li>
+<li><strong>ソートキー</strong>:同じパーティションキー内での並び順を決める。</li>
 </ul>
 
 <figure class="figure">
@@ -128,7 +132,7 @@
 <li><strong class="em">DynamoDB Streams</strong>:テーブルのデータ変更を記録し、外部処理に連携する。
   <ul>
   <li>Streams+Lambdaの流れ:アプリがテーブルを更新 → Streamsが変更イベントを記録 → Lambdaがポーリング(若干の遅延あり)→ まとめて取得して関数を実行</li>
-  <li>ビュータイプ:<code>KEYS_ONLY</code>(キーのみ)、<code>OLD_IMAGE</code>/<code>NEW_IMAGE</code>(更新前/後のデータ)</li>
+  <li>ビュータイプ(記録する内容):<code>KEYS_ONLY</code>(キーのみ)、<code>NEW_IMAGE</code>(更新後のアイテム)、<code>OLD_IMAGE</code>(更新前のアイテム)、<code>NEW_AND_OLD_IMAGES</code>(更新前と更新後の両方)</li>
   </ul></li>
 <li><strong>DynamoDB Transactions</strong>:複数アイテムの更新を「全成功 or 全失敗」にするACIDトランザクション。<code>TransactWriteItems</code>(複数書き込み)、<code>TransactGetItems</code>(複数読み取り)。</li>
 </ul>

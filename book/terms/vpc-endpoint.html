@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPCエンドポイント | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#1f2937">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワーク</span>
+  <h1>VPCエンドポイント</h1>
+  <p class="lead">インターネットを経由せずに、VPCからAWSのサービスへプライベートに接続する入り口</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>S3やSQSなどのAWSサービスのAPIは、本来インターネットに公開されたエンドポイント(<code>s3.ap-northeast-1.amazonaws.com</code> など)で受け付けています。そのため、プライベートサブネットのEC2からこれらを使うには、通常はNATゲートウェイを経由してインターネット側へ出る必要があります。</p>
+<p><strong>VPCエンドポイント</strong>を作ると、<strong>VPCの中からAWSのネットワーク内だけを通って</strong>サービスに接続できます。インターネットゲートウェイやNATゲートウェイが不要になり、通信がインターネットに出ないためセキュリティ要件も満たしやすく、NATゲートウェイのデータ処理料金も減らせます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図1 VPCエンドポイントの2つの型。ゲートウェイ型はルートテーブルの経路として働き、S3とDynamoDBだけに使える。インターフェース型(PrivateLink)はサブネット内にENIを作り、多くのサービスに使える。どちらも通信はインターネットに出ない。"><defs><marker id="dgterms-vpc-endpoint-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">プライベートサブネット</text>
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">ゲートウェイ型</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">ルートテーブルに経路</text>
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="347" y="147" text-anchor="middle" class="dg-t">インターフェース型</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">サブネット内のENI</text>
+<rect x="510" y="46" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="585" y="70" text-anchor="middle" class="dg-tb">S3 / DynamoDB</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="147" text-anchor="middle" class="dg-tb">SQS・SSMなど</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">多くのサービス</text>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#dgterms-vpc-endpoint-1)"/>
+<path d="M184.0,122.4 L272.0,138.1" class="dg-line" marker-end="url(#dgterms-vpc-endpoint-1)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgterms-vpc-endpoint-1)"/>
+<path d="M422.0,151.5 L510.0,151.5" class="dg-line" marker-end="url(#dgterms-vpc-endpoint-1)"/>
+</svg>
+</div>
+<figcaption>図1 VPCエンドポイントの2つの型。ゲートウェイ型はルートテーブルの経路として働き、S3とDynamoDBだけに使える。インターフェース型(PrivateLink)はサブネット内にENIを作り、多くのサービスに使える。どちらも通信はインターネットに出ない。</figcaption>
+</figure>
+
+<h3>2つの型の比較</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>ゲートウェイ型</th><th>インターフェース型(AWS PrivateLink)</th></tr>
+<tr><td>対応サービス</td><td><strong>S3とDynamoDBのみ</strong></td><td>SQS・SNS・KMS・Secrets Manager・Systems Manager・CloudWatchなど多数(S3も可)</td></tr>
+<tr><td>仕組み</td><td>サブネットのルートテーブルに、サービスのIP範囲(プレフィックスリスト)→エンドポイントの経路が追加される</td><td>サブネットに<strong>ENI(プライベートIP)</strong>が作られ、そこへ接続する</td></tr>
+<tr><td>名前解決</td><td>通常のサービスのDNS名をそのまま使う</td><td>「プライベートDNS」を有効にすると、通常のDNS名がENIのプライベートIPに解決される</td></tr>
+<tr><td>アクセス制御</td><td>エンドポイントポリシー</td><td>エンドポイントポリシー+<strong>セキュリティグループ</strong>(ENIに付く)</td></tr>
+<tr><td>オンプレミス・ピアリング先のVPCから</td><td><strong>使えない</strong></td><td>VPN・Direct Connect・ピアリング経由で使える</td></tr>
+<tr><td>料金</td><td><strong>無料</strong></td><td>エンドポイントのAZごとの時間料金+処理したデータ量</td></tr>
+</table></div>
+
+<h3>エンドポイントポリシーとバケットポリシー</h3>
+<ul>
+<li><strong>エンドポイントポリシー</strong>:エンドポイントを通して<strong>何ができるか</strong>を制限するポリシー。例:このエンドポイントからは自社のS3バケットにしかアクセスさせない。</li>
+<li>S3のバケットポリシーで <code>aws:SourceVpce</code>(エンドポイントID)や <code>aws:SourceVpc</code> を条件にすると、「<strong>特定のVPCエンドポイント経由のアクセスだけ許可</strong>」できる。</li>
+</ul>
+
+<h3>よく使う組み合わせ</h3>
+<ul>
+<li><strong>プライベートサブネットのEC2をSystems Managerで管理</strong>:インターフェース型の <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> の3つが必要。</li>
+<li><strong>プライベートサブネットからECRのイメージを取得</strong>:<code>ecr.api</code>・<code>ecr.dkr</code>(インターフェース型)と、イメージの実体があるS3(ゲートウェイ型)が必要。</li>
+<li><strong>大量のデータをS3へ送る</strong>:NATゲートウェイの代わりにゲートウェイ型エンドポイントを使うと、データ処理料金がかからない。</li>
+</ul>
+<div class="point"><p>自社のサービスをNLBの後ろに置いて「エンドポイントサービス」として公開すると、他のVPCやアカウントからインターフェース型エンドポイントで接続してもらうこともできます(これもPrivateLinkの仕組み)。VPCピアリングと違い、CIDRが重なっていても使えます。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="eni-elastic-ip.html">ENIとElastic IP</a>:インターフェース型エンドポイントの実体</li>
+<li><a href="route-table.html">ルートテーブル</a>:ゲートウェイ型エンドポイントの経路が追加される</li>
+<li><a href="outbound-traffic.html">アウトバウンド通信</a>:NATゲートウェイとの使い分け</li>
+<li><a href="vpc-peering.html">VPCピアリング</a>:VPC同士の接続(PrivateLinkはサービス単位の接続)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:エンドポイントを作成する場所</li>
+<li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/dynamodb.html">Amazon DynamoDB</a>:ゲートウェイ型に対応</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:プライベートサブネットのEC2の管理</li>
+<li><a href="../services/ecr.html">Amazon ECR</a>:プライベートサブネットからのイメージ取得</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:エンドポイントサービスの公開にNLBを使う</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="eni-elastic-ip.html"><span class="label">← 前へ</span>ENIとElastic IP</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="vpc-peering.html"><span class="label">次へ →</span>VPCピアリング</a>
+</nav>
+</main>
+</body>
+</html>

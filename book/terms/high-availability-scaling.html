@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>高可用性とスケーリング | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#1f2937">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">設計・運用</span>
+  <h1>高可用性とスケーリング</h1>
+  <p class="lead">止まらないシステム(高可用性)と、負荷に合わせて性能を変える方法(スケーリング)の基本</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<h3>高可用性と耐障害性</h3>
+<ul>
+<li><strong>可用性</strong>:システムが使える状態にある時間の割合。99.9%なら、1年で約8.8時間止まる計算。</li>
+<li><strong>高可用性(High Availability)</strong>:障害が起きても、<strong>短い時間で</strong>サービスを続けられるようにすること。例:RDSのMulti-AZで、障害時に1〜2分程度でスタンバイに切り替わる。</li>
+<li><strong>耐障害性(Fault Tolerance)</strong>:障害が起きても、<strong>止まらずに</strong>動き続けること。高可用性より強い要件で、コストも高くなる。</li>
+<li><strong>単一障害点(SPOF)</strong>:そこが壊れるとシステム全体が止まる部分。1台だけのサーバー、1つのAZにしかないNATゲートウェイなど。高可用性の設計は、SPOFをなくすことから始まる。</li>
+</ul>
+<p>AWSでの基本は、<strong>複数のAZにリソースを分けて置く(マルチAZ構成)</strong>ことです。AZは互いに独立しているため、1つのAZが停止しても他のAZで動き続けられます。</p>
+<div class="table-wrap"><table>
+<tr><th>リソース</th><th>マルチAZにする方法</th></tr>
+<tr><td>EC2</td><td>Auto Scalingグループを複数AZのサブネットにまたがらせ、ELBで振り分ける</td></tr>
+<tr><td>ELB</td><td>複数AZのサブネットを有効にする(ELB自体がAZごとにノードを持つ)</td></tr>
+<tr><td>RDS</td><td>Multi-AZ配置(別AZのスタンバイへ自動フェイルオーバー)</td></tr>
+<tr><td>Aurora</td><td>別AZにレプリカを置く(障害時にレプリカが昇格)</td></tr>
+<tr><td>NATゲートウェイ</td><td><strong>AZごとに1つずつ</strong>作り、各AZのルートテーブルから同じAZのNATゲートウェイを使う</td></tr>
+<tr><td>EBS</td><td>AZ単位のリソースのため、スナップショットを取って別AZで復元できるようにする</td></tr>
+<tr><td>S3・DynamoDB・SQS・Lambda</td><td>サービス側で自動的に複数AZに分散されている(利用者の設定は不要)</td></tr>
+</table></div>
+
+<h3>スケールアップとスケールアウト</h3>
+<p>負荷が増えたときに性能を上げる方法は2つあります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 383 218" style="max-width:383px;min-width:383px" role="img" aria-label="図1 スケールアップ(垂直スケーリング)はサーバーを大きくし、スケールアウト(水平スケーリング)はサーバーの台数を増やす。逆方向はそれぞれスケールダウン・スケールイン。"><defs><marker id="dgterms-high-availability-scaling-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="46" width="130" height="40" rx="8" class="dg-box"/>
+<text x="99" y="70" text-anchor="middle" class="dg-t">m7g.large</text>
+<rect x="229" y="40" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="294" y="62" text-anchor="middle" class="dg-tb">m7g.2xlarge</text>
+<text x="294" y="80" text-anchor="middle" class="dg-s">大きいサイズへ</text>
+<rect x="34" y="148" width="130" height="40" rx="8" class="dg-box"/>
+<text x="99" y="172" text-anchor="middle" class="dg-t">EC2 × 2</text>
+<rect x="229" y="142" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="294" y="164" text-anchor="middle" class="dg-t">EC2 × 4</text>
+<text x="294" y="182" text-anchor="middle" class="dg-s">台数を増やす</text>
+<path d="M164.0,66.5 L229.0,66.5" class="dg-line" marker-end="url(#dgterms-high-availability-scaling-1)"/>
+<text x="196" y="70" text-anchor="middle" class="dg-s dg-halo">スケールアップ</text>
+<path d="M164.0,168.5 L229.0,168.5" class="dg-line" marker-end="url(#dgterms-high-availability-scaling-1)"/>
+<text x="196" y="172" text-anchor="middle" class="dg-s dg-halo">スケールアウト</text>
+</svg>
+</div>
+<figcaption>図1 スケールアップ(垂直スケーリング)はサーバーを大きくし、スケールアウト(水平スケーリング)はサーバーの台数を増やす。逆方向はそれぞれスケールダウン・スケールイン。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>スケールアップ(垂直)</th><th>スケールアウト(水平)</th></tr>
+<tr><td>方法</td><td>インスタンスタイプ・DBのインスタンスクラスを大きくする</td><td>インスタンス・タスク・レプリカの数を増やす</td></tr>
+<tr><td>上限</td><td>最大のサイズで頭打ちになる</td><td>台数を増やせば伸ばせる</td></tr>
+<tr><td>停止</td><td>EC2では停止が必要(RDSも切り替え時に短時間止まる)</td><td>止めずに増減できる</td></tr>
+<tr><td>可用性</td><td>1台のままならSPOFが残る</td><td>複数台・複数AZで可用性も上がる</td></tr>
+<tr><td>AWSでの例</td><td>EC2のタイプ変更、RDSのクラス変更</td><td>EC2 Auto Scaling、ECSのサービスAuto Scaling、Auroraのレプリカのオートスケーリング</td></tr>
+</table></div>
+<p>クラウドでは、負荷に応じて自動で増減(<strong>伸縮性、Elasticity</strong>)させ、必要なときだけリソースを使ってコストを抑える設計が基本です。</p>
+
+<h3>スケールアウトしやすい作りにする</h3>
+<ul>
+<li><strong>ステートレスにする</strong>:セッションなどの状態をサーバー内に持たず、ElastiCacheやDynamoDBに置く。どのサーバーがリクエストを受けても同じ結果になるため、自由に台数を増減できる。</li>
+<li><strong>疎結合にする</strong>:SQSなどのキューを間に挟み、処理する側の台数を独立して増減できるようにする。</li>
+<li><strong>読み取りを分散する</strong>:DBはリードレプリカやキャッシュ(ElastiCache・DAX・CloudFront)で読み取りの負荷を逃がす。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:マルチAZ構成の前提</li>
+<li><a href="dr-strategies.html">災害対策(DR)戦略</a>:リージョン全体の障害への備え(RPO・RTO)</li>
+<li><a href="service-quotas.html">サービスクォータ</a>:スケールアウトできる台数の上限</li>
+<li><a href="deploy-strategies.html">デプロイ戦略</a>:台数を保ったまま安全に更新する方法</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:EC2のスケールアウト・イン</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:複数AZのターゲットへの振り分け</li>
+<li><a href="../services/rds.html">Amazon RDS</a>/<a href="../services/aurora.html">Amazon Aurora</a>:Multi-AZ・リードレプリカ</li>
+<li><a href="../services/sqs.html">Amazon SQS</a>:疎結合化</li>
+<li><a href="../services/elasticache.html">Amazon ElastiCache</a>:セッションの外出し・キャッシュ</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="storage-types.html"><span class="label">← 前へ</span>ブロック・ファイル・オブジェクトストレージ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="deploy-strategies.html"><span class="label">次へ →</span>デプロイ戦略</a>
+</nav>
+</main>
+</body>
+</html>

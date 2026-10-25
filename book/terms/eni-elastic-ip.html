@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENIとElastic IP | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#1f2937">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">ネットワーク</span>
+  <h1>ENIとElastic IP</h1>
+  <p class="lead">ENIはVPC内の仮想的なネットワークカード、Elastic IPは固定のパブリックIPアドレス</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<h3>ENI(Elastic Network Interface)</h3>
+<p><strong>ENI</strong>は、VPCの中で使う<strong>仮想的なネットワークカード(NIC)</strong>です。EC2がVPC内で通信できるのは、ENIがアタッチされているからです。IPアドレスやセキュリティグループは、実はインスタンスではなく<strong>ENIに付いています</strong>。</p>
+<ul>
+<li>ENIが持つもの:<strong>プライベートIPアドレス</strong>(1つの主アドレス+追加のセカンダリアドレス)、<strong>パブリックIPアドレス</strong>(割り当てた場合)、<strong>セキュリティグループ</strong>、MACアドレス</li>
+<li>ENIは<strong>特定のサブネット(=特定のAZ)</strong>に作成される。</li>
+<li>インスタンスに最初から付いている<strong>プライマリENI</strong>は取り外せない。追加で作ったENIは取り外して、<strong>同じAZの別のインスタンスに付け替え</strong>られる(IPアドレスやセキュリティグループもそのまま移る)。</li>
+<li>EC2以外でも、Lambda(VPC接続)、RDS、ELB、VPCエンドポイント(インターフェース型)、EFSのマウントターゲットなどが、サブネット内にENIを作って通信している。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図1 ENIとElastic IP。EC2はENIを通じてVPC内で通信する。プライベートIPとセキュリティグループはENIに付いており、Elastic IPもENI(のプライベートIP)に関連付けられる。"><defs><marker id="dgterms-eni-elastic-ip-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="262" y="55" width="170" height="90" rx="10" class="dg-group"/>
+<text x="272" y="70" class="dg-s">サブネット(AZ-a)</text>
+<rect x="34" y="89" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="113" text-anchor="middle" class="dg-t">EC2インスタンス</text>
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">ENI</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">プライベートIP・SG</text>
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">Elastic IP</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">固定のパブリックIP</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">インターネット</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">IGW経由</text>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgterms-eni-elastic-ip-1)" marker-start="url(#dgterms-eni-elastic-ip-1)"/>
+<path d="M510.0,79.9 L422.0,95.6" class="dg-line" marker-end="url(#dgterms-eni-elastic-ip-1)"/>
+<text x="466" y="92" text-anchor="middle" class="dg-s dg-halo">関連付け</text>
+<path d="M585.0,125.5 L585.0,92.5" class="dg-line" marker-end="url(#dgterms-eni-elastic-ip-1)" marker-start="url(#dgterms-eni-elastic-ip-1)"/>
+</svg>
+</div>
+<figcaption>図1 ENIとElastic IP。EC2はENIを通じてVPC内で通信する。プライベートIPとセキュリティグループはENIに付いており、Elastic IPもENI(のプライベートIP)に関連付けられる。</figcaption>
+</figure>
+
+<h3>パブリックIPアドレスとElastic IP</h3>
+<p>インターネットと通信するEC2には、プライベートIPのほかに<strong>パブリックIPアドレス</strong>が必要です(さらに、サブネットのルートテーブルにインターネットゲートウェイへの経路も必要)。パブリックIPには2種類あります。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>自動割り当てのパブリックIP</th><th>Elastic IP</th></tr>
+<tr><td>取得方法</td><td>サブネットの設定や起動時の設定で自動的に割り当てる</td><td>アカウントに確保し、インスタンス(ENI)に関連付ける</td></tr>
+<tr><td>停止・起動したとき</td><td><strong>変わる</strong>(停止すると解放され、起動時に別のIPが付く)</td><td><strong>変わらない</strong></td></tr>
+<tr><td>付け替え</td><td>できない</td><td>別のインスタンスへ付け替えられる(障害時の切り替えに使える)</td></tr>
+<tr><td>上限</td><td>-</td><td>既定ではリージョンごとに5個(引き上げを申請できる)</td></tr>
+</table></div>
+<p>2024年2月から、<strong>パブリックIPv4アドレスはすべて時間単位で課金</strong>されます(使用中のElastic IP、自動割り当てのパブリックIPも含む)。確保したまま使っていないElastic IPも課金されるため、不要になったら<strong>解放</strong>します。</p>
+<div class="point"><p>「停止・起動したらIPアドレスが変わって接続できなくなった」→ 固定したいなら<strong>Elastic IP</strong>。ただし、Webサービスの入り口を固定したい場合は、ELBやRoute 53のDNS名、Global Acceleratorの固定IPを使う方法もあります。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="cidr.html">CIDR</a>:ENIのプライベートIPはサブネットのCIDRから割り当てられる</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:セキュリティグループはENI単位で適用される</li>
+<li><a href="vpc-endpoint.html">VPCエンドポイント</a>:インターフェース型はサブネット内のENIとして作られる</li>
+<li><a href="outbound-traffic.html">アウトバウンド通信</a>:パブリックIPとNATゲートウェイの使い分け</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/ec2.html">Amazon EC2</a>:ENIとパブリックIP・Elastic IPを使う代表的なリソース</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:ENIを作るサブネット</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:VPC接続でENIを使う</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:NLBにはElastic IPを割り当てられる</li>
+<li><a href="../services/global-accelerator.html">AWS Global Accelerator</a>:固定のAnycast IPで入り口を固定</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="vpc-flow-logs.html"><span class="label">← 前へ</span>VPCフローログ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="vpc-endpoint.html"><span class="label">次へ →</span>VPCエンドポイント</a>
+</nav>
+</main>
+</body>
+</html>

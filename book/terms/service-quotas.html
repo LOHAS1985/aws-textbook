@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>サービスクォータ | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#1f2937">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">AWSの基礎</span>
+  <h1>サービスクォータ</h1>
+  <p class="lead">アカウント・リージョンごとに決められた、リソース数やAPI呼び出し回数の上限</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>サービスクォータ(Service Quotas、以前は「制限」とも呼ばれた)</strong>は、AWSの各サービスで<strong>作成できるリソースの数や、1秒あたりに呼び出せるAPIの回数などの上限</strong>です。誤操作による大量作成や、一部の利用者によるリソースの占有を防ぐために設けられています。多くのクォータは<strong>アカウントごと・リージョンごと</strong>に決まっています。</p>
+
+<h3>調整できるクォータと、できないクォータ</h3>
+<ul>
+<li><strong>調整可能(ソフトリミット)</strong>:申請すれば引き上げられる。多くのクォータはこちら。</li>
+<li><strong>調整不可(ハードリミット)</strong>:引き上げられない。設計で対応する(例:Lambdaの最大実行時間15分、S3のオブジェクトの最大サイズ)。</li>
+</ul>
+
+<h3>よく出てくるクォータの例</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>クォータ</th><th>既定値の目安</th><th>上限に達すると</th></tr>
+<tr><td>EC2</td><td>実行中のオンデマンドインスタンスの<strong>vCPU数</strong>(インスタンスファミリーのグループごと)</td><td>アカウントによって異なる</td><td>起動時に <code>VcpuLimitExceeded</code> などのエラーになり、Auto Scalingでも台数が増えない</td></tr>
+<tr><td>EC2</td><td>Elastic IPアドレスの数</td><td>リージョンごとに5個</td><td>新しいElastic IPを確保できない</td></tr>
+<tr><td>VPC</td><td>リージョンあたりのVPCの数</td><td>5個</td><td>VPCを作成できない</td></tr>
+<tr><td>Lambda</td><td>同時実行数</td><td>リージョンごとに1,000(新しいアカウントでは低い場合がある)</td><td>超えた呼び出しがスロットリングされる</td></tr>
+<tr><td>各サービスのAPI</td><td>1秒あたりのリクエスト数</td><td>APIごとに異なる</td><td><code>ThrottlingException</code>(スロットリング)になる</td></tr>
+</table></div>
+<div class="point"><p>APIのスロットリングは、AWS SDKの<strong>リトライ(エクスポネンシャルバックオフ)</strong>で吸収するのが基本です。それでも足りない場合にクォータの引き上げを申請します。</p></div>
+
+<h3>確認と引き上げ:Service Quotas</h3>
+<p>クォータは<strong>Service Quotas</strong>(コンソール・API)でまとめて確認し、引き上げを申請できます。</p>
+<ul>
+<li>サービスごとに、現在の値(適用されているクォータ)・既定値・調整可能かどうかを確認できる。</li>
+<li>調整可能なクォータは、Service Quotasから<strong>引き上げをリクエスト</strong>する。承認まで時間がかかることがあるため、本番の前やイベントの前に余裕を持って申請する。</li>
+<li>Organizationsを使っている場合は、<strong>クォータリクエストテンプレート</strong>で、新しく作るアカウントに自動で引き上げを申請できる。</li>
+</ul>
+
+<h3>上限に近づいたら知らせる</h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図1 クォータの監視。多くのサービスは使用量をCloudWatchの AWS/Usage 名前空間に送っている。メトリクス計算の SERVICE_QUOTA() 関数でクォータに対する割合を求めてアラームを作り、上限に近づいたら通知して引き上げを申請する。"><defs><marker id="dgterms-service-quotas-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">使用量</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">AWS/Usage メトリクス</text>
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">アラーム</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">CloudWatch・80%など</text>
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">SNSで通知</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">担当者へ</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">引き上げを申請</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">Service Quotas</text>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgterms-service-quotas-1)"/>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#dgterms-service-quotas-1)"/>
+<path d="M585.0,92.5 L585.0,125.5" class="dg-line dg-dash" marker-end="url(#dgterms-service-quotas-1)"/>
+</svg>
+</div>
+<figcaption>図1 クォータの監視。多くのサービスは使用量をCloudWatchの AWS/Usage 名前空間に送っている。メトリクス計算の SERVICE_QUOTA() 関数でクォータに対する割合を求めてアラームを作り、上限に近づいたら通知して引き上げを申請する。</figcaption>
+</figure>
+<ul>
+<li><strong>CloudWatch</strong>:Service Quotasのコンソールから、クォータに対する使用率のアラームを直接作成できる。</li>
+<li><strong>Trusted Advisor</strong>:「サービスクォータ」のチェックで、上限に近いリソース(使用率80%以上など)を一覧できる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:クォータの多くはリージョンごと</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:スケールアウトの前にクォータが足りるか確認する</li>
+<li><a href="dr-strategies.html">災害対策(DR)戦略</a>:切り替え先のリージョンでもクォータを引き上げておく</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:使用量のメトリクスとアラーム</li>
+<li><a href="../services/trusted-advisor.html">AWS Trusted Advisor</a>:サービスクォータのチェック</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:クォータリクエストテンプレート</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:vCPUのクォータ不足で起動に失敗することがある</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:同時実行数のクォータ</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="arn.html"><span class="label">← 前へ</span>ARN</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="dns.html"><span class="label">次へ →</span>DNS</a>
+</nav>
+</main>
+</body>
+</html>

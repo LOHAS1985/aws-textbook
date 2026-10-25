@@ -69,7 +69,8 @@
 <li><strong>カスタムリソース</strong>:実行時の独自処理を作成(ほとんどの場合Lambdaを使う)。例:RDSのDBユーザー作成、Slack通知のWebhook登録</li>
 <li><strong>DeletionPolicy</strong>:リソース削除時の扱い。<strong class="em">Delete(削除する。デフォルト)</strong>/Retain(残す)/Snapshot(スナップショットを取ってから削除)</li>
 <li><strong>NoEcho</strong>:機密情報を画面・ログに表示しない</li>
-<li><strong>変更セット</strong>:実行中のリソースに変更がどう影響するかを事前に確認する。<strong class="em">S3のオブジェクトキーやVersionIdが変わらないと、コードの変更を検知しない</strong>。</li>
+<li><strong>変更セット</strong>:実行中のリソースに変更がどう影響するか(追加・変更・置き換え・削除)を事前に確認する。</li>
+<li><strong>Lambdaのコード更新の注意</strong>:Lambdaのコードを <code>S3Bucket</code>/<code>S3Key</code> で指定している場合、S3上のファイルを同じキーで上書きしただけでは、テンプレートに変化がないため<strong class="em">CloudFormationはコードの変更を検知しない</strong>。S3のキー(ファイル名)か <code>S3ObjectVersion</code> を変えて更新する。</li>
 <li><strong>ドリフト検出</strong>:テンプレート(理想の状態)と実際のリソースのズレを検出</li>
 <li><strong>スタックポリシー</strong>:スタック更新時に特定のリソースの変更を禁止する</li>
 <li><strong class="em">ダイナミックリファレンス</strong>:テンプレート内でSecrets Manager/Parameter Storeの値を実行時に参照し、秘密情報を直書きしない。記述は <code>{{resolve:xxxx:...}}</code>。xxxxは <code>ssm</code>(Parameter Store)、<code>ssm-secure</code>(SecureString)、<code>secretsmanager</code>(Secrets Manager)。</li>

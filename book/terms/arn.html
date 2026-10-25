@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARN | AWS教科書</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#1f2937">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <span class="category">AWSの基礎</span>
+  <h1>ARN</h1>
+  <p class="lead">AWSのリソースを世界で一意に指し示す名前(Amazon Resource Name)</p>
+</div>
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>ARN(Amazon Resource Name)</strong>は、AWSのリソースを<strong>一意に識別するための名前</strong>です。IAMポリシーで「どのリソースへの操作を許可するか」を書くときや、CLI・API・CloudFormationで別のリソースを指定するときに使います。</p>
+
+<h3>形式</h3>
+<pre class="code"><code>arn:パーティション:サービス:リージョン:アカウントID:リソース
+例:arn:aws:lambda:ap-northeast-1:123456789012:function:MyFunction</code></pre>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 896 116" style="max-width:896px;min-width:520px" role="img" aria-label="図1 ARNの構成。コロン(:)で区切られた部分ごとに、パーティション・サービス・リージョン・アカウントID・リソースを表す。"><defs><marker id="dgterms-arn-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="110" height="52" rx="8" class="dg-box"/>
+<text x="89" y="62" text-anchor="middle" class="dg-t">arn</text>
+<text x="89" y="80" text-anchor="middle" class="dg-s">固定</text>
+<rect x="164" y="40" width="110" height="52" rx="8" class="dg-box"/>
+<text x="219" y="62" text-anchor="middle" class="dg-t">aws</text>
+<text x="219" y="80" text-anchor="middle" class="dg-s">パーティション</text>
+<rect x="294" y="40" width="110" height="52" rx="8" class="dg-box"/>
+<text x="349" y="62" text-anchor="middle" class="dg-t">lambda</text>
+<text x="349" y="80" text-anchor="middle" class="dg-s">サービス</text>
+<rect x="424" y="40" width="149" height="52" rx="8" class="dg-box"/>
+<text x="498" y="62" text-anchor="middle" class="dg-t">ap-northeast-1</text>
+<text x="498" y="80" text-anchor="middle" class="dg-s">リージョン</text>
+<rect x="593" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="661" y="62" text-anchor="middle" class="dg-t">123456789012</text>
+<text x="661" y="80" text-anchor="middle" class="dg-s">アカウントID</text>
+<rect x="749" y="40" width="123" height="52" rx="8" class="dg-accent"/>
+<text x="810" y="62" text-anchor="middle" class="dg-tb">function:…</text>
+<text x="810" y="80" text-anchor="middle" class="dg-s">リソース</text>
+</svg>
+</div>
+<figcaption>図1 ARNの構成。コロン(:)で区切られた部分ごとに、パーティション・サービス・リージョン・アカウントID・リソースを表す。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>部分</th><th>意味</th><th>例</th></tr>
+<tr><td>パーティション</td><td>AWSの大きな区分</td><td>通常は <code>aws</code>(中国は <code>aws-cn</code>、米国政府向けは <code>aws-us-gov</code>)</td></tr>
+<tr><td>サービス</td><td>サービスの名前空間</td><td><code>s3</code>、<code>ec2</code>、<code>iam</code>、<code>lambda</code></td></tr>
+<tr><td>リージョン</td><td>リソースがあるリージョン</td><td><code>ap-northeast-1</code>。グローバルなリソースでは<strong>空欄</strong></td></tr>
+<tr><td>アカウントID</td><td>リソースを所有する12桁のアカウントID</td><td><code>123456789012</code>。S3バケットなどでは<strong>空欄</strong></td></tr>
+<tr><td>リソース</td><td>リソースの種類と名前・ID</td><td><code>instance/i-0abc…</code>、<code>role/MyRole</code>、<code>my-bucket/*</code></td></tr>
+</table></div>
+
+<h3>よく見るARNの例</h3>
+<div class="table-wrap"><table>
+<tr><th>リソース</th><th>ARN</th><th>ポイント</th></tr>
+<tr><td>S3バケット</td><td><code>arn:aws:s3:::my-bucket</code></td><td>バケット名が世界で一意なので、リージョンとアカウントIDは空欄</td></tr>
+<tr><td>S3のオブジェクト</td><td><code>arn:aws:s3:::my-bucket/*</code></td><td>バケット内の全オブジェクト。バケット自体の操作(<code>s3:ListBucket</code>)とオブジェクトの操作(<code>s3:GetObject</code>)でARNが違う点に注意</td></tr>
+<tr><td>IAMロール</td><td><code>arn:aws:iam::123456789012:role/MyRole</code></td><td>IAMはグローバルなのでリージョンは空欄</td></tr>
+<tr><td>EC2インスタンス</td><td><code>arn:aws:ec2:ap-northeast-1:123456789012:instance/i-0abc123</code></td><td>すべての部分が埋まる</td></tr>
+<tr><td>Lambda関数のエイリアス</td><td><code>arn:aws:lambda:ap-northeast-1:123456789012:function:MyFunction:prod</code></td><td>末尾にエイリアス名やバージョン番号を付けると、その版を指す</td></tr>
+</table></div>
+
+<h3>ポリシーでの使い方</h3>
+<ul>
+<li>IAMポリシーの <code>Resource</code> にARNを書いて、操作の対象を絞る。</li>
+<li><code>*</code>(任意の文字列)や <code>?</code>(任意の1文字)のワイルドカードを使える。例:<code>arn:aws:s3:::logs-*/*</code> は「logs- で始まるすべてのバケットのオブジェクト」。</li>
+<li>リソースベースのポリシーでは、<code>Principal</code> に相手のアカウントやロールのARNを書く。</li>
+</ul>
+<div class="point"><p>S3で「バケットの一覧は見られるのにオブジェクトが取得できない」(またはその逆)というときは、<code>Resource</code> に <code>arn:aws:s3:::my-bucket</code>(バケット)と <code>arn:aws:s3:::my-bucket/*</code>(オブジェクト)の<strong>両方</strong>が正しく書かれているかを確認します。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:ARNを使ってポリシーを書く</li>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:グローバルなリソースはARNのリージョンが空欄になる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:ポリシーの <code>Resource</code>・<code>Principal</code></li>
+<li><a href="../services/s3.html">Amazon S3</a>:バケットとオブジェクトでARNが異なる</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:バージョン・エイリアスのARN</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:<code>!GetAtt</code> などでリソースのARNを取得する</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="region-az.html"><span class="label">← 前へ</span>リージョンとアベイラビリティーゾーン</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="service-quotas.html"><span class="label">次へ →</span>サービスクォータ</a>
+</nav>
+</main>
+</body>
+</html>

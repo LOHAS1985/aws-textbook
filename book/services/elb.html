@@ -36,17 +36,17 @@
 <tr><td>ALB(Application Load Balancer)</td><td>L7</td><td>HTTP/HTTPS用</td></tr>
 <tr><td>NLB(Network Load Balancer)</td><td>L4</td><td>TCP/UDP用。通信の高速転送</td></tr>
 <tr><td>GWLB(Gateway Load Balancer)</td><td>L3/L4</td><td>ネットワークセキュリティ機器用。通信をファイアウォールなどのセキュリティ機器群へ分散</td></tr>
-<tr><td>CLB(Classic Load Balancer)</td><td>-</td><td>旧世代</td></tr>
+<tr><td>CLB(Classic Load Balancer)</td><td>L4/L7</td><td>旧世代。新規ではALB・NLBを使う</td></tr>
 </table></div>
 
 <h3>機能</h3>
 <ul>
-<li><strong>ヘルスチェック</strong>:ALBはHTTP/HTTPSのみ。NLBはUDP・HTTP/HTTPSに対応。</li>
+<li><strong>ヘルスチェック</strong>:ALBはHTTP/HTTPSで行う。NLBはTCP・HTTP・HTTPSで行う(UDPのターゲットグループでも、ヘルスチェック自体はTCP・HTTP・HTTPSのいずれかで行う)。</li>
 <li><strong>パスルーティング</strong>:URLによって転送先を変える(例:<code>https://api.example.com/users/list</code> の <code>api.example.com</code> がホスト、<code>/users/list</code> がパス)。
   <ul><li>ホストベース:異なるホストへの分散</li><li>パスベース:同じドメイン内での分散</li></ul></li>
 <li><strong>HTTPS終端</strong>:HTTPSの復号をALBで行い、EC2の負担を軽減する。</li>
 </ul>
-<p>NLBのヘルスチェックはTCPにも対応しています。また、NLBは静的IP(Elastic IP)を割り当てられるのが特徴です。</p>
+<p>NLBはAZごとに静的IP(Elastic IP)を割り当てられるのが特徴です。</p>
 
 <h3 class="em">リスナールール</h3>
 <p>受け取ったリクエストの処理ルールです。</p>
@@ -119,7 +119,7 @@
 <section class="chapter">
 <h2>7. まとめ</h2>
 <ul>
-<li>ELBはALB(L7)・NLB(L4)・GWLB(L3/4)・CLB(旧)の4種類。</li>
+<li>ELBはALB(L7)・NLB(L4)・GWLB(L3/4)・CLB(旧世代)の4種類。</li>
 <li>ALBはリスナールール(IF/THEN)でホスト・パスごとに振り分ける。</li>
 </ul>
 </section>
