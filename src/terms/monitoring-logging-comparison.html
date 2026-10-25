@@ -1,0 +1,94 @@
+<!-- title: 監視・記録のサービスの選び方 -->
+<!-- category: サービスの選び方 -->
+<!-- lead: CloudWatch・CloudTrail・Config・X-Ray・VPCフローログを「何を知りたいか」で使い分ける -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>AWSには、システムの状態や出来事を記録するサービスがいくつもあります。どれも「ログ」や「履歴」を扱うので混同しやすいですが、<strong>記録しているものが違います</strong>。調べたいことから逆に考えると選びやすくなります。</p>
+<figure class="figure" data-diagram>
+grid 200 70
+node q1 0 0 box "性能・使用率は?"
+node q2 0 1 box "ログの中身は?"
+node q3 0 2 box "誰が何をした?"
+node q4 0 3 box "設定はどう変わった?"
+node q5 0 4 box "どこで遅い・失敗?"
+node q6 0 5 box "通信は届いた?"
+node q7 0 6 box "AWS側の障害は?"
+node s1 1.4 0 accent "CloudWatch" "メトリクス・アラーム"
+node s2 1.4 1 accent "CloudWatch Logs" "OS・アプリのログ"
+node s3 1.4 2 accent "CloudTrail" "APIの操作履歴"
+node s4 1.4 3 accent "AWS Config" "設定の履歴・準拠"
+node s5 1.4 4 accent "X-Ray" "リクエストの追跡"
+node s6 1.4 5 accent "VPCフローログ" "IP通信の記録"
+node s7 1.4 6 accent "Health Dashboard" "AWSのイベント"
+edge q1 s1
+edge q2 s2
+edge q3 s3
+edge q4 s4
+edge q5 s5
+edge q6 s6
+edge q7 s7
+<figcaption>図1 知りたいことと、使うサービスの対応。</figcaption>
+</figure>
+
+<h3>比較表</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>記録するもの</th><th>わかること</th><th>保存の期間</th></tr>
+<tr><td>CloudWatch(メトリクス)</td><td>CPU使用率・リクエスト数などの数値</td><td>性能・負荷の推移。しきい値でアラーム</td><td>15か月(古いものは粗い間隔にまとめられる)</td></tr>
+<tr><td>CloudWatch Logs</td><td>OS・アプリ・各サービスが出すログ</td><td>エラーの内容。Logs Insightsで検索・集計</td><td>ロググループごとに設定(既定は無期限)</td></tr>
+<tr><td>CloudTrail</td><td>AWSのAPIの呼び出し(コンソール操作を含む)</td><td>誰が・いつ・どこから・何をしたか</td><td>イベント履歴は90日。証跡を作るとS3に長期保存</td></tr>
+<tr><td>AWS Config</td><td>リソースの設定とその変更</td><td>ある時点の設定、ルールに準拠しているか</td><td>既定7年(変更できる)</td></tr>
+<tr><td>X-Ray</td><td>1つのリクエストが通ったサービスと時間</td><td>どのサービスで遅いか・失敗したか</td><td>30日</td></tr>
+<tr><td>VPCフローログ</td><td>ENIを通ったIP通信(送信元・宛先・ポート・許可/拒否)</td><td>通信が届いているか、SGやネットワークACLで拒否されたか</td><td>送信先(CloudWatch Logs・S3など)の設定による</td></tr>
+<tr><td>AWS Health Dashboard</td><td>AWS側の障害・予定メンテナンス</td><td>自分のリソースに影響するAWSのイベント</td><td>—</td></tr>
+</table></div>
+<p>HTTPのリクエスト1件ごとの詳細(クライアントのIP・パス・応答コード)は、ELB・CloudFront・S3のアクセスログやWAFのログに出ます。VPCの中の名前解決の問い合わせは、Route 53 Resolverのクエリログに記録できます。</p>
+
+<h3>組み合わせて調べる</h3>
+<p>実際の調査では、複数のサービスを順に見ていきます。たとえば「夜中に急にエラーが増えた」なら、CloudWatchのアラームで気づき、CloudWatch Logsでエラーの内容を確認し、CloudTrailとConfigでその直前に誰かが設定を変えていないかを調べます。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node a 0 0 ng "アラーム" "エラー数が増えた"
+node b 1.3 0 box "CloudWatch Logs" "エラーの内容"
+node c 2.6 0 box "CloudTrail" "直前の操作は?"
+node d 3.9 0 accent "AWS Config" "何が変わった?"
+edge a b
+edge b c
+edge c d
+<figcaption>図2 障害の調査の流れの例。メトリクスで気づき、ログで内容を確かめ、操作履歴と設定の変更から原因を絞り込む。</figcaption>
+</figure>
+
+<h3>選び方のポイント</h3>
+<div class="point"><ul>
+<li>誰がEC2を削除したか・セキュリティグループを変えたかを調べたい → <strong class="em">CloudTrail</strong>。</li>
+<li>リソースの設定が過去にどうだったか、ルールに違反していないかを知りたい → <strong class="em">AWS Config</strong>。違反を自動で直すこともできる(ユースケース「<a href="../usecases/config-auto-remediation.html">公開されたS3バケットを検出して自動で修復する</a>」)。</li>
+<li>EC2のメモリ・ディスクの使用率は標準のメトリクスにない → <strong>CloudWatchエージェント</strong>を入れる(ユースケース「<a href="../usecases/ec2-memory-monitoring.html">EC2のメモリ・ディスク使用率を監視する</a>」)。</li>
+<li>ログに出る特定の文字列(ERRORなど)の数でアラームを出したい → CloudWatch Logsのメトリクスフィルター。</li>
+<li>マイクロサービスのどこで遅いかを知りたい → <strong>X-Ray</strong>(ユースケース「<a href="../usecases/distributed-tracing.html">マイクロサービスの遅延の原因をトレースで特定する</a>」)。</li>
+<li>EC2に接続できない原因がSGかネットワークACLかを切り分けたい → VPCフローログ(REJECTの記録)。経路の設定ミスはReachability Analyzer(ユースケース「<a href="../usecases/network-troubleshooting.html">EC2に接続できない原因を調査する</a>」)。</li>
+<li>CloudTrailは管理イベントだけが既定で記録される。S3のオブジェクトの操作やLambdaの呼び出し(データイベント)は、証跡で有効にする。</li>
+<li>CloudTrailのログが改ざんされていないことを示したい → ログファイルの整合性の検証を有効にする。</li>
+<li>複数アカウントの記録をまとめたい → 組織の証跡(CloudTrail)、アグリゲーター(Config)、ログの集約(ユースケース「<a href="../usecases/centralized-logging.html">複数アカウントのログを集約して分析する</a>」)。</li>
+<li>AWS側のメンテナンスや障害に自動で対応したい → Healthのイベントを EventBridge で受ける(ユースケース「<a href="../usecases/health-event-response.html">AWSの予定メンテナンスや障害の通知に自動で対応する</a>」)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="vpc-flow-logs.html">VPCフローログ</a>:記録の形式と見方の詳細</li>
+<li><a href="security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>:記録をもとに脅威や問題を見つけるサービス</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:フローログのREJECTの原因になる設定</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:メトリクス・ログ・アラーム</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:APIの操作履歴</li>
+<li><a href="../services/config.html">AWS Config</a>:設定の履歴とルール</li>
+<li><a href="../services/xray.html">AWS X-Ray</a>:分散トレース</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:VPCフローログ・Reachability Analyzer</li>
+<li><a href="../services/health-dashboard.html">AWS Health Dashboard</a>:AWS側のイベント</li>
+</ul>
+</section>

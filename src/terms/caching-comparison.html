@@ -1,0 +1,87 @@
+<!-- title: キャッシュの選び方 -->
+<!-- category: サービスの選び方 -->
+<!-- lead: CloudFront・API Gatewayのキャッシュ・ElastiCache・DAXを、置く場所と対象で使い分ける -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>キャッシュは、一度取り出した結果を近くに保存しておき、次からはそれを返す仕組みです。後ろのサーバーやDBに届くリクエストが減るので、応答が速くなり、負荷と費用も下がります。AWSでは、リクエストの通り道のどこに置くかによって使うサービスが変わります。<strong>利用者に近い場所でキャッシュするほど、後ろの層すべての負荷が減ります</strong>。</p>
+<figure class="figure" data-diagram>
+grid 150 85
+node u 0 1 blue "利用者"
+node cf 1 1 accent "CloudFront" "エッジでキャッシュ"
+node api 2 1 accent "API Gateway" "API応答を保存"
+node app 3 1 box "アプリ" "EC2・Lambda"
+node ec 4 0 accent "ElastiCache" "DBの結果を保存"
+node dax 4 2 accent "DAX" "DynamoDB専用"
+node rds 5 0 box "RDS・Aurora"
+node ddb 5 2 box "DynamoDB"
+edge u cf
+edge cf api
+edge api app
+edge app ec
+edge app dax
+edge ec rds
+edge dax ddb
+<figcaption>図1 キャッシュを置く場所。CloudFrontは利用者に近いエッジで、API GatewayはAPIの入口で、ElastiCacheとDAXはDBの手前で結果を保存する。ヒットすれば、そこから後ろにはリクエストが届かない。</figcaption>
+</figure>
+
+<h3>比較表</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>置く場所</th><th>キャッシュするもの</th><th>アプリの変更</th></tr>
+<tr><td>CloudFront</td><td>世界中のエッジロケーション</td><td>Webページ・画像・動画・APIの応答</td><td>不要(DNSの向き先を変える)</td></tr>
+<tr><td>API Gatewayのキャッシュ</td><td>REST APIのステージ</td><td>APIの応答(TTLは既定300秒、最大3600秒)</td><td>不要(ステージで有効化)</td></tr>
+<tr><td>ElastiCache(Valkey・Redis OSS・Memcached)</td><td>VPCの中(アプリとDBの間)</td><td>DBの検索結果・計算結果・セッション情報など</td><td>必要(読み書きのコードを書く)</td></tr>
+<tr><td>DynamoDB Accelerator(DAX)</td><td>VPCの中(DynamoDBの手前)</td><td>DynamoDBの読み取り結果</td><td>ほぼ不要(DAXのクライアントに替える)</td></tr>
+</table></div>
+
+<h3>キャッシュの更新の仕方</h3>
+<p>キャッシュの中身は、元のデータが変わると古くなります。ElastiCacheでは、主に次の2つの方式と、有効期限(TTL)を組み合わせます。</p>
+<ul>
+<li><strong>遅延読み込み(Lazy Loading)</strong>:キャッシュになければDBから読んでキャッシュに入れる。必要なデータだけが入るが、初回は遅く、古いデータが残ることがある。</li>
+<li><strong>書き込みスルー(Write-Through)</strong>:DBに書くときにキャッシュも更新する。データは新しく保たれるが、読まれないデータもキャッシュに入る。</li>
+<li><strong>TTL</strong>:期限を過ぎたデータを自動で消す。どちらの方式でも、古いデータが残り続けないように設定する。</li>
+</ul>
+<p>CloudFrontでは、オリジンの内容を更新したらすぐに反映させたいとき、無効化(Invalidation)でエッジのキャッシュを消します。ファイル名にバージョンを付けて(例: <code>app.v2.js</code>)、別のファイルとして配信する方法もあります。</p>
+
+<h3>キャッシュ以外で読み取りの負荷を下げる</h3>
+<p>次の方法はキャッシュと混同しやすいですが、仕組みが異なります。</p>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>仕組み</th><th>キャッシュとの違い</th></tr>
+<tr><td>RDS・Auroraのリードレプリカ</td><td>DBのコピーを作り、読み取りを分散する</td><td>SQLをそのまま使える。データは非同期で複製されるため、少し遅れることがある</td></tr>
+<tr><td>Amazon MemoryDB</td><td>Valkey・Redis互換の、データを失わないインメモリDB</td><td>キャッシュではなく、データの保存先(プライマリDB)として使う</td></tr>
+<tr><td>RDS Proxy</td><td>DBへの接続をプールして使い回す</td><td>結果は保存しない。接続数が多すぎる問題(Lambdaからの大量接続など)を解決する</td></tr>
+</table></div>
+
+<h3>選び方のポイント</h3>
+<div class="point"><ul>
+<li>世界中の利用者への静的コンテンツの配信を速くしたい → <strong>CloudFront</strong>。</li>
+<li>同じ結果を返すAPIへのリクエストを減らしたい → <strong>API Gatewayのキャッシュ</strong>(REST APIのみ)。</li>
+<li>RDSへの同じ読み取りが多く、DBのCPUが高い → <strong>ElastiCache</strong>(ユースケース「<a href="../usecases/cache-read-offload.html">キャッシュでDBの読み取り負荷を下げる</a>」)。</li>
+<li>DynamoDBの読み取りをマイクロ秒にしたい・アプリをほとんど変えたくない → <strong class="em">DAX</strong>。</li>
+<li>DAXがキャッシュするのは結果整合性の読み取りだけ。強い整合性の読み取りは、DAXを通ってもDynamoDBから読む。</li>
+<li>複数のEC2でログイン状態(セッション)を共有したい → ElastiCache(またはDynamoDB)。</li>
+<li>Valkey・Redis互換で、データを失えないプライマリDBにしたい → キャッシュではなくMemoryDB。</li>
+<li>キャッシュがよく効いているかを確かめる → CloudFrontはキャッシュヒット率、ElastiCacheは <code>CacheHits</code>・<code>CacheMisses</code>・<code>Evictions</code>(容量不足で追い出された数)を見る。</li>
+<li>CloudFrontのヒット率が低い → キャッシュキーに含めるヘッダー・Cookie・クエリ文字列を必要なものだけに絞る。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="messaging-comparison.html">メッセージングサービスの選び方</a>:書き込みの急増をキューで受け止める方法</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:負荷に応じて台数を増やす方法</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:エッジでのキャッシュとコンテンツ配信</li>
+<li><a href="../services/api-gateway.html">Amazon API Gateway</a>:REST APIのステージのキャッシュ</li>
+<li><a href="../services/elasticache.html">Amazon ElastiCache</a>:インメモリのキャッシュ</li>
+<li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:DAXでの読み取りの高速化</li>
+<li><a href="../services/memorydb.html">Amazon MemoryDB</a>:永続的なインメモリDB</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:リードレプリカとRDS Proxy</li>
+<li><a href="../services/aurora.html">Amazon Aurora</a>:リードレプリカ</li>
+</ul>
+</section>

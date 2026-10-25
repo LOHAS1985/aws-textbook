@@ -1,0 +1,97 @@
+<!-- title: VPC同士をつなぐ方法の選び方 -->
+<!-- category: サービスの選び方 -->
+<!-- lead: VPCピアリング・Transit Gateway・PrivateLink・VPCの共有の違いと使い分け -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>別々のVPC(別アカウント・別リージョンを含む)を通信させる方法は、主に3つあります。違いは<strong>「何本の接続が必要か」</strong>と<strong>「ネットワーク全体をつなぐか、特定のサービスだけを公開するか」</strong>です。</p>
+<figure class="figure" data-diagram>
+grid 110 75
+node a 0 0 box "VPC A"
+node b 1.5 0 box "VPC B"
+node c 0 2 box "VPC C"
+node d 1.5 2 box "VPC D"
+edge a b both
+edge a c both
+edge a d both
+edge b c both
+edge b d both
+edge c d both
+group 0 0 1.5 2 "ピアリング:6本" pad=10
+node e 3.5 0 box "VPC A"
+node f 5.5 0 box "VPC B"
+node tgw 4.5 1 accent "TGW"
+node g 3.5 2 box "VPC C"
+node h 5.5 2 box "VPC D"
+edge e tgw both
+edge f tgw both
+edge g tgw both
+edge h tgw both
+group 3.5 0 5.5 2 "Transit Gateway:4本" pad=10
+<figcaption>図1 4つのVPCを互いに通信させる場合。VPCピアリングは推移的でないため、すべての組み合わせ(n×(n−1)÷2=6本)が必要。Transit Gatewayなら、各VPCをハブに1本ずつ(4本)つなぐだけでよい。</figcaption>
+</figure>
+
+<h3>比較表</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>VPCピアリング</th><th>Transit Gateway</th><th>PrivateLink</th></tr>
+<tr><td>つなぐ単位</td><td>VPCとVPC(1対1)</td><td>多数のVPC・VPN・DXをハブで</td><td>特定のサービスだけ(エンドポイント経由)</td></tr>
+<tr><td>推移的な経路</td><td>なし(Bを中継してA→Cには行けない)</td><td>あり</td><td>関係なし(サービスへの一方向の接続)</td></tr>
+<tr><td>CIDRの重複</td><td>不可</td><td>不可(経路が決められない)</td><td><strong>可</strong></td></tr>
+<tr><td>通信の向き</td><td>双方向</td><td>双方向(ルートテーブルで制限できる)</td><td>利用側→提供側のみ</td></tr>
+<tr><td>費用の考え方</td><td>接続自体は無料。データ転送のみ</td><td>アタッチメントの時間+処理したデータ量</td><td>エンドポイントの時間+処理したデータ量</td></tr>
+<tr><td>向いている場面</td><td>少数のVPCどうし</td><td>数十〜数百のVPC、オンプレミスも含めた集約</td><td>自社のサービスを他のVPC・他社に提供する</td></tr>
+</table></div>
+
+<h3>PrivateLinkはネットワークではなくサービスをつなぐ</h3>
+<p>PrivateLinkでは、提供側がNetwork Load Balancerの後ろにサービスを置いて「エンドポイントサービス」として公開し、利用側は自分のVPCにインターフェイスエンドポイント(ENI)を作ります。利用側から見えるのは自分のVPCの中のENIだけなので、<strong>両方のVPCのCIDRが重なっていても使えます</strong>。また、提供側から利用側のVPCへは通信できません。</p>
+<figure class="figure" data-diagram>
+grid 165 80
+node app 0 0.5 blue "利用側のアプリ"
+node ep 1.3 0.5 accent "エンドポイント" "利用側のENI"
+node nlb 2.8 0.5 box "NLB" "エンドポイントサービス"
+node svc 4.1 0.5 ok "提供側のサービス"
+group 0 0.5 1.3 0.5 "利用側VPC 10.0.0.0/16" pad=12
+group 2.8 0.5 4.1 0.5 "提供側VPC 10.0.0.0/16" pad=12
+edge app ep
+edge ep nlb "PrivateLink"
+edge nlb svc
+<figcaption>図2 PrivateLinkの仕組み。利用側は自分のVPCのエンドポイントに接続するだけなので、2つのVPCのCIDRが同じでもよい。通信は利用側から提供側への一方向。</figcaption>
+</figure>
+<p>S3やDynamoDBなどAWSのサービスへの接続に使う<a href="vpc-endpoint.html">VPCエンドポイント</a>も、インターフェイス型は同じPrivateLinkの仕組みです。</p>
+
+<h3>VPCをつながずに共有する</h3>
+<p>同じ組織の複数アカウントで1つのネットワークを使いたいなら、<a href="../services/ram.html">AWS RAM</a>でVPCのサブネットを他のアカウントと共有する方法もあります(VPCの共有)。各アカウントは共有されたサブネットに自分のリソースを作るので、VPCどうしをつなぐ必要がありません。ネットワークは所有者のアカウントがまとめて管理します。</p>
+
+<h3>選び方のポイント</h3>
+<div class="point"><ul>
+<li>2〜3個のVPCを、低コストでつなぎたい → <strong>VPCピアリング</strong>。</li>
+<li>ピアリングでA–B、B–CをつないだのにAとCが通信できない → ピアリングは<strong class="em">推移的でない</strong>。A–Cにもピアリングを作るか、Transit Gatewayに移る。</li>
+<li>多数のVPCやオンプレミスとの接続をまとめて管理したい → <strong class="em">Transit Gateway</strong>。ルートテーブルを分けると、本番と開発のVPCを通信させないこともできる。</li>
+<li>CIDRが重なるVPC、または他社のVPCに、特定のサービスだけを提供したい → <strong>PrivateLink</strong>。</li>
+<li>別リージョンのVPCどうし → リージョン間のVPCピアリング、またはTransit Gatewayどうしのピアリング。</li>
+<li>ピアリングを作っただけでは通信できない。両方のVPCのルートテーブルに相手のCIDRへの経路を追加し、セキュリティグループでも許可する。</li>
+<li>VPCのCIDRが重ならないように、組織全体でIPアドレスを払い出す → <a href="../services/ipam.html">IPAM</a>(ユースケース「<a href="../usecases/vpc-ip-planning.html">組織全体のVPCのIPアドレスを重ならないように払い出す</a>」)。</li>
+<li>Transit Gatewayを他のアカウントのVPCにつなぐときは、RAMでTransit Gatewayを共有する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="vpc-peering.html">VPCピアリング</a>:VPC同士を1対1でつなぐ仕組みの詳細</li>
+<li><a href="vpc-endpoint.html">VPCエンドポイント</a>:VPCからAWSのサービスへのプライベートな接続</li>
+<li><a href="route-table.html">ルートテーブル</a>:接続先への経路を設定する</li>
+<li><a href="cidr.html">CIDR</a>:VPCのアドレス範囲。重なると接続できない方法がある</li>
+<li><a href="hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>:VPN・Direct Connect・Client VPN</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:VPCピアリング・PrivateLink</li>
+<li><a href="../services/transit-gateway.html">AWS Transit Gateway</a>:多数のVPCをつなぐハブ</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:PrivateLinkで公開するサービスの前に置くNLB</li>
+<li><a href="../services/ram.html">AWS RAM</a>:サブネットやTransit Gatewayを他のアカウントと共有する</li>
+<li><a href="../services/ipam.html">Amazon VPC IPAM</a>:VPCのIPアドレスの計画と払い出し</li>
+</ul>
+</section>

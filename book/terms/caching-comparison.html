@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>キャッシュの選び方 | AWS教科書</title>
+<meta name="description" content="CloudFront・API Gatewayのキャッシュ・ElastiCache・DAXを、置く場所と対象で使い分ける">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">サービスの選び方</a>
+  <h1>キャッシュの選び方</h1>
+  <p class="lead">CloudFront・API Gatewayのキャッシュ・ElastiCache・DAXを、置く場所と対象で使い分ける</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>キャッシュは、一度取り出した結果を近くに保存しておき、次からはそれを返す仕組みです。後ろのサーバーやDBに届くリクエストが減るので、応答が速くなり、負荷と費用も下がります。AWSでは、リクエストの通り道のどこに置くかによって使うサービスが変わります。<strong>利用者に近い場所でキャッシュするほど、後ろの層すべての負荷が減ります</strong>。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 938 286" style="max-width:938px;min-width:750px" role="img" aria-label="図1 キャッシュを置く場所。CloudFrontは利用者に近いエッジで、API GatewayはAPIの入口で、ElastiCacheとDAXはDBの手前で結果を保存する。ヒットすれば、そこから後ろにはリクエストが届かない。"><defs><marker id="dgterms-caching-comparison-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="132" width="130" height="40" rx="8" class="dg-blue"/>
+<text x="99" y="156" text-anchor="middle" class="dg-t">利用者</text>
+<rect x="184" y="126" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="249" y="147" text-anchor="middle" class="dg-tb">CloudFront</text>
+<text x="249" y="165" text-anchor="middle" class="dg-s">エッジでキャッシュ</text>
+<rect x="334" y="126" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="147" text-anchor="middle" class="dg-tb">API Gateway</text>
+<text x="399" y="165" text-anchor="middle" class="dg-s">API応答を保存</text>
+<rect x="484" y="126" width="130" height="52" rx="8" class="dg-box"/>
+<text x="549" y="147" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="549" y="165" text-anchor="middle" class="dg-s">EC2・Lambda</text>
+<rect x="634" y="40" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="699" y="62" text-anchor="middle" class="dg-tb">ElastiCache</text>
+<text x="699" y="80" text-anchor="middle" class="dg-s">DBの結果を保存</text>
+<rect x="634" y="210" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="699" y="232" text-anchor="middle" class="dg-tb">DAX</text>
+<text x="699" y="250" text-anchor="middle" class="dg-s">DynamoDB専用</text>
+<rect x="784" y="46" width="130" height="40" rx="8" class="dg-box"/>
+<text x="849" y="70" text-anchor="middle" class="dg-t">RDS・Aurora</text>
+<rect x="784" y="216" width="130" height="40" rx="8" class="dg-box"/>
+<text x="849" y="240" text-anchor="middle" class="dg-t">DynamoDB</text>
+<path d="M164.0,151.5 L184.0,151.5" class="dg-line" marker-end="url(#dgterms-caching-comparison-1)"/>
+<path d="M314.0,151.5 L334.0,151.5" class="dg-line" marker-end="url(#dgterms-caching-comparison-1)"/>
+<path d="M464.0,151.5 L484.0,151.5" class="dg-line" marker-end="url(#dgterms-caching-comparison-1)"/>
+<path d="M594.9,125.5 L653.1,92.5" class="dg-line" marker-end="url(#dgterms-caching-comparison-1)"/>
+<path d="M594.9,177.5 L653.1,210.5" class="dg-line" marker-end="url(#dgterms-caching-comparison-1)"/>
+<path d="M764.0,66.5 L784.0,66.5" class="dg-line" marker-end="url(#dgterms-caching-comparison-1)"/>
+<path d="M764.0,236.5 L784.0,236.5" class="dg-line" marker-end="url(#dgterms-caching-comparison-1)"/>
+</svg>
+</div>
+<figcaption>図1 キャッシュを置く場所。CloudFrontは利用者に近いエッジで、API GatewayはAPIの入口で、ElastiCacheとDAXはDBの手前で結果を保存する。ヒットすれば、そこから後ろにはリクエストが届かない。</figcaption>
+</figure>
+
+<h3 id="c1-1">比較表<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>サービス</th><th>置く場所</th><th>キャッシュするもの</th><th>アプリの変更</th></tr>
+<tr><td data-label="サービス">CloudFront</td><td data-label="置く場所">世界中のエッジロケーション</td><td data-label="キャッシュするもの">Webページ・画像・動画・APIの応答</td><td data-label="アプリの変更">不要(DNSの向き先を変える)</td></tr>
+<tr><td data-label="サービス">API Gatewayのキャッシュ</td><td data-label="置く場所">REST APIのステージ</td><td data-label="キャッシュするもの">APIの応答(TTLは既定300秒、最大3600秒)</td><td data-label="アプリの変更">不要(ステージで有効化)</td></tr>
+<tr><td data-label="サービス">ElastiCache(Valkey・Redis OSS・Memcached)</td><td data-label="置く場所">VPCの中(アプリとDBの間)</td><td data-label="キャッシュするもの">DBの検索結果・計算結果・セッション情報など</td><td data-label="アプリの変更">必要(読み書きのコードを書く)</td></tr>
+<tr><td data-label="サービス">DynamoDB Accelerator(DAX)</td><td data-label="置く場所">VPCの中(DynamoDBの手前)</td><td data-label="キャッシュするもの">DynamoDBの読み取り結果</td><td data-label="アプリの変更">ほぼ不要(DAXのクライアントに替える)</td></tr>
+</table></div>
+
+<h3 id="c1-2">キャッシュの更新の仕方<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>キャッシュの中身は、元のデータが変わると古くなります。ElastiCacheでは、主に次の2つの方式と、有効期限(TTL)を組み合わせます。</p>
+<ul>
+<li><strong>遅延読み込み(Lazy Loading)</strong>:キャッシュになければDBから読んでキャッシュに入れる。必要なデータだけが入るが、初回は遅く、古いデータが残ることがある。</li>
+<li><strong>書き込みスルー(Write-Through)</strong>:DBに書くときにキャッシュも更新する。データは新しく保たれるが、読まれないデータもキャッシュに入る。</li>
+<li><strong>TTL</strong>:期限を過ぎたデータを自動で消す。どちらの方式でも、古いデータが残り続けないように設定する。</li>
+</ul>
+<p>CloudFrontでは、オリジンの内容を更新したらすぐに反映させたいとき、無効化(Invalidation)でエッジのキャッシュを消します。ファイル名にバージョンを付けて(例: <code>app.v2.js</code>)、別のファイルとして配信する方法もあります。</p>
+
+<h3 id="c1-3">キャッシュ以外で読み取りの負荷を下げる<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>次の方法はキャッシュと混同しやすいですが、仕組みが異なります。</p>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>仕組み</th><th>キャッシュとの違い</th></tr>
+<tr><td>RDS・Auroraのリードレプリカ</td><td>DBのコピーを作り、読み取りを分散する</td><td>SQLをそのまま使える。データは非同期で複製されるため、少し遅れることがある</td></tr>
+<tr><td>Amazon MemoryDB</td><td>Valkey・Redis互換の、データを失わないインメモリDB</td><td>キャッシュではなく、データの保存先(プライマリDB)として使う</td></tr>
+<tr><td>RDS Proxy</td><td>DBへの接続をプールして使い回す</td><td>結果は保存しない。接続数が多すぎる問題(Lambdaからの大量接続など)を解決する</td></tr>
+</table></div>
+
+<h3 id="c1-4">選び方のポイント<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="point"><ul>
+<li>世界中の利用者への静的コンテンツの配信を速くしたい → <strong>CloudFront</strong>。</li>
+<li>同じ結果を返すAPIへのリクエストを減らしたい → <strong>API Gatewayのキャッシュ</strong>(REST APIのみ)。</li>
+<li>RDSへの同じ読み取りが多く、DBのCPUが高い → <strong>ElastiCache</strong>(ユースケース「<a href="../usecases/cache-read-offload.html">キャッシュでDBの読み取り負荷を下げる</a>」)。</li>
+<li>DynamoDBの読み取りをマイクロ秒にしたい・アプリをほとんど変えたくない → <strong class="em">DAX</strong>。</li>
+<li>DAXがキャッシュするのは結果整合性の読み取りだけ。強い整合性の読み取りは、DAXを通ってもDynamoDBから読む。</li>
+<li>複数のEC2でログイン状態(セッション)を共有したい → ElastiCache(またはDynamoDB)。</li>
+<li>Valkey・Redis互換で、データを失えないプライマリDBにしたい → キャッシュではなくMemoryDB。</li>
+<li>キャッシュがよく効いているかを確かめる → CloudFrontはキャッシュヒット率、ElastiCacheは <code>CacheHits</code>・<code>CacheMisses</code>・<code>Evictions</code>(容量不足で追い出された数)を見る。</li>
+<li>CloudFrontのヒット率が低い → キャッシュキーに含めるヘッダー・Cookie・クエリ文字列を必要なものだけに絞る。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="messaging-comparison.html">メッセージングサービスの選び方</a>:書き込みの急増をキューで受け止める方法</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:負荷に応じて台数を増やす方法</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:エッジでのキャッシュとコンテンツ配信</li>
+<li><a href="../services/api-gateway.html">Amazon API Gateway</a>:REST APIのステージのキャッシュ</li>
+<li><a href="../services/elasticache.html">Amazon ElastiCache</a>:インメモリのキャッシュ</li>
+<li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:DAXでの読み取りの高速化</li>
+<li><a href="../services/memorydb.html">Amazon MemoryDB</a>:永続的なインメモリDB</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:リードレプリカとRDS Proxy</li>
+<li><a href="../services/aurora.html">Amazon Aurora</a>:リードレプリカ</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/dynamodb.html"><span class="title">Amazon DynamoDB</span><span class="kind">サービス</span><span class="desc">フルマネージドのキーバリュー型NoSQLデータベース</span></a></li>
+<li><a href="../services/elasticache.html"><span class="title">Amazon ElastiCache</span><span class="kind">サービス</span><span class="desc">アプリのデータをインメモリでキャッシュするサービス</span></a></li>
+<li><a href="../services/memorydb.html"><span class="title">Amazon MemoryDB</span><span class="kind">サービス</span><span class="desc">Redis互換の永続的なインメモリデータベース</span></a></li>
+<li><a href="../services/cloudfront.html"><span class="title">Amazon CloudFront</span><span class="kind">サービス</span><span class="desc">コンテンツを世界中へ高速配信するCDN</span></a></li>
+<li><a href="../services/api-gateway.html"><span class="title">Amazon API Gateway</span><span class="kind">サービス</span><span class="desc">APIの作成・公開・管理のためのサービス</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="messaging-comparison.html"><span class="label">← 前へ</span>メッセージングサービスの選び方</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="hybrid-connectivity.html"><span class="label">次へ →</span>オンプレミスとAWSをつなぐ方法の選び方</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

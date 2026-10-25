@@ -1,0 +1,69 @@
+<!-- title: コスト管理ツールの選び方 -->
+<!-- category: サービスの選び方 -->
+<!-- lead: Cost Explorer・Budgets・CUR・Compute Optimizer・Trusted Advisor・Savings Plansを目的で使い分ける -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>AWSの費用を管理するツールは、目的ごとに分かれています。見える化する(何にいくらかかっているか)、異常に気づく(予算超過や急な増加)、無駄を減らす(使いすぎのサイズや放置されたリソース)、割引で安くする(長期利用の約束)の4つです。この4つを繰り返し回していくのが、コスト最適化の基本の進め方です。</p>
+<figure class="figure" data-diagram>
+grid 200 90
+node a 0 0 box "見える化" "Cost Explorer・CUR"
+node b 1.5 0 box "異常に気づく" "Budgets・異常検出"
+node c 1.5 1.3 box "無駄を減らす" "Compute Optimizer"
+node d 0 1.3 box "割引で安くする" "Savings Plans・RI"
+edge a b
+edge b c
+edge c d
+edge d a
+<figcaption>図1 コスト管理の4つの目的と代表的なツール。見える化して、異常に気づき、無駄を減らし、残った使用量を割引で安くする。</figcaption>
+</figure>
+
+<h3>比較表</h3>
+<div class="table-wrap"><table>
+<tr><th>ツール</th><th>目的</th><th>できること</th><th>データの細かさ</th></tr>
+<tr><td>Cost Explorer</td><td>見える化</td><td>サービス・アカウント・タグ別の費用をグラフで見る。今後の費用の予測、Savings Plans・RIの購入の推奨</td><td>日単位・月単位(時間単位も有効にできる)</td></tr>
+<tr><td>Cost and Usage Reports(CUR 2.0)</td><td>見える化</td><td>最も詳しい請求データをS3に出力し、AthenaやQuickSightで分析する</td><td>時間単位・リソース単位</td></tr>
+<tr><td>AWS Budgets</td><td>異常に気づく</td><td>予算を決め、実績や予測がしきい値を超えたら通知する。超えたときにIAMポリシーの適用やEC2の停止などのアクションも実行できる</td><td>月・四半期・年の予算</td></tr>
+<tr><td>Cost Anomaly Detection</td><td>異常に気づく</td><td>機械学習で普段と違う費用の増え方を見つけて通知する</td><td>日単位</td></tr>
+<tr><td>Compute Optimizer</td><td>無駄を減らす</td><td>EC2・Auto Scalingグループ・EBS・Lambdaなどの使用状況から、適切なサイズを推奨する</td><td>リソース単位</td></tr>
+<tr><td>Trusted Advisor</td><td>無駄を減らす</td><td>使われていないEBS・Elastic IP、使用率の低いEC2などをチェックする</td><td>リソース単位</td></tr>
+<tr><td>Savings Plans・リザーブドインスタンス(RI)</td><td>割引で安くする</td><td>1年または3年の利用を約束して、オンデマンドより安くする</td><td>—</td></tr>
+</table></div>
+
+<h3>コスト配分タグ</h3>
+<p>部署やプロジェクトごとの費用を知るには、リソースにタグ(例: <code>Project=web</code>)を付けます。ただし、タグを付けただけでは費用の集計に使えません。Billingのコンソールでそのタグを<strong>コスト配分タグとして有効化</strong>すると、Cost ExplorerやCURでタグごとに集計できるようになります(有効化より前の費用には反映されません)。</p>
+
+<h3>選び方のポイント</h3>
+<div class="point"><ul>
+<li>予算を超えそうなときに通知を受けたい(予測値でも可) → <strong class="em">AWS Budgets</strong>。</li>
+<li>予算を超えたら自動でEC2を止めたり、新しいリソースを作れなくしたりしたい → Budgetsのアクション。</li>
+<li>普段と違う急な費用の増加に気づきたい → Cost Anomaly Detection。</li>
+<li>どのサービス・アカウントに費用がかかっているかをグラフで見たい・来月の費用を予測したい → <strong>Cost Explorer</strong>。</li>
+<li>リソース単位・時間単位の最も詳しい請求データをSQLで分析したい → <strong>CUR 2.0</strong>(S3+Athena)。</li>
+<li>EC2のインスタンスタイプが大きすぎないかを知りたい → <strong>Compute Optimizer</strong>。メモリの使用率も考慮させるには、CloudWatchエージェントでメモリのメトリクスを送る。</li>
+<li>部署ごとの費用を出したい → タグを付けて、コスト配分タグとして有効化する。</li>
+<li>Savings PlansやRIが十分に使われているか(使用率・カバレッジ)を見たい → Cost Explorerのレポート。下がったら通知するにはBudgetsの使用率予算。</li>
+<li>使っていない時間帯の費用を下げたい → 開発環境を夜間・休日に止める(ユースケース「<a href="../usecases/scheduled-start-stop.html">開発環境を夜間・休日に自動で停止して費用を下げる</a>」)。</li>
+<li>組織全体の費用をまとめたい → Organizationsの管理アカウントで一括請求。Savings PlansやRIの割引も組織内で共有される。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="service-quotas.html">サービスクォータ</a>:費用とは別に、作れるリソースの上限</li>
+<li><a href="monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>:Compute Optimizerが使うCloudWatchのメトリクス</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/cost-explorer.html">AWS Cost Explorer</a>:費用の見える化と予測</li>
+<li><a href="../services/cost-and-usage-reports.html">AWS Cost and Usage Reports</a>:詳細な請求データの出力</li>
+<li><a href="../services/compute-optimizer.html">AWS Compute Optimizer</a>:リソースのサイズの推奨</li>
+<li><a href="../services/trusted-advisor.html">AWS Trusted Advisor</a>:無駄なリソースのチェック</li>
+<li><a href="../services/savings-plans.html">Savings Plans</a>:長期利用の約束による割引</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:一括請求と割引の共有</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:リザーブドインスタンス・スポットインスタンス</li>
+</ul>
+</section>

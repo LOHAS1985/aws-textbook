@@ -95,7 +95,7 @@ COLLECTIONS = [
         "key": "terms",
         "label": "用語",
         "desc": "AWSを学ぶうえで押さえておきたい用語の解説",
-        "categories": ["AWSの基礎", "ネットワーク", "セキュリティ・認証", "ストレージ", "設計・運用"],
+        "categories": ["AWSの基礎", "ネットワーク", "セキュリティ・認証", "ストレージ", "設計・運用", "サービスの選び方"],
         "search": "用語・キーワードで絞り込み(例: IP、暗号化、DNS)",
         "order": [
             "region-az", "arn", "service-quotas",
@@ -105,6 +105,9 @@ COLLECTIONS = [
             "iam-policy-evaluation", "encryption", "oidc", "spf",
             "storage-types",
             "high-availability-scaling", "deploy-strategies", "dr-strategies", "circuit-breaker",
+            "monitoring-logging-comparison", "messaging-comparison", "caching-comparison",
+            "hybrid-connectivity", "vpc-connectivity", "security-detection-comparison",
+            "secrets-config-comparison", "cost-management-comparison",
         ],
     },
     {

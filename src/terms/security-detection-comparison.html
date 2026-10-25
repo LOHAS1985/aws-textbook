@@ -1,0 +1,78 @@
+<!-- title: セキュリティ検出のサービスの選び方 -->
+<!-- category: サービスの選び方 -->
+<!-- lead: GuardDuty・Inspector・Macie・Config・Security Hub CSPMなどを「何を見つけるか」で使い分ける -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>AWSには、セキュリティ上の問題を見つけるサービスが複数あります。名前からは役割が分かりにくいですが、<strong>見つけるもの</strong>で整理すると区別できます。不正なアクセスなどの「脅威」、ソフトウェアの「脆弱性」、S3の中の「機密データ」、リソースの「設定の不備」です。それぞれの検出結果を<strong>Security Hub CSPMに集めて</strong>、EventBridgeで通知や自動対応につなげるのが基本の形です。</p>
+<figure class="figure" data-diagram>
+grid 160 75
+node gd 0 0 box "GuardDuty" "脅威"
+node ins 0 1 box "Inspector" "脆弱性"
+node mac 0 2 box "Macie" "S3の機密データ"
+node cfg 0 3 box "AWS Config" "設定の準拠"
+node sh 1.4 1.5 accent "Security Hub" "CSPM:結果を集約"
+node eb 2.8 1.5 box "EventBridge" "ルールで振り分け"
+node act 4.2 1.5 ok "通知・自動対応" "SNS・Lambda"
+edge gd sh
+edge ins sh
+edge mac sh
+edge cfg sh
+edge sh eb
+edge eb act
+<figcaption>図1 検出サービスと集約の関係。GuardDuty・Inspector・Macie・Configの検出結果をSecurity Hub CSPMに集め、EventBridgeのルールで通知や自動対応に振り分ける。</figcaption>
+</figure>
+
+<h3>比較表</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>見つけるもの</th><th>対象</th><th>データの取り方</th></tr>
+<tr><td>GuardDuty</td><td>脅威(不正アクセス、乗っ取られたEC2、暗号資産のマイニング、マルウェアなど)</td><td>アカウント・EC2・S3・EKSなど</td><td>CloudTrail・VPCフローログ・DNSログを自動で分析。設定やエージェントは不要</td></tr>
+<tr><td>Inspector</td><td>ソフトウェアの脆弱性(CVE)、意図しないネットワークの公開</td><td>EC2・ECRのコンテナイメージ・Lambda</td><td>EC2はSSMエージェント(またはエージェントレスのスキャン)。継続的に再スキャン</td></tr>
+<tr><td>Macie</td><td>機密データ(個人情報・認証情報など)、公開されたバケット</td><td>S3</td><td>S3のオブジェクトの中身を機械学習とパターンで調べる</td></tr>
+<tr><td>AWS Config</td><td>ルールに違反した設定</td><td>ほぼすべてのリソース</td><td>設定の変更を記録し、ルールで評価する</td></tr>
+<tr><td>Security Hub CSPM</td><td>セキュリティ基準(AWS基礎セキュリティのベストプラクティス、CISなど)への違反。他サービスの結果の集約</td><td>アカウント全体(組織全体も可)</td><td>Configのルールでチェックし、各サービスの結果を共通の形式で集める</td></tr>
+<tr><td>Amazon Detective</td><td>検出結果の原因と影響範囲(調査用)</td><td>GuardDutyなどの検出結果</td><td>ログから関係をグラフにして、調査を助ける</td></tr>
+<tr><td>IAM Access Analyzer</td><td>外部のアカウントに公開されたリソース、使われていない権限</td><td>S3・IAMロール・KMSキーなど</td><td>ポリシーを分析する</td></tr>
+<tr><td>Trusted Advisor</td><td>ベストプラクティスからの逸脱(全ポートを開けたSG、ルートユーザーのMFAなど)</td><td>アカウント</td><td>定期的にチェックする(全項目はBusiness以上のサポートプラン)</td></tr>
+</table></div>
+<p>2025年に、従来のSecurity Hubは「Security Hub CSPM」という名前になりました。「Security Hub」の名前は、GuardDuty・Inspector・Macie・Security Hub CSPMの結果を関連付けてリスクを分析する新しいサービスに使われています。</p>
+
+<h3>見つけたあとの対応</h3>
+<p>検出サービスは問題を見つけるだけで、多くは自分では直しません。対応は、検出結果のイベントをEventBridgeで受けて、Lambdaや Systems Manager Automationで自動化します。たとえば、GuardDutyが乗っ取られたEC2を見つけたら、隔離用のセキュリティグループに付け替えます(ユースケース「<a href="../usecases/guardduty-auto-response.html">乗っ取られたEC2を自動で隔離する</a>」)。Configのルール違反には、Configの自動修復を設定できます。</p>
+
+<h3>選び方のポイント</h3>
+<div class="point"><ul>
+<li>不審なAPI呼び出しや、EC2が怪しいIPと通信しているのを見つけたい → <strong class="em">GuardDuty</strong>。</li>
+<li>EC2やコンテナイメージの脆弱性(CVE)を見つけたい → <strong class="em">Inspector</strong>(ユースケース「<a href="../usecases/vulnerability-management.html">脆弱性を継続的に検出し、パッチ適用まで自動化する</a>」)。</li>
+<li>S3に個人情報が保存されていないかを調べたい → <strong class="em">Macie</strong>(ユースケース「<a href="../usecases/s3-encryption-audit.html">機密データを保存するS3を暗号化・監査する</a>」)。</li>
+<li>「暗号化されていないEBSがないか」など、自社の設定ルールを継続的にチェックしたい → <strong>AWS Config</strong>。</li>
+<li>CISなどのセキュリティ基準にどれだけ準拠しているかを点数で見たい・複数のサービスの結果を1か所で見たい → <strong>Security Hub CSPM</strong>。</li>
+<li>GuardDutyの検出結果について、原因や影響範囲を詳しく調べたい → Detective。</li>
+<li>S3バケットやIAMロールが外部のアカウントに公開されていないかを知りたい → IAM Access Analyzer。</li>
+<li>InspectorでEC2がスキャンされない → SSMエージェントが動いていて、Systems Managerの管理対象になっているかを確認する。</li>
+<li>組織の全アカウントでまとめて有効にしたい → Organizationsで委任管理者のアカウントを決め、そこから全アカウントに有効化する(GuardDuty・Inspector・Macie・Security Hub CSPMとも対応)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>:GuardDutyが分析するログ(CloudTrail・VPCフローログ)</li>
+<li><a href="vpc-flow-logs.html">VPCフローログ</a>:IP通信の記録</li>
+<li><a href="iam-policy-evaluation.html">IAMポリシーの評価</a>:Access Analyzerが分析するポリシー</li>
+<li><a href="encryption.html">暗号化</a>:Configのルールで確認する代表的な設定</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/guardduty.html">Amazon GuardDuty</a>:脅威の検出</li>
+<li><a href="../services/inspector.html">Amazon Inspector</a>:脆弱性の検出</li>
+<li><a href="../services/macie.html">Amazon Macie</a>:S3の機密データの検出</li>
+<li><a href="../services/config.html">AWS Config</a>:設定の記録とルールでの評価</li>
+<li><a href="../services/security-hub.html">AWS Security Hub</a>:検出結果の集約とセキュリティ基準のチェック</li>
+<li><a href="../services/iam.html">AWS IAM</a>:IAM Access Analyzer</li>
+<li><a href="../services/trusted-advisor.html">AWS Trusted Advisor</a>:ベストプラクティスのチェック</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:検出結果を通知・自動対応に振り分ける</li>
+</ul>
+</section>

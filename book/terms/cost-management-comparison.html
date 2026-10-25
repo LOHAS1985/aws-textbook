@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コスト管理ツールの選び方 | AWS教科書</title>
+<meta name="description" content="Cost Explorer・Budgets・CUR・Compute Optimizer・Trusted Advisor・Savings Plansを目的で使い分ける">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">サービスの選び方</a>
+  <h1>コスト管理ツールの選び方</h1>
+  <p class="lead">Cost Explorer・Budgets・CUR・Compute Optimizer・Trusted Advisor・Savings Plansを目的で使い分ける</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWSの費用を管理するツールは、目的ごとに分かれています。見える化する(何にいくらかかっているか)、異常に気づく(予算超過や急な増加)、無駄を減らす(使いすぎのサイズや放置されたリソース)、割引で安くする(長期利用の約束)の4つです。この4つを繰り返し回していくのが、コスト最適化の基本の進め方です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 538 236" style="max-width:538px;min-width:520px" role="img" aria-label="図1 コスト管理の4つの目的と代表的なツール。見える化して、異常に気づき、無駄を減らし、残った使用量を割引で安くする。"><defs><marker id="dgterms-cost-management-comparison-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="43" width="180" height="52" rx="8" class="dg-box"/>
+<text x="124" y="64" text-anchor="middle" class="dg-t">見える化</text>
+<text x="124" y="82" text-anchor="middle" class="dg-s">Cost Explorer・CUR</text>
+<rect x="334" y="43" width="180" height="52" rx="8" class="dg-box"/>
+<text x="424" y="64" text-anchor="middle" class="dg-t">異常に気づく</text>
+<text x="424" y="82" text-anchor="middle" class="dg-s">Budgets・異常検出</text>
+<rect x="334" y="160" width="180" height="52" rx="8" class="dg-box"/>
+<text x="424" y="182" text-anchor="middle" class="dg-t">無駄を減らす</text>
+<text x="424" y="200" text-anchor="middle" class="dg-s">Compute Optimizer</text>
+<rect x="34" y="160" width="180" height="52" rx="8" class="dg-box"/>
+<text x="124" y="182" text-anchor="middle" class="dg-t">割引で安くする</text>
+<text x="124" y="200" text-anchor="middle" class="dg-s">Savings Plans・RI</text>
+<path d="M214.0,69.0 L334.0,69.0" class="dg-line" marker-end="url(#dgterms-cost-management-comparison-1)"/>
+<path d="M424.0,95.0 L424.0,160.0" class="dg-line" marker-end="url(#dgterms-cost-management-comparison-1)"/>
+<path d="M334.0,186.0 L214.0,186.0" class="dg-line" marker-end="url(#dgterms-cost-management-comparison-1)"/>
+<path d="M124.0,160.0 L124.0,95.0" class="dg-line" marker-end="url(#dgterms-cost-management-comparison-1)"/>
+</svg>
+</div>
+<figcaption>図1 コスト管理の4つの目的と代表的なツール。見える化して、異常に気づき、無駄を減らし、残った使用量を割引で安くする。</figcaption>
+</figure>
+
+<h3 id="c1-1">比較表<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>ツール</th><th>目的</th><th>できること</th><th>データの細かさ</th></tr>
+<tr><td data-label="ツール">Cost Explorer</td><td data-label="目的">見える化</td><td data-label="できること">サービス・アカウント・タグ別の費用をグラフで見る。今後の費用の予測、Savings Plans・RIの購入の推奨</td><td data-label="データの細かさ">日単位・月単位(時間単位も有効にできる)</td></tr>
+<tr><td data-label="ツール">Cost and Usage Reports(CUR 2.0)</td><td data-label="目的">見える化</td><td data-label="できること">最も詳しい請求データをS3に出力し、AthenaやQuickSightで分析する</td><td data-label="データの細かさ">時間単位・リソース単位</td></tr>
+<tr><td data-label="ツール">AWS Budgets</td><td data-label="目的">異常に気づく</td><td data-label="できること">予算を決め、実績や予測がしきい値を超えたら通知する。超えたときにIAMポリシーの適用やEC2の停止などのアクションも実行できる</td><td data-label="データの細かさ">月・四半期・年の予算</td></tr>
+<tr><td data-label="ツール">Cost Anomaly Detection</td><td data-label="目的">異常に気づく</td><td data-label="できること">機械学習で普段と違う費用の増え方を見つけて通知する</td><td data-label="データの細かさ">日単位</td></tr>
+<tr><td data-label="ツール">Compute Optimizer</td><td data-label="目的">無駄を減らす</td><td data-label="できること">EC2・Auto Scalingグループ・EBS・Lambdaなどの使用状況から、適切なサイズを推奨する</td><td data-label="データの細かさ">リソース単位</td></tr>
+<tr><td data-label="ツール">Trusted Advisor</td><td data-label="目的">無駄を減らす</td><td data-label="できること">使われていないEBS・Elastic IP、使用率の低いEC2などをチェックする</td><td data-label="データの細かさ">リソース単位</td></tr>
+<tr><td data-label="ツール">Savings Plans・リザーブドインスタンス(RI)</td><td data-label="目的">割引で安くする</td><td data-label="できること">1年または3年の利用を約束して、オンデマンドより安くする</td><td data-label="データの細かさ">—</td></tr>
+</table></div>
+
+<h3 id="c1-2">コスト配分タグ<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>部署やプロジェクトごとの費用を知るには、リソースにタグ(例: <code>Project=web</code>)を付けます。ただし、タグを付けただけでは費用の集計に使えません。Billingのコンソールでそのタグを<strong>コスト配分タグとして有効化</strong>すると、Cost ExplorerやCURでタグごとに集計できるようになります(有効化より前の費用には反映されません)。</p>
+
+<h3 id="c1-3">選び方のポイント<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="point"><ul>
+<li>予算を超えそうなときに通知を受けたい(予測値でも可) → <strong class="em">AWS Budgets</strong>。</li>
+<li>予算を超えたら自動でEC2を止めたり、新しいリソースを作れなくしたりしたい → Budgetsのアクション。</li>
+<li>普段と違う急な費用の増加に気づきたい → Cost Anomaly Detection。</li>
+<li>どのサービス・アカウントに費用がかかっているかをグラフで見たい・来月の費用を予測したい → <strong>Cost Explorer</strong>。</li>
+<li>リソース単位・時間単位の最も詳しい請求データをSQLで分析したい → <strong>CUR 2.0</strong>(S3+Athena)。</li>
+<li>EC2のインスタンスタイプが大きすぎないかを知りたい → <strong>Compute Optimizer</strong>。メモリの使用率も考慮させるには、CloudWatchエージェントでメモリのメトリクスを送る。</li>
+<li>部署ごとの費用を出したい → タグを付けて、コスト配分タグとして有効化する。</li>
+<li>Savings PlansやRIが十分に使われているか(使用率・カバレッジ)を見たい → Cost Explorerのレポート。下がったら通知するにはBudgetsの使用率予算。</li>
+<li>使っていない時間帯の費用を下げたい → 開発環境を夜間・休日に止める(ユースケース「<a href="../usecases/scheduled-start-stop.html">開発環境を夜間・休日に自動で停止して費用を下げる</a>」)。</li>
+<li>組織全体の費用をまとめたい → Organizationsの管理アカウントで一括請求。Savings PlansやRIの割引も組織内で共有される。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="service-quotas.html">サービスクォータ</a>:費用とは別に、作れるリソースの上限</li>
+<li><a href="monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>:Compute Optimizerが使うCloudWatchのメトリクス</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cost-explorer.html">AWS Cost Explorer</a>:費用の見える化と予測</li>
+<li><a href="../services/cost-and-usage-reports.html">AWS Cost and Usage Reports</a>:詳細な請求データの出力</li>
+<li><a href="../services/compute-optimizer.html">AWS Compute Optimizer</a>:リソースのサイズの推奨</li>
+<li><a href="../services/trusted-advisor.html">AWS Trusted Advisor</a>:無駄なリソースのチェック</li>
+<li><a href="../services/savings-plans.html">Savings Plans</a>:長期利用の約束による割引</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:一括請求と割引の共有</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:リザーブドインスタンス・スポットインスタンス</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/compute-optimizer.html"><span class="title">AWS Compute Optimizer</span><span class="kind">サービス</span><span class="desc">機械学習でリソースの使用状況を分析し、最適な設定を推奨</span></a></li>
+<li><a href="../services/cost-explorer.html"><span class="title">AWS Cost Explorer</span><span class="kind">サービス</span><span class="desc">AWSの料金と使用量をグラフで分析し、将来の費用を予測する</span></a></li>
+<li><a href="../services/cost-and-usage-reports.html"><span class="title">AWS Cost and Usage Reports</span><span class="kind">サービス</span><span class="desc">最も詳細な料金・使用量のデータを、S3にファイルとして定期的に出力する</span></a></li>
+<li><a href="../services/savings-plans.html"><span class="title">Savings Plans</span><span class="kind">サービス</span><span class="desc">1年または3年の利用額(1時間あたりの金額)を約束して、コンピューティングなどの料金を割り引く</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="secrets-config-comparison.html"><span class="label">← 前へ</span>機密情報・設定値の保存先の選び方</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <span class="next empty"></span>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

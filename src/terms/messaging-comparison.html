@@ -1,0 +1,100 @@
+<!-- title: メッセージングサービスの選び方 -->
+<!-- category: サービスの選び方 -->
+<!-- lead: SQS・SNS・EventBridge・Kinesis Data Streamsの違いと使い分け -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>システムの部品どうしを直接呼び出さず、メッセージ(イベント)を間に挟んでつなぐと、片方が遅くなったり止まったりしても、もう片方が影響を受けにくくなります(疎結合)。AWSにはそのためのサービスが複数あり、違いは<strong>「受け手にどう届けるか」</strong>と<strong>「データを残しておくか」</strong>です。</p>
+<figure class="figure" data-diagram>
+grid 175 80
+node src 0 1.5 blue "送信元" "アプリ・AWSサービス"
+node sqs 1.4 0 accent "SQS" "キューにためる"
+node sns 1.4 1 accent "SNS" "全員に一斉配信"
+node eb 1.4 2 accent "EventBridge" "内容で振り分け"
+node kds 1.4 3 accent "Kinesis\nData Streams" "流れを記録"
+node w 2.8 0 box "ワーカー" "取りに行く(プル)"
+node sub 2.8 1 box "購読者すべて" "届く(プッシュ)"
+node tg 2.8 2 box "一致したターゲット" "届く(プッシュ)"
+node con 2.8 3 box "複数の処理" "同じデータを読む"
+edge src sqs
+edge src sns
+edge src eb
+edge src kds
+edge sqs w
+edge sns sub
+edge eb tg
+edge kds con
+<figcaption>図1 4つのサービスの届け方の違い。SQSとKinesis Data Streamsは受け手が取りに行き(プル)、SNSとEventBridgeはサービス側から受け手に届ける(プッシュ)。</figcaption>
+</figure>
+
+<h3>比較表</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>SQS</th><th>SNS</th><th>EventBridge</th><th>Kinesis Data Streams</th></tr>
+<tr><td>種類</td><td>メッセージキュー</td><td>Pub/Sub(通知)</td><td>イベントバス</td><td>ストリーム</td></tr>
+<tr><td>届け方</td><td>受け手がポーリングして取りに行く</td><td>購読者へプッシュ</td><td>ルールに一致したターゲットへプッシュ</td><td>受け手(コンシューマー)が読みに行く</td></tr>
+<tr><td>1件を受け取る数</td><td>1つの処理(処理したら削除する)</td><td>すべての購読者</td><td>一致したルールのターゲット(1ルールに最大5つ)</td><td>複数のコンシューマーがそれぞれ読む</td></tr>
+<tr><td>データの保持</td><td>既定4日、最大14日</td><td>保持しない(配信を再試行する)</td><td>保持しない(アーカイブすれば再生できる)</td><td>既定24時間、最大365日。読み直せる</td></tr>
+<tr><td>順序</td><td>FIFOキューで保証</td><td>FIFOトピックで保証</td><td>保証しない</td><td>シャードの中で保証</td></tr>
+<tr><td>振り分け</td><td>なし(キューごとに分ける)</td><td>サブスクリプションのフィルターポリシー</td><td>イベントパターン(内容の細かい条件)</td><td>なし(パーティションキーでシャードに分ける)</td></tr>
+<tr><td>得意なこと</td><td>処理を後回しにしてためる</td><td>1つの出来事を多くの宛先へ</td><td>AWSサービス・SaaSのイベントを条件で振り分け</td><td>大量のデータをリアルタイムに、複数の処理で使う</td></tr>
+</table></div>
+<p>受け取ったデータをS3・OpenSearch・Redshiftなどへ保存するだけなら、コードを書かずに配送できる<a href="../services/data-firehose.html">Amazon Data Firehose</a>を使います。Kinesis Data Streamsの後ろにFirehoseをつないで、リアルタイム処理と保存を両方行う構成もよく使われます。</p>
+
+<h3>組み合わせて使う</h3>
+<p>代表的なのは、SNSとSQSを組み合わせる<strong>ファンアウト</strong>です。SNSトピックに複数のSQSキューを購読させると、1つのメッセージが各キューに複製されます。受け手ごとにキューがあるので、どれかの処理が止まっても、メッセージはそのキューにたまって失われません。</p>
+<figure class="figure" data-diagram>
+grid 165 80
+node app 0 1 blue "注文アプリ"
+node sns 1.3 1 accent "SNSトピック" "注文が入った"
+node q1 2.6 0 box "SQS" "在庫の更新用"
+node q2 2.6 1 box "SQS" "メール送信用"
+node q3 2.6 2 box "SQS" "分析用"
+node w1 3.9 0 ok "在庫の処理"
+node w2 3.9 1 ok "メールの処理"
+node w3 3.9 2 ng "分析の処理" "停止中でもたまる"
+edge app sns
+edge sns q1
+edge sns q2
+edge sns q3
+edge q1 w1
+edge q2 w2
+edge q3 w3 dash
+<figcaption>図2 SNSとSQSのファンアウト。1つの注文イベントが3つのキューに複製される。分析の処理が止まっていても、メッセージは分析用のキューにたまり、復旧後に処理できる。</figcaption>
+</figure>
+<p>AWSサービスのイベント(EC2の状態変化、AWS Healthの通知など)を受けて処理するときは、EventBridgeのルールでSQSに送り、Lambdaがキューから処理する形もよく使われます。急に大量のイベントが来ても、キューがためてくれるのでLambdaの同時実行数をあふれさせません。</p>
+
+<h3>選び方のポイント</h3>
+<div class="point"><ul>
+<li>処理が追いつかないときにためておき、バックエンドを守りたい → <strong class="em">SQS</strong>。</li>
+<li>1つの出来事を、メール・SMS・複数のシステムに同時に知らせたい → <strong>SNS</strong>(システム向けはSNS+SQSのファンアウト)。</li>
+<li>AWSサービスやSaaSのイベントを、内容の条件で振り分けたい → <strong class="em">EventBridge</strong>。決まった時刻に処理を動かすのもEventBridge(Scheduler)。</li>
+<li>クリックストリームやログなど大量のデータを順序どおりに、複数の処理で読んだり読み直したりしたい → <strong>Kinesis Data Streams</strong>。</li>
+<li>集めたデータをS3などへ保存するのが目的 → <strong>Data Firehose</strong>。</li>
+<li>順番どおりに1回だけ処理したい → SQSのFIFOキュー(SNSならFIFOトピック)。</li>
+<li>処理に何度も失敗するメッセージを退避したい → デッドレターキュー(DLQ)。SQS・SNS・EventBridgeのどれでも設定できる。</li>
+<li>複数の処理の順番・分岐・待ち合わせを管理したい → メッセージングではなく<a href="../services/step-functions.html">Step Functions</a>。</li>
+<li>オンプレミスのActiveMQやRabbitMQを、コードをあまり変えずに移したい → Amazon MQ。</li>
+</ul></div>
+<p>SQSを使った構成例は、ユースケース「<a href="../usecases/sqs-decoupling.html">キューで処理を分離し、急増や障害に強くする</a>」で説明しています。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:疎結合にすると、部品ごとにスケールできる</li>
+<li><a href="circuit-breaker.html">サーキットブレーカー</a>:障害を広げないための設計パターン</li>
+<li><a href="caching-comparison.html">キャッシュの選び方</a>:読み取りの負荷を下げる、もう1つの方法</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/sqs.html">Amazon SQS</a>:メッセージキュー</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:Pub/Sub型の通知</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:イベントバスとスケジューラー</li>
+<li><a href="../services/kinesis.html">Amazon Kinesis</a>:ストリーミングデータの収集・処理</li>
+<li><a href="../services/data-firehose.html">Amazon Data Firehose</a>:ストリーミングデータの配送</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:メッセージを受けて処理する代表的な受け手</li>
+<li><a href="../services/step-functions.html">AWS Step Functions</a>:処理の流れを管理するワークフロー</li>
+</ul>
+</section>
