@@ -77,12 +77,12 @@ SOA-C03で頻出なのに説明が薄い10ページに、仕組みの説明を�
 - [x] CloudFront FunctionsとLambda@Edgeの比較
 
 ## 8. CloudFormation(src/services/cloudformation.html)
-- [ ] 組み込み関数(!Ref・!GetAtt・!Sub・!FindInMap・!Join など)
-- [ ] Export/ImportValue(スタック間の参照)
-- [ ] ロールバックとスタックの状態(UPDATE_ROLLBACK_FAILED など)
-- [ ] cfn-init/cfn-signal/CreationPolicy(WaitCondition)
-- [ ] UpdatePolicy(Auto Scalingグループの更新)
-- [ ] 終了保護
+- [x] 組み込み関数(!Ref・!GetAtt・!Sub・!FindInMap・!Join など)
+- [x] Export/ImportValue(スタック間の参照)
+- [x] ロールバックとスタックの状態(UPDATE_ROLLBACK_FAILED など)
+- [x] cfn-init/cfn-signal/CreationPolicy(WaitCondition)
+- [x] UpdatePolicy(Auto Scalingグループの更新)
+- [x] 終了保護
 
 ## 9. Lambda(src/services/lambda.html)
 - [ ] 呼び出し方式3種(同期/非同期/イベントソースマッピング)と、再試行・DLQ・送信先(デスティネーション)の関係

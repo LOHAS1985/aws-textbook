@@ -113,6 +113,148 @@ edge admin a2
 edge admin a3
 <figcaption>図3 StackSets。1つのテンプレートから、複数のアカウント・リージョンへ同じスタックを一括で展開する。</figcaption>
 </figure>
+
+<h3>組み込み関数</h3>
+<p>テンプレートの中で値を参照・加工するために<strong>組み込み関数</strong>を使います。YAMLでは <code>!Ref</code> のような短縮形で書けます(正式な形は <code>Fn::GetAtt</code> など)。</p>
+<div class="table-wrap"><table>
+<tr><th>関数</th><th>返すもの</th><th>例</th></tr>
+<tr><td><code>!Ref</code></td><td>パラメータの値、またはリソースの<strong>物理ID</strong>(バケット名、インスタンスID、セキュリティグループIDなど。何が返るかはリソースの種類による)</td><td><code>!Ref MyS3Bucket</code> → バケット名</td></tr>
+<tr><td><code>!GetAtt</code></td><td>リソースの<strong>属性</strong>(ARN、DNS名など)</td><td><code>!GetAtt MyS3Bucket.Arn</code>、<code>!GetAtt MyALB.DNSName</code></td></tr>
+<tr><td><code>!Sub</code></td><td>文字列の中の <code>${...}</code> を値に置き換えた文字列</td><td><code>!Sub "arn:aws:s3:::${MyS3Bucket}/*"</code></td></tr>
+<tr><td><code>!FindInMap</code></td><td><code>Mappings</code> セクションの表から値を引く</td><td>リージョンごとのAMI ID、環境ごとのインスタンスタイプ</td></tr>
+<tr><td><code>!Join</code></td><td>区切り文字で値をつなげた文字列</td><td><code>!Join [",", [a, b, c]]</code> → <code>a,b,c</code></td></tr>
+<tr><td><code>!Select</code>/<code>!Split</code>/<code>!GetAZs</code></td><td>リストからの選択/文字列の分割/リージョンのAZの一覧</td><td><code>!Select [0, !GetAZs ""]</code> → 1つ目のAZ</td></tr>
+<tr><td><code>!If</code>/<code>!Equals</code></td><td>条件(Conditions)による値の切り替え</td><td>本番だけ大きいインスタンスにする</td></tr>
+<tr><td><code>!ImportValue</code></td><td>別のスタックがエクスポートした値</td><td>下の「スタック間の参照」を参照</td></tr>
+<tr><td><code>!Base64</code></td><td>Base64でエンコードした文字列</td><td>EC2の <code>UserData</code></td></tr>
+</table></div>
+<pre class="code"><code>Mappings:
+  RegionMap:
+    ap-northeast-1:
+      AMI: ami-0aaaaaaaaaaaaaaaa
+    us-east-1:
+      AMI: ami-0bbbbbbbbbbbbbbbb
+
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      SubnetId: !Select [0, !Ref SubnetIds]</code></pre>
+<p><code>AWS::Region</code>(リージョン)、<code>AWS::AccountId</code>(アカウントID)、<code>AWS::StackName</code>(スタック名)などの<strong>疑似パラメータ</strong>は、定義しなくても <code>!Ref</code> や <code>!Sub</code> で使えます。同じテンプレートを別のリージョン・アカウントで使い回すときに便利です。最新のAMI IDは、Parameter Storeの公開パラメータを <code>AWS::SSM::Parameter::Value&lt;AWS::EC2::Image::Id&gt;</code> 型のパラメータで参照する方法もあります。</p>
+
+<h3>Export/ImportValue(スタック間の参照)</h3>
+<p>ネットワーク用のスタックで作ったVPCやサブネットのIDを、アプリ用のスタックで使いたいときは、<strong>Outputsで値をエクスポート</strong>し、使う側で <strong><code>!ImportValue</code></strong> で読み込みます。</p>
+<pre class="code"><code># ネットワーク用スタック(エクスポートする側)
+Outputs:
+  PublicSubnetId:
+    Value: !Ref PublicSubnet
+    Export:
+      Name: network-PublicSubnetId
+
+# アプリ用スタック(インポートする側)
+Resources:
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      SubnetId: !ImportValue network-PublicSubnetId</code></pre>
+<ul>
+<li>エクスポート名は<strong>同じアカウント・同じリージョンの中で一意</strong>にする。インポートできるのも同じリージョン内だけ</li>
+<li>どこかのスタックがインポートしている間は、<strong>エクスポートしている側のスタックを削除したり、その出力値を変更したりできない</strong></li>
+<li>層ごと(ネットワーク・DB・アプリ)にスタックを分け、担当者やライフサイクルの違いに合わせて管理できる。1つのアプリの部品を再利用するならネストスタックを使う</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 185 80
+node net 0 0 box "ネットワーク" "Outputs + Export"
+node app 1.5 0 accent "アプリ用スタック" "!ImportValue"
+node db 1.5 1 accent "DB用スタック" "!ImportValue"
+edge net app "サブネットID"
+edge net db "サブネットID"
+<figcaption>図4 Export/ImportValue。ネットワーク用スタックがエクスポートした値を、複数のスタックがインポートして使う。インポートされている間、エクスポート側は削除・変更できない。</figcaption>
+</figure>
+
+<h3>ロールバックとスタックの状態</h3>
+<p>スタックの作成・更新の途中でリソースの作成に失敗すると、CloudFormationは既定で<strong>ロールバック</strong>し、元の状態に戻そうとします。スタックの状態(ステータス)は次のように変わります。</p>
+<div class="table-wrap"><table>
+<tr><th>状態</th><th>意味</th><th>対処</th></tr>
+<tr><td><code>CREATE_COMPLETE</code>/<code>UPDATE_COMPLETE</code></td><td>作成・更新が成功した</td><td>—</td></tr>
+<tr><td><code>ROLLBACK_COMPLETE</code></td><td><strong>作成</strong>に失敗し、作成したリソースを削除し終えた</td><td>更新はできない。<strong>スタックを削除して作り直す</strong></td></tr>
+<tr><td><code>UPDATE_ROLLBACK_COMPLETE</code></td><td><strong>更新</strong>に失敗し、更新前の状態に戻った</td><td>原因を直して再度更新する</td></tr>
+<tr><td><strong><code>UPDATE_ROLLBACK_FAILED</code></strong></td><td>更新のロールバック自体が失敗した(例:手動で削除・変更されたリソースを元に戻せない)</td><td>原因のリソースを手動で直してから<strong>「更新のロールバックを続行」</strong>(<code>continue-update-rollback</code>)。戻せないリソースはスキップを指定できる</td></tr>
+<tr><td><code>DELETE_FAILED</code></td><td>削除に失敗した(例:中身が残っているS3バケット、他から使われているセキュリティグループ)</td><td>原因を取り除いて再度削除する。残してよいリソースは保持を指定して削除する</td></tr>
+</table></div>
+<ul>
+<li>失敗の原因は、スタックの<strong>イベント</strong>タブで「最初に失敗したリソース」の理由を見ると分かる</li>
+<li>調査のために失敗したリソースを残したいときは、ロールバックを無効にする(<code>--disable-rollback</code>)か、「正常にプロビジョニングされたリソースを保持」を選ぶ</li>
+<li><strong>ロールバックトリガー</strong>にCloudWatchアラームを指定すると、更新後の監視期間中にアラームが発生したとき自動でロールバックできる</li>
+</ul>
+
+<h3>cfn-init・cfn-signal・CreationPolicy</h3>
+<p>EC2インスタンスは「起動した」時点でCloudFormation上は作成完了になりますが、その時点ではまだアプリのインストールが終わっていないことがあります。次のヘルパースクリプトを使うと、<strong>インスタンス内の設定が終わるまでスタックの完了を待たせる</strong>ことができます。</p>
+<div class="table-wrap"><table>
+<tr><th>仕組み</th><th>役割</th></tr>
+<tr><td><code>AWS::CloudFormation::Init</code>(メタデータ)</td><td>インストールするパッケージ、置くファイル、起動するサービス、実行するコマンドを宣言的に書く</td></tr>
+<tr><td><strong>cfn-init</strong></td><td>ユーザーデータから実行し、上のメタデータを読み取って設定を行う</td></tr>
+<tr><td><strong>cfn-signal</strong></td><td>設定が成功したか失敗したかをCloudFormationに<strong>通知</strong>する</td></tr>
+<tr><td><strong>CreationPolicy</strong></td><td>リソースに付け、「指定した数の成功シグナルを、指定した時間内に受け取るまで作成完了にしない」設定</td></tr>
+<tr><td>WaitCondition</td><td>テンプレートの外部の処理などを待つための仕組み。EC2やAuto ScalingグループにはCreationPolicyを使うのが推奨</td></tr>
+<tr><td>cfn-hup</td><td>メタデータの変更を検知して、cfn-initを再実行する常駐プログラム</td></tr>
+</table></div>
+<pre class="code"><code>WebServer:
+  Type: AWS::EC2::Instance
+  CreationPolicy:
+    ResourceSignal:
+      Count: 1
+      Timeout: PT15M
+  Metadata:
+    AWS::CloudFormation::Init:
+      config:
+        packages:
+          yum:
+            httpd: []
+        services:
+          sysvinit:
+            httpd:
+              enabled: true
+              ensureRunning: true
+  Properties:
+    UserData:
+      Fn::Base64: !Sub |
+        #!/bin/bash
+        /opt/aws/bin/cfn-init -s ${AWS::StackName} -r WebServer --region ${AWS::Region}
+        /opt/aws/bin/cfn-signal -e $? -s ${AWS::StackName} -r WebServer --region ${AWS::Region}</code></pre>
+<figure class="figure" data-diagram>
+grid 170 85
+node cfn 0 0.5 accent "CloudFormation" "完了を待つ"
+node ec2 1.4 0.5 box "EC2" "ユーザーデータ"
+node init 2.8 0 box "cfn-init" "設定を実行"
+node sig 2.8 1 ok "cfn-signal" "成功/失敗を通知"
+edge cfn ec2 "① 起動"
+edge ec2 init "②"
+edge init sig "③"
+edge sig cfn "④ シグナル"
+<figcaption>図5 CreationPolicyとcfn-signal。インスタンスの起動後、cfn-initで設定し、cfn-signalで結果を通知する。CloudFormationは成功のシグナルを受け取ってから作成完了にする。</figcaption>
+</figure>
+<p>タイムアウトまでに成功のシグナルが届かない(または失敗のシグナルが届く)と、そのリソースは作成失敗となり、スタックはロールバックします。「スタックがタイムアウトで失敗する」場合は、インスタンスからCloudFormationのエンドポイントへ通信できるか(NATゲートウェイなど)、cfn-signalが実行されているか(<code>/var/log/cfn-init.log</code>)を確認します。</p>
+
+<h3>UpdatePolicy(Auto Scalingグループの更新)</h3>
+<p>Auto Scalingグループの起動テンプレート(AMIなど)を変えてスタックを更新しても、既定では<strong>既存のインスタンスは置き換わりません</strong>(新しく起動するものから適用される)。<strong>UpdatePolicy</strong>を付けると、スタックの更新時にインスタンスをどう入れ替えるかを指定できます。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>動作</th></tr>
+<tr><td><code>AutoScalingRollingUpdate</code></td><td>既存のグループの中で、インスタンスを<strong>数台ずつ</strong>新しいものに入れ替える。<code>MaxBatchSize</code>(一度に入れ替える数)、<code>MinInstancesInService</code>(最低限動かしておく数)、<code>PauseTime</code>、<code>WaitOnResourceSignals</code>(cfn-signalを待つ)を指定する</td></tr>
+<tr><td><code>AutoScalingReplacingUpdate</code></td><td><code>WillReplace: true</code> で、<strong>新しいAuto Scalingグループを丸ごと作り</strong>、成功したら古いグループを削除する。失敗すると古いグループのまま戻せる</td></tr>
+<tr><td><code>AutoScalingScheduledAction</code></td><td>スケジュールされたアクションがあるグループで、更新時に台数の設定が元に戻されないようにする</td></tr>
+</table></div>
+<p>ローリング更新はリソースを節約できますが、途中で失敗すると新旧が混在した状態から戻すことになります。確実に戻せることを重視するなら置き換え更新を選びます。</p>
+
+<h3>終了保護</h3>
+<p>スタックの<strong>終了保護</strong>を有効にすると、<strong>スタックの削除操作が拒否</strong>されます。本番環境のスタックを誤って削除するのを防ぎます。ネストスタックでは、親(ルート)スタックの設定が適用されます。</p>
+<div class="table-wrap"><table>
+<tr><th>仕組み</th><th>防ぐもの</th><th>単位</th></tr>
+<tr><td>終了保護</td><td>スタックの削除</td><td>スタック</td></tr>
+<tr><td>DeletionPolicy</td><td>スタックの削除時やリソースを外したときに、リソースが消えること(Retain/Snapshot)</td><td>リソース</td></tr>
+<tr><td>スタックポリシー</td><td>スタックの更新による特定リソースの変更・置き換え</td><td>リソース(更新時)</td></tr>
+</table></div>
 </section>
 
 <section class="chapter">
@@ -150,6 +292,12 @@ edge admin a3
 <li>複数アカウント・リージョンへ展開 → <strong>StackSets</strong>。</li>
 <li>IAMリソースを作るテンプレート → <code>--capabilities CAPABILITY_IAM</code> が必要。</li>
 <li>Lambdaのコードを更新したのに反映されない → <strong>S3キーかVersionIdを変える</strong>。</li>
+<li>リソースのIDや名前 → <code>!Ref</code>、ARNやDNS名などの属性 → <code>!GetAtt</code>、リージョンごとのAMI → <code>Mappings</code>+<code>!FindInMap</code>。</li>
+<li>別のスタックの値を使う → <strong>Export</strong>+<strong><code>!ImportValue</code></strong>(同じリージョンのみ。インポートされている間はエクスポート側を削除・変更できない)。</li>
+<li><code>ROLLBACK_COMPLETE</code> のスタックは更新できない → 削除して作り直す。<code>UPDATE_ROLLBACK_FAILED</code> → 原因を直して<strong>更新のロールバックを続行</strong>。</li>
+<li>インスタンス内のアプリの準備ができるまで完了にしない → <strong>cfn-init</strong>+<strong>cfn-signal</strong>+<strong>CreationPolicy</strong>。シグナルが届かないとタイムアウトでロールバック。</li>
+<li>AMIを変えたらAuto Scalingのインスタンスも入れ替えたい → <strong>UpdatePolicy</strong>(ローリング更新/置き換え更新)。</li>
+<li>スタックの誤削除を防ぐ → <strong>終了保護</strong>。リソースを残す → DeletionPolicy。更新から守る → スタックポリシー。</li>
 </ul></div>
 </section>
 
