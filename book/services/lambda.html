@@ -142,6 +142,82 @@
 <li><strong>関数エラー</strong>:Lambda関数内のコードでエラーが起きている</li>
 </ul>
 
+<h3>呼び出し方式の3種類と再試行・DLQ・デスティネーション</h3>
+<p>Lambdaの呼び出され方は3種類あり、<strong>エラーになったときの再試行と、失敗したイベントの行き先が方式ごとに違います</strong>。</p>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>主な呼び出し元</th><th>エラー時の再試行</th><th>失敗したイベントの行き先</th></tr>
+<tr><td><strong>同期呼び出し</strong></td><td>API Gateway、ALB、Function URLs、CLIの <code>invoke</code></td><td>Lambdaは再試行しない。<strong>呼び出し元</strong>がエラーを受け取り、再試行するか判断する</td><td>呼び出し元に返る(DLQ・デスティネーションは使わない)</td></tr>
+<tr><td><strong>非同期呼び出し</strong></td><td>S3、SNS、EventBridge、CloudWatch Logs</td><td>Lambdaの内部キューに入り、<strong>最大2回</strong>再試行する(0〜2回で変更可)。イベントの最大保持期間も設定できる(最大6時間)</td><td><strong>失敗時のデスティネーション</strong>(SQS・SNS・Lambda・EventBridge・S3)、または<strong>DLQ</strong>(SQS・SNS)</td></tr>
+<tr><td><strong>イベントソースマッピング</strong></td><td>SQS、Kinesis Data Streams、DynamoDB Streams、Amazon MSK</td><td>Lambdaがポーリングして取得する。SQSは可視性タイムアウト後にメッセージがキューに戻って再処理され、ストリームは<strong>成功するかレコードの期限が切れるまで</strong>再試行する(最大再試行回数・最大レコード期間で制限できる)</td><td>SQS:<strong>キュー側のDLQ</strong>(再処理ポリシー)。ストリーム:<strong>失敗時の送信先</strong>(SQS・SNS・S3)</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 896 202" style="max-width:896px;min-width:520px" role="img" aria-label="図3 非同期呼び出しの流れ。イベントはLambdaの内部キューに入り、エラーなら再試行される。再試行しても失敗したイベントは、失敗時のデスティネーションかDLQに送られる。"><defs><marker id="dgservices-lambda-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="104" text-anchor="middle" class="dg-t">S3・SNSなど</text>
+<text x="112" y="122" text-anchor="middle" class="dg-s">非同期呼び出し</text>
+<rect x="262" y="83" width="155" height="52" rx="8" class="dg-box"/>
+<text x="339" y="104" text-anchor="middle" class="dg-t">内部キュー</text>
+<text x="339" y="122" text-anchor="middle" class="dg-s">最大2回再試行</text>
+<rect x="489" y="89" width="155" height="40" rx="8" class="dg-accent"/>
+<text x="566" y="113" text-anchor="middle" class="dg-tb">Lambda関数</text>
+<rect x="716" y="40" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="794" y="62" text-anchor="middle" class="dg-t">成功時の送信先</text>
+<text x="794" y="80" text-anchor="middle" class="dg-s">デスティネーション</text>
+<rect x="716" y="126" width="155" height="52" rx="8" class="dg-ng"/>
+<text x="794" y="147" text-anchor="middle" class="dg-t">失敗時の送信先</text>
+<text x="794" y="165" text-anchor="middle" class="dg-s">またはDLQ</text>
+<path d="M189.0,109.0 L261.5,109.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<path d="M416.5,109.0 L489.0,109.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<path d="M644.0,94.5 L716.5,81.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<text x="680" y="92" text-anchor="middle" class="dg-s dg-halo">成功</text>
+<path d="M644.0,123.5 L716.5,137.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<text x="680" y="134" text-anchor="middle" class="dg-s dg-halo">再試行も失敗</text>
+</svg>
+</div>
+<figcaption>図3 非同期呼び出しの流れ。イベントはLambdaの内部キューに入り、エラーなら再試行される。再試行しても失敗したイベントは、失敗時のデスティネーションかDLQに送られる。</figcaption>
+</figure>
+<ul>
+<li><strong>DLQ(デッドレターキュー)</strong>:失敗したイベントの<strong>内容だけ</strong>をSQS・SNSに送る。失敗時にしか使えない</li>
+<li><strong>デスティネーション</strong>:成功時・失敗時それぞれに送信先を設定でき、イベントの内容に加えて<strong>エラーの内容や関数の応答</strong>も含まれる。新しく作るならデスティネーションが推奨</li>
+<li>SQSのイベントソースマッピングでは、関数側のDLQやデスティネーションではなく、<strong>SQSキューの再処理ポリシー(DLQ)</strong>で失敗したメッセージを退避する。可視性タイムアウトは関数のタイムアウトより長くする</li>
+<li>ストリームでは、失敗したレコードがシャードの処理を止めてしまうため、「バッチを分割して再試行」や「部分的なバッチの失敗の報告(<code>ReportBatchItemFailures</code>)」を使う</li>
+<li>再試行で同じイベントが2回以上処理されることがあるため、関数は<strong>同じイベントを何度処理しても結果が変わらない(冪等な)</strong>作りにする</li>
+</ul>
+
+<h3>実行ロールとリソースベースのポリシー</h3>
+<p>Lambdaの権限は、向きの違う2つのポリシーで決まります。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>決めること</th><th>例</th></tr>
+<tr><td><strong>実行ロール</strong>(IAMロール)</td><td>関数が<strong>何にアクセスできるか</strong>(関数から外への権限)</td><td>DynamoDBへの書き込み、S3の読み取り、CloudWatch Logsへのログ出力、SQSのポーリング(イベントソースマッピング)</td></tr>
+<tr><td><strong>リソースベースのポリシー</strong></td><td><strong>誰が関数を呼び出せるか</strong>(外から関数への権限)</td><td>S3・SNS・EventBridge・API Gatewayや、別のアカウントに <code>lambda:InvokeFunction</code> を許可する</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 774 114" style="max-width:774px;min-width:520px" role="img" aria-label="図4 Lambdaの2つの権限。呼び出してよい相手はリソースベースのポリシー、関数がアクセスしてよい先は実行ロールで許可する。"><defs><marker id="dgservices-lambda-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="60" text-anchor="middle" class="dg-t">S3・SNS</text>
+<text x="104" y="78" text-anchor="middle" class="dg-s">呼び出す側</text>
+<rect x="354" y="44" width="140" height="40" rx="8" class="dg-accent"/>
+<text x="424" y="68" text-anchor="middle" class="dg-tb">Lambda関数</text>
+<rect x="610" y="38" width="140" height="52" rx="8" class="dg-box"/>
+<text x="680" y="60" text-anchor="middle" class="dg-t">DynamoDB</text>
+<text x="680" y="78" text-anchor="middle" class="dg-s">アクセス先</text>
+<path d="M174.0,64.0 L354.0,64.0" class="dg-line" marker-end="url(#dgservices-lambda-4)"/>
+<text x="264" y="68" text-anchor="middle" class="dg-s dg-halo">リソースベースのポリシー</text>
+<path d="M494.0,64.0 L610.0,64.0" class="dg-line" marker-end="url(#dgservices-lambda-4)"/>
+<text x="552" y="68" text-anchor="middle" class="dg-s dg-halo">実行ロール</text>
+</svg>
+</div>
+<figcaption>図4 Lambdaの2つの権限。呼び出してよい相手はリソースベースのポリシー、関数がアクセスしてよい先は実行ロールで許可する。</figcaption>
+</figure>
+<ul>
+<li>実行ロールの信頼ポリシーでは <code>lambda.amazonaws.com</code> がロールを引き受けられるようにする。ログを出すにはAWS管理ポリシー <code>AWSLambdaBasicExecutionRole</code> の権限が必要</li>
+<li>イベントソースマッピング(SQS・Kinesisなど)は<strong>Lambdaがポーリングする</strong>ため、<code>sqs:ReceiveMessage</code> などの権限は<strong>実行ロール</strong>に付ける</li>
+<li>S3やSNSからの非同期呼び出しは<strong>相手がLambdaを呼び出す</strong>ため、<strong>リソースベースのポリシー</strong>で許可する(コンソールでトリガーを追加すると自動で設定される)</li>
+<li>「AccessDenied」が関数の中で出るなら実行ロール、関数が呼び出されないなら呼び出し元の権限(リソースベースのポリシー)を確認する</li>
+</ul>
+
 <h3>バージョン管理とエイリアス</h3>
 <p>バージョンを発行するたびに新しいARNが発行されるため、<strong>イベントソースマッピング</strong>(イベント発生元とLambda関数を接続し自動起動する仕組み)が古いARNを参照し続けてしまう問題があります。</p>
 <p>解決策は、イベントソースマッピングを<strong>エイリアスのARN</strong>に向け、新バージョン発行時はエイリアスの向き先だけを更新することです。</p>
@@ -150,7 +226,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 179" style="max-width:684px;min-width:520px" role="img" aria-label="図3 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。"><defs><marker id="dgservices-lambda-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 179" style="max-width:684px;min-width:520px" role="img" aria-label="図5 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。"><defs><marker id="dgservices-lambda-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="68" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="90" text-anchor="middle" class="dg-t">イベントソース</text>
 <text x="109" y="108" text-anchor="middle" class="dg-s">S3など</text>
@@ -161,15 +237,15 @@
 <rect x="510" y="103" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="585" y="124" text-anchor="middle" class="dg-t">バージョン2</text>
 <text x="585" y="142" text-anchor="middle" class="dg-s">新しいコード</text>
-<path d="M184.0,94.0 L272.0,94.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<path d="M184.0,94.0 L272.0,94.0" class="dg-line" marker-end="url(#dgservices-lambda-5)"/>
 <text x="228" y="98" text-anchor="middle" class="dg-s dg-halo">ARNを指定</text>
-<path d="M422.0,83.0 L510.0,70.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<path d="M422.0,83.0 L510.0,70.0" class="dg-line" marker-end="url(#dgservices-lambda-5)"/>
 <text x="466" y="80" text-anchor="middle" class="dg-s dg-halo">90%</text>
-<path d="M422.0,105.0 L510.0,118.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<path d="M422.0,105.0 L510.0,118.0" class="dg-line" marker-end="url(#dgservices-lambda-5)"/>
 <text x="466" y="116" text-anchor="middle" class="dg-s dg-halo">10%</text>
 </svg>
 </div>
-<figcaption>図3 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。</figcaption>
+<figcaption>図5 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。</figcaption>
 </figure>
 <h3>VPC接続</h3>
 <p>Lambdaに仮想ENIを割り当て、サブネットとセキュリティグループに所属させることで、VPC内のリソースと通信できるようになります。</p>
@@ -182,7 +258,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 626 134" style="max-width:626px;min-width:520px" role="img" aria-label="図4 VPC接続。LambdaにENIを割り当て、サブネットとセキュリティグループに所属させることで、VPC内のリソースと通信できる。ENIの作成・参照・削除のため、実行ロールにEC2の権限が必要。"><defs><marker id="dgservices-lambda-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 626 134" style="max-width:626px;min-width:520px" role="img" aria-label="図6 VPC接続。LambdaにENIを割り当て、サブネットとセキュリティグループに所属させることで、VPC内のリソースと通信できる。ENIの作成・参照・削除のため、実行ロールにEC2の権限が必要。"><defs><marker id="dgservices-lambda-6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="262" y="20" width="340" height="90" rx="10" class="dg-group"/>
 <text x="272" y="35" class="dg-s">VPC</text>
 <rect x="24" y="20" width="170" height="90" rx="10" class="dg-group"/>
@@ -195,11 +271,45 @@
 <rect x="442" y="48" width="150" height="52" rx="8" class="dg-box"/>
 <text x="517" y="70" text-anchor="middle" class="dg-t">RDS など</text>
 <text x="517" y="88" text-anchor="middle" class="dg-s">VPC内のリソース</text>
-<path d="M184.0,74.0 L272.0,74.0" class="dg-line" marker-end="url(#dgservices-lambda-4)"/>
-<path d="M422.0,74.0 L442.0,74.0" class="dg-line" marker-end="url(#dgservices-lambda-4)"/>
+<path d="M184.0,74.0 L272.0,74.0" class="dg-line" marker-end="url(#dgservices-lambda-6)"/>
+<path d="M422.0,74.0 L442.0,74.0" class="dg-line" marker-end="url(#dgservices-lambda-6)"/>
 </svg>
 </div>
-<figcaption>図4 VPC接続。LambdaにENIを割り当て、サブネットとセキュリティグループに所属させることで、VPC内のリソースと通信できる。ENIの作成・参照・削除のため、実行ロールにEC2の権限が必要。</figcaption>
+<figcaption>図6 VPC接続。LambdaにENIを割り当て、サブネットとセキュリティグループに所属させることで、VPC内のリソースと通信できる。ENIの作成・参照・削除のため、実行ロールにEC2の権限が必要。</figcaption>
+</figure>
+<p>VPCに接続したLambdaは、<strong>インターネットやAWSサービスのパブリックなエンドポイントにそのままでは接続できなくなります</strong>。LambdaのENIにはプライベートIPしか付かず、<strong>パブリックサブネットに置いてもパブリックIPは付かない</strong>ためです。</p>
+<ul>
+<li>インターネット(外部API、VPCエンドポイントのないAWSサービス)に出るには、Lambdaを<strong>プライベートサブネット</strong>に置き、そのルートテーブルで<strong>パブリックサブネットのNATゲートウェイ</strong>に向ける</li>
+<li>S3・DynamoDB・Secrets ManagerなどのAWSサービスだけなら、<strong>VPCエンドポイント</strong>を作ればNATゲートウェイなしで使える</li>
+<li>VPC内のリソースにアクセスする必要がない関数は、VPCに接続しない方がシンプル</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 878 227" style="max-width:878px;min-width:520px" role="img" aria-label="図7 VPC接続したLambdaの外への通信。インターネットへはプライベートサブネットからNATゲートウェイ経由で出る。AWSサービスへはVPCエンドポイントでも接続できる。"><defs><marker id="dgservices-lambda-7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="151" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="112" y="172" text-anchor="middle" class="dg-tb">Lambda</text>
+<text x="112" y="190" text-anchor="middle" class="dg-s">プライベートサブネット</text>
+<rect x="262" y="43" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="339" y="64" text-anchor="middle" class="dg-t">NATゲートウェイ</text>
+<text x="339" y="82" text-anchor="middle" class="dg-s">パブリックサブネット</text>
+<rect x="489" y="49" width="155" height="40" rx="8" class="dg-box"/>
+<text x="566" y="73" text-anchor="middle" class="dg-t">IGW</text>
+<rect x="699" y="43" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="776" y="64" text-anchor="middle" class="dg-t">インターネット</text>
+<text x="776" y="82" text-anchor="middle" class="dg-s">外部API</text>
+<rect x="262" y="157" width="155" height="40" rx="8" class="dg-ok"/>
+<text x="339" y="181" text-anchor="middle" class="dg-t">VPCエンドポイント</text>
+<rect x="489" y="157" width="155" height="40" rx="8" class="dg-box"/>
+<text x="566" y="181" text-anchor="middle" class="dg-t">S3・DynamoDBなど</text>
+<path d="M166.3,151.0 L284.2,95.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+<text x="225" y="127" text-anchor="middle" class="dg-s dg-halo">0.0.0.0/0</text>
+<path d="M416.5,69.0 L489.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+<path d="M644.0,69.0 L699.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+<path d="M189.0,177.0 L261.5,177.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+<path d="M416.5,177.0 L489.0,177.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+</svg>
+</div>
+<figcaption>図7 VPC接続したLambdaの外への通信。インターネットへはプライベートサブネットからNATゲートウェイ経由で出る。AWSサービスへはVPCエンドポイントでも接続できる。</figcaption>
 </figure>
 <h3>Lambda@Edge</h3>
 <p>CloudFrontのエッジサーバ上でLambdaを実行する仕組みで、低レイテンシーを実現します。単純な処理はCloudFront Functionsを使い、<strong>AWSサービスにアクセスする処理はLambda@Edge</strong>を使います。</p>
@@ -247,6 +357,10 @@
 <li>デプロイパッケージが250MBを超える → <strong>コンテナイメージ(ECR)</strong>でデプロイ。</li>
 <li>コールドスタート対策 → <strong>プロビジョニングされた同時実行</strong>。同時実行の上限制御 → <strong>予約された同時実行</strong>。</li>
 <li>VPC接続には実行ロールに<strong>ENI作成・参照・削除</strong>の権限が必要。</li>
+<li>VPC接続したLambdaがインターネットに出られない → <strong>プライベートサブネット+NATゲートウェイ</strong>(パブリックサブネットに置いてもパブリックIPは付かない)。AWSサービスだけなら<strong>VPCエンドポイント</strong>。</li>
+<li>非同期呼び出しは<strong>最大2回</strong>再試行し、失敗したイベントは<strong>失敗時のデスティネーション</strong>か<strong>DLQ</strong>へ。同期呼び出しは呼び出し元が再試行する。</li>
+<li>SQSから処理して失敗したメッセージを退避 → <strong>SQSキュー側のDLQ</strong>(再処理ポリシー)。</li>
+<li>関数から他のサービスへの権限 → <strong>実行ロール</strong>。S3・SNSなどから関数を呼び出す権限 → <strong>リソースベースのポリシー</strong>。SQSのポーリングは実行ロール。</li>
 <li>イベントソースはバージョンARNではなく<strong>エイリアスARN</strong>に向ける。</li>
 <li>成功/失敗の結果を他サービスに送る → <strong>デスティネーション</strong>。</li>
 <li>Lambda@Edgeは<strong>us-east-1</strong>で作成。</li>
