@@ -658,7 +658,11 @@ def write_service_worker():
     for f in sorted(OUT.rglob("*")):
         rel = f.relative_to(OUT).as_posix()
         if f.is_file() and rel != "sw.js" and not f.name.startswith("."):
-            files[rel] = hashlib.sha256(f.read_bytes()).hexdigest()[:12]
+            # Windows ではテキストの改行が CRLF で書き出されるが、公開されるのは Git が LF にそろえた内容なので、LF にしてから計算する
+            data = f.read_bytes()
+            if f.suffix in (".html", ".css", ".js", ".json", ".svg", ".webmanifest"):
+                data = data.replace(b"\r\n", b"\n")
+            files[rel] = hashlib.sha256(data).hexdigest()[:12]
     version = hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()[:12]
     js = (SERVICE_WORKER_SCRIPT.replace("__VERSION__", version)
           .replace("__FILES__", json.dumps(files, ensure_ascii=False, indent=0)))
