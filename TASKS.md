@@ -47,14 +47,14 @@ SOA-C03で頻出なのに説明が薄い10ページに、仕組みの説明を�
 - [x] イベント通知の送信先としてのEventBridge
 
 ## 5. EC2(src/services/ec2.html)
-- [ ] キーペア
-- [ ] ユーザーデータ
-- [ ] インスタンスメタデータとIMDSv2
-- [ ] 停止・休止・終了の違い(終了保護も)
-- [ ] ステータスチェック(システム/インスタンス)と自動復旧
-- [ ] T系インスタンスのCPUクレジット(標準/unlimited)
-- [ ] RI(Standard/Convertible)とSavings Plans(Compute/EC2 Instance)の種類
-- [ ] スポットインスタンスの中断通知(2分前)
+- [x] キーペア
+- [x] ユーザーデータ
+- [x] インスタンスメタデータとIMDSv2
+- [x] 停止・休止・終了の違い(終了保護も)
+- [x] ステータスチェック(システム/インスタンス)と自動復旧
+- [x] T系インスタンスのCPUクレジット(標準/unlimited)
+- [x] RI(Standard/Convertible)とSavings Plans(Compute/EC2 Instance)の種類
+- [x] スポットインスタンスの中断通知(2分前)
 
 ## 6. RDS(src/services/rds.html)
 - [ ] DBサブネットグループ

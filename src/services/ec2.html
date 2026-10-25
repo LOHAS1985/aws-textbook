@@ -224,6 +224,120 @@ edge eice prv "SSH"
 <tr><td>Session Manager</td><td>不要</td><td>不要</td><td>SSM Agent+IAMロール</td></tr>
 </table></div>
 
+<h3>キーペア</h3>
+<p><strong>キーペア</strong>は、SSH接続(LinuxのEC2)やWindowsの管理者パスワードの取得に使う、<strong>公開鍵と秘密鍵の組</strong>です。</p>
+<ul>
+<li>起動時にキーペアを指定すると、<strong>公開鍵</strong>がインスタンスの <code>~/.ssh/authorized_keys</code> に置かれる</li>
+<li><strong>秘密鍵</strong>(<code>.pem</code>/<code>.ppk</code>)は作成時に<strong>1回だけ</strong>ダウンロードでき、AWSには保存されない。利用者が安全に保管する</li>
+<li>鍵の種類はRSAかED25519(ED25519はWindowsでは使えない)。キーペアはリージョンごとに管理される</li>
+<li>Windowsでは、秘密鍵を使って管理者パスワードを復号する</li>
+</ul>
+<p><strong>秘密鍵をなくした場合、AWSから取り出すことはできません</strong>。EC2 Instance ConnectやSession Managerで接続して新しい公開鍵を登録するか、インスタンスを停止してルートボリュームを別のインスタンスにアタッチし、<code>authorized_keys</code> を書き換えます(Systems Managerの <code>AWSSupport-ResetAccess</code> オートメーションでも復旧できる)。</p>
+
+<h3>ユーザーデータ</h3>
+<p><strong>ユーザーデータ</strong>は、インスタンスの起動時に実行させるスクリプトです。パッケージのインストールや設定ファイルの配置など、起動直後の初期設定を自動化します。</p>
+<pre class="code"><code>#!/bin/bash
+dnf update -y
+dnf install -y httpd
+systemctl enable --now httpd</code></pre>
+<ul>
+<li>既定では<strong>最初の起動時に1回だけ</strong>、<strong>root権限</strong>で実行される(Linuxではcloud-init、WindowsではEC2Launchが実行する)</li>
+<li>サイズは16KBまで。実行のログはLinuxでは <code>/var/log/cloud-init-output.log</code> に出る</li>
+<li>ユーザーデータは後からインスタンスメタデータで誰でも読めるため、<strong>パスワードなどの機密情報を書かない</strong>(Secrets ManagerやParameter Storeから取得する)</li>
+<li>内容を変更するにはインスタンスを停止する必要がある</li>
+</ul>
+<p>Auto Scalingでは起動テンプレートにユーザーデータを書き、起動するインスタンスすべてを同じ状態に設定します。</p>
+
+<h3>インスタンスメタデータとIMDSv2</h3>
+<p><strong>インスタンスメタデータ</strong>は、インスタンスの中から自分自身の情報を取得できる仕組みです。<strong><code>http://169.254.169.254/latest/meta-data/</code></strong> にアクセスすると、インスタンスID、インスタンスタイプ、AZ、プライベートIP、パブリックIP、<strong>IAMロールの一時的な認証情報</strong>などが取得できます。ユーザーデータは <code>/latest/user-data</code> で取得できます。</p>
+<p>この仕組みを提供するのが<strong>IMDS(Instance Metadata Service)</strong>で、2つのバージョンがあります。</p>
+<div class="table-wrap"><table>
+<tr><th>バージョン</th><th>アクセス方法</th><th>安全性</th></tr>
+<tr><td>IMDSv1</td><td>GETリクエストを送るだけで取得できる</td><td>Webアプリの脆弱性(SSRF)を突かれると、外部から認証情報を盗まれるおそれがある</td></tr>
+<tr><td><strong>IMDSv2</strong></td><td>先にPUTリクエストで<strong>セッショントークン</strong>を取得し、そのトークンをヘッダーに付けてGETする</td><td>トークンが必要なため、SSRFでの悪用を防げる</td></tr>
+</table></div>
+<pre class="code"><code>TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/instance-id</code></pre>
+<ul>
+<li>インスタンスのメタデータオプションで <strong><code>HttpTokens=required</code></strong> にすると、<strong>IMDSv2だけを許可</strong>(IMDSv1を禁止)できる。Amazon Linux 2023など新しいAMIでは既定でIMDSv2が必須になっている</li>
+<li>アカウント・リージョン単位で、新しいインスタンスの既定値をIMDSv2必須にできる</li>
+<li>まだIMDSv1を使っているインスタンスは、CloudWatchメトリクス <code>MetadataNoToken</code> で見つけられる</li>
+<li>ホップ数の上限(既定1)を超えるとトークンが届かない。コンテナから使う場合は2にする</li>
+</ul>
+
+<h3>停止・休止・終了の違い</h3>
+<div class="table-wrap"><table>
+<tr><th>操作</th><th>EBS(ルートボリューム)</th><th>インスタンスストア</th><th>メモリの内容</th><th>パブリックIP</th><th>料金</th></tr>
+<tr><td>再起動</td><td>保持</td><td>保持</td><td>消える</td><td>変わらない</td><td>継続</td></tr>
+<tr><td>停止</td><td>保持</td><td><strong>消える</strong></td><td>消える</td><td><strong>変わる</strong>(Elastic IPは保持)</td><td>インスタンス料金なし(EBSは課金)</td></tr>
+<tr><td>休止(ハイバネーション)</td><td>保持</td><td>消える</td><td><strong>EBSに保存され、起動時に復元</strong></td><td>変わる</td><td>停止と同じ</td></tr>
+<tr><td>終了</td><td>既定で<strong>削除</strong></td><td>消える</td><td>消える</td><td>解放</td><td>なし</td></tr>
+</table></div>
+<ul>
+<li><strong>停止</strong>:起動し直すと別の物理ホストに移ることがある。インスタンスタイプの変更は停止中に行う</li>
+<li><strong>休止</strong>:メモリ(RAM)の内容をルートボリュームに書き出してから停止し、起動するとアプリが動いていた状態から再開する。起動に時間がかかるアプリの「温まった状態」を残したいときに使う。<strong>起動時に有効にしておく</strong>必要があり、ルートボリュームは暗号化されたEBSで、メモリを書き出せる容量が必要</li>
+<li><strong>終了</strong>:インスタンスは削除され、元に戻せない。ルートボリュームは「終了時に削除」が既定で有効、後から追加したボリュームは既定で残る</li>
+</ul>
+<p><strong>終了保護</strong>を有効にすると、コンソールやAPIからの終了操作が拒否され、誤って終了するのを防げます。ただし、OSの中からシャットダウンしたときの動作を「終了」にしている場合のシャットダウンと、Auto Scalingのスケールインによる終了は防げません(Auto Scalingでは「スケールイン保護」を使う)。同様に停止を防ぐ<strong>停止保護</strong>もあります。</p>
+
+<h3>ステータスチェックと自動復旧</h3>
+<p>EC2は1分ごとに<strong>ステータスチェック</strong>を行い、結果をCloudWatchメトリクスとして記録します。</p>
+<div class="table-wrap"><table>
+<tr><th>チェック</th><th>何を確認するか</th><th>主な原因</th><th>対処</th></tr>
+<tr><td>システムステータスチェック<br><code>StatusCheckFailed_System</code></td><td>インスタンスが動いている<strong>AWS側の物理ホスト</strong></td><td>ハードウェアの故障、電源・ネットワークの障害</td><td>停止→起動で別のホストに移す、または<strong>自動復旧</strong></td></tr>
+<tr><td>インスタンスステータスチェック<br><code>StatusCheckFailed_Instance</code></td><td><strong>インスタンス(OS)側</strong></td><td>カーネルの異常、メモリ不足、ネットワーク設定やファイルシステムの誤り</td><td>再起動、OSの設定の修正(利用者が対処)</td></tr>
+<tr><td>アタッチされたEBSのステータスチェック<br><code>StatusCheckFailed_AttachedEBS</code></td><td>アタッチしているEBSボリュームへの到達性</td><td>ストレージ側の障害</td><td>インスタンスの置き換えなど</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 230 85
+node sys 0 0 ng "システムの失敗" "AWS側のホスト"
+node ins 0 1.2 ng "インスタンスの失敗" "OS側"
+node alarm 1.1 0 box "CloudWatchアラーム" "StatusCheckFailed_System"
+node rec 2.2 0 ok "復旧アクション" "別のホストで再開"
+node alarm2 1.1 1.2 box "CloudWatchアラーム" "StatusCheckFailed_Instance"
+node rb 2.2 1.2 ok "再起動アクション"
+edge sys alarm
+edge alarm rec
+edge ins alarm2
+edge alarm2 rb
+<figcaption>図6 ステータスチェックの失敗への対処。AWS側の障害(システム)は復旧アクションで別の物理ホストに移し、OS側の障害(インスタンス)は再起動などで対処する。</figcaption>
+</figure>
+<p><strong>自動復旧</strong>では、インスタンスが<strong>インスタンスID・プライベートIP・Elastic IP・メタデータを保ったまま</strong>別の物理ホストで再起動されます。対応するインスタンスタイプでは既定で「簡易自動復旧」が有効で、CloudWatchアラームの<strong>復旧アクション</strong>でも設定できます。インスタンスストアを使うインスタンスでは使えず、メモリとインスタンスストアの内容は失われます。</p>
+
+<h3>T系インスタンスのCPUクレジット</h3>
+<p>T系(t3・t4gなど)は<strong>バーストパフォーマンスインスタンス</strong>で、普段は<strong>ベースライン</strong>(例:t3.microは1vCPUあたり10%)のCPU性能で動き、必要なときだけそれを超えて<strong>バースト</strong>します。</p>
+<ul>
+<li>CPU使用率がベースラインより低いときに<strong>CPUクレジット</strong>が貯まり、ベースラインを超えるときに消費する(1クレジット=vCPU1個を100%で1分間使う量)</li>
+<li>残高はCloudWatchメトリクス <code>CPUCreditBalance</code> で確認できる</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>モード</th><th>クレジットがなくなると</th><th>料金</th><th>既定</th></tr>
+<tr><td>スタンダード</td><td><strong>ベースラインに制限</strong>され、処理が遅くなる</td><td>追加料金なし</td><td>t2</td></tr>
+<tr><td>Unlimited(無制限)</td><td>クレジットを前借りして<strong>バーストを続けられる</strong></td><td>24時間の平均がベースラインを超えた分は<strong>追加料金</strong></td><td>t3・t3a・t4g</td></tr>
+</table></div>
+<p>「T系のインスタンスが時々急に遅くなる」場合は、クレジットの枯渇を疑います。常に高いCPU使用率が続くなら、Unlimitedで追加料金を払い続けるより、M系やC系の固定性能のインスタンスに変えた方が安くなります。</p>
+
+<h3>スポットインスタンスの中断通知</h3>
+<p>スポットインスタンスは、AWSがその容量を必要としたときに<strong>中断</strong>されます。中断の<strong>2分前</strong>に通知が出るので、その間に処理の保存や切り離しを行います。</p>
+<ul>
+<li>通知の受け取り方:インスタンスメタデータの <code>spot/instance-action</code> をポーリングする、または<strong>EventBridge</strong>の「EC2 Spot Instance Interruption Warning」イベントでLambdaなどを起動する</li>
+<li>中断の可能性が高まったときには、それより早く<strong>リバランスの推奨</strong>のシグナルも出る(Auto Scalingの「容量の再調整」で事前に置き換えられる)</li>
+<li>中断時の動作は終了(既定)・停止・休止から選べる</li>
+<li>中断に強くするには、Auto Scalingグループで<strong>複数のインスタンスタイプ・複数のAZ</strong>を指定し、配分戦略に <code>price-capacity-optimized</code> などを使う</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 180 85
+node aws 0 0 blue "容量が必要に"
+node ev 1.4 0 accent "中断の2分前の通知" "メタデータ/EventBridge"
+node fn 2.8 0 box "Lambdaなど" "処理の保存・LBから外す"
+node end 2.8 1.1 ng "中断" "終了・停止・休止"
+edge aws ev
+edge ev fn
+edge fn end
+<figcaption>図7 スポットインスタンスの中断。2分前の通知を受けて、処理の状態を保存したりロードバランサーから外したりしてから中断に備える。</figcaption>
+</figure>
 </section>
 
 <section class="chapter">
@@ -292,7 +406,7 @@ edge eice prv "SSH"
 <text x="180" y="338" text-anchor="middle" class="dg-s">従量課金・柔軟(開発・短期向け)</text>
 </svg>
 </div>
-<figcaption>図6 購入モデルを選ぶ目安。下の表の「主用途」を判断の流れにしたもの(実際は組み合わせて使うこともある)。</figcaption>
+<figcaption>図8 購入モデルを選ぶ目安。下の表の「主用途」を判断の流れにしたもの(実際は組み合わせて使うこともある)。</figcaption>
 </figure>
 <div class="table-wrap"><table>
 <tr><th>購入モデル</th><th>特徴</th><th>メリット</th><th>デメリット</th><th>主用途</th></tr>
@@ -304,6 +418,20 @@ edge eice prv "SSH"
 <tr><td>Dedicated Instances</td><td>専用ハード上のVM</td><td>分離性</td><td>高価</td><td>セキュリティ</td></tr>
 <tr><td>キャパシティ予約</td><td>容量を予約</td><td>起動保証</td><td>割引なし</td><td>災害対策</td></tr>
 </table></div>
+<h3>リザーブドインスタンスとSavings Plansの種類</h3>
+<p>どちらも<strong>1年または3年</strong>の利用を約束して割引を受ける仕組みで、支払い方法は全額前払い・一部前払い・前払いなしから選びます(前払いが多いほど割引が大きい)。</p>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>割引率(最大)</th><th>約束するもの</th><th>柔軟性</th></tr>
+<tr><td>Standard RI</td><td>約72%</td><td>インスタンスファミリー・リージョン・OSなど</td><td>AZ・サイズ(同じファミリー内)の変更は可能。ファミリーやOSは変えられない。不要になったら<strong>RIマーケットプレイスで売却</strong>できる</td></tr>
+<tr><td>Convertible RI</td><td>約66%</td><td>同上</td><td>別の<strong>ファミリー・OS・テナンシーのRIに交換</strong>できる(同等以上の価値のものへ)。売却はできない</td></tr>
+<tr><td>EC2 Instance Savings Plans</td><td>約72%</td><td>1時間あたりの利用額(リージョン内の特定ファミリー)</td><td>ファミリー内のサイズ・OS・AZ・テナンシーは自由</td></tr>
+<tr><td>Compute Savings Plans</td><td>約66%</td><td>1時間あたりの利用額</td><td>ファミリー・リージョン・OSを問わず適用され、<strong>FargateとLambda</strong>にも適用される</td></tr>
+</table></div>
+<ul>
+<li>RIは特定のAZを指定して購入すると(ゾーンRI)、そのAZでの<strong>容量の予約</strong>も付く。リージョンを指定したRIは割引だけ</li>
+<li>Savings Plansには容量の予約は付かない。容量が必要ならオンデマンドキャパシティ予約と組み合わせる</li>
+<li>迷ったら:構成が固まっていて最大の割引 → Standard RIかEC2 Instance Savings Plans、将来の変更に備える → Compute Savings Plans</li>
+</ul>
 <p>オンデマンドは秒単位(Linuxの場合)の課金で、停止中のインスタンスにはコンピューティング料金はかかりません。ただしアタッチしたEBSボリュームの料金は停止中も発生します。</p>
 </section>
 
@@ -330,7 +458,15 @@ edge eice prv "SSH"
 <li>低レイテンシー → <strong>クラスター</strong>、障害分離(大規模分散) → <strong>パーティション</strong>、少数の重要インスタンス → <strong>スプレッド</strong>(図3)。</li>
 <li>インスタンスタイプの変更は<strong>停止してから</strong>。</li>
 <li>SSHの鍵を配らずに、IAMで制御しながら接続したい → <strong>EC2 Instance Connect</strong>(図5)。22番ポートも開けたくない → <strong>Session Manager</strong>。</li>
-<li>中断されてもよいバッチ処理はスポット、常時稼働はRI/Savings Plans、起動を保証したいならキャパシティ予約(割引はない)(図6)。</li>
+<li>中断されてもよいバッチ処理はスポット、常時稼働はRI/Savings Plans、起動を保証したいならキャパシティ予約(割引はない)(図8)。</li>
+<li>秘密鍵をなくした → AWSからは取り出せない。Instance Connect・Session Managerで接続するか、ルートボリュームを別のインスタンスにアタッチして <code>authorized_keys</code> を直す。</li>
+<li>起動時の初期設定を自動化 → <strong>ユーザーデータ</strong>(既定は初回起動時のみ、rootで実行)。機密情報は書かない。</li>
+<li>インスタンスの中から自分の情報やロールの認証情報を取得 → <strong>インスタンスメタデータ</strong>(169.254.169.254)。SSRF対策で<strong>IMDSv2を必須</strong>(<code>HttpTokens=required</code>)にする。</li>
+<li>メモリの内容を残したまま止めたい → <strong>休止</strong>(起動時に有効化、ルートボリュームの暗号化が必要)。誤って終了させない → <strong>終了保護</strong>。</li>
+<li><strong>システム</strong>ステータスチェックの失敗 → AWS側の障害。停止→起動か<strong>復旧アクション</strong>(IPやIDは保持)。<strong>インスタンス</strong>ステータスチェックの失敗 → OS側。再起動・設定の修正。</li>
+<li>T系が急に遅くなる → <strong>CPUクレジット</strong>の枯渇(<code>CPUCreditBalance</code>)。Unlimitedにするか固定性能のタイプへ。</li>
+<li>ファミリーやOSを将来変えたい → <strong>Convertible RI</strong>か<strong>Compute Savings Plans</strong>。Fargate・Lambdaにも割引 → Compute Savings Plans。</li>
+<li>スポットの中断は<strong>2分前</strong>に通知される(メタデータ/EventBridge)。</li>
 </ul>
 </div>
 </section>
