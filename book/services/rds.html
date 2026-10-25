@@ -101,6 +101,159 @@
 </div>
 <figcaption>図2 RDS Proxy。大量のクライアントからの接続を少数のDB接続にまとめて使い回し、DBの最大接続数を超えないようにする。</figcaption>
 </figure>
+
+<h3>DBサブネットグループ</h3>
+<p><strong>DBサブネットグループ</strong>は、RDSのDBインスタンスを配置してよい<strong>VPC内のサブネットの組</strong>です。DBインスタンスを作るときに指定し、RDSはこの中のサブネットにインスタンスを置きます。</p>
+<ul>
+<li><strong>2つ以上のAZのサブネット</strong>を含める必要がある(Multi-AZのスタンバイや、障害時の配置先に使われる)</li>
+<li>通常は<strong>プライベートサブネット</strong>だけで構成し、DBをインターネットから切り離す</li>
+<li>DBへのアクセスはセキュリティグループで、アプリサーバーのセキュリティグループからのDBポート(MySQLなら3306)だけを許可する</li>
+</ul>
+
+<h3>パラメータグループとオプショングループ</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>設定するもの</th><th>例</th></tr>
+<tr><td>パラメータグループ</td><td><strong>DBエンジンの設定値</strong>(設定ファイルの内容に当たるもの)</td><td><code>max_connections</code>、文字コード、タイムゾーン、スロークエリログの出力、<code>rds.force_ssl</code>(SSL接続の強制)</td></tr>
+<tr><td>オプショングループ</td><td>エンジンに<strong>追加する機能</strong></td><td>OracleのTDE(透過的データ暗号化)、SQL ServerのS3へのネイティブバックアップ</td></tr>
+</table></div>
+<ul>
+<li>RDSではOSにログインして設定ファイルを直接編集できないため、エンジンの設定はパラメータグループで行う</li>
+<li><strong>デフォルトのパラメータグループは変更できない</strong>。カスタムのパラメータグループを作ってDBに関連付ける</li>
+<li>パラメータには、すぐに反映される<strong>動的パラメータ</strong>と、<strong>再起動するまで反映されない静的パラメータ</strong>がある(状態が「pending-reboot」になる)</li>
+<li>オプショングループはMySQL・MariaDB・Oracle・SQL Serverで使う(PostgreSQLは拡張機能をパラメータで有効にする)</li>
+</ul>
+
+<h3>メンテナンスウィンドウ</h3>
+<p><strong>メンテナンスウィンドウ</strong>は、OSやDBエンジンのパッチ適用など、RDSが行うメンテナンスの時間帯です。<strong>週1回・30分以上</strong>の枠を指定します(指定しないとリージョンごとの時間帯から自動で割り当てられる)。</p>
+<ul>
+<li>「マイナーバージョンの自動アップグレード」を有効にすると、新しいマイナーバージョンがメンテナンスウィンドウで適用される</li>
+<li>インスタンスクラスの変更なども、「すぐに適用」を選ばなければ次のメンテナンスウィンドウで適用される</li>
+<li>メンテナンス中はDBが停止することがある。<strong>Multi-AZ</strong>では、先にスタンバイに適用してからフェイルオーバーし、最後に旧プライマリに適用するため、停止時間を短くできる</li>
+<li>予定されているメンテナンスは、コンソールやAWS Health Dashboardで確認できる</li>
+</ul>
+
+<h3>暗号化</h3>
+<p>RDSの保存時の暗号化は<strong>KMSキー</strong>で行い、ストレージだけでなく<strong>自動バックアップ・スナップショット・リードレプリカ・ログ</strong>もすべて暗号化されます。</p>
+<ul>
+<li>暗号化は<strong>DBインスタンスの作成時にしか有効にできない</strong>。作成後に有効・無効を切り替えることはできない</li>
+<li>暗号化されたDBのリードレプリカは暗号化される(別リージョンのレプリカでは、そのリージョンのKMSキーを使う)</li>
+<li>転送時の暗号化はSSL/TLSで行い、パラメータグループで接続時のSSLを強制できる</li>
+</ul>
+<p>暗号化されていない既存のDBを暗号化するには、次の手順で<strong>新しいDBに作り直します</strong>。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 116" style="max-width:698px;min-width:520px" role="img" aria-label="図3 暗号化されていないDBを暗号化する手順。①スナップショットを取り、②暗号化を指定してスナップショットをコピーし、③暗号化されたスナップショットから新しいDBを復元する。最後にアプリの接続先を切り替える。"><defs><marker id="dgservices-rds-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="106" y="62" text-anchor="middle" class="dg-t">既存のDB</text>
+<text x="106" y="80" text-anchor="middle" class="dg-s">暗号化なし</text>
+<rect x="199" y="40" width="145" height="52" rx="8" class="dg-box"/>
+<text x="272" y="62" text-anchor="middle" class="dg-t">スナップショット</text>
+<text x="272" y="80" text-anchor="middle" class="dg-s">暗号化なし</text>
+<rect x="364" y="40" width="145" height="52" rx="8" class="dg-box"/>
+<text x="436" y="62" text-anchor="middle" class="dg-t">コピー</text>
+<text x="436" y="80" text-anchor="middle" class="dg-s">KMSキーで暗号化</text>
+<rect x="529" y="40" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="62" text-anchor="middle" class="dg-t">新しいDB</text>
+<text x="602" y="80" text-anchor="middle" class="dg-s">暗号化あり</text>
+<path d="M179.0,66.5 L199.0,66.5" class="dg-line" marker-end="url(#dgservices-rds-3)"/>
+<text x="189" y="70" text-anchor="middle" class="dg-s dg-halo">①</text>
+<path d="M344.0,66.5 L364.0,66.5" class="dg-line" marker-end="url(#dgservices-rds-3)"/>
+<text x="354" y="70" text-anchor="middle" class="dg-s dg-halo">②</text>
+<path d="M509.0,66.5 L529.0,66.5" class="dg-line" marker-end="url(#dgservices-rds-3)"/>
+<text x="519" y="70" text-anchor="middle" class="dg-s dg-halo">③ 復元</text>
+</svg>
+</div>
+<figcaption>図3 暗号化されていないDBを暗号化する手順。①スナップショットを取り、②暗号化を指定してスナップショットをコピーし、③暗号化されたスナップショットから新しいDBを復元する。最後にアプリの接続先を切り替える。</figcaption>
+</figure>
+
+<h3>ストレージの自動スケーリング</h3>
+<p><strong>ストレージの自動スケーリング</strong>を有効にすると、空き容量が少なくなったときに<strong>ストレージが自動で拡張</strong>されます。拡張の上限(最大ストレージしきい値)を指定しておきます。</p>
+<ul>
+<li>拡張される条件:空き容量が割り当て容量の<strong>10%未満</strong>の状態が<strong>5分以上</strong>続き、前回のストレージ変更から6時間以上経っている</li>
+<li>拡張量は10GiB、割り当て容量の10%、直近の増え方から予測した7時間分のうち最も大きい値</li>
+<li>拡張中もDBは止まらない。ただし<strong>ストレージを縮小することはできない</strong></li>
+</ul>
+<p>容量不足でDBが止まるのを防げるため、データ量の増え方が読みにくい場合に有効です。CloudWatchメトリクス <code>FreeStorageSpace</code> にアラームを設定して監視も併用します。</p>
+
+<h3>Multi-AZのDNS切り替え</h3>
+<p>Multi-AZでは、アプリは<strong>DBのエンドポイント(DNS名)</strong>に接続します。プライマリに障害が起きると、RDSは自動で<strong>スタンバイを新しいプライマリに昇格</strong>し、<strong>エンドポイントのDNSレコードをスタンバイに向け直します</strong>。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 720 218" style="max-width:720px;min-width:520px" role="img" aria-label="図4 Multi-AZのフェイルオーバー。エンドポイントのDNS名は変わらず、指す先だけがスタンバイ(新プライマリ)に切り替わる。アプリの接続先の設定を変える必要はない。"><defs><marker id="dgservices-rds-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="92" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="113" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="112" y="131" text-anchor="middle" class="dg-s">エンドポイントに接続</text>
+<rect x="262" y="92" width="208" height="52" rx="8" class="dg-accent"/>
+<text x="365" y="113" text-anchor="middle" class="dg-tb">エンドポイント</text>
+<text x="365" y="131" text-anchor="middle" class="dg-s">mydb.xxxx.rds.amazonaws.com</text>
+<rect x="542" y="40" width="155" height="52" rx="8" class="dg-ng"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">旧プライマリ</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">AZ-a・障害</text>
+<rect x="542" y="142" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="164" text-anchor="middle" class="dg-t">新プライマリ</text>
+<text x="619" y="182" text-anchor="middle" class="dg-s">AZ-c・昇格</text>
+<path d="M189.0,117.5 L261.5,117.5" class="dg-line" marker-end="url(#dgservices-rds-4)"/>
+<path d="M469.0,96.6 L541.5,82.1" class="dg-line dg-dash" marker-end="url(#dgservices-rds-4)"/>
+<path d="M469.0,138.4 L541.5,152.9" class="dg-line" marker-end="url(#dgservices-rds-4)"/>
+<text x="505" y="150" text-anchor="middle" class="dg-s dg-halo">切り替え</text>
+</svg>
+</div>
+<figcaption>図4 Multi-AZのフェイルオーバー。エンドポイントのDNS名は変わらず、指す先だけがスタンバイ(新プライマリ)に切り替わる。アプリの接続先の設定を変える必要はない。</figcaption>
+</figure>
+<ul>
+<li><strong>エンドポイント名は変わらない</strong>ので、アプリの設定変更は不要。切り替えには通常1〜2分かかり、その間の接続は切れるため、アプリは<strong>再接続</strong>できるようにしておく</li>
+<li>DNSの結果を長くキャッシュするアプリ(JavaのDNSキャッシュなど)は、古いIPに接続し続けないようTTLを短くする</li>
+<li>フェイルオーバーが起きるのは、AZの障害、プライマリの故障、インスタンスクラスの変更やパッチ適用、「フェイルオーバーを伴う再起動」を実行したとき。RDSイベント通知で検知できる</li>
+<li>読み取り可能なスタンバイを2つ持つ「Multi-AZ DBクラスター」構成もあり、フェイルオーバーがより速い</li>
+</ul>
+
+<h3>Performance Insightsと拡張モニタリング</h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>見られるもの</th><th>使う場面</th></tr>
+<tr><td>CloudWatchの標準メトリクス</td><td>CPU使用率、空きメモリ、空きストレージ、接続数、IOPS、レイテンシーなど(1分間隔)</td><td>基本の監視・アラーム</td></tr>
+<tr><td><strong>拡張モニタリング</strong></td><td>DBインスタンス上のエージェントが集める<strong>OSレベルのメトリクス</strong>(プロセスごとのCPU・メモリ、ファイルシステムなど)。<strong>1〜60秒間隔</strong>で、CloudWatch Logsに出力</td><td>「OSのどのプロセスがCPUを使っているか」を細かく見たい</td></tr>
+<tr><td><strong>Performance Insights</strong></td><td><strong>DBの負荷</strong>(平均アクティブセッション数)を、<strong>SQL文・待機イベント・ユーザー・ホスト別</strong>に分解して表示する</td><td>「どのSQLが遅いのか」「何を待っているのか」を特定したい</td></tr>
+</table></div>
+<p>CloudWatchの標準メトリクスはハイパーバイザー側から取るため、OS内部の詳細は見えません。OSの中を見るなら拡張モニタリング、DBの中(SQL)を見るならPerformance Insights、と使い分けます。これらはCloudWatch Database Insightsとしてもまとめて表示できます。</p>
+
+<h3>Blue/Green Deployments</h3>
+<p><strong>RDS Blue/Green Deployments</strong>は、本番のDB(ブルー)をコピーした<strong>ステージング環境(グリーン)</strong>を作り、ブルーの変更をレプリケーションで同期させながらグリーン側で変更・テストし、準備ができたら<strong>短時間で切り替える</strong>機能です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 703 202" style="max-width:703px;min-width:520px" role="img" aria-label="図5 Blue/Green Deployments。グリーン環境でメジャーバージョンアップやパラメータ変更を済ませてテストし、切り替え時にグリーンがブルーのエンドポイント名を引き継ぐ。"><defs><marker id="dgservices-rds-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="89" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="112" y="113" text-anchor="middle" class="dg-t">アプリ</text>
+<rect x="279" y="40" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="356" y="62" text-anchor="middle" class="dg-tb">ブルー(本番)</text>
+<text x="356" y="80" text-anchor="middle" class="dg-s">現行バージョン</text>
+<rect x="279" y="126" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="356" y="147" text-anchor="middle" class="dg-t">グリーン</text>
+<text x="356" y="165" text-anchor="middle" class="dg-s">新バージョン・変更済み</text>
+<rect x="524" y="83" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="104" text-anchor="middle" class="dg-t">切り替え</text>
+<text x="602" y="122" text-anchor="middle" class="dg-s">通常1分以内</text>
+<path d="M189.0,95.6 L279.0,79.9" class="dg-line" marker-end="url(#dgservices-rds-5)"/>
+<path d="M356.5,92.5 L356.5,125.5" class="dg-line" marker-end="url(#dgservices-rds-5)"/>
+<text x="356" y="113" text-anchor="middle" class="dg-s dg-halo">レプリケーション</text>
+<path d="M434.0,138.1 L524.0,122.4" class="dg-line" marker-end="url(#dgservices-rds-5)"/>
+</svg>
+</div>
+<figcaption>図5 Blue/Green Deployments。グリーン環境でメジャーバージョンアップやパラメータ変更を済ませてテストし、切り替え時にグリーンがブルーのエンドポイント名を引き継ぐ。</figcaption>
+</figure>
+<ul>
+<li>メジャーバージョンアップグレード、スキーマ変更、パラメータの変更などを、本番への影響を抑えて行える</li>
+<li>切り替え(スイッチオーバー)は通常<strong>1分以内</strong>で、グリーンがブルーと<strong>同じエンドポイント名</strong>になるため、アプリの接続先を変えなくてよい</li>
+<li>切り替え後も旧ブルー環境は残るので、確認が終わってから削除する</li>
+<li>MySQL・MariaDB・PostgreSQL(とAurora)で使える</li>
+</ul>
+
+<h3>停止は最大7日</h3>
+<p>開発用のDBなど、使わない時間はDBインスタンスを<strong>停止</strong>してインスタンスの料金を節約できます。ただし、停止できるのは<strong>最大7日間</strong>で、<strong>7日を過ぎると自動で起動</strong>します(メンテナンスを適用できなくなるのを防ぐため)。</p>
+<ul>
+<li>停止中もストレージとスナップショットの料金はかかる</li>
+<li>長期間止めておきたい場合は、EventBridgeのスケジュールとLambdaで定期的に停止し直すか、スナップショットを取ってDBを削除し、必要なときに復元する</li>
+<li>リードレプリカがあるDBなど、構成によっては停止できない</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -136,6 +289,15 @@
 <li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
 <li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。</li>
 <li>特定時点に戻したい → <strong>ポイントインタイムリカバリ</strong>。</li>
+<li>DBを置くサブネットの指定 → <strong>DBサブネットグループ</strong>(2つ以上のAZのサブネットが必要)。</li>
+<li><code>max_connections</code> などエンジンの設定を変える → カスタムの<strong>パラメータグループ</strong>(デフォルトは変更不可)。静的パラメータは<strong>再起動</strong>で反映。TDEなど機能の追加 → <strong>オプショングループ</strong>。</li>
+<li>パッチ適用の時間帯を決める → <strong>メンテナンスウィンドウ</strong>。Multi-AZなら停止時間が短くなる。</li>
+<li>既存の暗号化されていないDBを暗号化 → スナップショット → <strong>暗号化してコピー</strong> → 復元。暗号化は作成時にしか設定できない。</li>
+<li>空き容量不足を自動で防ぐ → <strong>ストレージの自動スケーリング</strong>(縮小はできない)。</li>
+<li>Multi-AZのフェイルオーバーでは<strong>エンドポイント名は変わらず</strong>、DNSがスタンバイに切り替わる。アプリは再接続できるようにする。</li>
+<li>遅いSQLや待機イベントの特定 → <strong>Performance Insights</strong>。OSのプロセス単位のメトリクス → <strong>拡張モニタリング</strong>。</li>
+<li>メジャーバージョンアップを短い停止時間で安全に → <strong>Blue/Green Deployments</strong>。</li>
+<li>停止したDBが勝手に起動した → 停止は<strong>最大7日</strong>で自動起動する。</li>
 </ul></div>
 </section>
 
