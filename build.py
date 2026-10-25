@@ -55,6 +55,15 @@ COLLECTIONS = [
             "移行と転送": "オンプレミスなどからのデータの移行",
             "ビジネスアプリケーション": "メール送信などの業務向けサービス",
         },
+        # カテゴリの色(AWS公式アイコンの配色に合わせる)
+        "category_colors": {
+            "コンピューティング": "#ED7100", "コンテナ": "#ED7100", "ストレージ": "#7AA116",
+            "データベース": "#C925D1", "ネットワークとコンテンツ配信": "#8C4FFF",
+            "セキュリティ、アイデンティティ、コンプライアンス": "#DD344C",
+            "マネジメントとガバナンス": "#E7157B", "アプリケーション統合": "#E7157B",
+            "デベロッパーツール": "#C925D1", "フレームワーク": "#C925D1", "ライブラリ": "#DD344C",
+            "分析": "#8C4FFF", "移行と転送": "#01A88D", "ビジネスアプリケーション": "#DD344C",
+        },
         "compact": True,
         "search": "サービス名・キーワードで絞り込み(例: VPN、ログ、コンテナ)",
         "order": [
@@ -340,16 +349,24 @@ def render_page(col, pages, i):
     nxt = pages[i + 1] if i + 1 < len(pages) else None
     cat_no = [c for c, _ in grouped(col, pages)].index(p["category"]) + 1
     body, items = add_heading_ids(stack_tables(p["body"]))
+    icon = service_icon(p["slug"], "../", 56) if col["key"] == "services" else ""
     return (head(f"{p['title']} | {SITE_TITLE}", "../", p["lead"])
             + header("../", col["key"])
-            + "<main>\n<div class=\"page-head\">\n"
+            + f'<main>\n<div class="page-head hero"{cat_style(col, p["category"])}>\n'
+            + (f'  <div class="hero-icon">{icon}</div>\n' if icon else "")
+            + '  <div class="hero-text">\n'
             + f'  <a class="category" href="index.html#cat{cat_no}">{html.escape(p["category"])}</a>\n'
-            + f'  <h1>{service_icon(p["slug"], "../", 40) if col["key"] == "services" else ""}'
-            + f'{html.escape(p["title"])}</h1>\n'
+            + f'  <h1>{html.escape(p["title"])}</h1>\n'
             + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
             + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
             + f'{fmt_date(p["updated"])}</time></p>\n'
-            + "</div>\n" + page_toc(items) + body + "\n" + pager(prev, nxt) + "</main>\n" + TO_TOP + TAIL)
+            + "  </div>\n</div>\n" + page_toc(items) + body + "\n" + pager(prev, nxt) + "</main>\n" + TO_TOP + TAIL)
+
+
+def cat_style(col, category):
+    """カテゴリの色を CSS変数 --cat として渡す属性(色が決まっていなければ空)。"""
+    color = col.get("category_colors", {}).get(category)
+    return f' style="--cat:{color}"' if color else ""
 
 
 def render_collection_index(col, pages):
@@ -366,14 +383,19 @@ def render_collection_index(col, pages):
     descs = col.get("category_desc", {})
     compact = col.get("compact")
     if compact:
-        parts.append('<div class="svc-columns">\n')
+        # カテゴリへのジャンプ(スクロールを減らすため)
+        parts.append('<nav class="cat-jump" aria-label="カテゴリへ移動">\n'
+                     + "".join(f'<a href="#cat{i}"{cat_style(col, c)}>{html.escape(c.split("、")[0])}</a>'
+                               for i, (c, _) in enumerate(groups, 1))
+                     + '\n</nav>\n<div class="svc-columns">\n')
     for i, (category, items) in enumerate(groups, 1):
         if compact:
             # カテゴリごとのカード(折りたたみ可)。説明文はカテゴリ名にマウスを重ねたときだけ出す
-            tip = f' title="{html.escape(descs[category])}"' if category in descs else ""
-            parts.append(f'<section class="toc-category svc-card" id="cat{i}">\n<details open>\n'
-                         f'<summary{tip}><h2>{html.escape(category)} '
-                         f'<span class="count">({len(items)})</span></h2></summary>\n<ul class="svc-list">\n')
+            tip = html.escape(category + (":" + descs[category] if category in descs else ""))
+            parts.append(f'<section class="toc-category svc-card" id="cat{i}"{cat_style(col, category)}>\n'
+                         f'<details open>\n<summary title="{tip}"><h2><span class="cat-name">'
+                         f'{html.escape(category.split("、")[0])}</span>'
+                         f'<span class="count">{len(items)}</span></h2></summary>\n<ul class="svc-list">\n')
         else:
             parts.append(f'<section class="toc-category" id="cat{i}">\n<h2>{html.escape(category)} '
                          f'<span class="count">({len(items)})</span></h2>\n')
@@ -385,8 +407,8 @@ def render_collection_index(col, pages):
             keys = " ".join([p["title"], p["slug"], category, re.sub(r"<[^>]+>", "", p["lead"])])
             if compact:
                 tip = html.escape(p["title"] + (":" + plain(p["lead"]) if p["lead"] else ""))
-                inner = (f'{service_icon(p["slug"], "../", 24)}'
-                         f'<span class="name">{html.escape(p["title"])}</span>')
+                inner = (f'{service_icon(p["slug"], "../", 28)}'
+                         f'<span class="name">{html.escape(p["title"])}</span><span class="go" aria-hidden="true">›</span>')
                 parts.append(f'  <li data-keys="{html.escape(keys.lower())}"><a href="{p["slug"]}.html" '
                              f'title="{tip}">{inner}</a></li>\n')
             else:
@@ -425,7 +447,8 @@ SEARCH_SCRIPT = """<script>
       sec.hidden = n === 0;
       var det = sec.querySelector("details");
       if (det && words.length && n) det.open = true;
-      sec.querySelector("h2 .count").textContent = "(" + n + ")";
+      var cnt = sec.querySelector("h2 .count");
+      cnt.textContent = cnt.textContent.charAt(0) === "(" ? "(" + n + ")" : n;
       shown += n;
     });
     hits.textContent = words.length ? shown + " / " + total + "件" : "";
