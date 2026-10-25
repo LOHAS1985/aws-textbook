@@ -40,10 +40,11 @@
 <li><strong>CloudFrontなし</strong>:日本のユーザーがアメリカのWebサーバーへ直接アクセスすると時間がかかる。</li>
 <li><strong>CloudFrontあり</strong>
   <ul>
-  <li>初回:日本のエッジサーバーがアメリカのWebサーバーへアクセス(時間は同じ)し、エッジにキャッシュを残す。</li>
-  <li>2回目以降:ユーザーはエッジサーバー(リージョナルエッジキャッシュ)にアクセスするだけで済み、高速になる。</li>
+  <li>初回:日本の<strong>エッジロケーション</strong>にキャッシュがないため、エッジがアメリカのオリジンへ取りに行き(時間は直接アクセスと同程度)、エッジにキャッシュを残す。</li>
+  <li>2回目以降:ユーザーは近くのエッジロケーションから応答を受け取るだけで済み、高速になる。</li>
   </ul></li>
 </ul>
+<p>エッジロケーションとオリジンの間には、<strong>リージョナルエッジキャッシュ</strong>という、より大きなキャッシュの層があります。エッジロケーションにキャッシュがないときはまずリージョナルエッジキャッシュを探し、そこにもなければオリジンへ取りに行きます。エッジロケーションは利用者の近くに多数ある小さなキャッシュ、リージョナルエッジキャッシュはその背後にある少数の大きなキャッシュ、と区別します。</p>
 
 <figure class="figure">
 <div class="fig-scroll">
@@ -113,12 +114,14 @@
 </div>
 <figcaption>図2 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
 </figure>
-<h3>注意:カスタムドメインと証明書</h3>
-<p>API Gateway(エッジ最適化)などでカスタムドメインを使う場合の手順です。</p>
+<h3>独自ドメインで配信する(代替ドメイン名と証明書)</h3>
+<p>CloudFrontのディストリビューションには <code>d111111abcdef8.cloudfront.net</code> のようなドメイン名が付きます。<code>www.example.com</code> などの独自ドメインで配信するには、次の手順で設定します。</p>
 <ol>
-<li>証明書をACMに登録する。<strong>ACM証明書は us-east-1 に存在する必要がある</strong>。</li>
-<li>DNSにCNAMEレコード(ドメイン名の別名)を作成する。</li>
+<li>ACMで独自ドメインの証明書を発行する。<strong>CloudFrontで使うACM証明書は us-east-1(バージニア北部)で発行する必要がある</strong>。</li>
+<li>ディストリビューションの<strong>代替ドメイン名(CNAME)</strong>に独自ドメインを登録し、その証明書を選択する。</li>
+<li>DNSで独自ドメインをディストリビューションに向ける。Route 53なら<strong>エイリアスレコード</strong>を使う(<code>example.com</code> のようなゾーンの頂点にも設定でき、クエリ料金も無料)。他のDNSではCNAMEレコードを使う(ゾーンの頂点には設定できない)。</li>
 </ol>
+<p>API Gatewayのエッジ最適化APIは内部でCloudFrontを使うため、カスタムドメインの証明書は同じくus-east-1で発行します。</p>
 </section>
 
 <section class="chapter">

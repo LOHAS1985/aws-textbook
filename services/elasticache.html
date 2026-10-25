@@ -40,13 +40,14 @@
 
 <h3>エンジンの種類</h3>
 <div class="table-wrap"><table>
-<tr><th>項目</th><th>Redis</th><th>Memcached</th></tr>
+<tr><th>項目</th><th>Valkey / Redis OSS</th><th>Memcached</th></tr>
 <tr><td>機能</td><td>高機能</td><td>シンプル</td></tr>
-<tr><td>永続化</td><td>○</td><td>×</td></tr>
-<tr><td>マルチスレッド</td><td>弱い</td><td>強い</td></tr>
+<tr><td>レプリケーション・自動フェイルオーバー</td><td>○</td><td>×</td></tr>
+<tr><td>バックアップ(スナップショット)</td><td>○</td><td>×(ノードを自分で選ぶ構成の場合)</td></tr>
+<tr><td>コマンドの処理</td><td>1本のスレッドで順に処理(通信の処理は複数スレッドで並列化される)</td><td>複数スレッドで並列に処理</td></tr>
 <tr><td>複雑性</td><td>高</td><td>低</td></tr>
 </table></div>
-<p>Redisはレプリケーション・自動フェイルオーバー・バックアップに対応し、ソート済みセット(ランキング)などのデータ構造も使えます。現在はRedis互換のValkeyエンジンも選べます。</p>
+<p>エンジンは、Redisと互換のオープンソース<strong>Valkey</strong>、<strong>Redis OSS</strong>、<strong>Memcached</strong>から選びます。ValkeyとRedis OSSは同じように使え、レプリケーション・自動フェイルオーバー・バックアップに対応し、ソート済みセット(ランキング)などのデータ構造も使えます。</p>
 
 <h3>キャッシュ戦略</h3>
 <ul>
@@ -107,7 +108,7 @@
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
 <div class="point"><ul>
-<li>永続化・高機能 → <strong>Redis</strong>、シンプル・マルチスレッド → <strong>Memcached</strong>。</li>
+<li>レプリケーション・フェイルオーバー・バックアップ・高機能なデータ構造 → <strong>Valkey/Redis OSS</strong>、シンプル・マルチスレッド → <strong>Memcached</strong>。</li>
 <li>必要なデータだけをキャッシュ(アプリ主導)→ <strong>レイジーローディング</strong>。ただし初回はキャッシュミスで遅く、古いデータが残る可能性がある。</li>
 <li>キャッシュとDBの整合性重視 → <strong>ライトスルー</strong>。</li>
 <li>書き込み性能重視 → <strong>ライトビハインド</strong>(DBへの反映は遅延)。</li>
@@ -118,7 +119,7 @@
 <h2>7. まとめ</h2>
 <ul>
 <li>ElastiCacheはインメモリキャッシュ。DB負荷の軽減と高速化に使う。</li>
-<li>エンジンはRedisとMemcached。</li>
+<li>エンジンはValkey・Redis OSS・Memcached。</li>
 <li>キャッシュ戦略は読み込み2種・書き込み2種の特徴を押さえる。</li>
 </ul>
 </section>
