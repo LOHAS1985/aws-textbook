@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>監視・記録のサービスの選び方 | AWS教科書</title>
+<meta name="description" content="CloudWatch・CloudTrail・Config・X-Ray・VPCフローログを「何を知りたいか」で使い分ける">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">サービスの選び方</a>
+  <h1>監視・記録のサービスの選び方</h1>
+  <p class="lead">CloudWatch・CloudTrail・Config・X-Ray・VPCフローログを「何を知りたいか」で使い分ける</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWSには、システムの状態や出来事を記録するサービスがいくつもあります。どれも「ログ」や「履歴」を扱うので混同しやすいですが、<strong>記録しているものが違います</strong>。調べたいことから逆に考えると選びやすくなります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 518 529" style="max-width:518px;min-width:518px" role="img" aria-label="図1 知りたいことと、使うサービスの対応。"><defs><marker id="dgterms-monitoring-logging-comparison-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="39" width="180" height="40" rx="8" class="dg-box"/>
+<text x="124" y="63" text-anchor="middle" class="dg-t">性能・使用率は?</text>
+<rect x="34" y="109" width="180" height="40" rx="8" class="dg-box"/>
+<text x="124" y="133" text-anchor="middle" class="dg-t">ログの中身は?</text>
+<rect x="34" y="179" width="180" height="40" rx="8" class="dg-box"/>
+<text x="124" y="203" text-anchor="middle" class="dg-t">誰が何をした?</text>
+<rect x="34" y="249" width="180" height="40" rx="8" class="dg-box"/>
+<text x="124" y="273" text-anchor="middle" class="dg-t">設定はどう変わった?</text>
+<rect x="34" y="319" width="180" height="40" rx="8" class="dg-box"/>
+<text x="124" y="343" text-anchor="middle" class="dg-t">どこで遅い・失敗?</text>
+<rect x="34" y="389" width="180" height="40" rx="8" class="dg-box"/>
+<text x="124" y="413" text-anchor="middle" class="dg-t">通信は届いた?</text>
+<rect x="34" y="459" width="180" height="40" rx="8" class="dg-box"/>
+<text x="124" y="483" text-anchor="middle" class="dg-t">AWS側の障害は?</text>
+<rect x="314" y="33" width="180" height="52" rx="8" class="dg-accent"/>
+<text x="404" y="54" text-anchor="middle" class="dg-tb">CloudWatch</text>
+<text x="404" y="72" text-anchor="middle" class="dg-s">メトリクス・アラーム</text>
+<rect x="314" y="103" width="180" height="52" rx="8" class="dg-accent"/>
+<text x="404" y="124" text-anchor="middle" class="dg-tb">CloudWatch Logs</text>
+<text x="404" y="142" text-anchor="middle" class="dg-s">OS・アプリのログ</text>
+<rect x="314" y="173" width="180" height="52" rx="8" class="dg-accent"/>
+<text x="404" y="194" text-anchor="middle" class="dg-tb">CloudTrail</text>
+<text x="404" y="212" text-anchor="middle" class="dg-s">APIの操作履歴</text>
+<rect x="314" y="243" width="180" height="52" rx="8" class="dg-accent"/>
+<text x="404" y="264" text-anchor="middle" class="dg-tb">AWS Config</text>
+<text x="404" y="282" text-anchor="middle" class="dg-s">設定の履歴・準拠</text>
+<rect x="314" y="313" width="180" height="52" rx="8" class="dg-accent"/>
+<text x="404" y="334" text-anchor="middle" class="dg-tb">X-Ray</text>
+<text x="404" y="352" text-anchor="middle" class="dg-s">リクエストの追跡</text>
+<rect x="314" y="383" width="180" height="52" rx="8" class="dg-accent"/>
+<text x="404" y="404" text-anchor="middle" class="dg-tb">VPCフローログ</text>
+<text x="404" y="422" text-anchor="middle" class="dg-s">IP通信の記録</text>
+<rect x="314" y="453" width="180" height="52" rx="8" class="dg-accent"/>
+<text x="404" y="474" text-anchor="middle" class="dg-tb">Health Dashboard</text>
+<text x="404" y="492" text-anchor="middle" class="dg-s">AWSのイベント</text>
+<path d="M214.0,59.0 L314.0,59.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-1)"/>
+<path d="M214.0,129.0 L314.0,129.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-1)"/>
+<path d="M214.0,199.0 L314.0,199.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-1)"/>
+<path d="M214.0,269.0 L314.0,269.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-1)"/>
+<path d="M214.0,339.0 L314.0,339.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-1)"/>
+<path d="M214.0,409.0 L314.0,409.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-1)"/>
+<path d="M214.0,479.0 L314.0,479.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-1)"/>
+</svg>
+</div>
+<figcaption>図1 知りたいことと、使うサービスの対応。</figcaption>
+</figure>
+
+<h3 id="c1-1">比較表<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>サービス</th><th>記録するもの</th><th>わかること</th><th>保存の期間</th></tr>
+<tr><td data-label="サービス">CloudWatch(メトリクス)</td><td data-label="記録するもの">CPU使用率・リクエスト数などの数値</td><td data-label="わかること">性能・負荷の推移。しきい値でアラーム</td><td data-label="保存の期間">15か月(古いものは粗い間隔にまとめられる)</td></tr>
+<tr><td data-label="サービス">CloudWatch Logs</td><td data-label="記録するもの">OS・アプリ・各サービスが出すログ</td><td data-label="わかること">エラーの内容。Logs Insightsで検索・集計</td><td data-label="保存の期間">ロググループごとに設定(既定は無期限)</td></tr>
+<tr><td data-label="サービス">CloudTrail</td><td data-label="記録するもの">AWSのAPIの呼び出し(コンソール操作を含む)</td><td data-label="わかること">誰が・いつ・どこから・何をしたか</td><td data-label="保存の期間">イベント履歴は90日。証跡を作るとS3に長期保存</td></tr>
+<tr><td data-label="サービス">AWS Config</td><td data-label="記録するもの">リソースの設定とその変更</td><td data-label="わかること">ある時点の設定、ルールに準拠しているか</td><td data-label="保存の期間">既定7年(変更できる)</td></tr>
+<tr><td data-label="サービス">X-Ray</td><td data-label="記録するもの">1つのリクエストが通ったサービスと時間</td><td data-label="わかること">どのサービスで遅いか・失敗したか</td><td data-label="保存の期間">30日</td></tr>
+<tr><td data-label="サービス">VPCフローログ</td><td data-label="記録するもの">ENIを通ったIP通信(送信元・宛先・ポート・許可/拒否)</td><td data-label="わかること">通信が届いているか、SGやネットワークACLで拒否されたか</td><td data-label="保存の期間">送信先(CloudWatch Logs・S3など)の設定による</td></tr>
+<tr><td data-label="サービス">AWS Health Dashboard</td><td data-label="記録するもの">AWS側の障害・予定メンテナンス</td><td data-label="わかること">自分のリソースに影響するAWSのイベント</td><td data-label="保存の期間">—</td></tr>
+</table></div>
+<p>HTTPのリクエスト1件ごとの詳細(クライアントのIP・パス・応答コード)は、ELB・CloudFront・S3のアクセスログやWAFのログに出ます。VPCの中の名前解決の問い合わせは、Route 53 Resolverのクエリログに記録できます。</p>
+
+<h3 id="c1-2">組み合わせて調べる<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>実際の調査では、複数のサービスを順に見ていきます。たとえば「夜中に急にエラーが増えた」なら、CloudWatchのアラームで気づき、CloudWatch Logsでエラーの内容を確認し、CloudTrailとConfigでその直前に誰かが設定を変えていないかを調べます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 871 114" style="max-width:871px;min-width:697px" role="img" aria-label="図2 障害の調査の流れの例。メトリクスで気づき、ログで内容を確かめ、操作履歴と設定の変更から原因を絞り込む。"><defs><marker id="dgterms-monitoring-logging-comparison-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">アラーム</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">エラー数が増えた</text>
+<rect x="255" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="330" y="60" text-anchor="middle" class="dg-t">CloudWatch Logs</text>
+<text x="330" y="78" text-anchor="middle" class="dg-s">エラーの内容</text>
+<rect x="476" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="551" y="60" text-anchor="middle" class="dg-t">CloudTrail</text>
+<text x="551" y="78" text-anchor="middle" class="dg-s">直前の操作は?</text>
+<rect x="697" y="38" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="772" y="60" text-anchor="middle" class="dg-tb">AWS Config</text>
+<text x="772" y="78" text-anchor="middle" class="dg-s">何が変わった?</text>
+<path d="M184.0,64.0 L255.0,64.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-2)"/>
+<path d="M405.0,64.0 L476.0,64.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-2)"/>
+<path d="M626.0,64.0 L697.0,64.0" class="dg-line" marker-end="url(#dgterms-monitoring-logging-comparison-2)"/>
+</svg>
+</div>
+<figcaption>図2 障害の調査の流れの例。メトリクスで気づき、ログで内容を確かめ、操作履歴と設定の変更から原因を絞り込む。</figcaption>
+</figure>
+
+<h3 id="c1-3">選び方のポイント<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="point"><ul>
+<li>誰がEC2を削除したか・セキュリティグループを変えたかを調べたい → <strong class="em">CloudTrail</strong>。</li>
+<li>リソースの設定が過去にどうだったか、ルールに違反していないかを知りたい → <strong class="em">AWS Config</strong>。違反を自動で直すこともできる(ユースケース「<a href="../usecases/config-auto-remediation.html">公開されたS3バケットを検出して自動で修復する</a>」)。</li>
+<li>EC2のメモリ・ディスクの使用率は標準のメトリクスにない → <strong>CloudWatchエージェント</strong>を入れる(ユースケース「<a href="../usecases/ec2-memory-monitoring.html">EC2のメモリ・ディスク使用率を監視する</a>」)。</li>
+<li>ログに出る特定の文字列(ERRORなど)の数でアラームを出したい → CloudWatch Logsのメトリクスフィルター。</li>
+<li>マイクロサービスのどこで遅いかを知りたい → <strong>X-Ray</strong>(ユースケース「<a href="../usecases/distributed-tracing.html">マイクロサービスの遅延の原因をトレースで特定する</a>」)。</li>
+<li>EC2に接続できない原因がSGかネットワークACLかを切り分けたい → VPCフローログ(REJECTの記録)。経路の設定ミスはReachability Analyzer(ユースケース「<a href="../usecases/network-troubleshooting.html">EC2に接続できない原因を調査する</a>」)。</li>
+<li>CloudTrailは管理イベントだけが既定で記録される。S3のオブジェクトの操作やLambdaの呼び出し(データイベント)は、証跡で有効にする。</li>
+<li>CloudTrailのログが改ざんされていないことを示したい → ログファイルの整合性の検証を有効にする。</li>
+<li>複数アカウントの記録をまとめたい → 組織の証跡(CloudTrail)、アグリゲーター(Config)、ログの集約(ユースケース「<a href="../usecases/centralized-logging.html">複数アカウントのログを集約して分析する</a>」)。</li>
+<li>AWS側のメンテナンスや障害に自動で対応したい → Healthのイベントを EventBridge で受ける(ユースケース「<a href="../usecases/health-event-response.html">AWSの予定メンテナンスや障害の通知に自動で対応する</a>」)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="vpc-flow-logs.html">VPCフローログ</a>:記録の形式と見方の詳細</li>
+<li><a href="security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>:記録をもとに脅威や問題を見つけるサービス</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:フローログのREJECTの原因になる設定</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:メトリクス・ログ・アラーム</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:APIの操作履歴</li>
+<li><a href="../services/config.html">AWS Config</a>:設定の履歴とルール</li>
+<li><a href="../services/xray.html">AWS X-Ray</a>:分散トレース</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:VPCフローログ・Reachability Analyzer</li>
+<li><a href="../services/health-dashboard.html">AWS Health Dashboard</a>:AWS側のイベント</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/cloudwatch.html"><span class="title">Amazon CloudWatch</span><span class="kind">サービス</span><span class="desc">システムの状態を記録・監視・通知する統合監視サービス</span></a></li>
+<li><a href="../services/cloudtrail.html"><span class="title">AWS CloudTrail</span><span class="kind">サービス</span><span class="desc">「誰が・いつ・何をしたか」を記録する監査サービス</span></a></li>
+<li><a href="../services/config.html"><span class="title">AWS Config</span><span class="kind">サービス</span><span class="desc">リソースの設定状態を記録・評価し、違反を検出して修復</span></a></li>
+<li><a href="../services/health-dashboard.html"><span class="title">AWS Health Dashboard</span><span class="kind">サービス</span><span class="desc">AWS側の障害や予定されたメンテナンスが、自分のリソースに影響するかを知らせる</span></a></li>
+<li><a href="../services/xray.html"><span class="title">AWS X-Ray</span><span class="kind">サービス</span><span class="desc">分散アプリの処理の流れを可視化するトレーシングサービス</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="circuit-breaker.html"><span class="label">← 前へ</span>サーキットブレーカー</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="messaging-comparison.html"><span class="label">次へ →</span>メッセージングサービスの選び方</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
