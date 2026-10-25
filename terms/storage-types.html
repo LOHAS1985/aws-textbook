@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ブロック・ファイル・オブジェクトストレージ | AWS教科書</title>
+<meta name="description" content="3種類のストレージの違い(EBS・EFS・S3)">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,13 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ストレージ</span>
+  <a class="category" href="index.html#cat4">ストレージ</a>
   <h1>ブロック・ファイル・オブジェクトストレージ</h1>
   <p class="lead">3種類のストレージの違い(EBS・EFS・S3)</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. 詳しい説明</h2>
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><strong>ブロック</strong>:ディスクとして使う(Amazon EBS)</li>
 <li><strong>ファイル</strong>:フォルダ+ファイルとして使う(Amazon EFS)</li>
@@ -68,30 +71,30 @@
 </div>
 <figcaption>図1 3種類のストレージの違い。どれも最終的にはHDD/SSDに保存されるが、「利用者にどんな単位で見せるか」が異なる。</figcaption>
 </figure>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th></th><th>ブロックストレージ</th><th>ファイルストレージ</th><th>オブジェクトストレージ</th></tr>
-<tr><td>管理単位</td><td><strong>ブロック</strong></td><td><strong>ファイル</strong></td><td><strong>オブジェクト</strong></td></tr>
-<tr><td>利用者から見えるもの</td><td>ディスク/ボリューム</td><td>ファイル・フォルダ</td><td>オブジェクト</td></tr>
-<tr><td>ファイルシステム</td><td>利用者側で構築する</td><td>ストレージ側が提供</td><td>基本的に使わない</td></tr>
-<tr><td>階層構造</td><td>基本なし</td><td><strong>あり</strong></td><td>基本はフラット(キーのプレフィックスで階層を表現できる)</td></tr>
-<tr><td>アクセスのイメージ</td><td>ディスクとして利用</td><td>パスでファイルにアクセス</td><td>オブジェクトキーでアクセス</td></tr>
-<tr><td>具体例</td><td>PCのSSD、外付けSSD、サーバーのディスク、RAID</td><td>NAS、Windowsファイルサーバー、Linux/NFSファイルサーバー</td><td>写真・動画・バックアップなどの保管</td></tr>
-<tr><td>AWSサービス</td><td><strong>Amazon EBS</strong></td><td><strong>Amazon EFS</strong></td><td><strong>Amazon S3</strong></td></tr>
+<tr><td data-label="">管理単位</td><td data-label="ブロックストレージ"><strong>ブロック</strong></td><td data-label="ファイルストレージ"><strong>ファイル</strong></td><td data-label="オブジェクトストレージ"><strong>オブジェクト</strong></td></tr>
+<tr><td data-label="">利用者から見えるもの</td><td data-label="ブロックストレージ">ディスク/ボリューム</td><td data-label="ファイルストレージ">ファイル・フォルダ</td><td data-label="オブジェクトストレージ">オブジェクト</td></tr>
+<tr><td data-label="">ファイルシステム</td><td data-label="ブロックストレージ">利用者側で構築する</td><td data-label="ファイルストレージ">ストレージ側が提供</td><td data-label="オブジェクトストレージ">基本的に使わない</td></tr>
+<tr><td data-label="">階層構造</td><td data-label="ブロックストレージ">基本なし</td><td data-label="ファイルストレージ"><strong>あり</strong></td><td data-label="オブジェクトストレージ">基本はフラット(キーのプレフィックスで階層を表現できる)</td></tr>
+<tr><td data-label="">アクセスのイメージ</td><td data-label="ブロックストレージ">ディスクとして利用</td><td data-label="ファイルストレージ">パスでファイルにアクセス</td><td data-label="オブジェクトストレージ">オブジェクトキーでアクセス</td></tr>
+<tr><td data-label="">具体例</td><td data-label="ブロックストレージ">PCのSSD、外付けSSD、サーバーのディスク、RAID</td><td data-label="ファイルストレージ">NAS、Windowsファイルサーバー、Linux/NFSファイルサーバー</td><td data-label="オブジェクトストレージ">写真・動画・バックアップなどの保管</td></tr>
+<tr><td data-label="">AWSサービス</td><td data-label="ブロックストレージ"><strong>Amazon EBS</strong></td><td data-label="ファイルストレージ"><strong>Amazon EFS</strong></td><td data-label="オブジェクトストレージ"><strong>Amazon S3</strong></td></tr>
 </table></div>
 
-<h3>ブロックストレージ</h3>
+<h3 id="c1-1">ブロックストレージ<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>ストレージを<strong>ブロック単位の領域</strong>として提供します。PCのSSDでは、ユーザーには <code>C:\photo.jpg</code> のようなファイルとして見えますが、ストレージ上ではデータがブロックに分かれて管理されています。</p>
 <p>重要なのは、<strong>ブロックストレージにファイルシステムを作っただけで「ファイルストレージ」になるわけではない</strong>ことです。ブロックストレージの上に利用者がファイルシステムを構築し、ファイルとして使っています。</p>
 
-<h3>ファイルストレージ</h3>
+<h3 id="c1-2">ファイルストレージ<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>ファイルとフォルダという階層構造を利用者に提供する</strong>ストレージです。NASでは <code>\\NAS\写真\2026\photo01.jpg</code> のように<strong>ファイルパス</strong>でデータにアクセスします。</p>
 <p>裏側ではHDD/SSDにデータが保存されているので、「ファイルストレージはブロックを使わない」という意味ではありません。違いは、<strong>利用者にファイルシステムとファイル/フォルダというインターフェースを提供している</strong>ことです。</p>
 
-<h3>オブジェクトストレージ</h3>
+<h3 id="c1-3">オブジェクトストレージ<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>データを<strong>オブジェクト</strong>という単位で管理します。オブジェクトは「データ+メタデータ+識別情報(キーなど)」で構成されます。例えば写真なら、Key: <code>photo.jpg</code>、Data: JPEGデータ、Metadata: Content-Type・サイズなど、という形です。</p>
 <p><strong>「メタデータがあるからオブジェクトストレージ」ではありません</strong>。NASのファイルにもサイズ・作成日時・所有者などのメタデータがありますが、NASはファイルストレージです。違いは<strong>データを何という単位で管理するか</strong>です。</p>
 
-<h3>S3にフォルダを作れるのに、なぜ「階層構造がない」のか</h3>
+<h3 id="c1-4">S3にフォルダを作れるのに、なぜ「階層構造がない」のか<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 550 261" style="max-width:550px;min-width:520px" role="img" aria-label="図2 階層構造の違い。ファイルストレージには実際のディレクトリがある。S3はフラットで、「photos/2026/」はディレクトリではなく、キーの一部(プレフィックス)にすぎない。"><defs><marker id="dgterms-storage-types-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -121,14 +124,14 @@
 </section>
 
 <section class="chapter">
-<h2>2. 関連する用語</h2>
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>本書の用語ページの中には、まだ関連する用語がありません。</li>
 </ul>
 </section>
 
 <section class="chapter">
-<h2>3. 関連サービス</h2>
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/ebs.html">Amazon EBS</a>:ブロックストレージ</li>
 <li><a href="../services/efs.html">Amazon EFS</a>/<a href="../services/fsx.html">Amazon FSx</a>:ファイルストレージ</li>
@@ -141,5 +144,6 @@
   <a class="next" href="high-availability-scaling.html"><span class="label">次へ →</span>高可用性とスケーリング</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

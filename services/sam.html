@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS SAM | AWS教科書</title>
+<meta name="description" content="サーバーレスアプリの開発・デプロイを支援するフレームワーク">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,18 +21,33 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">フレームワーク</span>
+  <a class="category" href="index.html#cat10">フレームワーク</a>
   <h1>AWS SAM</h1>
   <p class="lead">サーバーレスアプリの開発・デプロイを支援するフレームワーク</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">SAMテンプレート</a></li><li><a href="#c2-2">SAM CLIのコマンド</a></li><li><a href="#c2-3">設定ファイル samconfig.toml</a></li><li><a href="#c2-4">段階的デプロイ</a></li><li><a href="#c2-5">SAMでデプロイするまでの流れ</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS SAM(Serverless Application Model)</strong>は、<strong>サーバーレスアプリケーションの開発・デプロイを支援するフレームワーク</strong>です。CloudFormationのサーバーレス版で、CloudFormationだと長くなる記述を簡単に書けます。<strong>最終的にはCloudFormationに変換</strong>されます。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>SAMテンプレート</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">SAMテンプレート<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>対象リソース:Lambda関数/レイヤー、API Gateway、DynamoDBテーブル、Step Functions など</p>
 <pre class="code"><code>AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
@@ -52,7 +69,7 @@ Resources:
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 773 196" style="max-width:773px;min-width:520px" role="img" aria-label="図1 SAMの仕組み。短く書いたSAMテンプレートは、Transformによって通常のCloudFormationテンプレートに変換され、LambdaやAPI Gatewayなどのリソースが作られる。"><defs><marker id="dgservices-sam-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 773 196" style="max-width:773px;min-width:618px" role="img" aria-label="図1 SAMの仕組み。短く書いたSAMテンプレートは、Transformによって通常のCloudFormationテンプレートに変換され、LambdaやAPI Gatewayなどのリソースが作られる。"><defs><marker id="dgservices-sam-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="83" width="130" height="52" rx="8" class="dg-blue"/>
 <text x="99" y="104" text-anchor="middle" class="dg-t">SAMテンプレート</text>
 <text x="99" y="122" text-anchor="middle" class="dg-s">短く書ける</text>
@@ -74,7 +91,7 @@ Resources:
 </div>
 <figcaption>図1 SAMの仕組み。短く書いたSAMテンプレートは、Transformによって通常のCloudFormationテンプレートに変換され、LambdaやAPI Gatewayなどのリソースが作られる。</figcaption>
 </figure>
-<h3>SAM CLIのコマンド</h3>
+<h3 id="c2-2">SAM CLIのコマンド<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>コマンド</th><th>内容</th></tr>
 <tr><td><code>sam init</code></td><td>プロジェクトのひな形を生成(ランタイム、アーキテクチャ、API有無、サンプルコードなど)</td></tr>
@@ -88,7 +105,7 @@ Resources:
 <tr><td><strong class="em"><code>sam sync --watch</code></strong></td><td>変更内容を高速にクラウドへ反映(既存リソースへの差分同期が目的)</td></tr>
 </table></div>
 
-<h3 class="em">設定ファイル samconfig.toml</h3>
+<h3 class="em" id="c2-3">設定ファイル samconfig.toml<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>複数環境で設定を変える場合などに使います。<code>stack_name</code>(スタック名)、<code>region</code>(リージョン)、<code>capabilities</code>(IAM作成の許可)、<code>s3_bucket</code>(パッケージの保存先)などを設定します。</p>
 
 <figure class="figure">
@@ -122,7 +139,7 @@ Resources:
 </div>
 <figcaption>図2 SAM CLIの基本的な流れ。init でひな形を作り、build でビルド、local でローカル実行して確認し、package / deploy でクラウドへ反映する。開発中の変更は sync で素早く反映できる。</figcaption>
 </figure>
-<h3>段階的デプロイ</h3>
+<h3 id="c2-4">段階的デプロイ<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li>SAMテンプレートに次の2つを記述:<strong class="em"><code>AutoPublishAlias: live</code></strong>、<strong class="em"><code>DeploymentPreference: Type: Canary10Percent5Minutes</code></strong></li>
 <li>初回デプロイ</li>
@@ -130,23 +147,23 @@ Resources:
 <li>段階的な移行が開始される(内部ではCodeDeployを使用)</li>
 </ol>
 
-<h3>SAMでデプロイするまでの流れ</h3>
+<h3 id="c2-5">SAMでデプロイするまでの流れ<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li>SAMテンプレートを作成し、Lambda・API・DynamoDBなどを定義</li>
 <li><code>sam build</code> でビルド</li>
 <li><code>sam package</code>/<code>sam deploy</code> でCloudFormationへ</li>
 <li>CloudFormationがAWSリソースを作成</li>
 </ol>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>コマンド</th><th>インプット</th><th>処理内容</th><th>アウトプット</th></tr>
-<tr><td><code>sam build</code></td><td>ソースコード、<code>template.yaml</code>、依存関係の定義(<code>requirements.txt</code>、<code>pom.xml</code>など)</td><td>依存関係を解決し、Lambda実行用の成果物を作成</td><td>ビルド成果物</td></tr>
-<tr><td><code>sam package</code></td><td><code>.aws-sam/build/</code> の成果物、<code>template.yaml</code></td><td>成果物をZIP化してS3へアップロードし、<code>CodeUri</code> をS3パスに置き換え</td><td>パッケージ済みテンプレート(<code>packaged.yaml</code> など)</td></tr>
-<tr><td><code>sam deploy</code></td><td>パッケージ済みテンプレート</td><td>CloudFormationスタックを作成・更新</td><td>Lambda関数・API GatewayなどのAWSリソース</td></tr>
+<tr><td data-label="コマンド"><code>sam build</code></td><td data-label="インプット">ソースコード、<code>template.yaml</code>、依存関係の定義(<code>requirements.txt</code>、<code>pom.xml</code>など)</td><td data-label="処理内容">依存関係を解決し、Lambda実行用の成果物を作成</td><td data-label="アウトプット">ビルド成果物</td></tr>
+<tr><td data-label="コマンド"><code>sam package</code></td><td data-label="インプット"><code>.aws-sam/build/</code> の成果物、<code>template.yaml</code></td><td data-label="処理内容">成果物をZIP化してS3へアップロードし、<code>CodeUri</code> をS3パスに置き換え</td><td data-label="アウトプット">パッケージ済みテンプレート(<code>packaged.yaml</code> など)</td></tr>
+<tr><td data-label="コマンド"><code>sam deploy</code></td><td data-label="インプット">パッケージ済みテンプレート</td><td data-label="処理内容">CloudFormationスタックを作成・更新</td><td data-label="アウトプット">Lambda関数・API GatewayなどのAWSリソース</td></tr>
 </table></div>
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>API Gateway+Lambda+DynamoDBのサーバーレスAPIを少ない記述で構築</li>
 <li>ローカルでLambdaやAPIをテストしてからデプロイ</li>
@@ -155,12 +172,12 @@ Resources:
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>SAM自体は無料のオープンソースフレームワークです。作成されたLambdaなどのリソースや、パッケージを置くS3に料金がかかります。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="cloudformation.html">AWS CloudFormation</a>:SAMの変換先</li>
 <li><a href="lambda.html">AWS Lambda</a>/<a href="api-gateway.html">Amazon API Gateway</a>/<a href="dynamodb.html">Amazon DynamoDB</a>/<a href="step-functions.html">AWS Step Functions</a>:SAMで定義する主なリソース</li>
@@ -170,7 +187,7 @@ Resources:
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>SAMテンプレートの目印 → <code>Transform: AWS::Serverless-2016-10-31</code>。</li>
 <li>Lambda単体のローカルテスト → <code>sam local invoke</code>。APIとしてローカル実行 → <code>sam local start-api</code>。</li>
@@ -181,7 +198,7 @@ Resources:
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>SAMはサーバーレス向けにCloudFormationを簡単に書けるフレームワーク。</li>
 <li>SAM CLIでビルド・ローカル実行・デプロイ・同期ができる。</li>
@@ -193,5 +210,6 @@ Resources:
   <a class="next" href="sdk.html"><span class="label">次へ →</span>AWS SDK</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

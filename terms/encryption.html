@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>保存時の暗号化と転送時の暗号化 | AWS教科書</title>
+<meta name="description" content="保存しているデータと、通信中のデータを、それぞれ暗号化して守る考え方">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,13 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">セキュリティ・認証</span>
+  <a class="category" href="index.html#cat3">セキュリティ・認証</a>
   <h1>保存時の暗号化と転送時の暗号化</h1>
   <p class="lead">保存しているデータと、通信中のデータを、それぞれ暗号化して守る考え方</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
 <section class="chapter">
-<h2>1. 詳しい説明</h2>
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>データの暗号化は、<strong>どの状態のデータを守るか</strong>で2つに分けて考えます。</p>
 <ul>
 <li><strong>保存時の暗号化(Encryption at rest)</strong>:ディスクやストレージに<strong>保存されているデータ</strong>を暗号化する。記憶媒体が盗まれたり、権限のない人に読まれたりしても中身が分からないようにする。</li>
@@ -33,7 +36,7 @@
 <p>どちらか一方だけでは不十分で、要件に応じて両方を組み合わせます。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 822 202" style="max-width:822px;min-width:520px" role="img" aria-label="図1 転送時の暗号化(矢印の通信)と保存時の暗号化(EBS・S3に保存されたデータ)。利用者とALBの間はACMの証明書でHTTPS、保存するデータはKMSのキーなどで暗号化する。ALBとEC2の間も暗号化するかは要件で決める。"><defs><marker id="dgterms-encryption-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 822 202" style="max-width:822px;min-width:658px" role="img" aria-label="図1 転送時の暗号化(矢印の通信)と保存時の暗号化(EBS・S3に保存されたデータ)。利用者とALBの間はACMの証明書でHTTPS、保存するデータはKMSのキーなどで暗号化する。ALBとEC2の間も暗号化するかは要件で決める。"><defs><marker id="dgterms-encryption-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="83" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="104" text-anchor="middle" class="dg-t">利用者</text>
 <text x="104" y="122" text-anchor="middle" class="dg-s">ブラウザ</text>
@@ -60,7 +63,7 @@
 <figcaption>図1 転送時の暗号化(矢印の通信)と保存時の暗号化(EBS・S3に保存されたデータ)。利用者とALBの間はACMの証明書でHTTPS、保存するデータはKMSのキーなどで暗号化する。ALBとEC2の間も暗号化するかは要件で決める。</figcaption>
 </figure>
 
-<h3>保存時の暗号化</h3>
+<h3 id="c1-1">保存時の暗号化<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>AWSの多くのサービスは、<strong>サーバー側の暗号化</strong>(サービスが保存するときに自動で暗号化し、読み出すときに自動で復号する)に対応しています。暗号化のキーは<a href="../services/kms.html">AWS KMS</a>で管理します。</p>
 <div class="table-wrap"><table>
 <tr><th>サービス</th><th>保存時の暗号化</th><th>ポイント</th></tr>
@@ -72,7 +75,7 @@
 </table></div>
 <p>サービスに渡す前に、アプリ側で暗号化してから保存する方法を<strong>クライアント側の暗号化</strong>といいます(S3のクライアントサイド暗号化、<a href="../services/database-encryption-sdk.html">AWS Database Encryption SDK</a>など)。AWS側でも平文を見られないようにしたい場合に使います。</p>
 
-<h3>転送時の暗号化</h3>
+<h3 id="c1-2">転送時の暗号化<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>転送時の暗号化は、主に<strong>TLS(HTTPS)</strong>で行います。AWSのサービスのAPIはHTTPSで呼び出されます。自分のシステムの通信も、要件に応じて暗号化します。</p>
 <div class="table-wrap"><table>
 <tr><th>通信</th><th>暗号化の方法</th></tr>
@@ -87,7 +90,7 @@
 </section>
 
 <section class="chapter">
-<h2>2. 関連する用語</h2>
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:<code>aws:SecureTransport</code> などの条件キー</li>
 <li><a href="storage-types.html">ストレージの種類</a>:暗号化の対象になるストレージ</li>
@@ -95,7 +98,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 関連サービス</h2>
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/kms.html">AWS KMS</a>:保存時の暗号化のキー管理</li>
 <li><a href="../services/acm.html">AWS Certificate Manager</a>:転送時の暗号化(HTTPS)の証明書</li>
@@ -110,5 +113,6 @@
   <a class="next" href="oidc.html"><span class="label">次へ →</span>OIDC(OpenID Connect)</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

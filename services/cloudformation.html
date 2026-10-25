@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS CloudFormation | AWS教科書</title>
+<meta name="description" content="AWSリソースをテンプレート(コード)で定義し、自動構築・管理">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,18 +21,33 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">マネジメントとガバナンス</span>
+  <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS CloudFormation</h1>
   <p class="lead">AWSリソースをテンプレート(コード)で定義し、自動構築・管理</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(17項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">主な機能</a></li><li><a href="#c2-3">AWS CLIのコマンドとオプション</a></li><li><a href="#c2-4">テンプレートの例(S3バケットの作成)</a></li><li><a href="#c2-5">組み込み関数</a></li><li><a href="#c2-6">Export/ImportValue(スタック間の参照)</a></li><li><a href="#c2-7">ロールバックとスタックの状態</a></li><li><a href="#c2-8">cfn-init・cfn-signal・CreationPolicy</a></li><li><a href="#c2-9">UpdatePolicy(Auto Scalingグループの更新)</a></li><li><a href="#c2-10">終了保護</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS CloudFormation</strong>は、AWSリソースを<strong>コード(テンプレート)として定義</strong>し、自動で構築・管理するサービスです(Infrastructure as Code)。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>構成要素</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">構成要素<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>テンプレート</strong>:インフラの設計図(YAML/JSON形式)</li>
 <li><strong>スタック</strong>:テンプレートから作られるリソースの集合(環境そのもののイメージ)</li>
@@ -39,7 +56,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 740 214" style="max-width:740px;min-width:520px" role="img" aria-label="図1 CloudFormationの基本。テンプレート(設計図)を渡すと、CloudFormationがリソースをまとめて作成し、スタックとして管理する。更新・削除もスタック単位で行う。"><defs><marker id="dgservices-cloudformation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 740 214" style="max-width:740px;min-width:592px" role="img" aria-label="図1 CloudFormationの基本。テンプレート(設計図)を渡すと、CloudFormationがリソースをまとめて作成し、スタックとして管理する。更新・削除もスタック単位で行う。"><defs><marker id="dgservices-cloudformation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="412" y="10" width="304" height="179" rx="10" class="dg-group"/>
 <text x="422" y="26" class="dg-s">スタック</text>
 <rect x="34" y="83" width="130" height="52" rx="8" class="dg-blue"/>
@@ -62,7 +79,7 @@
 </div>
 <figcaption>図1 CloudFormationの基本。テンプレート(設計図)を渡すと、CloudFormationがリソースをまとめて作成し、スタックとして管理する。更新・削除もスタック単位で行う。</figcaption>
 </figure>
-<h3>主な機能</h3>
+<h3 id="c2-2">主な機能<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>構文の拡張</strong>:サーバーレス用に <a href="sam.html">AWS SAM</a> がある。</li>
 <li><strong class="em">Transformセクション</strong>:デプロイ前にテンプレートを別のテンプレートへ変換する。例:<code>Transform: AWS::Serverless-2016-10-31</code>(SAM)</li>
@@ -79,7 +96,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 274" style="max-width:684px;min-width:520px" role="img" aria-label="図2 変更セットとドリフト検出。変更セットは更新の前に「何が変わるか」を確認する。ドリフト検出は、コンソールなどで手動変更されて生じたテンプレートとのズレを見つける。"><defs><marker id="dgservices-cloudformation-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図2 変更セットとドリフト検出。変更セットは更新の前に「何が変わるか」を確認する。ドリフト検出は、コンソールなどで手動変更されて生じたテンプレートとのズレを見つける。"><defs><marker id="dgservices-cloudformation-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="44" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="68" text-anchor="middle" class="dg-t">新しいテンプレート</text>
 <rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
@@ -104,7 +121,7 @@
 </div>
 <figcaption>図2 変更セットとドリフト検出。変更セットは更新の前に「何が変わるか」を確認する。ドリフト検出は、コンソールなどで手動変更されて生じたテンプレートとのズレを見つける。</figcaption>
 </figure>
-<h3>AWS CLIのコマンドとオプション</h3>
+<h3 id="c2-3">AWS CLIのコマンドとオプション<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>コマンド</th><th>内容</th></tr>
 <tr><td><code>create-stack</code></td><td>新規作成</td></tr>
@@ -115,7 +132,7 @@
 </table></div>
 <p>主なオプション:<code>--template-file</code>(テンプレート指定)、<code>--stack-name</code>(スタック名)、<code>--parameter-overrides</code>(パラメータ上書き)、<code>--capabilities</code>(IAMリソース作成の許可)、<code>--tags</code>、<code>--region</code>、<code>--role-arn</code>(実行ロール)、<code>--disable-rollback</code>(ロールバック無効)</p>
 
-<h3>テンプレートの例(S3バケットの作成)</h3>
+<h3 id="c2-4">テンプレートの例(S3バケットの作成)<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>Parameters</strong>:パラメータ(バケット名、バージョニングのON/OFF。<code>AllowedValues</code> で値の候補を限定)</li>
 <li><strong>Resources</strong>:本体(<code>Properties</code> で設定)</li>
@@ -172,7 +189,7 @@ Outputs:
 <figcaption>図3 StackSets。1つのテンプレートから、複数のアカウント・リージョンへ同じスタックを一括で展開する。</figcaption>
 </figure>
 
-<h3>組み込み関数</h3>
+<h3 id="c2-5">組み込み関数<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>テンプレートの中で値を参照・加工するために<strong>組み込み関数</strong>を使います。YAMLでは <code>!Ref</code> のような短縮形で書けます(正式な形は <code>Fn::GetAtt</code> など)。</p>
 <div class="table-wrap"><table>
 <tr><th>関数</th><th>返すもの</th><th>例</th></tr>
@@ -201,7 +218,7 @@ Resources:
       SubnetId: !Select [0, !Ref SubnetIds]</code></pre>
 <p><code>AWS::Region</code>(リージョン)、<code>AWS::AccountId</code>(アカウントID)、<code>AWS::StackName</code>(スタック名)などの<strong>疑似パラメータ</strong>は、定義しなくても <code>!Ref</code> や <code>!Sub</code> で使えます。同じテンプレートを別のリージョン・アカウントで使い回すときに便利です。最新のAMI IDは、Parameter Storeの公開パラメータを <code>AWS::SSM::Parameter::Value&lt;AWS::EC2::Image::Id&gt;</code> 型のパラメータで参照する方法もあります。</p>
 
-<h3>Export/ImportValue(スタック間の参照)</h3>
+<h3 id="c2-6">Export/ImportValue(スタック間の参照)<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p>ネットワーク用のスタックで作ったVPCやサブネットのIDを、アプリ用のスタックで使いたいときは、<strong>Outputsで値をエクスポート</strong>し、使う側で <strong><code>!ImportValue</code></strong> で読み込みます。</p>
 <pre class="code"><code># ネットワーク用スタック(エクスポートする側)
 Outputs:
@@ -242,7 +259,7 @@ Resources:
 <figcaption>図4 Export/ImportValue。ネットワーク用スタックがエクスポートした値を、複数のスタックがインポートして使う。インポートされている間、エクスポート側は削除・変更できない。</figcaption>
 </figure>
 
-<h3>ロールバックとスタックの状態</h3>
+<h3 id="c2-7">ロールバックとスタックの状態<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>スタックの作成・更新の途中でリソースの作成に失敗すると、CloudFormationは既定で<strong>ロールバック</strong>し、元の状態に戻そうとします。スタックの状態(ステータス)は次のように変わります。</p>
 <div class="table-wrap"><table>
 <tr><th>状態</th><th>意味</th><th>対処</th></tr>
@@ -258,7 +275,7 @@ Resources:
 <li><strong>ロールバックトリガー</strong>にCloudWatchアラームを指定すると、更新後の監視期間中にアラームが発生したとき自動でロールバックできる</li>
 </ul>
 
-<h3>cfn-init・cfn-signal・CreationPolicy</h3>
+<h3 id="c2-8">cfn-init・cfn-signal・CreationPolicy<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2インスタンスは「起動した」時点でCloudFormation上は作成完了になりますが、その時点ではまだアプリのインストールが終わっていないことがあります。次のヘルパースクリプトを使うと、<strong>インスタンス内の設定が終わるまでスタックの完了を待たせる</strong>ことができます。</p>
 <div class="table-wrap"><table>
 <tr><th>仕組み</th><th>役割</th></tr>
@@ -294,7 +311,7 @@ Resources:
         /opt/aws/bin/cfn-signal -e $? -s ${AWS::StackName} -r WebServer --region ${AWS::Region}</code></pre>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図5 CreationPolicyとcfn-signal。インスタンスの起動後、cfn-initで設定し、cfn-signalで結果を通知する。CloudFormationは成功のシグナルを受け取ってから作成完了にする。"><defs><marker id="dgservices-cloudformation-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図5 CreationPolicyとcfn-signal。インスタンスの起動後、cfn-initで設定し、cfn-signalで結果を通知する。CloudFormationは成功のシグナルを受け取ってから作成完了にする。"><defs><marker id="dgservices-cloudformation-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="83" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="104" text-anchor="middle" class="dg-tb">CloudFormation</text>
 <text x="109" y="122" text-anchor="middle" class="dg-s">完了を待つ</text>
@@ -321,7 +338,7 @@ Resources:
 </figure>
 <p>タイムアウトまでに成功のシグナルが届かない(または失敗のシグナルが届く)と、そのリソースは作成失敗となり、スタックはロールバックします。「スタックがタイムアウトで失敗する」場合は、インスタンスからCloudFormationのエンドポイントへ通信できるか(NATゲートウェイなど)、cfn-signalが実行されているか(<code>/var/log/cfn-init.log</code>)を確認します。</p>
 
-<h3>UpdatePolicy(Auto Scalingグループの更新)</h3>
+<h3 id="c2-9">UpdatePolicy(Auto Scalingグループの更新)<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p>Auto Scalingグループの起動テンプレート(AMIなど)を変えてスタックを更新しても、既定では<strong>既存のインスタンスは置き換わりません</strong>(新しく起動するものから適用される)。<strong>UpdatePolicy</strong>を付けると、スタックの更新時にインスタンスをどう入れ替えるかを指定できます。</p>
 <div class="table-wrap"><table>
 <tr><th>ポリシー</th><th>動作</th></tr>
@@ -331,7 +348,7 @@ Resources:
 </table></div>
 <p>ローリング更新はリソースを節約できますが、途中で失敗すると新旧が混在した状態から戻すことになります。確実に戻せることを重視するなら置き換え更新を選びます。</p>
 
-<h3>終了保護</h3>
+<h3 id="c2-10">終了保護<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>スタックの<strong>終了保護</strong>を有効にすると、<strong>スタックの削除操作が拒否</strong>されます。本番環境のスタックを誤って削除するのを防ぎます。ネストスタックでは、親(ルート)スタックの設定が適用されます。</p>
 <div class="table-wrap"><table>
 <tr><th>仕組み</th><th>防ぐもの</th><th>単位</th></tr>
@@ -342,7 +359,7 @@ Resources:
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>開発・ステージング・本番で同じ構成の環境を再現</li>
 <li>複数アカウントへ共通のセキュリティ設定を展開(StackSets)</li>
@@ -351,12 +368,12 @@ Resources:
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>CloudFormation自体は(AWSリソースを扱う範囲では)無料です。作成されたリソースに料金がかかります。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="cdk.html">AWS CDK</a>:プログラミング言語で書いてCloudFormationに変換</li>
 <li><a href="sam.html">AWS SAM</a>:サーバーレス向けの拡張</li>
@@ -368,25 +385,34 @@ Resources:
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
-<li>スタック削除時にリソースを残す → <strong>DeletionPolicy: Retain</strong>(デフォルトはDelete)。</li>
-<li>パスワードを直書きしない → <strong>ダイナミックリファレンス</strong>/<strong>NoEcho</strong>。</li>
-<li>変更の影響を事前確認 → <strong>変更セット</strong>。手動変更によるズレ → <strong>ドリフト検出</strong>。</li>
-<li>複数アカウント・リージョンへ展開 → <strong>StackSets</strong>。</li>
-<li>IAMリソースを作るテンプレート → <code>--capabilities CAPABILITY_IAM</code> が必要。</li>
-<li>Lambdaのコードを更新したのに反映されない → <strong>S3キーかVersionIdを変える</strong>。</li>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>テンプレートの書き方</h4>
+<ul>
 <li>リソースのIDや名前 → <code>!Ref</code>、ARNやDNS名などの属性 → <code>!GetAtt</code>、リージョンごとのAMI → <code>Mappings</code>+<code>!FindInMap</code>。</li>
 <li>別のスタックの値を使う → <strong>Export</strong>+<strong><code>!ImportValue</code></strong>(同じリージョンのみ。インポートされている間はエクスポート側を削除・変更できない)。</li>
+<li>パスワードを直書きしない → <strong>ダイナミックリファレンス</strong>/<strong>NoEcho</strong>。</li>
+<li>IAMリソースを作るテンプレート → <code>--capabilities CAPABILITY_IAM</code> が必要。</li>
+</ul>
+<h4>更新・変更管理</h4>
+<ul>
+<li>変更の影響を事前確認 → <strong>変更セット</strong>。手動変更によるズレ → <strong>ドリフト検出</strong>。</li>
+<li>Lambdaのコードを更新したのに反映されない → <strong>S3キーかVersionIdを変える</strong>。</li>
 <li><code>ROLLBACK_COMPLETE</code> のスタックは更新できない → 削除して作り直す。<code>UPDATE_ROLLBACK_FAILED</code> → 原因を直して<strong>更新のロールバックを続行</strong>。</li>
 <li>インスタンス内のアプリの準備ができるまで完了にしない → <strong>cfn-init</strong>+<strong>cfn-signal</strong>+<strong>CreationPolicy</strong>。シグナルが届かないとタイムアウトでロールバック。</li>
 <li>AMIを変えたらAuto Scalingのインスタンスも入れ替えたい → <strong>UpdatePolicy</strong>(ローリング更新/置き換え更新)。</li>
+</ul>
+<h4>保護・展開</h4>
+<ul>
+<li>スタック削除時にリソースを残す → <strong>DeletionPolicy: Retain</strong>(デフォルトはDelete)。</li>
 <li>スタックの誤削除を防ぐ → <strong>終了保護</strong>。リソースを残す → DeletionPolicy。更新から守る → スタックポリシー。</li>
-</ul></div>
+<li>複数アカウント・リージョンへ展開 → <strong>StackSets</strong>。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>CloudFormationはテンプレートからスタックを作るIaCサービス。</li>
 <li>DeletionPolicy・変更セット・ドリフト検出・スタックポリシーで安全に運用する。</li>
@@ -399,5 +425,6 @@ Resources:
   <a class="next" href="cdk.html"><span class="label">次へ →</span>AWS CDK</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

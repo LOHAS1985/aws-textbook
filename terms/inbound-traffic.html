@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>インバウンド通信 | AWS教科書</title>
+<meta name="description" content="外部からVPC内のリソースへ入ってくる通信と、その4つの入口">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,16 +21,27 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワーク</span>
+  <a class="category" href="index.html#cat2">ネットワーク</a>
   <h1>インバウンド通信</h1>
   <p class="lead">外部からVPC内のリソースへ入ってくる通信と、その4つの入口</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(9項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">① インターネット → パブリックサブネットのインスタンス(IGW)</a></li><li><a href="#c1-2">② インターネット → プライベートサブネットのインスタンス(ALB/NLB)</a></li><li><a href="#c1-3">③ オンプレミス → プライベートサブネット(Site-to-Site VPN/Direct Connect)</a></li><li><a href="#c1-4">④ 他のVPC → プライベートサブネット(VPCピアリング/Transit Gateway)</a></li><li><a href="#c1-5">比較</a></li><li><a href="#c1-6">押さえておきたいポイント</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. 詳しい説明</h2>
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>インバウンド通信</strong>は、外部からVPC内のリソースへ入ってくる通信です。送信元の種類によって通る入口が異なり、いずれの場合も<strong>ルートテーブルに経路があること</strong>に加えて、<strong>セキュリティグループとNACLで許可されていること</strong>が必要です。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 822 354" style="max-width:822px;min-width:520px" role="img" aria-label="図1 インバウンド通信の4つの入口。①インターネットからIGW経由でパブリックサブネットのインスタンスへ、②ALB/NLBを前段に置いてプライベートサブネットへ、③オンプレミスからVPN/Direct Connect経由で、④他のVPCからピアリング/Transit Gateway経由で届く。"><defs><marker id="dgterms-inbound-traffic-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 822 354" style="max-width:822px;min-width:657px" role="img" aria-label="図1 インバウンド通信の4つの入口。①インターネットからIGW経由でパブリックサブネットのインスタンスへ、②ALB/NLBを前段に置いてプライベートサブネットへ、③オンプレミスからVPN/Direct Connect経由で、④他のVPCからピアリング/Transit Gateway経由で届く。"><defs><marker id="dgterms-inbound-traffic-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="84" width="145" height="40" rx="8" class="dg-blue"/>
 <text x="106" y="108" text-anchor="middle" class="dg-t">インターネット</text>
 <rect x="34" y="204" width="145" height="40" rx="8" class="dg-blue"/>
@@ -69,7 +82,7 @@
 <figcaption>図1 インバウンド通信の4つの入口。①インターネットからIGW経由でパブリックサブネットのインスタンスへ、②ALB/NLBを前段に置いてプライベートサブネットへ、③オンプレミスからVPN/Direct Connect経由で、④他のVPCからピアリング/Transit Gateway経由で届く。</figcaption>
 </figure>
 
-<h3>① インターネット → パブリックサブネットのインスタンス(IGW)</h3>
+<h3 id="c1-1">① インターネット → パブリックサブネットのインスタンス(IGW)<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>経路:インターネット → IGW → インスタンス</li>
 <li>ルート:パブリックサブネットのルートテーブルで <code>0.0.0.0/0</code>(IPv6は <code>::/0</code>)→ IGW</li>
@@ -77,14 +90,14 @@
 <li>特徴:インスタンスを直接公開するため、セキュリティグループで受け付けるポートを絞る。</li>
 </ul>
 
-<h3>② インターネット → プライベートサブネットのインスタンス(ALB/NLB)</h3>
+<h3 id="c1-2">② インターネット → プライベートサブネットのインスタンス(ALB/NLB)<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>経路:インターネット → IGW → ALB/NLB → インスタンス</li>
 <li>配置:ロードバランサーはパブリックサブネット、インスタンスはプライベートサブネットに置く。</li>
 <li>特徴:インスタンスにパブリックIPを持たせずに公開できる。インスタンスのSGでは、<strong>ロードバランサーのSGからの通信だけを許可</strong>する。</li>
 </ul>
 
-<h3>③ オンプレミス → プライベートサブネット(Site-to-Site VPN/Direct Connect)</h3>
+<h3 id="c1-3">③ オンプレミス → プライベートサブネット(Site-to-Site VPN/Direct Connect)<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>経路:オンプレミス → Site-to-Site VPN または Direct Connect → インスタンス</li>
 <li>終端:仮想プライベートゲートウェイ(VGW)または Transit Gateway</li>
@@ -92,23 +105,23 @@
 <li>ルート:サブネットのルートテーブルに、オンプレミスのCIDR向けの経路(またはVGWのルート伝播)が必要。</li>
 </ul>
 
-<h3>④ 他のVPC → プライベートサブネット(VPCピアリング/Transit Gateway)</h3>
+<h3 id="c1-4">④ 他のVPC → プライベートサブネット(VPCピアリング/Transit Gateway)<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>経路:他のVPC → VPCピアリング または Transit Gateway → インスタンス</li>
 <li>特徴:プライベートIPでVPC間を接続する。<strong>VPCピアリングは1対1</strong>で推移的なルーティングはできない。<strong>Transit Gateway</strong>は多数のVPCやオンプレミスをハブ&スポークで接続できる。</li>
 <li>条件:双方のルートテーブルに相手側CIDR向けの経路が必要。<strong>CIDRが重複していると接続できない</strong>。</li>
 </ul>
 
-<h3>比較</h3>
-<div class="table-wrap"><table>
+<h3 id="c1-5">比較<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
 <tr><th>送信元</th><th>入口</th><th>経由するもの</th><th>宛先</th><th>パブリックIP</th></tr>
-<tr><td>インターネット</td><td>IGW</td><td>なし</td><td>パブリックサブネットのインスタンス</td><td>必要</td></tr>
-<tr><td>インターネット</td><td>IGW</td><td>ALB/NLB</td><td>プライベートサブネットのインスタンス</td><td>不要</td></tr>
-<tr><td>オンプレミス</td><td>VPN/Direct Connect</td><td>なし</td><td>プライベートサブネットのインスタンス</td><td>不要</td></tr>
-<tr><td>他のVPC</td><td>VPCピアリング/Transit Gateway</td><td>なし</td><td>プライベートサブネットのインスタンス</td><td>不要</td></tr>
+<tr><td data-label="送信元">インターネット</td><td data-label="入口">IGW</td><td data-label="経由するもの">なし</td><td data-label="宛先">パブリックサブネットのインスタンス</td><td data-label="パブリックIP">必要</td></tr>
+<tr><td data-label="送信元">インターネット</td><td data-label="入口">IGW</td><td data-label="経由するもの">ALB/NLB</td><td data-label="宛先">プライベートサブネットのインスタンス</td><td data-label="パブリックIP">不要</td></tr>
+<tr><td data-label="送信元">オンプレミス</td><td data-label="入口">VPN/Direct Connect</td><td data-label="経由するもの">なし</td><td data-label="宛先">プライベートサブネットのインスタンス</td><td data-label="パブリックIP">不要</td></tr>
+<tr><td data-label="送信元">他のVPC</td><td data-label="入口">VPCピアリング/Transit Gateway</td><td data-label="経由するもの">なし</td><td data-label="宛先">プライベートサブネットのインスタンス</td><td data-label="パブリックIP">不要</td></tr>
 </table></div>
 
-<h3>押さえておきたいポイント</h3>
+<h3 id="c1-6">押さえておきたいポイント<a class="anchor" href="#c1-6" aria-label="この見出しへのリンク">#</a></h3>
 <div class="point"><ul>
 <li>SGはステートフルなので、許可したインバウンド通信の応答(アウトバウンド)は自動的に許可される。</li>
 <li>NACLはステートレスなので、インバウンドと応答のアウトバウンド(エフェメラルポート)の両方を明示的に許可する必要がある。</li>
@@ -118,7 +131,7 @@
 </section>
 
 <section class="chapter">
-<h2>2. 関連する用語</h2>
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="outbound-traffic.html">アウトバウンド通信</a>:VPC内から外へ出ていく通信</li>
 <li><a href="route-table.html">ルートテーブル</a>:経路を決めるルール表</li>
@@ -127,7 +140,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 関連サービス</h2>
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/vpc.html">Amazon VPC</a>:IGW・サブネット・ピアリング</li>
 <li><a href="../services/elb.html">Elastic Load Balancing</a>:プライベートなインスタンスの公開</li>
@@ -142,5 +155,6 @@
   <a class="next" href="outbound-traffic.html"><span class="label">次へ →</span>アウトバウンド通信</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

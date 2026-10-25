@@ -4,21 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>用語 | AWS教科書</title>
+<meta name="description" content="AWSを学ぶうえで押さえておきたい用語の解説">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
   </div>
 </header>
 <main>
-<div class="page-head"><h1>用語</h1></div>
+<div class="page-head"><h1>用語</h1><p class="lead">AWSを学ぶうえで押さえておきたい用語の解説</p></div>
+<div class="toc-search">
+  <input type="search" id="toc-q" placeholder="用語・キーワードで絞り込み(例: IP、暗号化、DNS)" aria-label="絞り込み" autocomplete="off">
+  <span class="toc-hits" id="toc-hits"></span>
+</div>
 <section class="toc-category" id="cat1">
 <h2>AWSの基礎 <span class="count">(3)</span></h2>
 <ul class="card-list">
@@ -67,6 +73,36 @@
   <li data-keys="サーキットブレーカー circuit-breaker 設計・運用 呼び出し先の障害時に呼び出しを止め、障害の連鎖を防ぐ設計パターン"><a href="circuit-breaker.html"><span class="name">サーキットブレーカー</span><span class="desc">呼び出し先の障害時に呼び出しを止め、障害の連鎖を防ぐ設計パターン</span></a></li>
 </ul>
 </section>
+<p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>
+<script>
+(function () {
+  var q = document.getElementById("toc-q");
+  var hits = document.getElementById("toc-hits");
+  var none = document.getElementById("toc-none");
+  var sections = document.querySelectorAll(".toc-category");
+  var total = document.querySelectorAll(".toc-category li").length;
+  function apply() {
+    var words = q.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    var shown = 0;
+    sections.forEach(function (sec) {
+      var n = 0;
+      sec.querySelectorAll("li").forEach(function (li) {
+        var keys = li.getAttribute("data-keys");
+        var ok = words.every(function (w) { return keys.indexOf(w) >= 0; });
+        li.hidden = !ok;
+        if (ok) n++;
+      });
+      sec.hidden = n === 0;
+      sec.querySelector("h2 .count").textContent = "(" + n + ")";
+      shown += n;
+    });
+    hits.textContent = words.length ? shown + " / " + total + "件" : "";
+    none.hidden = shown > 0;
+  }
+  q.addEventListener("input", apply);
+  q.addEventListener("keydown", function (e) { if (e.key === "Escape") { q.value = ""; apply(); } });
+})();
+</script>
 </main>
 </body>
 </html>

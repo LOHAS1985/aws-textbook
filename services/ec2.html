@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon EC2 | AWS教科書</title>
+<meta name="description" content="AWS上で仮想サーバを動かすサービス(Elastic Compute Cloud)">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,27 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">コンピューティング</span>
+  <a class="category" href="index.html#cat1">コンピューティング</a>
   <h1>Amazon EC2</h1>
   <p class="lead">AWS上で仮想サーバを動かすサービス(Elastic Compute Cloud)</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(20項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">押さえておきたい用語</a></li><li><a href="#c2-2">EBSとインスタンスストアの違い</a></li><li><a href="#c2-3">プレイスメントグループ</a></li><li><a href="#c2-4">インスタンスタイプ</a></li><li><a href="#c2-5">EC2への接続方法(EC2 Instance Connect)</a></li><li><a href="#c2-6">キーペア</a></li><li><a href="#c2-7">ユーザーデータ</a></li><li><a href="#c2-8">インスタンスメタデータとIMDSv2</a></li><li><a href="#c2-9">停止・休止・終了の違い</a></li><li><a href="#c2-10">ステータスチェックと自動復旧</a></li><li><a href="#c2-11">T系インスタンスのCPUクレジット</a></li><li><a href="#c2-12">スポットインスタンスの中断通知</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a><ul><li><a href="#c4-1">リザーブドインスタンスとSavings Plansの種類</a></li></ul></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon EC2(Elastic Compute Cloud)</strong>は、AWS上で仮想サーバ(インスタンス)を動かすサービスです。OSテンプレートであるAMIを選び、インスタンスタイプ(CPU・メモリの組み合わせ)を決めて起動します。</p>
 
 <figure class="figure">
@@ -73,8 +90,8 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>押さえておきたい用語</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">押さえておきたい用語<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>AMI</strong>:起動イメージ(OSテンプレート)。AMIを暗号化すると、AMIが参照しているEBSスナップショットが暗号化される。</li>
 <li><strong>拡張ネットワーキング</strong>:仮想化によるネットワーク処理の負担を減らし(SR-IOVという技術で、インスタンスがネットワーク機器を直接使えるようにする)、<strong>高帯域・低レイテンシー・パケットの処理性能の向上</strong>を実現する機能。追加料金はなく、現在の多くのインスタンスタイプで使える。</li>
@@ -83,7 +100,7 @@
 <li><strong class="em">インスタンスプロファイル</strong>:IAMロールを格納するコンテナ。EC2に直接IAMロールは付与できず、<code>EC2 → インスタンスプロファイル → IAMロール</code> の形になる。</li>
 </ul>
 
-<h3>EBSとインスタンスストアの違い</h3>
+<h3 id="c2-2">EBSとインスタンスストアの違い<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 640 190" role="img" aria-label="インスタンスを停止して再起動したとき、EBSのデータは残り、インスタンスストアのデータは消える">
@@ -117,7 +134,7 @@
 <figcaption>図2 停止・起動したときのデータの違い。消えて困るデータはEBSやS3に置く。停止・起動するとインスタンスは別の物理ホストに移ることがあるため、ホスト直結のインスタンスストアのデータは引き継がれない。</figcaption>
 </figure>
 
-<h3>プレイスメントグループ</h3>
+<h3 id="c2-3">プレイスメントグループ<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>インスタンスをAWSのハードウェア上でどのように配置するかを決める仕組みです。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -172,14 +189,14 @@
 </div>
 <figcaption>図3 プレイスメントグループの3つの戦略。グレーの縦長の枠がラック、オレンジの四角がインスタンス。</figcaption>
 </figure>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>戦略</th><th>配置の考え方</th><th>目的</th><th>用途</th></tr>
-<tr><td>クラスター</td><td><strong>単一AZ</strong>内で、物理的に近い場所にまとめる</td><td>低レイテンシー・高スループット</td><td>HPC、密結合の分散処理、ノード間通信が多いワークロード</td></tr>
-<tr><td>パーティション</td><td>ラックごとのグループ(パーティション)に分け、パーティション間でハードウェアを共有しない</td><td>障害の影響範囲の分離</td><td>Hadoop(HDFS)、Cassandra、Kafkaなどの大規模分散システム</td></tr>
-<tr><td>スプレッド</td><td>インスタンスごとに別のラックに配置する</td><td>同時障害のリスクを最小化</td><td>少数の重要なインスタンス</td></tr>
+<tr><td data-label="戦略">クラスター</td><td data-label="配置の考え方"><strong>単一AZ</strong>内で、物理的に近い場所にまとめる</td><td data-label="目的">低レイテンシー・高スループット</td><td data-label="用途">HPC、密結合の分散処理、ノード間通信が多いワークロード</td></tr>
+<tr><td data-label="戦略">パーティション</td><td data-label="配置の考え方">ラックごとのグループ(パーティション)に分け、パーティション間でハードウェアを共有しない</td><td data-label="目的">障害の影響範囲の分離</td><td data-label="用途">Hadoop(HDFS)、Cassandra、Kafkaなどの大規模分散システム</td></tr>
+<tr><td data-label="戦略">スプレッド</td><td data-label="配置の考え方">インスタンスごとに別のラックに配置する</td><td data-label="目的">同時障害のリスクを最小化</td><td data-label="用途">少数の重要なインスタンス</td></tr>
 </table></div>
 
-<h3>インスタンスタイプ</h3>
+<h3 id="c2-4">インスタンスタイプ<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>インスタンスタイプを<strong>変更するときはインスタンスを停止状態にする</strong>必要があります。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -216,7 +233,7 @@
 <tr><td>trn</td><td>Trainium</td><td>学習</td></tr>
 <tr><td>hpc</td><td>HPC特化</td><td>科学計算</td></tr>
 </table></div>
-<h3>EC2への接続方法(EC2 Instance Connect)</h3>
+<h3 id="c2-5">EC2への接続方法(EC2 Instance Connect)<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>EC2 Instance Connect</strong>は、SSHの鍵を事前に配らずにEC2へSSH接続する仕組みです。接続のたびに<strong>一時的な公開鍵</strong>をAPIでインスタンスに送り込み(<strong>有効期間は60秒</strong>)、その間にSSHで接続します。鍵の配布・管理が不要で、誰が接続できるかをIAMポリシー(<code>ec2-instance-connect:SendSSHPublicKey</code>)で制御でき、鍵の送信はCloudTrailに記録されます。</p>
 <ul>
 <li>マネジメントコンソールのブラウザからも、AWS CLIからも接続できる。</li>
@@ -226,7 +243,7 @@
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 307" style="max-width:684px;min-width:520px" role="img" aria-label="図5 EC2 Instance Connectの仕組み。①APIで一時的な公開鍵を送ると、②その鍵がインスタンスに60秒間だけ置かれ、③その間にSSHで接続する。下段: Instance Connect Endpointを使うと、プライベートサブネットのEC2にも接続できる。"><defs><marker id="dgservices-ec2-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 307" style="max-width:684px;min-width:547px" role="img" aria-label="図5 EC2 Instance Connectの仕組み。①APIで一時的な公開鍵を送ると、②その鍵がインスタンスに60秒間だけ置かれ、③その間にSSHで接続する。下段: Instance Connect Endpointを使うと、プライベートサブネットのEC2にも接続できる。"><defs><marker id="dgservices-ec2-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="133" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="154" text-anchor="middle" class="dg-t">利用者</text>
 <text x="109" y="172" text-anchor="middle" class="dg-s">コンソール / CLI</text>
@@ -257,15 +274,15 @@
 </div>
 <figcaption>図5 EC2 Instance Connectの仕組み。①APIで一時的な公開鍵を送ると、②その鍵がインスタンスに60秒間だけ置かれ、③その間にSSHで接続する。下段: Instance Connect Endpointを使うと、プライベートサブネットのEC2にも接続できる。</figcaption>
 </figure>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>接続方法</th><th>鍵の管理</th><th>22番ポートの開放</th><th>主な前提</th></tr>
-<tr><td>キーペアでSSH</td><td>秘密鍵を利用者が保管・配布</td><td>必要</td><td>パブリックIPまたは踏み台サーバー</td></tr>
-<tr><td>EC2 Instance Connect</td><td>不要(一時的な鍵を毎回送る)</td><td>必要</td><td>IAMで送信を許可、対応AMI</td></tr>
-<tr><td>Instance Connect Endpoint</td><td>不要</td><td>エンドポイントからのみ許可</td><td>サブネットにエンドポイントを作成</td></tr>
-<tr><td>Session Manager</td><td>不要</td><td>不要</td><td>SSM Agent+IAMロール</td></tr>
+<tr><td data-label="接続方法">キーペアでSSH</td><td data-label="鍵の管理">秘密鍵を利用者が保管・配布</td><td data-label="22番ポートの開放">必要</td><td data-label="主な前提">パブリックIPまたは踏み台サーバー</td></tr>
+<tr><td data-label="接続方法">EC2 Instance Connect</td><td data-label="鍵の管理">不要(一時的な鍵を毎回送る)</td><td data-label="22番ポートの開放">必要</td><td data-label="主な前提">IAMで送信を許可、対応AMI</td></tr>
+<tr><td data-label="接続方法">Instance Connect Endpoint</td><td data-label="鍵の管理">不要</td><td data-label="22番ポートの開放">エンドポイントからのみ許可</td><td data-label="主な前提">サブネットにエンドポイントを作成</td></tr>
+<tr><td data-label="接続方法">Session Manager</td><td data-label="鍵の管理">不要</td><td data-label="22番ポートの開放">不要</td><td data-label="主な前提">SSM Agent+IAMロール</td></tr>
 </table></div>
 
-<h3>キーペア</h3>
+<h3 id="c2-6">キーペア<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>キーペア</strong>は、SSH接続(LinuxのEC2)やWindowsの管理者パスワードの取得に使う、<strong>公開鍵と秘密鍵の組</strong>です。</p>
 <ul>
 <li>起動時にキーペアを指定すると、<strong>公開鍵</strong>がインスタンスの <code>~/.ssh/authorized_keys</code> に置かれる</li>
@@ -275,7 +292,7 @@
 </ul>
 <p><strong>秘密鍵をなくした場合、AWSから取り出すことはできません</strong>。EC2 Instance ConnectやSession Managerで接続して新しい公開鍵を登録するか、インスタンスを停止してルートボリュームを別のインスタンスにアタッチし、<code>authorized_keys</code> を書き換えます(Systems Managerの <code>AWSSupport-ResetAccess</code> オートメーションでも復旧できる)。</p>
 
-<h3>ユーザーデータ</h3>
+<h3 id="c2-7">ユーザーデータ<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>ユーザーデータ</strong>は、インスタンスの起動時に実行させるスクリプトです。パッケージのインストールや設定ファイルの配置など、起動直後の初期設定を自動化します。</p>
 <pre class="code"><code>#!/bin/bash
 dnf update -y
@@ -289,7 +306,7 @@ systemctl enable --now httpd</code></pre>
 </ul>
 <p>Auto Scalingでは起動テンプレートにユーザーデータを書き、起動するインスタンスすべてを同じ状態に設定します。</p>
 
-<h3>インスタンスメタデータとIMDSv2</h3>
+<h3 id="c2-8">インスタンスメタデータとIMDSv2<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>インスタンスメタデータ</strong>は、インスタンスの中から自分自身の情報を取得できる仕組みです。<strong><code>http://169.254.169.254/latest/meta-data/</code></strong> にアクセスすると、インスタンスID、インスタンスタイプ、AZ、プライベートIP、パブリックIP、<strong>IAMロールの一時的な認証情報</strong>などが取得できます。ユーザーデータは <code>/latest/user-data</code> で取得できます。</p>
 <p>この仕組みを提供するのが<strong>IMDS(Instance Metadata Service)</strong>で、2つのバージョンがあります。</p>
 <div class="table-wrap"><table>
@@ -308,13 +325,13 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li>ホップ数の上限(既定1)を超えるとトークンが届かない。コンテナから使う場合は2にする</li>
 </ul>
 
-<h3>停止・休止・終了の違い</h3>
-<div class="table-wrap"><table>
+<h3 id="c2-9">停止・休止・終了の違い<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
 <tr><th>操作</th><th>EBS(ルートボリューム)</th><th>インスタンスストア</th><th>メモリの内容</th><th>パブリックIP</th><th>料金</th></tr>
-<tr><td>再起動</td><td>保持</td><td>保持</td><td>消える</td><td>変わらない</td><td>継続</td></tr>
-<tr><td>停止</td><td>保持</td><td><strong>消える</strong></td><td>消える</td><td><strong>変わる</strong>(Elastic IPは保持)</td><td>インスタンス料金なし(EBSは課金)</td></tr>
-<tr><td>休止(ハイバネーション)</td><td>保持</td><td>消える</td><td><strong>EBSに保存され、起動時に復元</strong></td><td>変わる</td><td>停止と同じ</td></tr>
-<tr><td>終了</td><td>既定で<strong>削除</strong></td><td>消える</td><td>消える</td><td>解放</td><td>なし</td></tr>
+<tr><td data-label="操作">再起動</td><td data-label="EBS(ルートボリューム)">保持</td><td data-label="インスタンスストア">保持</td><td data-label="メモリの内容">消える</td><td data-label="パブリックIP">変わらない</td><td data-label="料金">継続</td></tr>
+<tr><td data-label="操作">停止</td><td data-label="EBS(ルートボリューム)">保持</td><td data-label="インスタンスストア"><strong>消える</strong></td><td data-label="メモリの内容">消える</td><td data-label="パブリックIP"><strong>変わる</strong>(Elastic IPは保持)</td><td data-label="料金">インスタンス料金なし(EBSは課金)</td></tr>
+<tr><td data-label="操作">休止(ハイバネーション)</td><td data-label="EBS(ルートボリューム)">保持</td><td data-label="インスタンスストア">消える</td><td data-label="メモリの内容"><strong>EBSに保存され、起動時に復元</strong></td><td data-label="パブリックIP">変わる</td><td data-label="料金">停止と同じ</td></tr>
+<tr><td data-label="操作">終了</td><td data-label="EBS(ルートボリューム)">既定で<strong>削除</strong></td><td data-label="インスタンスストア">消える</td><td data-label="メモリの内容">消える</td><td data-label="パブリックIP">解放</td><td data-label="料金">なし</td></tr>
 </table></div>
 <ul>
 <li><strong>停止</strong>:起動し直すと別の物理ホストに移ることがある。インスタンスタイプの変更は停止中に行う</li>
@@ -323,17 +340,17 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </ul>
 <p><strong>終了保護</strong>を有効にすると、コンソールやAPIからの終了操作が拒否され、誤って終了するのを防げます。ただし、OSの中からシャットダウンしたときの動作を「終了」にしている場合のシャットダウンと、Auto Scalingのスケールインによる終了は防げません(Auto Scalingでは「スケールイン保護」を使う)。同様に停止を防ぐ<strong>停止保護</strong>もあります。</p>
 
-<h3>ステータスチェックと自動復旧</h3>
+<h3 id="c2-10">ステータスチェックと自動復旧<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2は1分ごとに<strong>ステータスチェック</strong>を行い、結果をCloudWatchメトリクスとして記録します。</p>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>チェック</th><th>何を確認するか</th><th>主な原因</th><th>対処</th></tr>
-<tr><td>システムステータスチェック<br><code>StatusCheckFailed_System</code></td><td>インスタンスが動いている<strong>AWS側の物理ホスト</strong></td><td>ハードウェアの故障、電源・ネットワークの障害</td><td>停止→起動で別のホストに移す、または<strong>自動復旧</strong></td></tr>
-<tr><td>インスタンスステータスチェック<br><code>StatusCheckFailed_Instance</code></td><td><strong>インスタンス(OS)側</strong></td><td>カーネルの異常、メモリ不足、ネットワーク設定やファイルシステムの誤り</td><td>再起動、OSの設定の修正(利用者が対処)</td></tr>
-<tr><td>アタッチされたEBSのステータスチェック<br><code>StatusCheckFailed_AttachedEBS</code></td><td>アタッチしているEBSボリュームへの到達性</td><td>ストレージ側の障害</td><td>インスタンスの置き換えなど</td></tr>
+<tr><td data-label="チェック">システムステータスチェック<br><code>StatusCheckFailed_System</code></td><td data-label="何を確認するか">インスタンスが動いている<strong>AWS側の物理ホスト</strong></td><td data-label="主な原因">ハードウェアの故障、電源・ネットワークの障害</td><td data-label="対処">停止→起動で別のホストに移す、または<strong>自動復旧</strong></td></tr>
+<tr><td data-label="チェック">インスタンスステータスチェック<br><code>StatusCheckFailed_Instance</code></td><td data-label="何を確認するか"><strong>インスタンス(OS)側</strong></td><td data-label="主な原因">カーネルの異常、メモリ不足、ネットワーク設定やファイルシステムの誤り</td><td data-label="対処">再起動、OSの設定の修正(利用者が対処)</td></tr>
+<tr><td data-label="チェック">アタッチされたEBSのステータスチェック<br><code>StatusCheckFailed_AttachedEBS</code></td><td data-label="何を確認するか">アタッチしているEBSボリュームへの到達性</td><td data-label="主な原因">ストレージ側の障害</td><td data-label="対処">インスタンスの置き換えなど</td></tr>
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 774 218" style="max-width:774px;min-width:520px" role="img" aria-label="図6 ステータスチェックの失敗への対処。AWS側の障害(システム)は復旧アクションで別の物理ホストに移し、OS側の障害(インスタンス)は再起動などで対処する。"><defs><marker id="dgservices-ec2-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 774 218" style="max-width:774px;min-width:619px" role="img" aria-label="図6 ステータスチェックの失敗への対処。AWS側の障害(システム)は復旧アクションで別の物理ホストに移し、OS側の障害(インスタンス)は再起動などで対処する。"><defs><marker id="dgservices-ec2-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="40" width="210" height="52" rx="8" class="dg-ng"/>
 <text x="139" y="62" text-anchor="middle" class="dg-t">システムの失敗</text>
 <text x="139" y="80" text-anchor="middle" class="dg-s">AWS側のホスト</text>
@@ -361,20 +378,20 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </figure>
 <p><strong>自動復旧</strong>では、インスタンスが<strong>インスタンスID・プライベートIP・Elastic IP・メタデータを保ったまま</strong>別の物理ホストで再起動されます。対応するインスタンスタイプでは既定で「簡易自動復旧」が有効で、CloudWatchアラームの<strong>復旧アクション</strong>でも設定できます。インスタンスストアを使うインスタンスでは使えず、メモリとインスタンスストアの内容は失われます。</p>
 
-<h3>T系インスタンスのCPUクレジット</h3>
+<h3 id="c2-11">T系インスタンスのCPUクレジット<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p>T系(t3・t4gなど)は<strong>バーストパフォーマンスインスタンス</strong>で、普段は<strong>ベースライン</strong>(例:t3.microは1vCPUあたり10%)のCPU性能で動き、必要なときだけそれを超えて<strong>バースト</strong>します。</p>
 <ul>
 <li>CPU使用率がベースラインより低いときに<strong>CPUクレジット</strong>が貯まり、ベースラインを超えるときに消費する(1クレジット=vCPU1個を100%で1分間使う量)</li>
 <li>残高はCloudWatchメトリクス <code>CPUCreditBalance</code> で確認できる</li>
 </ul>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>モード</th><th>クレジットがなくなると</th><th>料金</th><th>既定</th></tr>
-<tr><td>スタンダード</td><td><strong>ベースラインに制限</strong>され、処理が遅くなる</td><td>追加料金なし</td><td>t2</td></tr>
-<tr><td>Unlimited(無制限)</td><td>クレジットを前借りして<strong>バーストを続けられる</strong></td><td>24時間の平均がベースラインを超えた分は<strong>追加料金</strong></td><td>t3・t3a・t4g</td></tr>
+<tr><td data-label="モード">スタンダード</td><td data-label="クレジットがなくなると"><strong>ベースラインに制限</strong>され、処理が遅くなる</td><td data-label="料金">追加料金なし</td><td data-label="既定">t2</td></tr>
+<tr><td data-label="モード">Unlimited(無制限)</td><td data-label="クレジットがなくなると">クレジットを前借りして<strong>バーストを続けられる</strong></td><td data-label="料金">24時間の平均がベースラインを超えた分は<strong>追加料金</strong></td><td data-label="既定">t3・t3a・t4g</td></tr>
 </table></div>
 <p>「T系のインスタンスが時々急に遅くなる」場合は、クレジットの枯渇を疑います。常に高いCPU使用率が続くなら、Unlimitedで追加料金を払い続けるより、M系やC系の固定性能のインスタンスに変えた方が安くなります。</p>
 
-<h3>スポットインスタンスの中断通知</h3>
+<h3 id="c2-12">スポットインスタンスの中断通知<a class="anchor" href="#c2-12" aria-label="この見出しへのリンク">#</a></h3>
 <p>スポットインスタンスは、AWSがその容量を必要としたときに<strong>中断</strong>されます。中断の<strong>2分前</strong>に通知が出るので、その間に処理の保存や切り離しを行います。</p>
 <ul>
 <li>通知の受け取り方:インスタンスメタデータの <code>spot/instance-action</code> をポーリングする、または<strong>EventBridge</strong>の「EC2 Spot Instance Interruption Warning」イベントでLambdaなどを起動する</li>
@@ -384,7 +401,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 722 210" style="max-width:722px;min-width:520px" role="img" aria-label="図7 スポットインスタンスの中断。2分前の通知を受けて、処理の状態を保存したりロードバランサーから外したりしてから中断に備える。"><defs><marker id="dgservices-ec2-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 722 210" style="max-width:722px;min-width:578px" role="img" aria-label="図7 スポットインスタンスの中断。2分前の通知を受けて、処理の状態を保存したりロードバランサーから外したりしてから中断に備える。"><defs><marker id="dgservices-ec2-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="46" width="160" height="40" rx="8" class="dg-blue"/>
 <text x="114" y="70" text-anchor="middle" class="dg-t">容量が必要に</text>
 <rect x="286" y="40" width="160" height="52" rx="8" class="dg-accent"/>
@@ -406,7 +423,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>Webサーバ・アプリケーションサーバ(m系・t系)</li>
 <li>データベースサーバ(r系)、SAPなど大容量メモリが必要なシステム(x系)</li>
@@ -417,7 +434,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>EC2は「購入モデル」によって料金が大きく変わります。下の図のように、ワークロードの性質から選ぶと迷いません。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -473,24 +490,24 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </div>
 <figcaption>図8 購入モデルを選ぶ目安。下の表の「主用途」を判断の流れにしたもの(実際は組み合わせて使うこともある)。</figcaption>
 </figure>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>購入モデル</th><th>特徴</th><th>メリット</th><th>デメリット</th><th>主用途</th></tr>
-<tr><td>オンデマンド</td><td>従量課金</td><td>柔軟</td><td>高価</td><td>開発・短期</td></tr>
-<tr><td>リザーブドインスタンス</td><td>1〜3年契約割引</td><td>安い</td><td>長期前提</td><td>常時稼働</td></tr>
-<tr><td>Savings Plans</td><td>使用量コミット割引</td><td>柔軟な割引</td><td>契約が必要</td><td>長期運用</td></tr>
-<tr><td>スポットインスタンス</td><td>余剰リソースを利用</td><td>超安価</td><td>中断される</td><td>バッチ/HPC</td></tr>
-<tr><td>Dedicated Hosts</td><td>専用物理サーバ</td><td>ライセンス対応</td><td>高価</td><td>規制対応</td></tr>
-<tr><td>Dedicated Instances</td><td>専用ハード上のVM</td><td>分離性</td><td>高価</td><td>セキュリティ</td></tr>
-<tr><td>キャパシティ予約</td><td>容量を予約</td><td>起動保証</td><td>割引なし</td><td>災害対策</td></tr>
+<tr><td data-label="購入モデル">オンデマンド</td><td data-label="特徴">従量課金</td><td data-label="メリット">柔軟</td><td data-label="デメリット">高価</td><td data-label="主用途">開発・短期</td></tr>
+<tr><td data-label="購入モデル">リザーブドインスタンス</td><td data-label="特徴">1〜3年契約割引</td><td data-label="メリット">安い</td><td data-label="デメリット">長期前提</td><td data-label="主用途">常時稼働</td></tr>
+<tr><td data-label="購入モデル">Savings Plans</td><td data-label="特徴">使用量コミット割引</td><td data-label="メリット">柔軟な割引</td><td data-label="デメリット">契約が必要</td><td data-label="主用途">長期運用</td></tr>
+<tr><td data-label="購入モデル">スポットインスタンス</td><td data-label="特徴">余剰リソースを利用</td><td data-label="メリット">超安価</td><td data-label="デメリット">中断される</td><td data-label="主用途">バッチ/HPC</td></tr>
+<tr><td data-label="購入モデル">Dedicated Hosts</td><td data-label="特徴">専用物理サーバ</td><td data-label="メリット">ライセンス対応</td><td data-label="デメリット">高価</td><td data-label="主用途">規制対応</td></tr>
+<tr><td data-label="購入モデル">Dedicated Instances</td><td data-label="特徴">専用ハード上のVM</td><td data-label="メリット">分離性</td><td data-label="デメリット">高価</td><td data-label="主用途">セキュリティ</td></tr>
+<tr><td data-label="購入モデル">キャパシティ予約</td><td data-label="特徴">容量を予約</td><td data-label="メリット">起動保証</td><td data-label="デメリット">割引なし</td><td data-label="主用途">災害対策</td></tr>
 </table></div>
-<h3>リザーブドインスタンスとSavings Plansの種類</h3>
+<h3 id="c4-1">リザーブドインスタンスとSavings Plansの種類<a class="anchor" href="#c4-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>どちらも<strong>1年または3年</strong>の利用を約束して割引を受ける仕組みで、支払い方法は全額前払い・一部前払い・前払いなしから選びます(前払いが多いほど割引が大きい)。</p>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>種類</th><th>割引率(最大)</th><th>約束するもの</th><th>柔軟性</th></tr>
-<tr><td>Standard RI</td><td>約72%</td><td>インスタンスファミリー・リージョン・OSなど</td><td>AZ・サイズ(同じファミリー内)の変更は可能。ファミリーやOSは変えられない。不要になったら<strong>RIマーケットプレイスで売却</strong>できる</td></tr>
-<tr><td>Convertible RI</td><td>約66%</td><td>同上</td><td>別の<strong>ファミリー・OS・テナンシーのRIに交換</strong>できる(同等以上の価値のものへ)。売却はできない</td></tr>
-<tr><td>EC2 Instance Savings Plans</td><td>約72%</td><td>1時間あたりの利用額(リージョン内の特定ファミリー)</td><td>ファミリー内のサイズ・OS・AZ・テナンシーは自由</td></tr>
-<tr><td>Compute Savings Plans</td><td>約66%</td><td>1時間あたりの利用額</td><td>ファミリー・リージョン・OSを問わず適用され、<strong>FargateとLambda</strong>にも適用される</td></tr>
+<tr><td data-label="種類">Standard RI</td><td data-label="割引率(最大)">約72%</td><td data-label="約束するもの">インスタンスファミリー・リージョン・OSなど</td><td data-label="柔軟性">AZ・サイズ(同じファミリー内)の変更は可能。ファミリーやOSは変えられない。不要になったら<strong>RIマーケットプレイスで売却</strong>できる</td></tr>
+<tr><td data-label="種類">Convertible RI</td><td data-label="割引率(最大)">約66%</td><td data-label="約束するもの">同上</td><td data-label="柔軟性">別の<strong>ファミリー・OS・テナンシーのRIに交換</strong>できる(同等以上の価値のものへ)。売却はできない</td></tr>
+<tr><td data-label="種類">EC2 Instance Savings Plans</td><td data-label="割引率(最大)">約72%</td><td data-label="約束するもの">1時間あたりの利用額(リージョン内の特定ファミリー)</td><td data-label="柔軟性">ファミリー内のサイズ・OS・AZ・テナンシーは自由</td></tr>
+<tr><td data-label="種類">Compute Savings Plans</td><td data-label="割引率(最大)">約66%</td><td data-label="約束するもの">1時間あたりの利用額</td><td data-label="柔軟性">ファミリー・リージョン・OSを問わず適用され、<strong>FargateとLambda</strong>にも適用される</td></tr>
 </table></div>
 <ul>
 <li>RIは特定のAZを指定して購入すると(ゾーンRI)、そのAZでの<strong>容量の予約</strong>も付く。リージョンを指定したRIは割引だけ</li>
@@ -501,7 +518,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="ebs.html">Amazon EBS</a>:EC2にアタッチする永続ブロックストレージ</li>
 <li><a href="iam.html">AWS IAM</a>:インスタンスプロファイル経由でEC2にロールを渡す</li>
@@ -515,21 +532,31 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point">
+<h4>起動・接続</h4>
 <ul>
 <li>EC2にIAMロールを渡すときは<strong>インスタンスプロファイル</strong>を使う(図1)。アクセスキーをインスタンスに置かない。</li>
-<li><strong>インスタンスストアのデータは永続化しない</strong>(図2)。消えて困るデータはEBSやS3へ。</li>
-<li>低レイテンシー → <strong>クラスター</strong>、障害分離(大規模分散) → <strong>パーティション</strong>、少数の重要インスタンス → <strong>スプレッド</strong>(図3)。</li>
-<li>インスタンスタイプの変更は<strong>停止してから</strong>。</li>
-<li>SSHの鍵を配らずに、IAMで制御しながら接続したい → <strong>EC2 Instance Connect</strong>(図5)。22番ポートも開けたくない → <strong>Session Manager</strong>。</li>
-<li>中断されてもよいバッチ処理はスポット、常時稼働はRI/Savings Plans、起動を保証したいならキャパシティ予約(割引はない)(図8)。</li>
 <li>秘密鍵をなくした → AWSからは取り出せない。Instance Connect・Session Managerで接続するか、ルートボリュームを別のインスタンスにアタッチして <code>authorized_keys</code> を直す。</li>
 <li>起動時の初期設定を自動化 → <strong>ユーザーデータ</strong>(既定は初回起動時のみ、rootで実行)。機密情報は書かない。</li>
 <li>インスタンスの中から自分の情報やロールの認証情報を取得 → <strong>インスタンスメタデータ</strong>(169.254.169.254)。SSRF対策で<strong>IMDSv2を必須</strong>(<code>HttpTokens=required</code>)にする。</li>
+<li>SSHの鍵を配らずに、IAMで制御しながら接続したい → <strong>EC2 Instance Connect</strong>(図5)。22番ポートも開けたくない → <strong>Session Manager</strong>。</li>
+</ul>
+<h4>停止・障害対応</h4>
+<ul>
+<li><strong>インスタンスストアのデータは永続化しない</strong>(図2)。消えて困るデータはEBSやS3へ。</li>
+<li>インスタンスタイプの変更は<strong>停止してから</strong>。</li>
 <li>メモリの内容を残したまま止めたい → <strong>休止</strong>(起動時に有効化、ルートボリュームの暗号化が必要)。誤って終了させない → <strong>終了保護</strong>。</li>
 <li><strong>システム</strong>ステータスチェックの失敗 → AWS側の障害。停止→起動か<strong>復旧アクション</strong>(IPやIDは保持)。<strong>インスタンス</strong>ステータスチェックの失敗 → OS側。再起動・設定の修正。</li>
+</ul>
+<h4>性能・配置</h4>
+<ul>
+<li>低レイテンシー → <strong>クラスター</strong>、障害分離(大規模分散) → <strong>パーティション</strong>、少数の重要インスタンス → <strong>スプレッド</strong>(図3)。</li>
 <li>T系が急に遅くなる → <strong>CPUクレジット</strong>の枯渇(<code>CPUCreditBalance</code>)。Unlimitedにするか固定性能のタイプへ。</li>
+</ul>
+<h4>料金</h4>
+<ul>
+<li>中断されてもよいバッチ処理はスポット、常時稼働はRI/Savings Plans、起動を保証したいならキャパシティ予約(割引はない)(図8)。</li>
 <li>ファミリーやOSを将来変えたい → <strong>Convertible RI</strong>か<strong>Compute Savings Plans</strong>。Fargate・Lambdaにも割引 → Compute Savings Plans。</li>
 <li>スポットの中断は<strong>2分前</strong>に通知される(メタデータ/EventBridge)。</li>
 </ul>
@@ -537,7 +564,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>EC2はAWSの仮想サーバ。AMI+インスタンスタイプで起動する。</li>
 <li>配置はプレイスメントグループ、料金は購入モデルで最適化する。</li>
@@ -550,5 +577,6 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
   <a class="next" href="auto-scaling.html"><span class="label">次へ →</span>Amazon EC2 Auto Scaling</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

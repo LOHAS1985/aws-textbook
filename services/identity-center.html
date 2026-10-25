@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS IAM Identity Center | AWS教科書</title>
+<meta name="description" content="複数のAWSアカウントやアプリへのシングルサインオンと権限を一元管理するサービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,27 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">セキュリティ、アイデンティティ、コンプライアンス</span>
+  <a class="category" href="index.html#cat6">セキュリティ、アイデンティティ、コンプライアンス</a>
   <h1>AWS IAM Identity Center</h1>
   <p class="lead">複数のAWSアカウントやアプリへのシングルサインオンと権限を一元管理するサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">IDソース</a></li><li><a href="#c2-2">パーミッションセット</a></li><li><a href="#c2-3">AWSアクセスポータルとCLI</a></li><li><a href="#c2-4">アプリケーションへのSSO</a></li><li><a href="#c2-5">組織インスタンスと委任管理者</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS IAM Identity Center</strong>(旧称 AWS Single Sign-On)は、<strong>AWS Organizationsの複数のアカウント</strong>や業務アプリへの<strong>シングルサインオン(SSO)</strong>を提供し、誰がどのアカウントでどの権限を使えるかを一か所で管理するサービスです。</p>
 <ul>
 <li>利用者は<strong>AWSアクセスポータル</strong>に1回ログインするだけで、割り当てられたアカウントとロールを選んでコンソールやCLIを使える</li>
@@ -33,7 +50,7 @@
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 740 252" style="max-width:740px;min-width:520px" role="img" aria-label="図1 IAM Identity Centerの全体像。IDソースのユーザー・グループに、パーミッションセットとアカウントを組み合わせて割り当てる。割り当てると、各アカウントにパーミッションセットに対応するIAMロールが自動で作られる。"><defs><marker id="dgservices-identity-center-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 740 252" style="max-width:740px;min-width:592px" role="img" aria-label="図1 IAM Identity Centerの全体像。IDソースのユーザー・グループに、パーミッションセットとアカウントを組み合わせて割り当てる。割り当てると、各アカウントにパーミッションセットに対応するIAMロールが自動で作られる。"><defs><marker id="dgservices-identity-center-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="126" width="160" height="52" rx="8" class="dg-blue"/>
 <text x="114" y="147" text-anchor="middle" class="dg-t">IDソース</text>
 <text x="114" y="165" text-anchor="middle" class="dg-s">ディレクトリ/AD/外部IdP</text>
@@ -61,8 +78,8 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>IDソース</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">IDソース<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>ユーザーとグループをどこで管理するか(<strong>IDソース</strong>)を1つ選びます。</p>
 <div class="table-wrap"><table>
 <tr><th>IDソース</th><th>内容</th></tr>
@@ -71,7 +88,7 @@
 <tr><td>外部IDプロバイダー</td><td>Microsoft Entra ID、Okta などのIdPと<strong>SAML 2.0</strong>で連携する。ユーザー・グループの同期には<strong>SCIM</strong>を使う</td></tr>
 </table></div>
 
-<h3>パーミッションセット</h3>
+<h3 id="c2-2">パーミッションセット<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>パーミッションセット</strong>は、ユーザー・グループに与える権限の<strong>テンプレート</strong>です。中身は次のようなIAMポリシーの組み合わせです。</p>
 <ul>
 <li>AWS管理ポリシー(例:<code>AdministratorAccess</code>、<code>ViewOnlyAccess</code>)</li>
@@ -89,17 +106,17 @@
 </table></div>
 <p>このように「グループごと・アカウントごとにどのパーミッションセットを使えるか」を一覧として管理できます。</p>
 
-<h3>AWSアクセスポータルとCLI</h3>
+<h3 id="c2-3">AWSアクセスポータルとCLI<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>AWSアクセスポータル</strong>:ログイン後、使えるアカウントとパーミッションセットが一覧で表示され、選ぶとそのアカウントのコンソールに入れる</li>
 <li><strong>AWS CLI</strong>:<code>aws configure sso</code> でプロファイルを作り、<code>aws sso login</code> でブラウザ認証すると、一時的な認証情報でCLIを使える。アクセスキーを端末に保存しない</li>
 <li>MFAを必須にできる</li>
 </ul>
 
-<h3>アプリケーションへのSSO</h3>
+<h3 id="c2-4">アプリケーションへのSSO<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>AWSアカウントだけでなく、SAML 2.0やOAuth 2.0に対応したSaaSや自社アプリ、Amazon Managed Grafana・Amazon Q などのAWSのアプリにも、同じユーザーでシングルサインオンできます。</p>
 
-<h3>組織インスタンスと委任管理者</h3>
+<h3 id="c2-5">組織インスタンスと委任管理者<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>Organizationsと組み合わせる<strong>組織インスタンス</strong>が基本。管理アカウントで有効にし、組織内のすべてのアカウントに権限を割り当てられる</li>
 <li>日常の管理は、<strong>委任管理者</strong>として登録したメンバーアカウントから行える(管理アカウントの利用を最小限にするため)</li>
@@ -108,7 +125,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>数十のAWSアカウントへのログインを、社員1人1つのユーザーで一元化する</li>
 <li>社内のEntra ID・Oktaのアカウントで、そのままAWSにログインさせる(退職時はIdP側で無効にすれば全アカウントで使えなくなる)</li>
@@ -118,12 +135,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>IAM Identity Center自体は無料です。IDソースにAWS Managed Microsoft ADを使う場合などは、そのサービスの料金がかかります。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="organizations.html">AWS Organizations</a>:管理する複数アカウントのまとまり</li>
 <li><a href="iam.html">AWS IAM</a>:パーミッションセットの中身(ポリシー)と、各アカウントに作られるロール</li>
@@ -135,7 +152,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>複数アカウントへのログインを一元化・SSO → <strong>IAM Identity Center</strong>(各アカウントにIAMユーザーを作らない)。</li>
 <li>権限のテンプレート → <strong>パーミッションセット</strong>。割り当てると各アカウントに <code>AWSReservedSSO_</code> のロールが作られる。</li>
@@ -147,7 +164,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>IAM Identity Centerは、複数アカウントとアプリへのSSOと権限を一元管理する。</li>
 <li>IDソース(内蔵ディレクトリ・AD・外部IdP)のユーザー・グループに、パーミッションセットとアカウントを組み合わせて割り当てる。</li>
@@ -160,5 +177,6 @@
   <a class="next" href="sts.html"><span class="label">次へ →</span>AWS STS</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

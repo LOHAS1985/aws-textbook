@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>負荷に応じて自動でスケールするWebシステム | AWS教科書</title>
+<meta name="description" content="ALBとAuto Scalingグループで、複数AZにまたがって台数を自動調整する">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,20 +21,21 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">信頼性・事業継続</span>
+  <a class="category" href="index.html#cat2">信頼性・事業継続</a>
   <h1>負荷に応じて自動でスケールするWebシステム</h1>
   <p class="lead">ALBとAuto Scalingグループで、複数AZにまたがって台数を自動調整する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. やりたいこと</h2>
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>アクセス数の増減に合わせてEC2の台数を自動で増減させたい。1つのAZで障害が起きてもサービスを継続し、異常なインスタンスは自動で入れ替えたい。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 696 272" style="max-width:696px;min-width:520px" role="img" aria-label="図1 ALBが複数AZのEC2にリクエストを分散し、Auto ScalingグループがCloudWatchのメトリクスに応じて台数を増減する。異常なインスタンスは自動で入れ替わる。"><defs><marker id="dgusecases-auto-scaling-web-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 696 272" style="max-width:696px;min-width:557px" role="img" aria-label="図1 ALBが複数AZのEC2にリクエストを分散し、Auto ScalingグループがCloudWatchのメトリクスに応じて台数を増減する。異常なインスタンスは自動で入れ替わる。"><defs><marker id="dgusecases-auto-scaling-web-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="498" y="13" width="174" height="184" rx="10" class="dg-group"/>
 <text x="508" y="28" class="dg-s">Auto Scalingグループ</text>
 <rect x="34" y="94" width="150" height="40" rx="8" class="dg-blue"/>
@@ -60,7 +63,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/elb.html">Elastic Load Balancing(ALB)</a>:複数AZのインスタンスにトラフィックを分散し、ヘルスチェックで異常を検知する</li>
 <li><a href="../services/ec2.html">Amazon EC2</a>:アプリケーションを動かすインスタンス</li>
@@ -70,7 +73,7 @@
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>AMIとインスタンスタイプなどを指定した<strong>起動テンプレート</strong>を作成する</li>
 <li>複数AZのサブネットを指定してAuto Scalingグループを作成し、最小・最大・希望の台数を決める</li>
@@ -81,7 +84,7 @@
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>ELBはリージョン内の<strong>複数AZ</strong>に分散する。インスタンスも複数AZに配置して、AZ障害に備える。</li>
 <li>ヘルスチェックの種類がEC2のままだと、OSは動いているがアプリが落ちている状態を検知できない → <strong>ELBヘルスチェック</strong>を使う。</li>
@@ -95,5 +98,6 @@
   <a class="next" href="rds-high-availability.html"><span class="label">次へ →</span>データベースの高可用性と読み取り分散</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

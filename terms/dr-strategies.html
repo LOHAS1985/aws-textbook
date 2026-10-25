@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DR戦略 | AWS教科書</title>
+<meta name="description" content="災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,16 +21,17 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">設計・運用</span>
+  <a class="category" href="index.html#cat5">設計・運用</a>
   <h1>DR戦略</h1>
   <p class="lead">災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. 詳しい説明</h2>
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>DR(Disaster Recovery:災害復旧)戦略</strong>は、リージョン障害などの災害に備えて、別の場所(DRサイト)をどの程度準備しておくかの方式です。準備を厚くするほど早く復旧できますが、コストが上がります。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 698 186" style="max-width:698px;min-width:520px" role="img" aria-label="図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。"><defs><marker id="dgterms-dr-strategies-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 698 186" style="max-width:698px;min-width:558px" role="img" aria-label="図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。"><defs><marker id="dgterms-dr-strategies-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="43" width="145" height="52" rx="8" class="dg-box"/>
 <text x="106" y="64" text-anchor="middle" class="dg-t">バックアップと復元</text>
 <text x="106" y="82" text-anchor="middle" class="dg-s">バックアップのみ</text>
@@ -56,12 +59,12 @@
 </div>
 <figcaption>図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。</figcaption>
 </figure>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>名称</th><th>DR側の状態</th><th>RTO/RPO</th><th>コスト</th></tr>
-<tr><td>バックアップと復元</td><td>バックアップのみ保管</td><td>数時間</td><td>最小</td></tr>
-<tr><td>パイロットライト</td><td>データ層のみ稼働、アプリは停止</td><td>数十分〜数時間</td><td>低</td></tr>
-<tr><td>ウォームスタンバイ</td><td>縮小版の全構成が常時稼働</td><td>数分〜数十分</td><td>中</td></tr>
-<tr><td>マルチサイト(アクティブ/アクティブ)</td><td>本番と同規模で常時稼働</td><td>ほぼゼロ</td><td>最大</td></tr>
+<tr><td data-label="名称">バックアップと復元</td><td data-label="DR側の状態">バックアップのみ保管</td><td data-label="RTO/RPO">数時間</td><td data-label="コスト">最小</td></tr>
+<tr><td data-label="名称">パイロットライト</td><td data-label="DR側の状態">データ層のみ稼働、アプリは停止</td><td data-label="RTO/RPO">数十分〜数時間</td><td data-label="コスト">低</td></tr>
+<tr><td data-label="名称">ウォームスタンバイ</td><td data-label="DR側の状態">縮小版の全構成が常時稼働</td><td data-label="RTO/RPO">数分〜数十分</td><td data-label="コスト">中</td></tr>
+<tr><td data-label="名称">マルチサイト(アクティブ/アクティブ)</td><td data-label="DR側の状態">本番と同規模で常時稼働</td><td data-label="RTO/RPO">ほぼゼロ</td><td data-label="コスト">最大</td></tr>
 </table></div>
 <ul>
 <li><strong>RTO(目標復旧時間)</strong>:障害発生からサービスを再開するまでに許容できる時間。</li>
@@ -71,7 +74,7 @@
 </section>
 
 <section class="chapter">
-<h2>2. 関連する用語</h2>
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="deploy-strategies.html">デプロイ戦略</a>:Blue/Greenなど、新旧環境の切り替え方式</li>
 <li><a href="circuit-breaker.html">サーキットブレーカー</a>:障害を広げないための設計パターン</li>
@@ -79,7 +82,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 関連サービス</h2>
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/backup.html">AWS Backup</a>:別リージョンへのバックアップコピー</li>
 <li><a href="../services/aurora.html">Amazon Aurora</a>:グローバルデータベース</li>
@@ -93,5 +96,6 @@
   <a class="next" href="circuit-breaker.html"><span class="label">次へ →</span>サーキットブレーカー</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IAMポリシーと評価ロジック | AWS教科書</title>
+<meta name="description" content="ポリシーの書き方と、複数のポリシーから「許可か拒否か」が決まる順番">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,15 +21,26 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">セキュリティ・認証</span>
+  <a class="category" href="index.html#cat3">セキュリティ・認証</a>
   <h1>IAMポリシーと評価ロジック</h1>
   <p class="lead">ポリシーの書き方と、複数のポリシーから「許可か拒否か」が決まる順番</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(8項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">ポリシーの書き方</a></li><li><a href="#c1-2">ポリシーの種類</a></li><li><a href="#c1-3">評価ロジック(許可か拒否かの決まり方)</a></li><li><a href="#c1-4">同じアカウントと別のアカウント</a></li><li><a href="#c1-5">権限の確認・見直しに使う機能</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. 詳しい説明</h2>
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>AWSでは、APIの呼び出し(リクエスト)のたびに、関係するすべての<strong>ポリシー</strong>を調べて「許可するか拒否するか」を決めます。ポリシーの書き方と、この判断の順番(<strong>評価ロジック</strong>)を知っておくと、「なぜ権限エラーになるのか」を自分で切り分けられるようになります。</p>
 
-<h3>ポリシーの書き方</h3>
+<h3 id="c1-1">ポリシーの書き方<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>ポリシーはJSONで書きます。次の例は「特定のバケットのオブジェクトの読み取りを、会社のIPアドレスからだけ許可する」ポリシーです。</p>
 <pre class="code"><code>{
   "Version": "2012-10-17",
@@ -52,7 +65,7 @@
 </table></div>
 <p>よく使う条件キー:<code>aws:SourceIp</code>(送信元IP)、<code>aws:MultiFactorAuthPresent</code>(MFAで認証したか)、<code>aws:RequestedRegion</code>(操作対象のリージョン)、<code>aws:PrincipalOrgID</code>(呼び出し元が自組織のアカウントか)、<code>aws:SecureTransport</code>(HTTPSか)、<code>aws:ResourceTag/キー</code>(リソースのタグ)。</p>
 
-<h3>ポリシーの種類</h3>
+<h3 id="c1-2">ポリシーの種類<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>付ける場所</th><th>役割</th></tr>
 <tr><td><strong>アイデンティティベースのポリシー</strong></td><td>IAMユーザー・グループ・ロール</td><td>「このユーザーは何ができるか」を許可する。AWS管理ポリシー(AWSが用意)、カスタマー管理ポリシー(自分で作って再利用)、インラインポリシー(1つのユーザー・ロールに直接埋め込む)がある</td></tr>
@@ -63,7 +76,7 @@
 </table></div>
 <p>「上限」を決めるポリシー(境界・SCP・RCP・セッションポリシー)は、それだけでは何も許可しません。<strong>上限の範囲内で、アイデンティティベースまたはリソースベースのポリシーが許可した操作</strong>だけが実行できます。</p>
 
-<h3>評価ロジック(許可か拒否かの決まり方)</h3>
+<h3 id="c1-3">評価ロジック(許可か拒否かの決まり方)<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li><strong>最初はすべて拒否</strong>(暗黙的な拒否)の状態から始まる。</li>
 <li>関係するポリシーのどこかに、そのリクエストに当てはまる<strong>明示的な <code>Deny</code></strong> があれば、<strong>ほかでどれだけ許可していても拒否</strong>(明示的な拒否が最優先)。</li>
@@ -72,7 +85,7 @@
 </ol>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 863 209" style="max-width:863px;min-width:520px" role="img" aria-label="図1 IAMの評価ロジック(簡略化)。明示的なDenyが1つでもあれば拒否。上限(SCP・アクセス許可の境界など)の範囲内で、どこかにAllowがあれば許可。Allowがどこにもなければ「暗黙的な拒否」になる。"><defs><marker id="dgterms-iam-policy-evaluation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 863 209" style="max-width:863px;min-width:690px" role="img" aria-label="図1 IAMの評価ロジック(簡略化)。明示的なDenyが1つでもあれば拒否。上限(SCP・アクセス許可の境界など)の範囲内で、どこかにAllowがあれば許可。Allowがどこにもなければ「暗黙的な拒否」になる。"><defs><marker id="dgterms-iam-policy-evaluation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="49" width="145" height="40" rx="8" class="dg-blue"/>
 <text x="106" y="73" text-anchor="middle" class="dg-t">リクエスト</text>
 <rect x="199" y="43" width="145" height="52" rx="8" class="dg-box"/>
@@ -112,13 +125,13 @@
 <figcaption>図1 IAMの評価ロジック(簡略化)。明示的なDenyが1つでもあれば拒否。上限(SCP・アクセス許可の境界など)の範囲内で、どこかにAllowがあれば許可。Allowがどこにもなければ「暗黙的な拒否」になる。</figcaption>
 </figure>
 
-<h3>同じアカウントと別のアカウント</h3>
+<h3 id="c1-4">同じアカウントと別のアカウント<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>同じアカウント内</strong>:アイデンティティベースとリソースベースの<strong>どちらか一方</strong>で許可されていれば実行できる(KMSのキーポリシーのように、リソース側の許可が必須なものもある)。</li>
 <li><strong>別のアカウントへのアクセス</strong>:<strong>相手のリソースベースのポリシー</strong>(または引き受けるロールの信頼ポリシー)と、<strong>自分のアカウントのアイデンティティベースのポリシー</strong>の<strong>両方</strong>で許可されている必要がある。</li>
 </ul>
 
-<h3>権限の確認・見直しに使う機能</h3>
+<h3 id="c1-5">権限の確認・見直しに使う機能<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>機能</th><th>できること</th></tr>
 <tr><td><strong>IAM Access Analyzer</strong></td><td>外部(他のアカウントや公開)からアクセスできるリソースを検出する。未使用の権限・ロールの検出、ポリシーの文法チェック、CloudTrailの記録からのポリシー生成もできる</td></tr>
@@ -130,7 +143,7 @@
 </section>
 
 <section class="chapter">
-<h2>2. 関連する用語</h2>
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="arn.html">ARN</a>:ポリシーの <code>Resource</code> や <code>Principal</code> の指定に使う</li>
 <li><a href="oidc.html">OIDC</a>:外部のIDプロバイダーで認証してロールを引き受ける</li>
@@ -139,7 +152,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 関連サービス</h2>
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/iam.html">AWS IAM</a>:ユーザー・ロール・ポリシーの管理</li>
 <li><a href="../services/organizations.html">AWS Organizations</a>:SCP・RCPによる組織全体の上限</li>
@@ -155,5 +168,6 @@
   <a class="next" href="encryption.html"><span class="label">次へ →</span>保存時の暗号化と転送時の暗号化</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

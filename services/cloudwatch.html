@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon CloudWatch | AWS教科書</title>
+<meta name="description" content="システムの状態を記録・監視・通知する統合監視サービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,16 +21,31 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">マネジメントとガバナンス</span>
+  <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>Amazon CloudWatch</h1>
   <p class="lead">システムの状態を記録・監視・通知する統合監視サービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(17項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">メトリクス・アラーム・ダッシュボード</a></li><li><a href="#metrics">メトリクスの基本</a></li><li><a href="#c2-3">統計の選び方</a></li><li><a href="#c2-4">標準では取れないメトリクス</a></li><li><a href="#metrics-list">サービス別メトリクス一覧</a></li><li><a href="#c2-6">メトリクスを活用する機能</a></li><li><a href="#c2-7">CloudWatch Logs</a></li><li><a href="#c2-8">メトリクスフィルターの流れ(ERROR通知)</a></li><li><a href="#c2-9">CloudWatchエージェント</a></li><li><a href="#c2-10">その他の機能</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon CloudWatch</strong>は、AWS上のシステムの状態を<strong>記録・監視・通知</strong>するための統合監視サービスです。メトリクス(数値)とログの両方を扱います。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 286" style="max-width:684px;min-width:520px" role="img" aria-label="図1 CloudWatchの全体像。各サービスの標準メトリクスに加え、エージェントやアプリからカスタムメトリクス・ログを送る。ログはメトリクスフィルターで数値化でき、アラームでしきい値を監視してSNS通知やAuto Scalingを実行する。"><defs><marker id="dgservices-cloudwatch-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 286" style="max-width:684px;min-width:547px" role="img" aria-label="図1 CloudWatchの全体像。各サービスの標準メトリクスに加え、エージェントやアプリからカスタムメトリクス・ログを送る。ログはメトリクスフィルターで数値化でき、アラームでしきい値を監視してSNS通知やAuto Scalingを実行する。"><defs><marker id="dgservices-cloudwatch-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="260" y="53" width="174" height="179" rx="10" class="dg-group"/>
 <text x="270" y="68" class="dg-s">CloudWatch</text>
 <rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
@@ -66,8 +83,8 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>メトリクス・アラーム・ダッシュボード</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">メトリクス・アラーム・ダッシュボード<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>メトリクス</strong>:リソースの時系列の数値データ。
   <ul>
@@ -78,11 +95,11 @@
 <li><strong>ダッシュボード</strong>:クロスアカウント/クロスリージョンのメトリクスもまとめて表示できる。</li>
 </ul>
 
-<h3 id="metrics">メトリクスの基本</h3>
+<h3 id="metrics">メトリクスの基本<a class="anchor" href="#metrics" aria-label="この見出しへのリンク">#</a></h3>
 <p>メトリクスは「どのサービスの(名前空間)」「何の値を(メトリクス名)」「どのリソースについて(ディメンション)」の3つで特定します。アラームやグラフでは、それを「どの統計で・何秒ごとに集計するか」を指定して使います。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 818 128" style="max-width:818px;min-width:520px" role="img" aria-label="図2 メトリクスの構成。名前空間・メトリクス名・ディメンションで1つのメトリクスが決まり、統計と期間で集計した値をアラームがしきい値と比較する。"><defs><marker id="dgservices-cloudwatch-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 818 128" style="max-width:818px;min-width:654px" role="img" aria-label="図2 メトリクスの構成。名前空間・メトリクス名・ディメンションで1つのメトリクスが決まり、統計と期間で集計した値をアラームがしきい値と比較する。"><defs><marker id="dgservices-cloudwatch-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="22" y="10" width="454" height="94" rx="10" class="dg-group"/>
 <text x="32" y="26" class="dg-s">メトリクスを特定する3要素</text>
 <rect x="34" y="40" width="130" height="52" rx="8" class="dg-blue"/>
@@ -117,7 +134,7 @@
 <tr><td>保持期間</td><td>データが残る期間</td><td>1分未満は3時間、1分は15日、5分は63日、1時間は455日(<strong>最大15か月</strong>)。古いデータほど粗い粒度にまとめられる。メトリクスは手動で削除できない</td></tr>
 </table></div>
 
-<h3>統計の選び方</h3>
+<h3 id="c2-3">統計の選び方<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>同じメトリクスでも、統計を間違えると意味のない値になります。<strong>「回数は合計、使用率は平均、残量は最小、遅延はパーセンタイル」</strong>と覚えます。</p>
 <div class="table-wrap"><table>
 <tr><th>統計</th><th>向いているメトリクス</th><th>例</th></tr>
@@ -128,7 +145,7 @@
 <tr><td><strong>p99 など</strong></td><td>応答時間(平均だと一部の遅いリクエストが埋もれる)</td><td><code>TargetResponseTime</code>、<code>Latency</code></td></tr>
 </table></div>
 
-<h3>標準では取れないメトリクス</h3>
+<h3 id="c2-4">標準では取れないメトリクス<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2の標準メトリクスは、ハイパーバイザー(仮想化の層)の外から見える値だけです。<strong class="em">OSの中の値はCloudWatchエージェントでカスタムメトリクスとして送る</strong>必要があります。</p>
 <div class="table-wrap"><table>
 <tr><th>取りたい値</th><th>メトリクス(Linux)</th><th>メトリクス(Windows)</th></tr>
@@ -139,7 +156,7 @@
 </table></div>
 <p>エージェント設定の <code>append_dimensions</code> で <code>InstanceId</code> を付け、<code>aggregation_dimensions</code> で <code>AutoScalingGroupName</code> 単位に集計すると、Auto Scalingグループ全体のメモリ使用率でアラームを作れます。設定ファイルはSystems ManagerのParameter Storeに保存して複数台へ配布するのが定番です。</p>
 
-<h3 id="metrics-list">サービス別メトリクス一覧</h3>
+<h3 id="metrics-list">サービス別メトリクス一覧<a class="anchor" href="#metrics-list" aria-label="この見出しへのリンク">#</a></h3>
 <p>SOA-C03で出題されうるメトリクスをサービス別にまとめます。<strong class="em">赤字</strong>は特に出題されやすいメトリクスです。</p>
 <ul>
 <li><a href="#m-compute">コンピューティング</a>(EC2・Auto Scaling・Lambda)</li>
@@ -274,12 +291,12 @@
 </table></div>
 
 <h4 id="m-account">料金・アカウント・監視自体</h4>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>対象</th><th>メトリクス</th><th>意味</th><th>試験での見どころ</th></tr>
-<tr><td>請求<br><code>AWS/Billing</code></td><td><strong class="em"><code>EstimatedCharges</code></strong></td><td>当月の推定請求額</td><td><strong>us-east-1のみ</strong>。請求設定で「CloudWatch請求アラートを受信する」を有効化してから使う(予算管理全般はAWS Budgetsも選択肢)</td></tr>
-<tr><td>使用量<br><code>AWS/Usage</code></td><td><code>ResourceCount</code>、<code>CallCount</code></td><td>リソース数・API呼び出し数</td><td>Service Quotasの上限に近づいたらアラーム(メトリクス計算の <code>SERVICE_QUOTA()</code> 関数と組み合わせる)</td></tr>
-<tr><td>Synthetics<br><code>CloudWatchSynthetics</code></td><td><code>SuccessPercent</code>、<code>Duration</code></td><td>Canaryの成功率・実行時間</td><td>外形監視の失敗をアラームで通知</td></tr>
-<tr><td>Logs<br><code>AWS/Logs</code></td><td><code>IncomingBytes</code>、<code>IncomingLogEvents</code></td><td>取り込んだログのバイト数・件数</td><td>ログの取り込み量(=コスト)の監視</td></tr>
+<tr><td data-label="対象">請求<br><code>AWS/Billing</code></td><td data-label="メトリクス"><strong class="em"><code>EstimatedCharges</code></strong></td><td data-label="意味">当月の推定請求額</td><td data-label="試験での見どころ"><strong>us-east-1のみ</strong>。請求設定で「CloudWatch請求アラートを受信する」を有効化してから使う(予算管理全般はAWS Budgetsも選択肢)</td></tr>
+<tr><td data-label="対象">使用量<br><code>AWS/Usage</code></td><td data-label="メトリクス"><code>ResourceCount</code>、<code>CallCount</code></td><td data-label="意味">リソース数・API呼び出し数</td><td data-label="試験での見どころ">Service Quotasの上限に近づいたらアラーム(メトリクス計算の <code>SERVICE_QUOTA()</code> 関数と組み合わせる)</td></tr>
+<tr><td data-label="対象">Synthetics<br><code>CloudWatchSynthetics</code></td><td data-label="メトリクス"><code>SuccessPercent</code>、<code>Duration</code></td><td data-label="意味">Canaryの成功率・実行時間</td><td data-label="試験での見どころ">外形監視の失敗をアラームで通知</td></tr>
+<tr><td data-label="対象">Logs<br><code>AWS/Logs</code></td><td data-label="メトリクス"><code>IncomingBytes</code>、<code>IncomingLogEvents</code></td><td data-label="意味">取り込んだログのバイト数・件数</td><td data-label="試験での見どころ">ログの取り込み量(=コスト)の監視</td></tr>
 </table></div>
 
 <h4 id="m-reverse">症状からメトリクスを逆引き</h4>
@@ -303,7 +320,7 @@
 <tr><td>月の請求額が一定額を超えたら通知したい</td><td><code>EstimatedCharges</code></td><td>us-east-1で請求アラーム(またはAWS Budgets)</td></tr>
 </table></div>
 
-<h3>メトリクスを活用する機能</h3>
+<h3 id="c2-6">メトリクスを活用する機能<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>機能</th><th>できること</th></tr>
 <tr><td><strong>メトリクス計算(Metric Math)</strong></td><td>複数のメトリクスから新しい値を計算してグラフ・アラームに使う(例:エラー率 = Errors ÷ Invocations × 100)</td></tr>
@@ -314,7 +331,7 @@
 <tr><td><strong>メトリクスストリーム</strong></td><td>メトリクスをFirehose経由でS3やサードパーティの監視ツールへほぼリアルタイムに送る</td></tr>
 </table></div>
 
-<h3>CloudWatch Logs</h3>
+<h3 id="c2-7">CloudWatch Logs<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>ログの収集・保存・検索・分析を行います。</p>
 <ul>
 <li>用語:<strong>ロググループ</strong>(アプリ・サービス単位)、<strong>ログストリーム</strong>(インスタンスや実行単位)、<strong>ログイベント</strong>(実際のログ1行)</li>
@@ -332,7 +349,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 843 217" style="max-width:843px;min-width:520px" role="img" aria-label="図3 CloudWatch Logsの活用。メトリクスフィルターはログから数値を作り、アラームで通知する。サブスクリプションフィルターはログをLambdaやFirehoseなどへリアルタイムに転送する。"><defs><marker id="dgservices-cloudwatch-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 843 217" style="max-width:843px;min-width:674px" role="img" aria-label="図3 CloudWatch Logsの活用。メトリクスフィルターはログから数値を作り、アラームで通知する。サブスクリプションフィルターはログをLambdaやFirehoseなどへリアルタイムに転送する。"><defs><marker id="dgservices-cloudwatch-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="88" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="112" y="110" text-anchor="middle" class="dg-t">アプリのログ</text>
 <text x="112" y="128" text-anchor="middle" class="dg-s">ERROR を出力</text>
@@ -361,7 +378,7 @@
 </div>
 <figcaption>図3 CloudWatch Logsの活用。メトリクスフィルターはログから数値を作り、アラームで通知する。サブスクリプションフィルターはログをLambdaやFirehoseなどへリアルタイムに転送する。</figcaption>
 </figure>
-<h3>メトリクスフィルターの流れ(ERROR通知)</h3>
+<h3 id="c2-8">メトリクスフィルターの流れ(ERROR通知)<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li>ログに"ERROR"が出力される</li>
 <li>メトリクスフィルターが検知してカウント</li>
@@ -369,7 +386,7 @@
 <li>開発者へメール通知</li>
 </ol>
 
-<h3>CloudWatchエージェント</h3>
+<h3 id="c2-9">CloudWatchエージェント<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2やオンプレミスのサーバーから、詳細なメトリクスやログをCloudWatchへ送信します。</p>
 <ol>
 <li>CloudWatchエージェントをインストール</li>
@@ -378,7 +395,7 @@
 <li>エージェントを起動し、メトリクスがCloudWatchに送信される</li>
 </ol>
 
-<h3>その他の機能</h3>
+<h3 id="c2-10">その他の機能<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>CloudWatch Synthetics</strong>:ユーザー視点で定期監視。実際のユーザーのようにアクセス・API呼び出し・ログイン・ボタン操作などを自動実行する。監視用スクリプトを<strong>Canary</strong>(中身はLambda関数)と呼ぶ。</li>
 <li><strong>Application Signals</strong>:アプリの性能と可用性を自動で計測・可視化。サービス単位・APIパス単位でメトリクスを確認できる。CloudWatchエージェントとADOT(AWS Distro for OpenTelemetry)が必要。</li>
@@ -388,7 +405,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>CPU使用率が高くなったらAuto Scalingでスケールアウト</li>
 <li>EC2のメモリ使用率をエージェントで収集して監視</li>
@@ -398,12 +415,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>基本メトリクス(5分間隔)は無料です。詳細モニタリング、カスタムメトリクス、アラーム、ダッシュボード、ログの取り込み量・保存量、Logs Insightsのスキャン量などに応じて課金されます。古いログはS3へ移すとコストを下げられます。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="sns.html">Amazon SNS</a>:アラームの通知先</li>
 <li><a href="ec2.html">Amazon EC2</a>:エージェントによるメトリクス収集</li>
@@ -415,23 +432,29 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>メトリクス</h4>
+<ul>
 <li>EC2のメモリ・ディスク使用率 → <strong>CloudWatchエージェント</strong>でカスタムメトリクス。</li>
-<li>ログの特定文字列でアラーム → <strong>メトリクスフィルター</strong>。</li>
-<li>ログをリアルタイムに他サービスへ → <strong>サブスクリプションフィルター</strong>。</li>
 <li>1分間隔の監視 → <strong>詳細モニタリング</strong>。1秒間隔 → <strong>高解像度カスタムメトリクス</strong>。</li>
 <li>統計は「回数はSum、使用率はAverage、残量はMinimum、遅延はp99」。</li>
 <li>ハードウェア障害 → <code>StatusCheckFailed_System</code> で「復旧」、OSの問題 → <code>StatusCheckFailed_Instance</code> で「再起動」。</li>
 <li>Redis系のCPUは <code>EngineCPUUtilization</code>、Kinesis・ストリームの遅れは <code>IteratorAge</code>。</li>
 <li>請求(<code>EstimatedCharges</code>)・CloudFront・Route 53ヘルスチェックのメトリクスは <strong>us-east-1</strong>。</li>
 <li>Lambdaの詳細監視 → <strong>Lambda Insights</strong>(拡張レイヤー+IAMポリシー)。</li>
+</ul>
+<h4>ログ</h4>
+<ul>
+<li>ログの特定文字列でアラーム → <strong>メトリクスフィルター</strong>。</li>
+<li>ログをリアルタイムに他サービスへ → <strong>サブスクリプションフィルター</strong>。</li>
 <li>ログ保持期間はデフォルト<strong>無期限</strong>。コストに注意。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>CloudWatchはメトリクス・アラーム・ダッシュボード・ログの統合監視サービス。</li>
 <li>標準にない値はエージェントやPutMetricData、EMFで送る。</li>
@@ -444,5 +467,6 @@
   <a class="next" href="cloudtrail.html"><span class="label">次へ →</span>AWS CloudTrail</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

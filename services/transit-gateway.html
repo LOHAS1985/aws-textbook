@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Transit Gateway | AWS教科書</title>
+<meta name="description" content="多数のVPCとオンプレミスをハブ&amp;スポークでつなぐ中継ルーター">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,17 +21,18 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワークとコンテンツ配信</span>
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
   <h1>AWS Transit Gateway</h1>
   <p class="lead">多数のVPCとオンプレミスをハブ&スポークでつなぐ中継ルーター</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Transit Gateway(TGW)</strong>は、<strong>複数のVPCやオンプレミスのネットワークを1か所に集めて接続する、リージョン単位の中継ルーター</strong>です。各ネットワークをTransit Gatewayにつなぐだけで、つながったネットワーク同士が通信できるようになります(ハブ&スポーク型)。</p>
 <p>VPCピアリングは「1対1」の接続で、VPCが増えると接続の数が急に増えます。Transit Gatewayなら、接続はVPCの数だけで済みます。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 848 276" style="max-width:848px;min-width:520px" role="img" aria-label="図1 VPCピアリングとTransit Gatewayの違い。4つのVPCをすべてつなぐ場合、ピアリングは6本の接続が必要だが、Transit Gatewayなら4本で済む。"><defs><marker id="dgservices-transit-gateway-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 848 276" style="max-width:848px;min-width:678px" role="img" aria-label="図1 VPCピアリングとTransit Gatewayの違い。4つのVPCをすべてつなぐ場合、ピアリングは6本の接続が必要だが、Transit Gatewayなら4本で済む。"><defs><marker id="dgservices-transit-gateway-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="46" width="130" height="40" rx="8" class="dg-box"/>
 <text x="99" y="70" text-anchor="middle" class="dg-t">VPC A</text>
 <rect x="214" y="46" width="130" height="40" rx="8" class="dg-box"/>
@@ -67,8 +70,8 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>アタッチメント(つなぐもの)</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">アタッチメント(つなぐもの)<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>アタッチメント</th><th>内容</th></tr>
 <tr><td>VPC</td><td>VPCの各AZのサブネットにTGW用のネットワークインターフェイスを置いて接続する</td></tr>
@@ -79,7 +82,7 @@
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 731 286" style="max-width:731px;min-width:520px" role="img" aria-label="図2 Transit Gatewayのアタッチメント。VPC・VPN・Direct Connect・別リージョンのTransit Gatewayを1か所に集め、まとめてルーティングする。"><defs><marker id="dgservices-transit-gateway-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 731 286" style="max-width:731px;min-width:585px" role="img" aria-label="図2 Transit Gatewayのアタッチメント。VPC・VPN・Direct Connect・別リージョンのTransit Gatewayを1か所に集め、まとめてルーティングする。"><defs><marker id="dgservices-transit-gateway-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="46" width="145" height="40" rx="8" class="dg-box"/>
 <text x="106" y="70" text-anchor="middle" class="dg-t">VPC(本番)</text>
 <rect x="34" y="132" width="145" height="40" rx="8" class="dg-box"/>
@@ -109,7 +112,7 @@
 <figcaption>図2 Transit Gatewayのアタッチメント。VPC・VPN・Direct Connect・別リージョンのTransit Gatewayを1か所に集め、まとめてルーティングする。</figcaption>
 </figure>
 
-<h3>Transit Gatewayのルートテーブル</h3>
+<h3 id="c2-2">Transit Gatewayのルートテーブル<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>Transit Gatewayにも専用のルートテーブルがあり、「どのアタッチメントから来た通信を、どのアタッチメントへ送るか」を決めます。</p>
 <ul>
 <li><strong>関連付け(Association)</strong>:アタッチメントから入ってきた通信を、どのルートテーブルで判断するか。</li>
@@ -118,7 +121,7 @@
 <p>ルートテーブルを複数に分けると、「本番VPCと開発VPCは通信させない。どちらも共有サービスVPCとオンプレミスにはつなぐ」のような<strong>ネットワークの分離(セグメンテーション)</strong>ができます。</p>
 <p>あわせて、各VPCのサブネットのルートテーブルにも「相手のCIDR → Transit Gateway」の経路を追加する必要があります。</p>
 
-<h3>そのほかの特徴</h3>
+<h3 id="c2-3">そのほかの特徴<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>推移的なルーティング</strong>:A→TGW→B のように中継できる(VPCピアリングはできない)。</li>
 <li><strong>アカウント間の共有</strong>:<a href="ram.html">AWS RAM</a>でTransit Gatewayを他アカウントと共有し、各アカウントのVPCをつなげる。</li>
@@ -130,7 +133,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>数十〜数百のVPCとオンプレミスをまとめて接続する</li>
 <li>マルチアカウント環境で、共有サービス(認証・監視など)のVPCに各アカウントからつなぐ</li>
@@ -140,12 +143,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>アタッチメントごとの時間料金</strong>と、Transit Gatewayを通った<strong>データ量(GB)に応じた処理料金</strong>がかかります。VPCが2〜3個で通信量が多い場合は、データ処理料金のかからないVPCピアリングの方が安くなることがあります。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="vpc.html">Amazon VPC</a>:接続するネットワーク。少数の接続ならVPCピアリング</li>
 <li><a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>/<a href="direct-connect.html">AWS Direct Connect</a>:オンプレミスとの接続</li>
@@ -155,7 +158,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>「多数のVPC」「オンプレミスも含めて」「推移的に接続」→ <strong>Transit Gateway</strong>。2つのVPCだけなら<strong>VPCピアリング</strong>。</li>
 <li>他アカウントのVPCをつなぐ → <strong>RAM</strong>で共有する。</li>
@@ -166,7 +169,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>リージョン単位の中継ルーターで、VPC・VPN・Direct Connectをハブ&スポークでつなぐ。</li>
 <li>ルートテーブルの関連付け・伝播で経路を管理し、分離もできる。</li>
@@ -180,5 +183,6 @@
   <a class="next" href="site-to-site-vpn.html"><span class="label">次へ →</span>AWS Site-to-Site VPN</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

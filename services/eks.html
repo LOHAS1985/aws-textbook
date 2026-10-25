@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon EKS | AWS教科書</title>
+<meta name="description" content="Kubernetesをマネージドで運用するサービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,18 +21,33 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">コンテナ</span>
+  <a class="category" href="index.html#cat2">コンテナ</a>
   <h1>Amazon EKS</h1>
   <p class="lead">Kubernetesをマネージドで運用するサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(15項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">基本用語</a></li><li><a href="#c2-2">アーキテクチャ</a></li><li><a href="#c2-3">データプレーンの選択肢</a></li><li><a href="#c2-4">ネットワーク</a></li><li><a href="#c2-5">認証と認可</a></li><li><a href="#c2-6">kubectl</a></li><li><a href="#c2-7">ロードバランシング</a></li><li><a href="#c2-8">ストレージ</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon EKS(Elastic Kubernetes Service)</strong>は、<strong>Kubernetesをマネージドで運用</strong>できるサービスです。Kubernetesの頭脳にあたるコントロールプレーンをAWSが管理し、利用者はアプリ(Pod)の実行に集中できます。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>基本用語</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">基本用語<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>用語</th><th>意味</th></tr>
 <tr><td>クラスター</td><td>Kubernetes全体のまとまり。コントロールプレーンとノードで構成される</td></tr>
@@ -42,7 +59,7 @@
 <tr><td>etcd</td><td>クラスターの状態(Pod/Deployment/Serviceの一覧、レプリカ数、イメージ、ConfigMap、Secret、ノード情報など)を保存するデータベース</td></tr>
 </table></div>
 
-<h3>アーキテクチャ</h3>
+<h3 id="c2-2">アーキテクチャ<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>層</th><th>内容</th><th>管理者</th></tr>
 <tr><td>コントロールプレーン</td><td>APIサーバー、etcdなど。複数AZに分散して配置される</td><td>AWS</td></tr>
@@ -52,7 +69,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 770 221" style="max-width:770px;min-width:520px" role="img" aria-label="図1 EKSのアーキテクチャ。コントロールプレーンはAWSが管理し、Podが動くデータプレーン(ノード)は利用者のVPCに置かれる。"><defs><marker id="dgservices-eks-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 770 221" style="max-width:770px;min-width:616px" role="img" aria-label="図1 EKSのアーキテクチャ。コントロールプレーンはAWSが管理し、Podが動くデータプレーン(ノード)は利用者のVPCに置かれる。"><defs><marker id="dgservices-eks-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="292" y="58" width="184" height="94" rx="10" class="dg-group"/>
 <text x="302" y="73" class="dg-s">AWS管理のVPC(複数AZ)</text>
 <rect x="562" y="13" width="184" height="184" rx="10" class="dg-group"/>
@@ -78,7 +95,7 @@
 </div>
 <figcaption>図1 EKSのアーキテクチャ。コントロールプレーンはAWSが管理し、Podが動くデータプレーン(ノード)は利用者のVPCに置かれる。</figcaption>
 </figure>
-<h3>データプレーンの選択肢</h3>
+<h3 id="c2-3">データプレーンの選択肢<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>概要</th><th>向いているケース</th></tr>
 <tr><td>マネージド型ノードグループ</td><td>ノード(EC2)のプロビジョニングとライフサイクル管理をEKSが自動化</td><td>標準的な運用。ノードの更新を楽にしたい</td></tr>
@@ -88,7 +105,7 @@
 </table></div>
 <p><strong>Fargateの注意点</strong>:Fargateプロファイルで、Fargateで動かすPod(名前空間やラベル)を指定します。Podはプライベートサブネットで実行され、<strong>DaemonSetは使えず、特権コンテナも実行できません</strong>。</p>
 
-<h3>ネットワーク</h3>
+<h3 id="c2-4">ネットワーク<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>Amazon VPC CNIプラグイン</strong>により、PodにはVPCのプライベートIPアドレスが割り当てられる。</li>
 <li>Podが多いと<strong>サブネットのIPアドレスが枯渇</strong>しやすい。サブネットのサイズやCIDRの設計に注意する。</li>
@@ -100,7 +117,7 @@
 <tr><td>プライベートのみ</td><td>VPC内(VPNやDirect Connectを含む)からのみ接続できる</td></tr>
 </table></div>
 
-<h3>認証と認可</h3>
+<h3 id="c2-5">認証と認可<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>認証はIAMで行い、クラスター内での認可はKubernetesの<strong>RBAC</strong>で決まる。IAMの権限があっても、クラスター側で許可されていなければ操作できない。</li>
 <li>IAMプリンシパルとクラスター権限の対応付けには、<strong>アクセスエントリ(推奨)</strong>か、従来の <code>aws-auth</code> ConfigMapを使う。</li>
@@ -114,7 +131,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 896 218" style="max-width:896px;min-width:520px" role="img" aria-label="図2 上段: クラスターの操作は「IAMで認証 → RBAC(アクセスエントリ)で認可」の2段階。下段: PodにはIRSAまたはEKS Pod IdentityでIAMロールを割り当て、Pod単位で最小権限にする。"><defs><marker id="dgservices-eks-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 896 218" style="max-width:896px;min-width:716px" role="img" aria-label="図2 上段: クラスターの操作は「IAMで認証 → RBAC(アクセスエントリ)で認可」の2段階。下段: PodにはIRSAまたはEKS Pod IdentityでIAMロールを割り当て、Pod単位で最小権限にする。"><defs><marker id="dgservices-eks-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="46" width="155" height="40" rx="8" class="dg-blue"/>
 <text x="112" y="70" text-anchor="middle" class="dg-t">IAMユーザー/ロール</text>
 <rect x="262" y="40" width="155" height="52" rx="8" class="dg-box"/>
@@ -143,7 +160,7 @@
 </div>
 <figcaption>図2 上段: クラスターの操作は「IAMで認証 → RBAC(アクセスエントリ)で認可」の2段階。下段: PodにはIRSAまたはEKS Pod IdentityでIAMロールを割り当て、Pod単位で最小権限にする。</figcaption>
 </figure>
-<h3>kubectl</h3>
+<h3 id="c2-6">kubectl<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p>Kubernetesを操作するためのコマンドラインツールです。</p>
 <ul>
 <li><code>kubectl get pods</code>:Podの一覧を見る</li>
@@ -151,7 +168,7 @@
 <li><code>kubectl logs &lt;Pod名&gt;</code>:ログを見る</li>
 </ul>
 
-<h3>ロードバランシング</h3>
+<h3 id="c2-7">ロードバランシング<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>AWS Load Balancer Controller</strong>を導入すると、KubernetesのリソースからAWSのロードバランサーを作成できます。</p>
 <div class="table-wrap"><table>
 <tr><th>Kubernetesのリソース</th><th>作成されるロードバランサー</th></tr>
@@ -159,7 +176,7 @@
 <tr><td>Service</td><td>NLB</td></tr>
 </table></div>
 
-<h3>ストレージ</h3>
+<h3 id="c2-8">ストレージ<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>EBS CSIドライバー</strong>:EBSボリュームをPodの永続ボリュームとして使う。<strong>単一AZに紐付く</strong>。</li>
 <li><strong>EFS CSIドライバー</strong>:<strong>複数Pod・複数AZから共有</strong>できるファイルストレージとして使う。</li>
@@ -168,7 +185,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>既存のKubernetes資産(マニフェスト・ツール)をAWSで動かしたい</li>
 <li>マルチクラウドやオンプレミスとKubernetesで運用を揃えたい</li>
@@ -177,12 +194,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>料金は<strong>クラスターごとの時間課金</strong>と、<strong>データプレーンのコンピューティング料金</strong>(EC2またはFargate)で構成されます。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="ecs.html">Amazon ECS</a>:AWS独自のコンテナオーケストレーション</li>
 <li><a href="ecr.html">Amazon ECR</a>:コンテナイメージの保存先</li>
@@ -194,7 +211,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point">
 <ul>
 <li>Podに権限を渡す → <strong>IRSA</strong>または<strong>EKS Pod Identity</strong>(ノードロールに広い権限を付けない)。</li>
@@ -208,7 +225,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>EKSはコントロールプレーンをAWSが管理するKubernetesサービス。</li>
 <li>データプレーンはマネージド型ノードグループ/セルフマネージド/Fargate/Auto Modeから選ぶ。</li>
@@ -221,5 +238,6 @@
   <a class="next" href="ecr.html"><span class="label">次へ →</span>Amazon ECR</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

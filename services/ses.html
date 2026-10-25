@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon Simple Email Service(SES) | AWS教科書</title>
+<meta name="description" content="アプリからメールを大量に送信・受信できるメールサービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,13 +21,28 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ビジネスアプリケーション</span>
+  <a class="category" href="index.html#cat14">ビジネスアプリケーション</a>
   <h1>Amazon Simple Email Service(SES)</h1>
   <p class="lead">アプリからメールを大量に送信・受信できるメールサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(13項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">送信の方法</a></li><li><a href="#c2-2">検証済みID</a></li><li><a href="#c2-3">サンドボックス</a></li><li><a href="#c2-4">送信ドメイン認証</a></li><li><a href="#c2-5">評価(レピュテーション)の管理</a></li><li><a href="#c2-6">メールの受信</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
-<p><strong>Amazon Simple Email Service(SES)</strong>は、<strong>アプリケーションからメールを送信・受信する</strong>ためのサービスです。会員登録の確認メールやパスワードの再設定メールなどの<strong>通知メール</strong>や、メールマガジンなどの<strong>大量配信</strong>に使います。</p>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Simple Email Service(SES)</strong>は、アプリケーションからメールを送信・受信するためのサービスです。会員登録の確認メールやパスワードの再設定メールなどの<strong>通知メール</strong>や、メールマガジンなどの<strong>大量配信</strong>に使います。</p>
 <p>自分でメールサーバーを立てて運用する必要がなく、迷惑メールと判定されにくくするための仕組み(送信ドメイン認証、評価の監視など)も用意されています。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -54,17 +71,17 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>送信の方法</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">送信の方法<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>API</strong>:AWS SDKやCLIから <code>SendEmail</code> などのAPIを呼び出す。IAMで権限を管理する。</li>
 <li><strong>SMTPインターフェイス</strong>:既存のメールソフトやアプリから、SMTPで送信する。SES用の<strong>SMTP認証情報</strong>を作成して使う(IAMのアクセスキーとは別のもの)。</li>
 </ul>
 
-<h3>検証済みID</h3>
+<h3 id="c2-2">検証済みID<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>送信元として使うメールアドレスまたは<strong>ドメインを検証(所有の確認)</strong>してから送信します。ドメインを検証すると、そのドメインのどのアドレスからでも送信できます。</p>
 
-<h3>サンドボックス</h3>
+<h3 id="c2-3">サンドボックス<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>SESを使い始めた直後のアカウントは<strong>サンドボックス</strong>という制限された状態になっています。</p>
 <ul>
 <li>送信先は<strong>検証済みのアドレス(またはドメイン)だけ</strong></li>
@@ -73,7 +90,7 @@
 <p>本番で任意の宛先に送るには、<strong>本番環境へのアクセス(サンドボックスの解除)を申請</strong>します。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 682 154" style="max-width:682px;min-width:520px" role="img" aria-label="図2 サンドボックスの解除。最初は検証済みの宛先にしか送れないため、本番で使う前に申請して制限を外す。"><defs><marker id="dgservices-ses-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 682 154" style="max-width:682px;min-width:545px" role="img" aria-label="図2 サンドボックスの解除。最初は検証済みの宛先にしか送れないため、本番で使う前に申請して制限を外す。"><defs><marker id="dgservices-ses-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="78" width="145" height="52" rx="8" class="dg-ng"/>
 <text x="106" y="100" text-anchor="middle" class="dg-t">サンドボックス</text>
 <text x="106" y="118" text-anchor="middle" class="dg-s">検証済みの宛先のみ</text>
@@ -90,7 +107,7 @@
 <figcaption>図2 サンドボックスの解除。最初は検証済みの宛先にしか送れないため、本番で使う前に申請して制限を外す。</figcaption>
 </figure>
 
-<h3>送信ドメイン認証</h3>
+<h3 id="c2-4">送信ドメイン認証<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>なりすましを防ぎ、迷惑メールと判定されにくくするために設定します。</p>
 <div class="table-wrap"><table>
 <tr><th>仕組み</th><th>内容</th><th>SESでの設定</th></tr>
@@ -99,7 +116,7 @@
 <tr><td>DMARC</td><td>SPF・DKIMに失敗したメールの扱い(拒否など)を受信側に伝える</td><td>DNSにTXTレコードを追加する</td></tr>
 </table></div>
 
-<h3>評価(レピュテーション)の管理</h3>
+<h3 id="c2-5">評価(レピュテーション)の管理<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>バウンス</strong>(宛先不明などで届かない)と<strong>苦情</strong>(受信者が迷惑メールとして報告)の割合が高いと、送信が一時停止されることがある。</li>
 <li><strong>設定セット(Configuration Set)</strong>で、送信・配信・バウンス・苦情・開封などのイベントをSNS、CloudWatch、Data Firehose、EventBridgeへ送る。</li>
@@ -107,12 +124,12 @@
 <li><strong>専用IPアドレス</strong>:自社だけが使う送信元IPで、評価を自分で管理する(標準は共有IP)。</li>
 </ul>
 
-<h3>メールの受信</h3>
+<h3 id="c2-6">メールの受信<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p>受信ルールを設定すると、受け取ったメールをS3に保存したり、SNSで通知したり、Lambdaで処理したりできます(受信に対応しているリージョンのみ)。</p>
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>会員登録・パスワード再設定・注文確認などの通知メール(トランザクションメール)</li>
 <li>メールマガジン・キャンペーンの大量配信</li>
@@ -122,12 +139,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>送信したメールの通数(1,000通単位)</strong>と、添付ファイルなどの<strong>データ量</strong>に応じた従量課金です。受信も通数とデータ量で課金されます。専用IPアドレスなどのオプションは別料金です。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="sns.html">Amazon SNS</a>:バウンス・苦情の通知先。SNSのメール通知はシステム管理者向けで、顧客向けのメールにはSESを使う</li>
 <li><a href="lambda.html">AWS Lambda</a>:メールの送信処理、受信したメールの処理</li>
@@ -139,7 +156,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>検証していない宛先に送れない → <strong>サンドボックス</strong>のまま。本番アクセスを申請する。</li>
 <li>迷惑メールに入る・なりすまし対策 → <strong>SPF・DKIM・DMARC</strong>を設定する。</li>
@@ -150,7 +167,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>APIまたはSMTPでメールを送信・受信できるメールサービス。</li>
 <li>送信元のIDを検証し、最初はサンドボックスの制限がある。</li>
@@ -164,5 +181,6 @@
   <span class="next empty"></span>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

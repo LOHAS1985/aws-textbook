@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon Aurora | AWS教科書</title>
+<meta name="description" content="MySQL/PostgreSQL互換の高性能リレーショナルデータベース">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,18 +21,33 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">データベース</span>
+  <a class="category" href="index.html#cat4">データベース</a>
   <h1>Amazon Aurora</h1>
   <p class="lead">MySQL/PostgreSQL互換の高性能リレーショナルデータベース</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">アーキテクチャの特徴</a></li><li><a href="#c2-2">エンドポイント</a></li><li><a href="#c2-3">可用性とフェイルオーバー</a></li><li><a href="#c2-4">主な機能</a></li><li><a href="#c2-5">バックアップと復元</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon Aurora</strong>は、<strong>MySQL/PostgreSQL互換</strong>のリレーショナルデータベースです。RDSのDBエンジンの1つで、AWSが独自に設計したストレージにより高い性能と可用性を持ちます。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>アーキテクチャの特徴</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">アーキテクチャの特徴<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>共有クラスターボリューム</strong>:データは<strong>3つのAZにまたがって6コピー</strong>保持される。</li>
 <li><strong>インスタンス構成</strong>:1つのプライマリ(書き込み)と<strong>最大15のレプリカ</strong>(読み取り)。全インスタンスがボリュームを共有するため、レプリカのラグは通常ミリ秒レベル。</li>
@@ -59,7 +76,7 @@
 </div>
 <figcaption>図1 Auroraのアーキテクチャ。すべてのインスタンスが1つのクラスターボリュームを共有する。データは3つのAZに6コピー保存され、レプリカは最大15台まで追加できる。</figcaption>
 </figure>
-<h3>エンドポイント</h3>
+<h3 id="c2-2">エンドポイント<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>エンドポイント</th><th>向き先</th></tr>
 <tr><td>クラスターエンドポイント</td><td>常にプライマリ(書き込み用)</td></tr>
@@ -70,7 +87,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 718 256" style="max-width:718px;min-width:520px" role="img" aria-label="図2 エンドポイントの使い分け。書き込みはクラスターエンドポイント(常にプライマリ)、読み取りはリーダーエンドポイント(レプリカに負荷分散)を使う。"><defs><marker id="dgservices-aurora-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 718 256" style="max-width:718px;min-width:574px" role="img" aria-label="図2 エンドポイントの使い分け。書き込みはクラスターエンドポイント(常にプライマリ)、読み取りはリーダーエンドポイント(レプリカに負荷分散)を使う。"><defs><marker id="dgservices-aurora-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="116" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="140" text-anchor="middle" class="dg-t">アプリ</text>
 <rect x="289" y="36" width="150" height="52" rx="8" class="dg-box"/>
@@ -96,14 +113,14 @@
 </div>
 <figcaption>図2 エンドポイントの使い分け。書き込みはクラスターエンドポイント(常にプライマリ)、読み取りはリーダーエンドポイント(レプリカに負荷分散)を使う。</figcaption>
 </figure>
-<h3>可用性とフェイルオーバー</h3>
+<h3 id="c2-3">可用性とフェイルオーバー<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>プライマリに障害が起きると、<strong>レプリカが自動で昇格</strong>する。</li>
 <li>レプリカがない場合は新しいインスタンスを作成するため、復旧に時間がかかる。可用性を重視するなら<strong>別AZにレプリカを置く</strong>。</li>
 <li>通常のRDS Multi-AZと違い、スタンバイ専用インスタンスはなく、<strong>レプリカが読み取りとフェイルオーバーを兼ねる</strong>。</li>
 </ul>
 
-<h3>主な機能</h3>
+<h3 id="c2-4">主な機能<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>機能</th><th>概要</th></tr>
 <tr><td>レプリカのオートスケーリング</td><td>負荷に応じてレプリカ数を増減する</td></tr>
@@ -115,7 +132,7 @@
 <tr><td>Database Activity Streams</td><td>データベースアクティビティをほぼリアルタイムでストリーミングする(監査用)</td></tr>
 </table></div>
 
-<h3>バックアップと復元</h3>
+<h3 id="c2-5">バックアップと復元<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>継続的バックアップ</strong>:自動バックアップはS3に保存され、保持期間は<strong>1〜35日</strong>。ポイントインタイムリカバリが使える。</li>
 <li>復元は<strong>常に新しいクラスターとして作成</strong>される(既存クラスターは上書きされない)。</li>
@@ -124,7 +141,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>高い可用性・性能が必要な業務システムのDB</li>
 <li>読み取りが多いWebサービス(最大15レプリカ+リーダーエンドポイント)</li>
@@ -134,12 +151,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>インスタンスの稼働時間(Serverless v2ではACUの使用量)、ストレージの使用量、I/Oリクエスト、バックアップ容量で課金されます。ストレージは使った分だけ自動で拡張されます。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="rds.html">Amazon RDS</a>:Auroraを含むマネージドDBサービス</li>
 <li><a href="lambda.html">AWS Lambda</a>:RDS Proxy経由での接続</li>
@@ -149,7 +166,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>データは<strong>3AZに6コピー</strong>。レプリカは<strong>最大15</strong>。</li>
 <li>書き込み → <strong>クラスターエンドポイント</strong>、読み取り → <strong>リーダーエンドポイント</strong>。</li>
@@ -162,7 +179,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>AuroraはMySQL/PostgreSQL互換の高性能DB。共有ストレージで3AZ・6コピー。</li>
 <li>エンドポイントで書き込み・読み取りを使い分ける。</li>
@@ -175,5 +192,6 @@
   <a class="next" href="dynamodb.html"><span class="label">次へ →</span>Amazon DynamoDB</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

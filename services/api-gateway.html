@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon API Gateway | AWS教科書</title>
+<meta name="description" content="APIの作成・公開・管理のためのサービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,18 +21,33 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワークとコンテンツ配信</span>
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
   <h1>Amazon API Gateway</h1>
   <p class="lead">APIの作成・公開・管理のためのサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">APIの種類</a></li><li><a href="#c2-2">リクエスト処理の流れ</a></li><li><a href="#c2-3">オーソライザー</a></li><li><a href="#c2-4">統合タイプ</a></li><li><a href="#c2-5">主なAPI操作</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon API Gateway</strong>は、<strong>APIの作成・公開・管理</strong>のためのサービスです。クライアントからのリクエストを受け付け、LambdaやHTTPサーバー、他のAWSサービスへ中継します。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>APIの種類</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">APIの種類<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>HTTP API</strong>:シンプルで低コストなAPI(実体はHTTPS)。</li>
 <li><strong>REST API</strong>:多機能なAPI。
@@ -48,7 +65,7 @@
 <tr><td>VPCエンドポイント必須</td><td>×</td><td>○</td></tr>
 </table></div>
 
-<h3>リクエスト処理の流れ</h3>
+<h3 id="c2-2">リクエスト処理の流れ<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li><strong>メソッドリクエスト</strong>:クライアントから受け取るリクエストの定義</li>
 <li><strong>統合リクエスト</strong>:バックエンドへ送る前の変換処理(Lambda・HTTPサーバー・他AWSサービス向けに変換)</li>
@@ -58,7 +75,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 774 214" style="max-width:774px;min-width:520px" role="img" aria-label="図1 リクエスト処理の流れ。クライアントの要求をメソッドリクエストで受け、統合リクエストで変換してバックエンドへ送る。戻りは統合レスポンス → メソッドレスポンスの順に変換して返す。"><defs><marker id="dgservices-api-gateway-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 774 214" style="max-width:774px;min-width:619px" role="img" aria-label="図1 リクエスト処理の流れ。クライアントの要求をメソッドリクエストで受け、統合リクエストで変換してバックエンドへ送る。戻りは統合レスポンス → メソッドレスポンスの順に変換して返す。"><defs><marker id="dgservices-api-gateway-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="214" y="10" width="356" height="179" rx="10" class="dg-group"/>
 <text x="224" y="26" class="dg-s">API Gateway</text>
 <rect x="34" y="89" width="140" height="40" rx="8" class="dg-blue"/>
@@ -88,30 +105,30 @@
 </div>
 <figcaption>図1 リクエスト処理の流れ。クライアントの要求をメソッドリクエストで受け、統合リクエストで変換してバックエンドへ送る。戻りは統合レスポンス → メソッドレスポンスの順に変換して返す。</figcaption>
 </figure>
-<h3>オーソライザー</h3>
+<h3 id="c2-3">オーソライザー<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>APIを呼び出してよいかを判定する認証・認可の機能です。<strong class="em">キャッシュ機能があるため、直前の結果を引き継ぐ可能性</strong>があります。</p>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>種類</th><th>認証方法</th><th>主な用途</th><th>特徴</th></tr>
-<tr><td>JWT</td><td>JWT</td><td>Web/モバイルAPI</td><td>HTTP APIの標準</td></tr>
-<tr><td>Lambda</td><td><strong>トークン</strong>(ヘッダーのトークン1つで判定)/<strong>リクエスト</strong>(ヘッダー・クエリ文字列など複数の値で判定)</td><td>カスタム認証</td><td>独自のLambda関数が許可・拒否を判定し、IAMポリシーを返す。結果はトークンなどをキーにキャッシュされる(TTLで期間を設定、0で無効)</td></tr>
-<tr><td>IAM</td><td>SigV4</td><td>AWS内部のAPI</td><td>IAMで制御</td></tr>
-<tr><td>Cognito</td><td><strong>Cognito JWT</strong></td><td>ユーザー認証</td><td>マネージドな認証</td></tr>
+<tr><td data-label="種類">JWT</td><td data-label="認証方法">JWT</td><td data-label="主な用途">Web/モバイルAPI</td><td data-label="特徴">HTTP APIの標準</td></tr>
+<tr><td data-label="種類">Lambda</td><td data-label="認証方法"><strong>トークン</strong>(ヘッダーのトークン1つで判定)/<strong>リクエスト</strong>(ヘッダー・クエリ文字列など複数の値で判定)</td><td data-label="主な用途">カスタム認証</td><td data-label="特徴">独自のLambda関数が許可・拒否を判定し、IAMポリシーを返す。結果はトークンなどをキーにキャッシュされる(TTLで期間を設定、0で無効)</td></tr>
+<tr><td data-label="種類">IAM</td><td data-label="認証方法">SigV4</td><td data-label="主な用途">AWS内部のAPI</td><td data-label="特徴">IAMで制御</td></tr>
+<tr><td data-label="種類">Cognito</td><td data-label="認証方法"><strong>Cognito JWT</strong></td><td data-label="主な用途">ユーザー認証</td><td data-label="特徴">マネージドな認証</td></tr>
 </table></div>
 
-<h3>統合タイプ</h3>
+<h3 id="c2-4">統合タイプ<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>※マッピングテンプレート:リクエスト・レスポンスの形式を変換する仕組み</p>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>統合タイプ</th><th>概要</th><th>接続先</th><th>マッピングテンプレート</th><th>主な用途</th></tr>
-<tr><td>MOCK</td><td>API Gateway自身がレスポンスを返す</td><td>なし</td><td>利用可能</td><td>テスト、スタブAPI、ヘルスチェック</td></tr>
-<tr><td>Lambdaプロキシ</td><td>リクエストをほぼそのままLambdaへ渡す</td><td>Lambda</td><td>不要</td><td>サーバーレスAPIの標準構成</td></tr>
-<tr><td>Lambda(非プロキシ)</td><td>API Gatewayで加工してLambdaへ渡す</td><td>Lambda</td><td>必要</td><td>Lambdaの入出力を細かく制御</td></tr>
-<tr><td>HTTPプロキシ</td><td>リクエストをほぼそのままHTTPバックエンドへ転送</td><td>Webサーバー、ALB、外部API</td><td>不要</td><td>リバースプロキシ</td></tr>
-<tr><td>HTTP</td><td>API Gatewayで加工してHTTPバックエンドへ渡す</td><td>Webサーバー、ALB、外部API</td><td>必要</td><td>既存システムとの連携</td></tr>
+<tr><td data-label="統合タイプ">MOCK</td><td data-label="概要">API Gateway自身がレスポンスを返す</td><td data-label="接続先">なし</td><td data-label="マッピングテンプレート">利用可能</td><td data-label="主な用途">テスト、スタブAPI、ヘルスチェック</td></tr>
+<tr><td data-label="統合タイプ">Lambdaプロキシ</td><td data-label="概要">リクエストをほぼそのままLambdaへ渡す</td><td data-label="接続先">Lambda</td><td data-label="マッピングテンプレート">不要</td><td data-label="主な用途">サーバーレスAPIの標準構成</td></tr>
+<tr><td data-label="統合タイプ">Lambda(非プロキシ)</td><td data-label="概要">API Gatewayで加工してLambdaへ渡す</td><td data-label="接続先">Lambda</td><td data-label="マッピングテンプレート">必要</td><td data-label="主な用途">Lambdaの入出力を細かく制御</td></tr>
+<tr><td data-label="統合タイプ">HTTPプロキシ</td><td data-label="概要">リクエストをほぼそのままHTTPバックエンドへ転送</td><td data-label="接続先">Webサーバー、ALB、外部API</td><td data-label="マッピングテンプレート">不要</td><td data-label="主な用途">リバースプロキシ</td></tr>
+<tr><td data-label="統合タイプ">HTTP</td><td data-label="概要">API Gatewayで加工してHTTPバックエンドへ渡す</td><td data-label="接続先">Webサーバー、ALB、外部API</td><td data-label="マッピングテンプレート">必要</td><td data-label="主な用途">既存システムとの連携</td></tr>
 </table></div>
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 194" style="max-width:684px;min-width:520px" role="img" aria-label="図2 APIキーを使えるようにするまで。APIキーを作っただけでは使えず、使用量プランに関連付け(createUsagePlanKey)て初めて、制限付きで利用できるようになる。"><defs><marker id="dgservices-api-gateway-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 194" style="max-width:684px;min-width:547px" role="img" aria-label="図2 APIキーを使えるようにするまで。APIキーを作っただけでは使えず、使用量プランに関連付け(createUsagePlanKey)て初めて、制限付きで利用できるようになる。"><defs><marker id="dgservices-api-gateway-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="60" text-anchor="middle" class="dg-t">APIキー</text>
 <text x="109" y="78" text-anchor="middle" class="dg-s">createApiKey</text>
@@ -131,7 +148,7 @@
 </div>
 <figcaption>図2 APIキーを使えるようにするまで。APIキーを作っただけでは使えず、使用量プランに関連付け(createUsagePlanKey)て初めて、制限付きで利用できるようになる。</figcaption>
 </figure>
-<h3>主なAPI操作</h3>
+<h3 id="c2-5">主なAPI操作<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>API/メソッド</th><th>用途</th><th>ポイント</th></tr>
 <tr><td><code>createDeployment</code></td><td>APIをデプロイ</td><td><strong>API変更後は再デプロイが必要</strong></td></tr>
@@ -151,7 +168,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>API Gateway+Lambda(プロキシ統合)によるサーバーレスAPI</li>
 <li>既存のHTTPシステムの前段にAPIの入り口を置く(HTTP統合)</li>
@@ -161,12 +178,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>APIの呼び出し回数とデータ転送量で課金されます(WebSocketは接続時間とメッセージ数)。HTTP APIはREST APIより安価です。REST APIのキャッシュを有効にすると、キャッシュサイズに応じた時間料金が加わります。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="lambda.html">AWS Lambda</a>:代表的なバックエンド、Lambdaオーソライザー</li>
 <li><a href="cognito.html">Amazon Cognito</a>:ユーザー認証(Cognitoオーソライザー)</li>
@@ -178,7 +195,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>APIを変更したら<strong>再デプロイ</strong>(<code>createDeployment</code>)しないと反映されない。</li>
 <li>APIキーは<strong>使用量プランに関連付け</strong>(<code>createUsagePlanKey</code>)て初めて使える。</li>
@@ -190,7 +207,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>API GatewayはHTTP/REST/WebSocketのAPIを提供する。</li>
 <li>処理はメソッドリクエスト → 統合リクエスト → 統合レスポンス → メソッドレスポンス。</li>
@@ -203,5 +220,6 @@
   <a class="next" href="iam.html"><span class="label">次へ →</span>AWS IAM</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

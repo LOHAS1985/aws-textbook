@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>組織全体にセキュリティのガードレールを設ける | AWS教科書</title>
+<meta name="description" content="SCPで禁止事項を決め、組織の証跡とConfigで全アカウントを監視する">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,20 +21,21 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">セキュリティ・コンプライアンス</span>
+  <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
   <h1>組織全体にセキュリティのガードレールを設ける</h1>
   <p class="lead">SCPで禁止事項を決め、組織の証跡とConfigで全アカウントを監視する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. やりたいこと</h2>
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>組織内のすべてのアカウントで、「東京・大阪以外のリージョンを使わせない」「CloudTrailを止めさせない」といったルールを強制したい。あわせて、全アカウントの操作履歴と設定の準拠状況を管理アカウントでまとめて確認したい。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 274" style="max-width:684px;min-width:520px" role="img" aria-label="図1 管理アカウントから、SCPで「やってはいけないこと」の上限を決め、CloudTrailの組織の証跡で操作を記録し、Configのルールで設定を評価する。どれもOU配下の全アカウントに適用される。"><defs><marker id="dgusecases-org-guardrails-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 管理アカウントから、SCPで「やってはいけないこと」の上限を決め、CloudTrailの組織の証跡で操作を記録し、Configのルールで設定を評価する。どれもOU配下の全アカウントに適用される。"><defs><marker id="dgusecases-org-guardrails-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="118" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="140" text-anchor="middle" class="dg-tb">管理アカウント</text>
 <text x="109" y="158" text-anchor="middle" class="dg-s">Organizations</text>
@@ -64,7 +67,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/organizations.html">AWS Organizations</a>:OUとSCP(サービスコントロールポリシー)</li>
 <li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:組織の証跡で全アカウントのAPI操作を記録する</li>
@@ -75,7 +78,7 @@
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>Organizationsでアカウントを OU(本番・開発など)に整理する</li>
 <li>SCPを作成し(例:許可リージョン以外の操作を拒否、CloudTrailの停止を拒否)、ルートまたはOUに適用する</li>
@@ -85,7 +88,7 @@
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>SCPは権限を<strong>与えない</strong>。上限(ガードレール)を決めるだけで、実際に操作するにはIAMでの許可も必要。</li>
 <li>IAMで許可しても、<strong>SCPで拒否されていれば実行できない</strong>。</li>
@@ -99,5 +102,6 @@
   <a class="next" href="s3-encryption-audit.html"><span class="label">次へ →</span>機密データを保存するS3を暗号化・監査する</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

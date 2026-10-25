@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>機密データを保存するS3を暗号化・監査する | AWS教科書</title>
+<meta name="description" content="SSE-KMSで暗号化し、CloudTrailで操作を記録し、Macieで機密データを検出する">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,17 +21,18 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">セキュリティ・コンプライアンス</span>
+  <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
   <h1>機密データを保存するS3を暗号化・監査する</h1>
   <p class="lead">SSE-KMSで暗号化し、CloudTrailで操作を記録し、Macieで機密データを検出する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. やりたいこと</h2>
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>顧客の個人情報を含むファイルをS3に保存する。保存時の暗号化に加えて、「いつ・誰が鍵を使ってデータにアクセスしたか」を監査できるようにし、想定外の場所に個人情報が置かれていないかも定期的にチェックしたい。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 632 263" style="max-width:632px;min-width:520px" role="img" aria-label="図1 S3はKMSのカスタマー管理キーで暗号化(SSE-KMS)し、キーの利用とオブジェクト操作をCloudTrailで記録する。Macieでバケット内の個人情報を検出する。"><defs><marker id="dgusecases-s3-encryption-audit-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -63,7 +66,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/s3.html">Amazon S3</a>:SSE-KMSによる暗号化、バケットポリシーでのアクセス制御</li>
 <li><a href="../services/kms.html">AWS KMS</a>:カスタマー管理キー(キーポリシーで利用者を制御、利用を監査)</li>
@@ -73,7 +76,7 @@
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>KMSでカスタマー管理キーを作成し、キーポリシーで利用できるロールを限定する</li>
 <li>S3バケットのデフォルト暗号化をSSE-KMS(作成したキー)にする</li>
@@ -84,7 +87,7 @@
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>鍵の利用を<strong>監査</strong>したい → <strong>SSE-KMS</strong>(SSE-S3ではキーの利用履歴を追えない)。</li>
 <li>読み取る側にも <code>kms:Decrypt</code> の権限が必要。</li>
@@ -99,5 +102,6 @@
   <a class="next" href="bastionless-access.html"><span class="label">次へ →</span>踏み台サーバーなしでプライベートなEC2を操作する</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

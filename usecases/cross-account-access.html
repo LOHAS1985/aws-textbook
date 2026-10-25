@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>異なるAWSアカウントのリソースにアクセス | AWS教科書</title>
+<meta name="description" content="STSのAssumeRoleで別アカウントのロールを引き受け、一時認証情報で操作する">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,20 +21,21 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">セキュリティ・コンプライアンス</span>
+  <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
   <h1>異なるAWSアカウントのリソースにアクセス</h1>
   <p class="lead">STSのAssumeRoleで別アカウントのロールを引き受け、一時認証情報で操作する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. やりたいこと</h2>
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>アカウントAのIAMユーザー/ロールから、<strong>アカウントBのリソース(S3バケットなど)を安全に操作</strong>したい。アカウントBにIAMユーザーを作ってアクセスキーを渡すのではなく、<strong>AWS STS</strong>でアカウントBのロールを引き受け、<strong>有効期限付きの一時的な認証情報</strong>(アクセスキー、シークレットキー、セッショントークン)を使ってアクセスします。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 734 275" style="max-width:734px;min-width:520px" role="img" aria-label="図1 クロスアカウントアクセスの流れ。①アカウントAがSTSにAssumeRoleを要求し、②STSがアカウントBのロールの信頼ポリシーを確認して、③一時認証情報(デフォルト1時間有効)を返す。④Aはその認証情報を使い、ロールの権限ポリシーの範囲でBのリソースを操作する。"><defs><marker id="dgusecases-cross-account-access-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 734 275" style="max-width:734px;min-width:587px" role="img" aria-label="図1 クロスアカウントアクセスの流れ。①アカウントAがSTSにAssumeRoleを要求し、②STSがアカウントBのロールの信頼ポリシーを確認して、③一時認証情報(デフォルト1時間有効)を返す。④Aはその認証情報を使い、ロールの権限ポリシーの範囲でBのリソースを操作する。"><defs><marker id="dgusecases-cross-account-access-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="526" y="58" width="184" height="193" rx="10" class="dg-group"/>
 <text x="536" y="73" class="dg-s">アカウントB</text>
 <rect x="34" y="88" width="160" height="52" rx="8" class="dg-blue"/>
@@ -80,7 +83,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/sts.html">AWS STS</a>:有効期限付きの一時認証情報(アクセスキー、シークレットキー、セッショントークン)を発行する</li>
 <li><a href="../services/iam.html">AWS IAM</a>:アカウントAのIDベースポリシー、アカウントBのロール(信頼ポリシー・権限ポリシー)を定義する</li>
@@ -90,18 +93,18 @@
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
-<div class="table-wrap"><table>
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table class="stack">
 <tr><th>手順</th><th>誰が</th><th>何をするか</th><th>確認・使用されるポリシー</th><th>結果</th></tr>
-<tr><td>①</td><td>アカウントAのIAMユーザー/ロール</td><td>STSに <code>sts:AssumeRole</code> を呼び出す(BのロールのARNを指定)</td><td>AのIDベースポリシー(Bのロールへの <code>sts:AssumeRole</code> が許可されているか)</td><td>引き受けのリクエストがSTSに届く</td></tr>
-<tr><td>②</td><td>AWS STS</td><td>Bのロールの信頼ポリシーを確認する</td><td>Bのロールの信頼ポリシー(<code>Principal</code> にAが含まれるか、ExternalIdなどの条件を満たすか)</td><td>引き受けの可否が判定される</td></tr>
-<tr><td>③</td><td>AWS STS</td><td>Aのプリンシパルに一時認証情報を返す(有効期限はデフォルト1時間)</td><td>―</td><td>アクセスキー、シークレットキー、セッショントークンを取得</td></tr>
-<tr><td>④</td><td>アカウントAのIAMユーザー/ロール</td><td>一時認証情報を使ってBのリソースを操作する</td><td>Bのロールの権限ポリシー(必要に応じてリソース側のポリシーも)</td><td>ロールの権限の範囲で操作できる。CloudTrailには <code>AssumedRole</code> として記録される</td></tr>
+<tr><td data-label="手順">①</td><td data-label="誰が">アカウントAのIAMユーザー/ロール</td><td data-label="何をするか">STSに <code>sts:AssumeRole</code> を呼び出す(BのロールのARNを指定)</td><td data-label="確認・使用されるポリシー">AのIDベースポリシー(Bのロールへの <code>sts:AssumeRole</code> が許可されているか)</td><td data-label="結果">引き受けのリクエストがSTSに届く</td></tr>
+<tr><td data-label="手順">②</td><td data-label="誰が">AWS STS</td><td data-label="何をするか">Bのロールの信頼ポリシーを確認する</td><td data-label="確認・使用されるポリシー">Bのロールの信頼ポリシー(<code>Principal</code> にAが含まれるか、ExternalIdなどの条件を満たすか)</td><td data-label="結果">引き受けの可否が判定される</td></tr>
+<tr><td data-label="手順">③</td><td data-label="誰が">AWS STS</td><td data-label="何をするか">Aのプリンシパルに一時認証情報を返す(有効期限はデフォルト1時間)</td><td data-label="確認・使用されるポリシー">―</td><td data-label="結果">アクセスキー、シークレットキー、セッショントークンを取得</td></tr>
+<tr><td data-label="手順">④</td><td data-label="誰が">アカウントAのIAMユーザー/ロール</td><td data-label="何をするか">一時認証情報を使ってBのリソースを操作する</td><td data-label="確認・使用されるポリシー">Bのロールの権限ポリシー(必要に応じてリソース側のポリシーも)</td><td data-label="結果">ロールの権限の範囲で操作できる。CloudTrailには <code>AssumedRole</code> として記録される</td></tr>
 </table></div>
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <div class="table-wrap"><table>
 <tr><th>ポリシー</th><th>ひとことで</th><th>答える問い</th></tr>
 <tr><td>IDベースポリシー</td><td>「自分が何をできるか」</td><td>このユーザー/ロールは、どのリソースに何をしてよいか</td></tr>
@@ -121,5 +124,6 @@
   <a class="next" href="config-auto-remediation.html"><span class="label">次へ →</span>公開されたS3バケットを検出して自動で修復する</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

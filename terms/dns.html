@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DNS | AWS教科書</title>
+<meta name="description" content="ドメイン名をIPアドレスに変換する名前解決の仕組み">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,16 +21,27 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワーク</span>
+  <a class="category" href="index.html#cat2">ネットワーク</a>
   <h1>DNS</h1>
   <p class="lead">ドメイン名をIPアドレスに変換する名前解決の仕組み</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(9項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">主要な登場人物</a></li><li><a href="#c1-2">名前解決の流れ</a></li><li><a href="#c1-3">再帰問い合わせと反復問い合わせ</a></li><li><a href="#c1-4">DNSの階層構造</a></li><li><a href="#c1-5">DNSキャッシュとTTL</a></li><li><a href="#c1-6">AWSでのDNS</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. 詳しい説明</h2>
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>DNS(Domain Name System)</strong>は、<code>example.com</code> のようなドメイン名を、通信に使うIPアドレスに対応付ける仕組みです。</p>
 <p><code>example.com</code> → DNSで名前解決 → <code>93.184.216.34</code> → Webサーバーへ接続</p>
 <p>DNSは「ドメイン名を目的の情報へ変換するための<strong>分散型データベース・名前解決システム</strong>」であり、<a href="dns-record-types.html">DNSレコード</a>はそのデータベースに登録されている個々の情報です。</p>
-<h3>主要な登場人物</h3>
+<h3 id="c1-1">主要な登場人物<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>要素</th><th>役割</th></tr>
 <tr><td>DNSクライアント</td><td>名前解決を要求する側。一般的にはOSやアプリケーション</td></tr>
@@ -38,10 +51,10 @@
 <tr><td>権威DNSサーバー(Authoritative DNS)</td><td>特定のドメインのDNSレコードを正式に管理し、問い合わせに回答する</td></tr>
 </table></div>
 
-<h3>名前解決の流れ</h3>
+<h3 id="c1-2">名前解決の流れ<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 274" style="max-width:684px;min-width:520px" role="img" aria-label="図1 名前解決の流れ。クライアントはDNSリゾルバーに「最終的な答え」を求め(再帰問い合わせ)、リゾルバーはルート → TLD → 権威DNSの順に「次の問い合わせ先」を教えてもらいながら(反復問い合わせ)答えを得る。"><defs><marker id="dgterms-dns-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 名前解決の流れ。クライアントはDNSリゾルバーに「最終的な答え」を求め(再帰問い合わせ)、リゾルバーはルート → TLD → 権威DNSの順に「次の問い合わせ先」を教えてもらいながら(反復問い合わせ)答えを得る。"><defs><marker id="dgterms-dns-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="140" text-anchor="middle" class="dg-t">クライアント</text>
 <text x="109" y="158" text-anchor="middle" class="dg-s">ブラウザ・OS</text>
@@ -80,13 +93,13 @@
 <li><strong>ブラウザがそのIPアドレスへHTTP/HTTPSで接続</strong></li>
 </ol>
 
-<h3>再帰問い合わせと反復問い合わせ</h3>
+<h3 id="c1-3">再帰問い合わせと反復問い合わせ<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>再帰問い合わせ(Recursive Query)</strong>:クライアントがリゾルバーに「最終的な答えを返してほしい」と要求する方式。クライアントとリゾルバーの間で使う。</li>
 <li><strong>反復問い合わせ(Iterative Query)</strong>:リゾルバーがDNSサーバーに問い合わせ、答えそのものではなく「次に問い合わせるべきサーバー」を案内してもらう方式。リゾルバーとルート・TLD・権威DNSの間で使う。</li>
 </ul>
 
-<h3>DNSの階層構造</h3>
+<h3 id="c1-4">DNSの階層構造<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 438 354" style="max-width:438px;min-width:438px" role="img" aria-label="図2 DNSの階層構造。上位のサーバーは下位のサーバーの場所を知っており、最終的なレコードは各ドメインの権威DNSサーバーが管理する。"><defs><marker id="dgterms-dns-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -113,15 +126,15 @@
 <figcaption>図2 DNSの階層構造。上位のサーバーは下位のサーバーの場所を知っており、最終的なレコードは各ドメインの権威DNSサーバーが管理する。</figcaption>
 </figure>
 
-<h3>DNSキャッシュとTTL</h3>
+<h3 id="c1-5">DNSキャッシュとTTL<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>問い合わせのたびにルートから権威DNSまでたどると負荷が大きいため、DNSでは結果を一定期間キャッシュします。レコードには<strong>TTL(Time To Live)</strong>が設定されており、キャッシュを保持する期間を指定します。例えばTTLが <code>3600</code> 秒なら、リゾルバーは原則として1時間ほど結果をキャッシュし、その間は権威DNSに問い合わせずに回答します。</p>
 
-<h3>AWSでのDNS</h3>
+<h3 id="c1-6">AWSでのDNS<a class="anchor" href="#c1-6" aria-label="この見出しへのリンク">#</a></h3>
 <p>AWSでは主に<strong>Amazon Route 53</strong>を使います。ドメインのレコードを管理する<strong>ホストゾーン</strong>を作成し、A・AAAA・CNAME・MX・TXTなどを登録します。単純な名前解決だけでなく、<strong>ルーティングポリシー・ヘルスチェック・エイリアスレコード</strong>と組み合わせて、AWSリソースへのトラフィック制御にも使えます。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 関連する用語</h2>
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="dns-record-types.html">DNSレコードタイプ</a>:権威DNSが管理する個々の情報(A・CNAME・MXなど)</li>
 <li><a href="spf.html">SPF</a>:DNS(TXTレコード)を使ったメールのなりすまし対策</li>
@@ -129,7 +142,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 関連サービス</h2>
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/route53.html">Amazon Route 53</a>:AWSのマネージドDNSサービス</li>
 <li><a href="../services/cloudfront.html">Amazon CloudFront</a>/<a href="../services/elb.html">Elastic Load Balancing</a>:エイリアスレコードの向き先</li>
@@ -141,5 +154,6 @@
   <a class="next" href="dns-record-types.html"><span class="label">次へ →</span>DNSレコードタイプ</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

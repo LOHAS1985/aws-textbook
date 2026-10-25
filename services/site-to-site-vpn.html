@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Site-to-Site VPN | AWS教科書</title>
+<meta name="description" content="オンプレミスとVPCを、インターネット上の暗号化トンネル(IPsec)でつなぐ">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,19 +21,20 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワークとコンテンツ配信</span>
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
   <h1>AWS Site-to-Site VPN</h1>
   <p class="lead">オンプレミスとVPCを、インターネット上の暗号化トンネル(IPsec)でつなぐ</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Site-to-Site VPN</strong>は、<strong>オンプレミスのネットワークとAWSのVPCを、インターネット上の暗号化された通信路(IPsec VPN)で接続する</strong>サービスです。専用線を引かずに、数分〜数時間ですぐに使い始められます。</p>
 <p>VPN(Virtual Private Network)は、共有のネットワークの上に、暗号化した仮想的な専用の通信路(トンネル)を作る技術です。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>構成要素</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">構成要素<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>要素</th><th>内容</th></tr>
 <tr><td>カスタマーゲートウェイデバイス</td><td>オンプレミス側のVPNルーター(物理機器またはソフトウェア)</td></tr>
@@ -42,7 +45,7 @@
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 1028 244" style="max-width:1028px;min-width:520px" role="img" aria-label="図1 Site-to-Site VPNの構成。1つのVPN接続にはAWS側の終端が異なる2本のトンネルがあり、片方が停止しても、もう片方で通信を続けられる。"><defs><marker id="dgservices-site-to-site-vpn-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 1028 244" style="max-width:1028px;min-width:822px" role="img" aria-label="図1 Site-to-Site VPNの構成。1つのVPN接続にはAWS側の終端が異なる2本のトンネルがあり、片方が停止しても、もう片方で通信を続けられる。"><defs><marker id="dgservices-site-to-site-vpn-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="385" y="-20" width="318" height="240" rx="10" class="dg-group"/>
 <text x="395" y="-5" class="dg-s">インターネット</text>
 <rect x="34" y="83" width="145" height="52" rx="8" class="dg-blue"/>
@@ -75,14 +78,14 @@
 <figcaption>図1 Site-to-Site VPNの構成。1つのVPN接続にはAWS側の終端が異なる2本のトンネルがあり、片方が停止しても、もう片方で通信を続けられる。</figcaption>
 </figure>
 
-<h3>ルーティング</h3>
+<h3 id="c2-2">ルーティング<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>静的ルーティング</strong>:オンプレミスのCIDRを手動で登録する。</li>
 <li><strong>動的ルーティング(BGP)</strong>:BGPで経路を自動で交換する。トンネルの切り替えも自動で行えるため推奨。</li>
 <li>VPCのサブネットのルートテーブルで<strong>ルート伝播</strong>を有効にすると、VGWが学習したオンプレミスの経路が自動で追加される。</li>
 </ul>
 
-<h3>そのほかの特徴</h3>
+<h3 id="c2-3">そのほかの特徴<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>帯域</strong>:1トンネルあたり最大1.25Gbps。それ以上が必要なら、Transit Gatewayで複数のVPN接続に分散する(ECMP)。</li>
 <li><strong>高速化VPN(Accelerated VPN)</strong>:Global Acceleratorのネットワークを経由して、通信を安定・高速にする(Transit Gatewayで利用)。</li>
@@ -112,7 +115,7 @@
 <figcaption>図2 Direct ConnectのバックアップとしてSite-to-Site VPNを使う構成。BGPで経路の優先度を設定し、専用線が停止したときにVPNへ自動で切り替える。</figcaption>
 </figure>
 
-<h3>AWS Client VPNとの違い</h3>
+<h3 id="c2-4">AWS Client VPNとの違い<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>項目</th><th>Site-to-Site VPN</th><th>Client VPN</th></tr>
 <tr><td>接続するもの</td><td>拠点のネットワーク全体</td><td>個人のPC(在宅勤務など)</td></tr>
@@ -121,7 +124,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>社内ネットワークとVPCを、すぐに・安く接続する</li>
 <li>Direct Connectを開通するまでの一時的な接続や、障害時のバックアップ</li>
@@ -130,12 +133,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>VPN接続ごとの時間料金</strong>と、AWSからオンプレミスへの<strong>データ転送(アウト)料金</strong>がかかります。Transit Gatewayを終端にする場合は、TGWのアタッチメント料金とデータ処理料金も加わります。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="vpc.html">Amazon VPC</a>:接続先のネットワーク。VGWをアタッチする</li>
 <li><a href="transit-gateway.html">AWS Transit Gateway</a>:多数のVPCとVPNの終端を集約</li>
@@ -146,7 +149,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>「すぐに」「低コストで」「暗号化して」オンプレミスと接続 → <strong>Site-to-Site VPN</strong>。「安定した帯域」「低レイテンシー」→ Direct Connect。</li>
 <li>トンネルの停止を検知したい → CloudWatchの <strong><code>TunnelState</code></strong> にアラームを設定する。</li>
@@ -158,7 +161,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>インターネット上のIPsecトンネルで、オンプレミスとVPCを接続する。</li>
 <li>CGW・VGW(またはTGW)・2本のトンネルで構成し、BGPでの動的ルーティングが推奨。</li>
@@ -172,5 +175,6 @@
   <a class="next" href="direct-connect.html"><span class="label">次へ →</span>AWS Direct Connect</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>
