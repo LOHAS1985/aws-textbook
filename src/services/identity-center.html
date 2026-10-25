@@ -1,0 +1,120 @@
+<!-- title: AWS IAM Identity Center -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: 複数のAWSアカウントやアプリへのシングルサインオンと権限を一元管理するサービス -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS IAM Identity Center</strong>(旧称 AWS Single Sign-On)は、<strong>AWS Organizationsの複数のアカウント</strong>や業務アプリへの<strong>シングルサインオン(SSO)</strong>を提供し、誰がどのアカウントでどの権限を使えるかを一か所で管理するサービスです。</p>
+<ul>
+<li>利用者は<strong>AWSアクセスポータル</strong>に1回ログインするだけで、割り当てられたアカウントとロールを選んでコンソールやCLIを使える</li>
+<li>アカウントごとにIAMユーザーを作る必要がなく、長期のアクセスキーも配らない(一時的な認証情報を使う)</li>
+<li>権限は<strong>パーミッションセット</strong>として定義し、ユーザー・グループとアカウントの組み合わせに割り当てる</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 180 85
+node idp 0 1 blue "IDソース" "ディレクトリ/AD/外部IdP"
+node ic 1.4 1 accent "IAM Identity Center" "管理アカウント"
+node ps 1.4 0 box "パーミッションセット" "権限のテンプレート"
+node a1 2.9 0.4 ok "本番アカウント" "ロールが作られる"
+node a2 2.9 1.6 ok "開発アカウント" "ロールが作られる"
+edge idp ic "ユーザー・グループ"
+edge ps ic
+edge ic a1
+edge ic a2
+<figcaption>図1 IAM Identity Centerの全体像。IDソースのユーザー・グループに、パーミッションセットとアカウントを組み合わせて割り当てる。割り当てると、各アカウントにパーミッションセットに対応するIAMロールが自動で作られる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>IDソース</h3>
+<p>ユーザーとグループをどこで管理するか(<strong>IDソース</strong>)を1つ選びます。</p>
+<div class="table-wrap"><table>
+<tr><th>IDソース</th><th>内容</th></tr>
+<tr><td>Identity Centerディレクトリ</td><td>Identity Centerの中で直接ユーザー・グループを作る(既定)</td></tr>
+<tr><td>Active Directory</td><td><a href="directory-service.html">AWS Directory Service</a>のAWS Managed Microsoft ADや、AD Connector経由でオンプレミスのADのユーザーを使う</td></tr>
+<tr><td>外部IDプロバイダー</td><td>Microsoft Entra ID、Okta などのIdPと<strong>SAML 2.0</strong>で連携する。ユーザー・グループの同期には<strong>SCIM</strong>を使う</td></tr>
+</table></div>
+
+<h3>パーミッションセット</h3>
+<p><strong>パーミッションセット</strong>は、ユーザー・グループに与える権限の<strong>テンプレート</strong>です。中身は次のようなIAMポリシーの組み合わせです。</p>
+<ul>
+<li>AWS管理ポリシー(例:<code>AdministratorAccess</code>、<code>ViewOnlyAccess</code>)</li>
+<li>カスタマー管理ポリシー(各アカウントにある同じ名前のポリシーを参照する)</li>
+<li>インラインポリシー</li>
+<li>アクセス許可の境界</li>
+<li>セッション時間(1〜12時間、既定は1時間)</li>
+</ul>
+<p>パーミッションセットを「<strong>ユーザー/グループ × アカウント</strong>」に割り当てると、そのアカウントに <code>AWSReservedSSO_パーミッションセット名_…</code> という<strong>IAMロールが自動で作られます</strong>。利用者がアクセスポータルでアカウントとパーミッションセットを選ぶと、このロールを引き受けた一時的な認証情報でログインします。パーミッションセットを変更すると、割り当て済みのすべてのアカウントのロールに反映されます。</p>
+<div class="table-wrap"><table>
+<tr><th>グループ</th><th>本番アカウント</th><th>開発アカウント</th></tr>
+<tr><td>開発者</td><td>ReadOnly</td><td>PowerUser</td></tr>
+<tr><td>運用担当</td><td>Operator</td><td>Operator</td></tr>
+<tr><td>管理者</td><td>Administrator</td><td>Administrator</td></tr>
+</table></div>
+<p>このように「グループごと・アカウントごとにどのパーミッションセットを使えるか」を一覧として管理できます。</p>
+
+<h3>AWSアクセスポータルとCLI</h3>
+<ul>
+<li><strong>AWSアクセスポータル</strong>:ログイン後、使えるアカウントとパーミッションセットが一覧で表示され、選ぶとそのアカウントのコンソールに入れる</li>
+<li><strong>AWS CLI</strong>:<code>aws configure sso</code> でプロファイルを作り、<code>aws sso login</code> でブラウザ認証すると、一時的な認証情報でCLIを使える。アクセスキーを端末に保存しない</li>
+<li>MFAを必須にできる</li>
+</ul>
+
+<h3>アプリケーションへのSSO</h3>
+<p>AWSアカウントだけでなく、SAML 2.0やOAuth 2.0に対応したSaaSや自社アプリ、Amazon Managed Grafana・Amazon Q などのAWSのアプリにも、同じユーザーでシングルサインオンできます。</p>
+
+<h3>組織インスタンスと委任管理者</h3>
+<ul>
+<li>Organizationsと組み合わせる<strong>組織インスタンス</strong>が基本。管理アカウントで有効にし、組織内のすべてのアカウントに権限を割り当てられる</li>
+<li>日常の管理は、<strong>委任管理者</strong>として登録したメンバーアカウントから行える(管理アカウントの利用を最小限にするため)</li>
+<li>Organizationsを使わない単独アカウント用の「アカウントインスタンス」もあるが、AWSアカウントへのアクセス管理はできない(アプリへのSSO用)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>数十のAWSアカウントへのログインを、社員1人1つのユーザーで一元化する</li>
+<li>社内のEntra ID・Oktaのアカウントで、そのままAWSにログインさせる(退職時はIdP側で無効にすれば全アカウントで使えなくなる)</li>
+<li>開発者には開発アカウントで強い権限、本番アカウントでは読み取りだけ、と環境ごとに権限を分ける</li>
+<li>CLIの長期アクセスキーを廃止し、<code>aws sso login</code> の一時的な認証情報に置き換える</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>IAM Identity Center自体は無料です。IDソースにAWS Managed Microsoft ADを使う場合などは、そのサービスの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="organizations.html">AWS Organizations</a>:管理する複数アカウントのまとまり</li>
+<li><a href="iam.html">AWS IAM</a>:パーミッションセットの中身(ポリシー)と、各アカウントに作られるロール</li>
+<li><a href="sts.html">AWS STS</a>:ログイン時に一時的な認証情報を発行</li>
+<li><a href="directory-service.html">AWS Directory Service</a>:Active DirectoryをIDソースにする</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:誰がどのパーミッションセットでログインし、何をしたかの記録</li>
+<li>関連する用語:<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>複数アカウントへのログインを一元化・SSO → <strong>IAM Identity Center</strong>(各アカウントにIAMユーザーを作らない)。</li>
+<li>権限のテンプレート → <strong>パーミッションセット</strong>。割り当てると各アカウントに <code>AWSReservedSSO_</code> のロールが作られる。</li>
+<li>既存のEntra ID・Oktaと連携 → 外部IdPを<strong>SAML 2.0</strong>でIDソースにし、<strong>SCIM</strong>でユーザーを自動同期。</li>
+<li>オンプレミスのADのユーザーでログイン → IDソースにAD(AD Connector・AWS Managed Microsoft AD)。</li>
+<li>CLIで長期キーを使わない → <code>aws configure sso</code>/<code>aws sso login</code>。</li>
+<li>管理アカウントでの作業を減らす → <strong>委任管理者</strong>を設定する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>IAM Identity Centerは、複数アカウントとアプリへのSSOと権限を一元管理する。</li>
+<li>IDソース(内蔵ディレクトリ・AD・外部IdP)のユーザー・グループに、パーミッションセットとアカウントを組み合わせて割り当てる。</li>
+<li>ログインは一時的な認証情報で行われ、長期のアクセスキーが不要になる。</li>
+</ul>
+</section>

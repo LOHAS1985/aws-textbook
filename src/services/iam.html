@@ -18,9 +18,8 @@
 <li><strong>IAMユーザー・グループ</strong>:日常業務で必要な権限はポリシーで付与し、一時的に必要な権限はロールを使う権限を付与する。</li>
 <li><strong>IAMロール</strong>:ポリシーを持たせて特定の権限を一時的に付与する仕組み。<strong class="em">信頼ポリシー(誰が引き受けられるか)と権限ポリシー(何ができるか)の両方の設定が必要</strong>。</li>
 <li><strong>IAMポリシー</strong>:アイデンティティベースの権限設定。IAMユーザー・グループ・ロールに設定してリソースへのアクセスを制御する。<br>※リソースベースのポリシー:リソース側から見てアクセスを制御する(S3バケットポリシーなど)。</li>
-<li><strong class="em">パーミッションセット</strong>:ユーザー/グループに付与する権限のテンプレート。IAMポリシーを再利用可能なセットにしたもの。</li>
 </ul>
-<p>パーミッションセットは、複数アカウントへのシングルサインオンを管理する <strong>IAM Identity Center</strong> の機能です。</p>
+<p>Organizationsで複数のアカウントを使う場合は、各アカウントにIAMユーザーを作るのではなく、<a href="identity-center.html">IAM Identity Center</a>でユーザーを一元管理し、パーミッションセットで各アカウントの権限を割り当てるのが推奨です。</p>
 
 <figure class="figure" data-diagram>
 grid 175 80
@@ -37,6 +36,103 @@ edge pol res "許可"
 edge role res "許可"
 <figcaption>図1 IAMの基本構造。ユーザーやグループにはIAMポリシーで権限を与える。ロールは信頼ポリシーで「誰が引き受けられるか」、権限ポリシーで「何ができるか」を決め、EC2などのサービスやユーザーが一時的に引き受ける。</figcaption>
 </figure>
+<h3>ポリシーJSONの書き方</h3>
+<p>IAMポリシーはJSONで書き、1つ以上の<strong>ステートメント</strong>(<code>Statement</code>)からなります。次の例は「<code>my-bucket</code> の読み書きを許可し、ただしMFAで認証していないときの削除は拒否する」ポリシーです。</p>
+<pre class="code"><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::my-bucket/*"
+    },
+    {
+      "Effect": "Deny",
+      "Action": "s3:DeleteObject",
+      "Resource": "arn:aws:s3:::my-bucket/*",
+      "Condition": {
+        "BoolIfExists": { "aws:MultiFactorAuthPresent": "false" }
+      }
+    }
+  ]
+}</code></pre>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>意味</th></tr>
+<tr><td><code>Version</code></td><td>ポリシー言語のバージョン。常に <code>"2012-10-17"</code> を書く</td></tr>
+<tr><td><code>Effect</code></td><td><code>Allow</code>(許可)か <code>Deny</code>(拒否)</td></tr>
+<tr><td><code>Action</code></td><td>対象の操作。<code>サービス:アクション</code> の形式で、<code>s3:Get*</code> のようにワイルドカードも使える</td></tr>
+<tr><td><code>Resource</code></td><td>対象のリソースを<a href="../terms/arn.html">ARN</a>で指定する</td></tr>
+<tr><td><code>Condition</code></td><td>適用する条件(送信元IP、MFAの有無、タグ、リージョンなど)。省略すると常に適用</td></tr>
+<tr><td><code>Principal</code></td><td>誰に対するポリシーか。<strong>リソースベースのポリシー</strong>(バケットポリシーや信頼ポリシー)でだけ書く</td></tr>
+</table></div>
+<p>要素の詳しい書き方と例は用語ページ「<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>」を参照してください。</p>
+
+<h3>評価ロジック(明示的なDenyが最優先)</h3>
+<p>1つのリクエストに複数のポリシーが関係するとき、AWSは次の順番で判断します。</p>
+<ol>
+<li>どこかに<strong>明示的なDeny</strong>があれば → <strong>拒否</strong>(ほかにAllowがあっても覆らない)</li>
+<li>Denyがなく、<strong>明示的なAllow</strong>があれば → <strong>許可</strong></li>
+<li>どちらもなければ → <strong>暗黙的な拒否</strong>(既定はすべて拒否)</li>
+</ol>
+<figure class="figure" data-diagram>
+grid 190 80
+node req 0 0 blue "リクエスト"
+node d 1.2 0 box "明示的なDenyがある?"
+node a 2.4 0 box "明示的なAllowがある?"
+node ng1 1.2 1.2 ng "拒否" "明示的な拒否"
+node ok 3.6 0 ok "許可"
+node ng2 2.4 1.2 ng "拒否" "暗黙的な拒否"
+edge req d
+edge d ng1 "はい"
+edge d a "いいえ"
+edge a ok "はい"
+edge a ng2 "いいえ"
+<figcaption>図2 ポリシー評価の基本。明示的なDenyが最優先で、次に明示的なAllow。どちらもなければ拒否される。</figcaption>
+</figure>
+<p>さらに、Organizationsの<strong>SCP</strong>や<strong>アクセス許可の境界</strong>、ロールのセッションポリシーが設定されている場合は、<strong>そのすべてで許可されている範囲</strong>だけが実際に使えます。アイデンティティベースのポリシーでAllowしても、SCPで許可されていなければ使えません。</p>
+
+<h3>マネージドポリシーとインラインポリシー</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>作成・管理する人</th><th>特徴</th></tr>
+<tr><td>AWS管理ポリシー</td><td>AWS</td><td><code>AdministratorAccess</code>、<code>ReadOnlyAccess</code>、<code>AmazonS3ReadOnlyAccess</code> など。AWSが更新する。手軽だが権限が広めになりやすい</td></tr>
+<tr><td>カスタマー管理ポリシー</td><td>利用者</td><td>自分で作る独立したポリシー。<strong>複数のユーザー・グループ・ロールに付けて再利用</strong>でき、変更履歴(最大5バージョン)が残り、元のバージョンに戻せる</td></tr>
+<tr><td>インラインポリシー</td><td>利用者</td><td>特定の1つのユーザー・グループ・ロールに<strong>直接埋め込む</strong>ポリシー。付けた先を削除するとポリシーも消える。再利用やバージョン管理はできない</td></tr>
+</table></div>
+<p>基本は<strong>マネージドポリシー</strong>(特にカスタマー管理ポリシー)を使い、「そのロールだけに厳密に1対1で付けたい権限」のときにインラインポリシーを使います。</p>
+
+<h3>アクセス許可の境界(Permissions Boundary)</h3>
+<p><strong>アクセス許可の境界</strong>は、IAMユーザーやロールに設定する「<strong>付与できる権限の上限</strong>」です。マネージドポリシーで上限を定義して境界に設定すると、そのユーザー・ロールの実際の権限は「<strong>アイデンティティベースのポリシー</strong>と<strong>境界</strong>の<strong>両方で許可された範囲</strong>」になります。境界そのものは権限を与えません。</p>
+<figure class="figure" data-diagram>
+grid 180 80
+node pol 0 0 box "IAMポリシー" "S3・EC2・IAM"
+node bd 1.3 0 box "アクセス許可の境界" "S3・EC2・CloudWatch"
+node eff 2.8 0 ok "実際に使える権限" "S3・EC2のみ"
+edge pol eff
+edge bd eff
+<figcaption>図3 アクセス許可の境界。実際の権限は、ポリシーと境界の両方で許可された部分(重なり)だけになる。</figcaption>
+</figure>
+<p>代表的な用途は<strong>権限の委任</strong>です。開発者にIAMロールを作る権限を与えつつ、「作るロールには必ずこの境界を付けること」を条件にすると、開発者が自分より強い権限のロールを作って権限昇格するのを防げます。SCPがアカウント全体の上限なのに対して、境界は<strong>個々のユーザー・ロール</strong>の上限です。</p>
+
+<h3>IAM Access Analyzer</h3>
+<p><strong>IAM Access Analyzer</strong>は、ポリシーを分析して意図しないアクセスや不要な権限を見つける機能です。</p>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>内容</th></tr>
+<tr><td>外部アクセスの分析</td><td>S3バケット、IAMロール、KMSキー、Lambda関数、SQSキュー、Secrets Managerのシークレットなどのリソースベースのポリシーを調べ、<strong>アカウント(または組織)の外部からアクセスできるリソース</strong>を検出結果として表示する。無料</td></tr>
+<tr><td>未使用のアクセスの分析</td><td>使われていないロール、アクセスキー、パスワード、付与されているが使われていない権限を検出する(有料)</td></tr>
+<tr><td>ポリシーの検証</td><td>ポリシーを作るときに、文法エラーやセキュリティ上の問題(広すぎる権限など)を指摘する</td></tr>
+<tr><td>ポリシーの生成</td><td>CloudTrailのログから実際に使われたアクションを調べ、<strong>最小権限のポリシー</strong>のひな形を作る</td></tr>
+</table></div>
+<p>「信頼ゾーン」(アナライザーを作ったアカウント、または組織全体)の外からのアクセスが検出の対象です。</p>
+
+<h3>認証情報レポート</h3>
+<p><strong>認証情報レポート</strong>は、アカウント内の<strong>すべてのIAMユーザー(ルートユーザーを含む)</strong>の認証情報の状態をまとめたCSVファイルです。コンソールやCLIから生成・ダウンロードできます(生成は4時間に1回まで)。</p>
+<ul>
+<li>パスワードの有無・最終使用日時・最終変更日時</li>
+<li>MFAが有効かどうか</li>
+<li>アクセスキーの有無・作成(ローテーション)日時・最終使用日時と使われたサービス</li>
+</ul>
+<p>「90日以上ローテーションしていないアクセスキー」「MFAが無効なユーザー」「長期間使われていないユーザー」を洗い出す監査に使います。ユーザーやロールごとに「どのサービスを最後にいつ使ったか」を見る場合は、<strong>最終アクセス情報(アクセスアドバイザー)</strong>を使います。</p>
+
 <h3>よく使うIAMアクション</h3>
 <div class="table-wrap"><table>
 <tr><th>サービス</th><th>アクション</th><th>概要</th></tr>
@@ -83,7 +179,7 @@ edge n2 n3
 edge n3 n4
 edge n4 n5
 edge n5 n6
-<figcaption>図2 AWS CLI/SDKが認証情報を探す順番。上位で見つかった認証情報が使われるため、環境変数にキーが残っていると、EC2のロールより優先されてしまう。</figcaption>
+<figcaption>図4 AWS CLI/SDKが認証情報を探す順番。上位で見つかった認証情報が使われるため、環境変数にキーが残っていると、EC2のロールより優先されてしまう。</figcaption>
 </figure>
 </section>
 
@@ -107,6 +203,7 @@ edge n5 n6
 <ul>
 <li><a href="sts.html">AWS STS</a>:ロールの一時認証情報を発行</li>
 <li><a href="organizations.html">AWS Organizations</a>:複数アカウントの権限上限(SCP)</li>
+<li><a href="identity-center.html">AWS IAM Identity Center</a>:複数アカウントへのシングルサインオンとパーミッションセット</li>
 <li><a href="ec2.html">Amazon EC2</a>:インスタンスプロファイル</li>
 <li><a href="cognito.html">Amazon Cognito</a>:アプリユーザーへの一時的なAWS権限</li>
 <li><a href="cloudtrail.html">AWS CloudTrail</a>:APIの操作履歴</li>
@@ -122,6 +219,11 @@ edge n5 n6
 <li>アクセスキーをコードやインスタンスに置かず、<strong>ロール</strong>を使う。</li>
 <li>環境変数のキーが、インスタンスプロファイルより<strong>優先</strong>される。意図しない権限で動くときは優先順位を確認。</li>
 <li>他アカウントからのS3アクセスは、バケットポリシー(リソースベース)と相手側IAMポリシーの両方で許可。</li>
+<li>AllowとDenyが両方ある → <strong>明示的なDenyが優先</strong>。どこにもAllowがなければ暗黙的に拒否。</li>
+<li>複数のロールで再利用・バージョン管理したい → <strong>カスタマー管理ポリシー</strong>。特定のロールだけに1対1 → インラインポリシー。</li>
+<li>開発者にロール作成を任せつつ権限昇格を防ぐ → <strong>アクセス許可の境界</strong>。</li>
+<li>外部アカウントに公開されているリソースを見つける → <strong>IAM Access Analyzer</strong>。CloudTrailから最小権限のポリシーを作るのもAccess Analyzer。</li>
+<li>全ユーザーのMFA・アクセスキーのローテーション状況を監査 → <strong>認証情報レポート</strong>。</li>
 </ul></div>
 </section>
 

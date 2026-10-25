@@ -44,7 +44,7 @@ COLLECTIONS = [
             "rds", "aurora", "dynamodb", "elasticache", "memorydb",
             "vpc", "transit-gateway", "site-to-site-vpn", "direct-connect",
             "route53", "elb", "cloudfront", "global-accelerator", "api-gateway",
-            "iam", "sts", "organizations", "directory-service", "cognito", "kms",
+            "iam", "identity-center", "sts", "organizations", "directory-service", "cognito", "kms",
             "secrets-manager", "acm", "private-ca", "macie", "security-hub",
             "cloudwatch", "cloudtrail", "config", "systems-manager", "cloudformation", "cdk",
             "trusted-advisor", "health-dashboard", "compute-optimizer", "service-catalog", "ram",

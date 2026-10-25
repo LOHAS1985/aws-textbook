@@ -26,13 +26,13 @@ SOA-C03で頻出なのに説明が薄い10ページに、仕組みの説明を�
 - [x] WAFとの連携
 
 ## 3. IAM(src/services/iam.html)
-- [ ] ポリシーJSONの例(Effect/Action/Resource/Condition)(詳細は用語ページ iam-policy-evaluation へリンク)
-- [ ] 評価ロジック(明示的なDenyが最優先)
-- [ ] マネージドポリシーとインラインポリシー
-- [ ] アクセス許可の境界(Permissions Boundary)
-- [ ] IAM Access Analyzer
-- [ ] 認証情報レポート
-- [ ] IAM Identity Centerを別のサービスページとして作成し、パーミッションセットの説明を移す
+- [x] ポリシーJSONの例(Effect/Action/Resource/Condition)(詳細は用語ページ iam-policy-evaluation へリンク)
+- [x] 評価ロジック(明示的なDenyが最優先)
+- [x] マネージドポリシーとインラインポリシー
+- [x] アクセス許可の境界(Permissions Boundary)
+- [x] IAM Access Analyzer
+- [x] 認証情報レポート
+- [x] IAM Identity Centerを別のサービスページとして作成し、パーミッションセットの説明を移す
 
 ## 4. S3(src/services/s3.html)
 - [ ] バケット・キー・プレフィックス(フォルダは実在しない)
