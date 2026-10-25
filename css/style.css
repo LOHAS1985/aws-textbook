@@ -151,6 +151,7 @@ code {
   border-radius: 4px;
   font-size: 0.92em;
   font-family: Consolas, "Courier New", monospace;
+  overflow-wrap: anywhere; /* 長いメトリクス名などが枠からはみ出さないように */
 }
 
 pre.code {
@@ -541,7 +542,53 @@ a:focus-visible, summary:focus-visible, input:focus-visible {
   table.stack td:first-child { font-weight: 700; background: var(--accent-soft); border-radius: 6px 6px 0 0; margin-top: -4px; padding-top: 6px; }
   .page-toc ul { columns: 1; }
   .to-top { right: 12px; bottom: 12px; width: 36px; height: 36px; }
+
+  /* 列の少ない表は横スクロールさせず、セル内で折り返す */
+  table:not(.stack) { min-width: 0; }
+  td, th { overflow-wrap: anywhere; }
+
+  /* 図は横にスクロールして見ることを文字で示す(影だけでは暗い背景で気づきにくい) */
+  .figure:has(.fig-scroll)::before {
+    content: "← 図は横にスクロールできます →";
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
 }
+
+/* サービス・用語のページ末尾の、このページを参照しているページの一覧 */
+.chapter .backlink-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+}
+.backlink-list a {
+  display: block;
+  height: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.12s, background 0.12s;
+}
+.backlink-list a:hover { border-color: var(--accent); background: var(--accent-soft); }
+.backlink-list .title { display: block; font-weight: 700; color: var(--link); line-height: 1.5; }
+.backlink-list .kind {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.backlink-list .desc { display: block; margin-top: 4px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 
 /* 印刷 */
 @media print {
@@ -609,28 +656,6 @@ a:focus-visible, summary:focus-visible, input:focus-visible {
 }
 .page-head.hero h1 { margin: 6px 0 2px; }
 
-/* サービス一覧:カテゴリへのジャンプ */
-.cat-jump {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: -4px 0 18px;
-}
-.cat-jump a {
-  --cat: var(--accent);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px 3px 8px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 12.5px;
-  color: var(--text);
-  text-decoration: none;
-  background: var(--surface);
-}
-.cat-jump a::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--cat); }
-.cat-jump a:hover { border-color: var(--cat); color: var(--cat); }
 
 /* サービス一覧:カテゴリごとのカードを段組みで並べる */
 .svc-columns { columns: 3 300px; column-gap: 16px; }
@@ -716,6 +741,4 @@ main:has(.svc-columns), body:has(.svc-columns) .site-header .inner { max-width: 
   .page-head.hero { padding: 16px; gap: 14px; }
   .hero-icon { width: 60px; height: 60px; border-radius: 16px; }
   .hero-icon .svc-icon { width: 42px; height: 42px; }
-  .cat-jump { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-  .cat-jump a { white-space: nowrap; }
 }
