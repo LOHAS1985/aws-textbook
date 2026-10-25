@@ -17,5 +17,6 @@ else
 fi
 git add -A
 git diff --cached --quiet || git commit -m "$(date +%Y-%m-%d) ${1:-教科書を更新}"
-git push origin main
-git push origin "$(git subtree split --prefix book main)":refs/heads/gh-pages --force
+# クラウドのセッションはブランチではなくコミットを直接チェックアウトしている(detached HEAD)ので、HEAD を push する
+git push origin HEAD:main
+git push origin "$(git subtree split --prefix book HEAD)":refs/heads/gh-pages --force

@@ -21,7 +21,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/icons/・book/manifest.webmanifest … ホーム画面用アイコンとWebアプリ設定(アイコンは `python tools/make_icons.py book/icons` で再生成)
 - book/sw.js … オフラインで読むための Service Worker(生成物。直接編集しない)。build.py が book/ の全ファイルとその内容のハッシュを書き込み、利用者のブラウザは初回に全ファイル(約2.8MB)を保存し、更新時は変わったファイルだけを取り直す。book/ に置くファイルを増やすと自動で保存対象になる
 - deploy.sh … `sh deploy.sh "メッセージ"` で GitHub の最新を取り込み(pull)→ビルド→コミット→push し、book/ を gh-pages ブランチに公開する
-- src/news/YYYY-MM-DD.html・NEWS.md … AWSニュースのページと、その作り方の手順書。Claude Code の定期実行(クラウドのルーティン)が毎日 NEWS.md に従ってニュースを追加し push する。ニュースはヘッダーには出さず、トップページの「最新のAWSニュース」とニュースの一覧から読む。ニュースで見直しが必要になったページは TASKS.md の「ニュースによる見直し」に追記される
+- src/news/YYYY-MM-DD.html・NEWS.md … AWSニュースのページと、その作り方の手順書。Claude Code の定期実行(クラウドのルーティン)が毎日 NEWS.md に従ってニュースを追加し push する。ニュースはヘッダーには出さず、トップページの「最新のAWSニュース」とニュースの一覧から読む。ニュースをもとに既存のページを直すことはしない
 
 ## 公開(GitHub Pages)
 - リポジトリ: https://github.com/LOHAS1985/aws-textbook (public)
