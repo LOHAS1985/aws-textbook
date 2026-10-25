@@ -1,6 +1,6 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "0f27d0daa619";
+var CACHE = PREFIX + "3e0d5e47a605";
 var FILES = {
 "css/style.css": "9e17cba0d9bf",
 "icons/apple-touch-icon.png": "7b5b103e736b",
@@ -100,9 +100,10 @@ var FILES = {
 "icons/services/vpc.svg": "45c736cf9ac4",
 "icons/services/waf.svg": "e67f918f21cf",
 "icons/services/xray.svg": "15a5e6e3557e",
-"index.html": "c97eed5a42af",
+"index.html": "a57087e00288",
 "links.html": "3893aaaea1a0",
 "manifest.webmanifest": "963d1eda4f4c",
+"news/index.html": "de94d69f0301",
 "services/acm.html": "bc43dc4decab",
 "services/amplify.html": "47acc68aab71",
 "services/api-gateway.html": "3a33ecc84ff1",

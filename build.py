@@ -144,6 +144,18 @@ COLLECTIONS = [
             "static-site-cloudfront", "network-troubleshooting",
         ],
     },
+    {
+        # src/news/YYYY-MM-DD.html を毎日1件、クラウドの定期エージェントが追加する。
+        # category は「YYYY年M月」。新しい日付から順に並べ、ヘッダーのナビゲーションには出さない
+        "key": "news",
+        "label": "ニュース",
+        "desc": "AWSの新しい発表を、図解つきで分かりやすく解説(毎日更新)",
+        "categories": [],
+        "search": "サービス名・キーワードで絞り込み(例: Lambda、料金、東京リージョン)",
+        "order": [],
+        "newest_first": True,
+        "nav": False,
+    },
 ]
 
 # SOA-C03の出題分野(試験ガイドより)。ユースケースのカテゴリと同じ順番で対応させる。
@@ -206,6 +218,8 @@ def load_pages(col, warnings, updated):
         })
     order = {s: i for i, s in enumerate(col["order"])}
     pages.sort(key=lambda p: (order.get(p["slug"], len(order)), p["title"]))
+    if col.get("newest_first"):
+        pages.sort(key=lambda p: p["slug"], reverse=True)
     return pages
 
 
@@ -364,7 +378,7 @@ def header(prefix, current=None):
     cur = ' class="current"'
     links = "".join(
         f'<a href="{prefix}{c["key"]}/index.html"{cur if c["key"] == current else ""}>'
-        f'{c["label"]}</a>' for c in COLLECTIONS)
+        f'{c["label"]}</a>' for c in COLLECTIONS if c.get("nav", True))
     links += f'<a href="{prefix}links.html"{cur if current == "links" else ""}>リンク集</a>'
     return f"""<header class="site-header" id="top">
   <div class="inner">
@@ -547,8 +561,16 @@ def render_top(loaded):
                      f'<span class="badge">{weight}%</span></a></li>\n')
     parts.append("</ol>\n</section>\n")
 
-    # 最近更新したページ
-    recent = sorted(((p, c) for c in COLLECTIONS for p in loaded[c["key"]]),
+    # 最新のニュース(新しい日付から5件)
+    if loaded["news"]:
+        parts.append('<section class="top-section">\n<h2>最新のAWSニュース</h2>\n<ul class="recent-list">\n')
+        for p in loaded["news"][:5]:
+            parts.append(f'  <li><time datetime="{p["slug"]}">{p["slug"]}</time>'
+                         f'<a href="news/{p["slug"]}.html">{html.escape(p["title"])}</a></li>\n')
+        parts.append('</ul>\n<p class="cat-desc"><a href="news/index.html">ニュースの一覧へ</a></p>\n</section>\n')
+
+    # 最近更新したページ(ニュースは上の欄に出すので除く)
+    recent = sorted(((p, c) for c in COLLECTIONS if c["key"] != "news" for p in loaded[c["key"]]),
                     key=lambda pc: -pc[0]["updated"])[:10]
     parts.append('<section class="top-section">\n<h2>最近更新したページ</h2>\n<ul class="recent-list">\n')
     for p, c in recent:
