@@ -179,7 +179,7 @@ class Diagram:
 
         W, H = maxx + MARGIN, maxy + MARGIN
         aria = html.escape(re.sub(r"<[^>]+>", "", caption).strip())
-        head = (f'<svg viewBox="0 0 {W:.0f} {H:.0f}" style="max-width:{W:.0f}px;min-width:{min(W, 520):.0f}px" '
+        head = (f'<svg viewBox="0 0 {W:.0f} {H:.0f}" style="max-width:{W:.0f}px;min-width:{min(W, max(520, W * 0.8)):.0f}px" '
                 f'role="img" aria-label="{aria}">'
                 f'<defs><marker id="{mid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
                 f'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>')

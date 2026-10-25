@@ -317,26 +317,38 @@ edge g x
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
-<li>鍵の利用を<strong>監査</strong>したい → <strong>SSE-KMS</strong>。暗号化方式は <code>x-amz-server-side-encryption</code> ヘッダーで指定。</li>
+<div class="point">
+<h4>基本・ストレージクラス</h4>
+<ul>
+<li>S3にフォルダは実在しない。キーの先頭部分(<strong>プレフィックス</strong>)で範囲を指定する。</li>
+<li>Deep Archiveの取り出しはStandardで12時間、Bulkで48時間。</li>
+<li>古いデータを自動で安いクラスへ・自動削除 → <strong>ライフサイクルルール</strong>。不完全なマルチパートアップロードの中止もここで設定。</li>
+<li>遠隔地からのアップロード高速化 → <strong>Transfer Acceleration</strong>。取り出し時の加工 → <strong>Object Lambda</strong>。</li>
+<li>5GBを超えるファイルのアップロード → <strong>マルチパートアップロード</strong>が必須(100MB以上で推奨)。</li>
+</ul>
+<h4>アクセス制御・公開</h4>
+<ul>
 <li>他アカウントへのアクセス許可 → <strong>バケットポリシー</strong>+相手側のIAMポリシー。</li>
 <li>一時的に外部へ共有 → <strong>署名付きURL</strong>。</li>
-<li>VPCから無料でプライベート接続 → <strong>ゲートウェイ型</strong>。オンプレミスから → <strong>インターフェース型</strong>。</li>
-<li>イベント通知は<strong>GetObjectでは発火しない</strong>。</li>
-<li>レプリケーションには<strong>両バケットのバージョニング</strong>が必須。</li>
-<li>遠隔地からのアップロード高速化 → <strong>Transfer Acceleration</strong>。取り出し時の加工 → <strong>Object Lambda</strong>。</li>
-<li>Deep Archiveの取り出しはStandardで12時間、Bulkで48時間。</li>
-<li>S3にフォルダは実在しない。キーの先頭部分(<strong>プレフィックス</strong>)で範囲を指定する。</li>
-<li>誤った上書き・削除から戻したい → <strong>バージョニング</strong>。削除は<strong>削除マーカー</strong>を消せば復元できる。有効にした後は「停止」しかできない。</li>
-<li>古いデータを自動で安いクラスへ・自動削除 → <strong>ライフサイクルルール</strong>。不完全なマルチパートアップロードの中止もここで設定。</li>
 <li>アカウント内のどのバケットも公開させない → アカウント単位の<strong>ブロックパブリックアクセス</strong>。</li>
-<li>新しいオブジェクトは既定で<strong>SSE-S3</strong>で暗号化される。KMSを既定にするなら既定の暗号化をSSE-KMSに変え、<strong>バケットキー</strong>でKMSのコストを抑える。</li>
-<li>誰にも(ルートユーザーでも)削除させない保持 → Object Lockの<strong>コンプライアンスモード</strong>。特権ユーザーは解除できる → <strong>ガバナンスモード</strong>。期限なし → <strong>リーガルホールド</strong>。</li>
+<li>VPCから無料でプライベート接続 → <strong>ゲートウェイ型</strong>。オンプレミスから → <strong>インターフェース型</strong>。</li>
 <li>静的サイトをHTTPSで配信 → <strong>CloudFront</strong>を前に置く(ウェブサイトエンドポイントはHTTPのみ)。</li>
-<li>5GBを超えるファイルのアップロード → <strong>マルチパートアップロード</strong>が必須(100MB以上で推奨)。</li>
 <li>ブラウザから別ドメインのS3にアクセスするとエラー → バケットの<strong>CORS</strong>設定。</li>
+</ul>
+<h4>暗号化・データ保護</h4>
+<ul>
+<li>鍵の利用を<strong>監査</strong>したい → <strong>SSE-KMS</strong>。暗号化方式は <code>x-amz-server-side-encryption</code> ヘッダーで指定。</li>
+<li>新しいオブジェクトは既定で<strong>SSE-S3</strong>で暗号化される。KMSを既定にするなら既定の暗号化をSSE-KMSに変え、<strong>バケットキー</strong>でKMSのコストを抑える。</li>
+<li>誤った上書き・削除から戻したい → <strong>バージョニング</strong>。削除は<strong>削除マーカー</strong>を消せば復元できる。有効にした後は「停止」しかできない。</li>
+<li>誰にも(ルートユーザーでも)削除させない保持 → Object Lockの<strong>コンプライアンスモード</strong>。特権ユーザーは解除できる → <strong>ガバナンスモード</strong>。期限なし → <strong>リーガルホールド</strong>。</li>
+<li>レプリケーションには<strong>両バケットのバージョニング</strong>が必須。</li>
+</ul>
+<h4>イベント</h4>
+<ul>
+<li>イベント通知は<strong>GetObjectでは発火しない</strong>。</li>
 <li>S3のイベントをStep Functionsなど多数の送信先へ・細かく絞り込みたい → <strong>EventBridge</strong>への通知を有効にする。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">

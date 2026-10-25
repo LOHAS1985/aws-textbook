@@ -195,21 +195,30 @@ edge x s3 dash
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<div class="point">
+<h4>セキュリティ・配信制御</h4>
+<ul>
 <li>S3へのアクセスをCloudFront経由に限定 → <strong>OAC</strong>。</li>
 <li>CloudFrontで使うACM証明書は<strong>us-east-1</strong>。</li>
 <li>ユーザー側のHTTPS強制 → <strong>Viewer Protocol Policy</strong>、オリジン側 → <strong>Origin Protocol Policy</strong>。</li>
+<li>機密項目だけを暗号化 → <strong>フィールドレベル暗号化</strong>。</li>
+<li>有料コンテンツの配信 → 1ファイルなら<strong>署名付きURL</strong>、複数ファイル・URLを変えたくないなら<strong>署名付きCookie</strong>。</li>
+<li>特定の国からのアクセスを拒否 → <strong>地理的制限</strong>(403を返す)。</li>
+</ul>
+<h4>キャッシュ</h4>
+<ul>
 <li>オリジンの負荷を減らしたい → <strong>オリジンシールド</strong>、TTLを長くする。</li>
 <li>POST/PUTなどはキャッシュされない(キャッシュはGET/HEAD/OPTIONSのみ)。</li>
-<li>機密項目だけを暗号化 → <strong>フィールドレベル暗号化</strong>。</li>
 <li>パスごとにオリジンやキャッシュの設定を変える → <strong>ビヘイビア</strong>(どれにも一致しなければ既定の <code>*</code>)。</li>
 <li>キャッシュヒット率が低い → キャッシュポリシーで<strong>キャッシュキー</strong>に含めるヘッダー・Cookie・クエリ文字列を減らす。オリジンに渡すだけなら<strong>オリジンリクエストポリシー</strong>。</li>
 <li>更新したファイルをすぐ反映 → <strong>無効化</strong>(月1,000パスまで無料)。頻繁な更新ならファイル名にバージョンを付ける。</li>
-<li>有料コンテンツの配信 → 1ファイルなら<strong>署名付きURL</strong>、複数ファイル・URLを変えたくないなら<strong>署名付きCookie</strong>。</li>
-<li>特定の国からのアクセスを拒否 → <strong>地理的制限</strong>(403を返す)。</li>
+</ul>
+<h4>可用性・エッジでの処理</h4>
+<ul>
 <li>オリジンの障害時に別のオリジンへ → <strong>オリジングループ</strong>によるオリジンフェイルオーバー。</li>
 <li>ヘッダー操作やリダイレクトなどの軽い処理 → <strong>CloudFront Functions</strong>。オリジン側のイベントや外部へのアクセスが必要 → <strong>Lambda@Edge</strong>。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">

@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>公開されたS3バケットを検出して自動で修復する | AWS教科書</title>
+<meta name="description" content="Configルールで非準拠を検出し、SSM Automationで設定を自動修正する">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,20 +21,21 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">セキュリティ・コンプライアンス</span>
+  <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
   <h1>公開されたS3バケットを検出して自動で修復する</h1>
   <p class="lead">Configルールで非準拠を検出し、SSM Automationで設定を自動修正する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. やりたいこと</h2>
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>誰かが誤ってS3バケットを公開してしまっても、すぐに検出して自動で非公開に戻したい。違反の状況はSecurity Hubで一覧にし、担当者にも通知したい。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 798 209" style="max-width:798px;min-width:520px" role="img" aria-label="図1 Configルールが公開されたバケットを非準拠(NON_COMPLIANT)と判定すると、修復アクションでSSM Automationが設定を修正し、再評価で準拠(COMPLIANT)に戻る。検出結果はSecurity Hubに集約し、EventBridge経由でSNS通知する。"><defs><marker id="dgusecases-config-auto-remediation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 798 209" style="max-width:798px;min-width:638px" role="img" aria-label="図1 Configルールが公開されたバケットを非準拠(NON_COMPLIANT)と判定すると、修復アクションでSSM Automationが設定を修正し、再評価で準拠(COMPLIANT)に戻る。検出結果はSecurity Hubに集約し、EventBridge経由でSNS通知する。"><defs><marker id="dgusecases-config-auto-remediation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="88" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="110" text-anchor="middle" class="dg-t">S3バケット</text>
 <text x="104" y="128" text-anchor="middle" class="dg-s">誤って公開</text>
@@ -65,7 +68,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/config.html">AWS Config</a>:設定レコーダーで変更を記録し、Configルールで評価し、修復アクションを起動する</li>
 <li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Automationランブックで設定を修正する</li>
@@ -76,7 +79,7 @@
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>AWS Configの設定レコーダーを有効にする</li>
 <li>S3のパブリックアクセスを禁止するAWSマネージドルールを追加する</li>
@@ -86,7 +89,7 @@
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>「設定が要件を満たしているか」を継続的に評価 → <strong>Config</strong>。「誰が変更したか」→ <strong>CloudTrail</strong>。</li>
 <li>非準拠の自動修復 → <strong>修復アクション+SSM Automation</strong>。</li>
@@ -100,5 +103,6 @@
   <a class="next" href="secrets-rotation.html"><span class="label">次へ →</span>DBのパスワードを自動でローテーションする</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

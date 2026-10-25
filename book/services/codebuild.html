@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS CodeBuild | AWS教科書</title>
+<meta name="description" content="CI/CDパイプラインのビルド・テストを実行するサービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,18 +21,19 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">デベロッパーツール</span>
+  <a class="category" href="index.html#cat9">デベロッパーツール</a>
   <h1>AWS CodeBuild</h1>
   <p class="lead">CI/CDパイプラインのビルド・テストを実行するサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS CodeBuild</strong>は、CI/CDパイプラインで<strong>ビルド・テストを実行</strong>するフルマネージドなサービスです。ビルドサーバーを自分で用意する必要がありません。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>ビルドの手順(buildspec)</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">ビルドの手順(buildspec)<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>ビルドの内容は <strong class="em">buildspec.yml</strong> に記載します。</p>
 <ol>
 <li>依存関係のインストール</li>
@@ -67,15 +70,15 @@
 </div>
 <figcaption>図1 CodeBuildの流れ。buildspec.ymlの手順(依存のインストール → ビルド → テスト → 後処理)で実行し、成果物とテストレポートを出力する。キャッシュを使うと依存ファイルを再利用でき、高速になる。</figcaption>
 </figure>
-<h3>ローカルキャッシュ</h3>
+<h3 id="c2-2">ローカルキャッシュ<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>前回のビルドの依存ファイルや中間成果物を再利用して<strong>ビルドを高速化</strong>します。buildspec.ymlにキャッシュするフォルダのパスを追加します。</p>
 
-<h3>テストレポート</h3>
+<h3 id="c2-3">テストレポート<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>テストの結果を可視化できます。</p>
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>CodePipelineのBuildステージでのコンパイル・単体テスト</li>
 <li>Dockerイメージをビルドして<a href="ecr.html">ECR</a>へプッシュ</li>
@@ -84,12 +87,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>選んだコンピューティングタイプでビルドを実行した時間(分単位)に応じて課金されます。ビルドしていない時間は料金がかかりません。キャッシュでビルド時間を短くするとコストも下がります。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="codepipeline.html">AWS CodePipeline</a>:パイプラインのBuildステージ</li>
 <li><a href="codedeploy.html">AWS CodeDeploy</a>:ビルド後のデプロイ</li>
@@ -100,7 +103,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>ビルド手順の定義ファイル → <strong>buildspec.yml</strong>(CodeDeployのappspecと混同しない)。</li>
 <li>ビルドが遅い → <strong>ローカルキャッシュ</strong>を設定。</li>
@@ -109,7 +112,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>CodeBuildはマネージドなビルド・テスト実行サービス。手順はbuildspec.ymlに書く。</li>
 </ul>
@@ -120,5 +123,6 @@
   <a class="next" href="codedeploy.html"><span class="label">次へ →</span>AWS CodeDeploy</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

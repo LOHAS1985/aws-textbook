@@ -164,21 +164,30 @@ edge nc c1 "50%"
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<div class="point">
+<h4>種類の選び方</h4>
+<ul>
 <li>HTTP/HTTPSでパス・ホストによる振り分け → <strong>ALB</strong>。</li>
 <li>TCP/UDP・超高速・静的IP → <strong>NLB</strong>。</li>
 <li>セキュリティアプライアンスへの分散 → <strong>GWLB</strong>。</li>
-<li>EC2のSSL処理負荷を減らす → ALBで<strong>HTTPS終端</strong>。</li>
-<li>ELBはリージョン内の複数AZに分散する(リージョン間は Route 53 や Global Accelerator)。</li>
 <li>Lambdaをターゲットにできる → <strong>ALB</strong>。NLBの後ろにALBを置く → ターゲットタイプ「<strong>ALB</strong>」。Fargateのタスク → ターゲットタイプ「<strong>IP</strong>」。</li>
+<li>ELBはリージョン内の複数AZに分散する(リージョン間は Route 53 や Global Accelerator)。</li>
+</ul>
+<h4>ターゲットとヘルスチェック</h4>
+<ul>
 <li>全ターゲットが非正常になった → ヘルスチェックの<strong>パス・ポート・成功コード</strong>と、ターゲットのセキュリティグループでLBからの通信を許可しているかを確認する。</li>
 <li>AZごとのターゲット数が違い負荷が偏る → <strong>クロスゾーン負荷分散</strong>を有効にする(NLBは既定で無効)。</li>
 <li>スケールイン時に処理中のリクエストを失敗させない → <strong>登録解除の遅延</strong>。</li>
 <li>同じユーザーを同じサーバーに送りたい → <strong>スティッキーセッション</strong>(ただしステートレス化の方が望ましい)。</li>
-<li>リクエスト単位で記録を残したい → <strong>アクセスログ</strong>(S3に出力、既定は無効)。</li>
+</ul>
+<h4>セキュリティ・ログ</h4>
+<ul>
+<li>EC2のSSL処理負荷を減らす → ALBで<strong>HTTPS終端</strong>。</li>
 <li>複数のドメインの証明書を1つのALBで扱う → <strong>SNI</strong>。</li>
 <li>SQLインジェクションなどをブロック → ALBに<strong>AWS WAF</strong>を関連付ける。</li>
-</ul></div>
+<li>リクエスト単位で記録を残したい → <strong>アクセスログ</strong>(S3に出力、既定は無効)。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">

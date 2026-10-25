@@ -14,6 +14,8 @@ import html
 import json
 import re
 import shutil
+import subprocess
+import time
 from pathlib import Path
 
 from diagrams import render_figures
@@ -37,8 +39,24 @@ COLLECTIONS = [
             "マネジメントとガバナンス", "アプリケーション統合", "デベロッパーツール",
             "フレームワーク", "ライブラリ", "分析", "移行と転送", "ビジネスアプリケーション",
         ],
+        "category_desc": {
+            "コンピューティング": "仮想サーバー・関数など、プログラムを動かす基盤",
+            "コンテナ": "コンテナの実行・オーケストレーション・イメージの保管",
+            "ストレージ": "オブジェクト・ブロック・ファイルの保存とバックアップ",
+            "データベース": "リレーショナル・NoSQL・インメモリのデータベース",
+            "ネットワークとコンテンツ配信": "VPC・オンプレミスとの接続・DNS・負荷分散・配信",
+            "セキュリティ、アイデンティティ、コンプライアンス": "認証・権限・暗号化・証明書・脅威の検出",
+            "マネジメントとガバナンス": "監視・ログ・構成管理・自動化・複数アカウントの統制",
+            "アプリケーション統合": "キュー・通知・イベント・ワークフローでサービスをつなぐ",
+            "デベロッパーツール": "ビルド・デプロイ・CI/CD・トレース・開発環境",
+            "フレームワーク": "サーバーレスアプリの定義・AWSを操作するプログラムの開発",
+            "ライブラリ": "アプリに組み込んで使う暗号化などのライブラリ",
+            "分析": "ログやストリームデータの検索・分析",
+            "移行と転送": "オンプレミスなどからのデータの移行",
+            "ビジネスアプリケーション": "メール送信などの業務向けサービス",
+        },
         "compact": True,
-        "search": True,
+        "search": "サービス名・キーワードで絞り込み(例: VPN、ログ、コンテナ)",
         "order": [
             "ec2", "auto-scaling", "lambda", "elastic-beanstalk",
             "ecs", "eks", "ecr", "copilot",
@@ -62,6 +80,7 @@ COLLECTIONS = [
         "label": "用語",
         "desc": "AWSを学ぶうえで押さえておきたい用語の解説",
         "categories": ["AWSの基礎", "ネットワーク", "セキュリティ・認証", "ストレージ", "設計・運用"],
+        "search": "用語・キーワードで絞り込み(例: IP、暗号化、DNS)",
         "order": [
             "region-az", "arn", "service-quotas",
             "dns", "dns-record-types", "cidr", "route-table", "nacl-security-group", "vpc-flow-logs",
@@ -80,6 +99,7 @@ COLLECTIONS = [
             "監視・ログ・自動修復", "信頼性・事業継続", "デプロイ・自動化",
             "セキュリティ・コンプライアンス", "ネットワーク・コンテンツ配信",
         ],
+        "search": "やりたいこと・サービス名で絞り込み(例: バックアップ、パッチ)",
         "category_desc": {
             "監視・ログ・自動修復": "メトリクスやログで異常を見つけ、通知や自動修復につなげる",
             "信頼性・事業継続": "スケーリング・高可用性・バックアップ・災害対策",
@@ -98,10 +118,44 @@ COLLECTIONS = [
     },
 ]
 
+# SOA-C03の出題分野(試験ガイドより)。ユースケースのカテゴリと同じ順番で対応させる。
+EXAM_DOMAINS = [
+    ("モニタリング、ログ記録、分析、修復、パフォーマンスの最適化", 22),
+    ("信頼性と事業の継続性", 22),
+    ("デプロイ、プロビジョニング、オートメーション", 22),
+    ("セキュリティとコンプライアンス", 16),
+    ("ネットワークとコンテンツ配信", 18),
+]
+
+TOC_MIN_H3 = 5  # 小見出し(h3)がこの数以上あるページにだけページ内目次を付ける
+STACK_MIN_COLS = 4  # この列数以上の表は、スマホで行ごとのカード表示にする
+
 META_RE = re.compile(r"<!--\s*(title|category|lead):\s*(.*?)\s*-->\s*")
 
 
-def load_pages(col, warnings):
+def git_updated():
+    """src/ 以下の各ファイルの最終更新(UNIX時刻)。未コミットの変更があるファイルは現在時刻にする。"""
+    times = {}
+    try:
+        log = subprocess.run(["git", "log", "--format=@%ct", "--name-only", "--", "src"], cwd=ROOT,
+                             capture_output=True, text=True, encoding="utf-8", check=True).stdout
+        status = subprocess.run(["git", "status", "--porcelain", "--", "src"], cwd=ROOT,
+                                capture_output=True, text=True, encoding="utf-8", check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return times
+    t = 0
+    for line in log.splitlines():
+        if line.startswith("@"):
+            t = int(line[1:])
+        elif line and line not in times:
+            times[line] = t
+    now = int(time.time())
+    for line in status.splitlines():
+        times[line[3:].strip().strip('"')] = now
+    return times
+
+
+def load_pages(col, warnings, updated):
     pages = []
     src_dir = SRC / col["key"]
     for path in sorted(src_dir.glob("*.html")) if src_dir.exists() else []:
@@ -120,6 +174,7 @@ def load_pages(col, warnings):
             "category": meta.get("category", "その他"),
             "lead": meta.get("lead", ""),
             "body": render_figures(body, where, warnings),
+            "updated": updated.get(f"src/{col['key']}/{path.name}", int(time.time())),
         })
     order = {s: i for i, s in enumerate(col["order"])}
     pages.sort(key=lambda p: (order.get(p["slug"], len(order)), p["title"]))
@@ -135,21 +190,105 @@ def grouped(col, pages):
             if any(p["category"] == c for p in pages)]
 
 
-def head(title, prefix):
+def plain(s):
+    return html.unescape(re.sub(r"<[^>]+>", "", s))
+
+
+def head(title, prefix, description=""):
+    desc = (f'<meta name="description" content="{html.escape(plain(description))}">\n'
+            if description else "")
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
-<link rel="stylesheet" href="{prefix}css/style.css">
+{desc}<link rel="stylesheet" href="{prefix}css/style.css">
 <link rel="icon" type="image/png" href="{prefix}icons/favicon-32.png">
 <link rel="apple-touch-icon" href="{prefix}icons/apple-touch-icon.png">
 <link rel="manifest" href="{prefix}manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
 """
+
+
+HEADING_RE = re.compile(r"<(h[23])((?:\s[^>]*)?)>(.*?)</\1>", re.S)
+
+
+def add_heading_ids(body):
+    """h2・h3 に id とアンカーリンクを付け、目次用に (レベル, id, 見出し文字列) の一覧を返す。"""
+    items, n2, n3 = [], 0, 0
+
+    def sub(m):
+        nonlocal n2, n3
+        tag, attrs, inner = m.groups()
+        if tag == "h2":
+            n2, n3 = n2 + 1, 0
+            hid = f"c{n2}"
+        else:
+            n3 += 1
+            hid = f"c{n2}-{n3}"
+        found = re.search(r'\bid="([^"]+)"', attrs)
+        if found:
+            hid = found.group(1)
+        else:
+            attrs += f' id="{hid}"'
+        items.append((tag, hid, plain(inner).strip()))
+        return (f'<{tag}{attrs}>{inner}<a class="anchor" href="#{hid}" '
+                f'aria-label="この見出しへのリンク">#</a></{tag}>')
+    return HEADING_RE.sub(sub, body), items
+
+
+def page_toc(items):
+    if sum(1 for tag, _, _ in items if tag == "h3") < TOC_MIN_H3:
+        return ""
+    chapters = []  # [(h2の項目, [h3の項目, ...]), ...]
+    for item in items:
+        if item[0] == "h2" or not chapters:
+            chapters.append((item, []))
+        else:
+            chapters[-1][1].append(item)
+
+    def link(item):
+        return f'<a href="#{item[1]}">{html.escape(item[2])}</a>'
+    out = ['<nav class="page-toc" aria-label="ページ内目次">\n<details>\n'
+           f'<summary>このページの内容({len(items)}項目)</summary>\n<ol>\n']
+    for h2, subs in chapters:
+        sub_list = "".join(f"<li>{link(s)}</li>" for s in subs)
+        out.append(f"<li>{link(h2)}" + (f"<ul>{sub_list}</ul>" if subs else "") + "</li>\n")
+    out.append("</ol>\n</details>\n</nav>\n")
+    return "".join(out)
+
+
+def stack_tables(body):
+    """列の多い表に class="stack" と各セルの data-label を付ける(スマホでカード表示にするため)。"""
+    def sub(m):
+        attrs, inner = m.groups()
+        rows = re.findall(r"<tr>.*?</tr>", inner, re.S)
+        if not rows or "<th" not in rows[0]:
+            return m.group(0)
+        labels = [plain(h).strip() for h in re.findall(r"<th[^>]*>(.*?)</th>", rows[0], re.S)]
+        if len(labels) < STACK_MIN_COLS or "class=" in attrs or "span=" in inner:
+            return m.group(0)
+
+        def label_row(r):
+            i = -1
+
+            def cell(c):
+                nonlocal i
+                i += 1
+                lab = labels[i] if i < len(labels) else ""
+                return f'<td data-label="{html.escape(lab)}">'
+            return re.sub(r"<td>", cell, r.group(0))
+        inner = re.sub(r"<tr>.*?</tr>", label_row, inner, flags=re.S)
+        return f'<table class="stack"{attrs}>{inner}</table>'
+    return re.sub(r"<table((?:\s[^>]*)?)>(.*?)</table>", sub, body, flags=re.S)
+
+
+def fmt_date(ts):
+    return time.strftime("%Y-%m-%d", time.localtime(ts))
 
 
 def header(prefix, current=None):
@@ -158,7 +297,7 @@ def header(prefix, current=None):
         f'<a href="{prefix}{c["key"]}/index.html"{cur if c["key"] == current else ""}>'
         f'{c["label"]}</a>' for c in COLLECTIONS)
     links += f'<a href="{prefix}links.html"{cur if current == "links" else ""}>リンク集</a>'
-    return f"""<header class="site-header">
+    return f"""<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="{prefix}index.html">{SITE_TITLE}</a>
     <nav class="site-nav">{links}</nav>
@@ -168,6 +307,7 @@ def header(prefix, current=None):
 
 
 TAIL = "</body>\n</html>\n"
+TO_TOP = '<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>\n'
 
 
 def pager(prev, nxt):
@@ -187,24 +327,28 @@ def render_page(col, pages, i):
     p = pages[i]
     prev = pages[i - 1] if i > 0 else None
     nxt = pages[i + 1] if i + 1 < len(pages) else None
-    return (head(f"{p['title']} | {SITE_TITLE}", "../")
+    cat_no = [c for c, _ in grouped(col, pages)].index(p["category"]) + 1
+    body, items = add_heading_ids(stack_tables(p["body"]))
+    return (head(f"{p['title']} | {SITE_TITLE}", "../", p["lead"])
             + header("../", col["key"])
             + "<main>\n<div class=\"page-head\">\n"
-            + f'  <span class="category">{html.escape(p["category"])}</span>\n'
+            + f'  <a class="category" href="index.html#cat{cat_no}">{html.escape(p["category"])}</a>\n'
             + f'  <h1>{html.escape(p["title"])}</h1>\n'
             + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
-            + "</div>\n" + p["body"] + "\n" + pager(prev, nxt) + "</main>\n" + TAIL)
+            + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
+            + f'{fmt_date(p["updated"])}</time></p>\n'
+            + "</div>\n" + page_toc(items) + body + "\n" + pager(prev, nxt) + "</main>\n" + TO_TOP + TAIL)
 
 
 def render_collection_index(col, pages):
-    parts = [head(f"{col['label']} | {SITE_TITLE}", "../"), header("../", col["key"]), "<main>\n",
-             f'<div class="page-head"><h1>{col["label"]}</h1></div>\n']
+    parts = [head(f"{col['label']} | {SITE_TITLE}", "../", col["desc"]), header("../", col["key"]), "<main>\n",
+             f'<div class="page-head"><h1>{col["label"]}</h1><p class="lead">{col["desc"]}</p></div>\n']
     if not pages:
         parts.append('<p class="empty-state">準備中です。</p>\n')
     groups = grouped(col, pages)
     if col.get("search") and pages:
         parts.append('<div class="toc-search">\n'
-                     '  <input type="search" id="toc-q" placeholder="サービス名・キーワードで絞り込み(例: VPN、ログ、コンテナ)"'
+                     f'  <input type="search" id="toc-q" placeholder="{html.escape(col["search"])}"'
                      ' aria-label="絞り込み" autocomplete="off">\n'
                      '  <span class="toc-hits" id="toc-hits"></span>\n</div>\n')
     descs = col.get("category_desc", {})
@@ -223,7 +367,8 @@ def render_collection_index(col, pages):
             else:
                 inner = (f'<span class="name">{html.escape(p["title"])}</span>'
                          f'<span class="desc">{p["lead"]}</span>')
-            parts.append(f'  <li data-keys="{html.escape(keys.lower())}"><a href="{p["slug"]}.html">{inner}</a></li>\n')
+            tip = f' title="{html.escape(plain(p["lead"]))}"' if compact and p["lead"] else ""
+            parts.append(f'  <li data-keys="{html.escape(keys.lower())}"><a href="{p["slug"]}.html"{tip}>{inner}</a></li>\n')
         parts.append("</ul>\n</section>\n")
     if col.get("search") and pages:
         parts.append('<p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>\n'
@@ -265,18 +410,89 @@ SEARCH_SCRIPT = """<script>
 """
 
 
-def render_top(counts):
-    parts = [head(SITE_TITLE, ""), header(""), "<main>\n",
-             f'<div class="page-head"><h1>{SITE_TITLE}</h1></div>\n<ul class="card-list top-cards">\n']
+def render_top(loaded):
+    desc = "AWS認定(SOA-C03を中心)の学習用に、サービス・用語・ユースケースを図解でまとめた教科書"
+    parts = [head(SITE_TITLE, "", desc), header(""), "<main>\n",
+             f'<div class="page-head"><h1>{SITE_TITLE}</h1><p class="lead">{desc}</p></div>\n']
+
+    # 全ページ横断の検索(タイトル・説明・カテゴリ・小見出しが対象)
+    index = []
     for c in COLLECTIONS:
-        n = counts[c["key"]]
+        for p in loaded[c["key"]]:
+            h3 = " ".join(plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S))
+            index.append({"t": p["title"], "c": c["label"], "u": f'{c["key"]}/{p["slug"]}.html',
+                          "d": plain(p["lead"]),
+                          "k": " ".join([p["title"], p["slug"], p["category"], plain(p["lead"]), h3]).lower()})
+    parts.append('<div class="toc-search site-search">\n'
+                 '  <input type="search" id="site-q" placeholder="全ページを検索(例: ライフサイクル、IMDSv2、フェイルオーバー)"'
+                 ' aria-label="全ページを検索" autocomplete="off">\n'
+                 '  <span class="toc-hits" id="site-hits"></span>\n</div>\n'
+                 '<ul class="search-results" id="site-results" hidden></ul>\n'
+                 + SITE_SEARCH_SCRIPT.replace("__INDEX__", json.dumps(index, ensure_ascii=False)))
+
+    parts.append('<ul class="card-list top-cards">\n')
+    for c in COLLECTIONS:
+        n = len(loaded[c["key"]])
         badge = f"{n}ページ" if n else "準備中"
         parts.append(f'  <li><a href="{c["key"]}/index.html"><span class="name">{c["label"]}'
                      f'<span class="badge">{badge}</span></span><span class="desc">{c["desc"]}</span></a></li>\n')
     parts.append('  <li><a href="links.html"><span class="name">リンク集</span>'
                  '<span class="desc">試験ガイドや各サービスの公式ページ・ドキュメントへのリンク</span></a></li>\n')
-    parts += ["</ul>\n</main>\n", TAIL]
+    parts.append("</ul>\n")
+
+    # 試験分野ごとの入口(ユースケースのカテゴリへ)
+    parts.append('<section class="top-section">\n<h2>試験分野から学ぶ(SOA-C03)</h2>\n'
+                 '<p class="cat-desc">分野ごとのユースケースから読み始め、出てくるサービス・用語のページへ進むのがおすすめです。</p>\n'
+                 '<ol class="domain-list">\n')
+    for i, (name, weight) in enumerate(EXAM_DOMAINS, 1):
+        parts.append(f'  <li><a href="usecases/index.html#cat{i}"><span class="name">{html.escape(name)}</span>'
+                     f'<span class="badge">{weight}%</span></a></li>\n')
+    parts.append("</ol>\n</section>\n")
+
+    # 最近更新したページ
+    recent = sorted(((p, c) for c in COLLECTIONS for p in loaded[c["key"]]),
+                    key=lambda pc: -pc[0]["updated"])[:10]
+    parts.append('<section class="top-section">\n<h2>最近更新したページ</h2>\n<ul class="recent-list">\n')
+    for p, c in recent:
+        parts.append(f'  <li><time datetime="{fmt_date(p["updated"])}">{fmt_date(p["updated"])}</time>'
+                     f'<span class="badge">{c["label"]}</span>'
+                     f'<a href="{c["key"]}/{p["slug"]}.html">{html.escape(p["title"])}</a></li>\n')
+    parts.append("</ul>\n</section>\n")
+    parts += ["</main>\n", TAIL]
     return "".join(parts)
+
+
+# トップの全ページ検索(スペース区切りのAND検索。タイトルに一致したページを先に並べる)
+SITE_SEARCH_SCRIPT = """<script>
+(function () {
+  var pages = __INDEX__;
+  var q = document.getElementById("site-q");
+  var hits = document.getElementById("site-hits");
+  var list = document.getElementById("site-results");
+  function esc(s) { return s.replace(/[&<>"]/g, function (c) { return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }
+  function apply() {
+    var words = q.value.toLowerCase().trim().split(/\\s+/).filter(Boolean);
+    if (!words.length) { list.hidden = true; hits.textContent = ""; return; }
+    var found = pages.filter(function (p) {
+      return words.every(function (w) { return p.k.indexOf(w) >= 0; });
+    });
+    found.sort(function (a, b) {
+      var ta = words.every(function (w) { return a.t.toLowerCase().indexOf(w) >= 0; }) ? 0 : 1;
+      var tb = words.every(function (w) { return b.t.toLowerCase().indexOf(w) >= 0; }) ? 0 : 1;
+      return ta - tb;
+    });
+    hits.textContent = found.length + "件";
+    list.innerHTML = found.slice(0, 30).map(function (p) {
+      return '<li><a href="' + p.u + '"><span class="badge">' + esc(p.c) + '</span><span class="name">' +
+        esc(p.t) + '</span><span class="desc">' + esc(p.d) + '</span></a></li>';
+    }).join("") || '<li class="empty-state">該当するページがありません。</li>';
+    list.hidden = false;
+  }
+  q.addEventListener("input", apply);
+  q.addEventListener("keydown", function (e) { if (e.key === "Escape") { q.value = ""; apply(); } });
+})();
+</script>
+"""
 
 
 def official_url(kind, path):
@@ -307,7 +523,7 @@ def render_links(services, warnings):
         rows.append("</table></div>\n")
     body = META_RE.sub("", text).strip().replace("<!-- SERVICE_LINKS -->", "".join(rows))
     title = meta.get("title", "リンク集")
-    return (head(f"{title} | {SITE_TITLE}", "") + header("", "links")
+    return (head(f"{title} | {SITE_TITLE}", "", meta.get("lead", "")) + header("", "links")
             + f'<main>\n<div class="page-head">\n  <h1>{html.escape(title)}</h1>\n'
             + (f'  <p class="lead">{meta["lead"]}</p>\n' if meta.get("lead") else "")
             + "</div>\n" + body + "\n</main>\n" + TAIL)
@@ -315,8 +531,9 @@ def render_links(services, warnings):
 
 def main():
     warnings, counts, loaded = [], {}, {}
+    updated = git_updated()
     for col in COLLECTIONS:
-        pages = load_pages(col, warnings)
+        pages = load_pages(col, warnings, updated)
         counts[col["key"]] = len(pages)
         loaded[col["key"]] = pages
         out_dir = OUT / col["key"]
@@ -326,7 +543,7 @@ def main():
         for i, p in enumerate(pages):
             (out_dir / f"{p['slug']}.html").write_text(render_page(col, pages, i), encoding="utf-8")
         (out_dir / "index.html").write_text(render_collection_index(col, pages), encoding="utf-8")
-    (OUT / "index.html").write_text(render_top(counts), encoding="utf-8")
+    (OUT / "index.html").write_text(render_top(loaded), encoding="utf-8")
     (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
     print("built " + ", ".join(f"{c['label']} {counts[c['key']]}" for c in COLLECTIONS))
     for w in warnings:

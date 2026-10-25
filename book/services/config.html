@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Config | AWS教科書</title>
+<meta name="description" content="リソースの設定状態を記録・評価し、違反を検出して修復">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,18 +21,19 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">マネジメントとガバナンス</span>
+  <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS Config</h1>
   <p class="lead">リソースの設定状態を記録・評価し、違反を検出して修復</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Config</strong>は、AWSリソースの<strong>設定状態を記録・評価</strong>し、<strong>コンプライアンス違反を検出して修復</strong>するサービスです。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>設定レコーダー</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">設定レコーダー<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>有効にすると、対象リージョン・リソースの設定変更を記録します。</p>
 <ul>
 <li>設定内容:対象リソース、設定情報を保存するS3バケット、通知先のSNSトピック</li>
@@ -45,7 +48,7 @@
   </ul></li>
 </ul>
 
-<h3>Configルール</h3>
+<h3 id="c2-2">Configルール<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>リソースの設定が要件に適合しているかを評価します。</p>
 <ul>
 <li>種類:<strong>AWSマネージドルール</strong>(AWSが提供)、<strong>カスタムルール</strong>(Lambdaなどで作成)</li>
@@ -53,7 +56,7 @@
 <li>評価結果:<code>COMPLIANT</code>(準拠)、<code>NON_COMPLIANT</code>(非準拠)、<code>NOT_APPLICABLE</code>(評価対象外)、<code>INSUFFICIENT_DATA</code>(情報不足)</li>
 </ul>
 
-<h3>コンプライアンス監視と修復</h3>
+<h3 id="c2-3">コンプライアンス監視と修復<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>目的</th><th>サービス</th><th>用途</th></tr>
 <tr><td>変更イベントの通知</td><td>EventBridge</td><td>Configの変更・非準拠イベントを検出</td></tr>
@@ -68,7 +71,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 822 202" style="max-width:822px;min-width:520px" role="img" aria-label="図1 Configの仕組み。設定レコーダーがリソースの変更を記録し、Configルールが要件に準拠しているか評価する。非準拠(NON_COMPLIANT)なら、SSM Automationなどで自動修復したり、EventBridge・SNSで通知したりする。"><defs><marker id="dgservices-config-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 822 202" style="max-width:822px;min-width:657px" role="img" aria-label="図1 Configの仕組み。設定レコーダーがリソースの変更を記録し、Configルールが要件に準拠しているか評価する。非準拠(NON_COMPLIANT)なら、SSM Automationなどで自動修復したり、EventBridge・SNSで通知したりする。"><defs><marker id="dgservices-config-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="83" width="145" height="52" rx="8" class="dg-blue"/>
 <text x="106" y="104" text-anchor="middle" class="dg-t">AWSリソース</text>
 <text x="106" y="122" text-anchor="middle" class="dg-s">設定を変更</text>
@@ -92,7 +95,7 @@
 </div>
 <figcaption>図1 Configの仕組み。設定レコーダーがリソースの変更を記録し、Configルールが要件に準拠しているか評価する。非準拠(NON_COMPLIANT)なら、SSM Automationなどで自動修復したり、EventBridge・SNSで通知したりする。</figcaption>
 </figure>
-<h3>自動修復の例</h3>
+<h3 id="c2-4">自動修復の例<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li>ConfigルールがS3バケットのパブリックアクセスを検出</li>
 <li>リソースが <code>NON_COMPLIANT</code> になる</li>
@@ -103,7 +106,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>暗号化されていないEBSや公開されたS3バケットの検出</li>
 <li>「先月この時点でセキュリティグループはどう設定されていたか」の確認</li>
@@ -112,12 +115,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>記録した設定項目の数と、Configルールの評価回数に応じて課金されます。Conformance Packsも評価回数で課金されます。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="cloudtrail.html">AWS CloudTrail</a>:誰が変更したか</li>
 <li><a href="systems-manager.html">AWS Systems Manager</a>:Automationによる修復</li>
@@ -128,7 +131,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>「設定が要件に準拠しているか」「設定の変更履歴」→ <strong>Config</strong>。</li>
 <li>非準拠の自動修復 → <strong>修復アクション+SSM Automation</strong>。</li>
@@ -138,7 +141,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>Configは設定レコーダーで記録し、Configルールで評価する。</li>
 <li>非準拠はSSM AutomationやLambdaで自動修復できる。</li>
@@ -150,5 +153,6 @@
   <a class="next" href="systems-manager.html"><span class="label">次へ →</span>AWS Systems Manager</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>複数アカウント・リージョンに共通設定を展開する | AWS教科書</title>
+<meta name="description" content="CloudFormation StackSetsとOrganizationsで、新しいアカウントにも自動で展開する">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,20 +21,21 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">デプロイ・自動化</span>
+  <a class="category" href="index.html#cat3">デプロイ・自動化</a>
   <h1>複数アカウント・リージョンに共通設定を展開する</h1>
   <p class="lead">CloudFormation StackSetsとOrganizationsで、新しいアカウントにも自動で展開する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. やりたいこと</h2>
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>組織内のすべてのアカウント・リージョンに、監視用のIAMロールやConfigルールなどの共通設定を同じ内容で作りたい。新しくアカウントを追加したときにも、自動で同じ設定が入るようにしたい。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 798 274" style="max-width:798px;min-width:520px" role="img" aria-label="図1 1つのテンプレートをStackSetsで、OU配下の全アカウント・指定リージョンに展開する。自動デプロイを有効にすると、OUに追加されたアカウントにも自動でスタックが作られる。"><defs><marker id="dgusecases-multi-account-stacksets-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 798 274" style="max-width:798px;min-width:638px" role="img" aria-label="図1 1つのテンプレートをStackSetsで、OU配下の全アカウント・指定リージョンに展開する。自動デプロイを有効にすると、OUに追加されたアカウントにも自動でスタックが作られる。"><defs><marker id="dgusecases-multi-account-stacksets-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="118" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="140" text-anchor="middle" class="dg-t">テンプレート</text>
 <text x="104" y="158" text-anchor="middle" class="dg-s">共通の設定</text>
@@ -63,7 +66,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/cloudformation.html">AWS CloudFormation</a>:StackSetsで複数アカウント・リージョンへ一括展開する</li>
 <li><a href="../services/organizations.html">AWS Organizations</a>:展開先をOUで指定する</li>
@@ -72,7 +75,7 @@
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>共通設定をCloudFormationテンプレートにする</li>
 <li>OrganizationsでStackSetsの信頼されたアクセスを有効にし、サービスマネージドのアクセス許可を使う</li>
@@ -83,7 +86,7 @@
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>複数アカウント・リージョンに同じスタック → <strong>StackSets</strong>。</li>
 <li>テンプレートにIAMリソースを含む場合は、<code>CAPABILITY_IAM</code> などの許可が必要。</li>
@@ -97,5 +100,6 @@
   <a class="next" href="ec2-blue-green-pipeline.html"><span class="label">次へ →</span>EC2のアプリをCI/CDでBlue/Greenデプロイする</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

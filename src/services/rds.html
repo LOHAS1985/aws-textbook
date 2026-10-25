@@ -201,21 +201,33 @@ edge green sw
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
-<li>自動バックアップは<strong>最大35日</strong>。それ以上残したい → <strong>手動スナップショット</strong>。</li>
-<li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
-<li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。</li>
-<li>特定時点に戻したい → <strong>ポイントインタイムリカバリ</strong>。</li>
+<div class="point">
+<h4>構成・設定</h4>
+<ul>
 <li>DBを置くサブネットの指定 → <strong>DBサブネットグループ</strong>(2つ以上のAZのサブネットが必要)。</li>
 <li><code>max_connections</code> などエンジンの設定を変える → カスタムの<strong>パラメータグループ</strong>(デフォルトは変更不可)。静的パラメータは<strong>再起動</strong>で反映。TDEなど機能の追加 → <strong>オプショングループ</strong>。</li>
 <li>パッチ適用の時間帯を決める → <strong>メンテナンスウィンドウ</strong>。Multi-AZなら停止時間が短くなる。</li>
-<li>既存の暗号化されていないDBを暗号化 → スナップショット → <strong>暗号化してコピー</strong> → 復元。暗号化は作成時にしか設定できない。</li>
-<li>空き容量不足を自動で防ぐ → <strong>ストレージの自動スケーリング</strong>(縮小はできない)。</li>
+</ul>
+<h4>可用性・性能</h4>
+<ul>
+<li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
 <li>Multi-AZのフェイルオーバーでは<strong>エンドポイント名は変わらず</strong>、DNSがスタンバイに切り替わる。アプリは再接続できるようにする。</li>
+<li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。</li>
 <li>遅いSQLや待機イベントの特定 → <strong>Performance Insights</strong>。OSのプロセス単位のメトリクス → <strong>拡張モニタリング</strong>。</li>
+</ul>
+<h4>バックアップ・暗号化</h4>
+<ul>
+<li>自動バックアップは<strong>最大35日</strong>。それ以上残したい → <strong>手動スナップショット</strong>。</li>
+<li>特定時点に戻したい → <strong>ポイントインタイムリカバリ</strong>。</li>
+<li>既存の暗号化されていないDBを暗号化 → スナップショット → <strong>暗号化してコピー</strong> → 復元。暗号化は作成時にしか設定できない。</li>
+</ul>
+<h4>運用</h4>
+<ul>
+<li>空き容量不足を自動で防ぐ → <strong>ストレージの自動スケーリング</strong>(縮小はできない)。</li>
 <li>メジャーバージョンアップを短い停止時間で安全に → <strong>Blue/Green Deployments</strong>。</li>
 <li>停止したDBが勝手に起動した → 停止は<strong>最大7日</strong>で自動起動する。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">

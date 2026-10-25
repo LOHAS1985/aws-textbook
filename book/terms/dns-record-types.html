@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DNSレコードタイプ | AWS教科書</title>
+<meta name="description" content="DNSに登録する情報の種類(A・CNAME・MX・TXTなど)">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,13 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワーク</span>
+  <a class="category" href="index.html#cat2">ネットワーク</a>
   <h1>DNSレコードタイプ</h1>
   <p class="lead">DNSに登録する情報の種類(A・CNAME・MX・TXTなど)</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. 詳しい説明</h2>
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>DNSレコード</strong>は、<a href="dns.html">DNS</a>の権威サーバーに登録される個々の情報です。「このドメイン名はどのIPアドレスか」「メールはどのサーバーが受け取るか」など、用途ごとに<strong>レコードタイプ</strong>が分かれています。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -59,24 +62,24 @@
 </div>
 <figcaption>図1 主なレコードタイプ。1つのドメインに、用途ごとに複数のレコードを登録できる。</figcaption>
 </figure>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>タイプ</th><th>役割</th><th>主な用途</th><th>値の例</th></tr>
-<tr><td>A</td><td>ドメイン名をIPv4アドレスに対応付ける</td><td>WebサーバーなどのIPv4ホストを指定</td><td><code>example.com → 192.0.2.1</code></td></tr>
-<tr><td>AAAA</td><td>ドメイン名をIPv6アドレスに対応付ける</td><td>IPv6対応ホストを指定</td><td><code>example.com → 2001:db8::1</code></td></tr>
-<tr><td>CNAME</td><td>ドメイン名を別のドメイン名に別名(Canonical Name)として対応付ける</td><td>サブドメインを別ドメインへ向ける</td><td><code>www.example.com → example.com</code></td></tr>
-<tr><td>NS</td><td>そのドメイン(ゾーン)の権威DNSサーバーを指定する</td><td>DNSゾーン・サブドメインの委任</td><td><code>example.com → ns1.example.net</code></td></tr>
-<tr><td>MX</td><td>メールを受信するメールサーバーを指定する</td><td>ドメイン宛てメールの配送先</td><td><code>example.com → mail.example.com</code></td></tr>
-<tr><td>TXT</td><td>任意のテキスト情報を登録する</td><td>ドメイン所有権の確認、SPF、DKIMなど</td><td><code>"v=spf1 include:example.com ~all"</code>(example.comからのメールを受信。~all はソフトフェール)</td></tr>
-<tr><td>SOA</td><td>DNSゾーンの管理情報を定義する</td><td>ゾーンの管理者、シリアル番号、更新間隔など</td><td><code>ns1.example.com ...</code></td></tr>
-<tr><td>PTR</td><td>IPアドレスからドメイン名を引く(逆引き)</td><td>逆引きDNS(Reverse DNS)</td><td><code>192.0.2.1 → host.example.com</code></td></tr>
-<tr><td>SRV</td><td>特定のサービスを提供するホストとポートを指定する</td><td>SIP・XMPPなどのサービス検出</td><td><code>_sip._tcp.example.com → 5060</code></td></tr>
-<tr><td>CAA</td><td>そのドメインの証明書を発行できる認証局(CA)を指定する</td><td>TLS/SSL証明書の発行制御</td><td><code>0 issue "letsencrypt.org"</code></td></tr>
+<tr><td data-label="タイプ">A</td><td data-label="役割">ドメイン名をIPv4アドレスに対応付ける</td><td data-label="主な用途">WebサーバーなどのIPv4ホストを指定</td><td data-label="値の例"><code>example.com → 192.0.2.1</code></td></tr>
+<tr><td data-label="タイプ">AAAA</td><td data-label="役割">ドメイン名をIPv6アドレスに対応付ける</td><td data-label="主な用途">IPv6対応ホストを指定</td><td data-label="値の例"><code>example.com → 2001:db8::1</code></td></tr>
+<tr><td data-label="タイプ">CNAME</td><td data-label="役割">ドメイン名を別のドメイン名に別名(Canonical Name)として対応付ける</td><td data-label="主な用途">サブドメインを別ドメインへ向ける</td><td data-label="値の例"><code>www.example.com → example.com</code></td></tr>
+<tr><td data-label="タイプ">NS</td><td data-label="役割">そのドメイン(ゾーン)の権威DNSサーバーを指定する</td><td data-label="主な用途">DNSゾーン・サブドメインの委任</td><td data-label="値の例"><code>example.com → ns1.example.net</code></td></tr>
+<tr><td data-label="タイプ">MX</td><td data-label="役割">メールを受信するメールサーバーを指定する</td><td data-label="主な用途">ドメイン宛てメールの配送先</td><td data-label="値の例"><code>example.com → mail.example.com</code></td></tr>
+<tr><td data-label="タイプ">TXT</td><td data-label="役割">任意のテキスト情報を登録する</td><td data-label="主な用途">ドメイン所有権の確認、SPF、DKIMなど</td><td data-label="値の例"><code>"v=spf1 include:example.com ~all"</code>(example.comからのメールを受信。~all はソフトフェール)</td></tr>
+<tr><td data-label="タイプ">SOA</td><td data-label="役割">DNSゾーンの管理情報を定義する</td><td data-label="主な用途">ゾーンの管理者、シリアル番号、更新間隔など</td><td data-label="値の例"><code>ns1.example.com ...</code></td></tr>
+<tr><td data-label="タイプ">PTR</td><td data-label="役割">IPアドレスからドメイン名を引く(逆引き)</td><td data-label="主な用途">逆引きDNS(Reverse DNS)</td><td data-label="値の例"><code>192.0.2.1 → host.example.com</code></td></tr>
+<tr><td data-label="タイプ">SRV</td><td data-label="役割">特定のサービスを提供するホストとポートを指定する</td><td data-label="主な用途">SIP・XMPPなどのサービス検出</td><td data-label="値の例"><code>_sip._tcp.example.com → 5060</code></td></tr>
+<tr><td data-label="タイプ">CAA</td><td data-label="役割">そのドメインの証明書を発行できる認証局(CA)を指定する</td><td data-label="主な用途">TLS/SSL証明書の発行制御</td><td data-label="値の例"><code>0 issue "letsencrypt.org"</code></td></tr>
 </table></div>
 <p>Route 53には、DNS標準のレコードとは別に<strong>エイリアスレコード</strong>があります。ELBやCloudFrontなどのAWSリソースを直接指定でき、CNAMEと違ってドメインの頂点(<code>example.com</code> そのもの)にも設定できます。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 関連する用語</h2>
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="dns.html">DNS</a>:レコードを使った名前解決の仕組み</li>
 <li><a href="spf.html">SPF</a>:TXTレコードで正当なメール送信元を宣言する</li>
@@ -84,7 +87,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 関連サービス</h2>
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/route53.html">Amazon Route 53</a>:ホストゾーンにレコードを登録する</li>
 <li><a href="../services/acm.html">AWS Certificate Manager</a>:CAAレコードやDNS検証と関係する</li>
@@ -96,5 +99,6 @@
   <a class="next" href="cidr.html"><span class="label">次へ →</span>CIDR</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

@@ -240,17 +240,24 @@ edge vpce s3
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
 <div class="point">
+<h4>制限と性能</h4>
 <ul>
 <li>15分を超える処理はLambdaに向かない(ECS/Fargateなどを検討)。</li>
 <li>デプロイパッケージが250MBを超える → <strong>コンテナイメージ(ECR)</strong>でデプロイ。</li>
 <li>コールドスタート対策 → <strong>プロビジョニングされた同時実行</strong>。同時実行の上限制御 → <strong>予約された同時実行</strong>。</li>
-<li>VPC接続には実行ロールに<strong>ENI作成・参照・削除</strong>の権限が必要。</li>
-<li>VPC接続したLambdaがインターネットに出られない → <strong>プライベートサブネット+NATゲートウェイ</strong>(パブリックサブネットに置いてもパブリックIPは付かない)。AWSサービスだけなら<strong>VPCエンドポイント</strong>。</li>
+</ul>
+<h4>呼び出しとエラー処理</h4>
+<ul>
 <li>非同期呼び出しは<strong>最大2回</strong>再試行し、失敗したイベントは<strong>失敗時のデスティネーション</strong>か<strong>DLQ</strong>へ。同期呼び出しは呼び出し元が再試行する。</li>
 <li>SQSから処理して失敗したメッセージを退避 → <strong>SQSキュー側のDLQ</strong>(再処理ポリシー)。</li>
-<li>関数から他のサービスへの権限 → <strong>実行ロール</strong>。S3・SNSなどから関数を呼び出す権限 → <strong>リソースベースのポリシー</strong>。SQSのポーリングは実行ロール。</li>
-<li>イベントソースはバージョンARNではなく<strong>エイリアスARN</strong>に向ける。</li>
 <li>成功/失敗の結果を他サービスに送る → <strong>デスティネーション</strong>。</li>
+<li>イベントソースはバージョンARNではなく<strong>エイリアスARN</strong>に向ける。</li>
+</ul>
+<h4>権限・ネットワーク</h4>
+<ul>
+<li>関数から他のサービスへの権限 → <strong>実行ロール</strong>。S3・SNSなどから関数を呼び出す権限 → <strong>リソースベースのポリシー</strong>。SQSのポーリングは実行ロール。</li>
+<li>VPC接続には実行ロールに<strong>ENI作成・参照・削除</strong>の権限が必要。</li>
+<li>VPC接続したLambdaがインターネットに出られない → <strong>プライベートサブネット+NATゲートウェイ</strong>(パブリックサブネットに置いてもパブリックIPは付かない)。AWSサービスだけなら<strong>VPCエンドポイント</strong>。</li>
 <li>Lambda@Edgeは<strong>us-east-1</strong>で作成。</li>
 </ul>
 </div>

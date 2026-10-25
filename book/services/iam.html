@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS IAM | AWS教科書</title>
+<meta name="description" content="AWSの認証・認可を管理するサービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,27 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">セキュリティ、アイデンティティ、コンプライアンス</span>
+  <a class="category" href="index.html#cat6">セキュリティ、アイデンティティ、コンプライアンス</a>
   <h1>AWS IAM</h1>
   <p class="lead">AWSの認証・認可を管理するサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(17項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">用語</a></li><li><a href="#c2-2">ポリシーJSONの書き方</a></li><li><a href="#c2-3">評価ロジック(明示的なDenyが最優先)</a></li><li><a href="#c2-4">マネージドポリシーとインラインポリシー</a></li><li><a href="#c2-5">アクセス許可の境界(Permissions Boundary)</a></li><li><a href="#c2-6">IAM Access Analyzer</a></li><li><a href="#c2-7">認証情報レポート</a></li><li><a href="#c2-8">よく使うIAMアクション</a></li><li><a href="#c2-9">OIDCとの連携</a></li><li><a href="#c2-10">認証情報の優先順位(AWS CLI/SDK)</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS IAM(Identity and Access Management)</strong>は、AWSの<strong>認証・認可</strong>を管理するサービスです。</p>
 <ul>
 <li><strong>認証</strong>:ユーザーが「誰か」を確認する</li>
@@ -33,8 +50,8 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>用語</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">用語<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>ルートユーザー</strong>:アカウント作成時に作られる、全権限を持つユーザー。日常の運用での使用は非推奨。</li>
 <li><strong>IAMユーザー・グループ</strong>:日常業務で必要な権限はポリシーで付与し、一時的に必要な権限はロールを使う権限を付与する。</li>
@@ -45,7 +62,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 738 290" style="max-width:738px;min-width:520px" role="img" aria-label="図1 IAMの基本構造。ユーザーやグループにはIAMポリシーで権限を与える。ロールは信頼ポリシーで「誰が引き受けられるか」、権限ポリシーで「何ができるか」を決め、EC2などのサービスやユーザーが一時的に引き受ける。"><defs><marker id="dgservices-iam-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 738 290" style="max-width:738px;min-width:590px" role="img" aria-label="図1 IAMの基本構造。ユーザーやグループにはIAMポリシーで権限を与える。ロールは信頼ポリシーで「誰が引き受けられるか」、権限ポリシーで「何ができるか」を決め、EC2などのサービスやユーザーが一時的に引き受ける。"><defs><marker id="dgservices-iam-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="44" width="155" height="40" rx="8" class="dg-blue"/>
 <text x="112" y="68" text-anchor="middle" class="dg-t">IAMユーザー</text>
 <rect x="34" y="124" width="155" height="40" rx="8" class="dg-blue"/>
@@ -74,7 +91,7 @@
 </div>
 <figcaption>図1 IAMの基本構造。ユーザーやグループにはIAMポリシーで権限を与える。ロールは信頼ポリシーで「誰が引き受けられるか」、権限ポリシーで「何ができるか」を決め、EC2などのサービスやユーザーが一時的に引き受ける。</figcaption>
 </figure>
-<h3>ポリシーJSONの書き方</h3>
+<h3 id="c2-2">ポリシーJSONの書き方<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>IAMポリシーはJSONで書き、1つ以上の<strong>ステートメント</strong>(<code>Statement</code>)からなります。次の例は「<code>my-bucket</code> の読み書きを許可し、ただしMFAで認証していないときの削除は拒否する」ポリシーです。</p>
 <pre class="code"><code>{
   "Version": "2012-10-17",
@@ -105,7 +122,7 @@
 </table></div>
 <p>要素の詳しい書き方と例は用語ページ「<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>」を参照してください。</p>
 
-<h3>評価ロジック(明示的なDenyが最優先)</h3>
+<h3 id="c2-3">評価ロジック(明示的なDenyが最優先)<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>1つのリクエストに複数のポリシーが関係するとき、AWSは次の順番で判断します。</p>
 <ol>
 <li>どこかに<strong>明示的なDeny</strong>があれば → <strong>拒否</strong>(ほかにAllowがあっても覆らない)</li>
@@ -114,7 +131,7 @@
 </ol>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 912 210" style="max-width:912px;min-width:520px" role="img" aria-label="図2 ポリシー評価の基本。明示的なDenyが最優先で、次に明示的なAllow。どちらもなければ拒否される。"><defs><marker id="dgservices-iam-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 912 210" style="max-width:912px;min-width:730px" role="img" aria-label="図2 ポリシー評価の基本。明示的なDenyが最優先で、次に明示的なAllow。どちらもなければ拒否される。"><defs><marker id="dgservices-iam-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="44" width="170" height="40" rx="8" class="dg-blue"/>
 <text x="119" y="68" text-anchor="middle" class="dg-t">リクエスト</text>
 <rect x="262" y="44" width="170" height="40" rx="8" class="dg-box"/>
@@ -144,7 +161,7 @@
 </figure>
 <p>さらに、Organizationsの<strong>SCP</strong>や<strong>アクセス許可の境界</strong>、ロールのセッションポリシーが設定されている場合は、<strong>そのすべてで許可されている範囲</strong>だけが実際に使えます。アイデンティティベースのポリシーでAllowしても、SCPで許可されていなければ使えません。</p>
 
-<h3>マネージドポリシーとインラインポリシー</h3>
+<h3 id="c2-4">マネージドポリシーとインラインポリシー<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>作成・管理する人</th><th>特徴</th></tr>
 <tr><td>AWS管理ポリシー</td><td>AWS</td><td><code>AdministratorAccess</code>、<code>ReadOnlyAccess</code>、<code>AmazonS3ReadOnlyAccess</code> など。AWSが更新する。手軽だが権限が広めになりやすい</td></tr>
@@ -153,11 +170,11 @@
 </table></div>
 <p>基本は<strong>マネージドポリシー</strong>(特にカスタマー管理ポリシー)を使い、「そのロールだけに厳密に1対1で付けたい権限」のときにインラインポリシーを使います。</p>
 
-<h3>アクセス許可の境界(Permissions Boundary)</h3>
-<p><strong>アクセス許可の境界</strong>は、IAMユーザーやロールに設定する「<strong>付与できる権限の上限</strong>」です。マネージドポリシーで上限を定義して境界に設定すると、そのユーザー・ロールの実際の権限は「<strong>アイデンティティベースのポリシー</strong>と<strong>境界</strong>の<strong>両方で許可された範囲</strong>」になります。境界そのものは権限を与えません。</p>
+<h3 id="c2-5">アクセス許可の境界(Permissions Boundary)<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>アクセス許可の境界</strong>は、IAMユーザーやロールに設定する「<strong>付与できる権限の上限</strong>」です。マネージドポリシーで上限を定義して境界に設定すると、そのユーザー・ロールの実際の権限は「アイデンティティベースのポリシーと境界の<strong>両方で許可された範囲</strong>」になります。境界そのものは権限を与えません。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 722 114" style="max-width:722px;min-width:520px" role="img" aria-label="図3 アクセス許可の境界。実際の権限は、ポリシーと境界の両方で許可された部分(重なり)だけになる。"><defs><marker id="dgservices-iam-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 722 114" style="max-width:722px;min-width:578px" role="img" aria-label="図3 アクセス許可の境界。実際の権限は、ポリシーと境界の両方で許可された部分(重なり)だけになる。"><defs><marker id="dgservices-iam-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="38" width="160" height="52" rx="8" class="dg-box"/>
 <text x="114" y="60" text-anchor="middle" class="dg-t">IAMポリシー</text>
 <text x="114" y="78" text-anchor="middle" class="dg-s">S3・EC2・IAM</text>
@@ -175,7 +192,7 @@
 </figure>
 <p>代表的な用途は<strong>権限の委任</strong>です。開発者にIAMロールを作る権限を与えつつ、「作るロールには必ずこの境界を付けること」を条件にすると、開発者が自分より強い権限のロールを作って権限昇格するのを防げます。SCPがアカウント全体の上限なのに対して、境界は<strong>個々のユーザー・ロール</strong>の上限です。</p>
 
-<h3>IAM Access Analyzer</h3>
+<h3 id="c2-6">IAM Access Analyzer<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>IAM Access Analyzer</strong>は、ポリシーを分析して意図しないアクセスや不要な権限を見つける機能です。</p>
 <div class="table-wrap"><table>
 <tr><th>機能</th><th>内容</th></tr>
@@ -186,7 +203,7 @@
 </table></div>
 <p>「信頼ゾーン」(アナライザーを作ったアカウント、または組織全体)の外からのアクセスが検出の対象です。</p>
 
-<h3>認証情報レポート</h3>
+<h3 id="c2-7">認証情報レポート<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>認証情報レポート</strong>は、アカウント内の<strong>すべてのIAMユーザー(ルートユーザーを含む)</strong>の認証情報の状態をまとめたCSVファイルです。コンソールやCLIから生成・ダウンロードできます(生成は4時間に1回まで)。</p>
 <ul>
 <li>パスワードの有無・最終使用日時・最終変更日時</li>
@@ -195,7 +212,7 @@
 </ul>
 <p>「90日以上ローテーションしていないアクセスキー」「MFAが無効なユーザー」「長期間使われていないユーザー」を洗い出す監査に使います。ユーザーやロールごとに「どのサービスを最後にいつ使ったか」を見る場合は、<strong>最終アクセス情報(アクセスアドバイザー)</strong>を使います。</p>
 
-<h3>よく使うIAMアクション</h3>
+<h3 id="c2-8">よく使うIAMアクション<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>サービス</th><th>アクション</th><th>概要</th></tr>
 <tr><td>Lambda</td><td><code>lambda:InvokeFunction</code></td><td>Lambda関数を実行する</td></tr>
@@ -209,7 +226,7 @@
 <tr><td>CloudWatch Logs</td><td><code>logs:PutLogEvents</code></td><td>ログを書き込む</td></tr>
 </table></div>
 
-<h3>OIDCとの連携</h3>
+<h3 id="c2-9">OIDCとの連携<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p>IAMにOIDC IdP(プロバイダーURL、クライアントID=IdPが発行するトークンの受信者)を登録します。</p>
 <ol>
 <li>アプリがOIDC IdPからIDトークンを取得</li>
@@ -218,7 +235,7 @@
 <li>検証に通り、IAMロールの信頼ポリシーが許可していれば、一時的な認証情報を発行</li>
 </ol>
 
-<h3 class="em">認証情報の優先順位(AWS CLI/SDK)</h3>
+<h3 class="em" id="c2-10">認証情報の優先順位(AWS CLI/SDK)<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>優先順位</th><th>認証情報</th></tr>
 <tr><td>1</td><td>コード内で明示的に指定した認証情報</td></tr>
@@ -258,7 +275,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>開発者ごとにIAMユーザーを作り、グループで権限を管理</li>
 <li>EC2・Lambda・ECSにIAMロールを付けて、アクセスキーなしでAWSサービスを利用</li>
@@ -268,12 +285,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>IAMは無料で利用できます。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="sts.html">AWS STS</a>:ロールの一時認証情報を発行</li>
 <li><a href="organizations.html">AWS Organizations</a>:複数アカウントの権限上限(SCP)</li>
@@ -286,23 +303,32 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>基本</h4>
+<ul>
 <li>ルートユーザーは日常で使わない。</li>
-<li>ロールは<strong>信頼ポリシー+権限ポリシー</strong>の両方が必要。AssumeRoleできないときは信頼ポリシーを確認。</li>
 <li>アクセスキーをコードやインスタンスに置かず、<strong>ロール</strong>を使う。</li>
 <li>環境変数のキーが、インスタンスプロファイルより<strong>優先</strong>される。意図しない権限で動くときは優先順位を確認。</li>
-<li>他アカウントからのS3アクセスは、バケットポリシー(リソースベース)と相手側IAMポリシーの両方で許可。</li>
+<li>ロールは<strong>信頼ポリシー+権限ポリシー</strong>の両方が必要。AssumeRoleできないときは信頼ポリシーを確認。</li>
+</ul>
+<h4>ポリシーの評価と種類</h4>
+<ul>
 <li>AllowとDenyが両方ある → <strong>明示的なDenyが優先</strong>。どこにもAllowがなければ暗黙的に拒否。</li>
 <li>複数のロールで再利用・バージョン管理したい → <strong>カスタマー管理ポリシー</strong>。特定のロールだけに1対1 → インラインポリシー。</li>
 <li>開発者にロール作成を任せつつ権限昇格を防ぐ → <strong>アクセス許可の境界</strong>。</li>
+<li>他アカウントからのS3アクセスは、バケットポリシー(リソースベース)と相手側IAMポリシーの両方で許可。</li>
+</ul>
+<h4>監査</h4>
+<ul>
 <li>外部アカウントに公開されているリソースを見つける → <strong>IAM Access Analyzer</strong>。CloudTrailから最小権限のポリシーを作るのもAccess Analyzer。</li>
 <li>全ユーザーのMFA・アクセスキーのローテーション状況を監査 → <strong>認証情報レポート</strong>。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>IAMは「誰か(認証)」と「何ができるか(認可)」を管理する。</li>
 <li>ユーザー・グループ・ロール・ポリシーの役割を区別する。</li>
@@ -315,5 +341,6 @@
   <a class="next" href="identity-center.html"><span class="label">次へ →</span>AWS IAM Identity Center</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

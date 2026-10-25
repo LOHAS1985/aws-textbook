@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Health Dashboard | AWS教科書</title>
+<meta name="description" content="AWS側の障害や予定されたメンテナンスが、自分のリソースに影響するかを知らせる">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,19 +21,34 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">マネジメントとガバナンス</span>
+  <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS Health Dashboard</h1>
   <p class="lead">AWS側の障害や予定されたメンテナンスが、自分のリソースに影響するかを知らせる</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">2つの画面</a></li><li><a href="#c2-2">イベントの種類</a></li><li><a href="#c2-3">EventBridgeとの連携(自動対応)</a></li><li><a href="#c2-4">組織ビュー</a></li><li><a href="#c2-5">AWS Health API</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
-<p><strong>AWS Health Dashboard</strong>は、<strong>AWS側で起きている障害や、予定されているメンテナンス</strong>などの情報(<strong>イベント</strong>)を確認できる画面です。裏側では<strong>AWS Health</strong>というサービスがイベントを提供しており、ダッシュボード・API・EventBridgeから利用できます。</p>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Health Dashboard</strong>は、AWS側で起きている障害や、予定されているメンテナンスなどの情報(<strong>イベント</strong>)を確認できる画面です。裏側ではAWS Healthというサービスがイベントを提供しており、ダッシュボード・API・EventBridgeから利用できます。</p>
 <p>CloudWatchが「<strong>自分のリソース</strong>の状態(CPU使用率など)」を監視するのに対し、AWS Healthは「<strong>AWSのサービスやインフラ側</strong>の状態」と、それが自分のリソースに与える影響を知らせます。「アプリが遅いのは自分の設定のせいか、AWS側の障害か」を切り分けるときに最初に確認する場所です。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>2つの画面</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">2つの画面<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>画面</th><th>内容</th><th>見られる人</th></tr>
 <tr><td><strong>サービスの状態</strong>(Service health)</td><td>全リージョン・全サービスの稼働状況。一般向けの障害情報</td><td>誰でも(サインイン不要)</td></tr>
@@ -40,7 +57,7 @@
 <p>以前は前者が「Service Health Dashboard」、後者が「Personal Health Dashboard」という別々の名前でしたが、現在はAWS Health Dashboardにまとめられています。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 718 202" style="max-width:718px;min-width:520px" role="img" aria-label="図1 AWS Health Dashboardの2つの画面。「サービスの状態」はAWS全体の稼働状況を、「アカウントの状態」は自分のアカウントのどのリソースが影響を受けるかを表示する。"><defs><marker id="dgservices-health-dashboard-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 718 202" style="max-width:718px;min-width:574px" role="img" aria-label="図1 AWS Health Dashboardの2つの画面。「サービスの状態」はAWS全体の稼働状況を、「アカウントの状態」は自分のアカウントのどのリソースが影響を受けるかを表示する。"><defs><marker id="dgservices-health-dashboard-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="83" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="104" text-anchor="middle" class="dg-tb">AWS Health</text>
 <text x="109" y="122" text-anchor="middle" class="dg-s">イベントを提供</text>
@@ -64,7 +81,7 @@
 <figcaption>図1 AWS Health Dashboardの2つの画面。「サービスの状態」はAWS全体の稼働状況を、「アカウントの状態」は自分のアカウントのどのリソースが影響を受けるかを表示する。</figcaption>
 </figure>
 
-<h3>イベントの種類</h3>
+<h3 id="c2-2">イベントの種類<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>内容</th><th>例</th></tr>
 <tr><td>未解決の問題(Issue)</td><td>AWSのサービスで発生している障害・性能低下</td><td>東京リージョンのあるAZでEC2のAPIエラーが増えている</td></tr>
@@ -72,7 +89,7 @@
 <tr><td>その他の通知(Account notification)</td><td>アカウントに関するお知らせ</td><td>証明書の期限切れ、<strong>アクセスキーの漏えいの検知</strong></td></tr>
 </table></div>
 
-<h3>EventBridgeとの連携(自動対応)</h3>
+<h3 id="c2-3">EventBridgeとの連携(自動対応)<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>AWS Healthのイベントは<strong>Amazon EventBridge</strong>にも送られます(イベントの発生元は <code>aws.health</code>)。ルールを作れば、イベントをきっかけに通知や自動対応ができます。</p>
 <ul>
 <li>予定されたメンテナンスをSNSでメール・チャットに通知する</li>
@@ -81,7 +98,7 @@
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 690 286" style="max-width:690px;min-width:520px" role="img" aria-label="図2 AWS HealthのイベントをEventBridgeで受け取り、通知や自動対応につなげる。メンテナンスやアクセスキーの漏えいなどに、人手を介さず対応できる。"><defs><marker id="dgservices-health-dashboard-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 690 286" style="max-width:690px;min-width:552px" role="img" aria-label="図2 AWS HealthのイベントをEventBridgeで受け取り、通知や自動対応につなげる。メンテナンスやアクセスキーの漏えいなどに、人手を介さず対応できる。"><defs><marker id="dgservices-health-dashboard-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="126" width="145" height="52" rx="8" class="dg-accent"/>
 <text x="106" y="147" text-anchor="middle" class="dg-tb">AWS Health</text>
 <text x="106" y="165" text-anchor="middle" class="dg-s">イベント発生</text>
@@ -107,15 +124,15 @@
 </figure>
 <p>EventBridgeへは、イベントが発生したリージョンに届きます。特定のリージョンに属さないグローバルなイベント(IAMなど)は<strong>us-east-1</strong>に届くため、ルールを作るリージョンに注意します。</p>
 
-<h3>組織ビュー</h3>
+<h3 id="c2-4">組織ビュー<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p><a href="organizations.html">AWS Organizations</a>を使っている場合、管理アカウント(または委任された管理者アカウント)で<strong>組織ビュー</strong>を有効にすると、<strong>すべてのメンバーアカウントのイベントをまとめて</strong>確認できます。</p>
 
-<h3>AWS Health API</h3>
+<h3 id="c2-5">AWS Health API<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>イベントをプログラムから取得するためのAPIです。<strong>Business・Enterprise On-Ramp・Enterpriseのサポートプラン</strong>が必要です。EventBridgeとの連携やダッシュボードは、サポートプランに関係なく使えます。</p>
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>アプリの障害時に、AWS側の問題かどうかを確認する</li>
 <li>EC2のリタイアやRDSのメンテナンスの予定を事前に把握し、業務時間外に対応する</li>
@@ -125,12 +142,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>AWS Health Dashboardと、EventBridgeへのイベント配信は<strong>無料</strong>です。通知や自動対応に使うSNS・Lambdaなどの料金はかかります。AWS Health APIを使うには、上記のサポートプランの契約が必要です。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="eventbridge.html">Amazon EventBridge</a>:Healthのイベントを受け取り、通知・自動対応につなげる</li>
 <li><a href="sns.html">Amazon SNS</a>:イベントの通知</li>
@@ -142,7 +159,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>AWS側の障害・メンテナンスが<strong>自分のリソースに影響するか</strong>を知りたい → <strong>AWS Health Dashboard(アカウントの状態)</strong>。</li>
 <li>Healthのイベントで通知・自動対応したい → <strong>EventBridgeのルール</strong>(<code>aws.health</code>)→ SNS・Lambda・SSM Automation。</li>
@@ -154,7 +171,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>AWS側の障害・予定されたメンテナンス・アカウントへの通知を確認できるダッシュボード。</li>
 <li>「サービスの状態」は全体の情報、「アカウントの状態」は自分のリソースへの影響。</li>
@@ -168,5 +185,6 @@
   <a class="next" href="compute-optimizer.html"><span class="label">次へ →</span>AWS Compute Optimizer</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

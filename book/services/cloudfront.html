@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon CloudFront | AWS教科書</title>
+<meta name="description" content="コンテンツを世界中へ高速配信するCDN">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,27 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワークとコンテンツ配信</span>
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
   <h1>Amazon CloudFront</h1>
   <p class="lead">コンテンツを世界中へ高速配信するCDN</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(21項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">仕組み</a></li><li><a href="#c2-2">ビヘイビア(パスごとのオリジン・設定)</a></li><li><a href="#c2-3">キャッシュキーとキャッシュポリシー</a></li><li><a href="#c2-4">無効化(Invalidation)</a></li><li><a href="#c2-5">署名付きURL/署名付きCookie</a></li><li><a href="#c2-6">地理的制限</a></li><li><a href="#c2-7">オリジンフェイルオーバー(オリジングループ)</a></li><li><a href="#c2-8">CloudFront FunctionsとLambda@Edge</a></li><li><a href="#c2-9">オリジンシールド</a></li><li><a href="#c2-10">Origin Access Control(OAC)</a></li><li><a href="#c2-11">フィールドレベル暗号化</a></li><li><a href="#c2-12">TTL(キャッシュ期限)</a></li><li><a href="#c2-13">HTTPS制御</a></li><li><a href="#c2-14">独自ドメインで配信する(代替ドメイン名と証明書)</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon CloudFront</strong>は、<strong>CDN(Content Delivery Network)</strong>サービスです。世界中のエッジサーバーにコンテンツをキャッシュし、ユーザーの近くから高速に配信します。</p>
 <ul>
 <li><strong>オリジン</strong>:コンテンツを取得する元のサーバー(S3、ALB、EC2など)</li>
@@ -34,8 +51,8 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>仕組み</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">仕組み<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>CloudFrontなし</strong>:日本のユーザーがアメリカのWebサーバーへ直接アクセスすると時間がかかる。</li>
 <li><strong>CloudFrontあり</strong>
@@ -48,7 +65,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 798 116" style="max-width:798px;min-width:520px" role="img" aria-label="図1 CloudFrontの仕組み。初回はエッジからオリジンへ取りに行き、エッジにキャッシュを残す。2回目以降は近くのエッジが応答するため高速。オリジンシールドを使うと、オリジンへのリクエストをさらにまとめられる。"><defs><marker id="dgservices-cloudfront-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 798 116" style="max-width:798px;min-width:638px" role="img" aria-label="図1 CloudFrontの仕組み。初回はエッジからオリジンへ取りに行き、エッジにキャッシュを残す。2回目以降は近くのエッジが応答するため高速。オリジンシールドを使うと、オリジンへのリクエストをさらにまとめられる。"><defs><marker id="dgservices-cloudfront-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="62" text-anchor="middle" class="dg-t">ユーザー</text>
 <text x="104" y="80" text-anchor="middle" class="dg-s">日本</text>
@@ -70,11 +87,11 @@
 </div>
 <figcaption>図1 CloudFrontの仕組み。初回はエッジからオリジンへ取りに行き、エッジにキャッシュを残す。2回目以降は近くのエッジが応答するため高速。オリジンシールドを使うと、オリジンへのリクエストをさらにまとめられる。</figcaption>
 </figure>
-<h3>ビヘイビア(パスごとのオリジン・設定)</h3>
+<h3 id="c2-2">ビヘイビア(パスごとのオリジン・設定)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>ビヘイビア(キャッシュビヘイビア)</strong>は、リクエストのパスに応じて「<strong>どのオリジンに送るか</strong>」「<strong>どうキャッシュするか</strong>」を決める設定です。1つのディストリビューションに複数のビヘイビアを作り、パスパターンで振り分けます。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 722 274" style="max-width:722px;min-width:520px" role="img" aria-label="図2 ビヘイビアによる振り分け。パスパターンごとにオリジンとキャッシュの設定を変え、どれにも一致しないリクエストは既定のビヘイビア(*)で処理する。"><defs><marker id="dgservices-cloudfront-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 722 274" style="max-width:722px;min-width:578px" role="img" aria-label="図2 ビヘイビアによる振り分け。パスパターンごとにオリジンとキャッシュの設定を変え、どれにも一致しないリクエストは既定のビヘイビア(*)で処理する。"><defs><marker id="dgservices-cloudfront-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="124" width="160" height="40" rx="8" class="dg-blue"/>
 <text x="114" y="148" text-anchor="middle" class="dg-t">ユーザー</text>
 <rect x="268" y="118" width="160" height="52" rx="8" class="dg-accent"/>
@@ -103,7 +120,7 @@
 <li>静的ファイルはS3から長めのTTLで、APIはALBからキャッシュなしで、のように1つのドメインで静的・動的コンテンツをまとめて配信できる</li>
 </ul>
 
-<h3>キャッシュキーとキャッシュポリシー</h3>
+<h3 id="c2-3">キャッシュキーとキャッシュポリシー<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>キャッシュキー</strong>は、エッジがキャッシュを見分けるための値です。同じキャッシュキーのリクエストには同じキャッシュを返します。既定ではドメイン名とURLのパスだけがキャッシュキーで、クエリ文字列・ヘッダー・Cookieは含まれません。</p>
 <div class="table-wrap"><table>
 <tr><th>ポリシー</th><th>決めるもの</th><th>例</th></tr>
@@ -113,7 +130,7 @@
 </table></div>
 <p>キャッシュキーに含める値が多いほどキャッシュが細かく分かれ、<strong>キャッシュヒット率が下がります</strong>。表示内容を変える値だけをキャッシュキーに含め、オリジンが必要なだけの値はオリジンリクエストポリシーで渡すのが基本です。キャッシュヒット率はCloudWatchのメトリクスやレポートで確認できます。</p>
 
-<h3>無効化(Invalidation)</h3>
+<h3 id="c2-4">無効化(Invalidation)<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>オリジンのファイルを更新しても、エッジのキャッシュはTTLが切れるまで古いままです。すぐに反映したい場合は<strong>無効化(Invalidation)</strong>で、指定したパスのキャッシュを全エッジから削除します。</p>
 <ul>
 <li>パスを指定する(例:<code>/index.html</code>、<code>/images/*</code>、全体なら <code>/*</code>)。ワイルドカードを含むパスも1パスと数える</li>
@@ -122,7 +139,7 @@
 </ul>
 <p>頻繁に更新するファイルは、無効化に頼るより<strong>ファイル名にバージョンを付ける</strong>(<code>app.v2.js</code>、<code>style.3f9a.css</code> など)方が確実で安くなります。新しい名前のファイルは新しいキャッシュとして扱われるためです。</p>
 
-<h3>署名付きURL/署名付きCookie</h3>
+<h3 id="c2-5">署名付きURL/署名付きCookie<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>会員向けの動画や有料コンテンツなど、<strong>許可された人だけに配信</strong>したいときは、ビヘイビアで「署名付きリクエストを要求」し、<strong>署名付きURL</strong>か<strong>署名付きCookie</strong>でアクセスさせます。</p>
 <div class="table-wrap"><table>
 <tr><th>方式</th><th>向いている場面</th></tr>
@@ -135,15 +152,15 @@
 <li>S3の署名付きURLとは別の仕組み。CloudFront経由で配信し、S3はOACで直接アクセスを防ぐ組み合わせにする</li>
 </ul>
 
-<h3>地理的制限</h3>
+<h3 id="c2-6">地理的制限<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>地理的制限</strong>を設定すると、<strong>国単位</strong>でコンテンツへのアクセスを制限できます。許可する国の一覧(許可リスト)か、拒否する国の一覧(ブロックリスト)のどちらかを指定し、制限された国からのアクセスには <strong>403(Forbidden)</strong> を返します。配信権利が国ごとに決まっている動画などで使います。</p>
 <p>国より細かい条件(特定のIP範囲、国+パスの組み合わせなど)で制御したい場合は、AWS WAFのルール(地理的一致の条件)を使います。</p>
 
-<h3>オリジンフェイルオーバー(オリジングループ)</h3>
+<h3 id="c2-7">オリジンフェイルオーバー(オリジングループ)<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>オリジングループ</strong>にプライマリとセカンダリの2つのオリジンを登録すると、プライマリが失敗したときに<strong>自動でセカンダリに切り替えて</strong>取得し直します。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 704 202" style="max-width:704px;min-width:520px" role="img" aria-label="図3 オリジンフェイルオーバー。プライマリが指定したステータスコードを返すか接続できない場合、同じリクエストをセカンダリに送り直す。"><defs><marker id="dgservices-cloudfront-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 704 202" style="max-width:704px;min-width:563px" role="img" aria-label="図3 オリジンフェイルオーバー。プライマリが指定したステータスコードを返すか接続できない場合、同じリクエストをセカンダリに送り直す。"><defs><marker id="dgservices-cloudfront-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="89" width="160" height="40" rx="8" class="dg-blue"/>
 <text x="114" y="113" text-anchor="middle" class="dg-t">ユーザー</text>
 <rect x="268" y="83" width="160" height="52" rx="8" class="dg-accent"/>
@@ -170,7 +187,7 @@
 <li>S3のクロスリージョンレプリケーションで別リージョンにコピーしたバケットをセカンダリにすると、リージョン障害にも備えられる</li>
 </ul>
 
-<h3>CloudFront FunctionsとLambda@Edge</h3>
+<h3 id="c2-8">CloudFront FunctionsとLambda@Edge<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p>どちらもエッジでコードを動かし、リクエストやレスポンスを加工する機能です。</p>
 <div class="table-wrap"><table>
 <tr><th>項目</th><th>CloudFront Functions</th><th>Lambda@Edge</th></tr>
@@ -184,22 +201,22 @@
 </table></div>
 <p>軽くて大量に呼ばれる処理はCloudFront Functions、ネットワークアクセスや長い処理が必要ならLambda@Edgeを選びます。Lambda@Edgeの関数は<strong>us-east-1</strong>で作成し、CloudFrontが各地に複製します。</p>
 
-<h3>オリジンシールド</h3>
+<h3 id="c2-9">オリジンシールド<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p>複数のエッジロケーションからオリジンへのリクエストをまとめ、<strong>オリジンへのリクエスト数を減らす</strong>機能です。リージョナルエッジキャッシュを1つにまとめるイメージです。</p>
 
-<h3 class="em">Origin Access Control(OAC)</h3>
+<h3 class="em" id="c2-10">Origin Access Control(OAC)<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>S3オリジンへアクセスする仕組みで、<strong>CloudFront経由でのみS3にアクセスできる</strong>ようにします(S3への直接アクセスを防ぐ)。</p>
 
-<h3>フィールドレベル暗号化</h3>
+<h3 id="c2-11">フィールドレベル暗号化<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p>HTTPリクエスト内の特定の項目(クレジットカード番号など)をCloudFrontで暗号化する機能です。</p>
 
-<h3>TTL(キャッシュ期限)</h3>
+<h3 id="c2-12">TTL(キャッシュ期限)<a class="anchor" href="#c2-12" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>静的コンテンツ</strong>:誰がアクセスしても同じ内容なので、長時間キャッシュする。</li>
 <li><strong>動的コンテンツ</strong>:人や時刻によって内容が変わるので、短時間キャッシュする。</li>
 </ul>
 
-<h3>HTTPS制御</h3>
+<h3 id="c2-13">HTTPS制御<a class="anchor" href="#c2-13" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong class="em">Viewer Protocol Policy</strong>:ユーザー ⇔ CloudFront 間</li>
 <li><strong class="em">Origin Protocol Policy</strong>:CloudFront ⇔ オリジン 間</li>
@@ -207,7 +224,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="dgservices-cloudfront-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="dgservices-cloudfront-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="70" text-anchor="middle" class="dg-t">ユーザー</text>
 <rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
@@ -228,7 +245,7 @@
 </div>
 <figcaption>図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
 </figure>
-<h3>独自ドメインで配信する(代替ドメイン名と証明書)</h3>
+<h3 id="c2-14">独自ドメインで配信する(代替ドメイン名と証明書)<a class="anchor" href="#c2-14" aria-label="この見出しへのリンク">#</a></h3>
 <p>CloudFrontのディストリビューションには <code>d111111abcdef8.cloudfront.net</code> のようなドメイン名が付きます。<code>www.example.com</code> などの独自ドメインで配信するには、次の手順で設定します。</p>
 <ol>
 <li>ACMで独自ドメインの証明書を発行する。<strong>CloudFrontで使うACM証明書は us-east-1(バージニア北部)で発行する必要がある</strong>。</li>
@@ -239,7 +256,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>S3の静的Webサイト・画像・動画の高速配信(OACでS3を非公開に)</li>
 <li>グローバルユーザー向けWebアプリの高速化</li>
@@ -248,12 +265,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>エッジからユーザーへのデータ転送量と、HTTP/HTTPSリクエスト数で課金されます。オリジン(AWS内)からCloudFrontへの転送は無料です。キャッシュヒット率を上げるとオリジンの負荷とコストを下げられます。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="s3.html">Amazon S3</a>:代表的なオリジン(OAC)</li>
 <li><a href="elb.html">Elastic Load Balancing</a>:動的コンテンツのオリジン</li>
@@ -265,26 +282,35 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>セキュリティ・配信制御</h4>
+<ul>
 <li>S3へのアクセスをCloudFront経由に限定 → <strong>OAC</strong>。</li>
 <li>CloudFrontで使うACM証明書は<strong>us-east-1</strong>。</li>
 <li>ユーザー側のHTTPS強制 → <strong>Viewer Protocol Policy</strong>、オリジン側 → <strong>Origin Protocol Policy</strong>。</li>
+<li>機密項目だけを暗号化 → <strong>フィールドレベル暗号化</strong>。</li>
+<li>有料コンテンツの配信 → 1ファイルなら<strong>署名付きURL</strong>、複数ファイル・URLを変えたくないなら<strong>署名付きCookie</strong>。</li>
+<li>特定の国からのアクセスを拒否 → <strong>地理的制限</strong>(403を返す)。</li>
+</ul>
+<h4>キャッシュ</h4>
+<ul>
 <li>オリジンの負荷を減らしたい → <strong>オリジンシールド</strong>、TTLを長くする。</li>
 <li>POST/PUTなどはキャッシュされない(キャッシュはGET/HEAD/OPTIONSのみ)。</li>
-<li>機密項目だけを暗号化 → <strong>フィールドレベル暗号化</strong>。</li>
 <li>パスごとにオリジンやキャッシュの設定を変える → <strong>ビヘイビア</strong>(どれにも一致しなければ既定の <code>*</code>)。</li>
 <li>キャッシュヒット率が低い → キャッシュポリシーで<strong>キャッシュキー</strong>に含めるヘッダー・Cookie・クエリ文字列を減らす。オリジンに渡すだけなら<strong>オリジンリクエストポリシー</strong>。</li>
 <li>更新したファイルをすぐ反映 → <strong>無効化</strong>(月1,000パスまで無料)。頻繁な更新ならファイル名にバージョンを付ける。</li>
-<li>有料コンテンツの配信 → 1ファイルなら<strong>署名付きURL</strong>、複数ファイル・URLを変えたくないなら<strong>署名付きCookie</strong>。</li>
-<li>特定の国からのアクセスを拒否 → <strong>地理的制限</strong>(403を返す)。</li>
+</ul>
+<h4>可用性・エッジでの処理</h4>
+<ul>
 <li>オリジンの障害時に別のオリジンへ → <strong>オリジングループ</strong>によるオリジンフェイルオーバー。</li>
 <li>ヘッダー操作やリダイレクトなどの軽い処理 → <strong>CloudFront Functions</strong>。オリジン側のイベントや外部へのアクセスが必要 → <strong>Lambda@Edge</strong>。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>CloudFrontはエッジでキャッシュして配信を高速化するCDN。</li>
 <li>OAC・フィールドレベル暗号化・プロトコルポリシーでセキュリティを確保する。</li>
@@ -297,5 +323,6 @@
   <a class="next" href="global-accelerator.html"><span class="label">次へ →</span>AWS Global Accelerator</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

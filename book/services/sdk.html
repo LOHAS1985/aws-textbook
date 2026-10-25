@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS SDK | AWS教科書</title>
+<meta name="description" content="アプリからAWSサービスを操作するための公式ライブラリ群">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,17 +21,18 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">フレームワーク</span>
+  <a class="category" href="index.html#cat10">フレームワーク</a>
   <h1>AWS SDK</h1>
   <p class="lead">アプリからAWSサービスを操作するための公式ライブラリ群</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS SDK(Software Development Kit)</strong>は、<strong>アプリケーションからAWSサービスを操作するための公式ライブラリ群</strong>です。REST APIを直接呼ぶ代わりに、SDKのメソッドを使います。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>プログラムからAWSを操作するには認証情報(IAMユーザーのアクセスキーなど)が必要。</li>
 </ul>
@@ -37,7 +40,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 252" style="max-width:684px;min-width:520px" role="img" aria-label="図1 SDKの役割。アプリはSDKのメソッドを呼ぶだけでよく、SDKが認証情報を探して署名付きのAPIリクエストを送る。"><defs><marker id="dgservices-sdk-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 252" style="max-width:684px;min-width:547px" role="img" aria-label="図1 SDKの役割。アプリはSDKのメソッドを呼ぶだけでよく、SDKが認証情報を探して署名付きのAPIリクエストを送る。"><defs><marker id="dgservices-sdk-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="104" text-anchor="middle" class="dg-t">アプリのコード</text>
 <text x="109" y="122" text-anchor="middle" class="dg-s">s3.put_object()</text>
@@ -58,7 +61,7 @@
 </div>
 <figcaption>図1 SDKの役割。アプリはSDKのメソッドを呼ぶだけでよく、SDKが認証情報を探して署名付きのAPIリクエストを送る。</figcaption>
 </figure>
-<h3>対応言語</h3>
+<h3 id="c2-1">対応言語<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>Java:AWS SDK for Java</li>
 <li>JavaScript:AWS SDK for JavaScript</li>
@@ -66,14 +69,14 @@
 <li>.NET、Go(AWS SDK for Go)、Ruby、PHPなど</li>
 </ul>
 
-<h3>メソッドの例(Python)</h3>
+<h3 id="c2-2">メソッドの例(Python)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <pre class="code"><code># S3:オブジェクトのアップロード
 s3.put_object(Bucket="my-bucket", Key="sample.txt", Body="hello")
 
 # DynamoDB:アイテムの登録
 table.put_item(Item={"userId": "u001", "name": "Taro"})</code></pre>
 
-<h3>クライアントの初期化</h3>
+<h3 id="c2-3">クライアントの初期化<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>AWSサービスへアクセスするためのオブジェクトを生成・設定します。Lambdaでは<strong>ハンドラーの外で初期化</strong>すると、実行環境が再利用されたときに毎回初期化しなくて済みます。</p>
 <pre class="code"><code>import boto3
 
@@ -86,7 +89,7 @@ def lambda_handler(event, context):
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>アプリからS3へのファイルアップロード、DynamoDBへの読み書き</li>
 <li>Lambda関数内から他のAWSサービスを呼び出す</li>
@@ -95,12 +98,12 @@ def lambda_handler(event, context):
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>SDK自体は無料です。SDKから呼び出したAWSサービスの料金がかかります。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="iam.html">AWS IAM</a>:認証情報と優先順位</li>
 <li><a href="lambda.html">AWS Lambda</a>:ハンドラー外での初期化</li>
@@ -110,7 +113,7 @@ def lambda_handler(event, context):
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>PythonのSDK → <strong>Boto3</strong>。</li>
 <li>Lambdaでは、SDKクライアントやDB接続を<strong>ハンドラーの外</strong>で初期化して再利用する。</li>
@@ -119,7 +122,7 @@ def lambda_handler(event, context):
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>AWS SDKは各言語向けのAWS操作ライブラリ。Lambdaではクライアントをハンドラー外で初期化する。</li>
 </ul>
@@ -130,5 +133,6 @@ def lambda_handler(event, context):
   <a class="next" href="database-encryption-sdk.html"><span class="label">次へ →</span>AWS Database Encryption SDK</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

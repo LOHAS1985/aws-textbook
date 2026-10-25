@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon VPC | AWS教科書</title>
+<meta name="description" content="AWS上に論理的に分離された仮想ネットワークを作るサービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,27 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワークとコンテンツ配信</span>
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
   <h1>Amazon VPC</h1>
   <p class="lead">AWS上に論理的に分離された仮想ネットワークを作るサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(16項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">サブネットの予約IPと「1サブネット=1AZ」</a></li><li><a href="#c2-3">Elastic IP</a></li><li><a href="#c2-4">VPCピアリング</a></li><li><a href="#c2-5">VPCエンドポイントの2種類</a></li><li><a href="#c2-6">NATゲートウェイはAZごとに作る</a></li><li><a href="#c2-7">セキュリティグループ同士の参照</a></li><li><a href="#c2-8">エフェメラルポート(ネットワークACLの戻り通信)</a></li><li><a href="#c2-9">Reachability Analyzer(到達性の分析)</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon VPC(Virtual Private Cloud)</strong>は、AWS上に<strong>論理的に分離された仮想ネットワーク</strong>を構築するサービスです。</p>
 <ul>
 <li>AWS内に自分専用のネットワーク空間を作成できる</li>
@@ -33,7 +50,7 @@
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 830 383" style="max-width:830px;min-width:520px" role="img" aria-label="図1 VPCの基本構成。パブリックサブネットはインターネットゲートウェイ経由で外部と通信できる。プライベートサブネットはNATゲートウェイ経由で外向きの通信だけを行い、VPCエンドポイントでAWSサービスにプライベート接続する。"><defs><marker id="dgservices-vpc-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 830 383" style="max-width:830px;min-width:664px" role="img" aria-label="図1 VPCの基本構成。パブリックサブネットはインターネットゲートウェイ経由で外部と通信できる。プライベートサブネットはNATゲートウェイ経由で外向きの通信だけを行い、VPCエンドポイントでAWSサービスにプライベート接続する。"><defs><marker id="dgservices-vpc-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="184" y="112" width="400" height="247" rx="10" class="dg-group"/>
 <text x="194" y="127" class="dg-s">VPC</text>
 <rect x="206" y="134" width="356" height="86" rx="10" class="dg-group"/>
@@ -72,8 +89,8 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>構成要素</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">構成要素<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>構成要素</th><th>役割</th></tr>
 <tr><td>サブネット</td><td>VPC内のネットワークの分割単位</td></tr>
@@ -88,7 +105,7 @@
 <p>「パブリックサブネット」とは、ルートテーブルにインターネットゲートウェイへの経路(<code>0.0.0.0/0 → IGW</code>)があるサブネットのことです。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 879 129" style="max-width:879px;min-width:520px" role="img" aria-label="図2 通信がインスタンスに届くまで。サブネットの出入り口でネットワークACL(ステートレス)、インスタンスの手前でセキュリティグループ(ステートフル)がチェックする。"><defs><marker id="dgservices-vpc-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 879 129" style="max-width:879px;min-width:703px" role="img" aria-label="図2 通信がインスタンスに届くまで。サブネットの出入り口でネットワークACL(ステートレス)、インスタンスの手前でセキュリティグループ(ステートフル)がチェックする。"><defs><marker id="dgservices-vpc-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="462" y="15" width="394" height="90" rx="10" class="dg-group"/>
 <text x="472" y="30" class="dg-s">サブネット</text>
 <rect x="34" y="49" width="155" height="40" rx="8" class="dg-blue"/>
@@ -109,7 +126,7 @@
 <figcaption>図2 通信がインスタンスに届くまで。サブネットの出入り口でネットワークACL(ステートレス)、インスタンスの手前でセキュリティグループ(ステートフル)がチェックする。</figcaption>
 </figure>
 
-<h3>サブネットの予約IPと「1サブネット=1AZ」</h3>
+<h3 id="c2-2">サブネットの予約IPと「1サブネット=1AZ」<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>サブネットは必ず<strong>1つのアベイラビリティーゾーン(AZ)の中だけ</strong>に作られ、複数のAZにまたがることはできません。そのため、複数AZで冗長化したい場合は、AZごとにサブネットを用意します(例:パブリックサブネットとプライベートサブネットをそれぞれ2つのAZに1つずつ、計4つ)。</p>
 <p>サブネットのCIDRは <code>/16</code>〜<code>/28</code> の範囲で指定します。各サブネットでは、<strong>先頭4つと末尾1つの計5つのIPアドレスがAWSに予約</strong>されていて、リソースには割り当てられません。</p>
 <div class="table-wrap"><table>
@@ -122,7 +139,7 @@
 </table></div>
 <p>たとえば <code>/24</code>(256個)のサブネットで使えるのは251個、最小の <code>/28</code>(16個)では11個です。必要なIP数を見積もるときは、この5個を差し引いて考えます。CIDRの読み方は用語ページ「<a href="../terms/cidr.html">CIDR</a>」を参照してください。</p>
 
-<h3>Elastic IP</h3>
+<h3 id="c2-3">Elastic IP<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2インスタンスに自動で付くパブリックIPv4アドレスは、インスタンスを<strong>停止・起動すると変わります</strong>。固定のパブリックIPが必要な場合は、<strong>Elastic IPアドレス</strong>(アカウントに確保する静的なパブリックIPv4アドレス)を取得してインスタンスやENIに関連付けます。</p>
 <ul>
 <li>関連付け先を別のインスタンスに付け替えられるため、障害時に予備のインスタンスへIPごと切り替える、といった使い方ができる</li>
@@ -132,7 +149,7 @@
 </ul>
 <p>ENIとの関係は用語ページ「<a href="../terms/eni-elastic-ip.html">ENIとElastic IP</a>」を参照してください。</p>
 
-<h3>VPCピアリング</h3>
+<h3 id="c2-4">VPCピアリング<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>VPCピアリング</strong>は、2つのVPCを1対1でつなぎ、プライベートIPのまま通信できるようにする機能です。別のアカウントや別のリージョンのVPCともつなげます。</p>
 <ul>
 <li>つなぐVPC同士の<strong>CIDRが重なっていてはいけない</strong></li>
@@ -142,7 +159,7 @@
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 718 218" style="max-width:718px;min-width:520px" role="img" aria-label="図3 VPCピアリングは推移的ではない。A–B、B–Cをつないでも、Bを中継してAとCが通信することはできない。"><defs><marker id="dgservices-vpc-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 718 218" style="max-width:718px;min-width:574px" role="img" aria-label="図3 VPCピアリングは推移的ではない。A–B、B–Cをつないでも、Bを中継してAとCが通信することはできない。"><defs><marker id="dgservices-vpc-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="43" width="150" height="52" rx="8" class="dg-box"/>
 <text x="109" y="64" text-anchor="middle" class="dg-t">VPC A</text>
 <text x="109" y="82" text-anchor="middle" class="dg-s">10.0.0.0/16</text>
@@ -165,15 +182,15 @@
 </figure>
 <p>詳しくは用語ページ「<a href="../terms/vpc-peering.html">VPCピアリング</a>」を参照してください。</p>
 
-<h3>VPCエンドポイントの2種類</h3>
-<div class="table-wrap"><table>
+<h3 id="c2-5">VPCエンドポイントの2種類<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
 <tr><th>種類</th><th>対応サービス</th><th>仕組み</th><th>料金</th></tr>
-<tr><td>ゲートウェイ型</td><td><strong>S3とDynamoDBのみ</strong></td><td>ルートテーブルに、サービスへの経路(プレフィックスリスト → エンドポイント)が追加される</td><td>無料</td></tr>
-<tr><td>インターフェース型(AWS PrivateLink)</td><td>SQS・SNS・KMS・Systems Manager・CloudWatchなど多数(S3も可)</td><td>サブネットに<strong>ENI(プライベートIP)</strong>が作られ、セキュリティグループで制御する</td><td>時間料金+データ処理量</td></tr>
+<tr><td data-label="種類">ゲートウェイ型</td><td data-label="対応サービス"><strong>S3とDynamoDBのみ</strong></td><td data-label="仕組み">ルートテーブルに、サービスへの経路(プレフィックスリスト → エンドポイント)が追加される</td><td data-label="料金">無料</td></tr>
+<tr><td data-label="種類">インターフェース型(AWS PrivateLink)</td><td data-label="対応サービス">SQS・SNS・KMS・Systems Manager・CloudWatchなど多数(S3も可)</td><td data-label="仕組み">サブネットに<strong>ENI(プライベートIP)</strong>が作られ、セキュリティグループで制御する</td><td data-label="料金">時間料金+データ処理量</td></tr>
 </table></div>
 <p>オンプレミスやピアリング先のVPCから使えるのはインターフェース型だけです。エンドポイントポリシーなどの詳細は用語ページ「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」を参照してください。</p>
 
-<h3>NATゲートウェイはAZごとに作る</h3>
+<h3 id="c2-6">NATゲートウェイはAZごとに作る<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p>NATゲートウェイは、作成した<strong>1つのAZの中で冗長化</strong>されたサービスです。AZ自体に障害が起きると、そのAZのNATゲートウェイも使えなくなります。1つのNATゲートウェイを全AZのプライベートサブネットで共有していると、そのAZの障害で<strong>全AZのサーバーが外に出られなくなります</strong>。</p>
 <p>そのため、可用性を高めるには<strong>AZごとにNATゲートウェイを作り</strong>、各AZのプライベートサブネットのルートテーブルを、<strong>同じAZのNATゲートウェイ</strong>に向けます。AZをまたぐデータ転送料金がかからなくなる利点もあります。</p>
 <figure class="figure">
@@ -205,7 +222,7 @@
 </figure>
 <p>NATゲートウェイは自動でスケールし、セキュリティグループは付けられません(通信の制御はネットワークACLとインスタンス側のセキュリティグループで行う)。</p>
 
-<h3>セキュリティグループ同士の参照</h3>
+<h3 id="c2-7">セキュリティグループ同士の参照<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>セキュリティグループのルールでは、送信元(または送信先)にIPアドレスの範囲ではなく<strong>別のセキュリティグループのID</strong>を指定できます。「そのセキュリティグループが付いているリソースからの通信を許可する」という意味になります。</p>
 <div class="table-wrap"><table>
 <tr><th>セキュリティグループ</th><th>インバウンドルール</th></tr>
@@ -215,12 +232,12 @@
 </table></div>
 <p>Auto ScalingでWebサーバーが増減してIPアドレスが変わっても、ルールを書き換える必要がありません。多層構成で「前の層からの通信だけを許可する」ときの定番の書き方です。同じリージョンのピアリング先VPCのセキュリティグループも参照できます。</p>
 
-<h3>エフェメラルポート(ネットワークACLの戻り通信)</h3>
+<h3 id="c2-8">エフェメラルポート(ネットワークACLの戻り通信)<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p>クライアントがサーバーに接続するとき、送信先ポートは443などの決まった番号ですが、送信元ポート(=戻りの通信の宛先ポート)にはOSが一時的に選ぶ番号が使われます。これを<strong>エフェメラルポート</strong>と呼びます。</p>
 <p>ネットワークACLはステートレスなので、インバウンドで443を許可するだけでは足りず、<strong>アウトバウンドでエフェメラルポート宛ての戻り通信も許可</strong>する必要があります。逆に、サブネット内のサーバーが外部へ接続する場合は、インバウンドでエフェメラルポートを許可します。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 758 262" style="max-width:758px;min-width:520px" role="img" aria-label="図5 エフェメラルポート。戻りの通信はクライアントが選んだ一時的なポート宛てになるため、ネットワークACLのアウトバウンドでその範囲を許可する。"><defs><marker id="dgservices-vpc-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 758 262" style="max-width:758px;min-width:606px" role="img" aria-label="図5 エフェメラルポート。戻りの通信はクライアントが選んだ一時的なポート宛てになるため、ネットワークACLのアウトバウンドでその範囲を許可する。"><defs><marker id="dgservices-vpc-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="43" width="180" height="52" rx="8" class="dg-blue"/>
 <text x="124" y="64" text-anchor="middle" class="dg-t">クライアント</text>
 <text x="124" y="82" text-anchor="middle" class="dg-s">送信元ポート 50123</text>
@@ -249,7 +266,7 @@
 </figure>
 <p>使われる範囲はOSや経路によって異なります(Linuxの多くは 32768〜61000、Windowsは 49152〜65535、NATゲートウェイやELBは 1024〜65535)。どの相手からの通信でも通るように、通常は <strong>1024〜65535</strong> を許可します。セキュリティグループはステートフルなので、この設定は不要です。</p>
 
-<h3>Reachability Analyzer(到達性の分析)</h3>
+<h3 id="c2-9">Reachability Analyzer(到達性の分析)<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>VPC Reachability Analyzer</strong>は、送信元(EC2インスタンス、ENI、インターネットゲートウェイなど)と送信先を指定すると、その間の経路で<strong>通信が届くかどうかを設定から分析</strong>する機能です。実際にパケットは送りません。</p>
 <ul>
 <li>届く場合:通過するルートテーブル・セキュリティグループ・ネットワークACLなどの経路を1つずつ表示する</li>
@@ -260,7 +277,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>Webサーバーはパブリックサブネット、DBはプライベートサブネットに配置する多層構成</li>
 <li>プライベートサブネットのサーバーからNATゲートウェイ経由でOSアップデートを取得</li>
@@ -269,12 +286,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>VPC・サブネット・ルートテーブル・セキュリティグループ自体は無料です。NATゲートウェイ(時間+処理データ量)、インターフェース型VPCエンドポイント、パブリックIPv4アドレスなどは有料です。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="ec2.html">Amazon EC2</a>:VPC内に配置する代表的なリソース</li>
 <li><a href="elb.html">Elastic Load Balancing</a>:パブリックサブネットに置く入り口</li>
@@ -289,24 +306,33 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
-<li>プライベートサブネットから外へ出たいが外から入らせない → <strong>NATゲートウェイ</strong>。</li>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>アクセス制御</h4>
+<ul>
 <li>特定のIPを<strong>拒否</strong>したい → <strong>ネットワークACL</strong>(セキュリティグループは許可のみ)。</li>
 <li>インスタンス単位の制御 → セキュリティグループ、サブネット単位 → ネットワークACL。</li>
-<li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。S3・DynamoDBだけなら無料のゲートウェイ型、オンプレミスから使うならインターフェース型。</li>
-<li>サブネットで使えるIP数 = CIDRのアドレス数 − <strong>5</strong>(先頭4つと末尾1つは予約)。</li>
-<li>NATゲートウェイの可用性を高めたい → <strong>AZごとにNATゲートウェイ</strong>を作り、各AZのルートテーブルで同じAZのものを指定する。</li>
-<li>VPCピアリングは<strong>推移的ではない</strong>・CIDRの重複不可。多数のVPCをつなぐなら<strong>Transit Gateway</strong>。</li>
 <li>ネットワークACLでインバウンドを許可したのに通信できない → アウトバウンドの<strong>エフェメラルポート(1024〜65535)</strong>が許可されていない。</li>
 <li>Auto Scalingで増減するサーバーからの通信を許可したい → 送信元に<strong>セキュリティグループID</strong>を指定する。</li>
-<li>どの設定が原因で通信が届かないかを特定したい → <strong>Reachability Analyzer</strong>。</li>
+</ul>
+<h4>外部・AWSサービスとの接続</h4>
+<ul>
+<li>プライベートサブネットから外へ出たいが外から入らせない → <strong>NATゲートウェイ</strong>。</li>
+<li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。S3・DynamoDBだけなら無料のゲートウェイ型、オンプレミスから使うならインターフェース型。</li>
+<li>NATゲートウェイの可用性を高めたい → <strong>AZごとにNATゲートウェイ</strong>を作り、各AZのルートテーブルで同じAZのものを指定する。</li>
 <li>停止・起動してもパブリックIPを変えたくない → <strong>Elastic IP</strong>。</li>
-</ul></div>
+</ul>
+<h4>設計・トラブル調査</h4>
+<ul>
+<li>サブネットで使えるIP数 = CIDRのアドレス数 − <strong>5</strong>(先頭4つと末尾1つは予約)。</li>
+<li>VPCピアリングは<strong>推移的ではない</strong>・CIDRの重複不可。多数のVPCをつなぐなら<strong>Transit Gateway</strong>。</li>
+<li>どの設定が原因で通信が届かないかを特定したい → <strong>Reachability Analyzer</strong>。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>VPCはAWS上の自分専用ネットワーク。CIDRとサブネットで設計する。</li>
 <li>経路はルートテーブル、出入口はIGW/NAT/エンドポイント。</li>
@@ -319,5 +345,6 @@
   <a class="next" href="transit-gateway.html"><span class="label">次へ →</span>AWS Transit Gateway</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

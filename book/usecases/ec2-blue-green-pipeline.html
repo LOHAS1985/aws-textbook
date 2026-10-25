@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EC2のアプリをCI/CDでBlue/Greenデプロイする | AWS教科書</title>
+<meta name="description" content="CodePipelineで自動化し、CodeDeployのBlue/Greenで安全に切り替える">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,20 +21,21 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">デプロイ・自動化</span>
+  <a class="category" href="index.html#cat3">デプロイ・自動化</a>
   <h1>EC2のアプリをCI/CDでBlue/Greenデプロイする</h1>
   <p class="lead">CodePipelineで自動化し、CodeDeployのBlue/Greenで安全に切り替える</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. やりたいこと</h2>
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>GitHubへのプッシュをきっかけに、ビルド・テストから本番デプロイまでを自動化したい。本番への切り替えはダウンタイムなしで行い、問題があればすぐ元に戻したい。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 798 312" style="max-width:798px;min-width:520px" role="img" aria-label="図1 CodePipelineがビルド・テスト・手動承認を経てCodeDeployを起動する。CodeDeployは新しいAuto Scalingグループ(Green)にアプリを配置し、ALBの向き先をBlueからGreenへ切り替える。"><defs><marker id="dgusecases-ec2-blue-green-pipeline-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 798 312" style="max-width:798px;min-width:638px" role="img" aria-label="図1 CodePipelineがビルド・テスト・手動承認を経てCodeDeployを起動する。CodeDeployは新しいAuto Scalingグループ(Green)にアプリを配置し、ALBの向き先をBlueからGreenへ切り替える。"><defs><marker id="dgusecases-ec2-blue-green-pipeline-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="62" text-anchor="middle" class="dg-t">GitHub</text>
 <text x="104" y="80" text-anchor="middle" class="dg-s">プッシュ</text>
@@ -75,7 +78,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/codepipeline.html">AWS CodePipeline</a>:Source → Build → Approval → Deploy の流れを自動化する</li>
 <li><a href="../services/codebuild.html">AWS CodeBuild</a>:buildspec.ymlに従ってビルド・テストする</li>
@@ -86,7 +89,7 @@
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>ソースにbuildspec.yml(ビルド手順)とappspec.yml(デプロイ手順・フック)を置く</li>
 <li>CodeDeployのアプリケーションとデプロイグループを作成し、デプロイ方式をBlue/Greenにする</li>
@@ -96,7 +99,7 @@
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>本番前に人の確認を入れる → <strong>Manual Approval Action</strong>。</li>
 <li>Blue/Greenは旧環境(Blue)を残しておけるので、<strong>ロールバックが非常に容易</strong>(<a href="../terms/deploy-strategies.html">デプロイ戦略</a>)。</li>
@@ -110,5 +113,6 @@
   <a class="next" href="lambda-canary-release.html"><span class="label">次へ →</span>Lambdaを段階的にリリースする</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

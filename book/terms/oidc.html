@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OIDC(OpenID Connect) | AWS教科書</title>
+<meta name="description" content="OAuth 2.0を拡張した、ユーザー認証のためのプロトコル">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,22 +21,23 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">セキュリティ・認証</span>
+  <a class="category" href="index.html#cat3">セキュリティ・認証</a>
   <h1>OIDC(OpenID Connect)</h1>
   <p class="lead">OAuth 2.0を拡張した、ユーザー認証のためのプロトコル</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. 詳しい説明</h2>
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>OIDC(OpenID Connect)</strong>は、<strong>OAuth 2.0を拡張したプロトコル</strong>です。OAuth 2.0が「認可」のための仕組みなのに対し、OIDCは「認証(ユーザーが誰か)」を扱います。</p>
 <div class="table-wrap"><table>
 <tr><th>プロトコル</th><th>目的</th></tr>
 <tr><td>OAuth 2.0</td><td>認可(Authorization):何をしてよいか</td></tr>
 <tr><td>OpenID Connect</td><td>認証(Authentication):誰か</td></tr>
 </table></div>
-<h3>認証フロー</h3>
+<h3 id="c1-1">認証フロー<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 682 202" style="max-width:682px;min-width:520px" role="img" aria-label="図1 OIDCの認証フロー。①ユーザーがアプリからIdPにログインし、②IdPが認証して、③IDトークン(JWT)を発行する。④アプリはIDトークンの署名を検証してユーザーを認証する。"><defs><marker id="dgterms-oidc-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 682 202" style="max-width:682px;min-width:545px" role="img" aria-label="図1 OIDCの認証フロー。①ユーザーがアプリからIdPにログインし、②IdPが認証して、③IDトークン(JWT)を発行する。④アプリはIDトークンの署名を検証してユーザーを認証する。"><defs><marker id="dgterms-oidc-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="89" width="145" height="40" rx="8" class="dg-blue"/>
 <text x="106" y="113" text-anchor="middle" class="dg-t">ユーザー</text>
 <rect x="248" y="89" width="145" height="40" rx="8" class="dg-box"/>
@@ -64,19 +67,19 @@
 <li>アプリはIDトークンを受け取り、<strong>署名を検証</strong>することで認証を行う</li>
 </ol>
 
-<h3>AWSでの使われ方</h3>
+<h3 id="c1-2">AWSでの使われ方<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>AWSでは、IAMにOIDC IdPを登録しておき、IdPが発行したIDトークンをSTSの <code>AssumeRoleWithWebIdentity</code> に渡すことで、IAMユーザーなしで一時的な認証情報を受け取れます。EKSのIRSAや、Cognitoのソーシャルログインでも使われています。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 関連する用語</h2>
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../usecases/cross-account-access.html">異なるAWSアカウントのリソースにアクセス</a>:STSで一時認証情報を得る流れ</li>
 </ul>
 </section>
 
 <section class="chapter">
-<h2>3. 関連サービス</h2>
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/iam.html">AWS IAM</a>:OIDC IdPの登録</li>
 <li><a href="../services/sts.html">AWS STS</a>:AssumeRoleWithWebIdentity</li>
@@ -90,5 +93,6 @@
   <a class="next" href="spf.html"><span class="label">次へ →</span>SPF(Sender Policy Framework)</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

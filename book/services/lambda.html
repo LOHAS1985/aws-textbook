@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Lambda | AWS教科書</title>
+<meta name="description" content="サーバーレスでプログラムを実行するサービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,17 +21,32 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">コンピューティング</span>
+  <a class="category" href="index.html#cat1">コンピューティング</a>
   <h1>AWS Lambda</h1>
   <p class="lead">サーバーレスでプログラムを実行するサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(18項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">基本の制限値</a></li><li><a href="#c2-2">用語</a></li><li><a href="#c2-3">主な設定値</a></li><li><a href="#c2-4">同時実行数</a></li><li><a href="#c2-5">実行環境のライフサイクル</a></li><li><a href="#c2-6">エラーの種類</a></li><li><a href="#c2-7">呼び出し方式の3種類と再試行・DLQ・デスティネーション</a></li><li><a href="#c2-8">実行ロールとリソースベースのポリシー</a></li><li><a href="#c2-9">バージョン管理とエイリアス</a></li><li><a href="#c2-10">VPC接続</a></li><li><a href="#c2-11">Lambda@Edge</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Lambda</strong>は、サーバーを用意せずにプログラム(関数)を実行できるサーバーレスサービスです。関数はAWSが管理するLambda専用のネットワーク環境で実行されます。</p>
 <p>デフォルトでは<strong>VPC内のリソースにはアクセスできません</strong>。アクセスさせたい場合は後述の「VPC接続」を設定します。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 274" style="max-width:684px;min-width:520px" role="img" aria-label="図1 Lambdaの全体像。イベントをきっかけに関数が実行され、処理結果はデスティネーション(成功時・失敗時の送信先)に送れる。"><defs><marker id="dgservices-lambda-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Lambdaの全体像。イベントをきっかけに関数が実行され、処理結果はデスティネーション(成功時・失敗時の送信先)に送れる。"><defs><marker id="dgservices-lambda-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="60" text-anchor="middle" class="dg-t">S3</text>
 <text x="109" y="78" text-anchor="middle" class="dg-s">ファイルのアップロード</text>
@@ -64,15 +81,15 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>基本の制限値</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">基本の制限値<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>関数1回の<strong>最大実行時間は15分</strong>(タイムアウトは1〜900秒で設定)</li>
 <li><strong>非同期呼び出し</strong>(S3・SNS・EventBridgeなどからの呼び出し)で関数がエラーになると、Lambdaが<strong>最大2回リトライ</strong>する(初回+リトライ2回=最大3回実行。回数は0〜2で変更可)。同期呼び出し(API Gatewayなど)では呼び出し元がリトライを判断し、SQSやKinesisなどのイベントソースマッピングでは、メッセージやレコードが期限切れになるか成功するまでリトライされる、というように<strong>呼び出し方式によって動きが違う</strong>。</li>
 <li><strong>デプロイパッケージの上限は250MB(解凍後)</strong>。デプロイパッケージ=コード+依存関係+実行に必要なファイル一式。上限を超える場合は、S3経由でのアップロードや、<strong>ECR経由でコンテナイメージとしてデプロイ</strong>する。</li>
 </ul>
 
-<h3>用語</h3>
+<h3 id="c2-2">用語<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>ハンドラー</strong>:最初に呼び出される入口の関数/メソッド。再利用する処理(DB接続など)はハンドラーの外で定義する。</li>
 <li><strong>レイヤー(Lambda Layers)</strong>:複数の関数で共有するライブラリ・SDK・共通コード・証明書などを切り出したパッケージ。デプロイの肥大化・管理の重複・更新作業の負荷を解消する。</li>
@@ -82,7 +99,7 @@
 <li><strong>Function URLs</strong>:関数にWebエンドポイントを付けて直接呼び出せるようにする。</li>
 </ul>
 
-<h3>主な設定値</h3>
+<h3 id="c2-3">主な設定値<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>項目</th><th>設定可能範囲</th><th>用途</th></tr>
 <tr><td>メモリ</td><td>128〜10,240MB</td><td>実行性能の調整(<strong>CPU性能もメモリに比例</strong>)</td></tr>
@@ -93,13 +110,13 @@
 <tr><td>環境変数</td><td>任意</td><td>設定値の管理</td></tr>
 </table></div>
 
-<h3>同時実行数</h3>
+<h3 id="c2-4">同時実行数<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong class="em">予約(Reserved)</strong>:同時に実行できる上限数。上限を超えると<strong>スロットリング</strong>が発生する。</li>
 <li><strong class="em">プロビジョニング(Provisioned)</strong>:設定した数だけ実行環境をあらかじめ作成しておく(ウォームスタート)。超えた分はコールドスタートで作成される。</li>
 </ul>
 
-<h3>実行環境のライフサイクル</h3>
+<h3 id="c2-5">実行環境のライフサイクル<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li><strong>初期化</strong>:実行環境作成 → ランタイム作成 → コードのロード</li>
 <li><strong>実行</strong>:ハンドラー関数を実行し、event / context が渡される(同時実行時は自動スケーリング)</li>
@@ -110,7 +127,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 718 209" style="max-width:718px;min-width:520px" role="img" aria-label="図2 実行環境のライフサイクル。待機中の実行環境が次のリクエストで再利用されると、初期化が省かれて高速に動く(ウォームスタート)。"><defs><marker id="dgservices-lambda-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 718 209" style="max-width:718px;min-width:574px" role="img" aria-label="図2 実行環境のライフサイクル。待機中の実行環境が次のリクエストで再利用されると、初期化が省かれて高速に動く(ウォームスタート)。"><defs><marker id="dgservices-lambda-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="43" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="64" text-anchor="middle" class="dg-t">初期化</text>
 <text x="109" y="82" text-anchor="middle" class="dg-s">環境作成・コード読込</text>
@@ -136,23 +153,23 @@
 </div>
 <figcaption>図2 実行環境のライフサイクル。待機中の実行環境が次のリクエストで再利用されると、初期化が省かれて高速に動く(ウォームスタート)。</figcaption>
 </figure>
-<h3>エラーの種類</h3>
+<h3 id="c2-6">エラーの種類<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>呼び出しエラー</strong>:イベントソースに権限がない/呼び出し先の関数が存在しない/スロットリングが発生している</li>
 <li><strong>関数エラー</strong>:Lambda関数内のコードでエラーが起きている</li>
 </ul>
 
-<h3>呼び出し方式の3種類と再試行・DLQ・デスティネーション</h3>
+<h3 id="c2-7">呼び出し方式の3種類と再試行・DLQ・デスティネーション<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>Lambdaの呼び出され方は3種類あり、<strong>エラーになったときの再試行と、失敗したイベントの行き先が方式ごとに違います</strong>。</p>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="stack">
 <tr><th>方式</th><th>主な呼び出し元</th><th>エラー時の再試行</th><th>失敗したイベントの行き先</th></tr>
-<tr><td><strong>同期呼び出し</strong></td><td>API Gateway、ALB、Function URLs、CLIの <code>invoke</code></td><td>Lambdaは再試行しない。<strong>呼び出し元</strong>がエラーを受け取り、再試行するか判断する</td><td>呼び出し元に返る(DLQ・デスティネーションは使わない)</td></tr>
-<tr><td><strong>非同期呼び出し</strong></td><td>S3、SNS、EventBridge、CloudWatch Logs</td><td>Lambdaの内部キューに入り、<strong>最大2回</strong>再試行する(0〜2回で変更可)。イベントの最大保持期間も設定できる(最大6時間)</td><td><strong>失敗時のデスティネーション</strong>(SQS・SNS・Lambda・EventBridge・S3)、または<strong>DLQ</strong>(SQS・SNS)</td></tr>
-<tr><td><strong>イベントソースマッピング</strong></td><td>SQS、Kinesis Data Streams、DynamoDB Streams、Amazon MSK</td><td>Lambdaがポーリングして取得する。SQSは可視性タイムアウト後にメッセージがキューに戻って再処理され、ストリームは<strong>成功するかレコードの期限が切れるまで</strong>再試行する(最大再試行回数・最大レコード期間で制限できる)</td><td>SQS:<strong>キュー側のDLQ</strong>(再処理ポリシー)。ストリーム:<strong>失敗時の送信先</strong>(SQS・SNS・S3)</td></tr>
+<tr><td data-label="方式"><strong>同期呼び出し</strong></td><td data-label="主な呼び出し元">API Gateway、ALB、Function URLs、CLIの <code>invoke</code></td><td data-label="エラー時の再試行">Lambdaは再試行しない。<strong>呼び出し元</strong>がエラーを受け取り、再試行するか判断する</td><td data-label="失敗したイベントの行き先">呼び出し元に返る(DLQ・デスティネーションは使わない)</td></tr>
+<tr><td data-label="方式"><strong>非同期呼び出し</strong></td><td data-label="主な呼び出し元">S3、SNS、EventBridge、CloudWatch Logs</td><td data-label="エラー時の再試行">Lambdaの内部キューに入り、<strong>最大2回</strong>再試行する(0〜2回で変更可)。イベントの最大保持期間も設定できる(最大6時間)</td><td data-label="失敗したイベントの行き先"><strong>失敗時のデスティネーション</strong>(SQS・SNS・Lambda・EventBridge・S3)、または<strong>DLQ</strong>(SQS・SNS)</td></tr>
+<tr><td data-label="方式"><strong>イベントソースマッピング</strong></td><td data-label="主な呼び出し元">SQS、Kinesis Data Streams、DynamoDB Streams、Amazon MSK</td><td data-label="エラー時の再試行">Lambdaがポーリングして取得する。SQSは可視性タイムアウト後にメッセージがキューに戻って再処理され、ストリームは<strong>成功するかレコードの期限が切れるまで</strong>再試行する(最大再試行回数・最大レコード期間で制限できる)</td><td data-label="失敗したイベントの行き先">SQS:<strong>キュー側のDLQ</strong>(再処理ポリシー)。ストリーム:<strong>失敗時の送信先</strong>(SQS・SNS・S3)</td></tr>
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 896 202" style="max-width:896px;min-width:520px" role="img" aria-label="図3 非同期呼び出しの流れ。イベントはLambdaの内部キューに入り、エラーなら再試行される。再試行しても失敗したイベントは、失敗時のデスティネーションかDLQに送られる。"><defs><marker id="dgservices-lambda-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 896 202" style="max-width:896px;min-width:716px" role="img" aria-label="図3 非同期呼び出しの流れ。イベントはLambdaの内部キューに入り、エラーなら再試行される。再試行しても失敗したイベントは、失敗時のデスティネーションかDLQに送られる。"><defs><marker id="dgservices-lambda-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="83" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="112" y="104" text-anchor="middle" class="dg-t">S3・SNSなど</text>
 <text x="112" y="122" text-anchor="middle" class="dg-s">非同期呼び出し</text>
@@ -185,7 +202,7 @@
 <li>再試行で同じイベントが2回以上処理されることがあるため、関数は<strong>同じイベントを何度処理しても結果が変わらない(冪等な)</strong>作りにする</li>
 </ul>
 
-<h3>実行ロールとリソースベースのポリシー</h3>
+<h3 id="c2-8">実行ロールとリソースベースのポリシー<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p>Lambdaの権限は、向きの違う2つのポリシーで決まります。</p>
 <div class="table-wrap"><table>
 <tr><th>ポリシー</th><th>決めること</th><th>例</th></tr>
@@ -194,7 +211,7 @@
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 774 114" style="max-width:774px;min-width:520px" role="img" aria-label="図4 Lambdaの2つの権限。呼び出してよい相手はリソースベースのポリシー、関数がアクセスしてよい先は実行ロールで許可する。"><defs><marker id="dgservices-lambda-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 774 114" style="max-width:774px;min-width:619px" role="img" aria-label="図4 Lambdaの2つの権限。呼び出してよい相手はリソースベースのポリシー、関数がアクセスしてよい先は実行ロールで許可する。"><defs><marker id="dgservices-lambda-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="38" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="60" text-anchor="middle" class="dg-t">S3・SNS</text>
 <text x="104" y="78" text-anchor="middle" class="dg-s">呼び出す側</text>
@@ -218,7 +235,7 @@
 <li>「AccessDenied」が関数の中で出るなら実行ロール、関数が呼び出されないなら呼び出し元の権限(リソースベースのポリシー)を確認する</li>
 </ul>
 
-<h3>バージョン管理とエイリアス</h3>
+<h3 id="c2-9">バージョン管理とエイリアス<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p>バージョンを発行するたびに新しいARNが発行されるため、<strong>イベントソースマッピング</strong>(イベント発生元とLambda関数を接続し自動起動する仕組み)が古いARNを参照し続けてしまう問題があります。</p>
 <p>解決策は、イベントソースマッピングを<strong>エイリアスのARN</strong>に向け、新バージョン発行時はエイリアスの向き先だけを更新することです。</p>
 <p><code>旧:S3 → prod(エイリアス) → v1</code><br><code>新:S3 → prod(エイリアス) → v2</code></p>
@@ -226,7 +243,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 179" style="max-width:684px;min-width:520px" role="img" aria-label="図5 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。"><defs><marker id="dgservices-lambda-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 179" style="max-width:684px;min-width:547px" role="img" aria-label="図5 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。"><defs><marker id="dgservices-lambda-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="68" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="90" text-anchor="middle" class="dg-t">イベントソース</text>
 <text x="109" y="108" text-anchor="middle" class="dg-s">S3など</text>
@@ -247,7 +264,7 @@
 </div>
 <figcaption>図5 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。</figcaption>
 </figure>
-<h3>VPC接続</h3>
+<h3 id="c2-10">VPC接続<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>Lambdaに仮想ENIを割り当て、サブネットとセキュリティグループに所属させることで、VPC内のリソースと通信できるようになります。</p>
 <ol>
 <li>VPC・サブネットを作成</li>
@@ -285,7 +302,7 @@
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 878 227" style="max-width:878px;min-width:520px" role="img" aria-label="図7 VPC接続したLambdaの外への通信。インターネットへはプライベートサブネットからNATゲートウェイ経由で出る。AWSサービスへはVPCエンドポイントでも接続できる。"><defs><marker id="dgservices-lambda-7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 878 227" style="max-width:878px;min-width:702px" role="img" aria-label="図7 VPC接続したLambdaの外への通信。インターネットへはプライベートサブネットからNATゲートウェイ経由で出る。AWSサービスへはVPCエンドポイントでも接続できる。"><defs><marker id="dgservices-lambda-7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="151" width="155" height="52" rx="8" class="dg-accent"/>
 <text x="112" y="172" text-anchor="middle" class="dg-tb">Lambda</text>
 <text x="112" y="190" text-anchor="middle" class="dg-s">プライベートサブネット</text>
@@ -311,7 +328,7 @@
 </div>
 <figcaption>図7 VPC接続したLambdaの外への通信。インターネットへはプライベートサブネットからNATゲートウェイ経由で出る。AWSサービスへはVPCエンドポイントでも接続できる。</figcaption>
 </figure>
-<h3>Lambda@Edge</h3>
+<h3 id="c2-11">Lambda@Edge<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p>CloudFrontのエッジサーバ上でLambdaを実行する仕組みで、低レイテンシーを実現します。単純な処理はCloudFront Functionsを使い、<strong>AWSサービスにアクセスする処理はLambda@Edge</strong>を使います。</p>
 <ul>
 <li>作成できる<strong>リージョンはus-east-1のみ</strong></li>
@@ -321,7 +338,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>S3へのファイルアップロードをきっかけにした画像変換などのイベント駆動処理</li>
 <li>API GatewayやFunction URLsと組み合わせたサーバーレスAPI</li>
@@ -331,13 +348,13 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>Lambdaは「リクエスト数」と「実行時間×割り当てメモリ量」で課金されます。関数が動いていない時間は料金がかかりません。プロビジョニングされた同時実行は、設定している間ずっと料金が発生します。</p>
 <p>メモリを増やすとCPU性能も上がるため、実行時間が短くなり結果的に安くなる場合もあります。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="api-gateway.html">Amazon API Gateway</a>:LambdaをバックエンドにしたAPIを公開</li>
 <li><a href="cloudfront.html">Amazon CloudFront</a>:Lambda@Edgeの実行場所</li>
@@ -350,26 +367,33 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point">
+<h4>制限と性能</h4>
 <ul>
 <li>15分を超える処理はLambdaに向かない(ECS/Fargateなどを検討)。</li>
 <li>デプロイパッケージが250MBを超える → <strong>コンテナイメージ(ECR)</strong>でデプロイ。</li>
 <li>コールドスタート対策 → <strong>プロビジョニングされた同時実行</strong>。同時実行の上限制御 → <strong>予約された同時実行</strong>。</li>
-<li>VPC接続には実行ロールに<strong>ENI作成・参照・削除</strong>の権限が必要。</li>
-<li>VPC接続したLambdaがインターネットに出られない → <strong>プライベートサブネット+NATゲートウェイ</strong>(パブリックサブネットに置いてもパブリックIPは付かない)。AWSサービスだけなら<strong>VPCエンドポイント</strong>。</li>
+</ul>
+<h4>呼び出しとエラー処理</h4>
+<ul>
 <li>非同期呼び出しは<strong>最大2回</strong>再試行し、失敗したイベントは<strong>失敗時のデスティネーション</strong>か<strong>DLQ</strong>へ。同期呼び出しは呼び出し元が再試行する。</li>
 <li>SQSから処理して失敗したメッセージを退避 → <strong>SQSキュー側のDLQ</strong>(再処理ポリシー)。</li>
-<li>関数から他のサービスへの権限 → <strong>実行ロール</strong>。S3・SNSなどから関数を呼び出す権限 → <strong>リソースベースのポリシー</strong>。SQSのポーリングは実行ロール。</li>
-<li>イベントソースはバージョンARNではなく<strong>エイリアスARN</strong>に向ける。</li>
 <li>成功/失敗の結果を他サービスに送る → <strong>デスティネーション</strong>。</li>
+<li>イベントソースはバージョンARNではなく<strong>エイリアスARN</strong>に向ける。</li>
+</ul>
+<h4>権限・ネットワーク</h4>
+<ul>
+<li>関数から他のサービスへの権限 → <strong>実行ロール</strong>。S3・SNSなどから関数を呼び出す権限 → <strong>リソースベースのポリシー</strong>。SQSのポーリングは実行ロール。</li>
+<li>VPC接続には実行ロールに<strong>ENI作成・参照・削除</strong>の権限が必要。</li>
+<li>VPC接続したLambdaがインターネットに出られない → <strong>プライベートサブネット+NATゲートウェイ</strong>(パブリックサブネットに置いてもパブリックIPは付かない)。AWSサービスだけなら<strong>VPCエンドポイント</strong>。</li>
 <li>Lambda@Edgeは<strong>us-east-1</strong>で作成。</li>
 </ul>
 </div>
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>Lambdaはサーバー管理不要の関数実行サービス。最大15分、パッケージ250MB。</li>
 <li>同時実行は「予約=上限」「プロビジョニング=事前ウォーム」。</li>
@@ -382,5 +406,6 @@
   <a class="next" href="elastic-beanstalk.html"><span class="label">次へ →</span>AWS Elastic Beanstalk</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

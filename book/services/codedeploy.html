@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS CodeDeploy | AWS教科書</title>
+<meta name="description" content="アプリを安全に各環境へ配布・更新するデプロイ自動化サービス">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,18 +21,19 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">デベロッパーツール</span>
+  <a class="category" href="index.html#cat9">デベロッパーツール</a>
   <h1>AWS CodeDeploy</h1>
   <p class="lead">アプリを安全に各環境へ配布・更新するデプロイ自動化サービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS CodeDeploy</strong>は、アプリケーションを<strong>安全に各種環境へ配布・更新</strong>するためのデプロイ自動化サービスです。EC2・オンプレミス・ECS・Lambdaにデプロイできます。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>構成要素</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">構成要素<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>アプリケーション</strong>:デプロイ対象の論理単位</li>
 <li><strong>デプロイグループ</strong>:デプロイ先</li>
@@ -48,7 +51,7 @@ hooks:
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 202" style="max-width:684px;min-width:520px" role="img" aria-label="図1 CodeDeployの構成要素。アプリケーション(デプロイ対象)を、デプロイグループ(デプロイ先)へ、appspec.ymlの手順とデプロイ設定に従って配布する。"><defs><marker id="dgservices-codedeploy-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 CodeDeployの構成要素。アプリケーション(デプロイ対象)を、デプロイグループ(デプロイ先)へ、appspec.ymlの手順とデプロイ設定に従って配布する。"><defs><marker id="dgservices-codedeploy-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="104" text-anchor="middle" class="dg-t">アプリケーション</text>
 <text x="109" y="122" text-anchor="middle" class="dg-s">appspec.yml を含む</text>
@@ -68,7 +71,7 @@ hooks:
 </div>
 <figcaption>図1 CodeDeployの構成要素。アプリケーション(デプロイ対象)を、デプロイグループ(デプロイ先)へ、appspec.ymlの手順とデプロイ設定に従って配布する。</figcaption>
 </figure>
-<h3>デプロイ設定(Deployment Configuration)</h3>
+<h3 id="c2-2">デプロイ設定(Deployment Configuration)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>複数のインスタンスやトラフィックに対して、どう進めるかを決めます。</p>
 <div class="table-wrap"><table>
 <tr><th>対象</th><th>設定</th><th>内容</th></tr>
@@ -82,7 +85,7 @@ hooks:
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 688 243" style="max-width:688px;min-width:520px" role="img" aria-label="図2 ECS・Lambdaのトラフィック移行方式(新バージョンに流す割合の変化)。Canaryは少しだけ流して様子を見てから一気に、Linearは一定間隔で少しずつ、AllAtOnceは一度にすべて移す。"><defs><marker id="dgservices-codedeploy-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 688 243" style="max-width:688px;min-width:550px" role="img" aria-label="図2 ECS・Lambdaのトラフィック移行方式(新バージョンに流す割合の変化)。Canaryは少しだけ流して様子を見てから一気に、Linearは一定間隔で少しずつ、AllAtOnceは一度にすべて移す。"><defs><marker id="dgservices-codedeploy-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="39" width="110" height="40" rx="8" class="dg-accent"/>
 <text x="89" y="63" text-anchor="middle" class="dg-tb">Canary</text>
 <rect x="164" y="39" width="110" height="40" rx="8" class="dg-box"/>
@@ -114,7 +117,7 @@ hooks:
 </div>
 <figcaption>図2 ECS・Lambdaのトラフィック移行方式(新バージョンに流す割合の変化)。Canaryは少しだけ流して様子を見てから一気に、Linearは一定間隔で少しずつ、AllAtOnceは一度にすべて移す。</figcaption>
 </figure>
-<h3>デプロイの流れ(In-Placeデプロイ)</h3>
+<h3 id="c2-3">デプロイの流れ(In-Placeデプロイ)<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li><code>ApplicationStop</code>:既存アプリの停止</li>
 <li><code>BeforeInstall</code>:インストール前処理</li>
@@ -123,7 +126,7 @@ hooks:
 <li><code>ApplicationStart</code>:アプリの起動</li>
 <li><code>ValidateService</code>:動作確認</li>
 </ol>
-<p>デプロイ方式には、既存のインスタンスを更新する<strong>In-Place</strong>と、新しい環境を用意してトラフィックを切り替える<strong>Blue/Green</strong>があります。EC2/オンプレミスで使うには、各インスタンスに<strong>CodeDeployエージェント</strong>が必要です。CloudWatchアラームと連携した<strong>自動ロールバック</strong>も設定できます。</p>
+<p>デプロイ方式には、既存のインスタンスを更新する<strong>In-Place</strong>と、新しい環境を用意してトラフィックを切り替える<strong>Blue/Green</strong>があります。EC2/オンプレミスで使うには、各インスタンスにCodeDeployエージェントが必要です。CloudWatchアラームと連携した<strong>自動ロールバック</strong>も設定できます。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 548 188" style="max-width:548px;min-width:520px" role="img" aria-label="図3 In-Placeデプロイのライフサイクルイベント(フック)の順番。appspec.ymlの hooks で、各タイミングに実行するスクリプトを指定する。"><defs><marker id="dgservices-codedeploy-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -151,7 +154,7 @@ hooks:
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>EC2のWebサーバー群へ1台ずつ安全にリリース</li>
 <li>Lambdaの新バージョンへ10%ずつトラフィックを移行(Canary/Linear)</li>
@@ -160,12 +163,12 @@ hooks:
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>EC2・Lambda・ECSへのデプロイは追加料金なしで使えます。オンプレミスのサーバーへのデプロイは、更新するインスタンス数に応じて課金されます。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="codepipeline.html">AWS CodePipeline</a>:Deployステージ</li>
 <li><a href="codebuild.html">AWS CodeBuild</a>:デプロイ前のビルド</li>
@@ -175,7 +178,7 @@ hooks:
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>デプロイ手順の定義 → <strong>appspec.yml</strong>(ルートに配置)。</li>
 <li>フックの順序:ApplicationStop → BeforeInstall → Install → AfterInstall → ApplicationStart → ValidateService。</li>
@@ -185,7 +188,7 @@ hooks:
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>CodeDeployはEC2・オンプレ・ECS・Lambdaへのデプロイを自動化する。</li>
 <li>手順はappspec、進め方はデプロイ設定(OneAtATime/Canary/Linearなど)で決める。</li>
@@ -197,5 +200,6 @@ hooks:
   <a class="next" href="codeartifact.html"><span class="label">次へ →</span>AWS CodeArtifact</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

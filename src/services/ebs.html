@@ -188,19 +188,28 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<div class="point">
+<h4>ボリュームタイプと性能</h4>
+<ul>
 <li>迷ったら<strong>gp3</strong>。高IOPSのDB → <strong>io2</strong>。大量の順次読み書き → <strong>st1</strong>。</li>
+<li>gp3はサイズに関係なく<strong>3,000IOPS・125MiB/s</strong>のベースライン。gp2は<strong>1GiBあたり3IOPS</strong>でサイズに比例する。st1・sc1はブートボリュームにできない。</li>
 <li>gp2で性能が落ちる → <code>BurstBalance</code>(バーストクレジット残量)を確認。</li>
 <li>I/Oが詰まっている → <code>VolumeQueueLength</code> を確認。</li>
 <li>性能を上げたい → RAID 0(ストライピング)。</li>
+</ul>
+<h4>スナップショット・バックアップ</h4>
+<ul>
 <li>EBSはAZに紐づく。別AZへはスナップショット経由。</li>
-<li>gp3はサイズに関係なく<strong>3,000IOPS・125MiB/s</strong>のベースライン。gp2は<strong>1GiBあたり3IOPS</strong>でサイズに比例する。st1・sc1はブートボリュームにできない。</li>
 <li>スナップショットは<strong>増分</strong>。古いスナップショットを削除しても、残ったスナップショットから完全に復元できる。</li>
 <li>タグで対象を決めてスナップショットを自動作成・削除 → <strong>Data Lifecycle Manager</strong>。複数サービスのバックアップ → AWS Backup。</li>
 <li>誤って削除したスナップショット・AMIを復元したい → <strong>ごみ箱(Recycle Bin)</strong>の保持ルール。</li>
+</ul>
+<h4>暗号化・変更</h4>
+<ul>
 <li>既存のボリュームを暗号化 → スナップショット → <strong>暗号化してコピー</strong> → 新しいボリュームを作って付け替える。今後のボリュームは<strong>デフォルト暗号化</strong>で強制。</li>
 <li>止めずにサイズ・タイプを変更 → <strong>Elastic Volumes</strong>。その後OSで<strong>パーティションとファイルシステムを拡張</strong>する。サイズは縮小できない。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">

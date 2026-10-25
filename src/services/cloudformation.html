@@ -285,20 +285,29 @@ edge sig cfn "④ シグナル"
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
-<li>スタック削除時にリソースを残す → <strong>DeletionPolicy: Retain</strong>(デフォルトはDelete)。</li>
-<li>パスワードを直書きしない → <strong>ダイナミックリファレンス</strong>/<strong>NoEcho</strong>。</li>
-<li>変更の影響を事前確認 → <strong>変更セット</strong>。手動変更によるズレ → <strong>ドリフト検出</strong>。</li>
-<li>複数アカウント・リージョンへ展開 → <strong>StackSets</strong>。</li>
-<li>IAMリソースを作るテンプレート → <code>--capabilities CAPABILITY_IAM</code> が必要。</li>
-<li>Lambdaのコードを更新したのに反映されない → <strong>S3キーかVersionIdを変える</strong>。</li>
+<div class="point">
+<h4>テンプレートの書き方</h4>
+<ul>
 <li>リソースのIDや名前 → <code>!Ref</code>、ARNやDNS名などの属性 → <code>!GetAtt</code>、リージョンごとのAMI → <code>Mappings</code>+<code>!FindInMap</code>。</li>
 <li>別のスタックの値を使う → <strong>Export</strong>+<strong><code>!ImportValue</code></strong>(同じリージョンのみ。インポートされている間はエクスポート側を削除・変更できない)。</li>
+<li>パスワードを直書きしない → <strong>ダイナミックリファレンス</strong>/<strong>NoEcho</strong>。</li>
+<li>IAMリソースを作るテンプレート → <code>--capabilities CAPABILITY_IAM</code> が必要。</li>
+</ul>
+<h4>更新・変更管理</h4>
+<ul>
+<li>変更の影響を事前確認 → <strong>変更セット</strong>。手動変更によるズレ → <strong>ドリフト検出</strong>。</li>
+<li>Lambdaのコードを更新したのに反映されない → <strong>S3キーかVersionIdを変える</strong>。</li>
 <li><code>ROLLBACK_COMPLETE</code> のスタックは更新できない → 削除して作り直す。<code>UPDATE_ROLLBACK_FAILED</code> → 原因を直して<strong>更新のロールバックを続行</strong>。</li>
 <li>インスタンス内のアプリの準備ができるまで完了にしない → <strong>cfn-init</strong>+<strong>cfn-signal</strong>+<strong>CreationPolicy</strong>。シグナルが届かないとタイムアウトでロールバック。</li>
 <li>AMIを変えたらAuto Scalingのインスタンスも入れ替えたい → <strong>UpdatePolicy</strong>(ローリング更新/置き換え更新)。</li>
+</ul>
+<h4>保護・展開</h4>
+<ul>
+<li>スタック削除時にリソースを残す → <strong>DeletionPolicy: Retain</strong>(デフォルトはDelete)。</li>
 <li>スタックの誤削除を防ぐ → <strong>終了保護</strong>。リソースを残す → DeletionPolicy。更新から守る → スタックポリシー。</li>
-</ul></div>
+<li>複数アカウント・リージョンへ展開 → <strong>StackSets</strong>。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">

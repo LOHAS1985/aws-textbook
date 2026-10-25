@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ネットワークACLとセキュリティグループ | AWS教科書</title>
+<meta name="description" content="VPCで通信を許可・拒否する2つの仕組み">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,23 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワーク</span>
+  <a class="category" href="index.html#cat2">ネットワーク</a>
   <h1>ネットワークACLとセキュリティグループ</h1>
   <p class="lead">VPCで通信を許可・拒否する2つの仕組み</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(8項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">比較</a></li><li><a href="#c1-2">ネットワークACL(NACL)</a></li><li><a href="#c1-3">セキュリティグループ(SG)</a></li><li><a href="#c1-4">ステートフルとステートレスの違い(試験で重要)</a></li><li><a href="#c1-5">試験でよく問われるポイント</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. 詳しい説明</h2>
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>VPCでのネットワークアクセス制御には、主に<strong>ネットワークACL(NACL)</strong>と<strong>セキュリティグループ(SG)</strong>があります。</p>
 <ul>
 <li><strong>ネットワークACL</strong>:<strong>サブネット単位</strong>で通信を制御する</li>
@@ -32,7 +45,7 @@
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 807 129" style="max-width:807px;min-width:520px" role="img" aria-label="図1 2つの仕組みの位置関係。通信はサブネットの出入口でNACL、リソースの手前でSGのチェックを受ける。NACLとSGの両方で許可される必要がある。"><defs><marker id="dgterms-nacl-security-group-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 807 129" style="max-width:807px;min-width:646px" role="img" aria-label="図1 2つの仕組みの位置関係。通信はサブネットの出入口でNACL、リソースの手前でSGのチェックを受ける。NACLとSGの両方で許可される必要がある。"><defs><marker id="dgterms-nacl-security-group-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="420" y="15" width="363" height="90" rx="10" class="dg-group"/>
 <text x="430" y="30" class="dg-s">サブネット</text>
 <rect x="34" y="49" width="145" height="40" rx="8" class="dg-blue"/>
@@ -54,7 +67,7 @@
 <figcaption>図1 2つの仕組みの位置関係。通信はサブネットの出入口でNACL、リソースの手前でSGのチェックを受ける。NACLとSGの両方で許可される必要がある。</figcaption>
 </figure>
 
-<h3>比較</h3>
+<h3 id="c1-1">比較<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>項目</th><th>ネットワークACL(NACL)</th><th>セキュリティグループ(SG)</th></tr>
 <tr><td>適用単位</td><td>サブネット</td><td>ENI/リソース</td></tr>
@@ -65,7 +78,7 @@
 <tr><td>デフォルト</td><td>デフォルトNACLはイン・アウトとも許可。カスタムNACLは原則拒否</td><td>インバウンドは原則拒否、アウトバウンドは原則許可</td></tr>
 </table></div>
 
-<h3>ネットワークACL(NACL)</h3>
+<h3 id="c1-2">ネットワークACL(NACL)<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>サブネットに関連付けるアクセス制御リスト。</li>
 <li><strong>ステートレス</strong>なので、戻りの通信も別途許可する必要がある。</li>
@@ -74,7 +87,7 @@
 </ul>
 <p>例:Webサーバー用サブネットで、<code>10.0.0.0/16</code> からのTCP 80を許可、<code>203.0.113.0/24</code> からのTCP 80を拒否、その他を拒否。拒否ルールが許可ルールより先に評価されるよう、ルール番号を小さくする必要があります。</p>
 
-<h3>セキュリティグループ(SG)</h3>
+<h3 id="c1-3">セキュリティグループ(SG)<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>EC2などのリソースに紐づく仮想ファイアウォール。</li>
 <li><strong>ステートフル</strong>なので、許可した通信の戻りの通信は自動的に許可される。</li>
@@ -84,10 +97,10 @@
 </ul>
 <p>例:TCP 443を <code>0.0.0.0/0</code> から許可、TCP 22を管理用IP <code>203.0.113.10/32</code> から許可 → HTTPSは全世界から、SSHは管理端末からだけ接続できる。</p>
 
-<h3>ステートフルとステートレスの違い(試験で重要)</h3>
+<h3 id="c1-4">ステートフルとステートレスの違い(試験で重要)<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 722 210" style="max-width:722px;min-width:520px" role="img" aria-label="図2 SGは許可したリクエストの戻りの通信を自動で許可する。NACLは戻りの通信もアウトバウンドルールで許可する必要がある。"><defs><marker id="dgterms-nacl-security-group-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 722 210" style="max-width:722px;min-width:578px" role="img" aria-label="図2 SGは許可したリクエストの戻りの通信を自動で許可する。NACLは戻りの通信もアウトバウンドルールで許可する必要がある。"><defs><marker id="dgterms-nacl-security-group-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="38" width="160" height="52" rx="8" class="dg-blue"/>
 <text x="114" y="60" text-anchor="middle" class="dg-t">リクエスト</text>
 <text x="114" y="78" text-anchor="middle" class="dg-s">TCP 443</text>
@@ -116,7 +129,7 @@
 </figure>
 <p><code>SG = 戻りの通信を意識しなくてよい</code>、<code>NACL = 戻りの通信もルールで考える</code> と覚えるとよいでしょう。</p>
 
-<h3>試験でよく問われるポイント</h3>
+<h3 id="c1-5">試験でよく問われるポイント<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
 <div class="point"><ul>
 <li>特定のIPアドレスからの通信だけを明示的に拒否したい → <strong>ネットワークACL</strong>。</li>
 <li>EC2へのHTTPSを許可したとき、戻りの通信のルールは必要か → <strong>SGなら不要</strong>(ステートフル)。</li>
@@ -127,7 +140,7 @@
 </section>
 
 <section class="chapter">
-<h2>2. 関連する用語</h2>
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="route-table.html">ルートテーブル</a>:通信の経路を決める(許可・拒否はしない)</li>
 <li><a href="vpc-flow-logs.html">VPCフローログ</a>:SG・NACLで許可(ACCEPT)・拒否(REJECT)された通信の記録</li>
@@ -136,7 +149,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 関連サービス</h2>
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/vpc.html">Amazon VPC</a>:NACL・SGを設定するネットワーク</li>
 <li><a href="../services/ec2.html">Amazon EC2</a>:SGを関連付ける代表的なリソース</li>
@@ -149,5 +162,6 @@
   <a class="next" href="vpc-flow-logs.html"><span class="label">次へ →</span>VPCフローログ</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

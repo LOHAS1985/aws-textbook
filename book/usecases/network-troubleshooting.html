@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EC2に接続できない原因を調査する | AWS教科書</title>
+<meta name="description" content="経路と許可を順番に確認し、VPCフローログで通信の拒否を特定する">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,20 +21,21 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">ネットワーク・コンテンツ配信</span>
+  <a class="category" href="index.html#cat5">ネットワーク・コンテンツ配信</a>
   <h1>EC2に接続できない原因を調査する</h1>
   <p class="lead">経路と許可を順番に確認し、VPCフローログで通信の拒否を特定する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
 <section class="chapter">
-<h2>1. やりたいこと</h2>
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>インターネットからEC2上のWebサーバーにアクセスできない。どこで通信が止まっているのかを、順番に確認して特定したい。</p>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 818 227" style="max-width:818px;min-width:520px" role="img" aria-label="図1 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。"><defs><marker id="dgusecases-network-troubleshooting-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 818 227" style="max-width:818px;min-width:654px" role="img" aria-label="図1 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。"><defs><marker id="dgusecases-network-troubleshooting-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="40" width="136" height="52" rx="8" class="dg-box"/>
 <text x="102" y="62" text-anchor="middle" class="dg-t">① ルートテーブル</text>
 <text x="102" y="80" text-anchor="middle" class="dg-s">経路はあるか</text>
@@ -66,7 +69,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/vpc.html">Amazon VPC</a>:ルートテーブル、IGW、セキュリティグループ、ネットワークACL、<a href="../terms/vpc-flow-logs.html">VPCフローログ</a></li>
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:フローログの保存とLogs Insightsでの検索</li>
@@ -76,7 +79,7 @@
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ(調査手順)</h2>
+<h2 id="c4">4. 構築の流れ(調査手順)<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li><strong>ルートテーブル</strong>:サブネットに <code>0.0.0.0/0 → IGW</code> の経路があるか(<a href="../terms/route-table.html">ルートテーブル</a>)</li>
 <li><strong>IGW/NAT</strong>:IGWがVPCにアタッチされているか、NATゲートウェイが正常か</li>
@@ -88,7 +91,7 @@
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>SGは<strong>ステートフル</strong>で戻りの通信は自動で許可。NACLは<strong>ステートレス</strong>で戻りの通信も許可が必要(<a href="../terms/nacl-security-group.html">NACLとSG</a>)。</li>
 <li>ルートテーブルは経路を決めるだけで、許可・拒否はしない。</li>
@@ -102,5 +105,6 @@
   <span class="next empty"></span>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

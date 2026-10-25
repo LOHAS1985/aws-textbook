@@ -199,19 +199,28 @@ label 1.8 1.75 "戻り:アウトバウンドで 1024-65535 を許可" cls=dg-s
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
-<li>プライベートサブネットから外へ出たいが外から入らせない → <strong>NATゲートウェイ</strong>。</li>
+<div class="point">
+<h4>アクセス制御</h4>
+<ul>
 <li>特定のIPを<strong>拒否</strong>したい → <strong>ネットワークACL</strong>(セキュリティグループは許可のみ)。</li>
 <li>インスタンス単位の制御 → セキュリティグループ、サブネット単位 → ネットワークACL。</li>
-<li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。S3・DynamoDBだけなら無料のゲートウェイ型、オンプレミスから使うならインターフェース型。</li>
-<li>サブネットで使えるIP数 = CIDRのアドレス数 − <strong>5</strong>(先頭4つと末尾1つは予約)。</li>
-<li>NATゲートウェイの可用性を高めたい → <strong>AZごとにNATゲートウェイ</strong>を作り、各AZのルートテーブルで同じAZのものを指定する。</li>
-<li>VPCピアリングは<strong>推移的ではない</strong>・CIDRの重複不可。多数のVPCをつなぐなら<strong>Transit Gateway</strong>。</li>
 <li>ネットワークACLでインバウンドを許可したのに通信できない → アウトバウンドの<strong>エフェメラルポート(1024〜65535)</strong>が許可されていない。</li>
 <li>Auto Scalingで増減するサーバーからの通信を許可したい → 送信元に<strong>セキュリティグループID</strong>を指定する。</li>
-<li>どの設定が原因で通信が届かないかを特定したい → <strong>Reachability Analyzer</strong>。</li>
+</ul>
+<h4>外部・AWSサービスとの接続</h4>
+<ul>
+<li>プライベートサブネットから外へ出たいが外から入らせない → <strong>NATゲートウェイ</strong>。</li>
+<li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。S3・DynamoDBだけなら無料のゲートウェイ型、オンプレミスから使うならインターフェース型。</li>
+<li>NATゲートウェイの可用性を高めたい → <strong>AZごとにNATゲートウェイ</strong>を作り、各AZのルートテーブルで同じAZのものを指定する。</li>
 <li>停止・起動してもパブリックIPを変えたくない → <strong>Elastic IP</strong>。</li>
-</ul></div>
+</ul>
+<h4>設計・トラブル調査</h4>
+<ul>
+<li>サブネットで使えるIP数 = CIDRのアドレス数 − <strong>5</strong>(先頭4つと末尾1つは予約)。</li>
+<li>VPCピアリングは<strong>推移的ではない</strong>・CIDRの重複不可。多数のVPCをつなぐなら<strong>Transit Gateway</strong>。</li>
+<li>どの設定が原因で通信が届かないかを特定したい → <strong>Reachability Analyzer</strong>。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">

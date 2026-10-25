@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon SQS | AWS教科書</title>
+<meta name="description" content="システム間でメッセージを受け渡すメッセージキュー">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,17 +21,32 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">アプリケーション統合</span>
+  <a class="category" href="index.html#cat8">アプリケーション統合</a>
   <h1>Amazon SQS</h1>
   <p class="lead">システム間でメッセージを受け渡すメッセージキュー</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">用語</a></li><li><a href="#c2-2">キューの種類</a></li><li><a href="#c2-3">主な設定値</a></li><li><a href="#c2-4">イベントソースマッピング(Lambdaの機能)</a></li><li><a href="#c2-5">暗号化</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon SQS(Simple Queue Service)</strong>は、<strong>メッセージキューイングサービス</strong>です。送信側と受信側の間にキューを置くことで、システム同士を疎結合にします。</p>
 <p><strong>プル型</strong>:受信者がキューをポーリングしてメッセージを取得します。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 263" style="max-width:684px;min-width:520px" role="img" aria-label="図1 SQSの基本。プロデューサーがキューにメッセージを送り、コンシューマーがポーリングして受け取る(プル型)。何度も処理に失敗したメッセージはデッドレターキューに移る。"><defs><marker id="dgservices-sqs-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 263" style="max-width:684px;min-width:547px" role="img" aria-label="図1 SQSの基本。プロデューサーがキューにメッセージを送り、コンシューマーがポーリングして受け取る(プル型)。何度も処理に失敗したメッセージはデッドレターキューに移る。"><defs><marker id="dgservices-sqs-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="88" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="110" text-anchor="middle" class="dg-t">プロデューサー</text>
 <text x="109" y="128" text-anchor="middle" class="dg-s">送信者</text>
@@ -54,8 +71,8 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>用語</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">用語<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>プロデューサー</strong>:送信者</li>
 <li><strong>コンシューマー</strong>:受信者</li>
@@ -65,7 +82,7 @@
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 703 202" style="max-width:703px;min-width:520px" role="img" aria-label="図2 可視性タイムアウト。受信したメッセージは一定時間、ほかのコンシューマーから見えなくなる。時間内に処理して削除すれば完了。処理が長引いて時間切れになると再び見えるようになり、二重処理の原因になる。"><defs><marker id="dgservices-sqs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 703 202" style="max-width:703px;min-width:562px" role="img" aria-label="図2 可視性タイムアウト。受信したメッセージは一定時間、ほかのコンシューマーから見えなくなる。時間内に処理して削除すれば完了。処理が長引いて時間切れになると再び見えるようになり、二重処理の原因になる。"><defs><marker id="dgservices-sqs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="83" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="112" y="104" text-anchor="middle" class="dg-t">コンシューマーA</text>
 <text x="112" y="122" text-anchor="middle" class="dg-s">メッセージを受信</text>
@@ -87,14 +104,14 @@
 </div>
 <figcaption>図2 可視性タイムアウト。受信したメッセージは一定時間、ほかのコンシューマーから見えなくなる。時間内に処理して削除すれば完了。処理が長引いて時間切れになると再び見えるようになり、二重処理の原因になる。</figcaption>
 </figure>
-<h3>キューの種類</h3>
-<div class="table-wrap"><table>
+<h3 id="c2-2">キューの種類<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
 <tr><th>種類</th><th>スループット</th><th>順序</th><th>重複</th></tr>
-<tr><td>標準キュー</td><td>ほぼ無制限</td><td>ベストエフォート</td><td>同じメッセージが届く可能性あり</td></tr>
-<tr><td>FIFOキュー</td><td><span>上限あり</span></td><td><strong>順序を保証</strong></td><td><strong>重複排除</strong></td></tr>
+<tr><td data-label="種類">標準キュー</td><td data-label="スループット">ほぼ無制限</td><td data-label="順序">ベストエフォート</td><td data-label="重複">同じメッセージが届く可能性あり</td></tr>
+<tr><td data-label="種類">FIFOキュー</td><td data-label="スループット"><span>上限あり</span></td><td data-label="順序"><strong>順序を保証</strong></td><td data-label="重複"><strong>重複排除</strong></td></tr>
 </table></div>
 
-<h3>主な設定値</h3>
+<h3 id="c2-3">主な設定値<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>設定</th><th>内容</th></tr>
 <tr><td>Visibility Timeout</td><td>可視性タイムアウト</td></tr>
@@ -104,7 +121,7 @@
 <tr><td>maxReceiveCount</td><td>何回失敗したらDLQに移動するか</td></tr>
 </table></div>
 
-<h3 class="em">イベントソースマッピング(Lambdaの機能)</h3>
+<h3 class="em" id="c2-4">イベントソースマッピング(Lambdaの機能)<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>SQSキューを監視し、どのようにメッセージを取得して関数を起動するかを定義します。<strong>Lambdaが</strong>SQSのポーリング、メッセージ取得、関数の起動を行います。</p>
 <ul>
 <li>対象SQSキュー:どのキューを読むか</li>
@@ -115,11 +132,11 @@
 <li>Failure Handling:失敗時の処理</li>
 </ul>
 
-<h3>暗号化</h3>
+<h3 id="c2-5">暗号化<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>キュー内のメッセージ本文を <strong>SSE-SQS</strong> または <strong>SSE-KMS</strong> で暗号化できます。</p>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 127" style="max-width:684px;min-width:520px" role="img" aria-label="図3 イベントソースマッピング。Lambda側がSQSをポーリングしてメッセージをまとめて取得し(バッチサイズ・バッチウィンドウ)、関数を起動する。"><defs><marker id="dgservices-sqs-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 127" style="max-width:684px;min-width:547px" role="img" aria-label="図3 イベントソースマッピング。Lambda側がSQSをポーリングしてメッセージをまとめて取得し(バッチサイズ・バッチウィンドウ)、関数を起動する。"><defs><marker id="dgservices-sqs-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="49" width="150" height="40" rx="8" class="dg-accent"/>
 <text x="109" y="73" text-anchor="middle" class="dg-tb">SQSキュー</text>
 <rect x="272" y="35" width="150" height="68" rx="8" class="dg-box"/>
@@ -140,7 +157,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>Webサーバーと重い処理(画像変換など)のワーカーの間に置いて非同期化</li>
 <li>アクセス急増時にリクエストをためておき、バックエンドを守る(バッファ)</li>
@@ -150,12 +167,12 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>APIリクエスト数(送信・受信・削除など)に応じて課金されます。FIFOキューは標準キューより単価が高めです。空のキューへの無駄な受信リクエストは、ロングポーリング(Receive Wait Time)で減らせます。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="lambda.html">AWS Lambda</a>:イベントソースマッピングでキューを処理</li>
 <li><a href="sns.html">Amazon SNS</a>:プッシュ型の通知。SNS→SQSのファンアウト</li>
@@ -166,7 +183,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>順序保証・重複排除 → <strong>FIFOキュー</strong>。</li>
 <li>同じメッセージが二重処理される → <strong>可視性タイムアウト</strong>を処理時間より長くする。</li>
@@ -178,7 +195,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>SQSはプル型のメッセージキュー。標準とFIFOの2種類。</li>
 <li>可視性タイムアウト・DLQ・DelaySeconds・ロングポーリングを使い分ける。</li>
@@ -190,5 +207,6 @@
   <a class="next" href="sns.html"><span class="label">次へ →</span>Amazon SNS</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

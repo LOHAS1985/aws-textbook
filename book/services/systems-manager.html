@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Systems Manager | AWS教科書</title>
+<meta name="description" content="EC2・オンプレミスを含むシステム運用を一元管理・自動化する機能の集合体">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<header class="site-header">
+<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
     <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
@@ -19,12 +21,27 @@
 </header>
 <main>
 <div class="page-head">
-  <span class="category">マネジメントとガバナンス</span>
+  <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS Systems Manager</h1>
   <p class="lead">EC2・オンプレミスを含むシステム運用を一元管理・自動化する機能の集合体</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">共通の仕組み:SSM AgentとSSMドキュメント</a></li><li><a href="#c2-2">ノード管理の機能</a></li><li><a href="#c2-3">変更管理の機能</a></li><li><a href="#c2-4">アプリケーション管理の機能</a></li><li><a href="#c2-5">運用管理の機能</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
-<h2>1. サービス概要</h2>
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Systems Manager(SSM)</strong>は、EC2・オンプレミス・他クラウドのサーバーを含む<strong>システム運用を一元管理・自動化</strong>するためのサービスです。1つのサービスというより、<strong>「接続」「コマンド実行」「パッチ適用」「設定値の管理」「運用の自動化」などの機能の集合体</strong>です。</p>
 <p>機能は次の4つの分類に分かれています。このページでは、共通の仕組みを説明したあと、機能を1つずつ紹介します。</p>
 <div class="table-wrap"><table>
@@ -37,8 +54,8 @@
 </section>
 
 <section class="chapter">
-<h2>2. 主な機能・特徴</h2>
-<h3>共通の仕組み:SSM AgentとSSMドキュメント</h3>
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">共通の仕組み:SSM AgentとSSMドキュメント<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>SSM Agent</strong>は、サーバーにインストールしてSystems Managerとの橋渡しをするソフトウェアです。Amazon Linux・Windows Serverなどの多くのAMIには最初から入っています。Agentの方からSystems Managerへ接続しに行く(ポーリングする)ため、<strong>サーバー側のインバウンドポートを開ける必要がありません</strong>。</p>
 <ol>
 <li>SSM AgentがSystems ManagerのエンドポイントへHTTPS(443)で接続し、指示を待つ</li>
@@ -47,7 +64,7 @@
 </ol>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 696 214" style="max-width:696px;min-width:520px" role="img" aria-label="図1 Systems Managerの仕組み。各ノードのSSM AgentがSystems ManagerへHTTPSで接続し、届いたタスクを実行して結果を返す。インバウンドのポートを開ける必要はない。"><defs><marker id="dgservices-systems-manager-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 696 214" style="max-width:696px;min-width:557px" role="img" aria-label="図1 Systems Managerの仕組み。各ノードのSSM AgentがSystems ManagerへHTTPSで接続し、届いたタスクを実行して結果を返す。インバウンドのポートを開ける必要はない。"><defs><marker id="dgservices-systems-manager-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="498" y="10" width="174" height="179" rx="10" class="dg-group"/>
 <text x="508" y="26" class="dg-s">管理対象ノード</text>
 <rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
@@ -79,7 +96,7 @@
 </ul>
 <p><strong>SSMドキュメント</strong>は、Systems Managerが実行する処理を定義したJSON/YAMLのファイルです。AWSが用意したもの(<code>AWS-</code> で始まる)をそのまま使うことも、自作することもできます。Run Command用の「コマンドドキュメント」、Automation用の「ランブック」などの種類があります。</p>
 
-<h3>ノード管理の機能</h3>
+<h3 id="c2-2">ノード管理の機能<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="f-session">
 <h4>Session Manager</h4>
@@ -145,7 +162,7 @@
 </dl>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 274" style="max-width:684px;min-width:520px" role="img" aria-label="図3 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。"><defs><marker id="dgservices-systems-manager-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図3 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。"><defs><marker id="dgservices-systems-manager-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
 <text x="347" y="60" text-anchor="middle" class="dg-t">パッチベースライン</text>
 <text x="347" y="78" text-anchor="middle" class="dg-s">承認するパッチ</text>
@@ -218,7 +235,7 @@
 </dl>
 </div>
 
-<h3>変更管理の機能</h3>
+<h3 id="c2-3">変更管理の機能<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="f-automation">
 <h4>Automation</h4>
@@ -231,7 +248,7 @@
 </dl>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 706 202" style="max-width:706px;min-width:520px" role="img" aria-label="図4 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。"><defs><marker id="dgservices-systems-manager-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 706 202" style="max-width:706px;min-width:565px" role="img" aria-label="図4 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。"><defs><marker id="dgservices-systems-manager-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="40" width="145" height="52" rx="8" class="dg-box"/>
 <text x="106" y="62" text-anchor="middle" class="dg-t">Config</text>
 <text x="106" y="80" text-anchor="middle" class="dg-s">ルール違反を検出</text>
@@ -286,7 +303,7 @@
 </dl>
 </div>
 
-<h3>アプリケーション管理の機能</h3>
+<h3 id="c2-4">アプリケーション管理の機能<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="f-param">
 <h4>Parameter Store</h4>
@@ -314,7 +331,7 @@
 </dl>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 788 202" style="max-width:788px;min-width:520px" role="img" aria-label="図5 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。"><defs><marker id="dgservices-systems-manager-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 788 202" style="max-width:788px;min-width:630px" role="img" aria-label="図5 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。"><defs><marker id="dgservices-systems-manager-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="34" y="40" width="130" height="52" rx="8" class="dg-blue"/>
 <text x="99" y="62" text-anchor="middle" class="dg-t">新しい設定</text>
 <text x="99" y="80" text-anchor="middle" class="dg-s">バージョン作成</text>
@@ -344,7 +361,7 @@
 </figure>
 </div>
 
-<h3>運用管理の機能</h3>
+<h3 id="c2-5">運用管理の機能<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="f-opscenter">
 <h4>OpsCenter</h4>
@@ -366,7 +383,7 @@
 </section>
 
 <section class="chapter">
-<h2>3. ユースケース</h2>
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>踏み台サーバーなしでプライベートサブネットのEC2にログインする(Session Manager)</li>
 <li>数百台のサーバーへ、毎週決まった時間にパッチを適用する(Patch Manager+Maintenance Windows)</li>
@@ -378,13 +395,13 @@
 </section>
 
 <section class="chapter">
-<h2>4. 料金の考え方</h2>
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>Session Manager・Run Command・State Manager・Patch Manager・Inventory・Parameter Store(標準パラメータ)など、多くの機能は<strong>追加料金なし</strong>で使えます(EC2・S3・CloudWatch Logsなど、使ったほかのサービスの料金はかかります)。</p>
 <p>有料になるのは、Parameter Storeのアドバンストパラメータや高スループット設定、Automationのステップ実行、AppConfigの設定の取得、OpsCenterのOpsItem、オンプレミスのアドバンストインスタンス(Session Managerで接続する場合など)です。</p>
 </section>
 
 <section class="chapter">
-<h2>5. 関連サービス</h2>
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="ec2.html">Amazon EC2</a>:管理対象ノード</li>
 <li><a href="iam.html">AWS IAM</a>:インスタンスのロール、Session Managerの接続権限</li>
@@ -398,7 +415,7 @@
 </section>
 
 <section class="chapter">
-<h2>6. 試験・実務でのポイント</h2>
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(NATまたはVPCエンドポイント)</strong>を確認。</li>
 <li>ポート22を開けずに安全にログイン、操作ログも残したい → <strong>Session Manager</strong>。</li>
@@ -413,7 +430,7 @@
 </section>
 
 <section class="chapter">
-<h2>7. まとめ</h2>
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>Systems Managerは運用管理機能の集合体。SSM Agentを通じてサーバーを管理する。</li>
 <li>ノード管理:接続はSession Manager、コマンドはRun Command、状態維持はState Manager、パッチはPatch Manager。</li>
@@ -427,5 +444,6 @@
   <a class="next" href="cloudformation.html"><span class="label">次へ →</span>AWS CloudFormation</a>
 </nav>
 </main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
 </body>
 </html>

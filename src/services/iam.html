@@ -101,7 +101,7 @@ edge a ng2 "いいえ"
 <p>基本は<strong>マネージドポリシー</strong>(特にカスタマー管理ポリシー)を使い、「そのロールだけに厳密に1対1で付けたい権限」のときにインラインポリシーを使います。</p>
 
 <h3>アクセス許可の境界(Permissions Boundary)</h3>
-<p><strong>アクセス許可の境界</strong>は、IAMユーザーやロールに設定する「<strong>付与できる権限の上限</strong>」です。マネージドポリシーで上限を定義して境界に設定すると、そのユーザー・ロールの実際の権限は「<strong>アイデンティティベースのポリシー</strong>と<strong>境界</strong>の<strong>両方で許可された範囲</strong>」になります。境界そのものは権限を与えません。</p>
+<p><strong>アクセス許可の境界</strong>は、IAMユーザーやロールに設定する「<strong>付与できる権限の上限</strong>」です。マネージドポリシーで上限を定義して境界に設定すると、そのユーザー・ロールの実際の権限は「アイデンティティベースのポリシーと境界の<strong>両方で許可された範囲</strong>」になります。境界そのものは権限を与えません。</p>
 <figure class="figure" data-diagram>
 grid 180 80
 node pol 0 0 box "IAMポリシー" "S3・EC2・IAM"
@@ -213,18 +213,27 @@ edge n5 n6
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<div class="point">
+<h4>基本</h4>
+<ul>
 <li>ルートユーザーは日常で使わない。</li>
-<li>ロールは<strong>信頼ポリシー+権限ポリシー</strong>の両方が必要。AssumeRoleできないときは信頼ポリシーを確認。</li>
 <li>アクセスキーをコードやインスタンスに置かず、<strong>ロール</strong>を使う。</li>
 <li>環境変数のキーが、インスタンスプロファイルより<strong>優先</strong>される。意図しない権限で動くときは優先順位を確認。</li>
-<li>他アカウントからのS3アクセスは、バケットポリシー(リソースベース)と相手側IAMポリシーの両方で許可。</li>
+<li>ロールは<strong>信頼ポリシー+権限ポリシー</strong>の両方が必要。AssumeRoleできないときは信頼ポリシーを確認。</li>
+</ul>
+<h4>ポリシーの評価と種類</h4>
+<ul>
 <li>AllowとDenyが両方ある → <strong>明示的なDenyが優先</strong>。どこにもAllowがなければ暗黙的に拒否。</li>
 <li>複数のロールで再利用・バージョン管理したい → <strong>カスタマー管理ポリシー</strong>。特定のロールだけに1対1 → インラインポリシー。</li>
 <li>開発者にロール作成を任せつつ権限昇格を防ぐ → <strong>アクセス許可の境界</strong>。</li>
+<li>他アカウントからのS3アクセスは、バケットポリシー(リソースベース)と相手側IAMポリシーの両方で許可。</li>
+</ul>
+<h4>監査</h4>
+<ul>
 <li>外部アカウントに公開されているリソースを見つける → <strong>IAM Access Analyzer</strong>。CloudTrailから最小権限のポリシーを作るのもAccess Analyzer。</li>
 <li>全ユーザーのMFA・アクセスキーのローテーション状況を監査 → <strong>認証情報レポート</strong>。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
