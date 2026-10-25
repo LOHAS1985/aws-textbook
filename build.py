@@ -10,6 +10,7 @@
 図は diagrams.py の記法で書くとSVGに変換される。
 リンク集(book/links.html)は、src/links.html の本文と src/links.json(サービスごとの公式ページ)から作る。
 """
+import hashlib
 import html
 import json
 import re
@@ -258,6 +259,11 @@ def head(title, prefix, description=""):
 <link rel="manifest" href="{prefix}manifest.webmanifest">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {{
+  navigator.serviceWorker.register("{prefix}sw.js").catch(function () {{}});
+}}
+</script>
 </head>
 <body>
 """
@@ -620,6 +626,78 @@ def render_links(services, warnings):
             + "</div>\n" + body + "\n</main>\n" + TAIL)
 
 
+def write_service_worker():
+    """book/ の全ファイルをオフライン用に保存する Service Worker(book/sw.js)を作る。
+    ファイルごとに内容のハッシュを持たせ、更新時は変わったファイルだけを取り直す。"""
+    files = {}
+    for f in sorted(OUT.rglob("*")):
+        rel = f.relative_to(OUT).as_posix()
+        if f.is_file() and rel != "sw.js" and not f.name.startswith("."):
+            files[rel] = hashlib.sha256(f.read_bytes()).hexdigest()[:12]
+    version = hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()[:12]
+    js = (SERVICE_WORKER_SCRIPT.replace("__VERSION__", version)
+          .replace("__FILES__", json.dumps(files, ensure_ascii=False, indent=0)))
+    (OUT / "sw.js").write_text(js, encoding="utf-8")
+
+
+# オフライン用の Service Worker。
+# install: 前の版の保存場所から内容が同じファイルを写し、変わったファイルだけをダウンロードする
+# activate: 前の版の保存場所を消す
+# fetch: 保存済みのファイルがあればそれを返し、なければネットワークに取りに行く
+SERVICE_WORKER_SCRIPT = """// build.py が生成するファイル(直接編集しない)
+var PREFIX = "aws-textbook-";
+var CACHE = PREFIX + "__VERSION__";
+var FILES = __FILES__;
+var LIST = "__files__.json";
+
+function url(path) { return new URL(path, self.registration.scope).href; }
+
+self.addEventListener("install", function (e) {
+  e.waitUntil((async function () {
+    var cache = await caches.open(CACHE);
+    var old = null, oldFiles = {};
+    var names = (await caches.keys()).filter(function (k) { return k.startsWith(PREFIX) && k !== CACHE; });
+    if (names.length) {
+      old = await caches.open(names[names.length - 1]);
+      var list = await old.match(url(LIST));
+      if (list) oldFiles = await list.json();
+    }
+    await Promise.all(Object.keys(FILES).map(async function (path) {
+      if (old && oldFiles[path] === FILES[path]) {
+        var res = await old.match(url(path));
+        if (res) return cache.put(url(path), res);
+      }
+      var fresh = await fetch(url(path), { cache: "reload" });
+      if (!fresh.ok) throw new Error(path + " " + fresh.status);
+      return cache.put(url(path), fresh);
+    }));
+    await cache.put(url(LIST), new Response(JSON.stringify(FILES), { headers: { "Content-Type": "application/json" } }));
+    await self.skipWaiting();
+  })());
+});
+
+self.addEventListener("activate", function (e) {
+  e.waitUntil((async function () {
+    var names = await caches.keys();
+    await Promise.all(names.filter(function (k) { return k.startsWith(PREFIX) && k !== CACHE; })
+      .map(function (k) { return caches.delete(k); }));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener("fetch", function (e) {
+  if (e.request.method !== "GET") return;
+  var u = new URL(e.request.url);
+  if (u.origin !== location.origin) return;
+  u.search = ""; u.hash = "";
+  if (u.pathname.endsWith("/")) u.pathname += "index.html";
+  e.respondWith(caches.open(CACHE).then(function (cache) {
+    return cache.match(u.href).then(function (res) { return res || fetch(e.request); });
+  }));
+});
+"""
+
+
 def main():
     warnings, counts, loaded = [], {}, {}
     updated = git_updated()
@@ -638,6 +716,7 @@ def main():
         (out_dir / "index.html").write_text(render_collection_index(col, pages), encoding="utf-8")
     (OUT / "index.html").write_text(render_top(loaded), encoding="utf-8")
     (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
+    write_service_worker()
     print("built " + ", ".join(f"{c['label']} {counts[c['key']]}" for c in COLLECTIONS))
     for w in warnings:
         print("WARNING:", w)

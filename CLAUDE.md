@@ -19,6 +19,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/{services,terms,usecases}/{slug}.html … 各ページ(生成物。直接編集しない)
 - book/css/style.css … 共通スタイル(全ページで共有。これは直接編集する)
 - book/icons/・book/manifest.webmanifest … ホーム画面用アイコンとWebアプリ設定(アイコンは `python tools/make_icons.py book/icons` で再生成)
+- book/sw.js … オフラインで読むための Service Worker(生成物。直接編集しない)。build.py が book/ の全ファイルとその内容のハッシュを書き込み、利用者のブラウザは初回に全ファイル(約2.8MB)を保存し、更新時は変わったファイルだけを取り直す。book/ に置くファイルを増やすと自動で保存対象になる
 - deploy.sh … `sh deploy.sh "メッセージ"` でビルド→コミット→push し、book/ を gh-pages ブランチに公開する
 
 ## 公開(GitHub Pages)
@@ -76,7 +77,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - Notionからの移行は完了済み。今後はNotionを参照せず、AWS公式ドキュメント等で自ら調べて加筆・修正する
 - 加筆した内容に「補足」の表示(ラベル・括弧書き・note枠)は付けない。通常の本文として書く
 - ページ上に「Notion」への言及や制作に関する説明文は表示しない
-- HTMLは素のHTML+CSSのみ(外部ライブラリなし)。JavaScriptは build.py が出力する一覧の絞り込みと、トップページの全ページ検索だけに使う
+- HTMLは素のHTML+CSSのみ(外部ライブラリなし)。JavaScriptは build.py が出力する一覧の絞り込み、トップページの全ページ検索、オフライン用の Service Worker(sw.js と各ページでの登録)だけに使う
 - サービスの一覧はサービス名だけのコンパクトな表示(lead は表示しないが、絞り込みの検索対象には含める)
 - 全ページに「目次へ戻る」「前へ/次へ」のリンクを付ける(build.py が自動で付ける)
 - コレクション間のリンクは相対パス(例: 用語ページから `../services/vpc.html`)
