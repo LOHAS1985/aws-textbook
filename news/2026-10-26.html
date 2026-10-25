@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2026年10月26日のAWSニュース:Transit Gatewayの1:1 NATなど | AWS教科書</title>
+<meta name="description" content="Transit GatewayとCloud WANの接続だけで、CIDRが重なったネットワーク同士をつなげるようになった。">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年10月</a>
+  <h1>2026年10月26日のAWSニュース:Transit Gatewayの1:1 NATなど</h1>
+  <p class="lead">Transit GatewayとCloud WANの接続だけで、CIDRが重なったネットワーク同士をつなげるようになった。</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 今日のまとめ<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">Transit Gateway・Cloud WAN:1:1 NAT</a></td><td>接続(アタッチメント)にアドレス変換のルールを置くだけで、IPアドレス範囲が重なるネットワークもつなげられる</td><td><a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../services/vpc.html">VPC</a></td></tr>
+<tr><td><a href="#n2">Amazon Bedrock:Web検索の絞り込み</a></td><td>Web検索の結果を、許可・除外するドメインや利用者の地域で絞り込める</td><td><a href="../services/bedrock.html">Bedrock</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 注目の発表<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="n1">Transit Gateway・Cloud WAN:1:1 NAT<a class="anchor" href="#n1" aria-label="この見出しへのリンク">#</a></h3>
+<p>NAT(ネットワークアドレス変換)は、通信の途中でIPアドレスを別のアドレスに書き換える仕組みです。今回、Transit Gateway(複数のVPCやオンプレミスをつなぐ中継点)と Cloud WAN(世界中のネットワークをまとめて管理するサービス)の「アタッチメント(接続の口)」に、1対1でアドレスを置き換える機能が加わりました。内部ではリージョナルなプライベートNATゲートウェイが使われ、AWSが運用・拡張します。</p>
+<p>これまでCIDR(IPアドレスの範囲)が同じ10.0.0.0/16同士のネットワークは、そのままでは通信できませんでした。企業の合併、パートナーとのVPN接続、マルチクラウド接続などでよく起きる問題です。今回の機能では、片方のアドレスを重ならない範囲に変換するルールをアタッチメントに設定するだけで接続できます。変換は往復の通信で自動的に行われ、戻り通信用のルールは要りません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 同じCIDRのVPC同士を、アタッチメントの変換でつなぐ"><defs><marker id="dgnews-2026-10-26-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">VPC A</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">10.0.0.0/16</text>
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="62" text-anchor="middle" class="dg-tb">Transit Gateway</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">1:1 NATで変換</text>
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="653" y="62" text-anchor="middle" class="dg-t">VPC B</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">10.0.0.0/16(重複)</text>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-26-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">A側を別の範囲へ</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-26-1)"/>
+<text x="517" y="70" text-anchor="middle" class="dg-s dg-halo">往復を自動変換</text>
+</svg>
+</div>
+<figcaption>図1 同じCIDRのVPC同士を、アタッチメントの変換でつなぐ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アドレスの振り直しやNATアプライアンス(NAT用のサーバー)の構築・戻り通信のルール作成が不要になる。コンソール、CLI、CloudFormationで設定でき、変換された通信はCloudWatchのメトリクスとEventBridgeのイベントで確認できる。</dd>
+<dt>試験・実務への影響</dt><dd>「CIDRが重なるVPCは、ピアリングやTransit Gatewayではそのままつなげない」という前提は変わらない。ただし、重なる場合の解決策として、アタッチメントでの1:1 NATという選択肢が増えた。料金はAmazon VPCの料金ページで確認する。</dd>
+<dt>関連するページ</dt><dd><a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../services/vpc.html">VPC</a>、<a href="../services/site-to-site-vpn.html">Site-to-Site VPN</a>、<a href="../services/direct-connect.html">Direct Connect</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-transit-gateway-cloud-wan-1-1-nat/">AWS Transit Gateway and AWS Cloud WAN now support 1:1 NAT</a>(2026-10-23)</dd>
+</dl>
+
+<h3 id="n2">Amazon Bedrock:Web検索の絞り込み<a class="anchor" href="#n2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Bedrockの「Web Search」は、生成AIが答えるときにWeb上の情報を根拠として使う機能です。今回、検索結果を絞り込む2つの設定が加わりました。ドメインフィルタでは、許可するドメイン(allowed_domains)または除外するドメイン(blocked_domains)を、それぞれ最大100件まで指定できます。もう1つの利用者の地域指定では、地域に合った結果を返せます。どちらも OpenAI Responses API 形式のリクエストの web_search ツールに指定します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図2 ドメインと地域で絞り込んだWeb検索による回答"><defs><marker id="dgnews-2026-10-26-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">質問</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">地域も指定可</text>
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="62" text-anchor="middle" class="dg-tb">Web検索</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">ドメインで絞り込み</text>
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="62" text-anchor="middle" class="dg-t">回答</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">信頼できる出典のみ</text>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-26-2)"/>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-26-2)"/>
+</svg>
+</div>
+<figcaption>図2 ドメインと地域で絞り込んだWeb検索による回答</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>社内で認めた情報源だけを根拠にしたり、避けたいサイトを外したりできる。地域によって答えが変わる質問にも対応しやすい。</dd>
+<dt>試験・実務への影響</dt><dd>運用試験の中心ではないが、生成AIの出力の根拠を管理する手段として知っておくとよい。対応リージョンは米国東部(バージニア北部・オハイオ)、米国西部(オレゴン)、GovCloud(US-West)。</dd>
+<dt>関連するページ</dt><dd><a href="../services/bedrock.html">Bedrock</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/bedrock-web-search-domain-user-location/">Web Search on Amazon Bedrock now supports domain filtering and user location controls</a>(2026-10-23)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. その他の発表<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/emr-eks-reduces-emr-charge-30-percent/">Amazon EMR on EKS:EMR分の料金が30%値下げ</a>:<a href="../services/eks.html">EKS</a>上でSparkを動かすときにEMRが上乗せする、vCPU時間あたりとGB時間あたりの料金が30%下がり、EKS側の料金は変わらない。</li>
+</ul>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <span class="next empty"></span>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
