@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>メッセージングサービスの選び方 | AWS教科書</title>
+<meta name="description" content="SQS・SNS・EventBridge・Kinesis Data Streamsの違いと使い分け">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">サービスの選び方</a>
+  <h1>メッセージングサービスの選び方</h1>
+  <p class="lead">SQS・SNS・EventBridge・Kinesis Data Streamsの違いと使い分け</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>システムの部品どうしを直接呼び出さず、メッセージ(イベント)を間に挟んでつなぐと、片方が遅くなったり止まったりしても、もう片方が影響を受けにくくなります(疎結合)。AWSにはそのためのサービスが複数あり、違いは<strong>「受け手にどう届けるか」</strong>と<strong>「データを残しておくか」</strong>です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 703 362" style="max-width:703px;min-width:562px" role="img" aria-label="図1 4つのサービスの届け方の違い。SQSとKinesis Data Streamsは受け手が取りに行き(プル)、SNSとEventBridgeはサービス側から受け手に届ける(プッシュ)。"><defs><marker id="dgterms-messaging-comparison-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="158" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="180" text-anchor="middle" class="dg-t">送信元</text>
+<text x="112" y="198" text-anchor="middle" class="dg-s">アプリ・AWSサービス</text>
+<rect x="279" y="38" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="356" y="60" text-anchor="middle" class="dg-tb">SQS</text>
+<text x="356" y="78" text-anchor="middle" class="dg-s">キューにためる</text>
+<rect x="279" y="118" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="356" y="140" text-anchor="middle" class="dg-tb">SNS</text>
+<text x="356" y="158" text-anchor="middle" class="dg-s">全員に一斉配信</text>
+<rect x="279" y="198" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="356" y="220" text-anchor="middle" class="dg-tb">EventBridge</text>
+<text x="356" y="238" text-anchor="middle" class="dg-s">内容で振り分け</text>
+<rect x="279" y="270" width="155" height="68" rx="8" class="dg-accent"/>
+<text x="356" y="290" text-anchor="middle" class="dg-tb">Kinesis</text>
+<text x="356" y="308" text-anchor="middle" class="dg-tb">Data Streams</text>
+<text x="356" y="326" text-anchor="middle" class="dg-s">流れを記録</text>
+<rect x="524" y="38" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="60" text-anchor="middle" class="dg-t">ワーカー</text>
+<text x="602" y="78" text-anchor="middle" class="dg-s">取りに行く(プル)</text>
+<rect x="524" y="118" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="140" text-anchor="middle" class="dg-t">購読者すべて</text>
+<text x="602" y="158" text-anchor="middle" class="dg-s">届く(プッシュ)</text>
+<rect x="524" y="198" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="220" text-anchor="middle" class="dg-t">一致したターゲット</text>
+<text x="602" y="238" text-anchor="middle" class="dg-s">届く(プッシュ)</text>
+<rect x="524" y="278" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="300" text-anchor="middle" class="dg-t">複数の処理</text>
+<text x="602" y="318" text-anchor="middle" class="dg-s">同じデータを読む</text>
+<path d="M164.6,158.0 L303.4,90.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
+<path d="M189.0,171.3 L279.0,156.7" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
+<path d="M189.0,196.7 L279.0,211.3" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
+<path d="M164.6,210.0 L287.1,270.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
+<path d="M434.0,64.0 L524.0,64.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
+<path d="M434.0,144.0 L524.0,144.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
+<path d="M434.0,224.0 L524.0,224.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
+<path d="M434.0,304.0 L524.0,304.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
+</svg>
+</div>
+<figcaption>図1 4つのサービスの届け方の違い。SQSとKinesis Data Streamsは受け手が取りに行き(プル)、SNSとEventBridgeはサービス側から受け手に届ける(プッシュ)。</figcaption>
+</figure>
+
+<h3 id="c1-1">比較表<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>項目</th><th>SQS</th><th>SNS</th><th>EventBridge</th><th>Kinesis Data Streams</th></tr>
+<tr><td data-label="項目">種類</td><td data-label="SQS">メッセージキュー</td><td data-label="SNS">Pub/Sub(通知)</td><td data-label="EventBridge">イベントバス</td><td data-label="Kinesis Data Streams">ストリーム</td></tr>
+<tr><td data-label="項目">届け方</td><td data-label="SQS">受け手がポーリングして取りに行く</td><td data-label="SNS">購読者へプッシュ</td><td data-label="EventBridge">ルールに一致したターゲットへプッシュ</td><td data-label="Kinesis Data Streams">受け手(コンシューマー)が読みに行く</td></tr>
+<tr><td data-label="項目">1件を受け取る数</td><td data-label="SQS">1つの処理(処理したら削除する)</td><td data-label="SNS">すべての購読者</td><td data-label="EventBridge">一致したルールのターゲット(1ルールに最大5つ)</td><td data-label="Kinesis Data Streams">複数のコンシューマーがそれぞれ読む</td></tr>
+<tr><td data-label="項目">データの保持</td><td data-label="SQS">既定4日、最大14日</td><td data-label="SNS">保持しない(配信を再試行する)</td><td data-label="EventBridge">保持しない(アーカイブすれば再生できる)</td><td data-label="Kinesis Data Streams">既定24時間、最大365日。読み直せる</td></tr>
+<tr><td data-label="項目">順序</td><td data-label="SQS">FIFOキューで保証</td><td data-label="SNS">FIFOトピックで保証</td><td data-label="EventBridge">保証しない</td><td data-label="Kinesis Data Streams">シャードの中で保証</td></tr>
+<tr><td data-label="項目">振り分け</td><td data-label="SQS">なし(キューごとに分ける)</td><td data-label="SNS">サブスクリプションのフィルターポリシー</td><td data-label="EventBridge">イベントパターン(内容の細かい条件)</td><td data-label="Kinesis Data Streams">なし(パーティションキーでシャードに分ける)</td></tr>
+<tr><td data-label="項目">得意なこと</td><td data-label="SQS">処理を後回しにしてためる</td><td data-label="SNS">1つの出来事を多くの宛先へ</td><td data-label="EventBridge">AWSサービス・SaaSのイベントを条件で振り分け</td><td data-label="Kinesis Data Streams">大量のデータをリアルタイムに、複数の処理で使う</td></tr>
+</table></div>
+<p>受け取ったデータをS3・OpenSearch・Redshiftなどへ保存するだけなら、コードを書かずに配送できる<a href="../services/data-firehose.html">Amazon Data Firehose</a>を使います。Kinesis Data Streamsの後ろにFirehoseをつないで、リアルタイム処理と保存を両方行う構成もよく使われます。</p>
+
+<h3 id="c1-2">組み合わせて使う<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>代表的なのは、SNSとSQSを組み合わせる<strong>ファンアウト</strong>です。SNSトピックに複数のSQSキューを購読させると、1つのメッセージが各キューに複製されます。受け手ごとにキューがあるので、どれかの処理が止まっても、メッセージはそのキューにたまって失われません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 274" style="max-width:846px;min-width:677px" role="img" aria-label="図2 SNSとSQSのファンアウト。1つの注文イベントが3つのキューに複製される。分析の処理が止まっていても、メッセージは分析用のキューにたまり、復旧後に処理できる。"><defs><marker id="dgterms-messaging-comparison-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="124" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="148" text-anchor="middle" class="dg-t">注文アプリ</text>
+<rect x="248" y="118" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="321" y="140" text-anchor="middle" class="dg-tb">SNSトピック</text>
+<text x="321" y="158" text-anchor="middle" class="dg-s">注文が入った</text>
+<rect x="463" y="38" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="60" text-anchor="middle" class="dg-t">SQS</text>
+<text x="536" y="78" text-anchor="middle" class="dg-s">在庫の更新用</text>
+<rect x="463" y="118" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="140" text-anchor="middle" class="dg-t">SQS</text>
+<text x="536" y="158" text-anchor="middle" class="dg-s">メール送信用</text>
+<rect x="463" y="198" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="220" text-anchor="middle" class="dg-t">SQS</text>
+<text x="536" y="238" text-anchor="middle" class="dg-s">分析用</text>
+<rect x="678" y="44" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="750" y="68" text-anchor="middle" class="dg-t">在庫の処理</text>
+<rect x="678" y="124" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="750" y="148" text-anchor="middle" class="dg-t">メールの処理</text>
+<rect x="678" y="198" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="750" y="220" text-anchor="middle" class="dg-t">分析の処理</text>
+<text x="750" y="238" text-anchor="middle" class="dg-s">停止中でもたまる</text>
+<path d="M179.0,144.0 L248.5,144.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-2)"/>
+<path d="M390.7,118.0 L465.8,90.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-2)"/>
+<path d="M393.5,144.0 L463.0,144.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-2)"/>
+<path d="M390.7,170.0 L465.8,198.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-2)"/>
+<path d="M608.0,64.0 L677.5,64.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-2)"/>
+<path d="M608.0,144.0 L677.5,144.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-2)"/>
+<path d="M608.0,224.0 L677.5,224.0" class="dg-line dg-dash" marker-end="url(#dgterms-messaging-comparison-2)"/>
+</svg>
+</div>
+<figcaption>図2 SNSとSQSのファンアウト。1つの注文イベントが3つのキューに複製される。分析の処理が止まっていても、メッセージは分析用のキューにたまり、復旧後に処理できる。</figcaption>
+</figure>
+<p>AWSサービスのイベント(EC2の状態変化、AWS Healthの通知など)を受けて処理するときは、EventBridgeのルールでSQSに送り、Lambdaがキューから処理する形もよく使われます。急に大量のイベントが来ても、キューがためてくれるのでLambdaの同時実行数をあふれさせません。</p>
+
+<h3 id="c1-3">選び方のポイント<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="point"><ul>
+<li>処理が追いつかないときにためておき、バックエンドを守りたい → <strong class="em">SQS</strong>。</li>
+<li>1つの出来事を、メール・SMS・複数のシステムに同時に知らせたい → <strong>SNS</strong>(システム向けはSNS+SQSのファンアウト)。</li>
+<li>AWSサービスやSaaSのイベントを、内容の条件で振り分けたい → <strong class="em">EventBridge</strong>。決まった時刻に処理を動かすのもEventBridge(Scheduler)。</li>
+<li>クリックストリームやログなど大量のデータを順序どおりに、複数の処理で読んだり読み直したりしたい → <strong>Kinesis Data Streams</strong>。</li>
+<li>集めたデータをS3などへ保存するのが目的 → <strong>Data Firehose</strong>。</li>
+<li>順番どおりに1回だけ処理したい → SQSのFIFOキュー(SNSならFIFOトピック)。</li>
+<li>処理に何度も失敗するメッセージを退避したい → デッドレターキュー(DLQ)。SQS・SNS・EventBridgeのどれでも設定できる。</li>
+<li>複数の処理の順番・分岐・待ち合わせを管理したい → メッセージングではなく<a href="../services/step-functions.html">Step Functions</a>。</li>
+<li>オンプレミスのActiveMQやRabbitMQを、コードをあまり変えずに移したい → Amazon MQ。</li>
+</ul></div>
+<p>SQSを使った構成例は、ユースケース「<a href="../usecases/sqs-decoupling.html">キューで処理を分離し、急増や障害に強くする</a>」で説明しています。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:疎結合にすると、部品ごとにスケールできる</li>
+<li><a href="circuit-breaker.html">サーキットブレーカー</a>:障害を広げないための設計パターン</li>
+<li><a href="caching-comparison.html">キャッシュの選び方</a>:読み取りの負荷を下げる、もう1つの方法</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/sqs.html">Amazon SQS</a>:メッセージキュー</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:Pub/Sub型の通知</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:イベントバスとスケジューラー</li>
+<li><a href="../services/kinesis.html">Amazon Kinesis</a>:ストリーミングデータの収集・処理</li>
+<li><a href="../services/data-firehose.html">Amazon Data Firehose</a>:ストリーミングデータの配送</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:メッセージを受けて処理する代表的な受け手</li>
+<li><a href="../services/step-functions.html">AWS Step Functions</a>:処理の流れを管理するワークフロー</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/sqs.html"><span class="title">Amazon SQS</span><span class="kind">サービス</span><span class="desc">システム間でメッセージを受け渡すメッセージキュー</span></a></li>
+<li><a href="../services/sns.html"><span class="title">Amazon SNS</span><span class="kind">サービス</span><span class="desc">複数の購読者へメッセージをプッシュ配信するPub/Subサービス</span></a></li>
+<li><a href="../services/eventbridge.html"><span class="title">Amazon EventBridge</span><span class="kind">サービス</span><span class="desc">サーバーレスなイベント駆動型の統合サービス</span></a></li>
+<li><a href="../services/kinesis.html"><span class="title">Amazon Kinesis</span><span class="kind">サービス</span><span class="desc">ストリーミングデータを収集・処理・配信するサービス群</span></a></li>
+<li><a href="../services/data-firehose.html"><span class="title">Amazon Data Firehose</span><span class="kind">サービス</span><span class="desc">ストリーミングデータを受け取り、変換してS3・Redshift・OpenSearchなどへ自動で届ける</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="monitoring-logging-comparison.html"><span class="label">← 前へ</span>監視・記録のサービスの選び方</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="caching-comparison.html"><span class="label">次へ →</span>キャッシュの選び方</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
