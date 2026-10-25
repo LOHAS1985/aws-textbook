@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S3のデータを誤削除やリージョン障害から守る | AWS教科書</title>
+<meta name="description" content="バージョニング・レプリケーション・Object Lock・ライフサイクルを組み合わせてデータを守る">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">信頼性・事業継続</a>
+  <h1>S3のデータを誤削除やリージョン障害から守る</h1>
+  <p class="lead">バージョニング・レプリケーション・Object Lock・ライフサイクルを組み合わせてデータを守る</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>S3に保存した業務データについて、<strong>誤って上書き・削除</strong>しても元に戻せるようにしたい。リージョンの障害に備えて別リージョンにもコピーを置き、ランサムウェアなどで削除されないよう、一定期間は誰も消せないようにもしたい。古いバージョンが増え続けて費用がかさむのも防ぎたい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図1 S3のデータ保護。バージョニングで上書き・削除を元に戻せるようにし、クロスリージョンレプリケーション(CRR)で別リージョンにコピーする。Object Lockで消せない期間を設け、ライフサイクルで古いバージョンを整理する。"><defs><marker id="dgusecases-s3-data-protection-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="84" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="108" text-anchor="middle" class="dg-t">アプリ</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">S3(東京)</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">バージョニング</text>
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">S3(大阪)</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">レプリカ</text>
+<rect x="272" y="166" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="188" text-anchor="middle" class="dg-t">ライフサイクル</text>
+<text x="347" y="206" text-anchor="middle" class="dg-s">旧バージョンを整理</text>
+<rect x="510" y="166" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="188" text-anchor="middle" class="dg-t">Object Lock</text>
+<text x="585" y="206" text-anchor="middle" class="dg-s">期間中は削除不可</text>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-s3-data-protection-1)"/>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgusecases-s3-data-protection-1)"/>
+<text x="466" y="108" text-anchor="middle" class="dg-s dg-halo">CRR</text>
+<path d="M347.0,130.0 L347.0,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-s3-data-protection-1)"/>
+<path d="M585.0,130.0 L585.0,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-s3-data-protection-1)"/>
+</svg>
+</div>
+<figcaption>図1 S3のデータ保護。バージョニングで上書き・削除を元に戻せるようにし、クロスリージョンレプリケーション(CRR)で別リージョンにコピーする。Object Lockで消せない期間を設け、ライフサイクルで古いバージョンを整理する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/s3.html">Amazon S3</a>:バージョニング、レプリケーション(CRR/SRR)、Object Lock、ライフサイクルルール、MFA Delete</li>
+<li><a href="../services/iam.html">AWS IAM</a>:レプリケーション用のIAMロール</li>
+<li><a href="../services/kms.html">AWS KMS</a>:暗号化されたオブジェクトのレプリケーション</li>
+<li><a href="../services/backup.html">AWS Backup</a>:S3のバックアップ(特定時点への復元)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>コピー元・コピー先の両方のバケットで<strong>バージョニング</strong>を有効にする(レプリケーションの前提)</li>
+<li>レプリケーションルールを作り、コピー先のバケットとIAMロールを指定する。必要ならS3 Replication Time Control(15分以内の複製を目標)を有効にする</li>
+<li>既にあるオブジェクトもコピーするなら、<strong>S3バッチレプリケーション</strong>を実行する(ルールの作成後に追加されたものだけが自動で複製される)</li>
+<li>改ざん・削除を防ぐ必要があるバケットは、Object Lock(コンプライアンスモード/ガバナンスモード)と保持期間を設定する</li>
+<li>ライフサイクルルールで、古いバージョン(非現行バージョン)を一定日数後に安いストレージクラスへ移す・削除する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>誤削除・上書きからの復旧 → <strong class="em">バージョニング</strong>。削除は「削除マーカー」が付くだけなので、マーカーを消すと元に戻る。</li>
+<li>レプリケーションには<strong>両方のバケットのバージョニング</strong>が必要。既存のオブジェクトはバッチレプリケーションで複製する。</li>
+<li>既定では削除マーカーは複製されない(ルールで有効にできる)。バージョンIDを指定した削除は複製されないので、コピー元での悪意ある削除からは守られる。</li>
+<li>誰も(rootユーザーも)消せないようにする → Object Lockの<strong class="em">コンプライアンスモード</strong>。特別な権限があれば解除できる → ガバナンスモード。</li>
+<li>バージョニングを有効にすると旧バージョンにも料金がかかる → 非現行バージョンのライフサイクルルールで整理する。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="rds-point-in-time-restore.html"><span class="label">← 前へ</span>誤操作したRDSのデータを特定の時点に戻す</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="backup-cross-region.html"><span class="label">次へ →</span>バックアップを一元管理して別リージョンに保管する</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

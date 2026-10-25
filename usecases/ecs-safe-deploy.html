@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECSのサービスを止めずに更新し、失敗したら自動で戻す | AWS教科書</title>
+<meta name="description" content="ローリング更新の割合を調整し、デプロイサーキットブレーカーとアラームで失敗時に自動ロールバックする">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">デプロイ・自動化</a>
+  <h1>ECSのサービスを止めずに更新し、失敗したら自動で戻す</h1>
+  <p class="lead">ローリング更新の割合を調整し、デプロイサーキットブレーカーとアラームで失敗時に自動ロールバックする</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>ECS(Fargate)で動くWebアプリの新しいバージョンを、<strong>サービスを止めずに</strong>リリースしたい。新しいタスクが起動に失敗し続けたり、リリース後にエラーが増えたりした場合は、人が気づく前に<strong>自動で前のバージョンに戻したい</strong>。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 194" style="max-width:846px;min-width:677px" role="img" aria-label="図1 ECSの安全なデプロイ。新しいタスク定義でサービスを更新すると、新しいタスクを起動してから古いタスクを止める。タスクの起動が失敗し続けたり、指定したアラームが鳴ったりすると、前のデプロイに自動で戻る。"><defs><marker id="dgusecases-ecs-safe-deploy-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">ECR</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">新しいイメージ</text>
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="321" y="100" text-anchor="middle" class="dg-tb">ECSサービス</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">タスク定義を更新</text>
+<rect x="463" y="38" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="60" text-anchor="middle" class="dg-t">旧タスク</text>
+<text x="536" y="78" text-anchor="middle" class="dg-s">順に停止</text>
+<rect x="463" y="118" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="536" y="140" text-anchor="middle" class="dg-t">新タスク</text>
+<text x="536" y="158" text-anchor="middle" class="dg-s">ヘルスチェック</text>
+<rect x="678" y="118" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="750" y="140" text-anchor="middle" class="dg-t">失敗を検知</text>
+<text x="750" y="158" text-anchor="middle" class="dg-s">起動失敗・アラーム</text>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-ecs-safe-deploy-1)"/>
+<path d="M393.5,90.5 L463.0,77.5" class="dg-line" marker-end="url(#dgusecases-ecs-safe-deploy-1)"/>
+<path d="M393.5,117.5 L463.0,130.5" class="dg-line" marker-end="url(#dgusecases-ecs-safe-deploy-1)"/>
+<path d="M608.0,144.0 L677.5,144.0" class="dg-line dg-dash" marker-end="url(#dgusecases-ecs-safe-deploy-1)"/>
+<path d="M680.3,118.0 L605.2,90.0" class="dg-line dg-dash" marker-end="url(#dgusecases-ecs-safe-deploy-1)"/>
+<text x="643" y="108" text-anchor="middle" class="dg-s dg-halo">旧に戻す</text>
+</svg>
+</div>
+<figcaption>図1 ECSの安全なデプロイ。新しいタスク定義でサービスを更新すると、新しいタスクを起動してから古いタスクを止める。タスクの起動が失敗し続けたり、指定したアラームが鳴ったりすると、前のデプロイに自動で戻る。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/ecs.html">Amazon ECS</a>:ローリング更新(<code>minimumHealthyPercent</code>・<code>maximumPercent</code>)、デプロイサーキットブレーカー、ブルー/グリーンデプロイ</li>
+<li><a href="../services/ecr.html">Amazon ECR</a>:コンテナイメージの保存</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:新しいタスクのヘルスチェックと通信の切り替え</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:デプロイの失敗を判定するアラーム(5xxエラー率など)</li>
+<li><a href="../services/codepipeline.html">AWS CodePipeline</a>:ビルドからデプロイまでの自動化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>新しいイメージをECRにプッシュし、そのイメージを使う新しいタスク定義のリビジョンを作る</li>
+<li>サービスのデプロイ設定で <code>minimumHealthyPercent</code>(例:100)と <code>maximumPercent</code>(例:200)を決める。100/200なら、台数を減らさずに新しいタスクを先に起動する</li>
+<li><strong>デプロイサーキットブレーカー</strong>をロールバックありで有効にする(新しいタスクが起動・ヘルスチェックに失敗し続けると、デプロイを失敗とみなして戻す)</li>
+<li>5xxエラー率などのCloudWatchアラームをデプロイの監視対象に指定し、アラームが鳴ったらロールバックするよう設定する</li>
+<li>アプリの起動に時間がかかる場合は、ヘルスチェックの猶予期間を設定する。一気に切り替えて素早く戻したい場合は、ECSのブルー/グリーンデプロイを使う</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>起動に失敗し続けるデプロイを自動で止めて戻す → <strong class="em">デプロイサーキットブレーカー</strong>。リリース後のエラー増加で戻す → <strong>CloudWatchアラーム</strong>によるロールバック。</li>
+<li><code>minimumHealthyPercent</code> を下げると、追加の容量なしで更新できるが、更新中の処理能力が下がる。</li>
+<li>新旧の環境を並べ、ALBの通信を一度に切り替える → ブルー/グリーンデプロイ。少しずつ移す → カナリア・リニア。</li>
+<li>新しいタスクがすぐ止まる → 「停止したタスク」の停止理由、コンテナのログ、イメージの取得権限(タスク実行ロール)を確認する。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="ec2-blue-green-pipeline.html"><span class="label">← 前へ</span>EC2のアプリをCI/CDでBlue/Greenデプロイする</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="lambda-canary-release.html"><span class="label">次へ →</span>Lambdaを段階的にリリースする</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

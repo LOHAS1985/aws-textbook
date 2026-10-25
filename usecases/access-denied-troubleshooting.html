@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>「AccessDenied」の原因を調べ、最小権限に直す | AWS教科書</title>
+<meta name="description" content="CloudTrailのエラー記録とポリシーの評価順から拒否の原因を特定し、Access Analyzerで必要な権限だけに絞る">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
+  <h1>「AccessDenied」の原因を調べ、最小権限に直す</h1>
+  <p class="lead">CloudTrailのエラー記録とポリシーの評価順から拒否の原因を特定し、Access Analyzerで必要な権限だけに絞る</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>アプリのIAMロールにS3の権限を付けたのに、オブジェクトの取得で <code>AccessDenied</code> になる。どのポリシーが拒否しているのかを調べて直したい。また、とりあえず広い権限を付けたロールが多いので、<strong>実際に使っている権限だけに絞りたい</strong>。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 拒否の原因の候補。SCP・RCP、IAMのポリシーと許可境界、バケットポリシーやKMSキーポリシーなどのリソースベースのポリシーが評価され、どこかに明示的なDenyがあれば拒否、必要な許可がそろわなければ暗黙的に拒否される。"><defs><marker id="dgusecases-access-denied-troubleshooting-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">リクエスト</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">GetObject</text>
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">SCP・RCP</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">組織の上限</text>
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="140" text-anchor="middle" class="dg-t">IAMポリシー</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">許可境界</text>
+<rect x="272" y="198" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="220" text-anchor="middle" class="dg-t">リソースベース</text>
+<text x="347" y="238" text-anchor="middle" class="dg-s">バケット・キーの方針</text>
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">許可</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">すべて満たす</text>
+<rect x="510" y="198" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="585" y="220" text-anchor="middle" class="dg-t">拒否</text>
+<text x="585" y="238" text-anchor="middle" class="dg-s">明示的なDeny</text>
+<path d="M184.0,118.8 L272.0,89.2" class="dg-line" marker-end="url(#dgusecases-access-denied-troubleshooting-1)"/>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgusecases-access-denied-troubleshooting-1)"/>
+<path d="M184.0,169.2 L272.0,198.8" class="dg-line" marker-end="url(#dgusecases-access-denied-troubleshooting-1)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgusecases-access-denied-troubleshooting-1)"/>
+<path d="M422.0,224.0 L510.0,224.0" class="dg-line dg-dash" marker-end="url(#dgusecases-access-denied-troubleshooting-1)"/>
+</svg>
+</div>
+<figcaption>図1 拒否の原因の候補。SCP・RCP、IAMのポリシーと許可境界、バケットポリシーやKMSキーポリシーなどのリソースベースのポリシーが評価され、どこかに明示的なDenyがあれば拒否、必要な許可がそろわなければ暗黙的に拒否される。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:拒否されたAPI呼び出し(<code>errorCode: AccessDenied</code>)と呼び出し元の記録</li>
+<li><a href="../services/iam.html">AWS IAM</a>:ポリシーシミュレーター、IAM Access Analyzer(ポリシーの生成・未使用のアクセスの検出・外部アクセスの検出)、最終アクセス情報</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:SCP・RCPによる制限の確認</li>
+<li><a href="../services/kms.html">AWS KMS</a>:暗号化されたデータを読むためのキーポリシー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>CloudTrailのイベント履歴(またはAthena)で、拒否されたAPI・呼び出し元のロール・対象のリソースを特定する。エラーメッセージにどの種類のポリシーで拒否されたかが出ることもある</li>
+<li>ポリシーシミュレーターで、そのロールが該当の操作を許可されているかを確認する</li>
+<li>ポリシーの評価順に確認する:SCP・RCPに拒否はないか → 許可境界・セッションポリシーで制限されていないか → バケットポリシーに明示的なDenyはないか → <strong>SSE-KMSのキーポリシー</strong>で <code>kms:Decrypt</code> が許可されているか</li>
+<li>原因のポリシーを直す。別のアカウントのリソースなら、IAMポリシーとリソースベースのポリシーの<strong>両方</strong>で許可する</li>
+<li>Access Analyzerで、CloudTrailの記録から<strong>実際に使った操作だけのポリシーを生成</strong>し、未使用の権限・ロールを見つけて削除する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>評価の原則:<strong class="em">明示的なDenyが最優先</strong>、何も許可がなければ暗黙的に拒否。</li>
+<li>IAMポリシーで許可しても、SCP・許可境界の範囲外なら拒否される(実際の権限は重なった部分だけ)。</li>
+<li>KMSで暗号化されたS3のオブジェクトは、S3の権限に加えて<strong>KMSキーの権限</strong>が必要。</li>
+<li>クロスアカウントのアクセスは、呼び出し元のIAMポリシーと、相手側のリソースベースのポリシー(またはロールの信頼ポリシー)の両方が必要。</li>
+<li>最小権限への絞り込み → <strong>Access Analyzer</strong>のポリシー生成・未使用のアクセスの検出、IAMの最終アクセス情報。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="cross-account-access.html"><span class="label">← 前へ</span>異なるAWSアカウントのリソースにアクセス</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="org-guardrails.html"><span class="label">次へ →</span>組織全体にセキュリティのガードレールを設ける</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

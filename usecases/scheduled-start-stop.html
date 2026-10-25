@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>開発環境を夜間・休日に自動で停止して費用を下げる | AWS教科書</title>
+<meta name="description" content="EventBridge SchedulerとSSM Automationで、タグの付いたEC2・RDSを決まった時刻に停止・起動する">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">デプロイ・自動化</a>
+  <h1>開発環境を夜間・休日に自動で停止して費用を下げる</h1>
+  <p class="lead">EventBridge SchedulerとSSM Automationで、タグの付いたEC2・RDSを決まった時刻に停止・起動する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>開発・検証用のEC2やRDSが、誰も使わない夜間や休日も動き続けて費用がかかっている。<strong>平日の9時に起動し、20時に停止</strong>するよう自動化したい。対象は「Schedule=office-hours」のタグを付けたリソースだけにしたい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図1 定時の停止・起動。EventBridge Schedulerが決まった時刻にSSM Automationを起動し、タグで選んだEC2・RDSを停止・起動する。Auto Scalingグループは、スケジュールされたアクションで台数を0にする。"><defs><marker id="dgusecases-scheduled-start-stop-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="100" text-anchor="middle" class="dg-tb">Scheduler</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">平日9時・20時</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="100" text-anchor="middle" class="dg-t">SSM Automation</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">起動・停止の手順</text>
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">EC2</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">タグで選択</text>
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">RDS</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">タグで選択</text>
+<rect x="272" y="166" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="188" text-anchor="middle" class="dg-t">Auto Scaling</text>
+<text x="347" y="206" text-anchor="middle" class="dg-s">スケジュールで0台</text>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-1)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-1)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-1)"/>
+</svg>
+</div>
+<figcaption>図1 定時の停止・起動。EventBridge Schedulerが決まった時刻にSSM Automationを起動し、タグで選んだEC2・RDSを停止・起動する。Auto Scalingグループは、スケジュールされたアクションで台数を0にする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:Scheduler(cron式・タイムゾーン指定)で決まった時刻に処理を起動</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Automationランブック(<code>AWS-StopEC2Instance</code>・<code>AWS-StartEC2Instance</code>・<code>AWS-StopRdsInstance</code> など)をタグの対象に実行</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>/<a href="../services/rds.html">Amazon RDS</a>:停止・起動の対象</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:スケジュールされたアクションで希望容量を変更</li>
+<li><a href="../services/cost-explorer.html">AWS Cost Explorer</a>:タグ別の費用で効果を確認</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>対象のリソースにタグ(例:<code>Schedule=office-hours</code>)を付ける</li>
+<li>Automationの実行用IAMロール(EC2・RDSの停止・起動の権限)を作る</li>
+<li>EventBridge Schedulerで、平日20時(タイムゾーンを Asia/Tokyo に指定)に停止のランブックを、タグを対象に実行するスケジュールを作る。同様に9時の起動も作る</li>
+<li>Auto Scalingグループは、ランブックではなく<strong>スケジュールされたアクション</strong>で、夜間は最小・希望容量を0、朝に元の値へ戻す(グループ内のインスタンスを直接止めると、Auto Scalingが置き換えてしまう)</li>
+<li>Cost Explorerでタグ別の費用を確認し、効果を測る</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>決まった時刻に処理を起動 → <strong class="em">EventBridge Scheduler</strong>(cron式とタイムゾーン)。</li>
+<li>Auto Scalingのインスタンスを止めたい → インスタンスを止めるのではなく、<strong>スケジュールされたアクション</strong>で台数を変える。</li>
+<li>RDSを停止できるのは<strong>最大7日</strong>。7日を過ぎると自動で起動するので、長く止めるなら毎週止め直すか、スナップショットを取って削除する。</li>
+<li>EC2を停止しても、EBSボリュームとElastic IPの料金はかかる。インスタンスストアのデータは消える。</li>
+<li>多数のアカウントでまとめて管理したいなら、AWSが公開している Instance Scheduler on AWS のソリューションも使える。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="lambda-canary-release.html"><span class="label">← 前へ</span>Lambdaを段階的にリリースする</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="identity-center-sso.html"><span class="label">次へ →</span>複数アカウントへのログインをシングルサインオンにまとめる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

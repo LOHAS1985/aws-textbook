@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>手作業による設定変更(ドリフト)を見つけて戻す | AWS教科書</title>
+<meta name="description" content="CloudFormationのドリフト検出とConfigルールで、テンプレートと実際の設定のずれを定期的に見つける">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">デプロイ・自動化</a>
+  <h1>手作業による設定変更(ドリフト)を見つけて戻す</h1>
+  <p class="lead">CloudFormationのドリフト検出とConfigルールで、テンプレートと実際の設定のずれを定期的に見つける</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>CloudFormationで作った環境なのに、障害対応のときにコンソールでセキュリティグループのルールやインスタンスタイプを手で変えた人がいる。テンプレートと実際の設定が食い違うと、次のスタックの更新で失敗したり、変更が消えたりする。<strong>ずれ(ドリフト)を定期的に見つけて</strong>、どちらかに合わせたい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 242" style="max-width:905px;min-width:724px" role="img" aria-label="図1 ドリフトの検出。テンプレートの外で手作業の変更が入ると、実際の設定とずれる。AWS Configのマネージドルールが定期的にドリフトを確認し、非準拠になったらEventBridgeで通知する。"><defs><marker id="dgusecases-cloudformation-drift-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">スタック</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">テンプレート</text>
+<rect x="34" y="166" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="109" y="188" text-anchor="middle" class="dg-t">手作業の変更</text>
+<text x="109" y="206" text-anchor="middle" class="dg-s">コンソールで変更</text>
+<rect x="272" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="347" y="148" text-anchor="middle" class="dg-t">実際のリソース</text>
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="140" text-anchor="middle" class="dg-tb">Config ルール</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">ドリフトを定期確認</text>
+<rect x="731" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="806" y="140" text-anchor="middle" class="dg-t">EventBridge</text>
+<text x="806" y="158" text-anchor="middle" class="dg-s">通知・対応</text>
+<path d="M184.0,116.6 L272.0,131.4" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<path d="M184.0,176.9 L272.0,159.1" class="dg-line dg-dash" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<path d="M510.0,144.0 L422.0,144.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<text x="466" y="148" text-anchor="middle" class="dg-s dg-halo">比較</text>
+<path d="M660.0,144.0 L731.0,144.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<text x="696" y="148" text-anchor="middle" class="dg-s dg-halo">非準拠</text>
+</svg>
+</div>
+<figcaption>図1 ドリフトの検出。テンプレートの外で手作業の変更が入ると、実際の設定とずれる。AWS Configのマネージドルールが定期的にドリフトを確認し、非準拠になったらEventBridgeで通知する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:ドリフト検出(スタック・StackSets)、リソースのインポート</li>
+<li><a href="../services/config.html">AWS Config</a>:マネージドルール <code>cloudformation-stack-drift-detection-check</code> による定期的な確認</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>/<a href="../services/sns.html">Amazon SNS</a>:非準拠の通知</li>
+<li><a href="../services/iam.html">AWS IAM</a>/<a href="../services/organizations.html">AWS Organizations</a>:本番環境のコンソールでの変更そのものを制限する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>CloudFormationのコンソールまたはCLI(<code>detect-stack-drift</code>)でドリフト検出を実行し、<code>DRIFTED</code> のリソースと、期待値・実際の値の差分を確認する</li>
+<li>Configのルール <code>cloudformation-stack-drift-detection-check</code> を有効にし、ドリフト検出を定期的に実行させる</li>
+<li>非準拠になったらEventBridge経由でSNSに通知する</li>
+<li>ずれを解消する:手作業の変更を残すべきならテンプレートを修正して更新する。不要な変更なら、リソースの設定をテンプレートどおりに戻す</li>
+<li>再発を防ぐため、本番環境ではIAMやSCPで手作業の変更を制限し、変更はテンプレート経由で行う運用にする</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>テンプレートと実際の設定のずれを見つける → <strong class="em">ドリフト検出</strong>。定期的に自動で → <strong>Configルール</strong>。</li>
+<li>ドリフト検出は<strong>見つけるだけ</strong>で、自動では直さない。テンプレートか実際のリソースのどちらかに合わせる。</li>
+<li>テンプレートで明示的に指定したプロパティだけが比較の対象。ドリフト検出に対応していないリソースタイプもある。</li>
+<li>CloudFormationの外で作ったリソースをスタックの管理下に入れる → <strong>リソースのインポート</strong>。</li>
+<li>複数アカウント・リージョンに展開したスタックは、StackSetsのドリフト検出でまとめて確認できる。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="cloudformation-safe-update.html"><span class="label">← 前へ</span>CloudFormationで本番環境を安全に更新する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="multi-account-stacksets.html"><span class="label">次へ →</span>複数アカウント・リージョンに共通設定を展開する</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

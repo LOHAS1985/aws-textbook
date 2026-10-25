@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多数のEC2の設定やソフトウェアを一定に保つ | AWS教科書</title>
+<meta name="description" content="Systems ManagerのState ManagerとRun Commandで、タグで選んだインスタンスに設定を一括で適用し続ける">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">デプロイ・自動化</a>
+  <h1>多数のEC2の設定やソフトウェアを一定に保つ</h1>
+  <p class="lead">Systems ManagerのState ManagerとRun Commandで、タグで選んだインスタンスに設定を一括で適用し続ける</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>数百台のEC2すべてに、CloudWatchエージェントを入れて同じ設定にしておきたい。新しく起動したインスタンスにも自動で入り、誰かが止めたり設定を変えたりしても<strong>決めた状態に戻る</strong>ようにしたい。SSHでログインして1台ずつ作業するのはやめたい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 956 242" style="max-width:956px;min-width:765px" role="img" aria-label="図1 Systems Managerによる一括管理。State Managerの関連付けで、タグで選んだインスタンスに決めた状態を定期的に適用し続ける。1回だけの作業はRun Commandで実行する。実行結果はS3やCloudWatch Logsに残す。"><defs><marker id="dgusecases-ssm-fleet-configuration-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="100" text-anchor="middle" class="dg-tb">State Manager</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">関連付け</text>
+<rect x="34" y="166" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="188" text-anchor="middle" class="dg-t">Run Command</text>
+<text x="109" y="206" text-anchor="middle" class="dg-s">1回だけの作業</text>
+<rect x="289" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="364" y="140" text-anchor="middle" class="dg-t">タグで選択</text>
+<text x="364" y="158" text-anchor="middle" class="dg-s">Env=prod</text>
+<rect x="544" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="100" text-anchor="middle" class="dg-t">EC2(管理対象)</text>
+<text x="619" y="118" text-anchor="middle" class="dg-s">SSMエージェント</text>
+<rect x="544" y="158" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="180" text-anchor="middle" class="dg-t">EC2(管理対象)</text>
+<text x="619" y="198" text-anchor="middle" class="dg-s">SSMエージェント</text>
+<rect x="782" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="857" y="140" text-anchor="middle" class="dg-t">S3・Logs</text>
+<text x="857" y="158" text-anchor="middle" class="dg-s">実行結果</text>
+<path d="M184.0,115.8 L289.0,132.2" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+<text x="236" y="128" text-anchor="middle" class="dg-s dg-halo">定期的に適用</text>
+<path d="M184.0,177.9 L289.0,158.1" class="dg-line dg-dash" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+<path d="M439.0,132.2 L544.0,115.8" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+<path d="M439.0,155.8 L544.0,172.2" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+<path d="M694.0,116.6 L782.0,131.4" class="dg-line dg-dash" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+</svg>
+</div>
+<figcaption>図1 Systems Managerによる一括管理。State Managerの関連付けで、タグで選んだインスタンスに決めた状態を定期的に適用し続ける。1回だけの作業はRun Commandで実行する。実行結果はS3やCloudWatch Logsに残す。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:State Manager(状態の維持)、Run Command(一括実行)、Distributor(ソフトのパッケージ配布)、Inventory(導入済みソフトの一覧)、Parameter Store(エージェントの設定)</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:SSMエージェントとIAMロール(マネージドノードにする)</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:エージェントの設定の配布先、コマンドの出力の保存先</li>
+<li><a href="../services/s3.html">Amazon S3</a>:コマンドの出力の保存先</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>インスタンスを<strong>マネージドノード</strong>にする:SSMエージェント(主要なAMIには導入済み)と、<code>AmazonSSMManagedInstanceCore</code> を含むIAMロール。アカウント全体で自動化するならデフォルトのホスト管理設定(DHMC)を使う</li>
+<li>プライベートサブネットなら、SSM用のVPCエンドポイント(<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>)かNATゲートウェイを用意する</li>
+<li>State Managerの関連付けを作る:ドキュメント(例:<code>AWS-ConfigureAWSPackage</code> でCloudWatchエージェントを導入)、対象(タグ)、スケジュールを指定する</li>
+<li>レート制御(同時実行数・エラーのしきい値)を設定し、一度に全台が影響を受けないようにする</li>
+<li>実行結果をS3・CloudWatch Logsに保存し、Inventoryで導入状況を確認する。準拠状況はSystems Managerの「コンプライアンス」で見る</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>決めた状態を<strong>維持し続ける</strong>(新しいインスタンスにも自動で適用)→ <strong class="em">State Manager</strong>。その場で1回実行 → <strong class="em">Run Command</strong>。</li>
+<li>Systems Managerの一覧にインスタンスが出ない → SSMエージェント・<strong>IAMロール</strong>・SSMのエンドポイントへの経路のどれかが原因。</li>
+<li>対象はインスタンスIDではなく<strong>タグ</strong>で指定すると、台数が増えても設定を変えずに済む。</li>
+<li>レート制御で同時実行数とエラーのしきい値を決め、失敗が広がったら止める。</li>
+<li>SSHやキーペアは不要。操作の記録はCloudTrail、コマンドの出力はS3・CloudWatch Logsに残る。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="multi-region-failover.html"><span class="label">← 前へ</span>リージョン障害に備えて別リージョンへ切り替える</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="patch-management.html"><span class="label">次へ →</span>多数のEC2に定期的にパッチを適用する</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
