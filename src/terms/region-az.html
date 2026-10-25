@@ -1,0 +1,67 @@
+<!-- title: リージョンとアベイラビリティーゾーン -->
+<!-- category: AWSの基礎 -->
+<!-- lead: AWSのデータセンターの配置単位。リージョンの中に複数のAZがある -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>AWSのサービスは、世界中に置かれたデータセンターで動いています。その配置の単位が<strong>リージョン</strong>と<strong>アベイラビリティーゾーン(AZ)</strong>です。どのサービスも「どのリージョンの、どのAZで動いているか」を意識して設計します。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node a 0 0 box "AZ-a" "データセンター群"
+node c 1 0 box "AZ-c" "データセンター群"
+node d 2 0 box "AZ-d" "データセンター群"
+group 0 0 2 0 "リージョン(東京 ap-northeast-1)" pad=14
+node e 3.3 0 blue "エッジロケーション" "CloudFrontなど"
+edge a c both
+edge c d both
+<figcaption>図1 リージョン・AZ・エッジロケーションの関係。リージョンの中に、互いに離れた場所にある複数のAZがあり、高速な専用ネットワークでつながっている。エッジロケーションはリージョンとは別に、利用者の近くに多数置かれている。</figcaption>
+</figure>
+
+<h3>リージョン</h3>
+<p><strong>リージョン</strong>は、AWSのデータセンターがまとまって置かれている<strong>地理的な地域</strong>です。例:東京(<code>ap-northeast-1</code>)、大阪(<code>ap-northeast-3</code>)、バージニア北部(<code>us-east-1</code>)。</p>
+<ul>
+<li>リージョン同士は独立しており、あるリージョンの障害が他のリージョンに広がらないように作られている。</li>
+<li>データは、利用者が自分でコピーしない限り、<strong>選んだリージョンの外には出ない</strong>(法規制への対応にも関わる)。</li>
+<li>リージョンを選ぶときは、<strong>利用者との距離(レイテンシー)</strong>、<strong>法規制・データの保管場所の要件</strong>、<strong>使いたいサービスが提供されているか</strong>、<strong>料金</strong>(リージョンによって異なる)を考える。</li>
+</ul>
+
+<h3>アベイラビリティーゾーン(AZ)</h3>
+<p><strong>AZ</strong>は、リージョンの中にある<strong>1つ以上のデータセンターのまとまり</strong>です。1つのリージョンには通常3つ以上のAZがあります。</p>
+<ul>
+<li>AZ同士は、地震・火災・停電などが同時に起きにくいよう<strong>物理的に離れた場所</strong>にあり、電源やネットワークも独立している。</li>
+<li>同じリージョンのAZ同士は、低レイテンシーの専用ネットワークで接続されている。</li>
+<li>そのため、<strong>複数のAZにリソースを分けて置く(マルチAZ構成)</strong>と、1つのAZが停止してもシステムを動かし続けられる。これがAWSでの高可用性の基本。</li>
+</ul>
+<div class="point"><p><strong>AZ名とAZ IDの違い</strong>:<code>ap-northeast-1a</code> のような<strong>AZ名</strong>と実際のデータセンターの対応は、<strong>アカウントごとに異なる</strong>ことがあります。アカウントをまたいで同じ場所を指したいときは、<code>apne1-az1</code> のような<strong>AZ ID</strong>を使います。</p></div>
+
+<h3>エッジロケーション</h3>
+<p><strong>エッジロケーション</strong>は、利用者の近くからコンテンツを届けたり、通信を受け付けたりするための拠点です。リージョンよりずっと数が多く、世界中の都市にあります。<a href="../services/cloudfront.html">CloudFront</a>のキャッシュ、<a href="../services/route53.html">Route 53</a>のDNS応答、<a href="../services/global-accelerator.html">Global Accelerator</a>の入り口などに使われます。</p>
+
+<h3>サービスの範囲(グローバル・リージョン・AZ)</h3>
+<p>AWSのサービスやリソースは、どの範囲で動くかによって3種類に分けられます。障害の影響範囲や、作成・コピーの方法を考えるときに重要です。</p>
+<div class="table-wrap"><table>
+<tr><th>範囲</th><th>意味</th><th>例</th></tr>
+<tr><td><strong>グローバル</strong></td><td>リージョンに関係なく、1つの設定が全体で使われる</td><td>IAM、Route 53、CloudFront、Organizations</td></tr>
+<tr><td><strong>リージョン</strong></td><td>リージョンごとに作成する。AWSがリージョン内の複数AZに分散して動かす</td><td>S3バケット、DynamoDBテーブル、Lambda関数、VPC、SQSキュー、KMSキー</td></tr>
+<tr><td><strong>AZ</strong></td><td>特定のAZに作成する。そのAZが停止すると使えなくなる</td><td>EC2インスタンス、EBSボリューム、サブネット、RDSのDBインスタンス</td></tr>
+</table></div>
+<p>例えばEBSボリュームはAZのリソースなので、別のAZのEC2にはそのままアタッチできず、スナップショットを経由します。また、ある機能が「us-east-1でしか作れない」(CloudFront用のACM証明書、Lambda@Edgeなど)のは、グローバルサービスの設定がus-east-1で管理されているためです。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:マルチAZ構成で止まらないシステムを作る考え方</li>
+<li><a href="dr-strategies.html">災害対策(DR)戦略</a>:リージョン全体の障害に備える方法</li>
+<li><a href="cidr.html">CIDR</a>:VPC・サブネットのIPアドレス範囲(サブネットは1つのAZに属する)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:VPCはリージョン単位、サブネットはAZ単位</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>/<a href="../services/ebs.html">Amazon EBS</a>:AZ単位のリソース</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:Multi-AZ構成</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:エッジロケーションからの配信</li>
+</ul>
+</section>

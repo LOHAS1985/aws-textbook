@@ -1,0 +1,59 @@
+<!-- title: ENIとElastic IP -->
+<!-- category: ネットワーク -->
+<!-- lead: ENIはVPC内の仮想的なネットワークカード、Elastic IPは固定のパブリックIPアドレス -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<h3>ENI(Elastic Network Interface)</h3>
+<p><strong>ENI</strong>は、VPCの中で使う<strong>仮想的なネットワークカード(NIC)</strong>です。EC2がVPC内で通信できるのは、ENIがアタッチされているからです。IPアドレスやセキュリティグループは、実はインスタンスではなく<strong>ENIに付いています</strong>。</p>
+<ul>
+<li>ENIが持つもの:<strong>プライベートIPアドレス</strong>(1つの主アドレス+追加のセカンダリアドレス)、<strong>パブリックIPアドレス</strong>(割り当てた場合)、<strong>セキュリティグループ</strong>、MACアドレス</li>
+<li>ENIは<strong>特定のサブネット(=特定のAZ)</strong>に作成される。</li>
+<li>インスタンスに最初から付いている<strong>プライマリENI</strong>は取り外せない。追加で作ったENIは取り外して、<strong>同じAZの別のインスタンスに付け替え</strong>られる(IPアドレスやセキュリティグループもそのまま移る)。</li>
+<li>EC2以外でも、Lambda(VPC接続)、RDS、ELB、VPCエンドポイント(インターフェース型)、EFSのマウントターゲットなどが、サブネット内にENIを作って通信している。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node ec2 0 0.5 box "EC2インスタンス"
+node eni 1.4 0.5 accent "ENI" "プライベートIP・SG"
+node eip 2.8 0 ok "Elastic IP" "固定のパブリックIP"
+node net 2.8 1 blue "インターネット" "IGW経由"
+group 1.4 0.5 1.4 0.5 "サブネット(AZ-a)" pad=10
+edge ec2 eni both
+edge eip eni "関連付け"
+edge net eip both
+<figcaption>図1 ENIとElastic IP。EC2はENIを通じてVPC内で通信する。プライベートIPとセキュリティグループはENIに付いており、Elastic IPもENI(のプライベートIP)に関連付けられる。</figcaption>
+</figure>
+
+<h3>パブリックIPアドレスとElastic IP</h3>
+<p>インターネットと通信するEC2には、プライベートIPのほかに<strong>パブリックIPアドレス</strong>が必要です(さらに、サブネットのルートテーブルにインターネットゲートウェイへの経路も必要)。パブリックIPには2種類あります。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>自動割り当てのパブリックIP</th><th>Elastic IP</th></tr>
+<tr><td>取得方法</td><td>サブネットの設定や起動時の設定で自動的に割り当てる</td><td>アカウントに確保し、インスタンス(ENI)に関連付ける</td></tr>
+<tr><td>停止・起動したとき</td><td><strong>変わる</strong>(停止すると解放され、起動時に別のIPが付く)</td><td><strong>変わらない</strong></td></tr>
+<tr><td>付け替え</td><td>できない</td><td>別のインスタンスへ付け替えられる(障害時の切り替えに使える)</td></tr>
+<tr><td>上限</td><td>-</td><td>既定ではリージョンごとに5個(引き上げを申請できる)</td></tr>
+</table></div>
+<p>2024年2月から、<strong>パブリックIPv4アドレスはすべて時間単位で課金</strong>されます(使用中のElastic IP、自動割り当てのパブリックIPも含む)。確保したまま使っていないElastic IPも課金されるため、不要になったら<strong>解放</strong>します。</p>
+<div class="point"><p>「停止・起動したらIPアドレスが変わって接続できなくなった」→ 固定したいなら<strong>Elastic IP</strong>。ただし、Webサービスの入り口を固定したい場合は、ELBやRoute 53のDNS名、Global Acceleratorの固定IPを使う方法もあります。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="cidr.html">CIDR</a>:ENIのプライベートIPはサブネットのCIDRから割り当てられる</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:セキュリティグループはENI単位で適用される</li>
+<li><a href="vpc-endpoint.html">VPCエンドポイント</a>:インターフェース型はサブネット内のENIとして作られる</li>
+<li><a href="outbound-traffic.html">アウトバウンド通信</a>:パブリックIPとNATゲートウェイの使い分け</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/ec2.html">Amazon EC2</a>:ENIとパブリックIP・Elastic IPを使う代表的なリソース</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:ENIを作るサブネット</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:VPC接続でENIを使う</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:NLBにはElastic IPを割り当てられる</li>
+<li><a href="../services/global-accelerator.html">AWS Global Accelerator</a>:固定のAnycast IPで入り口を固定</li>
+</ul>
+</section>

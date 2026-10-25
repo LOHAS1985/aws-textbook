@@ -14,7 +14,7 @@
 <li><strong>REST API</strong>:多機能なAPI。
   <ul>
   <li><strong>ステージ変数</strong>:API Gateway内部だけで使う変数。バックエンドや呼び出し先URL、環境固有の設定値を切り替える。<code>${stageVariables.xxx}</code> で値を参照する。<br>例:prodステージは <code>lambdaAlias="prod"</code>、testステージは <code>lambdaAlias="test"</code> とし、<code>arn:aws:lambda:ap-northeast-1:123456789012:function:MyFunction:${stageVariables.lambdaAlias}</code> で呼び出し先を切り替える。</li>
-  <li><strong>ステージレベルのキャッシュ</strong>:GET以外(POSTなど)にも対応。</li>
+  <li><strong>ステージレベルのキャッシュ</strong>:ステージ単位でAPIの応答をキャッシュする。有効にすると<strong>既定ではGETメソッドだけ</strong>がキャッシュされ、POSTなど他のメソッドはメソッドごとの設定で個別に有効にする。</li>
   </ul></li>
 <li><strong>WebSocket API</strong>:双方向通信。</li>
 </ul>
@@ -56,7 +56,7 @@ edge mres c
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>認証方法</th><th>主な用途</th><th>特徴</th></tr>
 <tr><td>JWT</td><td>JWT</td><td>Web/モバイルAPI</td><td>HTTP APIの標準</td></tr>
-<tr><td>Lambda</td><td><strong>トークン(キャッシュ可)</strong>/リクエスト</td><td>カスタム認証</td><td>認可情報を返すときにcontextを返す設定(キャッシュの利用が可能に)</td></tr>
+<tr><td>Lambda</td><td><strong>トークン</strong>(ヘッダーのトークン1つで判定)/<strong>リクエスト</strong>(ヘッダー・クエリ文字列など複数の値で判定)</td><td>カスタム認証</td><td>独自のLambda関数が許可・拒否を判定し、IAMポリシーを返す。結果はトークンなどをキーにキャッシュされる(TTLで期間を設定、0で無効)</td></tr>
 <tr><td>IAM</td><td>SigV4</td><td>AWS内部のAPI</td><td>IAMで制御</td></tr>
 <tr><td>Cognito</td><td><strong>Cognito JWT</strong></td><td>ユーザー認証</td><td>マネージドな認証</td></tr>
 </table></div>

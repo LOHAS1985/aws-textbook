@@ -8,13 +8,9 @@
 
 <section class="chapter">
 <h2>2. 主な機能・特徴</h2>
-<ul>
-<li><strong class="em">キーの自動ローテーションは対称暗号キーのみ対応</strong>(対称キー=暗号化・復号に同じ鍵を使う)</li>
-</ul>
-
 <h3>キーの種類</h3>
 <ul>
-<li><strong>CMK(カスタマーマスターキー/KMSキー)</strong>:データキーを生成・暗号化する。</li>
+<li><strong>KMSキー</strong>:データキーを生成・暗号化する、KMSの中で管理されるキー。以前は<strong>CMK(カスタマーマスターキー)</strong>と呼ばれていたため、古い資料ではこの名前で出てくる。</li>
 <li><strong>データキー</strong>:実データを暗号化する。</li>
 <li><strong>HMACキー</strong>:改ざん検知用の鍵。</li>
 </ul>
@@ -25,7 +21,7 @@
 <tr><td>キーポリシーの編集</td><td>不可</td><td>不可</td><td>可能</td></tr>
 <tr><td>有効/無効化</td><td>不可</td><td>不可</td><td>可能</td></tr>
 <tr><td>削除</td><td>不可</td><td>不可</td><td>可能</td></tr>
-<tr><td>ローテーション設定</td><td>不可</td><td>AWSが管理</td><td>設定可能</td></tr>
+<tr><td>ローテーション設定</td><td>不可</td><td>AWSが管理</td><td>設定可能(<strong class="em">自動ローテーションは対称暗号キーのみ</strong>。対称キー=暗号化・復号に同じ鍵を使う)</td></tr>
 <tr><td>IAMでの細かな権限制御</td><td>不可</td><td>制限あり</td><td>可能</td></tr>
 <tr><td>クロスアカウント利用</td><td>不可</td><td>不可</td><td><strong class="em">可能</strong></td></tr>
 <tr><td>監査要件への対応</td><td>低</td><td>中</td><td>高</td></tr>
@@ -35,7 +31,7 @@
 <h3>暗号化の流れ(エンベロープ暗号化)</h3>
 <ol>
 <li>アプリがKMSにデータキーの生成をリクエスト(<code>GenerateDataKey</code> API)</li>
-<li>KMSがデータキーを生成し、CMKでそのデータキーを暗号化</li>
+<li>KMSがデータキーを生成し、KMSキーでそのデータキーを暗号化</li>
 <li>KMSが<strong>平文のデータキー</strong>と<strong>暗号化されたデータキー</strong>をアプリに渡す</li>
 <li>アプリが平文のデータキーでデータを暗号化し、平文のデータキーは破棄</li>
 <li>暗号化データと暗号化データキーを一緒に保存</li>
@@ -45,7 +41,7 @@
 <figure class="figure" data-diagram>
 grid 170 90
 node app 0 0.5 blue "アプリ"
-node kms 1.4 0 accent "KMS" "CMKで管理"
+node kms 1.4 0 accent "KMS" "KMSキーで管理"
 node pk 1.4 1 box "平文データキー" "使用後に破棄"
 node ek 2.8 0 ok "暗号化データキー"
 node data 2.8 1 ok "暗号化データ"
@@ -60,7 +56,7 @@ edge pk data "③ 暗号化"
 <ol>
 <li>アプリが保存先から暗号化データと暗号化データキーを取得</li>
 <li>アプリがKMSに復号をリクエスト(<code>Decrypt</code> API。入力=暗号化データキー)</li>
-<li>KMSがCMKで暗号化データキーを復号し、平文のデータキーを返す</li>
+<li>KMSがKMSキーで暗号化データキーを復号し、平文のデータキーを返す</li>
 <li>アプリが平文のデータキーでデータを復号し、平文のデータキーは破棄</li>
 </ol>
 </section>
@@ -87,6 +83,7 @@ edge pk data "③ 暗号化"
 <li><a href="cloudtrail.html">AWS CloudTrail</a>:キー利用の監査ログ</li>
 <li><a href="iam.html">AWS IAM</a>:<code>kms:Decrypt</code> などの権限</li>
 <li><a href="database-encryption-sdk.html">AWS Database Encryption SDK</a>:KMSを使ったクライアント側暗号化</li>
+<li>関連する用語:<a href="../terms/encryption.html">保存時の暗号化と転送時の暗号化</a></li>
 </ul>
 </section>
 
@@ -104,6 +101,6 @@ edge pk data "③ 暗号化"
 <h2>7. まとめ</h2>
 <ul>
 <li>KMSは暗号化キーの管理サービス。キーはAWS所有・AWS管理・カスタマー管理の3種類。</li>
-<li>CMKでデータキーを暗号化し、データキーで実データを暗号化する(エンベロープ暗号化)。</li>
+<li>KMSキーでデータキーを暗号化し、データキーで実データを暗号化する(エンベロープ暗号化)。</li>
 </ul>
 </section>

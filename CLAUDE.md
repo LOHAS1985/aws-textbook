@@ -27,6 +27,9 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - Python がない環境では deploy.sh がビルドを省略して src/ だけを push する(警告が出る)。その場合は book/ が古いままなので、Python のある環境で再度 deploy.sh を実行するよう利用者に伝える
 - gh は "C:\Program Files\GitHub CLI\gh.exe"
 
+## 残タスク
+- 今後対応する加筆の予定は TASKS.md にチェックリストでまとめている。対応したら `[x]` に更新する
+
 ## 本文ファイルのメタ情報(先頭に書く)
     <!-- title: ページ名 -->
     <!-- category: カテゴリ名 -->

@@ -3,12 +3,13 @@
 <!-- lead: ストリーミングデータを収集・処理・配信するサービス群 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
-<p><strong>Amazon Kinesis</strong>は、<strong>ストリーミングデータを扱うサービス群</strong>です。</p>
+<p><strong>Amazon Kinesis</strong>は、<strong>ストリーミングデータ(絶え間なく発生し続けるデータ)を扱うサービス群</strong>です。</p>
 <ul>
-<li>ストリーミング動画・データストリームの処理・保存</li>
-<li>AWSのデータストアへデータストリームをロード:<strong>Kinesis Data Firehose</strong></li>
-<li>データストリームの分析:<strong>Kinesis Data Analytics</strong></li>
+<li>データストリームの受け取りとリアルタイム処理:<strong>Kinesis Data Streams</strong></li>
+<li>S3などのデータストアへのデータの配送:<strong>Amazon Data Firehose</strong>(旧称 Kinesis Data Firehose)</li>
+<li>動画ストリームの取り込み・保存:<strong>Kinesis Video Streams</strong></li>
 </ul>
+<p>ストリームデータの分析には、かつて「Kinesis Data Analytics」と呼ばれていた <strong>Amazon Managed Service for Apache Flink</strong> を使います。</p>
 <figure class="figure" data-diagram>
 grid 160 85
 node prod 0 1 blue "データ送信元" "IoT・ログ・クリック"
@@ -56,12 +57,12 @@ edge pk2 s1
 edge pk3 s2
 <figcaption>図2 シャードとパーティションキー。レコードはパーティションキーでシャードに振り分けられる。シャード1本の性能は固定なので、キーが偏ると特定のシャードに負荷が集中する(ホットシャード)。シャードを増やすとスループットが上がる。</figcaption>
 </figure>
-<h3 class="em">Kinesis Data Firehose(データの配送・変換・保存)</h3>
+<h3 class="em">Amazon Data Firehose(データの配送・変換・保存)</h3>
 <ul>
 <li>ストリームデータを <strong>S3、Redshift、OpenSearch Service</strong> などへ配信する。</li>
 <li><strong>Lambdaを呼び出してレコードを変換</strong>できる。</li>
 </ul>
-<p>Data Streamsは自分でコンシューマー(Lambda・アプリなど)を作ってリアルタイムに処理するサービス、Firehoseはコードをほぼ書かずに保存先へ届けるフルマネージドな配送サービスです。Firehoseはバッファリングしてまとめて配信するため、ほぼリアルタイム(数十秒〜数分の遅延)になります。現在の正式名称は「Amazon Data Firehose」です。</p>
+<p>Data Streamsは自分でコンシューマー(Lambda・アプリなど)を作ってリアルタイムに処理するサービス、Firehoseはコードをほぼ書かずに保存先へ届けるフルマネージドな配送サービスです。Firehoseはバッファリングしてまとめて配信するため、ほぼリアルタイム(数十秒〜数分の遅延)になります。</p>
 </section>
 
 <section class="chapter">

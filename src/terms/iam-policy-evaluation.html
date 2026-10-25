@@ -1,0 +1,107 @@
+<!-- title: IAMポリシーと評価ロジック -->
+<!-- category: セキュリティ・認証 -->
+<!-- lead: ポリシーの書き方と、複数のポリシーから「許可か拒否か」が決まる順番 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>AWSでは、APIの呼び出し(リクエスト)のたびに、関係するすべての<strong>ポリシー</strong>を調べて「許可するか拒否するか」を決めます。ポリシーの書き方と、この判断の順番(<strong>評価ロジック</strong>)を知っておくと、「なぜ権限エラーになるのか」を自分で切り分けられるようになります。</p>
+
+<h3>ポリシーの書き方</h3>
+<p>ポリシーはJSONで書きます。次の例は「特定のバケットのオブジェクトの読み取りを、会社のIPアドレスからだけ許可する」ポリシーです。</p>
+<pre class="code"><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": "arn:aws:s3:::my-bucket/*",
+      "Condition": {
+        "IpAddress": { "aws:SourceIp": "203.0.113.0/24" }
+      }
+    }
+  ]
+}</code></pre>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>意味</th><th>例</th></tr>
+<tr><td><code>Effect</code></td><td>許可か拒否か</td><td><code>Allow</code>/<code>Deny</code></td></tr>
+<tr><td><code>Action</code></td><td>対象の操作(<code>サービス:API名</code>)</td><td><code>s3:GetObject</code>、<code>ec2:*</code>(ワイルドカード)</td></tr>
+<tr><td><code>Resource</code></td><td>対象のリソース(<a href="arn.html">ARN</a>で指定)</td><td><code>arn:aws:s3:::my-bucket/*</code></td></tr>
+<tr><td><code>Condition</code></td><td>適用する条件(省略可)</td><td>送信元IP、MFAの有無、リージョン、タグ</td></tr>
+<tr><td><code>Principal</code></td><td>誰に対するものか(<strong>リソースベースのポリシーだけ</strong>で使う)</td><td>別アカウントのロールのARN、<code>"Service": "lambda.amazonaws.com"</code></td></tr>
+</table></div>
+<p>よく使う条件キー:<code>aws:SourceIp</code>(送信元IP)、<code>aws:MultiFactorAuthPresent</code>(MFAで認証したか)、<code>aws:RequestedRegion</code>(操作対象のリージョン)、<code>aws:PrincipalOrgID</code>(呼び出し元が自組織のアカウントか)、<code>aws:SecureTransport</code>(HTTPSか)、<code>aws:ResourceTag/キー</code>(リソースのタグ)。</p>
+
+<h3>ポリシーの種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>付ける場所</th><th>役割</th></tr>
+<tr><td><strong>アイデンティティベースのポリシー</strong></td><td>IAMユーザー・グループ・ロール</td><td>「このユーザーは何ができるか」を許可する。AWS管理ポリシー(AWSが用意)、カスタマー管理ポリシー(自分で作って再利用)、インラインポリシー(1つのユーザー・ロールに直接埋め込む)がある</td></tr>
+<tr><td><strong>リソースベースのポリシー</strong></td><td>S3バケット、SQSキュー、KMSキー、Lambda関数など</td><td>「このリソースを誰が使えるか」を許可する。<code>Principal</code> で相手を指定するので、他のアカウントやAWSサービスにも許可できる</td></tr>
+<tr><td><strong>アクセス許可の境界</strong>(Permissions Boundary)</td><td>IAMユーザー・ロール</td><td>そのユーザー・ロールが持てる権限の<strong>上限</strong>。権限を与えるものではない</td></tr>
+<tr><td><strong>SCP・RCP</strong></td><td>Organizationsのルート・OU・アカウント</td><td>組織のアカウント内のプリンシパル(SCP)・リソース(RCP)に対する権限の<strong>上限</strong></td></tr>
+<tr><td><strong>セッションポリシー</strong></td><td>AssumeRoleなどで一時的な認証情報を作るとき</td><td>そのセッションだけ権限をさらに絞る</td></tr>
+</table></div>
+<p>「上限」を決めるポリシー(境界・SCP・RCP・セッションポリシー)は、それだけでは何も許可しません。<strong>上限の範囲内で、アイデンティティベースまたはリソースベースのポリシーが許可した操作</strong>だけが実行できます。</p>
+
+<h3>評価ロジック(許可か拒否かの決まり方)</h3>
+<ol>
+<li><strong>最初はすべて拒否</strong>(暗黙的な拒否)の状態から始まる。</li>
+<li>関係するポリシーのどこかに、そのリクエストに当てはまる<strong>明示的な <code>Deny</code></strong> があれば、<strong>ほかでどれだけ許可していても拒否</strong>(明示的な拒否が最優先)。</li>
+<li>SCP・RCP・アクセス許可の境界・セッションポリシーがある場合、その<strong>すべてで許可されている範囲</strong>に入っていなければ拒否。</li>
+<li>アイデンティティベースまたはリソースベースのポリシーに、当てはまる <code>Allow</code> があれば<strong>許可</strong>。どこにもなければ拒否(暗黙的な拒否のまま)。</li>
+</ol>
+<figure class="figure" data-diagram>
+grid 165 90
+node req 0 0 blue "リクエスト"
+node q1 1 0 box "明示的なDeny?" "どのポリシーでも"
+node q2 2 0 box "上限の範囲内?" "SCP・境界など"
+node q3 3 0 box "Allowがある?" "ID・リソース"
+node ok 4 0 ok "許可"
+node n1 1 1 ng "拒否" "明示的な拒否"
+node n2 2 1 ng "拒否"
+node n3 3 1 ng "拒否" "暗黙的な拒否"
+edge req q1
+edge q1 q2 "なし"
+edge q2 q3 "はい"
+edge q3 ok "あり"
+edge q1 n1 "あり"
+edge q2 n2 "いいえ"
+edge q3 n3 "なし"
+<figcaption>図1 IAMの評価ロジック(簡略化)。明示的なDenyが1つでもあれば拒否。上限(SCP・アクセス許可の境界など)の範囲内で、どこかにAllowがあれば許可。Allowがどこにもなければ「暗黙的な拒否」になる。</figcaption>
+</figure>
+
+<h3>同じアカウントと別のアカウント</h3>
+<ul>
+<li><strong>同じアカウント内</strong>:アイデンティティベースとリソースベースの<strong>どちらか一方</strong>で許可されていれば実行できる(KMSのキーポリシーのように、リソース側の許可が必須なものもある)。</li>
+<li><strong>別のアカウントへのアクセス</strong>:<strong>相手のリソースベースのポリシー</strong>(または引き受けるロールの信頼ポリシー)と、<strong>自分のアカウントのアイデンティティベースのポリシー</strong>の<strong>両方</strong>で許可されている必要がある。</li>
+</ul>
+
+<h3>権限の確認・見直しに使う機能</h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>できること</th></tr>
+<tr><td><strong>IAM Access Analyzer</strong></td><td>外部(他のアカウントや公開)からアクセスできるリソースを検出する。未使用の権限・ロールの検出、ポリシーの文法チェック、CloudTrailの記録からのポリシー生成もできる</td></tr>
+<tr><td><strong>認証情報レポート</strong></td><td>アカウント内の全IAMユーザーの、パスワード・アクセスキー・MFAの状態と最終使用日を一覧(CSV)にする</td></tr>
+<tr><td><strong>最終アクセス情報</strong></td><td>ユーザー・ロールが各サービスを最後に使った日時を表示する。使われていない権限を削る判断に使う</td></tr>
+<tr><td><strong>ポリシーシミュレーター</strong></td><td>あるユーザー・ロールが特定の操作を実行できるかを、実際に操作せずに試す</td></tr>
+</table></div>
+<div class="point"><p>エラーメッセージが暗号化されている(<code>Encoded authorization failure message</code>)場合は、<code>aws sts decode-authorization-message</code> でデコードすると、どのポリシーで拒否されたかの手がかりが得られます。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="arn.html">ARN</a>:ポリシーの <code>Resource</code> や <code>Principal</code> の指定に使う</li>
+<li><a href="oidc.html">OIDC</a>:外部のIDプロバイダーで認証してロールを引き受ける</li>
+<li><a href="encryption.html">保存時の暗号化と転送時の暗号化</a>:<code>aws:SecureTransport</code> でHTTPSを強制する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:ユーザー・ロール・ポリシーの管理</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:SCP・RCPによる組織全体の上限</li>
+<li><a href="../services/sts.html">AWS STS</a>:ロールの引き受けとセッションポリシー</li>
+<li><a href="../services/s3.html">Amazon S3</a>:バケットポリシー(リソースベースのポリシーの代表例)</li>
+<li><a href="../services/kms.html">AWS KMS</a>:キーポリシー</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:拒否された操作の記録</li>
+</ul>
+</section>

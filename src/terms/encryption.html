@@ -1,0 +1,69 @@
+<!-- title: 保存時の暗号化と転送時の暗号化 -->
+<!-- category: セキュリティ・認証 -->
+<!-- lead: 保存しているデータと、通信中のデータを、それぞれ暗号化して守る考え方 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>データの暗号化は、<strong>どの状態のデータを守るか</strong>で2つに分けて考えます。</p>
+<ul>
+<li><strong>保存時の暗号化(Encryption at rest)</strong>:ディスクやストレージに<strong>保存されているデータ</strong>を暗号化する。記憶媒体が盗まれたり、権限のない人に読まれたりしても中身が分からないようにする。</li>
+<li><strong>転送時の暗号化(Encryption in transit)</strong>:ネットワークを<strong>流れている途中のデータ</strong>を暗号化する。通信の盗聴や改ざんを防ぐ。</li>
+</ul>
+<p>どちらか一方だけでは不十分で、要件に応じて両方を組み合わせます。</p>
+<figure class="figure" data-diagram>
+grid 160 85
+node u 0 0.5 blue "利用者" "ブラウザ"
+node alb 1.3 0.5 box "ALB" "証明書(ACM)"
+node ec2 2.6 0.5 box "EC2"
+node ebs 3.9 0 ok "EBS" "保存時:KMS"
+node s3 3.9 1 ok "S3" "保存時:SSE"
+edge u alb "HTTPS"
+edge alb ec2 "HTTPS(任意)"
+edge ec2 ebs
+edge ec2 s3 "HTTPS"
+<figcaption>図1 転送時の暗号化(矢印の通信)と保存時の暗号化(EBS・S3に保存されたデータ)。利用者とALBの間はACMの証明書でHTTPS、保存するデータはKMSのキーなどで暗号化する。ALBとEC2の間も暗号化するかは要件で決める。</figcaption>
+</figure>
+
+<h3>保存時の暗号化</h3>
+<p>AWSの多くのサービスは、<strong>サーバー側の暗号化</strong>(サービスが保存するときに自動で暗号化し、読み出すときに自動で復号する)に対応しています。暗号化のキーは<a href="../services/kms.html">AWS KMS</a>で管理します。</p>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>保存時の暗号化</th><th>ポイント</th></tr>
+<tr><td>S3</td><td><strong>すべての新しいオブジェクトが既定でSSE-S3で暗号化</strong>される。SSE-KMSなども選べる</td><td>キーの利用を監査したい・アクセスをキーポリシーでも制御したい → SSE-KMS</td></tr>
+<tr><td>EBS</td><td>ボリューム作成時に暗号化を指定。リージョンの「デフォルトで暗号化」設定で、新しいボリュームを常に暗号化できる</td><td><strong>既存の暗号化されていないボリュームは直接暗号化できない</strong>。スナップショットを暗号化してコピーし、そこから新しいボリュームを作る</td></tr>
+<tr><td>RDS・Aurora</td><td>DBの作成時に暗号化を指定</td><td>後から暗号化するには、スナップショットを暗号化してコピーし、そこから復元する</td></tr>
+<tr><td>DynamoDB</td><td>すべてのテーブルが既定で暗号化される</td><td>キーの種類(AWS所有・AWS管理・カスタマー管理)を選べる</td></tr>
+<tr><td>EFS</td><td>ファイルシステムの作成時に指定</td><td>作成後には変更できない</td></tr>
+</table></div>
+<p>サービスに渡す前に、アプリ側で暗号化してから保存する方法を<strong>クライアント側の暗号化</strong>といいます(S3のクライアントサイド暗号化、<a href="../services/database-encryption-sdk.html">AWS Database Encryption SDK</a>など)。AWS側でも平文を見られないようにしたい場合に使います。</p>
+
+<h3>転送時の暗号化</h3>
+<p>転送時の暗号化は、主に<strong>TLS(HTTPS)</strong>で行います。AWSのサービスのAPIはHTTPSで呼び出されます。自分のシステムの通信も、要件に応じて暗号化します。</p>
+<div class="table-wrap"><table>
+<tr><th>通信</th><th>暗号化の方法</th></tr>
+<tr><td>利用者 ⇔ ALB・CloudFront</td><td><a href="../services/acm.html">ACM</a>の証明書でHTTPSにする。CloudFrontではViewer Protocol Policyで「HTTPSにリダイレクト」などを設定</td></tr>
+<tr><td>ALB ⇔ EC2</td><td>ALBでHTTPSを終端する(以降はHTTP)か、EC2側にも証明書を置いてHTTPSにする(エンドツーエンドの暗号化)</td></tr>
+<tr><td>S3へのアクセス</td><td>バケットポリシーで <code>aws:SecureTransport</code> が <code>false</code> のリクエストを <code>Deny</code> し、HTTPSを強制する</td></tr>
+<tr><td>EFSのマウント</td><td>EFSマウントヘルパーの <code>tls</code> オプションでTLSを使う</td></tr>
+<tr><td>オンプレミス ⇔ AWS</td><td><a href="../services/site-to-site-vpn.html">Site-to-Site VPN</a>(IPsec)。Direct Connectは標準では暗号化されないため、MACsecかDX上のVPNを使う</td></tr>
+<tr><td>RDSへの接続</td><td>SSL/TLSで接続する(DBのパラメータで暗号化された接続だけを許可することもできる)</td></tr>
+</table></div>
+<div class="point"><p>「保存時の暗号化」はKMS(キー)、「転送時の暗号化」はTLS(証明書=ACM)と結び付けて覚えると整理しやすくなります。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:<code>aws:SecureTransport</code> などの条件キー</li>
+<li><a href="storage-types.html">ストレージの種類</a>:暗号化の対象になるストレージ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/kms.html">AWS KMS</a>:保存時の暗号化のキー管理</li>
+<li><a href="../services/acm.html">AWS Certificate Manager</a>:転送時の暗号化(HTTPS)の証明書</li>
+<li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/ebs.html">Amazon EBS</a>/<a href="../services/rds.html">Amazon RDS</a>:保存時の暗号化</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>/<a href="../services/cloudfront.html">Amazon CloudFront</a>:HTTPSの終端</li>
+<li><a href="../services/config.html">AWS Config</a>:暗号化されていないリソースの検出</li>
+</ul>
+</section>

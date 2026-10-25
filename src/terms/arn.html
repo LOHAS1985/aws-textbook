@@ -1,0 +1,65 @@
+<!-- title: ARN -->
+<!-- category: AWSの基礎 -->
+<!-- lead: AWSのリソースを世界で一意に指し示す名前(Amazon Resource Name) -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>ARN(Amazon Resource Name)</strong>は、AWSのリソースを<strong>一意に識別するための名前</strong>です。IAMポリシーで「どのリソースへの操作を許可するか」を書くときや、CLI・API・CloudFormationで別のリソースを指定するときに使います。</p>
+
+<h3>形式</h3>
+<pre class="code"><code>arn:パーティション:サービス:リージョン:アカウントID:リソース
+例:arn:aws:lambda:ap-northeast-1:123456789012:function:MyFunction</code></pre>
+<figure class="figure" data-diagram>
+grid 130 85
+node p0 0 0 box "arn" "固定"
+node p1 1 0 box "aws" "パーティション"
+node p2 2 0 box "lambda" "サービス"
+node p3 3 0 box "ap-northeast-1" "リージョン" w=1.3
+node p4 4.3 0 box "123456789012" "アカウントID" w=1.2
+node p5 5.5 0 accent "function:…" "リソース" w=1.1
+<figcaption>図1 ARNの構成。コロン(:)で区切られた部分ごとに、パーティション・サービス・リージョン・アカウントID・リソースを表す。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>部分</th><th>意味</th><th>例</th></tr>
+<tr><td>パーティション</td><td>AWSの大きな区分</td><td>通常は <code>aws</code>(中国は <code>aws-cn</code>、米国政府向けは <code>aws-us-gov</code>)</td></tr>
+<tr><td>サービス</td><td>サービスの名前空間</td><td><code>s3</code>、<code>ec2</code>、<code>iam</code>、<code>lambda</code></td></tr>
+<tr><td>リージョン</td><td>リソースがあるリージョン</td><td><code>ap-northeast-1</code>。グローバルなリソースでは<strong>空欄</strong></td></tr>
+<tr><td>アカウントID</td><td>リソースを所有する12桁のアカウントID</td><td><code>123456789012</code>。S3バケットなどでは<strong>空欄</strong></td></tr>
+<tr><td>リソース</td><td>リソースの種類と名前・ID</td><td><code>instance/i-0abc…</code>、<code>role/MyRole</code>、<code>my-bucket/*</code></td></tr>
+</table></div>
+
+<h3>よく見るARNの例</h3>
+<div class="table-wrap"><table>
+<tr><th>リソース</th><th>ARN</th><th>ポイント</th></tr>
+<tr><td>S3バケット</td><td><code>arn:aws:s3:::my-bucket</code></td><td>バケット名が世界で一意なので、リージョンとアカウントIDは空欄</td></tr>
+<tr><td>S3のオブジェクト</td><td><code>arn:aws:s3:::my-bucket/*</code></td><td>バケット内の全オブジェクト。バケット自体の操作(<code>s3:ListBucket</code>)とオブジェクトの操作(<code>s3:GetObject</code>)でARNが違う点に注意</td></tr>
+<tr><td>IAMロール</td><td><code>arn:aws:iam::123456789012:role/MyRole</code></td><td>IAMはグローバルなのでリージョンは空欄</td></tr>
+<tr><td>EC2インスタンス</td><td><code>arn:aws:ec2:ap-northeast-1:123456789012:instance/i-0abc123</code></td><td>すべての部分が埋まる</td></tr>
+<tr><td>Lambda関数のエイリアス</td><td><code>arn:aws:lambda:ap-northeast-1:123456789012:function:MyFunction:prod</code></td><td>末尾にエイリアス名やバージョン番号を付けると、その版を指す</td></tr>
+</table></div>
+
+<h3>ポリシーでの使い方</h3>
+<ul>
+<li>IAMポリシーの <code>Resource</code> にARNを書いて、操作の対象を絞る。</li>
+<li><code>*</code>(任意の文字列)や <code>?</code>(任意の1文字)のワイルドカードを使える。例:<code>arn:aws:s3:::logs-*/*</code> は「logs- で始まるすべてのバケットのオブジェクト」。</li>
+<li>リソースベースのポリシーでは、<code>Principal</code> に相手のアカウントやロールのARNを書く。</li>
+</ul>
+<div class="point"><p>S3で「バケットの一覧は見られるのにオブジェクトが取得できない」(またはその逆)というときは、<code>Resource</code> に <code>arn:aws:s3:::my-bucket</code>(バケット)と <code>arn:aws:s3:::my-bucket/*</code>(オブジェクト)の<strong>両方</strong>が正しく書かれているかを確認します。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:ARNを使ってポリシーを書く</li>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:グローバルなリソースはARNのリージョンが空欄になる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:ポリシーの <code>Resource</code>・<code>Principal</code></li>
+<li><a href="../services/s3.html">Amazon S3</a>:バケットとオブジェクトでARNが異なる</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:バージョン・エイリアスのARN</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:<code>!GetAtt</code> などでリソースのARNを取得する</li>
+</ul>
+</section>

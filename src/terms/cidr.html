@@ -1,0 +1,81 @@
+<!-- title: CIDR -->
+<!-- category: ネットワーク -->
+<!-- lead: 「10.0.0.0/16」のように、IPアドレスの範囲をまとめて表す書き方 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>CIDR(サイダー、Classless Inter-Domain Routing)表記</strong>は、<code>10.0.0.0/16</code> のように、<strong>IPアドレスの範囲</strong>を「先頭のアドレス/プレフィックス長」で表す書き方です。VPC・サブネット・ルートテーブル・セキュリティグループなど、AWSのネットワーク設定のあらゆる場所で使います。</p>
+
+<h3>読み方</h3>
+<p>IPv4アドレスは32ビット(8ビット×4つ)です。<code>/</code> の後ろの数字(プレフィックス長)は、<strong>先頭から何ビットを固定するか</strong>を表します。残りのビットが自由に使える部分になり、その組み合わせの数がアドレスの個数です。</p>
+<pre class="code"><code>アドレスの個数 = 2 の (32 − プレフィックス長) 乗
+例:/16 → 2の16乗 = 65,536個、/24 → 2の8乗 = 256個</code></pre>
+<figure class="figure" data-diagram>
+grid 170 85
+node fix 0 0 accent "先頭16ビット" "10.0 で固定"
+node free 1.3 0 ok "残り16ビット" "自由に使える"
+node cnt 2.8 0 box "65,536個" "のアドレス"
+edge fix free
+edge free cnt "2の16乗"
+<figcaption>図1 10.0.0.0/16 の読み方。先頭16ビット(10.0)を固定し、残り16ビットで 2の16乗=65,536個のアドレス(10.0.0.0〜10.0.255.255)を表す。数字が大きいほど固定する部分が増え、範囲は狭くなる。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>CIDR</th><th>アドレスの個数</th><th>範囲の例</th><th>AWSでの使いどころ</th></tr>
+<tr><td><code>/16</code></td><td>65,536</td><td><code>10.0.0.0</code>〜<code>10.0.255.255</code></td><td>VPCの最大サイズ</td></tr>
+<tr><td><code>/20</code></td><td>4,096</td><td><code>10.0.0.0</code>〜<code>10.0.15.255</code></td><td>大きめのサブネット(EKSなどIPを多く使う用途)</td></tr>
+<tr><td><code>/24</code></td><td>256</td><td><code>10.0.1.0</code>〜<code>10.0.1.255</code></td><td>よく使うサブネットのサイズ</td></tr>
+<tr><td><code>/28</code></td><td>16</td><td><code>10.0.1.0</code>〜<code>10.0.1.15</code></td><td>VPC・サブネットの最小サイズ</td></tr>
+<tr><td><code>/32</code></td><td>1</td><td><code>203.0.113.10</code> のみ</td><td>セキュリティグループで特定の1つのIPだけを許可</td></tr>
+<tr><td><code>/0</code></td><td>すべて</td><td><code>0.0.0.0/0</code></td><td>「すべての宛先・送信元」(デフォルトルート、全開放)</td></tr>
+</table></div>
+
+<h3>VPCとサブネットでの使い方</h3>
+<ul>
+<li><strong>VPC</strong>には <code>/16</code>〜<code>/28</code> のCIDRを指定する。通常はプライベートIPアドレスの範囲(<code>10.0.0.0/8</code>、<code>172.16.0.0/12</code>、<code>192.168.0.0/16</code>)から選ぶ。</li>
+<li><strong>サブネット</strong>は、VPCのCIDRを分割した、より小さい範囲を指定する。<strong>1つのサブネットは1つのAZに属する</strong>。</li>
+<li>作成後にVPCへCIDRを追加することはできるが、既存のサブネットのCIDRは変更できない。後からIPが足りなくならないよう、余裕を持って設計する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node p1 0 0 ok "パブリック" "10.0.1.0/24"
+node v1 0 1 box "プライベート" "10.0.11.0/24"
+group 0 0 0 1 "AZ-a" pad=10
+node p2 1.4 0 ok "パブリック" "10.0.2.0/24"
+node v2 1.4 1 box "プライベート" "10.0.12.0/24"
+group 1.4 0 1.4 1 "AZ-c" pad=10
+group 0 0 1.4 1 "VPC 10.0.0.0/16" pad=30
+<figcaption>図2 CIDRの設計例。VPC(10.0.0.0/16)の範囲を /24 のサブネットに分け、AZごとにパブリックとプライベートのサブネットを作る。サブネット同士の範囲は重ならないようにする。</figcaption>
+</figure>
+
+<h3>サブネットで使えないアドレス(予約済みの5つ)</h3>
+<p>AWSでは、<strong>各サブネットの5つのアドレスが予約</strong>されていて、EC2などには割り当てられません。<code>10.0.1.0/24</code> の場合は次のとおりで、使えるのは256−5=<strong>251個</strong>です。</p>
+<div class="table-wrap"><table>
+<tr><th>アドレス</th><th>用途</th></tr>
+<tr><td><code>10.0.1.0</code></td><td>ネットワークアドレス</td></tr>
+<tr><td><code>10.0.1.1</code></td><td>VPCのルーター</td></tr>
+<tr><td><code>10.0.1.2</code></td><td>DNSサーバー(Amazon提供のDNS)</td></tr>
+<tr><td><code>10.0.1.3</code></td><td>将来の利用のための予約</td></tr>
+<tr><td><code>10.0.1.255</code></td><td>ネットワークのブロードキャストアドレス(VPCではブロードキャストは使えないが予約される)</td></tr>
+</table></div>
+
+<h3>CIDRの重複に注意</h3>
+<p><strong>CIDRが重なっているネットワーク同士は、そのままでは接続できません</strong>。VPCピアリングは作成できず、Transit GatewayやVPNでも正しくルーティングできません。将来つなぐ可能性があるVPCやオンプレミスのネットワークとは、最初から重ならない範囲を割り当てます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="route-table.html">ルートテーブル</a>:CIDRで宛先を指定し、ロンゲストマッチで経路を選ぶ</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:CIDRで許可・拒否する送信元・宛先を指定する</li>
+<li><a href="vpc-peering.html">VPCピアリング</a>:CIDRが重なるVPC同士はつなげない</li>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:サブネットはAZに属する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:VPC・サブネットのCIDRの設計</li>
+<li><a href="../services/eks.html">Amazon EKS</a>:PodにVPCのIPを割り当てるため、サブネットのサイズが重要</li>
+<li><a href="../services/transit-gateway.html">AWS Transit Gateway</a>:CIDRが重ならないネットワーク同士を接続</li>
+</ul>
+</section>

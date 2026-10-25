@@ -10,13 +10,17 @@
 <h2>2. 主な機能・特徴</h2>
 <h3>用語</h3>
 <ul>
-<li><strong>OU(組織単位)</strong>:アカウントのグループ。</li>
+<li><strong>ルート</strong>:組織の階層の最上位。ルートにSCPを適用すると、組織内のすべてのアカウントが対象になる。</li>
+<li><strong>管理アカウント</strong>:組織を作成したアカウント。メンバーアカウントの招待・作成や一括請求を行う。</li>
+<li><strong>メンバーアカウント</strong>:組織に所属する管理アカウント以外のアカウント。</li>
+<li><strong>OU(組織単位)</strong>:アカウントのグループ。OUの中にOUを入れて階層にできる。</li>
 <li><strong>SCP(サービスコントロールポリシー)</strong>:権限の制御(拒否が中心)。<strong>IAMで許可しても、SCPで拒否されていれば拒否</strong>される。</li>
 </ul>
 
 <figure class="figure" data-diagram>
 grid 160 85
-node mgmt 1.5 0 accent "管理アカウント" "SCP・一括請求"
+node root 1.5 0 accent "ルート" "組織の最上位"
+node mgmt 3 0 blue "管理アカウント" "組織の管理・一括請求"
 node ou1 0.5 1.2 box "OU: 本番"
 node ou2 2.5 1.2 box "OU: 開発"
 node a1 0 2.4 ok "本番アカウント"
@@ -24,13 +28,14 @@ node a2 1 2.4 ok "共有サービス"
 node a3 2 2.4 ok "開発アカウント"
 node a4 3 2.4 ok "テストアカウント"
 group 0 1.2 1 2.4 "SCPを適用" pad=10 accent
-edge mgmt ou1
-edge mgmt ou2
+edge root mgmt
+edge root ou1
+edge root ou2
 edge ou1 a1
 edge ou1 a2
 edge ou2 a3
 edge ou2 a4
-<figcaption>図1 Organizationsの構造。アカウントをOUにまとめ、OUにSCPを適用すると配下の全アカウントに権限の上限がかかる。</figcaption>
+<figcaption>図1 Organizationsの構造。組織の最上位は「ルート」で、その下にOUやアカウントを置く。管理アカウントは組織を作成・管理するアカウントで、組織内のアカウントの1つ。OUにSCPを適用すると、配下の全アカウントに権限の上限がかかる。</figcaption>
 </figure>
 <h3>SCPの利用イメージ</h3>
 <p>Organizationsの管理アカウント側の管理者が設定します。</p>

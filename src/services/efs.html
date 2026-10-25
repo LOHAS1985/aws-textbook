@@ -35,11 +35,12 @@ edge onp efs
 <figcaption>図1 EFSの構成。AZごとに1つマウントターゲット(サブネット内のENI)を作り、各AZのEC2・ECS・LambdaからNFSで同じファイルシステムを共有する。オンプレミスからも接続できる。</figcaption>
 </figure>
 <h3>パフォーマンスモード(作成後に変更不可)</h3>
+<p>最大I/Oは旧世代のモードで、操作ごとのレイテンシーが高くなります。AWSは<strong>すべてのファイルシステムで汎用モードを推奨</strong>しており、高い性能が必要な場合は汎用モード+Elasticスループットを使います。</p>
 <div class="table-wrap"><table>
 <tr><th></th><th>汎用</th><th>最大I/O</th></tr>
 <tr><td>レイテンシー</td><td>低い</td><td>高い</td></tr>
 <tr><td>IOPSの上限</td><td>高い</td><td>最高</td></tr>
-<tr><td>用途</td><td>Webサーバー、CMSなど</td><td>複数インスタンスから同時アクセスされるビッグデータ分析、メディア処理など</td></tr>
+<tr><td>用途</td><td>基本はこちら(推奨)。Webサーバー、CMSなど</td><td>旧世代。高いレイテンシーを許容できる、高度に並列化されたワークロード</td></tr>
 <tr><td>One Zone</td><td>利用可</td><td><strong class="em">利用不可</strong></td></tr>
 <tr><td>Elasticスループット</td><td>利用可</td><td><strong class="em">利用不可</strong></td></tr>
 </table></div>
@@ -93,7 +94,7 @@ edge onp efs
 <li>Linuxで複数インスタンス・複数AZから共有 → <strong>EFS</strong>。Windows → <strong>FSx for Windows</strong>。</li>
 <li>マウントターゲットは<strong>AZごとに1つ</strong>。</li>
 <li>パフォーマンスモードは<strong>作成後に変更不可</strong>、スループットモードは<strong>変更可能</strong>。</li>
-<li>最大I/OモードではOne Zone・Elasticスループットが使えない。</li>
+<li>最大I/OモードではOne Zone・Elasticスループットが使えない。AWSの推奨は<strong>汎用モード</strong>。</li>
 <li>スパイクがある負荷 → Elastic、小容量で高スループット → Provisioned。</li>
 </ul></div>
 </section>
