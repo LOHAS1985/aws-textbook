@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudFormationで本番環境を安全に更新する | AWS教科書</title>
+<meta name="description" content="変更セット・スタックポリシー・削除ポリシー・ロールバックトリガーで、意図しない置き換えや削除を防ぐ">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">デプロイ・自動化</a>
+  <h1>CloudFormationで本番環境を安全に更新する</h1>
+  <p class="lead">変更セット・スタックポリシー・削除ポリシー・ロールバックトリガーで、意図しない置き換えや削除を防ぐ</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>本番のCloudFormationスタックを更新したところ、プロパティの変更でRDSが<strong>置き換え(作り直し)</strong>になり、データが消えかけた。スタックの更新が失敗したまま止まってしまったこともある。本番のスタックを、事前に影響を確かめたうえで安全に更新し、失敗しても元に戻せるようにしたい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 194" style="max-width:846px;min-width:677px" role="img" aria-label="図1 安全な更新の流れ。変更セットで何が変更・置換・削除されるかを確かめてから実行する。更新中や直後にアラームが鳴ったり失敗したりすると、前の状態にロールバックされる。"><defs><marker id="dgusecases-cloudformation-safe-update-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="84" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="108" text-anchor="middle" class="dg-t">新テンプレート</text>
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="321" y="100" text-anchor="middle" class="dg-tb">変更セット</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">影響を確認</text>
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">レビュー</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">置換・削除はないか</text>
+<rect x="678" y="38" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="750" y="60" text-anchor="middle" class="dg-t">実行</text>
+<text x="750" y="78" text-anchor="middle" class="dg-s">更新成功</text>
+<rect x="678" y="118" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="750" y="140" text-anchor="middle" class="dg-t">ロールバック</text>
+<text x="750" y="158" text-anchor="middle" class="dg-s">アラームで発動</text>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-safe-update-1)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-safe-update-1)"/>
+<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgusecases-cloudformation-safe-update-1)"/>
+<path d="M750.0,90.0 L750.0,118.0" class="dg-line dg-dash" marker-end="url(#dgusecases-cloudformation-safe-update-1)"/>
+<text x="750" y="108" text-anchor="middle" class="dg-s dg-halo">失敗・アラーム</text>
+</svg>
+</div>
+<figcaption>図1 安全な更新の流れ。変更セットで何が変更・置換・削除されるかを確かめてから実行する。更新中や直後にアラームが鳴ったり失敗したりすると、前の状態にロールバックされる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:変更セット、スタックポリシー、DeletionPolicy・UpdateReplacePolicy、終了保護、ロールバックトリガー</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:ロールバックトリガーに使うアラーム</li>
+<li><a href="../services/iam.html">AWS IAM</a>:CloudFormationが使うサービスロール、スタックを操作できる人の制限</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>重要なリソース(RDS・S3など)に <code>DeletionPolicy: Snapshot</code>(または <code>Retain</code>)と <code>UpdateReplacePolicy</code> を設定する</li>
+<li><strong>スタックポリシー</strong>で、本番DBなどの置き換え・削除を伴う更新を拒否する。スタックには<strong>終了保護</strong>を有効にする</li>
+<li>更新は直接行わず、<strong>変更セット</strong>を作って、各リソースが変更・<strong>置換(Replacement)</strong>・削除のどれになるかを確認する</li>
+<li>エラー率などのCloudWatchアラームを<strong>ロールバックトリガー</strong>に設定し、監視時間内にアラームが鳴ったら自動でロールバックさせる</li>
+<li>変更セットを実行する。EC2の起動処理の完了を待つ必要があれば、<code>CreationPolicy</code> と <code>cfn-signal</code> を使う</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>更新の影響を事前に確認 → <strong class="em">変更セット</strong>。DBの名前など、変更すると置換になるプロパティがある。</li>
+<li>特定のリソースの更新・置換を禁止 → <strong class="em">スタックポリシー</strong>。スタックの削除を防ぐ → 終了保護。</li>
+<li>スタックを消してもリソースを残す・スナップショットを取る → <strong>DeletionPolicy</strong>(Retain/Snapshot)。</li>
+<li>ロールバックも失敗して <code>UPDATE_ROLLBACK_FAILED</code> になった → 原因を直して「更新のロールバックを続行」。必要なら問題のリソースをスキップする。</li>
+<li>テンプレートの外でリソースを手で変更すると、更新が失敗する原因になる(ドリフト)。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="golden-ami-pipeline.html"><span class="label">← 前へ</span>パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cloudformation-drift.html"><span class="label">次へ →</span>手作業による設定変更(ドリフト)を見つけて戻す</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

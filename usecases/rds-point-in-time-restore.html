@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>誤操作したRDSのデータを特定の時点に戻す | AWS教科書</title>
+<meta name="description" content="自動バックアップのポイントインタイムリカバリ(PITR)で、誤操作の直前の状態のDBを作り直す">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">信頼性・事業継続</a>
+  <h1>誤操作したRDSのデータを特定の時点に戻す</h1>
+  <p class="lead">自動バックアップのポイントインタイムリカバリ(PITR)で、誤操作の直前の状態のDBを作り直す</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>運用中のRDSで、14時05分に誤ってテーブルのデータを削除してしまった。<strong>14時04分の状態</strong>に戻して業務を再開したい。また、こうした事態に備えて、バックアップの保持期間や別リージョンへのバックアップも整えておきたい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 154" style="max-width:905px;min-width:724px" role="img" aria-label="図1 ポイントインタイムリカバリ。日次のスナップショットとトランザクションログから、指定した時点の状態の新しいDBインスタンスを作る。元のDBは上書きされないので、アプリの接続先を切り替える。"><defs><marker id="dgusecases-rds-point-in-time-restore-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">本番DB</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">14:05に誤削除</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="100" text-anchor="middle" class="dg-t">自動バックアップ</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">スナップショット+ログ</text>
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">新しいDB</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">14:04の状態</text>
+<rect x="731" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="806" y="100" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="806" y="118" text-anchor="middle" class="dg-s">接続先を切替</text>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-rds-point-in-time-restore-1)"/>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgusecases-rds-point-in-time-restore-1)"/>
+<text x="466" y="108" text-anchor="middle" class="dg-s dg-halo">PITR</text>
+<path d="M731.0,104.0 L660.0,104.0" class="dg-line" marker-end="url(#dgusecases-rds-point-in-time-restore-1)"/>
+</svg>
+</div>
+<figcaption>図1 ポイントインタイムリカバリ。日次のスナップショットとトランザクションログから、指定した時点の状態の新しいDBインスタンスを作る。元のDBは上書きされないので、アプリの接続先を切り替える。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/rds.html">Amazon RDS</a>:自動バックアップ(保持期間1〜35日)、PITR、手動スナップショット、自動バックアップのリージョン間レプリケーション</li>
+<li><a href="../services/aurora.html">Amazon Aurora</a>:バックトラック(Aurora MySQL。同じクラスターを数秒〜数分で過去に巻き戻す)</li>
+<li><a href="../services/backup.html">AWS Backup</a>:バックアップの一元管理・別アカウントへのコピー</li>
+<li><a href="../services/route53.html">Amazon Route 53</a>:アプリの接続先をCNAMEで切り替えやすくする</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>(事前)自動バックアップの保持期間を要件に合わせて設定する(0にすると無効)。長期保管は手動スナップショットかAWS Backupで行う</li>
+<li>誤操作が起きたら、コンソールの「特定時点への復元」で、誤操作の直前の時刻を指定して<strong>新しいDBインスタンス</strong>を作る(最新の復元可能時刻は通常、現在の約5分前)</li>
+<li>復元したDBに、元と同じセキュリティグループ・パラメータグループ・オプショングループが付いているかを確認する</li>
+<li>アプリの接続先を新しいエンドポイントに変える。または、元のインスタンスと新しいインスタンスの<strong>名前を入れ替えて</strong>エンドポイントを引き継ぐ</li>
+<li>問題がなければ元のインスタンスを削除する(必要なら最終スナップショットを取る)</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>特定の時刻に戻す → <strong class="em">PITR</strong>。復元先は<strong>新しいDBインスタンス</strong>(エンドポイントが変わる)。</li>
+<li>スナップショットからの復元も同じく新しいインスタンスになる。元のインスタンスが上書きされることはない。</li>
+<li>Aurora MySQLで、新しいクラスターを作らずにすばやく戻す → <strong>バックトラック</strong>(最大72時間)。</li>
+<li>自動バックアップはDBインスタンスを削除すると既定で消える。手動スナップショットは削除するまで残る。</li>
+<li>リージョン障害への備え → スナップショットの<strong>リージョン間コピー</strong>や、自動バックアップのリージョン間レプリケーション。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="dynamodb-scaling-recovery.html"><span class="label">← 前へ</span>DynamoDBを負荷に合わせてスケールし、誤操作から復旧する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="s3-data-protection.html"><span class="label">次へ →</span>S3のデータを誤削除やリージョン障害から守る</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>組織全体のVPCのIPアドレスを重ならないように払い出す | AWS教科書</title>
+<meta name="description" content="VPC IPAMのプールをRAMで共有し、各アカウントのVPCに重ならないCIDRを自動で割り当てる">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワーク・コンテンツ配信</a>
+  <h1>組織全体のVPCのIPアドレスを重ならないように払い出す</h1>
+  <p class="lead">VPC IPAMのプールをRAMで共有し、各アカウントのVPCに重ならないCIDRを自動で割り当てる</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>アカウントごとにチームが自由にVPCを作った結果、CIDRが重なり、Transit GatewayやオンプレミスとつなげないVPCが出てきた。これから作るVPCは、<strong>決められたアドレス範囲から重ならないCIDRを自動で割り当て</strong>、使用状況も1か所で把握したい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 922 194" style="max-width:922px;min-width:738px" role="img" aria-label="図1 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。"><defs><marker id="dgusecases-vpc-ip-planning-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="100" text-anchor="middle" class="dg-tb">IPAM</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">委任管理者</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="100" text-anchor="middle" class="dg-t">本番プール</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">10.0.0.0/12</text>
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">RAM</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">OUへ共有</text>
+<rect x="748" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="823" y="60" text-anchor="middle" class="dg-t">VPC(A)</text>
+<text x="823" y="78" text-anchor="middle" class="dg-s">/20を自動割当</text>
+<rect x="748" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="823" y="140" text-anchor="middle" class="dg-t">VPC(B)</text>
+<text x="823" y="158" text-anchor="middle" class="dg-s">/20を自動割当</text>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
+<path d="M660.0,91.4 L748.0,76.6" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
+<path d="M660.0,116.6 L748.0,131.4" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
+</svg>
+</div>
+<figcaption>図1 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/ipam.html">Amazon VPC IP Address Manager(IPAM)</a>:プールの階層、割り当てルール、使用状況・重複の監視</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:IPAMの委任管理者、組織全体のリソースの検出</li>
+<li><a href="../services/ram.html">AWS RAM</a>:プールの共有</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:VPCのテンプレートでIPAMプールを指定(StackSetsで各アカウントへ展開)</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:プールの使用率のアラーム</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>Organizationsの管理アカウントで、IPAMの委任管理者アカウントを指定する(高度なティアを使う)</li>
+<li>委任管理者でIPAMを作り、管理するリージョンを指定する。最上位のプール(例:<code>10.0.0.0/8</code>)の下に、リージョン・環境ごとのプールを作る</li>
+<li>各プールに割り当てルール(CIDRのサイズの最小・最大・既定、必須のタグ)を設定する</li>
+<li>RAMで、プールを対象のOU・アカウントに共有する</li>
+<li>各アカウントでは、VPCの作成時(またはCloudFormationの <code>Ipv4IpamPoolId</code>)にプールとネットマスクを指定する。既存のVPCの重複や非準拠は、IPAMのリソースの一覧で確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>組織全体のVPCのCIDRの重複を防ぐ・一元管理する → <strong class="em">IPAM</strong>。他のアカウントへのプールの共有 → <strong>RAM</strong>。</li>
+<li>CIDRが重なったVPCどうしは、ピアリングやTransit Gatewayで正しくルーティングできない。後から直すのは大変なので、作る前に計画する。</li>
+<li>プールの使用率をCloudWatchで監視し、枯渇の前にCIDRを追加する。</li>
+<li>VPCのCIDRは後から追加(セカンダリCIDR)できるが、元のCIDRは変更できない。</li>
+<li>プライベートのプールや他のアカウントへの割り当てには、IPAMの<strong>高度なティア</strong>が必要。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="waf-web-protection.html"><span class="label">← 前へ</span>Webアプリを攻撃や大量アクセスから守る</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="private-subnet-endpoints.html"><span class="label">次へ →</span>プライベートサブネットからNATなしでAWSのサービスを使う</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

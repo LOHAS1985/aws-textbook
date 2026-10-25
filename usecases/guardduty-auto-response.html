@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>乗っ取られたEC2を自動で隔離する | AWS教科書</title>
+<meta name="description" content="GuardDutyの検出結果をEventBridgeで受け、隔離用のセキュリティグループへの付け替えと証拠の保全を自動で行う">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
+  <h1>乗っ取られたEC2を自動で隔離する</h1>
+  <p class="lead">GuardDutyの検出結果をEventBridgeで受け、隔離用のセキュリティグループへの付け替えと証拠の保全を自動で行う</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>EC2が乗っ取られ、暗号資産のマイニングや外部への攻撃に使われた場合に、<strong>すぐにネットワークから切り離したい</strong>。調査のために、インスタンスを削除せずにディスクの状態を保存し、担当者にも通知したい。夜間でも自動で対応したい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 242" style="max-width:846px;min-width:677px" role="img" aria-label="図1 侵害されたEC2の自動隔離。GuardDutyの検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、EBSのスナップショットを取って証拠を残す。"><defs><marker id="dgusecases-guardduty-auto-response-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="106" y="100" text-anchor="middle" class="dg-tb">GuardDuty</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">重要度:高</text>
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="100" text-anchor="middle" class="dg-t">EventBridge</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">種類・重要度で判定</text>
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">SSM Automation</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">またはLambda</text>
+<rect x="678" y="38" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="750" y="60" text-anchor="middle" class="dg-t">隔離用SG</text>
+<text x="750" y="78" text-anchor="middle" class="dg-s">通信をすべて遮断</text>
+<rect x="678" y="118" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="750" y="140" text-anchor="middle" class="dg-t">スナップショット</text>
+<text x="750" y="158" text-anchor="middle" class="dg-s">証拠を保全</text>
+<rect x="248" y="166" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="321" y="188" text-anchor="middle" class="dg-t">SNS</text>
+<text x="321" y="206" text-anchor="middle" class="dg-s">担当者へ通知</text>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+<path d="M321.0,130.0 L321.0,166.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+<path d="M608.0,117.5 L677.5,130.5" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+</svg>
+</div>
+<figcaption>図1 侵害されたEC2の自動隔離。GuardDutyの検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、EBSのスナップショットを取って証拠を残す。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/guardduty.html">Amazon GuardDuty</a>:不審な通信・マイニング・認証情報の悪用などの検出</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:検出結果(<code>GuardDuty Finding</code>)を種類・重要度で絞り込んで自動処理を起動</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>/<a href="../services/lambda.html">AWS Lambda</a>:隔離・スナップショット・タグ付けの処理</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:隔離用セキュリティグループ、終了保護、EBSスナップショット</li>
+<li><a href="../services/security-hub.html">AWS Security Hub</a>:検出結果の集約と対応状況の管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>組織の全アカウント・全リージョンでGuardDutyを有効にする(委任管理者を使う)</li>
+<li>インバウンド・アウトバウンドのルールが何もない<strong>隔離用セキュリティグループ</strong>を用意する</li>
+<li>EventBridgeで、GuardDutyの検出結果のうち重要度が高く、EC2が対象のものに一致するルールを作る</li>
+<li>ターゲットの自動処理で、インスタンスの終了保護を有効にし、EBSのスナップショットを取り、セキュリティグループを隔離用に付け替える。Auto Scalingグループからは切り離す</li>
+<li>SNSで担当者に通知し、隔離したインスタンスを調査する。漏えいした可能性のある認証情報(IAMロールの一時認証情報など)は無効化する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>GuardDutyの検出結果への自動対応 → <strong class="em">EventBridge</strong>ルール+Lambda/SSM Automation。</li>
+<li>調査のため、すぐに<strong>終了しない</strong>。終了保護をかけ、スナップショットで証拠を残す。</li>
+<li>セキュリティグループを付け替えても、<strong>既に確立している通信</strong>は追跡されていると切れないことがある。ネットワークACLでの遮断も併用する。</li>
+<li>Auto Scalingグループに入ったままだと、ヘルスチェックで置き換えられて証拠が消えるので、先にグループから切り離す。</li>
+<li>GuardDutyは<strong>リージョンごと</strong>に有効化が必要。使っていないリージョンも有効にしておく。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="vulnerability-management.html"><span class="label">← 前へ</span>脆弱性を継続的に検出し、パッチ適用まで自動化する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="waf-web-protection.html"><span class="label">次へ →</span>Webアプリを攻撃や大量アクセスから守る</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

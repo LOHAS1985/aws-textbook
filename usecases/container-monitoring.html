@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コンテナ(ECS・EKS)の性能を監視する | AWS教科書</title>
+<meta name="description" content="Container Insightsでタスク・Pod単位のメトリクスとログを集め、異常をアラームで知らせる">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">監視・ログ・自動修復</a>
+  <h1>コンテナ(ECS・EKS)の性能を監視する</h1>
+  <p class="lead">Container Insightsでタスク・Pod単位のメトリクスとログを集め、異常をアラームで知らせる</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>ECSやEKSで動くアプリについて、クラスター全体だけでなく<strong>サービス・タスク・Pod単位</strong>のCPU・メモリ・再起動回数を監視したい。メモリ不足でタスクが落ちる、Podが再起動を繰り返す、といった問題を早く見つけて通知したい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 242" style="max-width:905px;min-width:724px" role="img" aria-label="図1 コンテナの監視の構成。ECSはクラスター単位でContainer Insightsを有効にし、EKSはCloudWatch Observabilityアドオンでエージェントを入れる。アプリ独自のPrometheus形式のメトリクスは、Managed Service for Prometheusに集めてGrafanaで見る。"><defs><marker id="dgusecases-container-monitoring-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">ECS</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">Container Insights</text>
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">EKS</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">CloudWatchアドオン</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">CloudWatch</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">メトリクス・ログ</text>
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">アラーム</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">メモリ使用率など</text>
+<rect x="731" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="806" y="60" text-anchor="middle" class="dg-t">SNS</text>
+<text x="806" y="78" text-anchor="middle" class="dg-s">通知</text>
+<rect x="272" y="166" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="188" text-anchor="middle" class="dg-t">Prometheus</text>
+<text x="347" y="206" text-anchor="middle" class="dg-s">アプリのメトリクス</text>
+<rect x="510" y="166" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="188" text-anchor="middle" class="dg-t">Grafana</text>
+<text x="585" y="206" text-anchor="middle" class="dg-s">ダッシュボード</text>
+<path d="M184.0,76.6 L272.0,91.4" class="dg-line" marker-end="url(#dgusecases-container-monitoring-1)"/>
+<path d="M184.0,131.4 L272.0,116.6" class="dg-line" marker-end="url(#dgusecases-container-monitoring-1)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgusecases-container-monitoring-1)"/>
+<path d="M660.0,64.0 L731.0,64.0" class="dg-line" marker-end="url(#dgusecases-container-monitoring-1)"/>
+<path d="M184.0,159.1 L272.0,176.9" class="dg-line dg-dash" marker-end="url(#dgusecases-container-monitoring-1)"/>
+<path d="M422.0,192.0 L510.0,192.0" class="dg-line" marker-end="url(#dgusecases-container-monitoring-1)"/>
+</svg>
+</div>
+<figcaption>図1 コンテナの監視の構成。ECSはクラスター単位でContainer Insightsを有効にし、EKSはCloudWatch Observabilityアドオンでエージェントを入れる。アプリ独自のPrometheus形式のメトリクスは、Managed Service for Prometheusに集めてGrafanaで見る。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Container Insightsによるタスク・Pod単位のメトリクスとパフォーマンスログ、アラーム</li>
+<li><a href="../services/ecs.html">Amazon ECS</a>:クラスターの設定でContainer Insightsを有効化。コンテナのログは <code>awslogs</code> ログドライバーでCloudWatch Logsへ</li>
+<li><a href="../services/eks.html">Amazon EKS</a>:<strong>Amazon CloudWatch Observability</strong> アドオン(CloudWatchエージェント+Fluent Bit)でメトリクスとログを収集</li>
+<li><a href="../services/managed-prometheus.html">Amazon Managed Service for Prometheus</a>/<a href="../services/managed-grafana.html">Amazon Managed Grafana</a>:Prometheus形式のメトリクスの保存と可視化</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:アラームの通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>ECS:クラスターでContainer Insights(オブザーバビリティ強化版)を有効にする。新しいクラスターで常に有効にするなら、アカウントの設定 <code>containerInsights</code> を有効にする</li>
+<li>ECS:タスク定義のログ設定を <code>awslogs</code> にし、ロググループを指定する。タスク実行ロールにログを書く権限を付ける</li>
+<li>EKS:CloudWatch Observabilityアドオンを追加し、ノードのIAMロール(またはPod Identity)に <code>CloudWatchAgentServerPolicy</code> を付ける</li>
+<li>メモリ使用率・実行中のタスク数・Podの再起動回数などにアラームを作り、SNSで通知する</li>
+<li>アプリのPrometheusメトリクスは、Managed Prometheusのマネージドコレクター(またはADOT)で収集し、Grafanaでダッシュボードを作る</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>ECSの標準のメトリクスはサービス単位のCPU・メモリだけ。タスク・コンテナ単位の詳細は<strong class="em">Container Insights</strong>を有効にして初めて見られる。</li>
+<li>EKSには標準のノード・Podのメトリクスがない → <strong>CloudWatchエージェント</strong>(Observabilityアドオン)が必要。</li>
+<li>Container Insightsの詳細データはCloudWatch Logsのパフォーマンスログとして保存され、Logs Insightsで調べられる。保存量に応じて費用がかかる。</li>
+<li>タスクが <code>OutOfMemoryError</code> で止まる → タスク定義のメモリの上限を見直す。停止の理由はECSの「停止したタスク」で確認できる。</li>
+<li>負荷に応じたタスク数の増減は、ECSサービスの自動スケーリング(ターゲット追跡)で行う。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="centralized-logging.html"><span class="label">← 前へ</span>複数アカウントのログを集約して分析する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="distributed-tracing.html"><span class="label">次へ →</span>マイクロサービスの遅延の原因をトレースで特定する</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

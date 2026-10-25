@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Savings Plans | AWS教科書</title>
+<meta name="description" content="1年または3年の利用額(1時間あたりの金額)を約束して、コンピューティングなどの料金を割り引く">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#7AA116">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/savings-plans.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat8">クラウド財務管理</a>
+  <h1>Savings Plans</h1>
+  <p class="lead">1年または3年の利用額(1時間あたりの金額)を約束して、コンピューティングなどの料金を割り引く</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Savings Plans</strong>は、<strong>1年または3年の期間、1時間あたり一定の金額を使うことを約束(コミット)</strong>する代わりに、オンデマンドより安い料金で使える割引の仕組みです。例えば「1時間あたり10ドル分を3年間使う」と約束すると、その金額までの利用に割引価格が適用されます。</p>
+<p>リザーブドインスタンス(RI)が「インスタンスの種類」を約束するのに対し、Savings Plans は「金額」を約束するので、インスタンスの種類やリージョンを変えても割引が続く柔軟さがあります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">種類<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>種類</th><th>割引(最大)</th><th>対象</th><th>柔軟さ</th></tr>
+<tr><td data-label="種類"><strong>Compute Savings Plans</strong></td><td data-label="割引(最大)">66%</td><td data-label="対象">EC2・Fargate・Lambda</td><td data-label="柔軟さ">インスタンスファミリー・サイズ・リージョン・OS・テナンシーを問わない</td></tr>
+<tr><td data-label="種類"><strong>EC2 Instance Savings Plans</strong></td><td data-label="割引(最大)">72%</td><td data-label="対象">EC2</td><td data-label="柔軟さ">選んだリージョンの<strong>特定のインスタンスファミリー</strong>(例:東京のm5)。サイズ・OSは変えられる</td></tr>
+<tr><td data-label="種類">Database Savings Plans</td><td data-label="割引(最大)">35%</td><td data-label="対象">Aurora・RDS・DynamoDB・ElastiCache・OpenSearch など</td><td data-label="柔軟さ">エンジン・インスタンスファミリー・リージョンを問わない。サーバーレスにも適用</td></tr>
+<tr><td data-label="種類">SageMaker AI Savings Plans</td><td data-label="割引(最大)">64%</td><td data-label="対象">SageMaker AI</td><td data-label="柔軟さ">インスタンスファミリー・リージョン・用途を問わない</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 703 154" style="max-width:703px;min-width:562px" role="img" aria-label="図1 割引の選び方。柔軟さを重視するならCompute Savings Plans、構成が決まっていて割引率を優先するならEC2 Instance Savings Plans。約束をしないオンデマンドは定価になる。"><defs><marker id="dgservices-savings-plans-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="100" text-anchor="middle" class="dg-t">オンデマンド</text>
+<text x="112" y="118" text-anchor="middle" class="dg-s">約束なし・定価</text>
+<rect x="279" y="78" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="356" y="100" text-anchor="middle" class="dg-t">Compute SP</text>
+<text x="356" y="118" text-anchor="middle" class="dg-s">最大66%・柔軟</text>
+<rect x="524" y="78" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="602" y="100" text-anchor="middle" class="dg-tb">EC2 Instance SP</text>
+<text x="602" y="118" text-anchor="middle" class="dg-s">最大72%・種類固定</text>
+<path d="M189.0,104.0 L279.0,104.0" class="dg-line" marker-end="url(#dgservices-savings-plans-1)"/>
+<text x="234" y="108" text-anchor="middle" class="dg-s dg-halo">金額を約束</text>
+<path d="M434.0,104.0 L524.0,104.0" class="dg-line" marker-end="url(#dgservices-savings-plans-1)"/>
+<text x="479" y="108" text-anchor="middle" class="dg-s dg-halo">柔軟さと交換</text>
+</svg>
+</div>
+<figcaption>図1 割引の選び方。柔軟さを重視するならCompute Savings Plans、構成が決まっていて割引率を優先するならEC2 Instance Savings Plans。約束をしないオンデマンドは定価になる。</figcaption>
+</figure>
+
+<h3 id="c2-2">支払い方法と期間<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>期間:1年または3年(3年の方が割引が大きい)</li>
+<li>支払い:全額前払い・一部前払い・前払いなし(前払いが多いほど割引が大きい)</li>
+<li>購入後に約束の内容は変更・解約できない。使用量が増えたら追加で購入する。</li>
+</ul>
+
+<h3 id="c2-3">適用のされ方<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>1時間ごとに、割引率の大きい利用から順に約束の金額まで自動で適用される。約束の金額を超えた分はオンデマンド料金。</li>
+<li>約束の金額に満たない時間があっても、約束の金額は支払う(使い残しは無駄になる)。</li>
+<li>Organizationsの一括請求では、既定で他のアカウントの利用にも割引が共有される(共有はオフにできる)。</li>
+<li>EKS・ECS・EMRのクラスターのEC2にも適用される(EKSのクラスター料金自体は対象外)。</li>
+<li>容量の予約はしない。特定のAZで容量を確保したい場合は、オンデマンドキャパシティ予約と組み合わせる。</li>
+</ul>
+
+<h3 id="c2-4">購入量の決め方と効果の確認<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>Cost Explorer</strong> の推奨事項で、過去の使用量から最適な約束額を確認します。購入後は、<strong>使用率</strong>(約束した金額をどれだけ使えているか)と<strong>カバレッジ</strong>(利用のうち割引されている割合)のレポートで効果を確かめます。AWS Budgets で使用率・カバレッジの予算を設定し、下回ったら通知することもできます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>常に動いているWebサーバーやバッチの基盤の費用を下げる</li>
+<li>EC2からFargateやLambdaへ移行する予定があるので、どれにも使えるCompute Savings Plansを選ぶ</li>
+<li>インスタンスファミリーを変える予定がない本番環境で、EC2 Instance Savings Plansで割引を最大にする</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>約束した1時間あたりの金額×期間の時間数を支払います(支払い方法に応じて前払いと月払いに分かれる)。使用量が約束を下回っても、約束の金額は請求されます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="cost-explorer.html">AWS Cost Explorer</a>:推奨事項・使用率・カバレッジ</li>
+<li><a href="cost-and-usage-reports.html">AWS Cost and Usage Reports</a>:割引の適用の詳細</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="lambda.html">AWS Lambda</a>/<a href="ecs.html">Amazon ECS</a>(Fargate):割引の対象</li>
+<li><a href="organizations.html">AWS Organizations</a>:割引の共有</li>
+<li><a href="compute-optimizer.html">AWS Compute Optimizer</a>:購入前のサイズの適正化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「EC2・Fargate・Lambdaにまたがって割引」「リージョンやファミリーを変えても割引」→ <strong class="em">Compute Savings Plans</strong>。</li>
+<li>「特定のファミリー・リージョンで最大の割引」→ <strong class="em">EC2 Instance Savings Plans</strong>。</li>
+<li>Savings Plansは<strong>容量を予約しない</strong>。容量の確保はキャパシティ予約。</li>
+<li>中断してよい処理を最も安くするならスポットインスタンス。</li>
+<li>購入前にCompute Optimizerなどでサイズを適正化してから、約束額を決める。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Savings Plansは、1時間あたりの利用額を1年・3年約束して割引を受ける仕組み。</li>
+<li>柔軟なCompute、割引の大きいEC2 Instanceを使い分け、Cost Explorerで推奨と効果を確認する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="cost-and-usage-reports.html"><span class="label">← 前へ</span>AWS Cost and Usage Reports</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="sqs.html"><span class="label">次へ →</span>Amazon SQS</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

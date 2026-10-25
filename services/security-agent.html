@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Security Agent | AWS教科書</title>
+<meta name="description" content="設計書・コードのセキュリティレビューやペネトレーションテストをAIエージェントが行う">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#DD344C">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/security-agent.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">セキュリティ、アイデンティティ、コンプライアンス</a>
+  <h1>AWS Security Agent</h1>
+  <p class="lead">設計書・コードのセキュリティレビューやペネトレーションテストをAIエージェントが行う</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Security Agent</strong>は、アプリケーションの<strong>設計から本番前まで、セキュリティの確認をAIエージェントが行う</strong>サービスです。設計書のレビュー・ソースコードのレビュー・脅威モデリング・<strong>ペネトレーションテスト(侵入テスト)</strong>を、必要なときにすぐ実行できます。</p>
+<p>AWSのセキュリティ関連のエージェント群をまとめた <strong>AWS Continuum</strong> の一部と位置づけられています。ペネトレーションテストは2026年3月に一般提供が始まり、設計レビュー・コードレビュー・脅威モデリングはプレビューとして提供されています。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>内容</th></tr>
+<tr><td>ペネトレーションテスト</td><td>対象のURL・認証情報・ソースコード・ドキュメントを渡すと、アプリの仕組みを理解したうえで複数の手順からなる攻撃を試し、実際に悪用できる脆弱性を見つける。再現手順・影響の分析・修正コードのプルリクエストまで作る</td></tr>
+<tr><td>コードのセキュリティレビュー</td><td>GitHub・GitLab・Bitbucket・S3にあるソースコード全体をスキャンする。プルリクエストごとの自動レビューでは、指摘をコメントとして投稿する</td></tr>
+<tr><td>設計のセキュリティレビュー</td><td>コードを書く前に、設計書が組織のセキュリティ要件を満たしているかを確認する</td></tr>
+<tr><td>脅威モデリング</td><td>設計書やコードから、構成要素・信頼の境界・データの流れをまとめ、STRIDEの分類で想定される脅威と対策を示す</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 599 242" style="max-width:599px;min-width:520px" role="img" aria-label="図1 Security Agentが関わる場面。開発の各段階で、組織のセキュリティ要件に照らしたレビューやテストを行い、早い段階で問題を見つける。"><defs><marker id="dgservices-security-agent-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="84" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="108" text-anchor="middle" class="dg-t">設計</text>
+<rect x="232" y="84" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="304" y="108" text-anchor="middle" class="dg-t">コード</text>
+<rect x="430" y="84" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="502" y="108" text-anchor="middle" class="dg-t">本番前</text>
+<rect x="34" y="166" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="106" y="188" text-anchor="middle" class="dg-tb">設計レビュー</text>
+<text x="106" y="206" text-anchor="middle" class="dg-s">脅威モデリング</text>
+<rect x="232" y="166" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="304" y="188" text-anchor="middle" class="dg-tb">コードレビュー</text>
+<text x="304" y="206" text-anchor="middle" class="dg-s">PRへのコメント</text>
+<rect x="430" y="166" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="502" y="188" text-anchor="middle" class="dg-tb">侵入テスト</text>
+<text x="502" y="206" text-anchor="middle" class="dg-s">悪用を実証</text>
+<path d="M179.0,104.0 L232.0,104.0" class="dg-line" marker-end="url(#dgservices-security-agent-1)"/>
+<path d="M377.0,104.0 L430.0,104.0" class="dg-line" marker-end="url(#dgservices-security-agent-1)"/>
+<path d="M106.5,166.0 L106.5,124.0" class="dg-line" marker-end="url(#dgservices-security-agent-1)"/>
+<path d="M304.5,166.0 L304.5,124.0" class="dg-line" marker-end="url(#dgservices-security-agent-1)"/>
+<path d="M502.5,166.0 L502.5,124.0" class="dg-line" marker-end="url(#dgservices-security-agent-1)"/>
+</svg>
+</div>
+<figcaption>図1 Security Agentが関わる場面。開発の各段階で、組織のセキュリティ要件に照らしたレビューやテストを行い、早い段階で問題を見つける。</figcaption>
+</figure>
+
+<h3 id="c2-1">組織のセキュリティ要件<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>セキュリティチームは、承認済みの認証ライブラリ・ログの基準・データへのアクセスの方針などを<strong>一度コンソールで定義</strong>します。以降の設計・コードのレビューでは、一般的なチェックリストではなく、その要件に沿って自動で確認されます。</p>
+
+<h3 id="c2-2">ほかのセキュリティサービスとの違い<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>主な役割</th></tr>
+<tr><td>Security Agent</td><td>開発中のアプリの設計・コードのレビューと、侵入テスト</td></tr>
+<tr><td>Inspector</td><td>デプロイ済みのEC2・イメージ・Lambdaの既知の脆弱性(CVE)のスキャン</td></tr>
+<tr><td>GuardDuty</td><td>本番環境で起きている脅威の検出</td></tr>
+</table></div>
+<p>AWS環境に対するペネトレーションテストは、一部の禁止された行為(DoS攻撃など)を除き、事前の申請なしで実施できます。Security Agentのテストは、AWSのほか、オンプレミスや他のクラウドのアプリにも使えます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>年1回の外部委託の侵入テストを、リリースごとのオンデマンドのテストに置き換える</li>
+<li>プルリクエストの段階でセキュリティの問題を指摘し、修正案まで受け取る</li>
+<li>セキュリティチームの人数が少なくても、全チームの設計レビューを一定の基準で回す</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>ペネトレーションテストは従量課金で、エージェントがテストに使った時間(タスク時間)に応じて課金されます。新規の利用者には2か月の無料試用があります。プレビュー中の設計レビュー・コードレビュー・脅威モデリングは課金されません(1か月あたりの回数に上限があります)。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="inspector.html">Amazon Inspector</a>:既知の脆弱性のスキャン</li>
+<li><a href="guardduty.html">Amazon GuardDuty</a>:本番環境の脅威の検出</li>
+<li><a href="devops-agent.html">AWS DevOps Agent</a>:運用・障害調査のAIエージェント</li>
+<li><a href="kiro.html">Kiro</a>:AIエージェントを使った開発環境</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「AIエージェントによる<strong>ペネトレーションテスト</strong>」「設計書・コードのセキュリティレビュー」→ <strong>Security Agent</strong>。</li>
+<li>デプロイ済みリソースのCVEスキャンは Inspector、実際の攻撃の検知は GuardDuty と区別する。</li>
+<li>組織の要件を一度定義すれば、全チームのレビューに同じ基準が使われる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Security Agentは、開発の各段階でセキュリティのレビューと侵入テストを行うAIエージェント。</li>
+<li>見つけた問題について、再現手順と修正コードまで示す。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="network-firewall.html"><span class="label">← 前へ</span>AWS Network Firewall</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cloudwatch.html"><span class="label">次へ →</span>Amazon CloudWatch</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

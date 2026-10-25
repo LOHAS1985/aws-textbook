@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiro | AWS教科書</title>
+<meta name="description" content="仕様(スペック)から設計・実装までをAIエージェントと進める開発環境(IDE・CLI)">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#C925D1">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/kiro.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat10">デベロッパーツール</a>
+  <h1>Kiro</h1>
+  <p class="lead">仕様(スペック)から設計・実装までをAIエージェントと進める開発環境(IDE・CLI)</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Kiro</strong>は、AWSが提供する<strong>AIエージェントを使った開発環境</strong>です。チャットでコードを書いてもらうだけでなく、<strong>要件 → 設計 → タスク</strong>の順に仕様(スペック)を作ってから実装を進める「仕様駆動開発」ができるのが特徴です。</p>
+<p>デスクトップのIDE、ターミナルで使うCLI、ブラウザで使うWeb版などがあり、どれも同じエージェントの仕組みで動きます。プロジェクトの設定は、リポジトリの <code>.kiro/</code> フォルダに保存され、チームで共有できます。Amazon Q Developer のIDE拡張・CLIの利用者向けに、Kiroへの移行ガイドが用意されています。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">スペック(仕様駆動開発)<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>作りたい機能を伝えると、Kiroが次の3つの文書を作り、確認しながら実装を進めます。</p>
+<div class="table-wrap"><table>
+<tr><th>文書</th><th>内容</th></tr>
+<tr><td>要件(requirements)</td><td>ユーザーストーリーと受け入れ条件</td></tr>
+<tr><td>設計(design)</td><td>構成・データの流れ・インターフェースなど</td></tr>
+<tr><td>タスク(tasks)</td><td>実装の手順を小さな作業に分けた一覧。1つずつ実行できる</td></tr>
+</table></div>
+<p>不具合の修正用に、原因の分析と再発防止を含めて進めるバグ修正用のスペックもあります。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 822 236" style="max-width:822px;min-width:657px" role="img" aria-label="図1 Kiroの仕様駆動開発。要件・設計・タスクを順に作り、人が確認してから実装に進む。何を作るかを先に文書で固めるので、大きな変更でも意図とずれにくい。"><defs><marker id="dgservices-kiro-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">作りたいもの</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">自然言語で伝える</text>
+<rect x="240" y="84" width="145" height="40" rx="8" class="dg-accent"/>
+<text x="313" y="108" text-anchor="middle" class="dg-tb">要件</text>
+<rect x="446" y="84" width="145" height="40" rx="8" class="dg-accent"/>
+<text x="519" y="108" text-anchor="middle" class="dg-tb">設計</text>
+<rect x="653" y="84" width="145" height="40" rx="8" class="dg-accent"/>
+<text x="725" y="108" text-anchor="middle" class="dg-tb">タスク</text>
+<rect x="653" y="172" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="725" y="196" text-anchor="middle" class="dg-t">実装・テスト</text>
+<path d="M179.0,104.0 L240.2,104.0" class="dg-line" marker-end="url(#dgservices-kiro-1)"/>
+<path d="M385.2,104.0 L446.5,104.0" class="dg-line" marker-end="url(#dgservices-kiro-1)"/>
+<path d="M591.5,104.0 L652.8,104.0" class="dg-line" marker-end="url(#dgservices-kiro-1)"/>
+<path d="M725.2,124.0 L725.2,172.0" class="dg-line" marker-end="url(#dgservices-kiro-1)"/>
+</svg>
+</div>
+<figcaption>図1 Kiroの仕様駆動開発。要件・設計・タスクを順に作り、人が確認してから実装に進む。何を作るかを先に文書で固めるので、大きな変更でも意図とずれにくい。</figcaption>
+</figure>
+
+<h3 id="c2-2">そのほかの主な機能<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>内容</th></tr>
+<tr><td>ステアリング</td><td>コーディング規約や使う技術など、プロジェクトの決まりをファイルに書いておくと、エージェントが常にそれに従う</td></tr>
+<tr><td>フック</td><td>ファイルの保存やタスクの完了などをきっかけに、テストの作成やドキュメントの更新などを自動で実行する</td></tr>
+<tr><td>MCP</td><td>外部のツールやAPI(AWSのドキュメント、社内システムなど)をエージェントにつなぐ</td></tr>
+<tr><td>権限とチェックポイント</td><td>エージェントが使えるツールやコマンドを制限する。変更を前の状態に巻き戻せる</td></tr>
+<tr><td>カスタムエージェント・スキル</td><td>特定の作業向けのエージェントや、再利用できる手順をまとめて使う</td></tr>
+</table></div>
+
+<h3 id="c2-3">サインインと組織での利用<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>個人はGoogle・GitHubのアカウントや AWS Builder ID でサインインします。企業での利用では、<strong>IAM Identity Center</strong> や外部のIdPでのシングルサインオン、利用状況の監視、請求のAWSへの一元化ができます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>新しい機能を、要件と設計をレビューしてから実装する</li>
+<li>CloudFormation・CDKなどのIaCのコードを、規約(ステアリング)に沿って作る</li>
+<li>保存のたびにテストを自動で更新し、品質を保つ</li>
+<li>DevOps Agentが示したコードの改善案を実装する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>利用者ごとの月額プラン(無料プランと、複数の有料プラン)で、プランごとに月の<strong>クレジット</strong>が付きます。クレジットはエージェントへの依頼の作業量に応じて消費され、複雑な作業ほど多く使います。有料プランでは追加のクレジットを購入できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="bedrock.html">Amazon Bedrock</a>:AWSの生成AIの基盤</li>
+<li><a href="devops-agent.html">AWS DevOps Agent</a>:運用のためのAIエージェント</li>
+<li><a href="security-agent.html">AWS Security Agent</a>:セキュリティのためのAIエージェント</li>
+<li><a href="identity-center.html">AWS IAM Identity Center</a>:企業でのサインイン</li>
+<li><a href="cdk.html">AWS CDK</a>/<a href="cloudformation.html">AWS CloudFormation</a>:IaCのコードの生成先</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「要件・設計・タスクのスペックから実装を進めるAIの開発環境」→ <strong>Kiro</strong>。</li>
+<li>プロジェクトの決まりを守らせる → <strong>ステアリング</strong>。イベントで自動実行 → <strong>フック</strong>。外部ツールとの接続 → MCP。</li>
+<li>企業での利用は IAM Identity Center などでのSSOで管理する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Kiroは、仕様駆動開発ができるAIエージェントの開発環境(IDE・CLIなど)。</li>
+<li>ステアリング・フック・MCPで、チームの決まりや外部のツールを組み込める。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="amplify.html"><span class="label">← 前へ</span>AWS Amplify</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="sam.html"><span class="label">次へ →</span>AWS SAM</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

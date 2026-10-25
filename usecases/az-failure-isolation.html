@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1つのAZの障害からアプリを切り離す | AWS教科書</title>
+<meta name="description" content="複数AZの構成に加え、ARCのゾーンシフト・ゾーンオートシフトで障害の出たAZから通信を移す">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">信頼性・事業継続</a>
+  <h1>1つのAZの障害からアプリを切り離す</h1>
+  <p class="lead">複数AZの構成に加え、ARCのゾーンシフト・ゾーンオートシフトで障害の出たAZから通信を移す</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>ALB+Auto Scalingで3つのAZにまたがるWebアプリを動かしている。あるAZだけでネットワークが不安定になり、ヘルスチェックは通るのにエラーや遅延が増える「部分的な障害(グレー障害)」が起きた。<strong>そのAZを一時的に切り離し</strong>、残りのAZだけで処理を続けたい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 268" style="max-width:905px;min-width:724px" role="img" aria-label="図1 AZの切り離し。ARCのゾーンシフトで、ALBがAZ-aに通信を送らないようにする。残りのAZで負荷を受けられるよう、Auto Scalingで台数を増やすか、事前に余裕を持たせておく。"><defs><marker id="dgusecases-az-failure-isolation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="124" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="148" text-anchor="middle" class="dg-t">利用者</text>
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">ALB</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">ゾーンシフト中</text>
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">AZ-a</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">エラーが増加</text>
+<rect x="510" y="124" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="148" text-anchor="middle" class="dg-t">AZ-b</text>
+<rect x="510" y="204" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="228" text-anchor="middle" class="dg-t">AZ-c</text>
+<rect x="731" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="806" y="140" text-anchor="middle" class="dg-t">Auto Scaling</text>
+<text x="806" y="158" text-anchor="middle" class="dg-s">残りのAZで増設</text>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgusecases-az-failure-isolation-1)"/>
+<path d="M422.0,118.8 L510.0,89.2" class="dg-line dg-dash" marker-end="url(#dgusecases-az-failure-isolation-1)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgusecases-az-failure-isolation-1)"/>
+<path d="M422.0,169.2 L525.5,204.0" class="dg-line" marker-end="url(#dgusecases-az-failure-isolation-1)"/>
+<path d="M660.0,144.0 L731.0,144.0" class="dg-line dg-dash" marker-end="url(#dgusecases-az-failure-isolation-1)"/>
+</svg>
+</div>
+<figcaption>図1 AZの切り離し。ARCのゾーンシフトで、ALBがAZ-aに通信を送らないようにする。残りのAZで負荷を受けられるよう、Auto Scalingで台数を増やすか、事前に余裕を持たせておく。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/application-recovery-controller.html">Amazon Application Recovery Controller(ARC)</a>:ゾーンシフト(手動・一時的)、ゾーンオートシフト(AWSが自動で実行)</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:複数AZへの振り分けとヘルスチェック</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:複数AZへのインスタンスの配置と台数の維持</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:AZ別のエラー率・レイテンシーの監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>アプリを<strong>3つ以上のAZ</strong>に配置し、1つのAZが使えなくても残りで処理できる台数(静的安定性)を確保する</li>
+<li>CloudWatchで、ALBのメトリクスをAZ別に見て、特定のAZだけエラーや遅延が多くないかを監視する</li>
+<li>ALBとAuto ScalingグループをARCのゾーンシフトの対象として有効にする</li>
+<li>特定のAZの問題が分かったら、そのAZへのゾーンシフトを開始する(有効期限を指定。最長3日で延長可)。問題が解消したら終了する</li>
+<li>AWS側の障害に自動で対応させたい場合は<strong>ゾーンオートシフト</strong>を有効にし、定期的に行われる練習の実行で問題がないことを確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>1つのAZの障害から通信を一時的に移す → <strong class="em">ゾーンシフト</strong>。AWSの判断で自動で → <strong class="em">ゾーンオートシフト</strong>。</li>
+<li>ゾーンシフトは一時的な措置。期限が切れるか終了すると元に戻る。</li>
+<li>切り離した後も処理できるよう、残りのAZに<strong>事前に容量の余裕</strong>を持たせておく(障害時にスケールアウトが間に合うとは限らない)。</li>
+<li>ヘルスチェックで分からない部分的な障害も、ゾーンシフトなら人の判断で切り離せる。</li>
+<li>リージョン全体の障害への備えは、マルチリージョン構成とRoute 53・ARCのリージョンスイッチで行う。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="rds-high-availability.html"><span class="label">← 前へ</span>データベースの高可用性と読み取り分散</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="dynamodb-scaling-recovery.html"><span class="label">次へ →</span>DynamoDBを負荷に合わせてスケールし、誤操作から復旧する</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

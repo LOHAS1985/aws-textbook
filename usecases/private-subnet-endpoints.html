@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プライベートサブネットからNATなしでAWSのサービスを使う | AWS教科書</title>
+<meta name="description" content="ゲートウェイ型・インターフェイス型のVPCエンドポイントで、インターネットを通らずにS3やSSMなどへ接続する">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワーク・コンテンツ配信</a>
+  <h1>プライベートサブネットからNATなしでAWSのサービスを使う</h1>
+  <p class="lead">ゲートウェイ型・インターフェイス型のVPCエンドポイントで、インターネットを通らずにS3やSSMなどへ接続する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>プライベートサブネットのEC2から、S3への大量のデータの読み書きや、Systems Manager・Secrets Managerの利用をしている。今はNATゲートウェイ経由のため、<strong>データ処理料金が高く</strong>、通信がインターネット側に出るのもセキュリティ上避けたい。特定のバケット以外にはアクセスさせたくない。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 274" style="max-width:718px;min-width:574px" role="img" aria-label="図1 VPCエンドポイントによる接続。S3とDynamoDBはゲートウェイ型(無料)で、ルートテーブルに経路を追加する。その他のサービスはインターフェイス型で、サブネットにENIを置き、プライベートDNSで通常のエンドポイント名のまま接続する。"><defs><marker id="dgusecases-private-subnet-endpoints-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">プライベートサブネット</text>
+<rect x="289" y="38" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="60" text-anchor="middle" class="dg-tb">ゲートウェイ型</text>
+<text x="364" y="78" text-anchor="middle" class="dg-s">ルートテーブルに追加</text>
+<rect x="289" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="140" text-anchor="middle" class="dg-tb">インターフェイス型</text>
+<text x="364" y="158" text-anchor="middle" class="dg-s">ENI+プライベートDNS</text>
+<rect x="544" y="44" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="619" y="68" text-anchor="middle" class="dg-t">S3・DynamoDB</text>
+<rect x="544" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="140" text-anchor="middle" class="dg-t">SSM・Secrets</text>
+<text x="619" y="158" text-anchor="middle" class="dg-s">Manager など</text>
+<rect x="289" y="198" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="364" y="220" text-anchor="middle" class="dg-t">NATゲートウェイ</text>
+<text x="364" y="238" text-anchor="middle" class="dg-s">使わない</text>
+<path d="M184.0,92.2 L289.0,75.8" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+<path d="M184.0,115.8 L289.0,132.2" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+<path d="M439.0,64.0 L544.0,64.0" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+<path d="M439.0,144.0 L544.0,144.0" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+<path d="M164.2,130.0 L308.8,198.0" class="dg-line dg-dash" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+</svg>
+</div>
+<figcaption>図1 VPCエンドポイントによる接続。S3とDynamoDBはゲートウェイ型(無料)で、ルートテーブルに経路を追加する。その他のサービスはインターフェイス型で、サブネットにENIを置き、プライベートDNSで通常のエンドポイント名のまま接続する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>(ゲートウェイ型・インターフェイス型)、エンドポイントポリシー、ルートテーブル</li>
+<li><a href="../services/s3.html">Amazon S3</a>:バケットポリシーで、特定のVPCエンドポイント経由のアクセスだけを許可(<code>aws:SourceVpce</code>)</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>/<a href="../services/secrets-manager.html">AWS Secrets Manager</a>:インターフェイス型エンドポイントの接続先</li>
+<li><a href="../services/cost-explorer.html">AWS Cost Explorer</a>:NATゲートウェイのデータ処理料金の削減効果の確認</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>S3の<strong>ゲートウェイ型エンドポイント</strong>を作り、プライベートサブネットのルートテーブルに関連付ける</li>
+<li>SSMには <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>、Secrets Managerには <code>secretsmanager</code> の<strong>インターフェイス型エンドポイント</strong>を、各AZのサブネットに作る</li>
+<li>インターフェイス型エンドポイントのセキュリティグループで、VPC内からのHTTPS(443番)を許可する。VPCの「DNS解決」「DNSホスト名」を有効にし、プライベートDNSを有効にする</li>
+<li>エンドポイントポリシーで、使ってよいバケットだけに絞る。バケット側でも <code>aws:SourceVpce</code> の条件で、エンドポイント経由以外を拒否する</li>
+<li>NATゲートウェイを通る通信が減ったことを、フローログやCost Explorerで確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>S3・DynamoDB → <strong class="em">ゲートウェイ型</strong>(無料、ルートテーブルで経路を追加)。その他のサービス → <strong class="em">インターフェイス型</strong>(PrivateLink、時間とデータ量の料金)。</li>
+<li>ゲートウェイ型はオンプレミスやピアリング先のVPCからは使えない。オンプレミスからS3に私的に接続するならS3のインターフェイス型エンドポイントを使う。</li>
+<li>インターフェイス型で名前解決がエンドポイントに向かない → VPCのDNS設定とプライベートDNSの有効化を確認する。</li>
+<li>大量のS3の通信をNAT経由にしていると、NATゲートウェイのデータ処理料金がかさむ。</li>
+<li>ゲートウェイ型エンドポイントは同じリージョンのS3にだけ使える。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="vpc-ip-planning.html"><span class="label">← 前へ</span>組織全体のVPCのIPアドレスを重ならないように払い出す</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="bastionless-access.html"><span class="label">次へ →</span>踏み台サーバーなしでプライベートなEC2を操作する</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

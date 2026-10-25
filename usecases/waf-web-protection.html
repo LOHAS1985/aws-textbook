@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Webアプリを攻撃や大量アクセスから守る | AWS教科書</title>
+<meta name="description" content="CloudFront+WAFのマネージドルールとレートベースルールで攻撃を防ぎ、ShieldでDDoSに備える">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
+  <h1>Webアプリを攻撃や大量アクセスから守る</h1>
+  <p class="lead">CloudFront+WAFのマネージドルールとレートベースルールで攻撃を防ぎ、ShieldでDDoSに備える</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>公開しているWebアプリに、SQLインジェクションを狙ったリクエストや、ログイン画面への大量の試行が来ている。アプリを改修せずに<strong>前段で攻撃を止め</strong>、DDoSにも備えたい。どのリクエストをブロックしたかの記録も残したい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 242" style="max-width:846px;min-width:677px" role="img" aria-label="図1 Webアプリの保護。CloudFrontにWeb ACLを関連付け、攻撃や大量アクセスをエッジで止める。ALBはCloudFrontからの通信だけを受け付け、WAFを迂回した直接のアクセスを防ぐ。"><defs><marker id="dgusecases-waf-web-protection-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="44" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="68" text-anchor="middle" class="dg-t">利用者</text>
+<rect x="34" y="118" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="106" y="140" text-anchor="middle" class="dg-t">攻撃者</text>
+<text x="106" y="158" text-anchor="middle" class="dg-s">SQLi・大量試行</text>
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="321" y="100" text-anchor="middle" class="dg-tb">CloudFront</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">WAF・Shield</text>
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">ALB</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">CloudFrontからのみ</text>
+<rect x="678" y="84" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="750" y="108" text-anchor="middle" class="dg-t">アプリ</text>
+<rect x="248" y="166" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="188" text-anchor="middle" class="dg-t">WAFログ</text>
+<text x="321" y="206" text-anchor="middle" class="dg-s">S3・Logs</text>
+<path d="M179.0,77.5 L248.5,90.5" class="dg-line" marker-end="url(#dgusecases-waf-web-protection-1)"/>
+<path d="M179.0,130.5 L248.5,117.5" class="dg-line dg-dash" marker-end="url(#dgusecases-waf-web-protection-1)"/>
+<text x="214" y="128" text-anchor="middle" class="dg-s dg-halo">ブロック</text>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-waf-web-protection-1)"/>
+<path d="M608.0,104.0 L677.5,104.0" class="dg-line" marker-end="url(#dgusecases-waf-web-protection-1)"/>
+<path d="M321.0,130.0 L321.0,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-waf-web-protection-1)"/>
+</svg>
+</div>
+<figcaption>図1 Webアプリの保護。CloudFrontにWeb ACLを関連付け、攻撃や大量アクセスをエッジで止める。ALBはCloudFrontからの通信だけを受け付け、WAFを迂回した直接のアクセスを防ぐ。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/waf.html">AWS WAF</a>:マネージドルール(SQLインジェクション・既知の悪い入力・IP評価リスト)、レートベースルール、ジオマッチ、ログ</li>
+<li><a href="../services/shield.html">AWS Shield</a>:Standard(自動)によるL3/L4のDDoS対策、必要ならAdvanced</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:エッジでの受付とキャッシュ</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:オリジンのALB</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:ルールごとのブロック件数の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>CloudFront用のWeb ACLを作る(CloudFront用は<strong>us-east-1</strong>で作成)</li>
+<li>AWSマネージドルール(コアルールセット・SQLデータベース・既知の悪い入力・Amazon IP評価リスト)を追加する</li>
+<li>ログインのパスに、IPごとの<strong>レートベースルール</strong>を追加する。必要に応じて国のジオマッチやBot Controlを加える</li>
+<li>まずは新しいルールを <strong>Count</strong> で動かし、正常な通信を誤ってブロックしていないかログで確かめてから Block にする</li>
+<li>ALBのセキュリティグループで、CloudFrontのマネージドプレフィックスリストからの通信だけを許可する(またはCloudFrontのVPCオリジンを使う)</li>
+<li>WAFのログを有効にし(ロググループ名は <code>aws-waf-logs-</code> で始める)、ブロック件数にアラームを設定する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>アプリ層の攻撃(SQLi・XSS)→ <strong class="em">WAF</strong>。同じIPからの大量アクセス → <strong class="em">レートベースルール</strong>。</li>
+<li>CloudFrontのWeb ACLは<strong>us-east-1</strong>で作る。ALB用はALBと同じリージョン。</li>
+<li>WAFは NLB・EC2に直接付けられない。CloudFront・ALB・API Gatewayなどの前段に付ける。</li>
+<li>オリジンに直接アクセスされるとWAFを迂回されるので、ALBへの経路をCloudFrontからだけに絞る。</li>
+<li>大規模なDDoSへの24時間の支援や費用の保護が必要 → Shield Advanced。複数アカウントへ同じルールを展開 → Firewall Manager。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="guardduty-auto-response.html"><span class="label">← 前へ</span>乗っ取られたEC2を自動で隔離する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="vpc-ip-planning.html"><span class="label">次へ →</span>組織全体のVPCのIPアドレスを重ならないように払い出す</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

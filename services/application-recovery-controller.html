@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Application Recovery Controller (ARC) | AWS教科書</title>
+<meta name="description" content="AZやリージョンの障害時に、通信を正常な場所へすばやく切り替えて復旧する">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/application-recovery-controller.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
+  <h1>Amazon Application Recovery Controller (ARC)</h1>
+  <p class="lead">AZやリージョンの障害時に、通信を正常な場所へすばやく切り替えて復旧する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Application Recovery Controller(ARC)</strong>は、AZやリージョンに障害が起きたときに、<strong>アプリケーションの通信を正常なAZ・リージョンへ切り替えて、すばやく復旧する</strong>ためのサービスです。旧称は Route 53 Application Recovery Controller です。</p>
+<p>機能は、1つのAZの障害に備える「マルチAZの復旧」と、リージョンの障害に備える「マルチリージョンの復旧」の2つに分かれます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>分類</th><th>機能</th><th>内容</th></tr>
+<tr><td rowspan="2">マルチAZ</td><td>ゾーンシフト</td><td>障害が起きたAZから、同じリージョンの正常なAZへ通信を<strong>手動で一時的に</strong>移す</td></tr>
+<tr><td>ゾーンオートシフト</td><td>AWSがAZの障害を検知すると、<strong>AWSが自動で</strong>通信を移す</td></tr>
+<tr><td rowspan="3">マルチリージョン</td><td>リージョンスイッチ</td><td>複数アカウントにまたがるリソースのリージョン切り替えを、計画(プラン)として自動で実行する</td></tr>
+<tr><td>ルーティングコントロール</td><td>DNSのレコードを、オン/オフのスイッチで切り替えてリージョンをフェイルオーバーする</td></tr>
+<tr><td>準備状況チェック</td><td>切り替え先のクォータ・容量・ルーティングの設定を監視する(新規の利用受付は終了)</td></tr>
+</table></div>
+
+<h3 id="c2-1">ゾーンシフトとゾーンオートシフト<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>対象は、ALB・NLB(クロスゾーン負荷分散の有効・無効を問わない)、EC2 Auto Scalingグループ、EKS。シフトしたいAZと同じリージョンで開始する。</li>
+<li>ゾーンシフトは手動で開始し、<strong>最長3日の有効期限</strong>(延長可)を付ける。悪いデプロイが1つのAZにだけ入った場合などにも使える。</li>
+<li>ゾーンオートシフトを有効にするときは、残りのAZで全負荷をまかなえる容量を事前に用意しておく。AWSは定期的に<strong>練習の実行</strong>(実際にAZから通信を移す)を行い、移しても問題ないことを確かめる。</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 446 268" style="max-width:446px;min-width:446px" role="img" aria-label="図1 ゾーンシフト。障害が起きたAZ-aへの通信を止め、正常なAZ-b・AZ-cだけで処理する。期限が来るか手動で終了すると、元に戻る。"><defs><marker id="dgservices-application-recovery-controller-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="140" text-anchor="middle" class="dg-tb">ALB</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">ゾーンシフト</text>
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">AZ-a</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">障害</text>
+<rect x="272" y="124" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="347" y="148" text-anchor="middle" class="dg-t">AZ-b</text>
+<rect x="272" y="204" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="347" y="228" text-anchor="middle" class="dg-t">AZ-c</text>
+<path d="M184.0,118.8 L272.0,89.2" class="dg-line dg-dash" marker-end="url(#dgservices-application-recovery-controller-1)"/>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgservices-application-recovery-controller-1)"/>
+<path d="M184.0,169.2 L287.5,204.0" class="dg-line" marker-end="url(#dgservices-application-recovery-controller-1)"/>
+</svg>
+</div>
+<figcaption>図1 ゾーンシフト。障害が起きたAZ-aへの通信を止め、正常なAZ-b・AZ-cだけで処理する。期限が来るか手動で終了すると、元に戻る。</figcaption>
+</figure>
+
+<h3 id="c2-2">ルーティングコントロール<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Route 53 のヘルスチェックと組み合わせ、ルーティングコントロールの状態(オン/オフ)でDNSの応答を切り替えます。5つのリージョンにまたがるクラスターで動いており、障害時でも確実に操作できるように作られています。<strong>安全ルール</strong>で「必ずどちらか一方だけをオンにする」といった誤操作の防止ができます。</p>
+
+<h3 id="c2-3">リージョンスイッチ<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>EC2 Auto Scalingの容量の拡張、Auroraグローバルデータベースの切り替え、DNSの切り替えなど、リージョンを切り替える手順を<strong>プラン</strong>として定義しておき、障害時にまとめて実行します。実行の進み具合を確認でき、練習の実行もできます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>1つのAZだけでエラー率が上がったときに、そのAZを切り離して影響を減らす</li>
+<li>AZの障害時に、利用者が操作しなくても自動で正常なAZだけで動かす(ゾーンオートシフト)</li>
+<li>アクティブ/スタンバイ構成の複数リージョンのアプリを、確実な手順でフェイルオーバーする</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>ゾーンシフトとゾーンオートシフトは追加料金なしで使えます。ルーティングコントロールはクラスターの時間料金、リージョンスイッチはプランの数に応じた料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="elb.html">Elastic Load Balancing</a>/<a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:ゾーンシフトの対象</li>
+<li><a href="route53.html">Amazon Route 53</a>:DNSのフェイルオーバー</li>
+<li><a href="aurora.html">Amazon Aurora</a>:グローバルデータベースの切り替え</li>
+<li><a href="../terms/dr-strategies.html">DR戦略</a>/<a href="../terms/region-az.html">リージョンとAZ</a></li>
+<li><a href="../usecases/multi-region-failover.html">マルチリージョンのフェイルオーバー</a>(ユースケース)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「1つのAZの障害から通信を一時的に移す」→ <strong class="em">ゾーンシフト</strong>。AWSに自動で任せる → <strong class="em">ゾーンオートシフト</strong>。</li>
+<li>ゾーンオートシフトの前提は、残りのAZで処理しきれる<strong>容量を事前に確保</strong>しておくこと。</li>
+<li>ゾーンシフトの対象は ALB・NLB・EC2 Auto Scalingグループ・EKS。</li>
+<li>リージョンの切り替えを確実・自動で → ルーティングコントロール/リージョンスイッチ。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ARCは、AZやリージョンの障害時に通信を切り替えて復旧するためのサービス。</li>
+<li>マルチAZはゾーンシフト/オートシフト、マルチリージョンはリージョンスイッチ/ルーティングコントロール。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="dns-firewall.html"><span class="label">← 前へ</span>Route 53 Resolver DNS Firewall</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="elb.html"><span class="label">次へ →</span>Elastic Load Balancing (ELB)</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Shield | AWS教科書</title>
+<meta name="description" content="DDoS攻撃からAWS上のアプリケーションを守るサービス(StandardとAdvanced)">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#DD344C">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/shield.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">セキュリティ、アイデンティティ、コンプライアンス</a>
+  <h1>AWS Shield</h1>
+  <p class="lead">DDoS攻撃からAWS上のアプリケーションを守るサービス(StandardとAdvanced)</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Shield</strong>は、<strong>DDoS攻撃(分散型サービス妨害攻撃)</strong>からAWS上のアプリケーションを守るサービスです。DDoS攻撃とは、多数のコンピューターから大量の通信を送りつけて、サービスを使えなくする攻撃です。</p>
+<p>無料で全員に適用される <strong>Shield Standard</strong> と、有料で保護を強化する <strong>Shield Advanced</strong> の2種類があります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">Shield Standard と Shield Advanced<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Shield Standard</th><th>Shield Advanced</th></tr>
+<tr><td>料金</td><td>無料(申し込み不要・自動で適用)</td><td>月額料金(1年契約)+データ転送料</td></tr>
+<tr><td>防げる攻撃</td><td>よくあるネットワーク層・トランスポート層(L3/L4)の攻撃(SYNフラッド・UDPリフレクションなど)</td><td>L3/L4に加え、WAFと組み合わせたアプリケーション層(L7)の攻撃</td></tr>
+<tr><td>保護対象</td><td>すべてのAWSリソース</td><td>CloudFront、Route 53のホストゾーン、Global Accelerator、ELB、Elastic IP(EC2・NLB)</td></tr>
+<tr><td>攻撃の可視化</td><td>—</td><td>攻撃の検出・詳細なメトリクスとレポート</td></tr>
+<tr><td>専門チームの支援</td><td>—</td><td><strong>Shield Response Team(SRT)</strong>による24時間の支援(Business以上のサポートプランが必要)</td></tr>
+<tr><td>費用の保護</td><td>—</td><td>攻撃で増えたスケーリング費用をクレジットで払い戻す</td></tr>
+<tr><td>WAFの料金</td><td>—</td><td>保護対象リソースのWAF料金が含まれる</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 234" style="max-width:905px;min-width:724px" role="img" aria-label="図1 DDoS対策の組み立て方。L3/L4の攻撃はShieldがエッジで吸収し、L7の攻撃はWAFで防ぐ。Shield Advancedでは、攻撃中にSRTがWAFのルール作成などを支援する。"><defs><marker id="dgservices-shield-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">DDoS攻撃</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">大量の通信</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">エッジ</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">Shield Standard</text>
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">WAF</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">L7の攻撃を検査</text>
+<rect x="731" y="84" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="806" y="108" text-anchor="middle" class="dg-t">ALB / EC2</text>
+<rect x="510" y="158" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="585" y="180" text-anchor="middle" class="dg-t">SRT</text>
+<text x="585" y="198" text-anchor="middle" class="dg-s">Advancedで支援</text>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgservices-shield-1)"/>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgservices-shield-1)"/>
+<text x="466" y="108" text-anchor="middle" class="dg-s dg-halo">L3/L4を吸収</text>
+<path d="M660.0,104.0 L731.0,104.0" class="dg-line" marker-end="url(#dgservices-shield-1)"/>
+<path d="M585.0,158.0 L585.0,130.0" class="dg-line dg-dash" marker-end="url(#dgservices-shield-1)"/>
+<text x="585" y="148" text-anchor="middle" class="dg-s dg-halo">ルール作成を支援</text>
+</svg>
+</div>
+<figcaption>図1 DDoS対策の組み立て方。L3/L4の攻撃はShieldがエッジで吸収し、L7の攻撃はWAFで防ぐ。Shield Advancedでは、攻撃中にSRTがWAFのルール作成などを支援する。</figcaption>
+</figure>
+
+<h3 id="c2-2">Shield Advanced の主な機能<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>保護グループ</strong>:複数のリソースをまとめて1つの保護単位として扱う。</li>
+<li><strong>アプリケーション層の自動緩和</strong>:L7のDDoSを検出すると、WAFのルールを自動で作成・適用する。</li>
+<li><strong>ヘルスベースの検出</strong>:Route 53のヘルスチェックと関連付けて、検出の精度を上げる。</li>
+<li><strong>プロアクティブエンゲージメント</strong>:攻撃でヘルスチェックが異常になると、SRTから連絡が来る。</li>
+<li>攻撃の発生はCloudWatchメトリクス(<code>DDoSDetected</code> など)で監視できる。</li>
+<li>Firewall Managerで組織全体のリソースに一括で適用できる。</li>
+</ul>
+
+<h3 id="c2-3">DDoSに強い構成の基本<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>CloudFront・Route 53・Global Acceleratorなどのエッジのサービスを前に置き、攻撃をエッジで受ける。</li>
+<li>ELBとAuto Scalingで、負荷が増えてもスケールできるようにする。</li>
+<li>セキュリティグループで、オリジンには前段のサービスからの通信だけを許可する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>すべてのAWS利用者:Shield Standardで基本的なDDoS対策が自動で行われる</li>
+<li>止まると影響が大きいECサイトや金融サービス:Shield Advancedで攻撃の可視化とSRTの支援を受ける</li>
+<li>攻撃でスケールアウトした費用の払い戻しを受けたい場合</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Shield Standardは無料です。Shield Advancedは組織単位の<strong>月額固定料金(1年契約)</strong>と、保護対象リソースのデータ転送量に応じた料金がかかります。1つの契約で、同じ組織(一括請求)の複数アカウントを保護できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="waf.html">AWS WAF</a>:アプリケーション層の攻撃対策</li>
+<li><a href="cloudfront.html">Amazon CloudFront</a>/<a href="route53.html">Amazon Route 53</a>/<a href="global-accelerator.html">AWS Global Accelerator</a>:エッジで攻撃を受ける</li>
+<li><a href="elb.html">Elastic Load Balancing</a>/<a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:負荷の吸収</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:攻撃の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「DDoS」→ <strong class="em">Shield</strong>。基本的なL3/L4の攻撃は<strong>Standard(無料・自動)</strong>で守られる。</li>
+<li>「24時間の専門チーム(SRT)」「攻撃による費用の補償」「高度なDDoS対策」→ <strong class="em">Shield Advanced</strong>。</li>
+<li>L7(HTTPフラッドなど)の対策は WAF のレートベースルールと組み合わせる。</li>
+<li>Advancedの対象は CloudFront・Route 53・Global Accelerator・ELB・Elastic IP。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ShieldはDDoS対策のサービス。Standardは全員に無料で適用される。</li>
+<li>Advancedは攻撃の可視化・SRTの支援・費用の保護・L7の自動緩和を追加する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="waf.html"><span class="label">← 前へ</span>AWS WAF</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="network-firewall.html"><span class="label">次へ →</span>AWS Network Firewall</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

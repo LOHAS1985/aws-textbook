@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Storage Gateway | AWS教科書</title>
+<meta name="description" content="オンプレミスのサーバーからAWSのストレージを、ファイル・ボリューム・テープとして使えるようにする">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#7AA116">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/storage-gateway.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">ストレージ</a>
+  <h1>AWS Storage Gateway</h1>
+  <p class="lead">オンプレミスのサーバーからAWSのストレージを、ファイル・ボリューム・テープとして使えるようにする</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Storage Gateway</strong>は、<strong>オンプレミスのサーバーから、AWSのストレージ(S3など)をいつものファイル共有・ディスク・テープ装置として使えるようにする</strong>ハイブリッドストレージのサービスです。</p>
+<p>オンプレミスに<strong>ゲートウェイ</strong>(VMware・Hyper-V・KVM上の仮想マシン、またはハードウェアアプライアンス。EC2上にも置ける)を置きます。よく使うデータはゲートウェイのローカルにキャッシュして速く読み書きし、データ本体はAWSに保存します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">ゲートウェイの種類<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>種類</th><th>オンプレミスからの見え方</th><th>AWS側の保存先</th><th>主な用途</th></tr>
+<tr><td data-label="種類"><strong>S3ファイルゲートウェイ</strong></td><td data-label="オンプレミスからの見え方">NFS・SMBのファイル共有</td><td data-label="AWS側の保存先">S3のオブジェクト(1ファイル=1オブジェクト)</td><td data-label="主な用途">ファイルをS3に置き、AWS側の分析やバックアップにも使う</td></tr>
+<tr><td data-label="種類"><strong>ボリュームゲートウェイ</strong></td><td data-label="オンプレミスからの見え方">iSCSIのブロックディスク</td><td data-label="AWS側の保存先">S3(内部で管理)+EBSスナップショット</td><td data-label="主な用途">サーバーのディスクのバックアップ・災害対策</td></tr>
+<tr><td data-label="種類"><strong>テープゲートウェイ</strong></td><td data-label="オンプレミスからの見え方">iSCSIの仮想テープライブラリ(VTL)</td><td data-label="AWS側の保存先">S3、アーカイブはS3 Glacier Flexible Retrieval/Deep Archive</td><td data-label="主な用途">既存のバックアップソフトのテープ運用をそのままクラウドへ</td></tr>
+</table></div>
+<p>FSx ファイルゲートウェイ(FSx for Windows File Serverへのアクセスをキャッシュする種類)は、新規の利用受付が終了しています。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Storage Gatewayの仕組み。オンプレミスのサーバーはゲートウェイを通常のファイル共有・ディスク・テープ装置として使い、データはAWSのストレージに保存される。"><defs><marker id="dgservices-storage-gateway-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">サーバー</text>
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">ゲートウェイ</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">ローカルキャッシュ</text>
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">S3</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">ファイル</text>
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">EBSスナップショット</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">ボリューム</text>
+<rect x="510" y="198" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="220" text-anchor="middle" class="dg-t">S3 Glacier</text>
+<text x="585" y="238" text-anchor="middle" class="dg-s">仮想テープ</text>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgservices-storage-gateway-1)"/>
+<text x="228" y="148" text-anchor="middle" class="dg-s dg-halo">NFS/SMB/iSCSI</text>
+<path d="M422.0,118.8 L510.0,89.2" class="dg-line" marker-end="url(#dgservices-storage-gateway-1)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgservices-storage-gateway-1)"/>
+<path d="M422.0,169.2 L510.0,198.8" class="dg-line" marker-end="url(#dgservices-storage-gateway-1)"/>
+</svg>
+</div>
+<figcaption>図1 Storage Gatewayの仕組み。オンプレミスのサーバーはゲートウェイを通常のファイル共有・ディスク・テープ装置として使い、データはAWSのストレージに保存される。</figcaption>
+</figure>
+
+<h3 id="c2-2">ボリュームゲートウェイの2つのモード<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>モード</th><th>データ本体の場所</th><th>特徴</th></tr>
+<tr><td>キャッシュ型</td><td>AWS(よく使うデータだけローカルにキャッシュ)</td><td>オンプレミスのディスク容量を減らせる</td></tr>
+<tr><td>保管型</td><td>オンプレミス(非同期でAWSにスナップショットとしてバックアップ)</td><td>全データにローカルの速さでアクセスでき、AWSは災害対策用</td></tr>
+</table></div>
+
+<h3 id="c2-3">運用のポイント<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>S3ファイルゲートウェイで、ゲートウェイを経由せずにS3へ直接追加されたファイルは、すぐには見えない。<strong>キャッシュの更新(RefreshCache)</strong>を実行するか、自動更新の間隔を設定する。</li>
+<li>キャッシュ用ディスクやアップロード用バッファの使用率は CloudWatch のメトリクスで監視する。不足すると書き込みが遅くなる。</li>
+<li>ゲートウェイとAWSの通信は暗号化され、VPCエンドポイント経由にもできる。帯域幅の上限を時間帯ごとに設定できる。</li>
+<li>ゲートウェイのソフトウェアの更新はメンテナンス時間に自動で適用される。</li>
+<li>AWS Backupでボリュームゲートウェイのボリュームをバックアップできる。</li>
+</ul>
+
+<h3 id="c2-4">DataSyncとの違い<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>Storage Gatewayは、オンプレミスからAWSのストレージを<strong>使い続ける</strong>ためのものです。データを一度にまとめて<strong>移行・転送</strong>するなら DataSync を使います。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ファイルサーバーの容量不足を、S3を裏側にしたファイル共有で解消する</li>
+<li>物理テープとテープ装置の運用をやめ、既存のバックアップソフトのまま仮想テープへ移す</li>
+<li>オンプレミスのサーバーのディスクをAWSにバックアップし、災害時はEBSボリュームとしてEC2で復元する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS側に保存したデータ量(S3・EBSスナップショット・Glacierの料金)、ゲートウェイからAWSへの書き込み量、データの取り出し・転送量などに応じて課金されます。ゲートウェイの仮想マシン自体はオンプレミスの資源で動かします。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:データの保存先</li>
+<li><a href="ebs.html">Amazon EBS</a>:ボリュームのスナップショットからの復元</li>
+<li><a href="backup.html">AWS Backup</a>:ボリュームのバックアップの管理</li>
+<li><a href="datasync.html">AWS DataSync</a>:データの移行・転送</li>
+<li><a href="fsx.html">Amazon FSx</a>:フルマネージドのファイルサーバー</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:キャッシュなどの監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「オンプレミスからS3をNFS/SMBで使う」→ <strong class="em">S3ファイルゲートウェイ</strong>。</li>
+<li>「iSCSIのディスクをAWSにバックアップ」→ ボリュームゲートウェイ。「テープの置き換え」→ <strong class="em">テープゲートウェイ</strong>。</li>
+<li>S3に直接置いたファイルが共有に見えない → <strong>RefreshCache</strong>。</li>
+<li>移行はDataSync、オンプレミスから使い続けるならStorage Gateway。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Storage Gatewayは、オンプレミスからAWSのストレージを使うためのハイブリッドストレージ。</li>
+<li>ファイル・ボリューム・テープの3種類のゲートウェイがある。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="backup.html"><span class="label">← 前へ</span>AWS Backup</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="rds.html"><span class="label">次へ →</span>Amazon RDS</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

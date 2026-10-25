@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RDSの遅いクエリと接続数の問題を解消する | AWS教科書</title>
+<meta name="description" content="Performance Insightsとスロークエリログで原因を特定し、RDS Proxyやリードレプリカで負荷を下げる">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">監視・ログ・自動修復</a>
+  <h1>RDSの遅いクエリと接続数の問題を解消する</h1>
+  <p class="lead">Performance Insightsとスロークエリログで原因を特定し、RDS Proxyやリードレプリカで負荷を下げる</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>RDSのCPU使用率が高く、アプリの応答が遅い。また、アクセスが増えると「接続数が多すぎる(Too many connections)」エラーが出る。<strong>どのSQLが負荷の原因か</strong>を特定し、接続数の問題も含めて解消したい。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 234" style="max-width:846px;min-width:677px" role="img" aria-label="図1 DBの負荷対策の構成。Performance Insightsとスロークエリログで重いSQLを見つける。接続数の急増はRDS Proxyで吸収し、読み取りの多い処理はリードレプリカに逃がす。"><defs><marker id="dgusecases-rds-performance-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">Lambda・アプリ</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">接続が急増</text>
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="321" y="100" text-anchor="middle" class="dg-tb">RDS Proxy</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">接続を集約</text>
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">RDS</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">書き込み</text>
+<rect x="463" y="158" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="536" y="180" text-anchor="middle" class="dg-t">リードレプリカ</text>
+<text x="536" y="198" text-anchor="middle" class="dg-s">読み取りを分散</text>
+<rect x="678" y="38" width="145" height="52" rx="8" class="dg-box"/>
+<text x="750" y="60" text-anchor="middle" class="dg-t">Performance</text>
+<text x="750" y="78" text-anchor="middle" class="dg-s">Insights</text>
+<rect x="678" y="118" width="145" height="52" rx="8" class="dg-box"/>
+<text x="750" y="140" text-anchor="middle" class="dg-t">CloudWatch Logs</text>
+<text x="750" y="158" text-anchor="middle" class="dg-s">スロークエリログ</text>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-rds-performance-1)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-rds-performance-1)"/>
+<path d="M179.0,117.5 L463.0,170.5" class="dg-line dg-dash" marker-end="url(#dgusecases-rds-performance-1)"/>
+<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgusecases-rds-performance-1)"/>
+<path d="M608.0,117.5 L677.5,130.5" class="dg-line" marker-end="url(#dgusecases-rds-performance-1)"/>
+</svg>
+</div>
+<figcaption>図1 DBの負荷対策の構成。Performance Insightsとスロークエリログで重いSQLを見つける。接続数の急増はRDS Proxyで吸収し、読み取りの多い処理はリードレプリカに逃がす。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/rds.html">Amazon RDS</a>:Performance Insights(SQL別・待機イベント別の負荷)、拡張モニタリング(OSの詳細)、リードレプリカ、RDS Proxy</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:<code>CPUUtilization</code>・<code>DatabaseConnections</code>・<code>ReadLatency</code> などの監視、スロークエリログの保存と検索(Logs Insights)</li>
+<li><a href="../services/secrets-manager.html">AWS Secrets Manager</a>:RDS ProxyがDBに接続するための認証情報</li>
+<li><a href="../services/elasticache.html">Amazon ElastiCache</a>:よく読まれるデータのキャッシュ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li>Performance Insightsを有効にし、DBの負荷(平均アクティブセッション数)が多い<strong>SQL文と待機イベント</strong>を確認する</li>
+<li>パラメータグループでスロークエリログ(MySQLの <code>slow_query_log</code>・<code>long_query_time</code> など)を有効にし、CloudWatch Logsに発行する</li>
+<li>重いSQLにインデックスを追加するなど、クエリを改善する</li>
+<li>接続数の問題には RDS Proxy を作成し、アプリの接続先をProxyのエンドポイントに変える(認証情報はSecrets Managerに保存)</li>
+<li>読み取りが多い場合はリードレプリカを追加し、読み取り処理の接続先を分ける。それでも足りなければインスタンスクラスを上げる</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「どのSQLが負荷をかけているか」→ <strong class="em">Performance Insights</strong>。OSのプロセスやメモリの詳細 → 拡張モニタリング。</li>
+<li>Lambdaなどで接続数が急増する・接続が枯渇する → <strong class="em">RDS Proxy</strong>(フェイルオーバー時間の短縮にもなる)。</li>
+<li>ログをCloudWatch Logsに出すには、パラメータグループでの出力設定と、DBインスタンスの<strong>ログのエクスポート</strong>設定の両方が必要。</li>
+<li>リードレプリカは非同期なので、直後の読み取りに古いデータが返ることがある。高可用性はMulti-AZ、読み取りの分散はリードレプリカ。</li>
+<li>パラメータの変更には、すぐ反映されるもの(動的)と、再起動が必要なもの(静的)がある。</li>
+</ul></div>
+</section>
+<nav class="pager">
+  <a class="prev" href="ebs-performance.html"><span class="label">← 前へ</span>EC2・EBSの性能不足を見つけて改善する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="auto-scaling-web.html"><span class="label">次へ →</span>負荷に応じて自動でスケールするWebシステム</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

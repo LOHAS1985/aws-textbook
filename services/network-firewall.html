@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Network Firewall | AWS教科書</title>
+<meta name="description" content="VPCに出入りする通信を検査・フィルタリングするマネージド型のネットワークファイアウォール">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#DD344C">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/network-firewall.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">セキュリティ、アイデンティティ、コンプライアンス</a>
+  <h1>AWS Network Firewall</h1>
+  <p class="lead">VPCに出入りする通信を検査・フィルタリングするマネージド型のネットワークファイアウォール</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">通信を検査させる方法(ルートテーブル)</a></li><li><a href="#c2-3">主な使いどころ</a></li><li><a href="#c2-4">ログ</a></li><li><a href="#c2-5">ほかのフィルタリング手段との違い</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Network Firewall</strong>は、<strong>VPCに出入りする通信をまとめて検査・フィルタリング</strong>するマネージド型のファイアウォールです。セキュリティグループやネットワークACLより細かい条件(ドメイン名、通信の中身のパターン、プロトコルなど)で通信を制御でき、侵入検知・防止(IDS/IPS)にも使えます。</p>
+<p>ファイアウォールの台数や冗長化はAWSが管理し、通信量に合わせて自動でスケールします。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">構成要素<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>説明</th></tr>
+<tr><td>ファイアウォール</td><td>VPCに作成する本体。AZごとの専用サブネットに<strong>ファイアウォールエンドポイント</strong>が置かれる</td></tr>
+<tr><td>ファイアウォールポリシー</td><td>どのルールグループをどの順で使うか、既定の動作を決める</td></tr>
+<tr><td>ステートレスルールグループ</td><td>パケットを1つずつ、送信元・宛先・ポート・プロトコルで判定する</td></tr>
+<tr><td>ステートフルルールグループ</td><td>通信の流れ(セッション)全体を見て判定する。ドメインリスト・Suricata形式のIPSルールが使える</td></tr>
+</table></div>
+
+<h3 id="c2-2">通信を検査させる方法(ルートテーブル)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Network Firewallは、<strong>ルートテーブルで通信をファイアウォールエンドポイントに向ける</strong>ことで初めて検査されます。例えばインターネットとの通信を検査するには、次のように設定します。</p>
+<ul>
+<li>ワークロードのサブネット:<code>0.0.0.0/0</code> の宛先をファイアウォールエンドポイントにする</li>
+<li>ファイアウォールのサブネット:<code>0.0.0.0/0</code> の宛先をインターネットゲートウェイにする</li>
+<li>インターネットゲートウェイのルートテーブル(エッジの関連付け):ワークロードのサブネット宛てをファイアウォールエンドポイントにする(戻りの通信も検査するため)</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Network Firewallの配置。行きも戻りもファイアウォールエンドポイントを通るようにルートテーブルを設定する。ルールに一致した通信(不正なドメインへの接続など)はここで止められる。"><defs><marker id="dgservices-network-firewall-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">インターネット</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">ゲートウェイ</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">Firewall</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">エンドポイント</text>
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">ワークロード</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">サブネット</text>
+<rect x="272" y="166" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="347" y="188" text-anchor="middle" class="dg-t">不正なドメイン</text>
+<text x="347" y="206" text-anchor="middle" class="dg-s">ブロック</text>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgservices-network-firewall-1)" marker-start="url(#dgservices-network-firewall-1)"/>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgservices-network-firewall-1)" marker-start="url(#dgservices-network-firewall-1)"/>
+<path d="M347.0,130.0 L347.0,166.0" class="dg-line dg-dash" marker-end="url(#dgservices-network-firewall-1)"/>
+</svg>
+</div>
+<figcaption>図1 Network Firewallの配置。行きも戻りもファイアウォールエンドポイントを通るようにルートテーブルを設定する。ルールに一致した通信(不正なドメインへの接続など)はここで止められる。</figcaption>
+</figure>
+
+<h3 id="c2-3">主な使いどころ<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ドメインでの送信先の制限</strong>:許可したドメイン(例:<code>.amazonaws.com</code>、パッケージのリポジトリ)以外への外向きの通信をブロックする。</li>
+<li>IDS/IPS:既知の攻撃パターンに一致する通信を検出・遮断する(AWSマネージドの脅威シグネチャも使える)。</li>
+<li>TLSの中身の検査(TLSインスペクション)。</li>
+<li>Transit Gatewayと組み合わせた<strong>検査用VPC</strong>で、複数VPCの通信を集中して検査する。</li>
+</ul>
+
+<h3 id="c2-4">ログ<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>アラートログ(ルールに一致した通信)・フローログ・TLSログを、S3・CloudWatch Logs・Data Firehose に出力できます。</p>
+
+<h3 id="c2-5">ほかのフィルタリング手段との違い<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>手段</th><th>単位</th><th>見られるもの</th></tr>
+<tr><td>セキュリティグループ</td><td>ENI(インスタンス)</td><td>IP・ポート(ステートフル)</td></tr>
+<tr><td>ネットワークACL</td><td>サブネット</td><td>IP・ポート(ステートレス)</td></tr>
+<tr><td>Network Firewall</td><td>VPC・サブネット間の経路</td><td>ドメイン・通信の中身・プロトコル</td></tr>
+<tr><td>AWS WAF</td><td>CloudFront・ALBなど</td><td>HTTPリクエストの中身</td></tr>
+<tr><td>Route 53 Resolver DNS Firewall</td><td>VPCのDNS問い合わせ</td><td>問い合わせるドメイン名</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>プライベートサブネットのサーバーが、許可したドメイン以外のインターネットにつながらないようにする</li>
+<li>複数VPC・オンプレミスとの通信を、Transit Gateway経由で1か所で検査する</li>
+<li>規制のために、IDS/IPSによる通信の監視が必要な環境</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>ファイアウォールエンドポイントごとの時間料金と、処理したデータ量(GB)に応じて課金されます。AZごとにエンドポイントを置くので、AZ数に比例して時間料金が増えます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>/<a href="../terms/route-table.html">ルートテーブル</a>:配置と通信の誘導</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:検査用VPCへの集約</li>
+<li><a href="waf.html">AWS WAF</a>:HTTPのアプリケーション層の保護</li>
+<li><a href="dns-firewall.html">Route 53 Resolver DNS Firewall</a>:DNSの問い合わせのフィルタリング</li>
+<li><a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「VPC全体の通信の検査」「IDS/IPS」「ドメイン名で外向きの通信を制限」→ <strong class="em">Network Firewall</strong>。</li>
+<li>検査されないときは<strong>ルートテーブル</strong>を確認する。行きと戻りの両方がエンドポイントを通る必要がある。</li>
+<li>HTTPのSQLインジェクション対策ならWAF、IP・ポートだけならセキュリティグループ/ネットワークACLで足りる。</li>
+<li>DNSの問い合わせだけを止めたいなら、より手軽な DNS Firewall も候補。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Network FirewallはVPCの通信をまとめて検査するマネージド型ファイアウォール。</li>
+<li>ルートテーブルで通信をファイアウォールエンドポイントに通して使う。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="shield.html"><span class="label">← 前へ</span>AWS Shield</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="security-agent.html"><span class="label">次へ →</span>AWS Security Agent</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
