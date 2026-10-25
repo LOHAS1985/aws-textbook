@@ -26,7 +26,49 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </header>
 <main>
 <div class="page-head"><h1>ニュース</h1><p class="lead">AWSの新しい発表を、図解つきで分かりやすく解説(毎日更新)</p></div>
-<p class="empty-state">準備中です。</p>
+<div class="toc-search">
+  <input type="search" id="toc-q" placeholder="サービス名・キーワードで絞り込み(例: Lambda、料金、東京リージョン)" aria-label="絞り込み" autocomplete="off">
+  <span class="toc-hits" id="toc-hits"></span>
+</div>
+<section class="toc-category" id="cat1">
+<h2>2026年10月 <span class="count">(1)</span></h2>
+<ul class="card-list">
+  <li data-keys="2026年10月26日のawsニュース:transit gatewayの1:1 natなど 2026-10-26 2026年10月 transit gatewayとcloud wanの接続だけで、cidrが重なったネットワーク同士をつなげるようになった。"><a href="2026-10-26.html"><span class="name">2026年10月26日のAWSニュース:Transit Gatewayの1:1 NATなど</span><span class="desc">Transit GatewayとCloud WANの接続だけで、CIDRが重なったネットワーク同士をつなげるようになった。</span></a></li>
+</ul>
+</section>
+<p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>
+<script>
+(function () {
+  var q = document.getElementById("toc-q");
+  var hits = document.getElementById("toc-hits");
+  var none = document.getElementById("toc-none");
+  var sections = document.querySelectorAll(".toc-category");
+  var total = document.querySelectorAll(".toc-category li").length;
+  function apply() {
+    var words = q.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    var shown = 0;
+    sections.forEach(function (sec) {
+      var n = 0;
+      sec.querySelectorAll("li").forEach(function (li) {
+        var keys = li.getAttribute("data-keys");
+        var ok = words.every(function (w) { return keys.indexOf(w) >= 0; });
+        li.hidden = !ok;
+        if (ok) n++;
+      });
+      sec.hidden = n === 0;
+      var det = sec.querySelector("details");
+      if (det && words.length && n) det.open = true;
+      var cnt = sec.querySelector("h2 .count");
+      cnt.textContent = cnt.textContent.charAt(0) === "(" ? "(" + n + ")" : n;
+      shown += n;
+    });
+    hits.textContent = words.length ? shown + " / " + total + "件" : "";
+    none.hidden = shown > 0;
+  }
+  q.addEventListener("input", apply);
+  q.addEventListener("keydown", function (e) { if (e.key === "Escape") { q.value = ""; apply(); } });
+})();
+</script>
 </main>
 </body>
 </html>
