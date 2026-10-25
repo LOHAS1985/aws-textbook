@@ -54,6 +54,96 @@ node sc1 3.3 0 box "sc1" "最低コスト"
 group 2.3 0 3.3 0 "HDD(順次読み書き)" pad=10
 <figcaption>図2 ボリュームタイプの選び方。ランダムアクセスが多い用途はSSD、大きなファイルの順次読み書きはHDD。迷ったらgp3。(旧世代のgp2・io1・standardは省略)</figcaption>
 </figure>
+
+<h3>ボリュームタイプごとの性能値</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>サイズ</th><th>IOPS</th><th>スループット</th><th>性能の決まり方</th></tr>
+<tr><td><code>gp3</code></td><td>1GiB〜64TiB</td><td>ベースライン<strong>3,000</strong>、最大80,000</td><td>ベースライン<strong>125MiB/s</strong>、最大2,000MiB/s</td><td><strong>サイズに関係なく</strong>ベースラインが付き、IOPS・スループットを追加料金で個別に上げられる(IOPSは1GiBあたり500まで)</td></tr>
+<tr><td><code>gp2</code></td><td>1GiB〜16TiB</td><td><strong>1GiBあたり3IOPS</strong>(最低100、最大16,000)。1TiB未満はバーストで3,000まで</td><td>最大250MiB/s</td><td>IOPSが<strong>サイズに比例</strong>。性能のために容量を増やす必要がある</td></tr>
+<tr><td><code>io2</code>(Block Express)</td><td>4GiB〜64TiB</td><td>最大256,000(1GiBあたり1,000まで)</td><td>最大4,000MiB/s</td><td>IOPSを指定して確保する。耐久性99.999%</td></tr>
+<tr><td><code>io1</code></td><td>4GiB〜16TiB</td><td>最大64,000(1GiBあたり50まで)</td><td>最大1,000MiB/s</td><td>IOPSを指定して確保する</td></tr>
+<tr><td><code>st1</code></td><td>125GiB〜16TiB</td><td>—</td><td>1TiBあたりベースライン40MiB/s・バースト250MiB/s、最大500MiB/s</td><td>容量に比例。<strong>ブートボリュームにできない</strong></td></tr>
+<tr><td><code>sc1</code></td><td>125GiB〜16TiB</td><td>—</td><td>1TiBあたりベースライン12MiB/s・バースト80MiB/s、最大250MiB/s</td><td>容量に比例。ブートボリュームにできない</td></tr>
+</table></div>
+<p>gp3の上限は2025年に、16,000IOPS・1,000MiB/s・16TiBから引き上げられました。gp2からgp3に変えると、同じ容量でも3,000IOPSが保証され、料金も安くなるのが一般的です。また、ボリュームの性能とは別に、<strong>インスタンスタイプごとのEBS帯域幅の上限</strong>があり、ボリュームの性能を上げてもインスタンス側で頭打ちになることがあります。</p>
+
+<h3>スナップショットは増分</h3>
+<p>EBSスナップショットは<strong>増分バックアップ</strong>です。最初のスナップショットはボリュームで使われているブロック全体を保存し、2回目以降は<strong>前回から変更されたブロックだけ</strong>を保存します。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node s1 0 0 box "スナップショット1" "全ブロック 100GB"
+node s2 1.3 0 box "スナップショット2" "変更分 5GB"
+node s3 2.6 0 box "スナップショット3" "変更分 3GB"
+edge s1 s2
+edge s2 s3
+node r 1.3 1.1 ok "どれからでも完全に復元" "未変更のブロックは前のものを参照" w=2.3
+edge s3 r dash
+<figcaption>図3 スナップショットは増分。2回目以降は変更されたブロックだけを保存し、未変更のブロックは前のスナップショットのものを参照する。どのスナップショットからでもボリューム全体を復元できる。</figcaption>
+</figure>
+<ul>
+<li>保存料金は実際に保存したブロック分だけなので、頻繁に取っても容量は増えにくい</li>
+<li><strong>古いスナップショットを削除しても、後のスナップショットから復元できる</strong>(他のスナップショットが参照しているブロックは残され、どこからも参照されないブロックだけが削除される)</li>
+<li>スナップショットは取得を開始した時点の内容になる。DBなど整合性が必要な場合は、書き込みを止めるかアプリ側で静止させてから取る</li>
+<li>別リージョンへの<strong>コピー</strong>(災害対策)や、別アカウントとの共有ができる(暗号化されている場合は、カスタマー管理のKMSキーで、そのキーの利用も相手に許可する)</li>
+<li>スナップショットから作ったボリュームは、ブロックが初めて読まれるときにS3から読み込まれるため、最初は遅い。すぐに全性能が必要なら<strong>高速スナップショット復元(FSR)</strong>を使う</li>
+<li>めったに使わない長期保存用には、料金が安い<strong>スナップショットのアーカイブ階層</strong>がある(復元に24〜72時間、最低90日)</li>
+</ul>
+
+<h3>Data Lifecycle Manager(DLM)</h3>
+<p><strong>Amazon Data Lifecycle Manager(DLM)</strong>は、EBSスナップショット(とEBSを使うAMI)の<strong>作成・保持・削除を自動化</strong>する機能です。</p>
+<ul>
+<li>対象は<strong>タグ</strong>で指定する(例:<code>Backup=daily</code> が付いたボリューム・インスタンス)</li>
+<li>スケジュール(12時間ごと、24時間ごと、cron式など)と、保持する数・期間を決める。古いものは自動で削除される</li>
+<li>別リージョンへのコピー、別アカウントとの共有、高速スナップショット復元の有効化もポリシーで自動化できる</li>
+<li>DLM自体は無料(スナップショットの保存料金だけがかかる)</li>
+</ul>
+<p>EBSだけを対象にするならDLM、RDS・DynamoDB・EFSなど<strong>複数のサービスのバックアップをまとめて管理</strong>したいなら<a href="backup.html">AWS Backup</a>を使います。</p>
+
+<h3>ごみ箱(Recycle Bin)</h3>
+<p><strong>ごみ箱(Recycle Bin)</strong>は、削除した<strong>EBSスナップショットとEBSを使うAMI</strong>を、すぐに消さずに一定期間残しておく機能です。誤って削除しても、保持期間内なら<strong>ごみ箱から復元</strong>できます。</p>
+<ul>
+<li><strong>保持ルール</strong>で対象(リージョン内のすべて、または特定のタグが付いたもの)と保持期間(1日〜1年)を決める</li>
+<li>ルールを<strong>ロック</strong>すると、ルールの変更・削除ができなくなり、悪意のある削除やランサムウェアへの対策になる</li>
+<li>ごみ箱にある間も、通常のスナップショットと同じ保存料金がかかる</li>
+</ul>
+
+<h3>既存の暗号化されていないボリュームを暗号化する手順</h3>
+<p>EBSの暗号化は<strong>ボリュームの作成時</strong>に決まり、既存のボリュームの暗号化をそのまま有効にすることはできません。暗号化されていないボリュームは、次の手順で暗号化したボリュームに置き換えます。</p>
+<figure class="figure" data-diagram>
+grid 160 85
+node v 0 0 ng "既存ボリューム" "暗号化なし"
+node s 1 0 box "スナップショット" "暗号化なし"
+node c 2 0 box "コピー" "KMSキーで暗号化"
+node nv 3 0 ok "新しいボリューム" "暗号化あり"
+edge v s "①"
+edge s c "②"
+edge c nv "③"
+node ec2 3 1.1 accent "EC2" "④ 付け替え"
+edge nv ec2
+<figcaption>図4 暗号化されていないボリュームを暗号化する手順。①スナップショットを取り、②暗号化を指定してコピーし、③そこから新しいボリュームを作成して、④インスタンスを停止して古いボリュームと付け替える。</figcaption>
+</figure>
+<ol>
+<li>ボリュームのスナップショットを取る</li>
+<li>スナップショットを、<strong>暗号化を有効にしてコピー</strong>する(KMSキーを指定)。スナップショットからボリュームを作るときに暗号化を指定してもよい</li>
+<li>暗号化されたスナップショットから、<strong>同じAZ</strong>に新しいボリュームを作る</li>
+<li>インスタンスを停止し、古いボリュームをデタッチして、新しいボリュームを<strong>同じデバイス名</strong>でアタッチしてから起動する(ルートボリュームは「ルートボリュームの置き換え」でも行える)</li>
+</ol>
+<p>今後作るボリュームを必ず暗号化するには、リージョンごとの設定「<strong>EBSのデフォルト暗号化</strong>」を有効にします。暗号化されたボリュームでは、保存データ・インスタンスとの間の通信・スナップショット・そこから作るボリュームがすべて暗号化され、性能への影響はほとんどありません。</p>
+
+<h3>Elastic Volumes</h3>
+<p><strong>Elastic Volumes</strong>は、アタッチしたまま(インスタンスを止めずに)<strong>サイズ・ボリュームタイプ・IOPS・スループットを変更</strong>できる機能です。gp2からgp3への変更も、この機能でオンラインで行えます。</p>
+<ul>
+<li>変更中の状態は「modifying → optimizing → completed」と進み、optimizingの間も使えるが性能が揺れることがある</li>
+<li>同じボリュームを再び変更するには、前回の変更から<strong>6時間以上</strong>空ける必要がある</li>
+<li><strong>サイズは増やせるが減らせない</strong>。小さくしたいときは新しいボリュームを作ってデータをコピーする</li>
+</ul>
+<p>サイズを増やしても、<strong>OSから見えるパーティションとファイルシステムは自動では広がりません</strong>。変更後に、OSの中で拡張します。</p>
+<pre class="code"><code># パーティションの拡張(例:/dev/nvme0n1 の1番目のパーティション)
+sudo growpart /dev/nvme0n1 1
+# ファイルシステムの拡張
+sudo xfs_growfs -d /     # XFSの場合
+sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
+<p>Windowsでは「ディスクの管理」でボリュームを拡張します。「容量を増やしたのにディスクの空きが増えない」ときは、この拡張を忘れていないかを確認します。</p>
 <h3>CloudWatchメトリクス</h3>
 <div class="table-wrap"><table>
 <tr><th>観点</th><th>メトリクス</th></tr>
@@ -91,6 +181,7 @@ group 2.3 0 3.3 0 "HDD(順次読み書き)" pad=10
 <li><a href="s3.html">Amazon S3</a>:スナップショットの保存先</li>
 <li><a href="efs.html">Amazon EFS</a>:複数インスタンス・複数AZで共有できるファイルストレージ</li>
 <li><a href="backup.html">AWS Backup</a>:スナップショットの一元管理</li>
+<li><a href="kms.html">AWS KMS</a>:ボリューム・スナップショットの暗号化キー</li>
 <li><a href="cloudwatch.html">Amazon CloudWatch</a>:メトリクスの監視</li>
 </ul>
 </section>
@@ -103,6 +194,12 @@ group 2.3 0 3.3 0 "HDD(順次読み書き)" pad=10
 <li>I/Oが詰まっている → <code>VolumeQueueLength</code> を確認。</li>
 <li>性能を上げたい → RAID 0(ストライピング)。</li>
 <li>EBSはAZに紐づく。別AZへはスナップショット経由。</li>
+<li>gp3はサイズに関係なく<strong>3,000IOPS・125MiB/s</strong>のベースライン。gp2は<strong>1GiBあたり3IOPS</strong>でサイズに比例する。st1・sc1はブートボリュームにできない。</li>
+<li>スナップショットは<strong>増分</strong>。古いスナップショットを削除しても、残ったスナップショットから完全に復元できる。</li>
+<li>タグで対象を決めてスナップショットを自動作成・削除 → <strong>Data Lifecycle Manager</strong>。複数サービスのバックアップ → AWS Backup。</li>
+<li>誤って削除したスナップショット・AMIを復元したい → <strong>ごみ箱(Recycle Bin)</strong>の保持ルール。</li>
+<li>既存のボリュームを暗号化 → スナップショット → <strong>暗号化してコピー</strong> → 新しいボリュームを作って付け替える。今後のボリュームは<strong>デフォルト暗号化</strong>で強制。</li>
+<li>止めずにサイズ・タイプを変更 → <strong>Elastic Volumes</strong>。その後OSで<strong>パーティションとファイルシステムを拡張</strong>する。サイズは縮小できない。</li>
 </ul></div>
 </section>
 
