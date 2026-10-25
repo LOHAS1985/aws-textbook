@@ -15,15 +15,15 @@ SOA-C03で頻出なのに説明が薄い10ページに、仕組みの説明を�
 - [x] Reachability Analyzer(到達性の分析)
 
 ## 2. ELB(src/services/elb.html)
-- [ ] ターゲットグループとターゲットタイプ(インスタンス/IP/Lambda/ALB)
-- [ ] ヘルスチェックの設定項目(パス・間隔・しきい値・成功コード)
-- [ ] クロスゾーン負荷分散(ALBは既定で有効、NLBは既定で無効)
-- [ ] 登録解除の遅延(Connection Draining)
-- [ ] スティッキーセッション
-- [ ] 内部向け/インターネット向け
-- [ ] アクセスログ(S3へ出力)
-- [ ] SNI(1つのリスナーで複数の証明書)
-- [ ] WAFとの連携
+- [x] ターゲットグループとターゲットタイプ(インスタンス/IP/Lambda/ALB)
+- [x] ヘルスチェックの設定項目(パス・間隔・しきい値・成功コード)
+- [x] クロスゾーン負荷分散(ALBは既定で有効、NLBは既定で無効)
+- [x] 登録解除の遅延(Connection Draining)
+- [x] スティッキーセッション
+- [x] 内部向け/インターネット向け
+- [x] アクセスログ(S3へ出力)
+- [x] SNI(1つのリスナーで複数の証明書)
+- [x] WAFとの連携
 
 ## 3. IAM(src/services/iam.html)
 - [ ] ポリシーJSONの例(Effect/Action/Resource/Condition)(詳細は用語ページ iam-policy-evaluation へリンク)

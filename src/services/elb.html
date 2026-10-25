@@ -43,6 +43,96 @@ edge alb tg1
 edge alb tg2
 <figcaption>図1 ALBのリスナールール。HTTPSを終端したあと、条件(IF)に一致したターゲットグループへ転送(THEN)する。この例はパスベースのルーティング。ターゲットは複数のAZに分散して配置する。</figcaption>
 </figure>
+
+<h3>ターゲットグループとターゲットタイプ</h3>
+<p><strong>ターゲットグループ</strong>は、通信の転送先(ターゲット)をまとめたものです。リスナーやリスナールールの転送先にはターゲットグループを指定し、ヘルスチェックの設定もターゲットグループごとに持ちます。ターゲットグループを作るときに<strong>ターゲットタイプ</strong>を選び、後から変更はできません。</p>
+<div class="table-wrap"><table>
+<tr><th>ターゲットタイプ</th><th>登録するもの</th><th>使えるLB</th><th>主な用途</th></tr>
+<tr><td>インスタンス</td><td>EC2インスタンスID</td><td>ALB・NLB・GWLB</td><td>EC2への分散。Auto Scalingグループと組み合わせる</td></tr>
+<tr><td>IP</td><td>プライベートIPアドレス</td><td>ALB・NLB・GWLB</td><td>ECS(Fargate、awsvpcモード)、ピアリング先VPCやオンプレミスのサーバー</td></tr>
+<tr><td>Lambda</td><td>Lambda関数</td><td><strong>ALBのみ</strong></td><td>HTTPリクエストをサーバーレスで処理</td></tr>
+<tr><td>ALB</td><td>Application Load Balancer</td><td><strong>NLBのみ</strong></td><td>NLBの静的IPとALBのL7ルーティングを組み合わせる</td></tr>
+</table></div>
+
+<h3>ヘルスチェックの設定項目</h3>
+<p>ロードバランサーは、ターゲットグループの設定に従って各ターゲットへ定期的にリクエストを送り、<strong>正常(healthy)なターゲットにだけ</strong>通信を転送します。</p>
+<div class="table-wrap"><table>
+<tr><th>設定項目</th><th>意味</th><th>ALBの既定値</th></tr>
+<tr><td>プロトコル・ポート</td><td>ヘルスチェックに使うプロトコルとポート(既定は通信と同じポート)</td><td>HTTP・トラフィックポート</td></tr>
+<tr><td>パス</td><td>HTTP/HTTPSの場合にリクエストするパス(例:<code>/health</code>)</td><td><code>/</code></td></tr>
+<tr><td>間隔</td><td>ヘルスチェックを送る間隔</td><td>30秒</td></tr>
+<tr><td>タイムアウト</td><td>応答がないと失敗とみなすまでの時間</td><td>5秒</td></tr>
+<tr><td>正常のしきい値</td><td>何回連続で成功したら正常に戻すか</td><td>5回</td></tr>
+<tr><td>非正常のしきい値</td><td>何回連続で失敗したら非正常にするか</td><td>2回</td></tr>
+<tr><td>成功コード</td><td>成功とみなすHTTPステータスコード(例:<code>200</code>、<code>200-299</code>)</td><td>200</td></tr>
+</table></div>
+<p>パスにアプリやDBの状態まで確認する専用のページを用意すると、「サーバーは動いているがアプリが壊れている」状態も検知できます。ログイン画面へのリダイレクト(302)が返るパスを指定すると、成功コードが200のままでは全ターゲットが非正常になる点に注意します。Auto Scalingグループで<strong>ELBのヘルスチェック</strong>を有効にすると、非正常と判定されたインスタンスは自動で置き換えられます。</p>
+
+<h3>クロスゾーン負荷分散</h3>
+<p>ロードバランサーのノードはAZごとに置かれます。<strong>クロスゾーン負荷分散</strong>が無効だと、各ノードは<strong>自分のAZのターゲットにだけ</strong>転送し、有効だと<strong>全AZのターゲットに均等に</strong>転送します。</p>
+<figure class="figure" data-diagram>
+grid 150 85
+node na 0.5 0 accent "LBノード" "AZ-a 50%"
+node nc 2.5 0 accent "LBノード" "AZ-c 50%"
+node a1 0 1.2 box "EC2"
+node a2 1 1.2 box "EC2"
+node c1 2.5 1.2 box "EC2"
+group 0 0 1 1.2 "AZ-a" pad=10
+group 2.5 0 2.5 1.2 "AZ-c" pad=10
+edge na a1 "25%"
+edge na a2 "25%"
+edge nc c1 "50%"
+<figcaption>図2 クロスゾーン負荷分散が無効な場合。各AZのノードは自分のAZのターゲットにだけ転送するため、AZ-cの1台に50%が集中する。有効にすると3台に約33%ずつ均等に分散される。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>既定</th><th>補足</th></tr>
+<tr><td>ALB</td><td><strong>有効</strong></td><td>AZ間のデータ転送料金はかからない。ターゲットグループ単位で無効にもできる</td></tr>
+<tr><td>NLB・GWLB</td><td><strong>無効</strong></td><td>有効にするとAZ間のデータ転送料金がかかる</td></tr>
+<tr><td>CLB</td><td>コンソールで作ると有効、API・CLIで作ると無効</td><td>—</td></tr>
+</table></div>
+
+<h3>登録解除の遅延(Connection Draining)</h3>
+<p>スケールインやデプロイでターゲットをターゲットグループから外すとき、いきなり切り離すと処理中のリクエストが失敗します。<strong>登録解除の遅延</strong>を設定すると、ターゲットは「draining」状態になり、<strong>新しいリクエストは送られず、処理中のリクエストだけ</strong>指定時間まで完了を待ってから外されます。</p>
+<ul>
+<li>既定は<strong>300秒</strong>、0〜3600秒で設定できる</li>
+<li>短い処理しかないアプリでは短くすると、スケールインやデプロイが早く終わる</li>
+<li>CLBでは「Connection Draining」という名前の設定</li>
+</ul>
+
+<h3>スティッキーセッション</h3>
+<p><strong>スティッキーセッション(セッション維持)</strong>を有効にすると、同じクライアントからのリクエストを<strong>同じターゲットに送り続けます</strong>。セッション情報をサーバーのメモリに持つアプリで使います。</p>
+<ul>
+<li>ALB:Cookieで実現する。ロードバランサーが発行するCookie(<code>AWSALB</code>、期間ベース)か、アプリが発行するCookie(アプリケーションベース)を使う。維持する期間は1秒〜7日</li>
+<li>NLB:送信元IPアドレスで同じターゲットに送る</li>
+<li>負荷が偏りやすく、ターゲットが停止するとセッションが失われる。可能ならセッション情報を<a href="elasticache.html">ElastiCache</a>や<a href="dynamodb.html">DynamoDB</a>に置いてサーバーをステートレスにする方がよい</li>
+</ul>
+
+<h3>内部向けとインターネット向け</h3>
+<p>ロードバランサーは作成時に<strong>スキーム</strong>を選びます。作成後は変更できません。</p>
+<div class="table-wrap"><table>
+<tr><th>スキーム</th><th>IPアドレス</th><th>配置するサブネット</th><th>用途</th></tr>
+<tr><td>インターネット向け(internet-facing)</td><td>パブリックIP(DNS名がパブリックIPに解決される)</td><td>パブリックサブネット</td><td>インターネットからの入り口</td></tr>
+<tr><td>内部向け(internal)</td><td><strong>プライベートIPのみ</strong></td><td>プライベートサブネット</td><td>Web層からアプリ層への分散など、VPC内(とVPN・Direct Connectの先)からの通信</td></tr>
+</table></div>
+<p>インターネット向けのALBでも、ターゲットのEC2はプライベートサブネットに置けます(ALBからはプライベートIPで転送されるため)。</p>
+
+<h3>アクセスログ</h3>
+<p><strong>アクセスログ</strong>を有効にすると、リクエストごとの記録(受信時刻、クライアントIP、処理時間、リクエストの内容、ステータスコード、転送先のターゲットなど)が<strong>S3バケットに5分ごと</strong>に出力されます。</p>
+<ul>
+<li>既定では<strong>無効</strong>。有効にし、出力先のバケットのバケットポリシーでELBからの書き込みを許可する</li>
+<li>機能自体は無料で、S3の保存料金だけがかかる</li>
+<li>出力したログは<a href="athena.html">Athena</a>でSQLを使って分析できる</li>
+<li>NLBのアクセスログはTLSリスナーの通信だけが対象</li>
+</ul>
+<p>集計値(リクエスト数、5xxの数、レイテンシーなど)を見るならCloudWatchメトリクス、リクエスト1件ずつの詳細を調べるならアクセスログ、と使い分けます。</p>
+
+<h3>SNI(1つのリスナーで複数の証明書)</h3>
+<p><strong>SNI(Server Name Indication)</strong>は、TLSの接続開始時にクライアントが「どのホスト名に接続したいか」をサーバーへ伝える仕組みです。ALBとNLB(TLSリスナー)はSNIに対応していて、<strong>1つのHTTPS/TLSリスナーに複数の証明書</strong>を登録でき、クライアントが指定したホスト名に合う証明書を自動で選びます。</p>
+<p>これにより、<code>a.example.com</code> と <code>b.example.org</code> のような別ドメインのサイトを、1つのALB・1つのリスナー(443)でまとめて提供できます。証明書は<a href="acm.html">ACM</a>で発行・管理するのが一般的です。CLBはSNIに対応していません。</p>
+
+<h3>WAFとの連携</h3>
+<p>ALBには<strong>AWS WAF</strong>のウェブACLを関連付けられます。ALBに届いたリクエストはWAFのルールで検査され、SQLインジェクションやクロスサイトスクリプティング、特定のIP・国からのアクセス、短時間の大量アクセス(レートベースのルール)などを<strong>ターゲットに届く前にブロック</strong>できます。</p>
+<p>WAFを関連付けられるのは<strong>ALB</strong>で、NLB・GWLBには関連付けられません(WAFはHTTPの中身を検査するL7の機能のため)。<a href="cloudfront.html">CloudFront</a>や<a href="api-gateway.html">API Gateway</a>にも関連付けられます。</p>
 </section>
 
 <section class="chapter">
@@ -80,6 +170,14 @@ edge alb tg2
 <li>セキュリティアプライアンスへの分散 → <strong>GWLB</strong>。</li>
 <li>EC2のSSL処理負荷を減らす → ALBで<strong>HTTPS終端</strong>。</li>
 <li>ELBはリージョン内の複数AZに分散する(リージョン間は Route 53 や Global Accelerator)。</li>
+<li>Lambdaをターゲットにできる → <strong>ALB</strong>。NLBの後ろにALBを置く → ターゲットタイプ「<strong>ALB</strong>」。Fargateのタスク → ターゲットタイプ「<strong>IP</strong>」。</li>
+<li>全ターゲットが非正常になった → ヘルスチェックの<strong>パス・ポート・成功コード</strong>と、ターゲットのセキュリティグループでLBからの通信を許可しているかを確認する。</li>
+<li>AZごとのターゲット数が違い負荷が偏る → <strong>クロスゾーン負荷分散</strong>を有効にする(NLBは既定で無効)。</li>
+<li>スケールイン時に処理中のリクエストを失敗させない → <strong>登録解除の遅延</strong>。</li>
+<li>同じユーザーを同じサーバーに送りたい → <strong>スティッキーセッション</strong>(ただしステートレス化の方が望ましい)。</li>
+<li>リクエスト単位で記録を残したい → <strong>アクセスログ</strong>(S3に出力、既定は無効)。</li>
+<li>複数のドメインの証明書を1つのALBで扱う → <strong>SNI</strong>。</li>
+<li>SQLインジェクションなどをブロック → ALBに<strong>AWS WAF</strong>を関連付ける。</li>
 </ul></div>
 </section>
 
