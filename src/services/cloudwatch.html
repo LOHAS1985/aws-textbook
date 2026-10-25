@@ -38,31 +38,226 @@ edge alarm act
 <li><strong>ダッシュボード</strong>:クロスアカウント/クロスリージョンのメトリクスもまとめて表示できる。</li>
 </ul>
 
-<h3>主な標準メトリクス</h3>
+<h3 id="metrics">メトリクスの基本</h3>
+<p>メトリクスは「どのサービスの(名前空間)」「何の値を(メトリクス名)」「どのリソースについて(ディメンション)」の3つで特定します。アラームやグラフでは、それを「どの統計で・何秒ごとに集計するか」を指定して使います。</p>
+<figure class="figure" data-diagram>
+grid 150 85
+node ns 0 0 blue "名前空間" "AWS/EC2"
+node name 1 0 blue "メトリクス名" "CPUUtilization"
+node dim 2 0 blue "ディメンション" "InstanceId"
+group 0 0 2 0 "メトリクスを特定する3要素" pad=12
+node stat 3.2 0 accent "統計・期間" "Average / 5分"
+node alarm 4.2 0 ok "アラーム" "しきい値と比較"
+edge ns name
+edge name dim
+edge dim stat
+edge stat alarm
+<figcaption>図2 メトリクスの構成。名前空間・メトリクス名・ディメンションで1つのメトリクスが決まり、統計と期間で集計した値をアラームがしきい値と比較する。</figcaption>
+</figure>
 <div class="table-wrap"><table>
-<tr><th>サービス</th><th>メトリクス</th><th>意味</th><th>用途・ポイント</th></tr>
-<tr><td rowspan="3">EC2</td><td><code>CPUUtilization</code></td><td>CPU使用率</td><td>Auto Scalingのトリガー(例:70%以上でスケールアウト)</td></tr>
-<tr><td><code>StatusCheckFailed</code></td><td>インスタンス異常</td><td>インスタンス障害の検知</td></tr>
-<tr><td><code>NetworkIn</code>/<code>NetworkOut</code></td><td>通信量</td><td>異常トラフィックの検知</td></tr>
-<tr><td rowspan="4">Lambda</td><td><code>Invocations</code></td><td>実行回数</td><td>トラフィック量の把握</td></tr>
-<tr><td><code>Errors</code></td><td>エラー回数</td><td>異常検知</td></tr>
-<tr><td><code>Duration</code></td><td>実行時間</td><td>タイムアウト/性能問題</td></tr>
-<tr><td><code>Throttles</code></td><td>スロットリング回数</td><td>同時実行制限超過の検知</td></tr>
-<tr><td rowspan="3">ALB</td><td><code>RequestCount</code></td><td>リクエスト数</td><td>負荷状況の把握</td></tr>
-<tr><td><code>TargetResponseTime</code></td><td>応答時間</td><td>レイテンシー監視</td></tr>
-<tr><td><code>HTTPCode_Target_5XX_Count</code></td><td>ターゲットの5xx</td><td>アプリ側エラーの検知</td></tr>
-<tr><td rowspan="3">DynamoDB</td><td><code>ConsumedReadCapacityUnits</code></td><td>読み込み消費量</td><td>キャパシティ設計</td></tr>
-<tr><td><code>ConsumedWriteCapacityUnits</code></td><td>書き込み消費量</td><td>キャパシティ設計</td></tr>
-<tr><td><code>ThrottledRequests</code></td><td>スロットリング</td><td>キャパシティ不足の検知</td></tr>
-<tr><td rowspan="3">SQS</td><td><code>ApproximateNumberOfMessagesVisible</code></td><td>キュー内のメッセージ数</td><td>バックログ監視</td></tr>
-<tr><td><code>NumberOfMessagesSent</code></td><td>送信数</td><td>トラフィック量</td></tr>
-<tr><td><code>NumberOfMessagesDeleted</code></td><td>処理完了数</td><td>コンシューマーの処理能力</td></tr>
-<tr><td rowspan="3">API Gateway</td><td><code>Count</code></td><td>リクエスト数</td><td>API利用状況</td></tr>
-<tr><td><code>Latency</code></td><td>レイテンシー</td><td>パフォーマンス</td></tr>
-<tr><td><code>5XXError</code></td><td>サーバーエラー</td><td>バックエンド障害の検知</td></tr>
-<tr><td rowspan="3">RDS</td><td><code>CPUUtilization</code></td><td>CPU使用率</td><td>DB負荷監視</td></tr>
-<tr><td><code>DatabaseConnections</code></td><td>接続数</td><td>コネクション枯渇の検知</td></tr>
-<tr><td><code>FreeStorageSpace</code></td><td>空き容量</td><td>ストレージ枯渇の検知</td></tr>
+<tr><th>用語</th><th>意味</th><th>例・ポイント</th></tr>
+<tr><td>名前空間</td><td>メトリクスの入れ物(サービス単位)</td><td><code>AWS/EC2</code>、<code>AWS/RDS</code>。エージェントのメトリクスは既定で <code>CWAgent</code>。カスタムメトリクスは自由に命名できる(<code>AWS/</code> で始まる名前は使えない)</td></tr>
+<tr><td>ディメンション</td><td>リソースを区別するキーと値</td><td><code>InstanceId</code>、<code>AutoScalingGroupName</code>、<code>LoadBalancer</code>。ディメンションが違えば別のメトリクスとして扱われる</td></tr>
+<tr><td>統計</td><td>期間内のデータの集計方法</td><td>Average・Sum・Maximum・Minimum・SampleCount・パーセンタイル(p99など)</td></tr>
+<tr><td>期間・解像度</td><td>何秒ごとの値か</td><td>EC2は標準5分、<strong>詳細モニタリングで1分</strong>。カスタムメトリクスは<strong>高解像度で1秒</strong>まで(アラームは10秒・30秒周期も可)</td></tr>
+<tr><td>保持期間</td><td>データが残る期間</td><td>1分未満は3時間、1分は15日、5分は63日、1時間は455日(<strong>最大15か月</strong>)。古いデータほど粗い粒度にまとめられる。メトリクスは手動で削除できない</td></tr>
+</table></div>
+
+<h3>統計の選び方</h3>
+<p>同じメトリクスでも、統計を間違えると意味のない値になります。<strong>「回数は合計、使用率は平均、残量は最小、遅延はパーセンタイル」</strong>と覚えます。</p>
+<div class="table-wrap"><table>
+<tr><th>統計</th><th>向いているメトリクス</th><th>例</th></tr>
+<tr><td><strong>Sum</strong></td><td>回数・件数(期間内に何回起きたか)</td><td><code>Errors</code>、<code>RequestCount</code>、<code>HTTPCode_Target_5XX_Count</code>、<code>ThrottledRequests</code></td></tr>
+<tr><td><strong>Average</strong></td><td>使用率・割合</td><td><code>CPUUtilization</code>、<code>mem_used_percent</code></td></tr>
+<tr><td><strong>Maximum</strong></td><td>一瞬でも超えたら困る値・ピーク</td><td><code>Duration</code>(タイムアウト接近)、<code>ApproximateAgeOfOldestMessage</code>、<code>IteratorAge</code></td></tr>
+<tr><td><strong>Minimum</strong></td><td>残量(少ないほど危険)</td><td><code>FreeStorageSpace</code>、<code>CPUCreditBalance</code>、<code>BurstBalance</code>、<code>HealthyHostCount</code></td></tr>
+<tr><td><strong>p99 など</strong></td><td>応答時間(平均だと一部の遅いリクエストが埋もれる)</td><td><code>TargetResponseTime</code>、<code>Latency</code></td></tr>
+</table></div>
+
+<h3>標準では取れないメトリクス</h3>
+<p>EC2の標準メトリクスは、ハイパーバイザー(仮想化の層)の外から見える値だけです。<strong class="em">OSの中の値はCloudWatchエージェントでカスタムメトリクスとして送る</strong>必要があります。</p>
+<div class="table-wrap"><table>
+<tr><th>取りたい値</th><th>メトリクス(Linux)</th><th>メトリクス(Windows)</th></tr>
+<tr><td>メモリ使用率</td><td><code>mem_used_percent</code></td><td><code>Memory % Committed Bytes In Use</code></td></tr>
+<tr><td>ディスク(ファイルシステム)使用率</td><td><code>disk_used_percent</code></td><td><code>LogicalDisk % Free Space</code>(空き率)</td></tr>
+<tr><td>スワップ使用率</td><td><code>swap_used_percent</code></td><td><code>Paging File % Usage</code></td></tr>
+<tr><td>特定プロセスの状態</td><td colspan="2"><code>procstat</code> プラグイン(プロセスごとのCPU・メモリ・起動数)</td></tr>
+</table></div>
+<p>エージェント設定の <code>append_dimensions</code> で <code>InstanceId</code> を付け、<code>aggregation_dimensions</code> で <code>AutoScalingGroupName</code> 単位に集計すると、Auto Scalingグループ全体のメモリ使用率でアラームを作れます。設定ファイルはSystems ManagerのParameter Storeに保存して複数台へ配布するのが定番です。</p>
+
+<h3 id="metrics-list">サービス別メトリクス一覧</h3>
+<p>SOA-C03で出題されうるメトリクスをサービス別にまとめます。<strong class="em">赤字</strong>は特に出題されやすいメトリクスです。</p>
+<ul>
+<li><a href="#m-compute">コンピューティング</a>(EC2・Auto Scaling・Lambda)</li>
+<li><a href="#m-container">コンテナ</a>(ECS・EKS)</li>
+<li><a href="#m-storage">ストレージ</a>(EBS・EFS・S3)</li>
+<li><a href="#m-db">データベース</a>(RDS・Aurora・DynamoDB・ElastiCache)</li>
+<li><a href="#m-network">ネットワーク・コンテンツ配信</a>(ELB・CloudFront・Route 53・API Gateway・NAT・VPN・Direct Connect・Transit Gateway)</li>
+<li><a href="#m-integration">アプリケーション統合・分析</a>(SQS・SNS・Kinesis・Step Functions・EventBridge)</li>
+<li><a href="#m-account">料金・アカウント・監視自体</a>(Billing・Usage・Synthetics・Logs)</li>
+<li><a href="#m-reverse">症状からメトリクスを逆引き</a></li>
+</ul>
+
+<h4 id="m-compute">コンピューティング</h4>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>メトリクス</th><th>意味</th><th>試験での見どころ</th></tr>
+<tr><td rowspan="7">EC2<br><code>AWS/EC2</code></td><td><strong class="em"><code>CPUUtilization</code></strong></td><td>CPU使用率(%)</td><td>Auto Scalingのトリガーの定番</td></tr>
+<tr><td><strong class="em"><code>StatusCheckFailed_System</code></strong></td><td>システムステータスチェックの失敗(AWS側のハードウェア・電源・ネットワークの障害)</td><td>アラームアクション<strong>「復旧(Recover)」</strong>で別ホストへ移す。または停止→起動</td></tr>
+<tr><td><strong class="em"><code>StatusCheckFailed_Instance</code></strong></td><td>インスタンスステータスチェックの失敗(OS側の問題。カーネル異常・メモリ枯渇・ネットワーク設定ミスなど)</td><td>アラームアクション<strong>「再起動(Reboot)」</strong>。OSの設定修正が必要なこともある</td></tr>
+<tr><td><code>StatusCheckFailed_AttachedEBS</code></td><td>アタッチ済みEBSボリュームへの到達性チェックの失敗</td><td>EBSの障害でI/Oが止まったことの検知</td></tr>
+<tr><td><strong class="em"><code>CPUCreditBalance</code></strong></td><td>T系インスタンスのCPUクレジット残高</td><td>0になるとベースライン性能に制限されて遅くなる。<code>CPUCreditUsage</code>(消費量)、<code>CPUSurplusCreditBalance</code>(unlimitedモードでの前借り)もある</td></tr>
+<tr><td><code>NetworkIn</code>/<code>NetworkOut</code>、<code>NetworkPacketsIn</code>/<code>Out</code></td><td>送受信バイト数・パケット数</td><td>通信量によるスケーリング、異常トラフィックの検知</td></tr>
+<tr><td><code>MetadataNoToken</code></td><td>トークンなし(IMDSv1)でのメタデータアクセス回数</td><td>0であることを確認してからIMDSv2を必須にする</td></tr>
+<tr><td rowspan="3">Auto Scaling<br><code>AWS/AutoScaling</code></td><td><code>GroupDesiredCapacity</code>、<code>GroupInServiceInstances</code>、<code>GroupPendingInstances</code>、<code>GroupTotalInstances</code> など</td><td>グループのインスタンス数</td><td><strong>グループメトリクスは有効化が必要</strong>(無料・1分間隔)</td></tr>
+<tr><td colspan="2">ターゲット追跡の定義済みメトリクス:<code>ASGAverageCPUUtilization</code>、<code>ASGAverageNetworkIn</code>/<code>Out</code>、<strong class="em"><code>ALBRequestCountPerTarget</code></strong></td><td>「1台あたりのリクエスト数を一定に保つ」はALBRequestCountPerTarget</td></tr>
+<tr><td colspan="2">SQSのバックログでスケール:<code>ApproximateNumberOfMessagesVisible</code> ÷ 稼働台数 =「1台あたりのバックログ」</td><td>この値は標準にないので<strong>カスタムメトリクス</strong>として発行し、ターゲット追跡に使う</td></tr>
+<tr><td rowspan="8">Lambda<br><code>AWS/Lambda</code></td><td><strong class="em"><code>Errors</code></strong></td><td>関数のエラーで失敗した回数</td><td>エラー率 = Errors ÷ Invocations(メトリクス計算で作る)</td></tr>
+<tr><td><code>Invocations</code></td><td>呼び出し回数(成功・失敗の両方)</td><td>トラフィック量の把握。スロットリングされた呼び出しは含まない</td></tr>
+<tr><td><strong class="em"><code>Duration</code></strong></td><td>実行時間(ミリ秒)</td><td>Maximumがタイムアウト値に近い → タイムアウトの延長・メモリの増強</td></tr>
+<tr><td><strong class="em"><code>Throttles</code></strong></td><td>同時実行数の上限で拒否された回数</td><td>予約同時実行数の見直し・クォータの引き上げ</td></tr>
+<tr><td><code>ConcurrentExecutions</code></td><td>同時実行数</td><td>アカウントの上限(既定1,000)への接近を監視</td></tr>
+<tr><td><strong class="em"><code>IteratorAge</code></strong></td><td>ストリーム(Kinesis・DynamoDB Streams)から読んだ最後のレコードの古さ</td><td>増え続ける=処理が追いついていない → バッチサイズ・並列化係数・シャード数を調整</td></tr>
+<tr><td><code>DeadLetterErrors</code>、<code>DestinationDeliveryFailures</code>、<code>AsyncEventsDropped</code></td><td>非同期呼び出しで、失敗イベントの退避に失敗した回数・破棄されたイベント数</td><td>DLQ・送信先(Destinations)の権限や設定ミスの検知</td></tr>
+<tr><td><code>ProvisionedConcurrencySpilloverInvocations</code></td><td>プロビジョニング済み同時実行を超えた呼び出し</td><td>コールドスタートが起きている → プロビジョニング量を増やす</td></tr>
+</table></div>
+
+<h4 id="m-container">コンテナ</h4>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>メトリクス</th><th>意味</th><th>試験での見どころ</th></tr>
+<tr><td rowspan="3">ECS<br><code>AWS/ECS</code></td><td><code>CPUUtilization</code>/<code>MemoryUtilization</code>(サービス単位)</td><td>サービスのタスクが使っているCPU・メモリの割合</td><td>サービスAuto Scalingのターゲット追跡(<code>ECSServiceAverageCPUUtilization</code> など)</td></tr>
+<tr><td><code>CPUReservation</code>/<code>MemoryReservation</code>(クラスター単位)</td><td>EC2起動タイプで、登録済みインスタンスの容量のうちタスクが予約している割合</td><td>クラスターの容量不足の検知(キャパシティプロバイダーで拡張)</td></tr>
+<tr><td colspan="2"><strong>Container Insights</strong>(<code>ECS/ContainerInsights</code>):タスク・コンテナ単位のCPU・メモリ・ネットワーク、<code>RunningTaskCount</code> など</td><td>タスク単位の詳細を見るには<strong>Container Insightsを有効化</strong></td></tr>
+<tr><td>EKS</td><td colspan="2"><strong>Container Insights</strong>(<code>ContainerInsights</code>):<code>node_cpu_utilization</code>、<code>pod_memory_utilization</code>、<code>pod_number_of_container_restarts</code>、<code>cluster_failed_node_count</code> など</td><td>EKSには標準のノード・Podメトリクスがない → CloudWatchエージェント(CloudWatch Observabilityアドオン)を導入</td></tr>
+</table></div>
+
+<h4 id="m-storage">ストレージ</h4>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>メトリクス</th><th>意味</th><th>試験での見どころ</th></tr>
+<tr><td rowspan="6">EBS<br><code>AWS/EBS</code></td><td><strong class="em"><code>BurstBalance</code></strong></td><td>gp2・st1・sc1のバーストバケット残高(%)</td><td>0に近い → 性能がベースラインまで低下。<strong>gp3へ変更</strong>(容量と独立してIOPSを指定できる)が定番の解決策</td></tr>
+<tr><td><strong class="em"><code>VolumeQueueLength</code></strong></td><td>処理待ちのI/Oリクエスト数</td><td>高止まり=IOPS・スループットの不足</td></tr>
+<tr><td><code>VolumeReadOps</code>/<code>VolumeWriteOps</code></td><td>期間内のI/O回数</td><td>IOPS = Sum ÷ 期間の秒数(5分なら ÷300)</td></tr>
+<tr><td><code>VolumeReadBytes</code>/<code>VolumeWriteBytes</code></td><td>期間内の読み書きバイト数</td><td>スループットの算出</td></tr>
+<tr><td><code>VolumeThroughputPercentage</code>、<code>VolumeConsumedReadWriteOps</code></td><td>io1・io2で、プロビジョンドIOPSに対する実績</td><td>プロビジョンドIOPSが過剰か不足かの判断</td></tr>
+<tr><td><code>VolumeIdleTime</code>、<code>VolumeStalledIOCheck</code></td><td>I/Oがなかった時間/I/Oが止まっていないかのチェック</td><td>未使用ボリュームの発見、ボリューム障害の検知</td></tr>
+<tr><td rowspan="5">EFS<br><code>AWS/EFS</code></td><td><strong class="em"><code>BurstCreditBalance</code></strong></td><td>バーストスループットモードのクレジット残高</td><td>減り続ける → <strong>Elastic</strong>または<strong>Provisioned</strong>スループットモードへ</td></tr>
+<tr><td><strong class="em"><code>PercentIOLimit</code></strong></td><td>汎用(General Purpose)パフォーマンスモードのI/O上限に対する割合</td><td>100%に張り付く → I/O上限に達している(Max I/Oモードの検討対象)</td></tr>
+<tr><td><code>PermittedThroughput</code>、<code>MeteredIOBytes</code></td><td>許可されているスループット/実際の使用量</td><td>両者が近い=スループットが頭打ち</td></tr>
+<tr><td><code>ClientConnections</code></td><td>接続しているクライアント数</td><td>マウントできているかの確認</td></tr>
+<tr><td><code>StorageBytes</code></td><td>保存データ量(ストレージクラス別)</td><td>容量・コストの把握</td></tr>
+<tr><td rowspan="3">S3<br><code>AWS/S3</code></td><td><code>BucketSizeBytes</code>、<code>NumberOfObjects</code></td><td>バケットのサイズ・オブジェクト数(ストレージメトリクス)</td><td><strong>無料・1日1回</strong>の更新。リアルタイムではない</td></tr>
+<tr><td><code>AllRequests</code>、<code>GetRequests</code>、<code>4xxErrors</code>、<code>5xxErrors</code>、<code>FirstByteLatency</code>、<code>TotalRequestLatency</code></td><td>リクエスト数・エラー数・遅延(リクエストメトリクス)</td><td><strong>有料・要設定</strong>(バケット全体、またはプレフィックス・タグでフィルター)。1分間隔</td></tr>
+<tr><td><code>ReplicationLatency</code>、<code>OperationsPendingReplication</code>、<code>BytesPendingReplication</code>、<code>OperationsFailedReplication</code></td><td>レプリケーションの遅れ・未完了・失敗</td><td><strong>S3 RTC</strong>またはレプリケーションメトリクスを有効化すると取得できる</td></tr>
+</table></div>
+
+<h4 id="m-db">データベース</h4>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>メトリクス</th><th>意味</th><th>試験での見どころ</th></tr>
+<tr><td rowspan="9">RDS<br><code>AWS/RDS</code></td><td><code>CPUUtilization</code></td><td>CPU使用率</td><td>高い → 重いクエリの調査(Performance Insights)、インスタンスクラスの変更、リードレプリカへの読み込み分散</td></tr>
+<tr><td><strong class="em"><code>DatabaseConnections</code></strong></td><td>DB接続数</td><td>上限(<code>max_connections</code>)に近い、Lambdaからの大量接続 → <strong>RDS Proxy</strong></td></tr>
+<tr><td><strong class="em"><code>FreeStorageSpace</code></strong></td><td>空きストレージ容量</td><td>枯渇対策は<strong>ストレージの自動スケーリング</strong>。アラームはMinimumで</td></tr>
+<tr><td><code>FreeableMemory</code>、<code>SwapUsage</code></td><td>空きメモリ/スワップ使用量</td><td>メモリ不足 → より大きいインスタンスクラスへ</td></tr>
+<tr><td><code>ReadIOPS</code>/<code>WriteIOPS</code>、<code>ReadLatency</code>/<code>WriteLatency</code>、<code>DiskQueueDepth</code></td><td>ディスクI/Oの量・遅延・待ち行列</td><td>ストレージ性能の不足 → gp3・io2への変更、IOPSの引き上げ</td></tr>
+<tr><td><code>BurstBalance</code></td><td>gp2ストレージのバースト残高</td><td>EBSと同じ考え方</td></tr>
+<tr><td><strong class="em"><code>ReplicaLag</code></strong></td><td>リードレプリカの遅延(秒)</td><td>レプリカから古いデータが読まれる原因。レプリカの性能不足・書き込み過多</td></tr>
+<tr><td colspan="2"><strong>拡張モニタリング</strong>:OSレベル(プロセスごとのCPU・メモリなど)を最短1秒間隔で取得。CloudWatch Logs(<code>RDSOSMetrics</code>)に出力される</td><td>「OSのプロセス単位で見たい」→ 拡張モニタリング。標準メトリクスはハイパーバイザーから見た値</td></tr>
+<tr><td colspan="2"><strong>Performance Insights</strong>(CloudWatch Database Insights):DB負荷(<code>DBLoad</code>)を待機イベント・SQLごとに分解</td><td>「どのSQLが負荷の原因か」→ Performance Insights</td></tr>
+<tr><td rowspan="3">Aurora<br><code>AWS/RDS</code></td><td><code>AuroraReplicaLag</code></td><td>Auroraレプリカの遅延(ミリ秒)</td><td>通常は数十ミリ秒以下。RDSの <code>ReplicaLag</code> と区別する</td></tr>
+<tr><td><code>VolumeBytesUsed</code>、<code>BufferCacheHitRatio</code>、<code>Deadlocks</code></td><td>クラスターボリュームの使用量/バッファキャッシュのヒット率/デッドロック数</td><td>ヒット率の低下はメモリ不足のサイン</td></tr>
+<tr><td><code>ServerlessDatabaseCapacity</code>、<code>ACUUtilization</code></td><td>Aurora Serverless v2の使用ACU/最大ACUに対する割合</td><td>ACUUtilizationが100%に近い → 最大ACUを引き上げる</td></tr>
+<tr><td rowspan="6">DynamoDB<br><code>AWS/DynamoDB</code></td><td><code>ConsumedReadCapacityUnits</code>/<code>ConsumedWriteCapacityUnits</code></td><td>消費したRCU・WCU</td><td><code>ProvisionedReadCapacityUnits</code>/<code>ProvisionedWriteCapacityUnits</code> と比べて、キャパシティ設計やAuto Scalingを判断</td></tr>
+<tr><td><strong class="em"><code>ReadThrottleEvents</code>/<code>WriteThrottleEvents</code></strong>、<code>ThrottledRequests</code></td><td>キャパシティ超過でスロットリングされた回数</td><td>容量不足またはホットパーティション。<strong>GSIの書き込みスロットリングはベーステーブルへの書き込みも止める</strong>(ディメンション <code>GlobalSecondaryIndexName</code> で確認)</td></tr>
+<tr><td><code>SystemErrors</code></td><td>DynamoDB側のエラー(HTTP 500)</td><td>SDKのリトライ(エクスポネンシャルバックオフ)で対応</td></tr>
+<tr><td><code>UserErrors</code></td><td>リクエスト側のエラー(HTTP 400。権限不足・パラメーターの誤りなど)</td><td>リージョン・アカウント単位で集計される</td></tr>
+<tr><td><code>SuccessfulRequestLatency</code></td><td>成功したリクエストの処理時間</td><td>DynamoDB内部の遅延。ネットワークの遅延は含まない</td></tr>
+<tr><td><code>ReplicationLatency</code></td><td>グローバルテーブルのリージョン間の複製遅延</td><td>マルチリージョン構成の監視</td></tr>
+<tr><td rowspan="5">ElastiCache<br><code>AWS/ElastiCache</code></td><td><strong class="em"><code>EngineCPUUtilization</code></strong></td><td>Redis OSS・Valkeyのエンジン(シングルスレッド)のCPU使用率</td><td>Redis系は<strong>CPUUtilizationではなくこちら</strong>を見る(多コアのノードだとCPUUtilizationは低く見える)。Memcachedは <code>CPUUtilization</code></td></tr>
+<tr><td><strong class="em"><code>Evictions</code></strong></td><td>メモリ不足で追い出されたキーの数</td><td>増加 → ノードタイプを大きく/シャードを追加</td></tr>
+<tr><td><code>DatabaseMemoryUsagePercentage</code>、<code>FreeableMemory</code>、<code>SwapUsage</code></td><td>メモリ使用率・空きメモリ・スワップ</td><td>メモリ逼迫の検知</td></tr>
+<tr><td><code>CacheHits</code>/<code>CacheMisses</code>、<code>CacheHitRate</code></td><td>キャッシュのヒット・ミス</td><td>ヒット率が低い → TTLやキャッシュ戦略の見直し</td></tr>
+<tr><td><code>CurrConnections</code>、<code>ReplicationLag</code></td><td>接続数/レプリカの遅延</td><td>接続リーク・レプリカ遅延の検知</td></tr>
+</table></div>
+
+<h4 id="m-network">ネットワーク・コンテンツ配信</h4>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>メトリクス</th><th>意味</th><th>試験での見どころ</th></tr>
+<tr><td rowspan="7">ALB<br><code>AWS/ApplicationELB</code></td><td><strong class="em"><code>HTTPCode_ELB_5XX_Count</code></strong></td><td>ロードバランサー自身が返した5xx</td><td>502=ターゲットの応答が不正、<strong>503=正常なターゲットがない</strong>、<strong>504=ターゲットがタイムアウト</strong>(<code>HTTPCode_ELB_502_Count</code> などコード別のメトリクスもある)</td></tr>
+<tr><td><strong class="em"><code>HTTPCode_Target_5XX_Count</code></strong>、<code>HTTPCode_Target_4XX_Count</code></td><td>ターゲット(アプリ)が返したエラー</td><td>ELB側とターゲット側のどちらの問題かを切り分ける</td></tr>
+<tr><td><strong class="em"><code>TargetResponseTime</code></strong></td><td>ALBがリクエストを送ってからターゲットが応答するまでの時間</td><td>p99やAverageでレイテンシーを監視</td></tr>
+<tr><td><strong class="em"><code>HealthyHostCount</code>/<code>UnHealthyHostCount</code></strong></td><td>正常・異常なターゲットの数</td><td>ターゲットグループ単位。異常ならヘルスチェックのパス・セキュリティグループを見直す</td></tr>
+<tr><td><code>RequestCount</code>、<code>RequestCountPerTarget</code></td><td>リクエスト数/ターゲット1台あたりのリクエスト数</td><td>RequestCountPerTargetはターゲット追跡のスケーリングに使う</td></tr>
+<tr><td><code>ActiveConnectionCount</code>、<code>RejectedConnectionCount</code></td><td>同時接続数/接続数の上限で拒否された接続数</td><td>負荷状況の把握</td></tr>
+<tr><td><code>TargetConnectionErrorCount</code></td><td>ターゲットへの接続に失敗した数</td><td>セキュリティグループ・ターゲットの停止を疑う</td></tr>
+<tr><td rowspan="2">NLB<br><code>AWS/NetworkELB</code></td><td><code>ActiveFlowCount</code>、<code>NewFlowCount</code>、<code>ProcessedBytes</code></td><td>同時フロー(接続)数/新規フロー数/処理バイト数</td><td>NLBにはHTTPステータスコードのメトリクスがない</td></tr>
+<tr><td><code>HealthyHostCount</code>/<code>UnHealthyHostCount</code>、<code>TCP_Target_Reset_Count</code>、<code>TCP_Client_Reset_Count</code></td><td>正常・異常なターゲット数/TCPリセット数</td><td>どちら側が接続を切ったかの切り分け</td></tr>
+<tr><td rowspan="2">CLB<br><code>AWS/ELB</code></td><td><code>SurgeQueueLength</code></td><td>ターゲットへの転送を待つリクエスト数(最大1,024)</td><td>バックエンドの処理能力不足</td></tr>
+<tr><td><code>SpilloverCount</code></td><td>待ち行列があふれて拒否されたリクエスト数</td><td>0より大きければリクエストを失っている → バックエンドを拡張</td></tr>
+<tr><td rowspan="2">CloudFront<br><code>AWS/CloudFront</code></td><td><code>Requests</code>、<code>BytesDownloaded</code>、<code>4xxErrorRate</code>、<code>5xxErrorRate</code>、<code>TotalErrorRate</code></td><td>リクエスト数・転送量・エラー率(既定で無料)</td><td>メトリクスは<strong>バージニア北部(us-east-1)</strong>に出る。アラームもus-east-1で作る</td></tr>
+<tr><td><strong class="em"><code>CacheHitRate</code></strong>、<code>OriginLatency</code>、<code>504ErrorRate</code> など</td><td>キャッシュヒット率・オリジンの応答時間・コード別のエラー率</td><td><strong>追加メトリクスの有効化が必要(有料)</strong>。ヒット率が低い → キャッシュキー・TTLの見直し</td></tr>
+<tr><td>Route 53<br><code>AWS/Route53</code></td><td><strong class="em"><code>HealthCheckStatus</code></strong>、<code>HealthCheckPercentageHealthy</code>、<code>ConnectionTime</code></td><td>ヘルスチェックの結果(1=正常、0=異常)/正常と判定したチェッカーの割合/接続時間</td><td><strong>us-east-1</strong>に出る。逆に、CloudWatchアラームの状態を監視するヘルスチェックも作れる</td></tr>
+<tr><td rowspan="3">API Gateway<br><code>AWS/ApiGateway</code></td><td><strong class="em"><code>Latency</code></strong>/<strong class="em"><code>IntegrationLatency</code></strong></td><td>リクエスト受信から応答までの全体の時間/バックエンド(統合先)の処理時間</td><td>Latencyだけ大きい → API Gateway側(オーソライザーなど)、両方大きい → バックエンドが遅い</td></tr>
+<tr><td><code>4XXError</code>、<code>5XXError</code>、<code>Count</code></td><td>クライアントエラー数・サーバーエラー数・リクエスト数</td><td>スロットリング(429)は4XXErrorに含まれる</td></tr>
+<tr><td><code>CacheHitCount</code>/<code>CacheMissCount</code></td><td>APIキャッシュのヒット・ミス</td><td>APIキャッシュの効果測定</td></tr>
+<tr><td rowspan="2">NATゲートウェイ<br><code>AWS/NATGateway</code></td><td><strong class="em"><code>ErrorPortAllocation</code></strong></td><td>送信元ポートを割り当てられなかった回数</td><td>同じ宛先への同時接続が多すぎる(上限55,000)→ NATゲートウェイを分ける/セカンダリIPアドレスを追加</td></tr>
+<tr><td><code>PacketsDropCount</code>、<code>ActiveConnectionCount</code>、<code>IdleTimeoutCount</code>、<code>BytesOutToDestination</code></td><td>破棄されたパケット数/接続数/アイドルタイムアウト数/送信量</td><td>通信量の多いNATゲートウェイはコスト増の原因(S3・DynamoDBならゲートウェイ型VPCエンドポイントへ)</td></tr>
+<tr><td>Site-to-Site VPN<br><code>AWS/VPN</code></td><td><strong class="em"><code>TunnelState</code></strong>、<code>TunnelDataIn</code>/<code>Out</code></td><td>トンネルの状態(1=UP、0=DOWN)/通信量</td><td>トンネルのダウンをアラームでSNS通知</td></tr>
+<tr><td>Direct Connect<br><code>AWS/DX</code></td><td><code>ConnectionState</code>、<code>ConnectionBpsEgress</code>/<code>Ingress</code>、<code>ConnectionLightLevelTx</code>/<code>Rx</code></td><td>接続の状態/帯域/光信号のレベル</td><td>回線断・帯域の逼迫・物理的な信号劣化の検知</td></tr>
+<tr><td>Transit Gateway<br><code>AWS/TransitGateway</code></td><td><code>PacketDropCountBlackhole</code>、<code>PacketDropCountNoRoute</code>、<code>BytesIn</code>/<code>Out</code></td><td>ブラックホールルート・ルートなしで破棄されたパケット数/通信量</td><td>ルートテーブルの設定ミスの切り分け</td></tr>
+</table></div>
+
+<h4 id="m-integration">アプリケーション統合・分析</h4>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>メトリクス</th><th>意味</th><th>試験での見どころ</th></tr>
+<tr><td rowspan="5">SQS<br><code>AWS/SQS</code></td><td><strong class="em"><code>ApproximateNumberOfMessagesVisible</code></strong></td><td>受信できる(処理待ちの)メッセージ数</td><td>バックログの監視・スケーリングの元データ。<strong>DLQのこの値が1以上</strong>でアラーム=処理失敗の検知</td></tr>
+<tr><td><strong class="em"><code>ApproximateAgeOfOldestMessage</code></strong></td><td>最も古いメッセージの経過時間(秒)</td><td>処理の遅れの検知。保持期間を超えたメッセージは消える</td></tr>
+<tr><td><code>ApproximateNumberOfMessagesNotVisible</code></td><td>受信済みで処理中(可視性タイムアウト中)のメッセージ数</td><td>多いまま=コンシューマーが詰まっている</td></tr>
+<tr><td><code>NumberOfMessagesSent</code>/<code>Received</code>/<code>Deleted</code></td><td>送信・受信・削除(処理完了)の数</td><td>受信数に比べて削除数が少ない → 処理に失敗して再処理が起きている</td></tr>
+<tr><td><code>NumberOfEmptyReceives</code></td><td>メッセージがなく空で返った受信の回数</td><td>多い → <strong>ロングポーリング</strong>(受信待機時間を1〜20秒)でAPI呼び出しとコストを削減</td></tr>
+<tr><td>SNS<br><code>AWS/SNS</code></td><td><code>NumberOfMessagesPublished</code>、<code>NumberOfNotificationsDelivered</code>、<strong class="em"><code>NumberOfNotificationsFailed</code></strong>、<code>NumberOfNotificationsFilteredOut</code></td><td>発行数/配信成功数/配信失敗数/フィルターで除外された数</td><td>配信失敗の原因は、配信ステータスのログ記録(CloudWatch Logs)を有効化して調べる</td></tr>
+<tr><td rowspan="2">Kinesis Data Streams<br><code>AWS/Kinesis</code></td><td><strong class="em"><code>GetRecords.IteratorAgeMilliseconds</code></strong></td><td>読み取ったレコードの古さ</td><td>増加=コンシューマーが遅れている → コンシューマーの増強・シャードの追加</td></tr>
+<tr><td><code>WriteProvisionedThroughputExceeded</code>、<code>ReadProvisionedThroughputExceeded</code>、<code>IncomingBytes</code>/<code>IncomingRecords</code></td><td>書き込み・読み取りの上限超過/流入量</td><td>超過 → シャードの分割(オンデマンドモードも選択肢)。シャード単位で見るには<strong>拡張(シャードレベル)メトリクス</strong>を有効化</td></tr>
+<tr><td>Step Functions<br><code>AWS/States</code></td><td><code>ExecutionsFailed</code>、<code>ExecutionsTimedOut</code>、<code>ExecutionsAborted</code>、<code>ExecutionThrottled</code></td><td>実行の失敗・タイムアウト・中止・スロットリングの数</td><td>ワークフローの失敗をアラームで通知</td></tr>
+<tr><td>EventBridge<br><code>AWS/Events</code></td><td><code>Invocations</code>、<strong class="em"><code>FailedInvocations</code></strong>、<code>TriggeredRules</code></td><td>ターゲットの呼び出し数/呼び出しの失敗数/ルールが一致した回数</td><td>FailedInvocationsが増えた → ターゲットの権限(リソースベースポリシー・IAMロール)を確認。ルールのターゲットにDLQも設定できる</td></tr>
+</table></div>
+
+<h4 id="m-account">料金・アカウント・監視自体</h4>
+<div class="table-wrap"><table>
+<tr><th>対象</th><th>メトリクス</th><th>意味</th><th>試験での見どころ</th></tr>
+<tr><td>請求<br><code>AWS/Billing</code></td><td><strong class="em"><code>EstimatedCharges</code></strong></td><td>当月の推定請求額</td><td><strong>us-east-1のみ</strong>。請求設定で「CloudWatch請求アラートを受信する」を有効化してから使う(予算管理全般はAWS Budgetsも選択肢)</td></tr>
+<tr><td>使用量<br><code>AWS/Usage</code></td><td><code>ResourceCount</code>、<code>CallCount</code></td><td>リソース数・API呼び出し数</td><td>Service Quotasの上限に近づいたらアラーム(メトリクス計算の <code>SERVICE_QUOTA()</code> 関数と組み合わせる)</td></tr>
+<tr><td>Synthetics<br><code>CloudWatchSynthetics</code></td><td><code>SuccessPercent</code>、<code>Duration</code></td><td>Canaryの成功率・実行時間</td><td>外形監視の失敗をアラームで通知</td></tr>
+<tr><td>Logs<br><code>AWS/Logs</code></td><td><code>IncomingBytes</code>、<code>IncomingLogEvents</code></td><td>取り込んだログのバイト数・件数</td><td>ログの取り込み量(=コスト)の監視</td></tr>
+</table></div>
+
+<h4 id="m-reverse">症状からメトリクスを逆引き</h4>
+<div class="table-wrap"><table>
+<tr><th>問題文の状況</th><th>見るメトリクス</th><th>対処の方向</th></tr>
+<tr><td>EC2のメモリ・ディスク使用率で監視・スケールしたい</td><td><code>mem_used_percent</code>、<code>disk_used_percent</code></td><td>CloudWatchエージェントを導入(標準メトリクスにはない)</td></tr>
+<tr><td>EC2がハードウェア障害で止まったら自動で復旧したい</td><td><code>StatusCheckFailed_System</code></td><td>アラームアクション「復旧」</td></tr>
+<tr><td>T系インスタンスがときどき極端に遅くなる</td><td><code>CPUCreditBalance</code></td><td>unlimitedモード、またはM系など固定性能のタイプへ</td></tr>
+<tr><td>EBSが最初は速いが途中から遅くなる</td><td><code>BurstBalance</code></td><td>gp3へ変更してIOPSを指定</td></tr>
+<tr><td>ALBが503を返す</td><td><code>HTTPCode_ELB_5XX_Count</code>、<code>HealthyHostCount</code></td><td>正常なターゲットがない → ヘルスチェック・ターゲットの登録を確認</td></tr>
+<tr><td>ALBが504を返す</td><td><code>HTTPCode_ELB_5XX_Count</code>、<code>TargetResponseTime</code></td><td>ターゲットの処理が遅い → アプリの改善・アイドルタイムアウトの調整</td></tr>
+<tr><td>RDSの接続数が上限に達する(特にLambdaから)</td><td><code>DatabaseConnections</code></td><td>RDS Proxyで接続をプールする</td></tr>
+<tr><td>RDSのストレージが足りなくなりそう</td><td><code>FreeStorageSpace</code></td><td>ストレージの自動スケーリング</td></tr>
+<tr><td>リードレプリカから古いデータが返る</td><td><code>ReplicaLag</code></td><td>レプリカのインスタンスクラスを上げる</td></tr>
+<tr><td>DynamoDBで <code>ProvisionedThroughputExceededException</code> が出る</td><td><code>ReadThrottleEvents</code>/<code>WriteThrottleEvents</code></td><td>Auto Scaling・オンデマンドモード・パーティションキーの分散</td></tr>
+<tr><td>Redisが遅い/キーが消える</td><td><code>EngineCPUUtilization</code>/<code>Evictions</code></td><td>シャードの追加・ノードタイプの変更</td></tr>
+<tr><td>Lambdaがときどき失敗・遅延する</td><td><code>Throttles</code>、<code>Duration</code>、<code>Errors</code></td><td>同時実行数・タイムアウト・メモリの見直し</td></tr>
+<tr><td>Kinesisのデータ処理がどんどん遅れていく</td><td><code>IteratorAge</code>、<code>GetRecords.IteratorAgeMilliseconds</code></td><td>シャードの追加・コンシューマーの並列度を上げる</td></tr>
+<tr><td>SQSの処理待ちの量に応じてワーカーを増減したい</td><td><code>ApproximateNumberOfMessagesVisible</code></td><td>「1台あたりのバックログ」をカスタムメトリクスにしてターゲット追跡</td></tr>
+<tr><td>プライベートサブネットから外部への接続がときどき失敗する</td><td><code>ErrorPortAllocation</code></td><td>NATゲートウェイのポート枯渇 → NATゲートウェイを分ける・IPアドレスを追加</td></tr>
+<tr><td>月の請求額が一定額を超えたら通知したい</td><td><code>EstimatedCharges</code></td><td>us-east-1で請求アラーム(またはAWS Budgets)</td></tr>
+</table></div>
+
+<h3>メトリクスを活用する機能</h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>できること</th></tr>
+<tr><td><strong>メトリクス計算(Metric Math)</strong></td><td>複数のメトリクスから新しい値を計算してグラフ・アラームに使う(例:エラー率 = Errors ÷ Invocations × 100)</td></tr>
+<tr><td><strong>異常検出(Anomaly Detection)</strong></td><td>過去のデータから機械学習で「普段の値の帯」を作り、帯から外れたらアラーム。曜日・時間帯で変動するメトリクスに向く</td></tr>
+<tr><td><strong>複合アラーム</strong></td><td>複数のアラームをAND・ORで組み合わせ、通知の量(アラート疲れ)を減らす</td></tr>
+<tr><td><strong>欠落データの扱い</strong></td><td>データが届かないときの扱いを「正常(notBreaching)」「異常(breaching)」「無視(ignore)」「欠落(missing)」から選ぶ。アラームは「N個中M個のデータポイントがしきい値超え」で判定する</td></tr>
+<tr><td><strong>Metrics Insights</strong></td><td>SQLライクなクエリで多数のメトリクスをまとめて検索・集計(例:CPU使用率の高い上位10台)</td></tr>
+<tr><td><strong>メトリクスストリーム</strong></td><td>メトリクスをFirehose経由でS3やサードパーティの監視ツールへほぼリアルタイムに送る</td></tr>
 </table></div>
 
 <h3>CloudWatch Logs</h3>
@@ -94,7 +289,7 @@ edge lg mf
 edge lg sf
 edge mf alarm
 edge sf dst
-<figcaption>図2 CloudWatch Logsの活用。メトリクスフィルターはログから数値を作り、アラームで通知する。サブスクリプションフィルターはログをLambdaやFirehoseなどへリアルタイムに転送する。</figcaption>
+<figcaption>図3 CloudWatch Logsの活用。メトリクスフィルターはログから数値を作り、アラームで通知する。サブスクリプションフィルターはログをLambdaやFirehoseなどへリアルタイムに転送する。</figcaption>
 </figure>
 <h3>メトリクスフィルターの流れ(ERROR通知)</h3>
 <ol>
@@ -155,7 +350,11 @@ edge sf dst
 <li>EC2のメモリ・ディスク使用率 → <strong>CloudWatchエージェント</strong>でカスタムメトリクス。</li>
 <li>ログの特定文字列でアラーム → <strong>メトリクスフィルター</strong>。</li>
 <li>ログをリアルタイムに他サービスへ → <strong>サブスクリプションフィルター</strong>。</li>
-<li>1分間隔の監視 → <strong>詳細モニタリング</strong>。</li>
+<li>1分間隔の監視 → <strong>詳細モニタリング</strong>。1秒間隔 → <strong>高解像度カスタムメトリクス</strong>。</li>
+<li>統計は「回数はSum、使用率はAverage、残量はMinimum、遅延はp99」。</li>
+<li>ハードウェア障害 → <code>StatusCheckFailed_System</code> で「復旧」、OSの問題 → <code>StatusCheckFailed_Instance</code> で「再起動」。</li>
+<li>Redis系のCPUは <code>EngineCPUUtilization</code>、Kinesis・ストリームの遅れは <code>IteratorAge</code>。</li>
+<li>請求(<code>EstimatedCharges</code>)・CloudFront・Route 53ヘルスチェックのメトリクスは <strong>us-east-1</strong>。</li>
 <li>Lambdaの詳細監視 → <strong>Lambda Insights</strong>(拡張レイヤー+IAMポリシー)。</li>
 <li>ログ保持期間はデフォルト<strong>無期限</strong>。コストに注意。</li>
 </ul></div>

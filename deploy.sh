@@ -1,10 +1,15 @@
 #!/bin/sh
 # ビルドして main を push し、book/ の中身を gh-pages ブランチに公開する(GitHub Pages)
-# 使い方: sh deploy.sh "コミットメッセージ"
+# 使い方: sh deploy.sh "修正内容"
+# コミットメッセージは「YYYY-MM-DD 修正内容」になる(日付は自動で付く)
 set -e
 cd "$(dirname "$0")"
-PYTHONIOENCODING=utf-8 python build.py
+if python -c "" 2>/dev/null; then
+  PYTHONIOENCODING=utf-8 python build.py
+else
+  echo "WARNING: Python が見つからないためビルドを省略します(book/ は更新されません)" >&2
+fi
 git add -A
-git diff --cached --quiet || git commit -m "${1:-教科書を更新}"
+git diff --cached --quiet || git commit -m "$(date +%Y-%m-%d) ${1:-教科書を更新}"
 git push origin main
 git push origin "$(git subtree split --prefix book main)":refs/heads/gh-pages --force

@@ -22,7 +22,10 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 ## 公開(GitHub Pages)
 - リポジトリ: https://github.com/LOHAS1985/aws-textbook (public)
 - 公開URL: https://lohas1985.github.io/aws-textbook/ (gh-pages ブランチ = book/ の中身。push 後1〜2分で反映)
-- ページを追加・修正したら deploy.sh で公開する。gh は "C:\Program Files\GitHub CLI\gh.exe"
+- **修正を行ったら、確認を求めずに毎回すぐ `sh deploy.sh "修正内容"` を実行して GitHub に push する**(ページ以外の修正=CLAUDE.md・build.py・style.css なども同様)
+- コミットメッセージは「YYYY-MM-DD 修正内容」の形式。日付は deploy.sh が自動で付けるので、引数には修正内容だけを具体的に書く(例: `sh deploy.sh "CloudWatchにメトリクス一覧を追加"`)
+- Python がない環境では deploy.sh がビルドを省略して src/ だけを push する(警告が出る)。その場合は book/ が古いままなので、Python のある環境で再度 deploy.sh を実行するよう利用者に伝える
+- gh は "C:\Program Files\GitHub CLI\gh.exe"
 
 ## 本文ファイルのメタ情報(先頭に書く)
     <!-- title: ページ名 -->
