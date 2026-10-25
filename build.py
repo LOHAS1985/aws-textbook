@@ -8,8 +8,10 @@
     <!-- category: カテゴリ名 -->
     <!-- lead: 一言説明 -->
 図は diagrams.py の記法で書くとSVGに変換される。
+リンク集(book/links.html)は、src/links.html の本文と src/links.json(サービスごとの公式ページ)から作る。
 """
 import html
+import json
 import re
 import shutil
 from pathlib import Path
@@ -155,6 +157,7 @@ def header(prefix, current=None):
     links = "".join(
         f'<a href="{prefix}{c["key"]}/index.html"{cur if c["key"] == current else ""}>'
         f'{c["label"]}</a>' for c in COLLECTIONS)
+    links += f'<a href="{prefix}links.html"{cur if current == "links" else ""}>リンク集</a>'
     return f"""<header class="site-header">
   <div class="inner">
     <a class="site-title" href="{prefix}index.html">{SITE_TITLE}</a>
@@ -270,15 +273,52 @@ def render_top(counts):
         badge = f"{n}ページ" if n else "準備中"
         parts.append(f'  <li><a href="{c["key"]}/index.html"><span class="name">{c["label"]}'
                      f'<span class="badge">{badge}</span></span><span class="desc">{c["desc"]}</span></a></li>\n')
+    parts.append('  <li><a href="links.html"><span class="name">リンク集</span>'
+                 '<span class="desc">試験ガイドや各サービスの公式ページ・ドキュメントへのリンク</span></a></li>\n')
     parts += ["</ul>\n</main>\n", TAIL]
     return "".join(parts)
 
 
+def official_url(kind, path):
+    """links.json の値を公式ページのURLにする(http で始まる値はそのまま使う)。"""
+    if path.startswith("http"):
+        return path
+    base = "https://aws.amazon.com/jp/" if kind == "product" else "https://docs.aws.amazon.com/ja_jp/"
+    return base + path + ("" if path.endswith(("/", ".html")) else "/")
+
+
+def render_links(services, warnings):
+    text = (SRC / "links.html").read_text(encoding="utf-8")
+    meta = dict(META_RE.findall(text))
+    data = json.loads((SRC / "links.json").read_text(encoding="utf-8"))
+    col = next(c for c in COLLECTIONS if c["key"] == "services")
+    rows = []
+    for category, items in grouped(col, services):
+        rows.append(f'<h3>{html.escape(category)}</h3>\n<div class="table-wrap"><table class="links">\n'
+                    '<tr><th>サービス</th><th>製品ページ</th><th>ドキュメント</th></tr>\n')
+        for p in items:
+            if p["slug"] not in data:
+                warnings.append(f"links.json: {p['slug']} がありません")
+            product, docs = data.get(p["slug"], [None, None])
+            cells = [f'<a href="{official_url(k, v)}" target="_blank" rel="noopener">公式</a>' if v else "—"
+                     for k, v in (("product", product), ("docs", docs))]
+            rows.append(f'<tr><td><a href="services/{p["slug"]}.html">{html.escape(p["title"])}</a></td>'
+                        f'<td>{cells[0]}</td><td>{cells[1]}</td></tr>\n')
+        rows.append("</table></div>\n")
+    body = META_RE.sub("", text).strip().replace("<!-- SERVICE_LINKS -->", "".join(rows))
+    title = meta.get("title", "リンク集")
+    return (head(f"{title} | {SITE_TITLE}", "") + header("", "links")
+            + f'<main>\n<div class="page-head">\n  <h1>{html.escape(title)}</h1>\n'
+            + (f'  <p class="lead">{meta["lead"]}</p>\n' if meta.get("lead") else "")
+            + "</div>\n" + body + "\n</main>\n" + TAIL)
+
+
 def main():
-    warnings, counts = [], {}
+    warnings, counts, loaded = [], {}, {}
     for col in COLLECTIONS:
         pages = load_pages(col, warnings)
         counts[col["key"]] = len(pages)
+        loaded[col["key"]] = pages
         out_dir = OUT / col["key"]
         if out_dir.exists():
             shutil.rmtree(out_dir)
@@ -287,6 +327,7 @@ def main():
             (out_dir / f"{p['slug']}.html").write_text(render_page(col, pages, i), encoding="utf-8")
         (out_dir / "index.html").write_text(render_collection_index(col, pages), encoding="utf-8")
     (OUT / "index.html").write_text(render_top(counts), encoding="utf-8")
+    (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
     print("built " + ", ".join(f"{c['label']} {counts[c['key']]}" for c in COLLECTIONS))
     for w in warnings:
         print("WARNING:", w)

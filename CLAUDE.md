@@ -12,7 +12,8 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - src/{terms,usecases}/_template.html … 新規ページのひな形(`_` で始まるファイルはビルド対象外)
 - build.py … `python build.py` で src/ から book/ を生成する(コレクションの並び順・カテゴリ順もここで定義)
 - diagrams.py … 本文中の図の記法をSVGに変換する
-- book/index.html … トップ(サービス・用語・ユースケースへの入口)
+- book/index.html … トップ(サービス・用語・ユースケース・リンク集への入口)
+- src/links.html・src/links.json … リンク集(book/links.html)の本文と、サービスごとの公式ページ(製品ページ・ドキュメント)のパス。サービスを追加したら links.json にも追加する(URLは実際にアクセスして確認する)
 - book/{services,terms,usecases}/index.html … 各コレクションの目次(カテゴリ別)
 - book/{services,terms,usecases}/{slug}.html … 各ページ(生成物。直接編集しない)
 - book/css/style.css … 共通スタイル(全ページで共有。これは直接編集する)
@@ -28,7 +29,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - gh は "C:\Program Files\GitHub CLI\gh.exe"
 
 ## 残タスク
-- 今後対応する加筆の予定は TASKS.md にチェックリストでまとめている。対応したら `[x]` に更新する
+- 今後対応する加筆・デザイン改善の予定は TASKS.md にチェックリストでまとめている。対応したら `[x]` に更新する
 
 ## 本文ファイルのメタ情報(先頭に書く)
     <!-- title: ページ名 -->
