@@ -1,0 +1,110 @@
+<!-- title: AWS WAF -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: HTTP/HTTPSのリクエストを検査し、SQLインジェクションや不正なアクセスを防ぐWebアプリケーションファイアウォール -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS WAF</strong>は、Webアプリケーションに届く<strong>HTTP/HTTPSのリクエストの中身を検査</strong>して、許可・ブロック・カウントするWebアプリケーションファイアウォール(WAF)です。</p>
+<p>セキュリティグループやネットワークACLはIPアドレスとポートしか見ませんが、WAFは<strong>URL・ヘッダー・クエリ文字列・本文</strong>まで見て判断できます。SQLインジェクション・クロスサイトスクリプティング(XSS)・ボット・大量アクセスなど、アプリケーション層(レイヤー7)の攻撃を防ぐのに使います。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>保護できるリソース</h3>
+<ul>
+<li><strong>CloudFront</strong>ディストリビューション</li>
+<li><strong>ALB</strong>(Application Load Balancer)</li>
+<li><strong>API Gateway</strong>のREST API</li>
+<li>AppSyncのGraphQL API、Cognitoユーザープール、App Runner、Verified Access、Amplify など</li>
+</ul>
+<p>NLBやEC2には直接付けられません。CloudFront用のWeb ACLは<strong>グローバル</strong>(us-east-1で作成)、ALBなど用はリージョンごとに作成します。</p>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node u 0 0 blue "利用者"
+node bad 0 1 ng "攻撃者" "SQLi・ボット"
+node waf 1.4 0.5 accent "AWS WAF" "Web ACLで検査"
+node cf 2.8 0.5 box "CloudFront / ALB" "API Gateway"
+node app 4.1 0.5 ok "アプリ"
+edge u waf
+edge bad waf "ブロック(403)" dash
+edge waf cf "許可"
+edge cf app
+<figcaption>図1 WAFの位置づけ。CloudFront・ALB・API Gatewayなどに関連付けたWeb ACLがリクエストを検査し、ルールに一致した攻撃は403などでブロックする。</figcaption>
+</figure>
+
+<h3>Web ACL とルール</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>説明</th></tr>
+<tr><td>Web ACL(保護パック)</td><td>ルールをまとめたもの。保護したいリソースに関連付ける。どのルールにも一致しないときの既定のアクション(許可/ブロック)を決める</td></tr>
+<tr><td>ルール</td><td>検査の条件とアクション。上から優先順位の順に評価される</td></tr>
+<tr><td>ルールグループ</td><td>ルールをまとめて再利用できるようにしたもの</td></tr>
+<tr><td>マネージドルール</td><td>AWSやベンダーが用意したルールグループ。SQLインジェクション・既知の悪い入力・悪意のあるIPリストなど</td></tr>
+<tr><td>IPセット/正規表現パターンセット</td><td>ルールから参照する、IPアドレスや文字列パターンの一覧</td></tr>
+</table></div>
+
+<h3>主なルールの種類</h3>
+<ul>
+<li>IPアドレス(IPセット)での許可・拒否</li>
+<li><strong>地域(国)</strong>での制限(ジオマッチ)</li>
+<li>文字列・正規表現・サイズ制限・SQLインジェクション・XSSの検査</li>
+<li><strong>レートベースルール</strong>:同じIPなどから一定時間内にリクエストが多すぎるとブロック(HTTPフラッドへの対策)</li>
+<li>Bot Control(ボットの識別)、不正アカウント作成・乗っ取りの防止、CAPTCHA・チャレンジ</li>
+</ul>
+
+<h3>アクション</h3>
+<p>Allow(許可)・Block(ブロック)・<strong>Count(数えるだけ)</strong>・CAPTCHA・Challenge があります。新しいルールはまず Count で動かし、正常な通信を止めないことを確かめてから Block にするのが定番です。</p>
+
+<h3>ログと監視</h3>
+<ul>
+<li>Web ACLのログを <strong>CloudWatch Logs・S3・Data Firehose</strong> に出力できる(ロググループ名は <code>aws-waf-logs-</code> で始める必要がある)。</li>
+<li>CloudWatchメトリクスで、ルールごとの許可・ブロック件数を確認できる。</li>
+<li>複数アカウントのWeb ACLを一括で配布・管理するには <strong>AWS Firewall Manager</strong>(Organizationsが前提)を使う。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>CloudFront+ALBのWebサイトをSQLインジェクションやXSSから守る</li>
+<li>特定の国からのアクセスや、社外IPからの管理画面へのアクセスをブロックする</li>
+<li>レートベースルールで、ログイン画面への総当たりやHTTPフラッドを抑える</li>
+<li>組織内の全アカウントのALBに同じWeb ACLを適用する(Firewall Manager)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Web ACLの数、ルールの数(いずれも月額)と、処理したリクエスト数に応じて課金されます。Bot Controlや不正防止のマネージドルールには追加料金がかかります。Shield Advancedの契約者は、保護対象リソースのWAF料金が含まれます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cloudfront.html">Amazon CloudFront</a>/<a href="elb.html">Elastic Load Balancing</a>/<a href="api-gateway.html">Amazon API Gateway</a>:保護する対象</li>
+<li><a href="shield.html">AWS Shield</a>:DDoS対策(WAFと組み合わせる)</li>
+<li><a href="network-firewall.html">AWS Network Firewall</a>:VPC全体の通信を検査するファイアウォール</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ログ・メトリクス</li>
+<li><a href="organizations.html">AWS Organizations</a>:Firewall Managerでの一括管理</li>
+<li><a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:IP・ポート単位の制御</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「SQLインジェクション」「XSS」「HTTPヘッダーの検査」→ <strong class="em">WAF</strong>。</li>
+<li>「特定IPからの大量リクエスト」→ <strong class="em">レートベースルール</strong>。「特定の国をブロック」→ ジオマッチ(CloudFrontの地理的制限でも可)。</li>
+<li>付けられるのは CloudFront・ALB・API Gateway など。<strong>NLB・EC2には付けられない</strong>。</li>
+<li>新しいルールは Count で影響を確かめてから Block にする。</li>
+<li>複数アカウントへの一括適用 → <strong>Firewall Manager</strong>。</li>
+<li>大規模なDDoS対策とDDoS対応チームの支援 → Shield Advanced。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>WAFはHTTP/HTTPSのリクエストの中身を検査して、アプリケーション層の攻撃を防ぐ。</li>
+<li>Web ACLにマネージドルールや独自ルールを入れて、CloudFront・ALB・API Gatewayに関連付ける。</li>
+</ul>
+</section>

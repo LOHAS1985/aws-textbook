@@ -1,0 +1,101 @@
+<!-- title: AWS Control Tower -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: ベストプラクティスに沿ったマルチアカウント環境(ランディングゾーン)を作り、コントロールで統制する -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Control Tower</strong>は、ベストプラクティスに沿った<strong>マルチアカウント環境(ランディングゾーン)を短時間で作り、継続的に統制する</strong>サービスです。</p>
+<p>Organizations・IAM Identity Center・Service Catalog・Config・CloudTrail などを組み合わせた構成を、Control Tower が代わりに組み立てて管理します。Organizationsを直接使うよりも、「最初からあるべき形」が用意されている点が特徴です。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>ランディングゾーン</h3>
+<p>セキュリティとコンプライアンスのベストプラクティスに沿った、マルチアカウントの環境です。作成すると、次のようなものが用意されます。</p>
+<ul>
+<li>管理アカウントのもとに <strong>Security OU</strong> を作り、その中に<strong>ログアーカイブアカウント</strong>(全アカウントのCloudTrail・Configのログを集約)と<strong>監査アカウント</strong>(セキュリティチームが全アカウントを確認する)を置く</li>
+<li>組織全体のCloudTrailの証跡とConfigの記録</li>
+<li>IAM Identity Center によるシングルサインオン</li>
+<li>必須のコントロール</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node mgmt 1.4 0 accent "管理アカウント" "Control Tower"
+node sec 0.5 1 box "Security OU"
+node wl 2.3 1 box "ワークロードのOU"
+node log 0 2 ok "ログアーカイブ" "ログを集約"
+node aud 1 2 ok "監査" "全体を確認"
+node acc 2.3 2 blue "各アカウント" "Account Factory"
+edge mgmt sec
+edge mgmt wl
+edge sec log
+edge sec aud
+edge wl acc
+<figcaption>図1 ランディングゾーンの構成。Security OUにログアーカイブと監査の共有アカウントを置き、ワークロードのアカウントはAccount Factoryで作成してOUに登録する。</figcaption>
+</figure>
+
+<h3>コントロール(ガードレール)</h3>
+<p>環境全体を統制するルールです。動作の種類は3つあります。</p>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>動き</th><th>実装</th></tr>
+<tr><td>予防型</td><td>違反する操作をそもそも<strong>できなくする</strong></td><td>SCP・RCP</td></tr>
+<tr><td>検出型</td><td>違反しているリソースを<strong>見つけて知らせる</strong></td><td>Configルール</td></tr>
+<tr><td>事前対応型(プロアクティブ)</td><td>違反するリソースを<strong>作る前に止める</strong></td><td>CloudFormationフック</td></tr>
+</table></div>
+<p>適用の度合いとして、必須(常に有効・無効にできない)・強く推奨・選択の3段階があります。コントロールは<strong>OU単位</strong>で有効化します。</p>
+
+<h3>Account Factory</h3>
+<p>あらかじめ決めた設定(OU・ネットワークなど)で、新しいアカウントを作る仕組みです。作られたアカウントには、所属するOUのコントロールが自動で適用されます。Terraformで定義する Account Factory for Terraform(AFT)や、アカウントのカスタマイズ用のブループリントもあります。</p>
+
+<h3>ドリフト</h3>
+<p>Control Tower の外(Organizationsの画面など)で、OUの移動やSCPの変更を行うと、ランディングゾーンの状態と食い違う「ドリフト」になります。ダッシュボードで確認し、ランディングゾーンの<strong>修復(リセット)</strong>で元に戻します。</p>
+
+<h3>既存の環境への導入</h3>
+<p>既存のOrganizationsの組織に対しても有効化できます。既存のOUを登録し、既存のアカウントを登録(enroll)すると、Control Tower の管理下に入ります。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>これからマルチアカウントの環境を作る組織が、ベストプラクティスの構成をすぐに用意する</li>
+<li>「本番OUではリージョンを東京と大阪に限る」「ログの削除を禁止する」といったルールを組織全体に強制する</li>
+<li>開発チームの依頼に応じて、統制の効いたアカウントをすぐに払い出す</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Control Tower 自体は無料です。裏で使われる Config・CloudTrail・S3・Service Catalogなどのサービスの料金がかかります。アカウント数・リージョン数・検出型コントロールが増えると、Configの記録や評価の費用も増えます。リソースの作成と削除をくり返す環境(スポットインスタンスやAuto Scalingが多いなど)では、Configの費用が大きくなりやすい点に注意します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="organizations.html">AWS Organizations</a>:OUとSCP(土台)</li>
+<li><a href="identity-center.html">AWS IAM Identity Center</a>:シングルサインオン</li>
+<li><a href="config.html">AWS Config</a>:検出型コントロール</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:組織の証跡</li>
+<li><a href="service-catalog.html">AWS Service Catalog</a>:Account Factory の仕組み</li>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:事前対応型コントロール(フック)</li>
+<li><a href="../usecases/org-guardrails.html">組織のガードレール</a>(ユースケース)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「ベストプラクティスに沿ったマルチアカウント環境をすばやく作る」「ランディングゾーン」→ <strong class="em">Control Tower</strong>。</li>
+<li>予防型=<strong>SCP</strong>、検出型=<strong>Configルール</strong>、事前対応型=<strong>CloudFormationフック</strong>。</li>
+<li>統制の効いた新しいアカウントの作成 → Account Factory。</li>
+<li>Control Tower の外で変更してドリフトした → ランディングゾーンを修復する。</li>
+<li>細かく自分で組み立てたいならOrganizationsを直接使う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Control Tower は、Organizationsなどを組み合わせたマルチアカウント環境を作り、コントロールで統制する。</li>
+<li>ログアーカイブ・監査アカウント、組織の証跡、SSOが最初から用意される。</li>
+</ul>
+</section>

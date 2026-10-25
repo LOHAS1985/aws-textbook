@@ -1,0 +1,87 @@
+<!-- title: Amazon EC2 Image Builder -->
+<!-- category: コンピューティング -->
+<!-- lead: パッチ適用済みのAMIやコンテナイメージの作成・テスト・配布を自動化 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon EC2 Image Builder</strong>は、<strong>AMI(EC2の起動用イメージ)やコンテナイメージの作成・テスト・配布を自動化</strong>するサービスです。</p>
+<p>手作業でインスタンスを設定してAMIを取る方法では、手順のばらつきやパッチの適用漏れが起きます。Image Builderでは手順を<strong>パイプライン</strong>として定義し、スケジュールや新しいパッチの公開をきっかけに、最新の状態の「ゴールデンイメージ」を作り続けられます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>説明</th></tr>
+<tr><td>コンポーネント</td><td>ソフトウェアのインストールや設定(ビルド用)と、確認の手順(テスト用)をYAMLで書いたもの。AWSが用意したもの(パッチ適用・CISの強化など)も使える</td></tr>
+<tr><td>イメージレシピ</td><td>元にするイメージ(ベースイメージ)と、適用するコンポーネントの組み合わせ。バージョンで管理する</td></tr>
+<tr><td>インフラストラクチャ設定</td><td>ビルド用のインスタンスのタイプ・サブネット・セキュリティグループ・<strong>IAMインスタンスプロファイル</strong>・ログの出力先(S3)</td></tr>
+<tr><td>ディストリビューション設定</td><td>できたAMIをコピーする<strong>リージョン</strong>や共有する<strong>アカウント</strong>、起動テンプレートの更新</td></tr>
+<tr><td>パイプライン</td><td>上の設定をまとめ、実行のスケジュールを決めたもの</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 160 80
+node base 0 0.5 blue "ベースイメージ" "Amazon Linuxなど"
+node build 1.25 0.5 accent "ビルド" "コンポーネント適用"
+node test 2.5 0.5 box "テスト" "別インスタンスで確認"
+node dist 3.75 0.5 ok "配布" "他リージョン・共有"
+edge base build
+edge build test
+edge test dist
+<figcaption>図1 Image Builderのパイプライン。ベースイメージに設定やパッチを適用してAMIを作り、別のインスタンスで起動してテストし、合格したら指定したリージョンやアカウントに配布する。</figcaption>
+</figure>
+
+<h3>主な機能</h3>
+<ul>
+<li>パイプラインの実行は手動・スケジュール(cron)・<strong>ベースイメージや依存するコンポーネントの更新時</strong>から選べる。</li>
+<li>ビルド用インスタンスは<strong>SSMエージェント</strong>を使って操作される。インスタンスプロファイルに <code>AmazonSSMManagedInstanceCore</code> と <code>EC2InstanceProfileForImageBuilder</code> のポリシーが必要。</li>
+<li>Inspectorと連携して、作ったイメージの脆弱性をスキャンできる。</li>
+<li>ディストリビューション設定で<strong>起動テンプレートの新しいバージョン</strong>を自動で作れる。Auto Scalingグループのインスタンスの更新と組み合わせると、新しいAMIへの入れ替えまで自動化できる。</li>
+<li>ライフサイクルポリシーで、古いイメージやスナップショットを自動で削除できる。</li>
+<li>完了・失敗の通知をSNSやEventBridgeで受け取れる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>毎月、最新のOSパッチとセキュリティ設定を適用したゴールデンAMIを作り、全リージョンに配布する</li>
+<li>組織の各アカウントに、承認済みのAMIだけを共有する</li>
+<li>新しいAMIができたら起動テンプレートを更新し、Auto Scalingグループのインスタンスを順に入れ替える</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Image Builder自体は無料です。ビルド・テストに使うEC2インスタンス、作ったAMIのEBSスナップショット、S3のログなど、使ったリソースの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:AMIの利用先</li>
+<li><a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:起動テンプレートの更新とインスタンスの入れ替え</li>
+<li><a href="systems-manager.html">AWS Systems Manager</a>:ビルド用インスタンスの操作、Parameter StoreへのAMI IDの保存</li>
+<li><a href="inspector.html">Amazon Inspector</a>:イメージの脆弱性スキャン</li>
+<li><a href="ecr.html">Amazon ECR</a>:コンテナイメージの保存先</li>
+<li><a href="ram.html">AWS RAM</a>:コンポーネントやレシピの共有</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「パッチ適用済みのAMIを定期的に自動作成」「ゴールデンイメージ」→ <strong class="em">EC2 Image Builder</strong>。</li>
+<li>他のリージョン・アカウントへの配布は<strong>ディストリビューション設定</strong>で行う。</li>
+<li>ビルドが失敗する → インスタンスプロファイルの権限、SSMエージェント、サブネットからSSMやS3への経路を確認する。ログはS3に出力される。</li>
+<li>新しいAMIへの切り替え → 起動テンプレートの更新+Auto Scalingのインスタンスの更新。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Image Builderは、イメージの作成・テスト・配布をパイプラインで自動化する。</li>
+<li>サービス自体は無料で、使ったEC2などの料金だけがかかる。</li>
+</ul>
+</section>

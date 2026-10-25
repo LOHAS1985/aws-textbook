@@ -1,0 +1,110 @@
+<!-- title: Amazon GuardDuty -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: ログを機械学習と脅威インテリジェンスで分析し、不正アクセスやマルウェアを検出 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon GuardDuty</strong>は、AWSアカウント内のログやイベントを継続的に分析し、<strong>不正アクセス・認証情報の漏えい・マルウェア・暗号資産のマイニング</strong>などの脅威を検出するサービスです。</p>
+<p>悪意のあるIPアドレスやドメインのリスト(脅威インテリジェンス)と機械学習を使って、ふだんと違う怪しい動きを見つけます。エージェントのインストールやログの収集設定は不要で、<strong>有効化するだけ</strong>で分析が始まります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>基本の分析対象(基盤データソース)</h3>
+<p>有効化すると、次の3つのログを自動で分析します。利用者が CloudTrail の証跡やフローログを作成しておく必要はありません(GuardDuty が独自に取得します)。</p>
+<div class="table-wrap"><table>
+<tr><th>データソース</th><th>見つけられる脅威の例</th></tr>
+<tr><td>CloudTrail 管理イベント</td><td>ふだん使わない国からのAPI呼び出し、CloudTrailの停止、漏えいした認証情報の利用</td></tr>
+<tr><td>VPCフローログ</td><td>悪意のあるIPアドレスとの通信、ポートスキャン、EC2からの大量送信</td></tr>
+<tr><td>DNSログ</td><td>マルウェアの指令サーバーや、マイニング用ドメインへの問い合わせ</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 170 75
+node ct 0 0 blue "CloudTrail" "管理イベント"
+node fl 0 1 blue "VPCフローログ"
+node dns 0 2 blue "DNSログ"
+node gd 1.4 1 accent "GuardDuty" "脅威情報+機械学習"
+node fd 2.8 0.5 ng "検出結果" "重要度 低〜重大"
+node eb 2.8 1.5 box "EventBridge" "通知・自動対応"
+edge ct gd
+edge fl gd
+edge dns gd
+edge gd fd
+edge gd eb
+<figcaption>図1 GuardDutyの仕組み。3つの基盤データソースを自動で分析し、怪しい動きを「検出結果(Finding)」として出す。検出結果はEventBridgeに送られるので、通知や自動対応につなげられる。</figcaption>
+</figure>
+
+<h3>保護プラン(追加で有効化する分析対象)</h3>
+<div class="table-wrap"><table>
+<tr><th>保護プラン</th><th>分析するもの</th></tr>
+<tr><td>S3 Protection</td><td>S3のデータイベント(オブジェクトの取得・削除など)</td></tr>
+<tr><td>EKS Protection</td><td>EKSの監査ログ</td></tr>
+<tr><td>Runtime Monitoring</td><td>EC2・ECS(Fargate含む)・EKS上のOSレベルの動き(プロセス・ファイル・通信)。専用のセキュリティエージェントを使う</td></tr>
+<tr><td>Malware Protection for EC2</td><td>怪しい動きがあったEC2のEBSボリュームをスキャン</td></tr>
+<tr><td>Malware Protection for S3</td><td>S3に新しくアップロードされたファイルをスキャン</td></tr>
+<tr><td>RDS Protection</td><td>Aurora・RDSへのログインの異常</td></tr>
+<tr><td>Lambda Protection</td><td>Lambda関数のネットワーク通信</td></tr>
+</table></div>
+<p>初めて有効化したときは、Runtime Monitoring 以外の保護プランが自動で有効になり、<strong>30日間の無料試用</strong>に含まれます。</p>
+
+<h3>Extended Threat Detection</h3>
+<p>1つひとつは小さな出来事でも、順番に起きると攻撃とみなせるもの(認証情報の窃取→権限の昇格→データの持ち出し など)を、<strong>複数段階の攻撃</strong>としてまとめて検出します。追加料金なしで自動的に有効です。</p>
+
+<h3>検出結果(Finding)</h3>
+<ul>
+<li>種類は <code>脅威の目的:リソース/内容</code> の形の名前で表す(例:<code>UnauthorizedAccess:EC2/SSHBruteForce</code>、<code>CryptoCurrency:EC2/BitcoinTool.B</code>)。</li>
+<li>重要度は 低・中・高・重大 の4段階。</li>
+<li>信頼できるIPリスト(検出しない)・脅威リスト(必ず検出する)を自分で登録できる。</li>
+<li>抑制ルールで、問題ないと分かっている検出結果を自動でアーカイブできる。</li>
+</ul>
+
+<h3>複数アカウントの管理</h3>
+<p>Organizations と連携し、<strong>委任管理者アカウント</strong>で組織全体の GuardDuty を有効化・管理できます。有効化は<strong>リージョンごと</strong>に必要です。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>漏えいしたアクセスキーが使われたことを早期に発見する</li>
+<li>EC2が乗っ取られてマイニングや外部攻撃の踏み台にされていないかを監視する</li>
+<li>検出結果をEventBridge+Lambdaで受けて、該当インスタンスを隔離用セキュリティグループに付け替える</li>
+<li>S3にアップロードされたファイルのマルウェアチェック</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>分析したイベントやログの量(CloudTrailのイベント数、フローログ・DNSログのGB数など)と、有効にした保護プランの対象量に応じて課金されます。30日間の無料試用期間があり、その間にコンソールで月額の見込みを確認できます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="security-hub.html">AWS Security Hub</a>:検出結果の集約</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:検出結果をトリガーにした通知・自動対応</li>
+<li><a href="inspector.html">Amazon Inspector</a>:脆弱性の検出(GuardDutyは脅威の検出)</li>
+<li><a href="macie.html">Amazon Macie</a>:S3の機密データの検出</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>/<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>:分析の元になるログ</li>
+<li><a href="organizations.html">AWS Organizations</a>:委任管理者による一括管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「不正アクセス」「認証情報の悪用」「マイニング」「脅威の検出」→ <strong class="em">GuardDuty</strong>。</li>
+<li>CloudTrail・フローログ・DNSログを<strong>自分で有効化していなくても</strong>分析できる。</li>
+<li>脆弱性(CVE)は Inspector、機密データは Macie、脅威は GuardDuty と使い分ける。</li>
+<li>検出結果への自動対応 → <strong>EventBridge</strong>ルール+Lambda/SSM Automation。</li>
+<li>組織全体での有効化 → <strong>委任管理者</strong>。リージョンごとに有効化が必要。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>GuardDutyは、ログを自動で分析して脅威を検出するサービス。有効化するだけで使える。</li>
+<li>保護プランでS3・EKS・RDS・Lambda・実行時の動きまで分析対象を広げられる。</li>
+<li>EventBridgeと組み合わせて、検出から対応までを自動化する。</li>
+</ul>
+</section>

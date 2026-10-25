@@ -1,0 +1,99 @@
+<!-- title: Amazon Inspector -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: EC2・コンテナイメージ・Lambdaのソフトウェアの脆弱性とネットワークの露出を継続的にスキャン -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Inspector</strong>は、<strong>EC2インスタンス・ECRのコンテナイメージ・Lambda関数</strong>を自動で見つけ、ソフトウェアの<strong>脆弱性(CVE)</strong>や意図しないネットワークの露出を継続的にスキャンする脆弱性管理サービスです。</p>
+<p>スキャンの予定を組む必要はありません。パッケージのインストールやパッチの適用、新しいCVEの公開などをきっかけに、自動で再スキャンします。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>スキャンの種類</h3>
+<div class="table-wrap"><table>
+<tr><th>対象</th><th>調べる内容</th><th>しくみ</th></tr>
+<tr><td>EC2インスタンス</td><td>OS・パッケージの脆弱性、インターネットから到達できるポート</td><td>SSMエージェントで情報を集める方式と、EBSスナップショットを読むエージェントレス方式がある</td></tr>
+<tr><td>ECRのコンテナイメージ</td><td>イメージ内のOS・言語パッケージの脆弱性</td><td>プッシュ時と、新しいCVEの公開時に再スキャン</td></tr>
+<tr><td>Lambda関数</td><td>依存パッケージの脆弱性(標準)、コード自体の欠陥(コードスキャン)</td><td>関数のデプロイ・更新時にスキャン</td></tr>
+</table></div>
+<p>EC2のエージェント方式では、インスタンスが<strong>Systems Managerのマネージドノード</strong>になっている必要があります(SSMエージェントとIAMロールが必要)。</p>
+
+<figure class="figure" data-diagram>
+grid 170 75
+node ec2 0 0 blue "EC2" "SSMエージェント"
+node ecr 0 1 blue "ECRイメージ"
+node lam 0 2 blue "Lambda関数"
+node ins 1.4 1 accent "Inspector" "CVEと照合"
+node fd 2.8 0.5 ng "検出結果" "Inspectorスコア"
+node sh 2.8 1.5 box "Security Hub" "EventBridge"
+edge ec2 ins
+edge ecr ins
+edge lam ins
+edge ins fd
+edge ins sh
+<figcaption>図1 Inspectorの仕組み。対象を自動で見つけて脆弱性データベースと照合し、検出結果を出す。結果はSecurity HubやEventBridgeに送られる。修正されると検出結果は自動で閉じられる。</figcaption>
+</figure>
+
+<h3>Inspectorリスクスコア</h3>
+<p>公開されている脆弱性の基本スコア(CVSS)を、実際の環境に合わせて調整したスコアです。例えば、ネットワーク経由で悪用される脆弱性でも、インターネットへの経路がないインスタンスではスコアが下がります。</p>
+
+<h3>そのほかの機能</h3>
+<ul>
+<li>ソフトウェア部品表(SBOM)の出力</li>
+<li>CISベンチマークに沿ったOS設定のチェック(EC2)</li>
+<li>抑制ルールで対象外の検出結果を非表示にする</li>
+<li>Organizations の<strong>委任管理者</strong>で組織全体を一括で有効化し、新しいアカウントにも自動で有効化できる</li>
+</ul>
+
+<h3>似たサービスとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>見つけるもの</th></tr>
+<tr><td>Inspector</td><td>ソフトウェアの脆弱性、ネットワークの露出</td></tr>
+<tr><td>GuardDuty</td><td>実際に起きている不審な動き(脅威)</td></tr>
+<tr><td>Macie</td><td>S3の機密データ</td></tr>
+<tr><td>Systems Manager Patch Manager</td><td>(見つけるのではなく)パッチを適用する</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>全EC2インスタンスの脆弱性を継続的に把握し、重大なものから対応する</li>
+<li>ECRにプッシュしたイメージに重大な脆弱性があれば、EventBridge経由で通知してデプロイを止める</li>
+<li>検出結果をもとに Patch Manager でパッチを適用し、修正されたことをInspectorで確認する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>スキャン対象の数で課金されます。EC2はスキャンしたインスタンス数(月平均)、ECRはスキャンしたイメージ数、Lambdaはスキャンした関数数が基準です。新しいアカウントには15日間の無料試用があります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ecr.html">Amazon ECR</a>/<a href="lambda.html">AWS Lambda</a>:スキャン対象</li>
+<li><a href="systems-manager.html">AWS Systems Manager</a>:EC2の情報収集(SSMエージェント)とパッチ適用</li>
+<li><a href="security-hub.html">AWS Security Hub</a>:検出結果の集約</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:検出結果をトリガーにした自動対応</li>
+<li><a href="guardduty.html">Amazon GuardDuty</a>:脅威の検出</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「脆弱性」「CVE」「コンテナイメージのスキャン」→ <strong class="em">Inspector</strong>。</li>
+<li>EC2のエージェント方式は <strong>SSMエージェント</strong>が前提。スキャンされないときは、マネージドノードになっているかを確認する。</li>
+<li>スキャンは自動・継続的。手動でスケジュールを組む必要はない。</li>
+<li>見つけるのはInspector、直すのは Patch Manager。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>InspectorはEC2・ECR・Lambdaの脆弱性を継続的にスキャンするサービス。</li>
+<li>環境に合わせたリスクスコアで、優先して直すべきものが分かる。</li>
+</ul>
+</section>

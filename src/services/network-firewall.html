@@ -1,0 +1,104 @@
+<!-- title: AWS Network Firewall -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: VPCに出入りする通信を検査・フィルタリングするマネージド型のネットワークファイアウォール -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Network Firewall</strong>は、<strong>VPCに出入りする通信をまとめて検査・フィルタリング</strong>するマネージド型のファイアウォールです。セキュリティグループやネットワークACLより細かい条件(ドメイン名、通信の中身のパターン、プロトコルなど)で通信を制御でき、侵入検知・防止(IDS/IPS)にも使えます。</p>
+<p>ファイアウォールの台数や冗長化はAWSが管理し、通信量に合わせて自動でスケールします。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>説明</th></tr>
+<tr><td>ファイアウォール</td><td>VPCに作成する本体。AZごとの専用サブネットに<strong>ファイアウォールエンドポイント</strong>が置かれる</td></tr>
+<tr><td>ファイアウォールポリシー</td><td>どのルールグループをどの順で使うか、既定の動作を決める</td></tr>
+<tr><td>ステートレスルールグループ</td><td>パケットを1つずつ、送信元・宛先・ポート・プロトコルで判定する</td></tr>
+<tr><td>ステートフルルールグループ</td><td>通信の流れ(セッション)全体を見て判定する。ドメインリスト・Suricata形式のIPSルールが使える</td></tr>
+</table></div>
+
+<h3>通信を検査させる方法(ルートテーブル)</h3>
+<p>Network Firewallは、<strong>ルートテーブルで通信をファイアウォールエンドポイントに向ける</strong>ことで初めて検査されます。例えばインターネットとの通信を検査するには、次のように設定します。</p>
+<ul>
+<li>ワークロードのサブネット:<code>0.0.0.0/0</code> の宛先をファイアウォールエンドポイントにする</li>
+<li>ファイアウォールのサブネット:<code>0.0.0.0/0</code> の宛先をインターネットゲートウェイにする</li>
+<li>インターネットゲートウェイのルートテーブル(エッジの関連付け):ワークロードのサブネット宛てをファイアウォールエンドポイントにする(戻りの通信も検査するため)</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node igw 0 0.5 blue "インターネット" "ゲートウェイ"
+node fw 1.4 0.5 accent "Firewall" "エンドポイント"
+node app 2.8 0.5 ok "ワークロード" "サブネット"
+node bad 1.4 1.6 ng "不正なドメイン" "ブロック"
+edge igw fw both
+edge fw app both
+edge fw bad dash
+<figcaption>図1 Network Firewallの配置。行きも戻りもファイアウォールエンドポイントを通るようにルートテーブルを設定する。ルールに一致した通信(不正なドメインへの接続など)はここで止められる。</figcaption>
+</figure>
+
+<h3>主な使いどころ</h3>
+<ul>
+<li><strong>ドメインでの送信先の制限</strong>:許可したドメイン(例:<code>.amazonaws.com</code>、パッケージのリポジトリ)以外への外向きの通信をブロックする。</li>
+<li>IDS/IPS:既知の攻撃パターンに一致する通信を検出・遮断する(AWSマネージドの脅威シグネチャも使える)。</li>
+<li>TLSの中身の検査(TLSインスペクション)。</li>
+<li>Transit Gatewayと組み合わせた<strong>検査用VPC</strong>で、複数VPCの通信を集中して検査する。</li>
+</ul>
+
+<h3>ログ</h3>
+<p>アラートログ(ルールに一致した通信)・フローログ・TLSログを、S3・CloudWatch Logs・Data Firehose に出力できます。</p>
+
+<h3>ほかのフィルタリング手段との違い</h3>
+<div class="table-wrap"><table>
+<tr><th>手段</th><th>単位</th><th>見られるもの</th></tr>
+<tr><td>セキュリティグループ</td><td>ENI(インスタンス)</td><td>IP・ポート(ステートフル)</td></tr>
+<tr><td>ネットワークACL</td><td>サブネット</td><td>IP・ポート(ステートレス)</td></tr>
+<tr><td>Network Firewall</td><td>VPC・サブネット間の経路</td><td>ドメイン・通信の中身・プロトコル</td></tr>
+<tr><td>AWS WAF</td><td>CloudFront・ALBなど</td><td>HTTPリクエストの中身</td></tr>
+<tr><td>Route 53 Resolver DNS Firewall</td><td>VPCのDNS問い合わせ</td><td>問い合わせるドメイン名</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>プライベートサブネットのサーバーが、許可したドメイン以外のインターネットにつながらないようにする</li>
+<li>複数VPC・オンプレミスとの通信を、Transit Gateway経由で1か所で検査する</li>
+<li>規制のために、IDS/IPSによる通信の監視が必要な環境</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ファイアウォールエンドポイントごとの時間料金と、処理したデータ量(GB)に応じて課金されます。AZごとにエンドポイントを置くので、AZ数に比例して時間料金が増えます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>/<a href="../terms/route-table.html">ルートテーブル</a>:配置と通信の誘導</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:検査用VPCへの集約</li>
+<li><a href="waf.html">AWS WAF</a>:HTTPのアプリケーション層の保護</li>
+<li><a href="dns-firewall.html">Route 53 Resolver DNS Firewall</a>:DNSの問い合わせのフィルタリング</li>
+<li><a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「VPC全体の通信の検査」「IDS/IPS」「ドメイン名で外向きの通信を制限」→ <strong class="em">Network Firewall</strong>。</li>
+<li>検査されないときは<strong>ルートテーブル</strong>を確認する。行きと戻りの両方がエンドポイントを通る必要がある。</li>
+<li>HTTPのSQLインジェクション対策ならWAF、IP・ポートだけならセキュリティグループ/ネットワークACLで足りる。</li>
+<li>DNSの問い合わせだけを止めたいなら、より手軽な DNS Firewall も候補。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Network FirewallはVPCの通信をまとめて検査するマネージド型ファイアウォール。</li>
+<li>ルートテーブルで通信をファイアウォールエンドポイントに通して使う。</li>
+</ul>
+</section>

@@ -1,0 +1,96 @@
+<!-- title: AWS Shield -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: DDoS攻撃からAWS上のアプリケーションを守るサービス(StandardとAdvanced) -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Shield</strong>は、<strong>DDoS攻撃(分散型サービス妨害攻撃)</strong>からAWS上のアプリケーションを守るサービスです。DDoS攻撃とは、多数のコンピューターから大量の通信を送りつけて、サービスを使えなくする攻撃です。</p>
+<p>無料で全員に適用される <strong>Shield Standard</strong> と、有料で保護を強化する <strong>Shield Advanced</strong> の2種類があります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>Shield Standard と Shield Advanced</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Shield Standard</th><th>Shield Advanced</th></tr>
+<tr><td>料金</td><td>無料(申し込み不要・自動で適用)</td><td>月額料金(1年契約)+データ転送料</td></tr>
+<tr><td>防げる攻撃</td><td>よくあるネットワーク層・トランスポート層(L3/L4)の攻撃(SYNフラッド・UDPリフレクションなど)</td><td>L3/L4に加え、WAFと組み合わせたアプリケーション層(L7)の攻撃</td></tr>
+<tr><td>保護対象</td><td>すべてのAWSリソース</td><td>CloudFront、Route 53のホストゾーン、Global Accelerator、ELB、Elastic IP(EC2・NLB)</td></tr>
+<tr><td>攻撃の可視化</td><td>—</td><td>攻撃の検出・詳細なメトリクスとレポート</td></tr>
+<tr><td>専門チームの支援</td><td>—</td><td><strong>Shield Response Team(SRT)</strong>による24時間の支援(Business以上のサポートプランが必要)</td></tr>
+<tr><td>費用の保護</td><td>—</td><td>攻撃で増えたスケーリング費用をクレジットで払い戻す</td></tr>
+<tr><td>WAFの料金</td><td>—</td><td>保護対象リソースのWAF料金が含まれる</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node atk 0 0.5 ng "DDoS攻撃" "大量の通信"
+node edge1 1.4 0.5 accent "エッジ" "Shield Standard"
+node waf 2.8 0.5 box "WAF" "L7の攻撃を検査"
+node app 4.1 0.5 ok "ALB / EC2"
+node srt 2.8 1.5 blue "SRT" "Advancedで支援"
+edge atk edge1
+edge edge1 waf "L3/L4を吸収"
+edge waf app
+edge srt waf "ルール作成を支援" dash
+<figcaption>図1 DDoS対策の組み立て方。L3/L4の攻撃はShieldがエッジで吸収し、L7の攻撃はWAFで防ぐ。Shield Advancedでは、攻撃中にSRTがWAFのルール作成などを支援する。</figcaption>
+</figure>
+
+<h3>Shield Advanced の主な機能</h3>
+<ul>
+<li><strong>保護グループ</strong>:複数のリソースをまとめて1つの保護単位として扱う。</li>
+<li><strong>アプリケーション層の自動緩和</strong>:L7のDDoSを検出すると、WAFのルールを自動で作成・適用する。</li>
+<li><strong>ヘルスベースの検出</strong>:Route 53のヘルスチェックと関連付けて、検出の精度を上げる。</li>
+<li><strong>プロアクティブエンゲージメント</strong>:攻撃でヘルスチェックが異常になると、SRTから連絡が来る。</li>
+<li>攻撃の発生はCloudWatchメトリクス(<code>DDoSDetected</code> など)で監視できる。</li>
+<li>Firewall Managerで組織全体のリソースに一括で適用できる。</li>
+</ul>
+
+<h3>DDoSに強い構成の基本</h3>
+<ul>
+<li>CloudFront・Route 53・Global Acceleratorなどのエッジのサービスを前に置き、攻撃をエッジで受ける。</li>
+<li>ELBとAuto Scalingで、負荷が増えてもスケールできるようにする。</li>
+<li>セキュリティグループで、オリジンには前段のサービスからの通信だけを許可する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>すべてのAWS利用者:Shield Standardで基本的なDDoS対策が自動で行われる</li>
+<li>止まると影響が大きいECサイトや金融サービス:Shield Advancedで攻撃の可視化とSRTの支援を受ける</li>
+<li>攻撃でスケールアウトした費用の払い戻しを受けたい場合</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Shield Standardは無料です。Shield Advancedは組織単位の<strong>月額固定料金(1年契約)</strong>と、保護対象リソースのデータ転送量に応じた料金がかかります。1つの契約で、同じ組織(一括請求)の複数アカウントを保護できます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="waf.html">AWS WAF</a>:アプリケーション層の攻撃対策</li>
+<li><a href="cloudfront.html">Amazon CloudFront</a>/<a href="route53.html">Amazon Route 53</a>/<a href="global-accelerator.html">AWS Global Accelerator</a>:エッジで攻撃を受ける</li>
+<li><a href="elb.html">Elastic Load Balancing</a>/<a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:負荷の吸収</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:攻撃の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「DDoS」→ <strong class="em">Shield</strong>。基本的なL3/L4の攻撃は<strong>Standard(無料・自動)</strong>で守られる。</li>
+<li>「24時間の専門チーム(SRT)」「攻撃による費用の補償」「高度なDDoS対策」→ <strong class="em">Shield Advanced</strong>。</li>
+<li>L7(HTTPフラッドなど)の対策は WAF のレートベースルールと組み合わせる。</li>
+<li>Advancedの対象は CloudFront・Route 53・Global Accelerator・ELB・Elastic IP。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>ShieldはDDoS対策のサービス。Standardは全員に無料で適用される。</li>
+<li>Advancedは攻撃の可視化・SRTの支援・費用の保護・L7の自動緩和を追加する。</li>
+</ul>
+</section>

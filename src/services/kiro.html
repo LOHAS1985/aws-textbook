@@ -1,0 +1,91 @@
+<!-- title: Kiro -->
+<!-- category: デベロッパーツール -->
+<!-- lead: 仕様(スペック)から設計・実装までをAIエージェントと進める開発環境(IDE・CLI) -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Kiro</strong>は、AWSが提供する<strong>AIエージェントを使った開発環境</strong>です。チャットでコードを書いてもらうだけでなく、<strong>要件 → 設計 → タスク</strong>の順に仕様(スペック)を作ってから実装を進める「仕様駆動開発」ができるのが特徴です。</p>
+<p>デスクトップのIDE、ターミナルで使うCLI、ブラウザで使うWeb版などがあり、どれも同じエージェントの仕組みで動きます。プロジェクトの設定は、リポジトリの <code>.kiro/</code> フォルダに保存され、チームで共有できます。Amazon Q Developer のIDE拡張・CLIの利用者向けに、Kiroへの移行ガイドが用意されています。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>スペック(仕様駆動開発)</h3>
+<p>作りたい機能を伝えると、Kiroが次の3つの文書を作り、確認しながら実装を進めます。</p>
+<div class="table-wrap"><table>
+<tr><th>文書</th><th>内容</th></tr>
+<tr><td>要件(requirements)</td><td>ユーザーストーリーと受け入れ条件</td></tr>
+<tr><td>設計(design)</td><td>構成・データの流れ・インターフェースなど</td></tr>
+<tr><td>タスク(tasks)</td><td>実装の手順を小さな作業に分けた一覧。1つずつ実行できる</td></tr>
+</table></div>
+<p>不具合の修正用に、原因の分析と再発防止を含めて進めるバグ修正用のスペックもあります。</p>
+
+<figure class="figure" data-diagram>
+grid 165 80
+node idea 0 0.5 blue "作りたいもの" "自然言語で伝える"
+node req 1.25 0.5 accent "要件"
+node des 2.5 0.5 accent "設計"
+node task 3.75 0.5 accent "タスク"
+node code 3.75 1.6 ok "実装・テスト"
+edge idea req
+edge req des
+edge des task
+edge task code
+<figcaption>図1 Kiroの仕様駆動開発。要件・設計・タスクを順に作り、人が確認してから実装に進む。何を作るかを先に文書で固めるので、大きな変更でも意図とずれにくい。</figcaption>
+</figure>
+
+<h3>そのほかの主な機能</h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>内容</th></tr>
+<tr><td>ステアリング</td><td>コーディング規約や使う技術など、プロジェクトの決まりをファイルに書いておくと、エージェントが常にそれに従う</td></tr>
+<tr><td>フック</td><td>ファイルの保存やタスクの完了などをきっかけに、テストの作成やドキュメントの更新などを自動で実行する</td></tr>
+<tr><td>MCP</td><td>外部のツールやAPI(AWSのドキュメント、社内システムなど)をエージェントにつなぐ</td></tr>
+<tr><td>権限とチェックポイント</td><td>エージェントが使えるツールやコマンドを制限する。変更を前の状態に巻き戻せる</td></tr>
+<tr><td>カスタムエージェント・スキル</td><td>特定の作業向けのエージェントや、再利用できる手順をまとめて使う</td></tr>
+</table></div>
+
+<h3>サインインと組織での利用</h3>
+<p>個人はGoogle・GitHubのアカウントや AWS Builder ID でサインインします。企業での利用では、<strong>IAM Identity Center</strong> や外部のIdPでのシングルサインオン、利用状況の監視、請求のAWSへの一元化ができます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>新しい機能を、要件と設計をレビューしてから実装する</li>
+<li>CloudFormation・CDKなどのIaCのコードを、規約(ステアリング)に沿って作る</li>
+<li>保存のたびにテストを自動で更新し、品質を保つ</li>
+<li>DevOps Agentが示したコードの改善案を実装する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>利用者ごとの月額プラン(無料プランと、複数の有料プラン)で、プランごとに月の<strong>クレジット</strong>が付きます。クレジットはエージェントへの依頼の作業量に応じて消費され、複雑な作業ほど多く使います。有料プランでは追加のクレジットを購入できます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="bedrock.html">Amazon Bedrock</a>:AWSの生成AIの基盤</li>
+<li><a href="devops-agent.html">AWS DevOps Agent</a>:運用のためのAIエージェント</li>
+<li><a href="security-agent.html">AWS Security Agent</a>:セキュリティのためのAIエージェント</li>
+<li><a href="identity-center.html">AWS IAM Identity Center</a>:企業でのサインイン</li>
+<li><a href="cdk.html">AWS CDK</a>/<a href="cloudformation.html">AWS CloudFormation</a>:IaCのコードの生成先</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「要件・設計・タスクのスペックから実装を進めるAIの開発環境」→ <strong>Kiro</strong>。</li>
+<li>プロジェクトの決まりを守らせる → <strong>ステアリング</strong>。イベントで自動実行 → <strong>フック</strong>。外部ツールとの接続 → MCP。</li>
+<li>企業での利用は IAM Identity Center などでのSSOで管理する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Kiroは、仕様駆動開発ができるAIエージェントの開発環境(IDE・CLIなど)。</li>
+<li>ステアリング・フック・MCPで、チームの決まりや外部のツールを組み込める。</li>
+</ul>
+</section>

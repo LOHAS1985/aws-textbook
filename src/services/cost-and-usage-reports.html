@@ -1,0 +1,109 @@
+<!-- title: AWS Cost and Usage Reports -->
+<!-- category: クラウド財務管理 -->
+<!-- lead: 最も詳細な料金・使用量のデータを、S3にファイルとして定期的に出力する -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Cost and Usage Reports(CUR)</strong>は、AWSが提供する中で<strong>最も詳細な料金と使用量のデータ</strong>を、<strong>自分のS3バケットにファイルとして出力</strong>する機能です。サービス・使用タイプ・API操作の組み合わせごとに1行で、時間・日・月の単位で記録されます。リソースIDやタグの列も含められます。</p>
+<p>現在は Billing and Cost Management の <strong>Data Exports</strong> から作成する <strong>CUR 2.0</strong> が推奨です。それより前の形式は「従来のCUR(Legacy CUR)」として引き続き使えます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>Data Exports で出力できるもの</h3>
+<div class="table-wrap"><table>
+<tr><th>エクスポートの種類</th><th>内容</th></tr>
+<tr><td>CUR 2.0</td><td>詳細な料金・使用量のデータ。列が固定された形式で、出力する列や行をSQLで選べる</td></tr>
+<tr><td>FOCUS</td><td>クラウドの請求データの共通仕様(FOCUS)に沿った形式。他のクラウドの請求と合わせて分析しやすい</td></tr>
+<tr><td>コスト最適化の推奨事項</td><td>Cost Optimization Hub の推奨事項</td></tr>
+<tr><td>炭素排出量</td><td>AWSの利用による炭素排出量の推定値</td></tr>
+<tr><td>Cost and usage dashboard</td><td>Amazon QuickSight に、用意されたダッシュボードを作る</td></tr>
+<tr><td>従来のCUR</td><td>以前の形式のCUR</td></tr>
+</table></div>
+
+<h3>出力のしくみ</h3>
+<ul>
+<li>出力先は自分のS3バケット。形式はCSV(gzip)またはParquet。</li>
+<li>作成してから最初の出力まで最大24時間かかる。その後は<strong>1日に1回以上</strong>更新され、月の途中の値は見込み(確定は請求書の発行後)。</li>
+<li>同じ月のデータは上書き(または新しいバージョン)で、月初からの累計になる。</li>
+<li>返金・クレジット・サポート料金は、月が締まった後に反映されることがある。</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node bill 0 0.5 blue "請求データ"
+node de 1.4 0.5 accent "Data Exports" "CUR 2.0"
+node s3 2.8 0.5 box "S3バケット" "CSV / Parquet"
+node ath 4.1 0 ok "Athena" "SQLで分析"
+node qs 4.1 1 ok "QuickSight" "ダッシュボード"
+edge bill de
+edge de s3 "1日1回以上"
+edge s3 ath
+edge s3 qs
+<figcaption>図1 CURの使い方。Data ExportsでS3バケットに定期的に出力し、AthenaでSQLを使って集計したり、QuickSightで可視化したりする。</figcaption>
+</figure>
+
+<h3>分析の方法</h3>
+<ul>
+<li><strong>Athena</strong>:S3のCURをテーブルとして登録し、SQLで集計する(Parquet形式がおすすめ)。</li>
+<li><strong>QuickSight</strong>:ダッシュボードで可視化する。</li>
+<li>Redshiftに読み込んで、他の業務データと合わせて分析する。</li>
+</ul>
+
+<h3>Cost Explorerとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Cost Explorer</th><th>CUR</th></tr>
+<tr><td>使い方</td><td>画面でグラフを見る</td><td>ファイルを自分で集計する</td></tr>
+<tr><td>細かさ</td><td>集計済み(リソース単位は直近14日)</td><td>最も細かい(リソースID・タグごと)</td></tr>
+<tr><td>保存期間</td><td>過去13か月(設定で延長可)</td><td>S3に置く限りずっと</td></tr>
+</table></div>
+
+<h3>そのほかのポイント</h3>
+<ul>
+<li>Organizationsの<strong>管理アカウント</strong>で作成すると、全メンバーアカウントのデータが含まれる。</li>
+<li>タグの列を出すには、<strong>コスト配分タグ</strong>を有効化しておく。</li>
+<li>ECS・EKSのタスクやポッドごとに共有のEC2の費用を分ける「分割コスト配分データ」を含められる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>リソース・タグ単位の費用を、社内の配賦システムに取り込む</li>
+<li>Athenaで「先月どのリソースのデータ転送料が高かったか」を集計する</li>
+<li>何年分もの請求データを残して、長期の傾向を分析する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>CURの作成・出力そのものは無料です。保存先のS3の料金と、分析に使うAthena・QuickSightなどの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cost-explorer.html">AWS Cost Explorer</a>:画面での分析・予測</li>
+<li><a href="s3.html">Amazon S3</a>:出力先</li>
+<li><a href="athena.html">Amazon Athena</a>:SQLでの分析</li>
+<li><a href="organizations.html">AWS Organizations</a>:管理アカウントでの一括出力</li>
+<li><a href="savings-plans.html">Savings Plans</a>:割引の適用状況の列</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「最も詳細な請求データ」「時間単位・リソース単位の費用をS3に出力」→ <strong class="em">CUR</strong>(Data ExportsのCUR 2.0)。</li>
+<li>分析は <strong>S3+Athena</strong>(+QuickSight)が定番。</li>
+<li>リアルタイムではなく、<strong>1日に1回以上</strong>の更新。</li>
+<li>画面で手軽に見るならCost Explorer、細かく自分で集計するならCUR。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>CURは、最も詳細な料金・使用量のデータをS3に出力する機能。</li>
+<li>現在はData ExportsのCUR 2.0が推奨。Athenaなどで分析する。</li>
+</ul>
+</section>

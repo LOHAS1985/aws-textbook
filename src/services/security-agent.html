@@ -1,0 +1,88 @@
+<!-- title: AWS Security Agent -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: 設計書・コードのセキュリティレビューやペネトレーションテストをAIエージェントが行う -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Security Agent</strong>は、アプリケーションの<strong>設計から本番前まで、セキュリティの確認をAIエージェントが行う</strong>サービスです。設計書のレビュー・ソースコードのレビュー・脅威モデリング・<strong>ペネトレーションテスト(侵入テスト)</strong>を、必要なときにすぐ実行できます。</p>
+<p>AWSのセキュリティ関連のエージェント群をまとめた <strong>AWS Continuum</strong> の一部と位置づけられています。ペネトレーションテストは2026年3月に一般提供が始まり、設計レビュー・コードレビュー・脅威モデリングはプレビューとして提供されています。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>内容</th></tr>
+<tr><td>ペネトレーションテスト</td><td>対象のURL・認証情報・ソースコード・ドキュメントを渡すと、アプリの仕組みを理解したうえで複数の手順からなる攻撃を試し、実際に悪用できる脆弱性を見つける。再現手順・影響の分析・修正コードのプルリクエストまで作る</td></tr>
+<tr><td>コードのセキュリティレビュー</td><td>GitHub・GitLab・Bitbucket・S3にあるソースコード全体をスキャンする。プルリクエストごとの自動レビューでは、指摘をコメントとして投稿する</td></tr>
+<tr><td>設計のセキュリティレビュー</td><td>コードを書く前に、設計書が組織のセキュリティ要件を満たしているかを確認する</td></tr>
+<tr><td>脅威モデリング</td><td>設計書やコードから、構成要素・信頼の境界・データの流れをまとめ、STRIDEの分類で想定される脅威と対策を示す</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 165 80
+node d 0 0.5 blue "設計"
+node c 1.2 0.5 blue "コード"
+node p 2.4 0.5 blue "本番前"
+node r1 0 1.6 accent "設計レビュー" "脅威モデリング"
+node r2 1.2 1.6 accent "コードレビュー" "PRへのコメント"
+node r3 2.4 1.6 accent "侵入テスト" "悪用を実証"
+edge d c
+edge c p
+edge r1 d
+edge r2 c
+edge r3 p
+<figcaption>図1 Security Agentが関わる場面。開発の各段階で、組織のセキュリティ要件に照らしたレビューやテストを行い、早い段階で問題を見つける。</figcaption>
+</figure>
+
+<h3>組織のセキュリティ要件</h3>
+<p>セキュリティチームは、承認済みの認証ライブラリ・ログの基準・データへのアクセスの方針などを<strong>一度コンソールで定義</strong>します。以降の設計・コードのレビューでは、一般的なチェックリストではなく、その要件に沿って自動で確認されます。</p>
+
+<h3>ほかのセキュリティサービスとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>主な役割</th></tr>
+<tr><td>Security Agent</td><td>開発中のアプリの設計・コードのレビューと、侵入テスト</td></tr>
+<tr><td>Inspector</td><td>デプロイ済みのEC2・イメージ・Lambdaの既知の脆弱性(CVE)のスキャン</td></tr>
+<tr><td>GuardDuty</td><td>本番環境で起きている脅威の検出</td></tr>
+</table></div>
+<p>AWS環境に対するペネトレーションテストは、一部の禁止された行為(DoS攻撃など)を除き、事前の申請なしで実施できます。Security Agentのテストは、AWSのほか、オンプレミスや他のクラウドのアプリにも使えます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>年1回の外部委託の侵入テストを、リリースごとのオンデマンドのテストに置き換える</li>
+<li>プルリクエストの段階でセキュリティの問題を指摘し、修正案まで受け取る</li>
+<li>セキュリティチームの人数が少なくても、全チームの設計レビューを一定の基準で回す</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ペネトレーションテストは従量課金で、エージェントがテストに使った時間(タスク時間)に応じて課金されます。新規の利用者には2か月の無料試用があります。プレビュー中の設計レビュー・コードレビュー・脅威モデリングは課金されません(1か月あたりの回数に上限があります)。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="inspector.html">Amazon Inspector</a>:既知の脆弱性のスキャン</li>
+<li><a href="guardduty.html">Amazon GuardDuty</a>:本番環境の脅威の検出</li>
+<li><a href="devops-agent.html">AWS DevOps Agent</a>:運用・障害調査のAIエージェント</li>
+<li><a href="kiro.html">Kiro</a>:AIエージェントを使った開発環境</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「AIエージェントによる<strong>ペネトレーションテスト</strong>」「設計書・コードのセキュリティレビュー」→ <strong>Security Agent</strong>。</li>
+<li>デプロイ済みリソースのCVEスキャンは Inspector、実際の攻撃の検知は GuardDuty と区別する。</li>
+<li>組織の要件を一度定義すれば、全チームのレビューに同じ基準が使われる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Security Agentは、開発の各段階でセキュリティのレビューと侵入テストを行うAIエージェント。</li>
+<li>見つけた問題について、再現手順と修正コードまで示す。</li>
+</ul>
+</section>

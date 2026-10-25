@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Client VPN | AWS教科書</title>
+<meta name="description" content="利用者のPCからVPCやオンプレミスへ安全に接続するマネージド型のリモートアクセスVPN">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/client-vpn.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
+  <h1>AWS Client VPN</h1>
+  <p class="lead">利用者のPCからVPCやオンプレミスへ安全に接続するマネージド型のリモートアクセスVPN</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Client VPN</strong>は、テレワーク中の社員などが<strong>自分のPCからVPCやオンプレミスのネットワークへ安全に接続</strong>するための、マネージド型のリモートアクセスVPNです。OpenVPNベースのクライアントソフト(AWS提供のクライアントなど)を使って、TLSで暗号化した接続を張ります。</p>
+<p>拠点(ネットワーク)どうしをつなぐ <a href="site-to-site-vpn.html">Site-to-Site VPN</a> に対し、Client VPN は<strong>個々の利用者の端末</strong>をつなぎます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">構成要素<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>説明</th></tr>
+<tr><td>Client VPNエンドポイント</td><td>接続を受け付ける本体。サーバー証明書(ACM)・認証方法・クライアントに割り当てるIPアドレス範囲(クライアントCIDR)を設定する</td></tr>
+<tr><td>ターゲットネットワーク</td><td>エンドポイントを関連付けるVPCのサブネット。高可用性のために複数のAZのサブネットを関連付ける</td></tr>
+<tr><td>認可ルール</td><td>どの利用者(グループ)が、どの宛先ネットワークにアクセスできるかを決める</td></tr>
+<tr><td>ルートテーブル</td><td>エンドポイントから先の宛先(VPC・ピアリング先・オンプレミス・インターネット)への経路</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 194" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Client VPNの構成。利用者のPCからエンドポイントにTLSで接続し、認可ルールで許可されたVPCやオンプレミスのネットワークにアクセスする。"><defs><marker id="dgservices-client-vpn-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">利用者のPC</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">VPNクライアント</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">Client VPN</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">エンドポイント</text>
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">VPC</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">プライベートサブネット</text>
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">Site-to-Site VPN</text>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgservices-client-vpn-1)"/>
+<text x="228" y="108" text-anchor="middle" class="dg-s dg-halo">TLS</text>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgservices-client-vpn-1)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgservices-client-vpn-1)"/>
+</svg>
+</div>
+<figcaption>図1 Client VPNの構成。利用者のPCからエンドポイントにTLSで接続し、認可ルールで許可されたVPCやオンプレミスのネットワークにアクセスする。</figcaption>
+</figure>
+
+<h3 id="c2-2">認証の方法<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>相互認証(証明書)</strong>:クライアント証明書で認証する</li>
+<li><strong>Active Directory認証</strong>:AWS Directory Service経由でADのユーザーで認証する(MFAも可)</li>
+<li><strong>SAMLフェデレーション認証</strong>:IAM Identity Centerや外部のIdPでシングルサインオン</li>
+</ul>
+<p>AD・SAMLを使うと、グループごとに認可ルールを分けられます。</p>
+
+<h3 id="c2-3">スプリットトンネル<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>既定では、PCの<strong>すべての通信</strong>がVPNを通ります。<strong>スプリットトンネル</strong>を有効にすると、エンドポイントのルートにある宛先(VPCなど)だけをVPNに通し、それ以外のインターネットの通信はPCから直接出ます。VPNの通信量とデータ転送料を減らせます。</p>
+
+<h3 id="c2-4">運用<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>接続ログを CloudWatch Logs に出力できる(誰がいつ接続したか)。</li>
+<li>クライアント接続ハンドラー(Lambda)で、接続時に独自のチェックを行える。</li>
+<li>セキュリティグループをエンドポイントに適用して、VPC内の通信先を制限できる。</li>
+<li>クライアントCIDRは、VPCのCIDRと重ならない範囲にする。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>テレワークの社員が、VPC内の社内システムやオンプレミスのファイルサーバーにアクセスする</li>
+<li>踏み台サーバーを置かずに、管理者がプライベートサブネットのサーバーに接続する</li>
+<li>委託先の作業者に、特定のネットワークだけアクセスを許可する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>エンドポイントを関連付けたサブネットごとの時間料金と、接続している利用者ごとの時間料金(接続数×時間)がかかります。関連付けるサブネットを増やすと可用性は上がりますが、費用も増えます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>:拠点どうしの接続</li>
+<li><a href="vpc.html">Amazon VPC</a>:接続先のネットワーク</li>
+<li><a href="acm.html">AWS Certificate Manager</a>:サーバー証明書</li>
+<li><a href="directory-service.html">AWS Directory Service</a>/<a href="identity-center.html">IAM Identity Center</a>:利用者の認証</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:接続ログ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「個々の社員のPCからVPCに接続」「リモートアクセスVPN」→ <strong class="em">Client VPN</strong>。拠点間は Site-to-Site VPN。</li>
+<li>VPC以外の通信までVPN経由になって遅い・費用が高い → <strong class="em">スプリットトンネル</strong>を有効にする。</li>
+<li>接続できても目的のネットワークに届かない → <strong>認可ルール</strong>とエンドポイントのルートテーブルの両方を確認する。</li>
+<li>可用性を上げるには、複数AZのサブネットをターゲットネットワークに関連付ける。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Client VPNは、利用者の端末からVPCやオンプレミスにつなぐマネージド型のVPN。</li>
+<li>証明書・AD・SAMLで認証し、認可ルールとルートで行き先を制御する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="site-to-site-vpn.html"><span class="label">← 前へ</span>AWS Site-to-Site VPN</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="direct-connect.html"><span class="label">次へ →</span>AWS Direct Connect</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

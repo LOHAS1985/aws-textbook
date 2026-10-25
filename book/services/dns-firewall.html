@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Route 53 Resolver DNS Firewall | AWS教科書</title>
+<meta name="description" content="VPCからのDNS問い合わせをドメイン名で許可・ブロックし、不正なドメインへの接続を防ぐ">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/dns-firewall.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
+  <h1>Route 53 Resolver DNS Firewall</h1>
+  <p class="lead">VPCからのDNS問い合わせをドメイン名で許可・ブロックし、不正なドメインへの接続を防ぐ</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">ブロックしたときの応答</a></li><li><a href="#c2-3">許可リスト方式とブロックリスト方式</a></li><li><a href="#c2-4">フェイルオープン/フェイルクローズ</a></li><li><a href="#c2-5">注意点</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Route 53 Resolver DNS Firewall</strong>は、VPC内のリソースが <strong>Route 53 Resolver(VPCのDNS)に送る問い合わせ</strong>を、ドメイン名で許可・ブロックする機能です。</p>
+<p>マルウェアの指令サーバーや、データを持ち出すために使われるドメインの名前解決を止めることで、<strong>不正なドメインへの通信を入口で防ぎます</strong>。DNSの問い合わせを使ってデータを外に送る攻撃(DNSトンネリング・DNS経由のデータ持ち出し)への対策にもなります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">構成要素<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>説明</th></tr>
+<tr><td>ドメインリスト</td><td>対象にするドメインの一覧。自分で作るものと、AWSが管理するもの(マルウェア・ボットネットの指令サーバーなど)がある</td></tr>
+<tr><td>ルール</td><td>ドメインリストと、一致したときのアクション(許可・アラート・ブロック)の組み合わせ。優先順位の順に評価される</td></tr>
+<tr><td>ルールグループ</td><td>ルールをまとめたもの。VPCに関連付けて使う。RAMで他のアカウントと共有できる</td></tr>
+</table></div>
+
+<h3 id="c2-2">ブロックしたときの応答<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>NODATA(該当するレコードがない)</li>
+<li>NXDOMAIN(ドメインが存在しない)</li>
+<li>OVERRIDE(指定したドメイン名に向ける。警告用ページなど)</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 194" style="max-width:684px;min-width:547px" role="img" aria-label="図1 DNS Firewallの仕組み。VPCのDNS(Route 53 Resolver)への問い合わせをルールで判定し、不正なドメインは名前解決させない。"><defs><marker id="dgservices-dns-firewall-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">VPC内のリソース</text>
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">Resolver</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">DNS Firewall</text>
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">許可したドメイン</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">名前解決できる</text>
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">不正なドメイン</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">NXDOMAINなど</text>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgservices-dns-firewall-1)"/>
+<text x="228" y="108" text-anchor="middle" class="dg-s dg-halo">問い合わせ</text>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgservices-dns-firewall-1)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line dg-dash" marker-end="url(#dgservices-dns-firewall-1)"/>
+</svg>
+</div>
+<figcaption>図1 DNS Firewallの仕組み。VPCのDNS(Route 53 Resolver)への問い合わせをルールで判定し、不正なドメインは名前解決させない。</figcaption>
+</figure>
+
+<h3 id="c2-3">許可リスト方式とブロックリスト方式<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>ブロックリスト方式:危険なドメインだけをブロックする(AWS管理のドメインリストを使うと手軽)。</li>
+<li>許可リスト方式:使ってよいドメインだけを許可し、最後に「すべてのドメイン(<code>*</code>)をブロック」するルールを置く。</li>
+</ul>
+
+<h3 id="c2-4">フェイルオープン/フェイルクローズ<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>DNS Firewallが応答できない状態になったとき、問い合わせを通すか(フェイルオープン=可用性重視)止めるか(フェイルクローズ=セキュリティ重視)をVPCごとに設定できます。既定はフェイルクローズです。</p>
+
+<h3 id="c2-5">注意点<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>対象はRoute 53 Resolverへの問い合わせだけ。インスタンスが外部のDNSサーバー(8.8.8.8など)を直接使うと防げない。この抜け道はセキュリティグループ・ネットワークACL・Network Firewallで塞ぐ。</li>
+<li>ドメイン名で判定するので、IPアドレスを直接指定した通信は防げない。</li>
+<li>問い合わせの記録は <strong>Resolverクエリログ</strong>(CloudWatch Logs・S3・Data Firehoseへ出力)で確認する。</li>
+<li>Firewall Managerで組織全体のVPCに一括で関連付けられる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>マルウェアに感染したインスタンスが指令サーバーと通信できないようにする</li>
+<li>閉じた環境のVPCで、業務に必要なドメインだけ名前解決できるようにする</li>
+<li>DNSを使ったデータ持ち出しの防止</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>ルールグループに含めたドメインの数(月額)と、処理したDNSの問い合わせ数に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="route53.html">Amazon Route 53</a>:Resolver(VPCのDNS)</li>
+<li><a href="network-firewall.html">AWS Network Firewall</a>:DNS以外も含めた通信全体の検査</li>
+<li><a href="guardduty.html">Amazon GuardDuty</a>:DNSログから不審な問い合わせを検出</li>
+<li><a href="ram.html">AWS RAM</a>:ルールグループの共有</li>
+<li><a href="../terms/dns.html">DNS</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「VPCから悪意のあるドメインへの<strong>名前解決をブロック</strong>」「DNS経由のデータ持ち出し」→ <strong class="em">DNS Firewall</strong>。</li>
+<li>許可リスト方式は、許可ルールの後に全ドメインをブロックするルールを置く。</li>
+<li>可用性を優先するならフェイルオープン、セキュリティを優先するならフェイルクローズ。</li>
+<li>GuardDutyは「検出」、DNS Firewallは「ブロック」。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>DNS Firewallは、VPCのDNS問い合わせをドメイン名でフィルタリングする機能。</li>
+<li>不正なドメインへの通信を、名前解決の段階で止められる。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="route53.html"><span class="label">← 前へ</span>Amazon Route 53</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="application-recovery-controller.html"><span class="label">次へ →</span>Amazon Application Recovery Controller (ARC)</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon GuardDuty | AWS教科書</title>
+<meta name="description" content="ログを機械学習と脅威インテリジェンスで分析し、不正アクセスやマルウェアを検出">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#DD344C">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/guardduty.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">セキュリティ、アイデンティティ、コンプライアンス</a>
+  <h1>Amazon GuardDuty</h1>
+  <p class="lead">ログを機械学習と脅威インテリジェンスで分析し、不正アクセスやマルウェアを検出</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">基本の分析対象(基盤データソース)</a></li><li><a href="#c2-2">保護プラン(追加で有効化する分析対象)</a></li><li><a href="#c2-3">Extended Threat Detection</a></li><li><a href="#c2-4">検出結果(Finding)</a></li><li><a href="#c2-5">複数アカウントの管理</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon GuardDuty</strong>は、AWSアカウント内のログやイベントを継続的に分析し、<strong>不正アクセス・認証情報の漏えい・マルウェア・暗号資産のマイニング</strong>などの脅威を検出するサービスです。</p>
+<p>悪意のあるIPアドレスやドメインのリスト(脅威インテリジェンス)と機械学習を使って、ふだんと違う怪しい動きを見つけます。エージェントのインストールやログの収集設定は不要で、<strong>有効化するだけ</strong>で分析が始まります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">基本の分析対象(基盤データソース)<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>有効化すると、次の3つのログを自動で分析します。利用者が CloudTrail の証跡やフローログを作成しておく必要はありません(GuardDuty が独自に取得します)。</p>
+<div class="table-wrap"><table>
+<tr><th>データソース</th><th>見つけられる脅威の例</th></tr>
+<tr><td>CloudTrail 管理イベント</td><td>ふだん使わない国からのAPI呼び出し、CloudTrailの停止、漏えいした認証情報の利用</td></tr>
+<tr><td>VPCフローログ</td><td>悪意のあるIPアドレスとの通信、ポートスキャン、EC2からの大量送信</td></tr>
+<tr><td>DNSログ</td><td>マルウェアの指令サーバーや、マイニング用ドメインへの問い合わせ</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 256" style="max-width:684px;min-width:547px" role="img" aria-label="図1 GuardDutyの仕組み。3つの基盤データソースを自動で分析し、怪しい動きを「検出結果(Finding)」として出す。検出結果はEventBridgeに送られるので、通知や自動対応につなげられる。"><defs><marker id="dgservices-guardduty-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="36" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="57" text-anchor="middle" class="dg-t">CloudTrail</text>
+<text x="109" y="75" text-anchor="middle" class="dg-s">管理イベント</text>
+<rect x="34" y="116" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">VPCフローログ</text>
+<rect x="34" y="192" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="216" text-anchor="middle" class="dg-t">DNSログ</text>
+<rect x="272" y="110" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="132" text-anchor="middle" class="dg-tb">GuardDuty</text>
+<text x="347" y="150" text-anchor="middle" class="dg-s">脅威情報+機械学習</text>
+<rect x="510" y="73" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="585" y="94" text-anchor="middle" class="dg-t">検出結果</text>
+<text x="585" y="112" text-anchor="middle" class="dg-s">重要度 低〜重大</text>
+<rect x="510" y="148" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="170" text-anchor="middle" class="dg-t">EventBridge</text>
+<text x="585" y="188" text-anchor="middle" class="dg-s">通知・自動対応</text>
+<path d="M184.0,85.1 L272.0,112.9" class="dg-line" marker-end="url(#dgservices-guardduty-1)"/>
+<path d="M184.0,136.5 L272.0,136.5" class="dg-line" marker-end="url(#dgservices-guardduty-1)"/>
+<path d="M172.5,191.5 L272.0,160.1" class="dg-line" marker-end="url(#dgservices-guardduty-1)"/>
+<path d="M422.0,124.7 L510.0,110.8" class="dg-line" marker-end="url(#dgservices-guardduty-1)"/>
+<path d="M422.0,148.3 L510.0,162.2" class="dg-line" marker-end="url(#dgservices-guardduty-1)"/>
+</svg>
+</div>
+<figcaption>図1 GuardDutyの仕組み。3つの基盤データソースを自動で分析し、怪しい動きを「検出結果(Finding)」として出す。検出結果はEventBridgeに送られるので、通知や自動対応につなげられる。</figcaption>
+</figure>
+
+<h3 id="c2-2">保護プラン(追加で有効化する分析対象)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>保護プラン</th><th>分析するもの</th></tr>
+<tr><td>S3 Protection</td><td>S3のデータイベント(オブジェクトの取得・削除など)</td></tr>
+<tr><td>EKS Protection</td><td>EKSの監査ログ</td></tr>
+<tr><td>Runtime Monitoring</td><td>EC2・ECS(Fargate含む)・EKS上のOSレベルの動き(プロセス・ファイル・通信)。専用のセキュリティエージェントを使う</td></tr>
+<tr><td>Malware Protection for EC2</td><td>怪しい動きがあったEC2のEBSボリュームをスキャン</td></tr>
+<tr><td>Malware Protection for S3</td><td>S3に新しくアップロードされたファイルをスキャン</td></tr>
+<tr><td>RDS Protection</td><td>Aurora・RDSへのログインの異常</td></tr>
+<tr><td>Lambda Protection</td><td>Lambda関数のネットワーク通信</td></tr>
+</table></div>
+<p>初めて有効化したときは、Runtime Monitoring 以外の保護プランが自動で有効になり、<strong>30日間の無料試用</strong>に含まれます。</p>
+
+<h3 id="c2-3">Extended Threat Detection<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>1つひとつは小さな出来事でも、順番に起きると攻撃とみなせるもの(認証情報の窃取→権限の昇格→データの持ち出し など)を、<strong>複数段階の攻撃</strong>としてまとめて検出します。追加料金なしで自動的に有効です。</p>
+
+<h3 id="c2-4">検出結果(Finding)<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>種類は <code>脅威の目的:リソース/内容</code> の形の名前で表す(例:<code>UnauthorizedAccess:EC2/SSHBruteForce</code>、<code>CryptoCurrency:EC2/BitcoinTool.B</code>)。</li>
+<li>重要度は 低・中・高・重大 の4段階。</li>
+<li>信頼できるIPリスト(検出しない)・脅威リスト(必ず検出する)を自分で登録できる。</li>
+<li>抑制ルールで、問題ないと分かっている検出結果を自動でアーカイブできる。</li>
+</ul>
+
+<h3 id="c2-5">複数アカウントの管理<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>Organizations と連携し、<strong>委任管理者アカウント</strong>で組織全体の GuardDuty を有効化・管理できます。有効化は<strong>リージョンごと</strong>に必要です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>漏えいしたアクセスキーが使われたことを早期に発見する</li>
+<li>EC2が乗っ取られてマイニングや外部攻撃の踏み台にされていないかを監視する</li>
+<li>検出結果をEventBridge+Lambdaで受けて、該当インスタンスを隔離用セキュリティグループに付け替える</li>
+<li>S3にアップロードされたファイルのマルウェアチェック</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>分析したイベントやログの量(CloudTrailのイベント数、フローログ・DNSログのGB数など)と、有効にした保護プランの対象量に応じて課金されます。30日間の無料試用期間があり、その間にコンソールで月額の見込みを確認できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="security-hub.html">AWS Security Hub</a>:検出結果の集約</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:検出結果をトリガーにした通知・自動対応</li>
+<li><a href="inspector.html">Amazon Inspector</a>:脆弱性の検出(GuardDutyは脅威の検出)</li>
+<li><a href="macie.html">Amazon Macie</a>:S3の機密データの検出</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>/<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>:分析の元になるログ</li>
+<li><a href="organizations.html">AWS Organizations</a>:委任管理者による一括管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「不正アクセス」「認証情報の悪用」「マイニング」「脅威の検出」→ <strong class="em">GuardDuty</strong>。</li>
+<li>CloudTrail・フローログ・DNSログを<strong>自分で有効化していなくても</strong>分析できる。</li>
+<li>脆弱性(CVE)は Inspector、機密データは Macie、脅威は GuardDuty と使い分ける。</li>
+<li>検出結果への自動対応 → <strong>EventBridge</strong>ルール+Lambda/SSM Automation。</li>
+<li>組織全体での有効化 → <strong>委任管理者</strong>。リージョンごとに有効化が必要。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>GuardDutyは、ログを自動で分析して脅威を検出するサービス。有効化するだけで使える。</li>
+<li>保護プランでS3・EKS・RDS・Lambda・実行時の動きまで分析対象を広げられる。</li>
+<li>EventBridgeと組み合わせて、検出から対応までを自動化する。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="private-ca.html"><span class="label">← 前へ</span>AWS Private CA</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="inspector.html"><span class="label">次へ →</span>Amazon Inspector</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

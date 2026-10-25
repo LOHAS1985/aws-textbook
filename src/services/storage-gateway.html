@@ -1,0 +1,97 @@
+<!-- title: AWS Storage Gateway -->
+<!-- category: ストレージ -->
+<!-- lead: オンプレミスのサーバーからAWSのストレージを、ファイル・ボリューム・テープとして使えるようにする -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Storage Gateway</strong>は、<strong>オンプレミスのサーバーから、AWSのストレージ(S3など)をいつものファイル共有・ディスク・テープ装置として使えるようにする</strong>ハイブリッドストレージのサービスです。</p>
+<p>オンプレミスに<strong>ゲートウェイ</strong>(VMware・Hyper-V・KVM上の仮想マシン、またはハードウェアアプライアンス。EC2上にも置ける)を置きます。よく使うデータはゲートウェイのローカルにキャッシュして速く読み書きし、データ本体はAWSに保存します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>ゲートウェイの種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>オンプレミスからの見え方</th><th>AWS側の保存先</th><th>主な用途</th></tr>
+<tr><td><strong>S3ファイルゲートウェイ</strong></td><td>NFS・SMBのファイル共有</td><td>S3のオブジェクト(1ファイル=1オブジェクト)</td><td>ファイルをS3に置き、AWS側の分析やバックアップにも使う</td></tr>
+<tr><td><strong>ボリュームゲートウェイ</strong></td><td>iSCSIのブロックディスク</td><td>S3(内部で管理)+EBSスナップショット</td><td>サーバーのディスクのバックアップ・災害対策</td></tr>
+<tr><td><strong>テープゲートウェイ</strong></td><td>iSCSIの仮想テープライブラリ(VTL)</td><td>S3、アーカイブはS3 Glacier Flexible Retrieval/Deep Archive</td><td>既存のバックアップソフトのテープ運用をそのままクラウドへ</td></tr>
+</table></div>
+<p>FSx ファイルゲートウェイ(FSx for Windows File Serverへのアクセスをキャッシュする種類)は、新規の利用受付が終了しています。</p>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node srv 0 1 blue "オンプレミス" "サーバー"
+node gw 1.4 1 accent "ゲートウェイ" "ローカルキャッシュ"
+node s3 2.8 0 ok "S3" "ファイル"
+node ebs 2.8 1 ok "EBSスナップショット" "ボリューム"
+node gl 2.8 2 ok "S3 Glacier" "仮想テープ"
+edge srv gw "NFS/SMB/iSCSI"
+edge gw s3
+edge gw ebs
+edge gw gl
+<figcaption>図1 Storage Gatewayの仕組み。オンプレミスのサーバーはゲートウェイを通常のファイル共有・ディスク・テープ装置として使い、データはAWSのストレージに保存される。</figcaption>
+</figure>
+
+<h3>ボリュームゲートウェイの2つのモード</h3>
+<div class="table-wrap"><table>
+<tr><th>モード</th><th>データ本体の場所</th><th>特徴</th></tr>
+<tr><td>キャッシュ型</td><td>AWS(よく使うデータだけローカルにキャッシュ)</td><td>オンプレミスのディスク容量を減らせる</td></tr>
+<tr><td>保管型</td><td>オンプレミス(非同期でAWSにスナップショットとしてバックアップ)</td><td>全データにローカルの速さでアクセスでき、AWSは災害対策用</td></tr>
+</table></div>
+
+<h3>運用のポイント</h3>
+<ul>
+<li>S3ファイルゲートウェイで、ゲートウェイを経由せずにS3へ直接追加されたファイルは、すぐには見えない。<strong>キャッシュの更新(RefreshCache)</strong>を実行するか、自動更新の間隔を設定する。</li>
+<li>キャッシュ用ディスクやアップロード用バッファの使用率は CloudWatch のメトリクスで監視する。不足すると書き込みが遅くなる。</li>
+<li>ゲートウェイとAWSの通信は暗号化され、VPCエンドポイント経由にもできる。帯域幅の上限を時間帯ごとに設定できる。</li>
+<li>ゲートウェイのソフトウェアの更新はメンテナンス時間に自動で適用される。</li>
+<li>AWS Backupでボリュームゲートウェイのボリュームをバックアップできる。</li>
+</ul>
+
+<h3>DataSyncとの違い</h3>
+<p>Storage Gatewayは、オンプレミスからAWSのストレージを<strong>使い続ける</strong>ためのものです。データを一度にまとめて<strong>移行・転送</strong>するなら DataSync を使います。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ファイルサーバーの容量不足を、S3を裏側にしたファイル共有で解消する</li>
+<li>物理テープとテープ装置の運用をやめ、既存のバックアップソフトのまま仮想テープへ移す</li>
+<li>オンプレミスのサーバーのディスクをAWSにバックアップし、災害時はEBSボリュームとしてEC2で復元する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>AWS側に保存したデータ量(S3・EBSスナップショット・Glacierの料金)、ゲートウェイからAWSへの書き込み量、データの取り出し・転送量などに応じて課金されます。ゲートウェイの仮想マシン自体はオンプレミスの資源で動かします。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:データの保存先</li>
+<li><a href="ebs.html">Amazon EBS</a>:ボリュームのスナップショットからの復元</li>
+<li><a href="backup.html">AWS Backup</a>:ボリュームのバックアップの管理</li>
+<li><a href="datasync.html">AWS DataSync</a>:データの移行・転送</li>
+<li><a href="fsx.html">Amazon FSx</a>:フルマネージドのファイルサーバー</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:キャッシュなどの監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「オンプレミスからS3をNFS/SMBで使う」→ <strong class="em">S3ファイルゲートウェイ</strong>。</li>
+<li>「iSCSIのディスクをAWSにバックアップ」→ ボリュームゲートウェイ。「テープの置き換え」→ <strong class="em">テープゲートウェイ</strong>。</li>
+<li>S3に直接置いたファイルが共有に見えない → <strong>RefreshCache</strong>。</li>
+<li>移行はDataSync、オンプレミスから使い続けるならStorage Gateway。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Storage Gatewayは、オンプレミスからAWSのストレージを使うためのハイブリッドストレージ。</li>
+<li>ファイル・ボリューム・テープの3種類のゲートウェイがある。</li>
+</ul>
+</section>

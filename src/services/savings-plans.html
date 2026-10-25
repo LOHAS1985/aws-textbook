@@ -1,0 +1,93 @@
+<!-- title: Savings Plans -->
+<!-- category: クラウド財務管理 -->
+<!-- lead: 1年または3年の利用額(1時間あたりの金額)を約束して、コンピューティングなどの料金を割り引く -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Savings Plans</strong>は、<strong>1年または3年の期間、1時間あたり一定の金額を使うことを約束(コミット)</strong>する代わりに、オンデマンドより安い料金で使える割引の仕組みです。例えば「1時間あたり10ドル分を3年間使う」と約束すると、その金額までの利用に割引価格が適用されます。</p>
+<p>リザーブドインスタンス(RI)が「インスタンスの種類」を約束するのに対し、Savings Plans は「金額」を約束するので、インスタンスの種類やリージョンを変えても割引が続く柔軟さがあります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>割引(最大)</th><th>対象</th><th>柔軟さ</th></tr>
+<tr><td><strong>Compute Savings Plans</strong></td><td>66%</td><td>EC2・Fargate・Lambda</td><td>インスタンスファミリー・サイズ・リージョン・OS・テナンシーを問わない</td></tr>
+<tr><td><strong>EC2 Instance Savings Plans</strong></td><td>72%</td><td>EC2</td><td>選んだリージョンの<strong>特定のインスタンスファミリー</strong>(例:東京のm5)。サイズ・OSは変えられる</td></tr>
+<tr><td>Database Savings Plans</td><td>35%</td><td>Aurora・RDS・DynamoDB・ElastiCache・OpenSearch など</td><td>エンジン・インスタンスファミリー・リージョンを問わない。サーバーレスにも適用</td></tr>
+<tr><td>SageMaker AI Savings Plans</td><td>64%</td><td>SageMaker AI</td><td>インスタンスファミリー・リージョン・用途を問わない</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 175 80
+node od 0 0.5 blue "オンデマンド" "約束なし・定価"
+node c 1.4 0.5 ok "Compute SP" "最大66%・柔軟"
+node e 2.8 0.5 accent "EC2 Instance SP" "最大72%・種類固定"
+edge od c "金額を約束"
+edge c e "柔軟さと交換"
+<figcaption>図1 割引の選び方。柔軟さを重視するならCompute Savings Plans、構成が決まっていて割引率を優先するならEC2 Instance Savings Plans。約束をしないオンデマンドは定価になる。</figcaption>
+</figure>
+
+<h3>支払い方法と期間</h3>
+<ul>
+<li>期間:1年または3年(3年の方が割引が大きい)</li>
+<li>支払い:全額前払い・一部前払い・前払いなし(前払いが多いほど割引が大きい)</li>
+<li>購入後に約束の内容は変更・解約できない。使用量が増えたら追加で購入する。</li>
+</ul>
+
+<h3>適用のされ方</h3>
+<ul>
+<li>1時間ごとに、割引率の大きい利用から順に約束の金額まで自動で適用される。約束の金額を超えた分はオンデマンド料金。</li>
+<li>約束の金額に満たない時間があっても、約束の金額は支払う(使い残しは無駄になる)。</li>
+<li>Organizationsの一括請求では、既定で他のアカウントの利用にも割引が共有される(共有はオフにできる)。</li>
+<li>EKS・ECS・EMRのクラスターのEC2にも適用される(EKSのクラスター料金自体は対象外)。</li>
+<li>容量の予約はしない。特定のAZで容量を確保したい場合は、オンデマンドキャパシティ予約と組み合わせる。</li>
+</ul>
+
+<h3>購入量の決め方と効果の確認</h3>
+<p><strong>Cost Explorer</strong> の推奨事項で、過去の使用量から最適な約束額を確認します。購入後は、<strong>使用率</strong>(約束した金額をどれだけ使えているか)と<strong>カバレッジ</strong>(利用のうち割引されている割合)のレポートで効果を確かめます。AWS Budgets で使用率・カバレッジの予算を設定し、下回ったら通知することもできます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>常に動いているWebサーバーやバッチの基盤の費用を下げる</li>
+<li>EC2からFargateやLambdaへ移行する予定があるので、どれにも使えるCompute Savings Plansを選ぶ</li>
+<li>インスタンスファミリーを変える予定がない本番環境で、EC2 Instance Savings Plansで割引を最大にする</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>約束した1時間あたりの金額×期間の時間数を支払います(支払い方法に応じて前払いと月払いに分かれる)。使用量が約束を下回っても、約束の金額は請求されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cost-explorer.html">AWS Cost Explorer</a>:推奨事項・使用率・カバレッジ</li>
+<li><a href="cost-and-usage-reports.html">AWS Cost and Usage Reports</a>:割引の適用の詳細</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="lambda.html">AWS Lambda</a>/<a href="ecs.html">Amazon ECS</a>(Fargate):割引の対象</li>
+<li><a href="organizations.html">AWS Organizations</a>:割引の共有</li>
+<li><a href="compute-optimizer.html">AWS Compute Optimizer</a>:購入前のサイズの適正化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「EC2・Fargate・Lambdaにまたがって割引」「リージョンやファミリーを変えても割引」→ <strong class="em">Compute Savings Plans</strong>。</li>
+<li>「特定のファミリー・リージョンで最大の割引」→ <strong class="em">EC2 Instance Savings Plans</strong>。</li>
+<li>Savings Plansは<strong>容量を予約しない</strong>。容量の確保はキャパシティ予約。</li>
+<li>中断してよい処理を最も安くするならスポットインスタンス。</li>
+<li>購入前にCompute Optimizerなどでサイズを適正化してから、約束額を決める。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Savings Plansは、1時間あたりの利用額を1年・3年約束して割引を受ける仕組み。</li>
+<li>柔軟なCompute、割引の大きいEC2 Instanceを使い分け、Cost Explorerで推奨と効果を確認する。</li>
+</ul>
+</section>

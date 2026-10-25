@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Control Tower | AWS教科書</title>
+<meta name="description" content="ベストプラクティスに沿ったマルチアカウント環境(ランディングゾーン)を作り、コントロールで統制する">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#E7157B">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/control-tower.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
+  <h1>AWS Control Tower</h1>
+  <p class="lead">ベストプラクティスに沿ったマルチアカウント環境(ランディングゾーン)を作り、コントロールで統制する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">ランディングゾーン</a></li><li><a href="#c2-2">コントロール(ガードレール)</a></li><li><a href="#c2-3">Account Factory</a></li><li><a href="#c2-4">ドリフト</a></li><li><a href="#c2-5">既存の環境への導入</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Control Tower</strong>は、ベストプラクティスに沿った<strong>マルチアカウント環境(ランディングゾーン)を短時間で作り、継続的に統制する</strong>サービスです。</p>
+<p>Organizations・IAM Identity Center・Service Catalog・Config・CloudTrail などを組み合わせた構成を、Control Tower が代わりに組み立てて管理します。Organizationsを直接使うよりも、「最初からあるべき形」が用意されている点が特徴です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">ランディングゾーン<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>セキュリティとコンプライアンスのベストプラクティスに沿った、マルチアカウントの環境です。作成すると、次のようなものが用意されます。</p>
+<ul>
+<li>管理アカウントのもとに <strong>Security OU</strong> を作り、その中に<strong>ログアーカイブアカウント</strong>(全アカウントのCloudTrail・Configのログを集約)と<strong>監査アカウント</strong>(セキュリティチームが全アカウントを確認する)を置く</li>
+<li>組織全体のCloudTrailの証跡とConfigの記録</li>
+<li>IAM Identity Center によるシングルサインオン</li>
+<li>必須のコントロール</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 599 274" style="max-width:599px;min-width:520px" role="img" aria-label="図1 ランディングゾーンの構成。Security OUにログアーカイブと監査の共有アカウントを置き、ワークロードのアカウントはAccount Factoryで作成してOUに登録する。"><defs><marker id="dgservices-control-tower-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="60" text-anchor="middle" class="dg-tb">管理アカウント</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">Control Tower</text>
+<rect x="119" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="194" y="148" text-anchor="middle" class="dg-t">Security OU</text>
+<rect x="425" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="500" y="148" text-anchor="middle" class="dg-t">ワークロードのOU</text>
+<rect x="34" y="198" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="109" y="220" text-anchor="middle" class="dg-t">ログアーカイブ</text>
+<text x="109" y="238" text-anchor="middle" class="dg-s">ログを集約</text>
+<rect x="204" y="198" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="279" y="220" text-anchor="middle" class="dg-t">監査</text>
+<text x="279" y="238" text-anchor="middle" class="dg-s">全体を確認</text>
+<rect x="425" y="198" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="500" y="220" text-anchor="middle" class="dg-t">各アカウント</text>
+<text x="500" y="238" text-anchor="middle" class="dg-s">Account Factory</text>
+<path d="M297.3,90.0 L232.2,124.0" class="dg-line" marker-end="url(#dgservices-control-tower-1)"/>
+<path d="M396.7,90.0 L461.7,124.0" class="dg-line" marker-end="url(#dgservices-control-tower-1)"/>
+<path d="M172.8,164.0 L136.6,198.0" class="dg-line" marker-end="url(#dgservices-control-tower-1)"/>
+<path d="M215.2,164.0 L251.4,198.0" class="dg-line" marker-end="url(#dgservices-control-tower-1)"/>
+<path d="M500.0,164.0 L500.0,198.0" class="dg-line" marker-end="url(#dgservices-control-tower-1)"/>
+</svg>
+</div>
+<figcaption>図1 ランディングゾーンの構成。Security OUにログアーカイブと監査の共有アカウントを置き、ワークロードのアカウントはAccount Factoryで作成してOUに登録する。</figcaption>
+</figure>
+
+<h3 id="c2-2">コントロール(ガードレール)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>環境全体を統制するルールです。動作の種類は3つあります。</p>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>動き</th><th>実装</th></tr>
+<tr><td>予防型</td><td>違反する操作をそもそも<strong>できなくする</strong></td><td>SCP・RCP</td></tr>
+<tr><td>検出型</td><td>違反しているリソースを<strong>見つけて知らせる</strong></td><td>Configルール</td></tr>
+<tr><td>事前対応型(プロアクティブ)</td><td>違反するリソースを<strong>作る前に止める</strong></td><td>CloudFormationフック</td></tr>
+</table></div>
+<p>適用の度合いとして、必須(常に有効・無効にできない)・強く推奨・選択の3段階があります。コントロールは<strong>OU単位</strong>で有効化します。</p>
+
+<h3 id="c2-3">Account Factory<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>あらかじめ決めた設定(OU・ネットワークなど)で、新しいアカウントを作る仕組みです。作られたアカウントには、所属するOUのコントロールが自動で適用されます。Terraformで定義する Account Factory for Terraform(AFT)や、アカウントのカスタマイズ用のブループリントもあります。</p>
+
+<h3 id="c2-4">ドリフト<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>Control Tower の外(Organizationsの画面など)で、OUの移動やSCPの変更を行うと、ランディングゾーンの状態と食い違う「ドリフト」になります。ダッシュボードで確認し、ランディングゾーンの<strong>修復(リセット)</strong>で元に戻します。</p>
+
+<h3 id="c2-5">既存の環境への導入<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>既存のOrganizationsの組織に対しても有効化できます。既存のOUを登録し、既存のアカウントを登録(enroll)すると、Control Tower の管理下に入ります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>これからマルチアカウントの環境を作る組織が、ベストプラクティスの構成をすぐに用意する</li>
+<li>「本番OUではリージョンを東京と大阪に限る」「ログの削除を禁止する」といったルールを組織全体に強制する</li>
+<li>開発チームの依頼に応じて、統制の効いたアカウントをすぐに払い出す</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Control Tower 自体は無料です。裏で使われる Config・CloudTrail・S3・Service Catalogなどのサービスの料金がかかります。アカウント数・リージョン数・検出型コントロールが増えると、Configの記録や評価の費用も増えます。リソースの作成と削除をくり返す環境(スポットインスタンスやAuto Scalingが多いなど)では、Configの費用が大きくなりやすい点に注意します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="organizations.html">AWS Organizations</a>:OUとSCP(土台)</li>
+<li><a href="identity-center.html">AWS IAM Identity Center</a>:シングルサインオン</li>
+<li><a href="config.html">AWS Config</a>:検出型コントロール</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:組織の証跡</li>
+<li><a href="service-catalog.html">AWS Service Catalog</a>:Account Factory の仕組み</li>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:事前対応型コントロール(フック)</li>
+<li><a href="../usecases/org-guardrails.html">組織のガードレール</a>(ユースケース)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「ベストプラクティスに沿ったマルチアカウント環境をすばやく作る」「ランディングゾーン」→ <strong class="em">Control Tower</strong>。</li>
+<li>予防型=<strong>SCP</strong>、検出型=<strong>Configルール</strong>、事前対応型=<strong>CloudFormationフック</strong>。</li>
+<li>統制の効いた新しいアカウントの作成 → Account Factory。</li>
+<li>Control Tower の外で変更してドリフトした → ランディングゾーンを修復する。</li>
+<li>細かく自分で組み立てたいならOrganizationsを直接使う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Control Tower は、Organizationsなどを組み合わせたマルチアカウント環境を作り、コントロールで統制する。</li>
+<li>ログアーカイブ・監査アカウント、組織の証跡、SSOが最初から用意される。</li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="cdk.html"><span class="label">← 前へ</span>AWS CDK</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="trusted-advisor.html"><span class="label">次へ →</span>AWS Trusted Advisor</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

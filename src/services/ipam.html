@@ -1,0 +1,95 @@
+<!-- title: Amazon VPC IP Address Manager (IPAM) -->
+<!-- category: ネットワークとコンテンツ配信 -->
+<!-- lead: 組織全体のVPCのIPアドレスを計画・割り当て・監視し、CIDRの重複を防ぐ -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon VPC IP Address Manager(IPAM)</strong>は、複数のアカウント・リージョンにまたがる<strong>IPアドレス(CIDR)を一元的に計画・割り当て・監視</strong>するVPCの機能です。</p>
+<p>VPCが増えると、表計算ソフトでのCIDRの管理では重複や記入漏れが起きがちです。CIDRが重なったVPCどうしはピアリングやTransit Gatewayでうまくつなげません。IPAMを使うと、<strong>決められた範囲から重ならないCIDRを自動で割り当て</strong>られます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>説明</th></tr>
+<tr><td>IPAM</td><td>本体。管理するリージョン(運用リージョン)を指定する</td></tr>
+<tr><td>スコープ</td><td>IPアドレス空間の単位。プライベートスコープとパブリックスコープが最初から作られる</td></tr>
+<tr><td>プール</td><td>CIDRの集まり。入れ子にして階層を作れる(例:全社 → リージョン → 本番/開発)</td></tr>
+<tr><td>割り当てルール</td><td>プールから割り当てるCIDRのサイズの上限・下限・既定値、必須のタグなど</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 165 80
+node top 0 1 accent "全社プール" "10.0.0.0/8"
+node r1 1.3 0.5 box "東京プール" "10.0.0.0/12"
+node r2 1.3 1.5 box "大阪プール" "10.16.0.0/12"
+node p 2.6 0 box "本番プール"
+node d 2.6 1 box "開発プール"
+node vpc 3.9 0 ok "新しいVPC" "/16を自動で割当"
+edge top r1
+edge top r2
+edge r1 p
+edge r1 d
+edge p vpc
+<figcaption>図1 IPAMのプールの階層の例。上位のプールを地域や環境ごとに分け、VPCを作るときはプールを指定するだけで重ならないCIDRが割り当てられる。</figcaption>
+</figure>
+
+<h3>主な機能</h3>
+<ul>
+<li><strong>CIDRの自動割り当て</strong>:VPCの作成時にIPAMプールを指定すると、空いているCIDRが割り当てられる。CloudFormationからも指定できる。</li>
+<li><strong>使用状況の監視</strong>:プールやVPCのIPアドレスの使用率を確認し、CloudWatchでアラームを設定できる。</li>
+<li><strong>重複・非準拠の検出</strong>:CIDRが重なっているリソースや、割り当てルールに合わないリソースを見つける。</li>
+<li><strong>IPアドレスの履歴</strong>:あるIPアドレスが、いつどのリソースに使われていたかを調べられる(セキュリティ調査に便利)。</li>
+<li><strong>パブリックIPの分析</strong>:パブリックIPv4アドレスの使い道(EC2・NAT・ELBなど)を一覧にする。</li>
+<li>独自に保有するIPアドレス(BYOIP)やIPv6アドレスの管理。</li>
+</ul>
+
+<h3>複数アカウントでの利用</h3>
+<p>Organizations と連携し、<strong>委任管理者アカウント</strong>でIPAMを作成します。プールは <strong>AWS RAM</strong> で他のアカウントに共有し、各アカウントはそのプールからCIDRを割り当てます。</p>
+
+<h3>ティア</h3>
+<p>無料ティアと高度なティアがあります。無料ティアで使えるのはパブリックIPの分析など一部の機能だけです。<strong>プライベートIPアドレスのプール</strong>を作る場合や、IPAMを所有するアカウント以外にCIDRを割り当てる場合は、高度なティアが必要です。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>大規模な組織で、全VPCのCIDRが重ならないように自動で割り当てる</li>
+<li>Transit Gatewayやオンプレミスと接続する前に、CIDRの重複がないか確認する</li>
+<li>IPアドレスの枯渇を、使用率のアラームで事前に知る</li>
+<li>使われていないパブリックIPv4アドレス(Elastic IP)を見つけて費用を減らす</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>高度なティアでは、IPAMで管理しているアクティブなIPアドレスの数に応じた時間料金がかかります。無料ティアは無料です。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>:CIDRを割り当てる対象</li>
+<li><a href="organizations.html">AWS Organizations</a>/<a href="ram.html">AWS RAM</a>:委任管理者とプールの共有</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:CIDRが重ならないことが前提の接続</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:使用率のアラーム</li>
+<li><a href="../terms/cidr.html">CIDR</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「複数アカウントのVPCのCIDRの重複を防ぐ」「IPアドレスの一元管理」→ <strong class="em">IPAM</strong>。</li>
+<li>他のアカウントへのプールの共有は <strong>RAM</strong>、組織での管理は<strong>委任管理者</strong>。</li>
+<li>IPアドレスの使用率は CloudWatch のメトリクスでアラームにできる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>IPAMは、組織全体のIPアドレスをプールの階層で管理し、重ならないCIDRを自動で割り当てる。</li>
+<li>使用状況・重複・IPアドレスの履歴を確認できる。</li>
+</ul>
+</section>

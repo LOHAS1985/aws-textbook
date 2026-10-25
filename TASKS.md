@@ -130,3 +130,16 @@ PC幅(1000px)とスマホ幅(375px)で表示を確認して見つけた、デザ
 - [x] 印刷用のスタイル(@media print)がなく、ダークモードの背景色のまま印刷される・図や表がページの途中で切れる
 - [x] ページの説明(`<meta name="description">`)がなく、共有時や検索結果に説明が出ない。lead を使って出力する
 - [x] 各ページに最終更新日がなく、情報がいつ時点のものか分からない(AWSは仕様の変更が多い)。git の更新日を build.py で表示する
+
+# 残タスク(SOA-C03の対象サービスのページ追加)※完了
+
+試験ガイド(SOA-C03)の In-Scope AWS Services にあり、ページがなかったサービスを追加する。
+- [x] 分析:Amazon Data Firehose
+- [x] クラウド財務管理:AWS Cost Explorer、AWS Cost and Usage Reports、Savings Plans
+- [x] コンピューティング:Amazon EC2 Image Builder
+- [x] ストレージ:AWS Storage Gateway
+- [x] ネットワーク:Amazon VPC IP Address Manager(IPAM)、AWS Client VPN、Route 53 Resolver DNS Firewall、Amazon Application Recovery Controller(ARC)
+- [x] セキュリティ:Amazon GuardDuty、Amazon Inspector、AWS WAF、AWS Shield、AWS Network Firewall、AWS Security Agent
+- [x] マネジメントとガバナンス:AWS Control Tower、AWS DevOps Agent
+- [x] デベロッパーツール:Kiro
+- [x] 機械学習と人工知能:Amazon Bedrock

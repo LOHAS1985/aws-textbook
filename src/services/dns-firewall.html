@@ -1,0 +1,98 @@
+<!-- title: Route 53 Resolver DNS Firewall -->
+<!-- category: ネットワークとコンテンツ配信 -->
+<!-- lead: VPCからのDNS問い合わせをドメイン名で許可・ブロックし、不正なドメインへの接続を防ぐ -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Route 53 Resolver DNS Firewall</strong>は、VPC内のリソースが <strong>Route 53 Resolver(VPCのDNS)に送る問い合わせ</strong>を、ドメイン名で許可・ブロックする機能です。</p>
+<p>マルウェアの指令サーバーや、データを持ち出すために使われるドメインの名前解決を止めることで、<strong>不正なドメインへの通信を入口で防ぎます</strong>。DNSの問い合わせを使ってデータを外に送る攻撃(DNSトンネリング・DNS経由のデータ持ち出し)への対策にもなります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>構成要素</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>説明</th></tr>
+<tr><td>ドメインリスト</td><td>対象にするドメインの一覧。自分で作るものと、AWSが管理するもの(マルウェア・ボットネットの指令サーバーなど)がある</td></tr>
+<tr><td>ルール</td><td>ドメインリストと、一致したときのアクション(許可・アラート・ブロック)の組み合わせ。優先順位の順に評価される</td></tr>
+<tr><td>ルールグループ</td><td>ルールをまとめたもの。VPCに関連付けて使う。RAMで他のアカウントと共有できる</td></tr>
+</table></div>
+
+<h3>ブロックしたときの応答</h3>
+<ul>
+<li>NODATA(該当するレコードがない)</li>
+<li>NXDOMAIN(ドメインが存在しない)</li>
+<li>OVERRIDE(指定したドメイン名に向ける。警告用ページなど)</li>
+</ul>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node ec2 0 0.5 blue "EC2" "VPC内のリソース"
+node res 1.4 0.5 accent "Resolver" "DNS Firewall"
+node ok 2.8 0 ok "許可したドメイン" "名前解決できる"
+node ng 2.8 1 ng "不正なドメイン" "NXDOMAINなど"
+edge ec2 res "問い合わせ"
+edge res ok
+edge res ng dash
+<figcaption>図1 DNS Firewallの仕組み。VPCのDNS(Route 53 Resolver)への問い合わせをルールで判定し、不正なドメインは名前解決させない。</figcaption>
+</figure>
+
+<h3>許可リスト方式とブロックリスト方式</h3>
+<ul>
+<li>ブロックリスト方式:危険なドメインだけをブロックする(AWS管理のドメインリストを使うと手軽)。</li>
+<li>許可リスト方式:使ってよいドメインだけを許可し、最後に「すべてのドメイン(<code>*</code>)をブロック」するルールを置く。</li>
+</ul>
+
+<h3>フェイルオープン/フェイルクローズ</h3>
+<p>DNS Firewallが応答できない状態になったとき、問い合わせを通すか(フェイルオープン=可用性重視)止めるか(フェイルクローズ=セキュリティ重視)をVPCごとに設定できます。既定はフェイルクローズです。</p>
+
+<h3>注意点</h3>
+<ul>
+<li>対象はRoute 53 Resolverへの問い合わせだけ。インスタンスが外部のDNSサーバー(8.8.8.8など)を直接使うと防げない。この抜け道はセキュリティグループ・ネットワークACL・Network Firewallで塞ぐ。</li>
+<li>ドメイン名で判定するので、IPアドレスを直接指定した通信は防げない。</li>
+<li>問い合わせの記録は <strong>Resolverクエリログ</strong>(CloudWatch Logs・S3・Data Firehoseへ出力)で確認する。</li>
+<li>Firewall Managerで組織全体のVPCに一括で関連付けられる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>マルウェアに感染したインスタンスが指令サーバーと通信できないようにする</li>
+<li>閉じた環境のVPCで、業務に必要なドメインだけ名前解決できるようにする</li>
+<li>DNSを使ったデータ持ち出しの防止</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ルールグループに含めたドメインの数(月額)と、処理したDNSの問い合わせ数に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="route53.html">Amazon Route 53</a>:Resolver(VPCのDNS)</li>
+<li><a href="network-firewall.html">AWS Network Firewall</a>:DNS以外も含めた通信全体の検査</li>
+<li><a href="guardduty.html">Amazon GuardDuty</a>:DNSログから不審な問い合わせを検出</li>
+<li><a href="ram.html">AWS RAM</a>:ルールグループの共有</li>
+<li><a href="../terms/dns.html">DNS</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「VPCから悪意のあるドメインへの<strong>名前解決をブロック</strong>」「DNS経由のデータ持ち出し」→ <strong class="em">DNS Firewall</strong>。</li>
+<li>許可リスト方式は、許可ルールの後に全ドメインをブロックするルールを置く。</li>
+<li>可用性を優先するならフェイルオープン、セキュリティを優先するならフェイルクローズ。</li>
+<li>GuardDutyは「検出」、DNS Firewallは「ブロック」。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>DNS Firewallは、VPCのDNS問い合わせをドメイン名でフィルタリングする機能。</li>
+<li>不正なドメインへの通信を、名前解決の段階で止められる。</li>
+</ul>
+</section>

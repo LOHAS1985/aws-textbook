@@ -1,0 +1,95 @@
+<!-- title: Amazon Bedrock -->
+<!-- category: 機械学習と人工知能 -->
+<!-- lead: 複数の企業の生成AIモデル(基盤モデル)を、1つのAPIでサーバーの管理なしに使える -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Bedrock</strong>は、Anthropic(Claude)・Amazon(Nova)・Meta(Llama)・Mistral AI など複数の企業の<strong>生成AIモデル(基盤モデル)を、共通のAPIで使える</strong>フルマネージドサービスです。GPUサーバーを用意したり、モデルを動かす基盤を管理したりする必要はありません。</p>
+<p>入力したデータや出力は、モデルの学習には使われません。社内文書を参照させる仕組み(RAG)や、有害な出力を防ぐ仕組みなど、業務のアプリに組み込むための機能もそろっています。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>内容</th></tr>
+<tr><td>モデルの呼び出し</td><td><code>InvokeModel</code> や、モデルの違いを吸収した <code>Converse</code> APIで、テキスト・画像などを入力して結果を受け取る。ストリーミングにも対応</td></tr>
+<tr><td>ナレッジベース</td><td>S3などの社内文書をベクトル化して保存し、質問に関連する部分を探してモデルに渡す(<strong>RAG</strong>:検索拡張生成)</td></tr>
+<tr><td>ガードレール</td><td>有害な内容・禁止したい話題・個人情報(PII)の入出力をフィルタリングする</td></tr>
+<tr><td>エージェント/AgentCore</td><td>モデルがAPIやツールを呼び出しながら作業を進めるAIエージェントを作り、動かす</td></tr>
+<tr><td>モデルのカスタマイズ</td><td>自社のデータでモデルを追加学習(ファインチューニングなど)する</td></tr>
+<tr><td>モデルの評価</td><td>複数のモデルの回答の品質を比べる</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node app 0 0.5 blue "アプリ" "Lambdaなど"
+node br 1.4 0.5 accent "Bedrock" "共通API"
+node gr 1.4 1.6 box "ガードレール" "入出力を確認"
+node kb 2.8 1.6 box "ナレッジベース" "S3の社内文書"
+node fm 2.8 0.5 ok "基盤モデル" "Claude・Novaなど"
+edge app br
+edge br fm
+edge br gr
+edge br kb "RAG"
+<figcaption>図1 Bedrockの使い方。アプリは共通のAPIでモデルを呼び出す。ナレッジベースで社内文書を検索して回答に使い(RAG)、ガードレールで入出力を確認する。</figcaption>
+</figure>
+
+<h3>運用で押さえること</h3>
+<ul>
+<li><strong>モデル呼び出しのログ</strong>:入力・出力の内容を記録するには、モデル呼び出しのログを有効にして CloudWatch Logs や S3 に出力する(既定では無効)。APIの呼び出し自体は CloudTrail に記録される。</li>
+<li><strong>メトリクス</strong>:CloudWatch で呼び出し回数・レイテンシー・スロットリングの回数・入出力のトークン数などを監視できる。</li>
+<li><strong>クォータとスロットリング</strong>:モデルごとに1分あたりのリクエスト数・トークン数の上限がある。超えると <code>ThrottlingException</code> になるので、再試行(エクスポネンシャルバックオフ)、Service Quotasでの引き上げ、<strong>クロスリージョン推論</strong>(複数のリージョンに処理を振り分ける)で対処する。</li>
+<li><strong>ネットワーク</strong>:VPCからはインターフェイス型のVPCエンドポイント(PrivateLink)で、インターネットを通らずに呼び出せる。</li>
+<li><strong>アクセス制御</strong>:IAMポリシーで、使えるモデルやAPIを制限する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>社内文書をもとに答えるチャットボット(ナレッジベースでRAG)</li>
+<li>問い合わせ・ログ・障害報告の要約や分類</li>
+<li>文章の生成・翻訳・画像の生成</li>
+<li>業務システムのAPIを呼び出して作業するAIエージェント</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>内容</th></tr>
+<tr><td>オンデマンド</td><td>入力・出力の<strong>トークン数</strong>(モデルごとに単価が違う)に応じて課金</td></tr>
+<tr><td>バッチ</td><td>大量の依頼をまとめて非同期で処理する。オンデマンドより安い</td></tr>
+<tr><td>プロビジョンドスループット</td><td>一定の処理能力を時間単位で確保する。カスタマイズしたモデルの利用や、安定した大量の処理向け</td></tr>
+</table></div>
+<p>ナレッジベース・ガードレール・エージェントには、それぞれの利用量に応じた料金が別にかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="lambda.html">AWS Lambda</a>:Bedrockを呼び出すアプリの実行</li>
+<li><a href="s3.html">Amazon S3</a>:ナレッジベースの文書・ログの保存先</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:ナレッジベースのベクトルの保存先</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>/<a href="cloudtrail.html">AWS CloudTrail</a>:呼び出しのログ・メトリクス・監査</li>
+<li><a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>/<a href="../terms/service-quotas.html">Service Quotas</a></li>
+<li><a href="kiro.html">Kiro</a>/<a href="devops-agent.html">AWS DevOps Agent</a>:AWSが提供するAIエージェント</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「複数の基盤モデルをサーバー管理なしで使う」→ <strong class="em">Bedrock</strong>。社内文書を使った回答 → ナレッジベース(RAG)。</li>
+<li>プロンプトと応答の内容を記録したい → <strong class="em">モデル呼び出しのログ</strong>を有効にする(CloudTrailには内容は残らない)。</li>
+<li><code>ThrottlingException</code> → 再試行・<strong>クォータの引き上げ</strong>・クロスリージョン推論。</li>
+<li>有害な出力やPIIの漏えいを防ぐ → ガードレール。インターネットを通さずに呼び出す → VPCエンドポイント。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Bedrockは、複数の企業の基盤モデルを共通のAPIで使えるフルマネージドの生成AIサービス。</li>
+<li>運用では、呼び出しのログ・メトリクス・クォータ・ネットワークの経路を押さえる。</li>
+</ul>
+</section>

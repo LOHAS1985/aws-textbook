@@ -1,0 +1,116 @@
+<!-- title: Amazon Data Firehose -->
+<!-- category: 分析 -->
+<!-- lead: ストリーミングデータを受け取り、変換してS3・Redshift・OpenSearchなどへ自動で届ける -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Data Firehose</strong>(旧称 Kinesis Data Firehose)は、ログやイベントなどの<strong>ストリーミングデータを受け取り、S3・Redshift・OpenSearch Service などの保存先へ自動で届ける</strong>フルマネージドの配送サービスです。</p>
+<p>受け取ったデータを一定量・一定時間ためてから(<strong>バッファリング</strong>)まとめて書き込むため、届くまでに数秒〜数分かかる「ほぼリアルタイム」の処理になります。サーバーやシャードの管理は不要で、データ量に合わせて自動でスケールします。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>データの送り元(ソース)</h3>
+<ul>
+<li>アプリやエージェントからの直接の送信(<code>PutRecord</code>/<code>PutRecordBatch</code>)</li>
+<li>Kinesis Data Streams・Amazon MSK(Kafka)からの読み取り</li>
+<li><strong>CloudWatch Logs のサブスクリプションフィルター</strong>、CloudWatch メトリクスストリーム</li>
+<li>VPCフローログ・WAFのログ・IoT Coreのルールなど</li>
+</ul>
+
+<h3>主な配送先</h3>
+<div class="table-wrap"><table>
+<tr><th>配送先</th><th>主な用途</th></tr>
+<tr><td>Amazon S3</td><td>ログの長期保存、Athenaでの分析(データレイク)</td></tr>
+<tr><td>Apache Iceberg テーブル</td><td>S3上のテーブル形式での保存</td></tr>
+<tr><td>Amazon Redshift</td><td>データウェアハウスでの分析(いったんS3に置いてからCOPY)</td></tr>
+<tr><td>OpenSearch Service/Serverless</td><td>ログの検索・可視化</td></tr>
+<tr><td>HTTPエンドポイント・SaaS</td><td>Splunk・Datadog・New Relic・Snowflake など</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 170 80
+node src 0 0.5 blue "送り元" "CloudWatch Logsなど"
+node fh 1.4 0.5 accent "Data Firehose" "バッファリング"
+node lam 1.4 1.6 box "Lambda" "レコードの変換"
+node s3 2.8 0 ok "S3" "Parquetに変換も可"
+node os 2.8 1 ok "OpenSearch" "Splunkなど"
+node bk 4.1 0.5 ng "S3(失敗分)" "バックアップ"
+edge src fh
+edge fh lam both
+edge fh s3
+edge fh os
+edge os bk dash
+<figcaption>図1 Data Firehoseの流れ。受け取ったデータをバッファにため、必要ならLambdaで変換してから配送先にまとめて書き込む。配送に失敗したデータはS3のバックアップ用バケットに保存できる。</figcaption>
+</figure>
+
+<h3>バッファリング</h3>
+<p>配送先への書き込みは、<strong>バッファのサイズ(MB)か時間(秒)のどちらかに達したとき</strong>に行われます。小さくするほど早く届き、大きくするほどファイルの数が減ってS3やAthenaで扱いやすくなります。</p>
+
+<h3>変換・加工</h3>
+<ul>
+<li><strong>Lambdaによる変換</strong>:レコードを1件ずつ加工・絞り込みする(例:CloudWatch Logsの圧縮データを展開して整形)。</li>
+<li><strong>形式の変換</strong>:JSONを Parquet・ORC に変換してS3に保存する(Glueデータカタログのスキーマを使う)。Athenaの検索が速く・安くなる。</li>
+<li>動的パーティショニング:レコードの中身(顧客IDなど)でS3のプレフィックスを分ける。</li>
+<li>圧縮(GZIP・Snappyなど)と、KMSによる暗号化。</li>
+</ul>
+
+<h3>エラー処理と監視</h3>
+<ul>
+<li>配送先に書き込めないときは一定時間再試行し、それでも失敗したデータは S3 のバックアップ先に保存される。</li>
+<li>エラーはCloudWatch Logsに記録できる。CloudWatchメトリクス(<code>DeliveryToS3.Success</code>、<code>DeliveryToS3.DataFreshness</code> など)で、配送の成功や遅れを監視する。</li>
+<li>VPC内のOpenSearchなどにも配送できる。</li>
+</ul>
+
+<h3>Kinesis Data Streams との違い</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Data Firehose</th><th>Kinesis Data Streams</th></tr>
+<tr><td>目的</td><td>保存先への配送</td><td>自分で作る処理でのリアルタイム処理</td></tr>
+<tr><td>遅延</td><td>ほぼリアルタイム(バッファリングあり)</td><td>リアルタイム(ミリ秒〜)</td></tr>
+<tr><td>管理</td><td>不要(自動でスケール)</td><td>シャード数の管理(オンデマンドモードもある)</td></tr>
+<tr><td>データの保持・再読み込み</td><td>できない</td><td>保持期間内なら何度でも読める</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>複数アカウントの CloudWatch Logs を、サブスクリプションフィルター経由で中央のS3に集める</li>
+<li>VPCフローログやWAFのログをParquetに変換してS3に保存し、Athenaで分析する</li>
+<li>アプリのログをOpenSearchやSplunkに送って検索できるようにする</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>取り込んだデータ量(GB)に応じて課金されます。形式の変換・動的パーティショニング・VPCへの配送などを使うと、その処理量に応じた料金が追加されます。Lambdaによる変換では、Lambdaの料金も別にかかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="kinesis.html">Amazon Kinesis</a>:Data Streams(リアルタイム処理)</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:サブスクリプションフィルター・メトリクスストリーム・監視</li>
+<li><a href="s3.html">Amazon S3</a>/<a href="athena.html">Amazon Athena</a>:保存と分析</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:ログの検索・可視化</li>
+<li><a href="lambda.html">AWS Lambda</a>:レコードの変換</li>
+<li><a href="../usecases/centralized-logging.html">ログの一元管理</a>(ユースケース)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「ストリーミングデータを<strong>コードを書かずに</strong>S3・Redshift・OpenSearchへ」→ <strong class="em">Data Firehose</strong>。</li>
+<li>「ミリ秒単位のリアルタイム処理」「データを再読み込み」→ Kinesis Data Streams。</li>
+<li>S3に届くのが遅い・ファイルが細かすぎる → <strong>バッファのサイズ・時間</strong>を調整する。</li>
+<li>Athenaを速く安く → Parquetへの形式の変換。配送の失敗分は S3 のバックアップに残る。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Data Firehoseは、ストリーミングデータをバッファリングして保存先へ届けるフルマネージドの配送サービス。</li>
+<li>Lambdaでの変換・Parquetへの変換・失敗時のS3へのバックアップができる。</li>
+</ul>
+</section>
