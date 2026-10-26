@@ -46,21 +46,31 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 614 252" style="max-width:614px;min-width:520px" role="img" aria-label="図1 Kinesisの主なサービス。Data Streamsはシャードで並列に受け取り、Lambdaなど自作の処理でリアルタイムに処理する。Data Firehoseはコードをほぼ書かずに、S3やOpenSearchなどへ配送・保存する。"><defs><marker id="dgservices-kinesis-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="prod">
 <rect x="34" y="126" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="147" text-anchor="middle" class="dg-t">データ送信元</text>
 <text x="104" y="165" text-anchor="middle" class="dg-s">IoT・ログ・クリック</text>
+</g>
+<g data-node="ds">
 <rect x="242" y="83" width="140" height="52" rx="8" class="dg-accent"/>
 <text x="312" y="104" text-anchor="middle" class="dg-tb">Data Streams</text>
 <text x="312" y="122" text-anchor="middle" class="dg-s">シャードで並列処理</text>
+</g>
+<g data-node="cons">
 <rect x="450" y="83" width="140" height="52" rx="8" class="dg-box"/>
 <text x="520" y="104" text-anchor="middle" class="dg-t">Lambda / アプリ</text>
 <text x="520" y="122" text-anchor="middle" class="dg-s">リアルタイム処理</text>
+</g>
+<g data-node="fh">
 <rect x="242" y="176" width="140" height="52" rx="8" class="dg-accent"/>
 <text x="312" y="198" text-anchor="middle" class="dg-tb">Data Firehose</text>
 <text x="312" y="216" text-anchor="middle" class="dg-s">配送・変換</text>
+</g>
+<g data-node="dst">
 <rect x="450" y="176" width="140" height="52" rx="8" class="dg-ok"/>
 <text x="520" y="198" text-anchor="middle" class="dg-t">S3・OpenSearch</text>
 <text x="520" y="216" text-anchor="middle" class="dg-s">保存先</text>
+</g>
 <path d="M174.0,137.2 L242.0,123.3" class="dg-line" marker-end="url(#dgservices-kinesis-1)"/>
 <path d="M174.0,168.7 L242.0,185.3" class="dg-line" marker-end="url(#dgservices-kinesis-1)"/>
 <path d="M382.0,109.0 L450.0,109.0" class="dg-line" marker-end="url(#dgservices-kinesis-1)"/>
@@ -94,17 +104,27 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 463 243" style="max-width:463px;min-width:463px" role="img" aria-label="図2 シャードとパーティションキー。レコードはパーティションキーでシャードに振り分けられる。シャード1本の性能は固定なので、キーが偏ると特定のシャードに負荷が集中する(ホットシャード)。シャードを増やすとスループットが上がる。"><defs><marker id="dgservices-kinesis-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="pk1">
 <rect x="34" y="39" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="63" text-anchor="middle" class="dg-t">pk=user-A</text>
+</g>
+<g data-node="pk2">
 <rect x="34" y="109" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="133" text-anchor="middle" class="dg-t">pk=user-B</text>
+</g>
+<g data-node="pk3">
 <rect x="34" y="179" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="203" text-anchor="middle" class="dg-t">pk=user-C</text>
+</g>
+<g data-node="s1">
 <rect x="289" y="68" width="150" height="52" rx="8" class="dg-ng"/>
 <text x="364" y="90" text-anchor="middle" class="dg-t">シャード1</text>
 <text x="364" y="108" text-anchor="middle" class="dg-s">偏るとホットシャード</text>
+</g>
+<g data-node="s2">
 <rect x="289" y="179" width="150" height="40" rx="8" class="dg-box"/>
 <text x="364" y="203" text-anchor="middle" class="dg-t">シャード2</text>
+</g>
 <path d="M184.0,69.3 L289.0,83.7" class="dg-line" marker-end="url(#dgservices-kinesis-2)"/>
 <path d="M184.0,118.7 L289.0,104.3" class="dg-line" marker-end="url(#dgservices-kinesis-2)"/>
 <path d="M184.0,199.0 L289.0,199.0" class="dg-line" marker-end="url(#dgservices-kinesis-2)"/>

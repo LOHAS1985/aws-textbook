@@ -71,22 +71,34 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 896 252" style="max-width:896px;min-width:717px" role="img" aria-label="図1 Auto Scalingグループの構成。起動テンプレートを元に複数AZへインスタンスを起動し、CloudWatchのメトリクスに応じて台数を変える。起動したインスタンスはELBのターゲットに自動で登録される。"><defs><marker id="dgservices-auto-scaling-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="lt">
 <rect x="34" y="83" width="145" height="52" rx="8" class="dg-box"/>
 <text x="106" y="104" text-anchor="middle" class="dg-t">起動テンプレート</text>
 <text x="106" y="122" text-anchor="middle" class="dg-s">AMI・タイプ・SG</text>
+</g>
+<g data-node="asg">
 <rect x="265" y="83" width="178" height="52" rx="8" class="dg-accent"/>
 <text x="354" y="104" text-anchor="middle" class="dg-tb">Auto Scalingグループ</text>
 <text x="354" y="122" text-anchor="middle" class="dg-s">最小2・希望2・最大6</text>
+</g>
+<g data-node="a">
 <rect x="512" y="46" width="145" height="40" rx="8" class="dg-ok"/>
 <text x="585" y="70" text-anchor="middle" class="dg-t">EC2(AZ-a)</text>
+</g>
+<g data-node="c">
 <rect x="512" y="132" width="145" height="40" rx="8" class="dg-ok"/>
 <text x="585" y="156" text-anchor="middle" class="dg-t">EC2(AZ-c)</text>
+</g>
+<g data-node="cw">
 <rect x="265" y="176" width="145" height="52" rx="8" class="dg-blue"/>
 <text x="338" y="198" text-anchor="middle" class="dg-t">CloudWatch</text>
 <text x="338" y="216" text-anchor="middle" class="dg-s">CPU使用率など</text>
+</g>
+<g data-node="elb">
 <rect x="727" y="83" width="145" height="52" rx="8" class="dg-box"/>
 <text x="800" y="104" text-anchor="middle" class="dg-t">ELB</text>
 <text x="800" y="122" text-anchor="middle" class="dg-s">自動で登録</text>
+</g>
 <path d="M179.0,109.0 L265.0,109.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-1)"/>
 <text x="222" y="113" text-anchor="middle" class="dg-s dg-halo">これを元に起動</text>
 <path d="M443.0,92.6 L512.5,79.8" class="dg-line" marker-end="url(#dgservices-auto-scaling-1)"/>
@@ -115,18 +127,26 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 648 194" style="max-width:648px;min-width:520px" role="img" aria-label="図2 ターゲット追跡スケーリング。目標値(例:平均CPU使用率50%)を設定するだけで、必要なCloudWatchアラームが自動で作られ、目標値に近づくように台数が調整される。"><defs><marker id="dgservices-auto-scaling-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="m">
 <rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
 <text x="106" y="100" text-anchor="middle" class="dg-t">メトリクス</text>
 <text x="106" y="118" text-anchor="middle" class="dg-s">平均CPU 80%</text>
+</g>
+<g data-node="p">
 <rect x="257" y="78" width="145" height="52" rx="8" class="dg-accent"/>
 <text x="329" y="100" text-anchor="middle" class="dg-tb">ターゲット追跡</text>
 <text x="329" y="118" text-anchor="middle" class="dg-s">目標:CPU 50%</text>
+</g>
+<g data-node="out">
 <rect x="480" y="38" width="145" height="52" rx="8" class="dg-ok"/>
 <text x="552" y="60" text-anchor="middle" class="dg-t">スケールアウト</text>
 <text x="552" y="78" text-anchor="middle" class="dg-s">目標超えで増やす</text>
+</g>
+<g data-node="in">
 <rect x="480" y="118" width="145" height="52" rx="8" class="dg-box"/>
 <text x="552" y="140" text-anchor="middle" class="dg-t">スケールイン</text>
 <text x="552" y="158" text-anchor="middle" class="dg-s">目標未満で減らす</text>
+</g>
 <path d="M179.0,104.0 L256.8,104.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-2)"/>
 <path d="M401.8,91.0 L479.5,77.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-2)"/>
 <path d="M401.8,117.0 L479.5,131.0" class="dg-line dg-dash" marker-end="url(#dgservices-auto-scaling-2)"/>
@@ -147,18 +167,28 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 593 194" style="max-width:593px;min-width:520px" role="img" aria-label="図3 ライフサイクルフック。起動時(Pending:Wait)と終了時(Terminating:Wait)に一時停止させ、EventBridgeやLambda、Systems Managerなどで独自の処理を実行できる。"><defs><marker id="dgservices-auto-scaling-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="p">
 <rect x="34" y="44" width="130" height="40" rx="8" class="dg-box"/>
 <text x="99" y="68" text-anchor="middle" class="dg-t">Pending</text>
+</g>
+<g data-node="pw">
 <rect x="214" y="38" width="130" height="52" rx="8" class="dg-accent"/>
 <text x="279" y="60" text-anchor="middle" class="dg-tb">Pending:Wait</text>
 <text x="279" y="78" text-anchor="middle" class="dg-s">設定・初期化</text>
+</g>
+<g data-node="ins">
 <rect x="394" y="44" width="130" height="40" rx="8" class="dg-ok"/>
 <text x="459" y="68" text-anchor="middle" class="dg-t">InService</text>
+</g>
+<g data-node="tw">
 <rect x="394" y="118" width="175" height="52" rx="8" class="dg-accent"/>
 <text x="482" y="140" text-anchor="middle" class="dg-tb">Terminating:Wait</text>
 <text x="482" y="158" text-anchor="middle" class="dg-s">ログ退避など</text>
+</g>
+<g data-node="t">
 <rect x="214" y="124" width="130" height="40" rx="8" class="dg-ng"/>
 <text x="279" y="148" text-anchor="middle" class="dg-t">Terminated</text>
+</g>
 <path d="M164.0,64.0 L214.0,64.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
 <path d="M344.0,64.0 L394.0,64.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
 <path d="M464.6,84.0 L474.2,118.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>

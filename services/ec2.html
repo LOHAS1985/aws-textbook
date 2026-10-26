@@ -253,23 +253,33 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 307" style="max-width:684px;min-width:547px" role="img" aria-label="図5 EC2 Instance Connectの仕組み。①APIで一時的な公開鍵を送ると、②その鍵がインスタンスに60秒間だけ置かれ、③その間にSSHで接続する。下段: Instance Connect Endpointを使うと、プライベートサブネットのEC2にも接続できる。"><defs><marker id="dgservices-ec2-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
 <rect x="34" y="133" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="154" text-anchor="middle" class="dg-t">利用者</text>
 <text x="109" y="172" text-anchor="middle" class="dg-s">コンソール / CLI</text>
+</g>
+<g data-node="api">
 <rect x="272" y="35" width="150" height="68" rx="8" class="dg-accent"/>
 <text x="347" y="56" text-anchor="middle" class="dg-tb">EC2 Instance</text>
 <text x="347" y="74" text-anchor="middle" class="dg-tb">Connect</text>
 <text x="347" y="92" text-anchor="middle" class="dg-s">一時公開鍵を送る</text>
+</g>
+<g data-node="ec2">
 <rect x="510" y="133" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="585" y="154" text-anchor="middle" class="dg-t">EC2</text>
 <text x="585" y="172" text-anchor="middle" class="dg-s">鍵は60秒だけ有効</text>
+</g>
+<g data-node="eice">
 <rect x="272" y="215" width="150" height="68" rx="8" class="dg-box"/>
 <text x="347" y="236" text-anchor="middle" class="dg-t">Instance Connect</text>
 <text x="347" y="254" text-anchor="middle" class="dg-t">Endpoint</text>
 <text x="347" y="272" text-anchor="middle" class="dg-s">サブネットに作成</text>
+</g>
+<g data-node="prv">
 <rect x="510" y="223" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="585" y="244" text-anchor="middle" class="dg-t">プライベートEC2</text>
 <text x="585" y="262" text-anchor="middle" class="dg-s">パブリックIPなし</text>
+</g>
 <path d="M177.8,133.0 L272.0,97.4" class="dg-line" marker-end="url(#dgservices-ec2-1)"/>
 <text x="225" y="119" text-anchor="middle" class="dg-s dg-halo">① 公開鍵</text>
 <path d="M422.0,97.4 L516.2,133.0" class="dg-line" marker-end="url(#dgservices-ec2-1)"/>
@@ -360,23 +370,35 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 774 218" style="max-width:774px;min-width:619px" role="img" aria-label="図6 ステータスチェックの失敗への対処。AWS側の障害(システム)は復旧アクションで別の物理ホストに移し、OS側の障害(インスタンス)は再起動などで対処する。"><defs><marker id="dgservices-ec2-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="sys">
 <rect x="34" y="40" width="210" height="52" rx="8" class="dg-ng"/>
 <text x="139" y="62" text-anchor="middle" class="dg-t">システムの失敗</text>
 <text x="139" y="80" text-anchor="middle" class="dg-s">AWS側のホスト</text>
+</g>
+<g data-node="ins">
 <rect x="34" y="142" width="210" height="52" rx="8" class="dg-ng"/>
 <text x="139" y="164" text-anchor="middle" class="dg-t">インスタンスの失敗</text>
 <text x="139" y="182" text-anchor="middle" class="dg-s">OS側</text>
+</g>
+<g data-node="alarm">
 <rect x="287" y="40" width="210" height="52" rx="8" class="dg-box"/>
 <text x="392" y="62" text-anchor="middle" class="dg-t">CloudWatchアラーム</text>
 <text x="392" y="80" text-anchor="middle" class="dg-s">StatusCheckFailed_System</text>
+</g>
+<g data-node="rec">
 <rect x="540" y="40" width="210" height="52" rx="8" class="dg-ok"/>
 <text x="645" y="62" text-anchor="middle" class="dg-t">復旧アクション</text>
 <text x="645" y="80" text-anchor="middle" class="dg-s">別のホストで再開</text>
+</g>
+<g data-node="alarm2">
 <rect x="287" y="142" width="210" height="52" rx="8" class="dg-box"/>
 <text x="392" y="164" text-anchor="middle" class="dg-t">CloudWatchアラーム</text>
 <text x="392" y="182" text-anchor="middle" class="dg-s">StatusCheckFailed_Instance</text>
+</g>
+<g data-node="rb">
 <rect x="540" y="148" width="210" height="40" rx="8" class="dg-ok"/>
 <text x="645" y="172" text-anchor="middle" class="dg-t">再起動アクション</text>
+</g>
 <path d="M244.0,66.5 L287.0,66.5" class="dg-line" marker-end="url(#dgservices-ec2-2)"/>
 <path d="M497.0,66.5 L540.0,66.5" class="dg-line" marker-end="url(#dgservices-ec2-2)"/>
 <path d="M244.0,168.5 L287.0,168.5" class="dg-line" marker-end="url(#dgservices-ec2-2)"/>
@@ -411,17 +433,25 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 722 210" style="max-width:722px;min-width:578px" role="img" aria-label="図7 スポットインスタンスの中断。2分前の通知を受けて、処理の状態を保存したりロードバランサーから外したりしてから中断に備える。"><defs><marker id="dgservices-ec2-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="aws">
 <rect x="34" y="46" width="160" height="40" rx="8" class="dg-blue"/>
 <text x="114" y="70" text-anchor="middle" class="dg-t">容量が必要に</text>
+</g>
+<g data-node="ev">
 <rect x="286" y="40" width="160" height="52" rx="8" class="dg-accent"/>
 <text x="366" y="62" text-anchor="middle" class="dg-tb">中断の2分前の通知</text>
 <text x="366" y="80" text-anchor="middle" class="dg-s">メタデータ/EventBridge</text>
+</g>
+<g data-node="fn">
 <rect x="538" y="40" width="160" height="52" rx="8" class="dg-box"/>
 <text x="618" y="62" text-anchor="middle" class="dg-t">Lambdaなど</text>
 <text x="618" y="80" text-anchor="middle" class="dg-s">処理の保存・LBから外す</text>
+</g>
+<g data-node="end">
 <rect x="538" y="134" width="160" height="52" rx="8" class="dg-ng"/>
 <text x="618" y="156" text-anchor="middle" class="dg-t">中断</text>
 <text x="618" y="174" text-anchor="middle" class="dg-s">終了・停止・休止</text>
+</g>
 <path d="M194.0,66.5 L286.0,66.5" class="dg-line" marker-end="url(#dgservices-ec2-3)"/>
 <path d="M446.0,66.5 L538.0,66.5" class="dg-line" marker-end="url(#dgservices-ec2-3)"/>
 <path d="M618.0,92.5 L618.0,134.0" class="dg-line" marker-end="url(#dgservices-ec2-3)"/>
