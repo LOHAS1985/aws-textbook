@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IOPS・スループット・レイテンシ | AWS教科書</title>
+<meta name="description" content="ストレージやデータベースの性能を表す3つの指標と、どこが詰まっているか(ボトルネック)の見つけ方">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat4">ストレージ</a>
+  <h1>IOPS・スループット・レイテンシ</h1>
+  <p class="lead">ストレージやデータベースの性能を表す3つの指標と、どこが詰まっているか(ボトルネック)の見つけ方</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>「遅い」と言われたとき、何が足りないのかを表すのが次の3つの指標です。性能の問題は、<strong>どの指標が上限に当たっているか</strong>を見つけてから対処します。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th>指標</th><th>意味</th><th>単位</th><th>たとえ</th></tr>
+<tr><td data-label="指標"><strong>IOPS</strong></td><td data-label="意味">1秒あたりに処理できる読み書きの<strong>回数</strong></td><td data-label="単位">回/秒</td><td data-label="たとえ">レジで1分に会計できる人数</td></tr>
+<tr><td data-label="指標"><strong>スループット</strong></td><td data-label="意味">1秒あたりに読み書きできる<strong>データ量</strong></td><td data-label="単位">MiB/秒</td><td data-label="たとえ">1分に運べる荷物の量</td></tr>
+<tr><td data-label="指標"><strong>レイテンシ</strong></td><td data-label="意味">1回の読み書きにかかる<strong>時間</strong></td><td data-label="単位">ミリ秒</td><td data-label="たとえ">1人の会計にかかる時間</td></tr>
+</table></div>
+
+<h3 id="c1-1">3つの関係<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>スループットは「IOPS × 1回あたりのデータの大きさ(I/Oサイズ)」で決まります。</p>
+<ul>
+<li><strong>小さなデータをばらばらに読み書きする</strong>(データベースなど):回数が多くなるので<strong>IOPS</strong>が上限に当たりやすい</li>
+<li><strong>大きなファイルを順番に読み書きする</strong>(ログの処理・動画・バックアップなど):データ量が多くなるので<strong>スループット</strong>が上限に当たりやすい</li>
+<li>上限に近づくと、処理待ちの行列(<strong>キューの長さ</strong>)が伸び、<strong>レイテンシ</strong>が悪化する</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 ボトルネックの見つけ方。読み書きの回数と量のどちらが上限に当たっているかで、上げるべき性能が変わる。インスタンス側の上限に当たっている場合は、ボリュームを変えても速くならない。"><defs><marker id="dgterms-performance-metrics-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">遅い</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">レイテンシが悪化</text>
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">小さな読み書き</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">回数が多い</text>
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="147" text-anchor="middle" class="dg-t">大きな読み書き</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">量が多い</text>
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="62" text-anchor="middle" class="dg-tb">IOPSを上げる</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">gp3のIOPS・io2</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="147" text-anchor="middle" class="dg-tb">MiB/sを上げる</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">gp3の値・st1</text>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#dgterms-performance-metrics-1)"/>
+<path d="M184.0,122.4 L272.0,138.1" class="dg-line" marker-end="url(#dgterms-performance-metrics-1)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgterms-performance-metrics-1)"/>
+<path d="M422.0,151.5 L510.0,151.5" class="dg-line" marker-end="url(#dgterms-performance-metrics-1)"/>
+</svg>
+</div>
+<figcaption>図1 ボトルネックの見つけ方。読み書きの回数と量のどちらが上限に当たっているかで、上げるべき性能が変わる。インスタンス側の上限に当たっている場合は、ボリュームを変えても速くならない。</figcaption>
+</figure>
+
+<h3 id="c1-2">どこが上限か:ボリュームとインスタンス<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>EBSの性能は、<strong>ボリュームの上限</strong>と<strong>インスタンスタイプごとのEBSの上限(帯域幅・IOPS)</strong>の小さいほうで決まります。ボリュームの性能を上げても、インスタンスの上限で頭打ちになることがあります。その場合は、EBS最適化の性能が高いインスタンスタイプに変えます。</p>
+
+<h3 id="c1-3">サービスごとに見るメトリクス<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>主なメトリクス</th><th>上限に当たったときの対処</th></tr>
+<tr><td>EBS</td><td><code>VolumeReadOps</code>・<code>VolumeWriteOps</code>(回数)、<code>VolumeReadBytes</code>・<code>VolumeWriteBytes</code>(量)、<code>VolumeQueueLength</code>、<code>VolumeIOPSExceededCheck</code>・<code>VolumeThroughputExceededCheck</code></td><td>gp3のIOPS・スループットを上げる、io2に変える(Elastic Volumesで止めずに変更できる)</td></tr>
+<tr><td>EC2</td><td><code>EBSIOBalance%</code>・<code>EBSByteBalance%</code>(バーストの残り)</td><td>インスタンスタイプを大きくする</td></tr>
+<tr><td>RDS</td><td><code>ReadIOPS</code>・<code>WriteIOPS</code>、<code>ReadLatency</code>・<code>WriteLatency</code>、<code>DiskQueueDepth</code></td><td>ストレージのIOPSを上げる、リードレプリカ・キャッシュで読み込みを減らす、Performance Insightsで重いSQLを探す</td></tr>
+<tr><td>EFS</td><td><code>PercentIOLimit</code>、<code>MeteredIOBytes</code>、<code>BurstCreditBalance</code></td><td>スループットモードをElastic(自動)にする</td></tr>
+</table></div>
+<div class="point"><p>gp2は容量に比例してIOPSが決まり、小さいボリュームでは<strong>バーストクレジット</strong>を使い切ると急に遅くなります。gp3にすると、容量に関係なく3,000IOPS・125MiB/sが常に出るので、この問題が起きなくなります。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="storage-types.html">ブロック・ファイル・オブジェクトストレージ</a>:ストレージの種類</li>
+<li><a href="caching-comparison.html">キャッシュの選び方</a>:読み込みを減らしてレイテンシを下げる</li>
+<li><a href="cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>:性能のアラーム</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/ebs.html">Amazon EBS</a>:ボリュームタイプごとの性能</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:インスタンスタイプごとのEBSの上限</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:ストレージの性能とPerformance Insights</li>
+<li><a href="../services/efs.html">Amazon EFS</a>:スループットモード</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:性能のメトリクス</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/ebs.html"><span class="title">Amazon EBS</span><span class="kind">サービス</span><span class="desc">EC2にアタッチして使うブロックストレージ</span></a></li>
+<li><a href="../services/rds.html"><span class="title">Amazon RDS</span><span class="kind">サービス</span><span class="desc">リレーショナルデータベースの構築・運用を任せられるマネージドDB</span></a></li>
+<li><a href="../services/cloudwatch.html"><span class="title">Amazon CloudWatch</span><span class="kind">サービス</span><span class="desc">システムの状態を記録・監視・通知する統合監視サービス</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="storage-types.html"><span class="label">← 前へ</span>ブロック・ファイル・オブジェクトストレージ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="high-availability-scaling.html"><span class="label">次へ →</span>高可用性とスケーリング</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

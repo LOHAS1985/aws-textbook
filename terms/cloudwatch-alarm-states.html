@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudWatchアラームの状態と評価 | AWS教科書</title>
+<meta name="description" content="アラームの3つの状態(OK・ALARM・INSUFFICIENT_DATA)と、期間・データポイント数・欠落データの扱いでアラームが鳴る条件が決まる仕組み">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">設計・運用</a>
+  <h1>CloudWatchアラームの状態と評価</h1>
+  <p class="lead">アラームの3つの状態(OK・ALARM・INSUFFICIENT_DATA)と、期間・データポイント数・欠落データの扱いでアラームが鳴る条件が決まる仕組み</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(9項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">3つの状態</a></li><li><a href="#c1-2">評価の設定(いつALARMになるか)</a></li><li><a href="#c1-3">欠落データの扱い</a></li><li><a href="#c1-4">アラームのアクション</a></li><li><a href="#c1-5">アラームの種類</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+<li><a href="#c4">この用語が出てくるページ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>CloudWatchアラームは、1つのメトリクス(またはメトリクスの計算結果)を一定の間隔で調べ、しきい値を超えているかどうかで<strong>状態</strong>を切り替えます。アクション(通知や自動修復)は、<strong>状態が変わったとき</strong>に実行されます。そのため「なぜ鳴らないのか」「なぜ鳴りすぎるのか」は、状態と評価の設定から切り分けます。</p>
+
+<h3 id="c1-1">3つの状態<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>状態</th><th>意味</th><th>よくある原因</th></tr>
+<tr><td><code>OK</code></td><td>メトリクスがしきい値の範囲内</td><td>正常</td></tr>
+<tr><td><code>ALARM</code></td><td>メトリクスがしきい値を超えた(条件を満たした)</td><td>負荷の増加、エラーの発生</td></tr>
+<tr><td><strong class="em"><code>INSUFFICIENT_DATA</code></strong></td><td>判定に使えるデータが足りない</td><td>作成した直後、メトリクスが送られていない(エージェントの停止・インスタンスの停止)、メトリクス名やディメンションの指定の誤り</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 548 202" style="max-width:548px;min-width:520px" role="img" aria-label="図1 アラームの状態の移り変わり。どの状態からどの状態へも移る。アクションは状態が変わったときに1回だけ実行される(Auto Scalingのアクションだけは、ALARMの間くり返し実行される)。"><defs><marker id="dgterms-cloudwatch-alarm-states-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">OK</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">しきい値の範囲内</text>
+<rect x="374" y="40" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="449" y="62" text-anchor="middle" class="dg-t">ALARM</text>
+<text x="449" y="80" text-anchor="middle" class="dg-s">しきい値を超えた</text>
+<rect x="204" y="126" width="218" height="52" rx="8" class="dg-box"/>
+<text x="313" y="147" text-anchor="middle" class="dg-t">INSUFFICIENT_DATA</text>
+<text x="313" y="165" text-anchor="middle" class="dg-s">データが足りない</text>
+<path d="M184.0,66.5 L374.0,66.5" class="dg-line" marker-end="url(#dgterms-cloudwatch-alarm-states-1)" marker-start="url(#dgterms-cloudwatch-alarm-states-1)"/>
+<text x="279" y="70" text-anchor="middle" class="dg-s dg-halo">超えた</text>
+<path d="M171.4,92.5 L250.6,125.5" class="dg-line dg-dash" marker-end="url(#dgterms-cloudwatch-alarm-states-1)"/>
+<path d="M407.4,92.5 L354.6,125.5" class="dg-line dg-dash" marker-end="url(#dgterms-cloudwatch-alarm-states-1)"/>
+</svg>
+</div>
+<figcaption>図1 アラームの状態の移り変わり。どの状態からどの状態へも移る。アクションは状態が変わったときに1回だけ実行される(Auto Scalingのアクションだけは、ALARMの間くり返し実行される)。</figcaption>
+</figure>
+<p>アクションは状態ごとに設定できます。ALARMになったときだけでなく、<strong>OKに戻ったとき</strong>(復旧の通知)や、<strong>INSUFFICIENT_DATAになったとき</strong>(監視が止まったことの通知)にも通知できます。</p>
+
+<h3 id="c1-2">評価の設定(いつALARMになるか)<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>意味</th><th>例</th></tr>
+<tr><td>統計</td><td>期間内のデータを何でまとめるか</td><td>平均(Average)、合計(Sum)、最大(Maximum)、パーセンタイル(p99)</td></tr>
+<tr><td>期間(Period)</td><td>1つのデータポイントにまとめる時間</td><td>60秒、300秒。高解像度メトリクスなら10秒・30秒も可</td></tr>
+<tr><td>評価期間の数(N)</td><td>直近いくつのデータポイントを見るか</td><td>5</td></tr>
+<tr><td>アラームを実行するデータポイント数(M)</td><td>N個のうちいくつが超えたらALARMにするか</td><td>3(「5個中3個」)</td></tr>
+<tr><td>欠落データの扱い</td><td>データがないときにどう数えるか</td><td>下の表を参照</td></tr>
+</table></div>
+<p>例えば「期間60秒・5個中3個」なら、直近5分のうち3分でしきい値を超えたときにALARMになります。<strong>「M/N」にすると一瞬の急増では鳴らず</strong>、誤報を減らせます。逆に、検知を早くしたいときは期間を短くし、M・Nを小さくします。なお、EC2の基本モニタリングはメトリクスが<strong>5分ごと</strong>なので、1分単位で判定したい場合は詳細モニタリング(1分ごと)を有効にします。</p>
+
+<h3 id="c1-3">欠落データの扱い<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>動き</th><th>向いているメトリクス</th></tr>
+<tr><td><code>missing</code>(既定)</td><td>欠落したデータポイントは数えない。評価範囲がすべて欠落すると INSUFFICIENT_DATA になる</td><td>常に送られてくるメトリクス</td></tr>
+<tr><td><code>notBreaching</code></td><td>欠落を「正常」として数える</td><td><strong>何か起きたときだけ送られる</strong>メトリクス(エラー数、ALBの5xxの数など)</td></tr>
+<tr><td><code>breaching</code></td><td>欠落を「しきい値超え」として数える</td><td>データが来ないこと自体が異常なもの(ハートビート、定期処理の完了数)</td></tr>
+<tr><td><code>ignore</code></td><td>今の状態を保つ</td><td>まばらに送られるメトリクスで、状態をむやみに変えたくないとき</td></tr>
+</table></div>
+<div class="point"><p>エラー数のアラームがエラーのないときに INSUFFICIENT_DATA のままになるのは、エラーがない時間はメトリクス自体が送られないためです。<strong class="em">欠落データを notBreaching(正常として扱う)</strong>にすると、エラーがないときはOKになります。</p></div>
+
+<h3 id="c1-4">アラームのアクション<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>SNSトピックへの通知</strong>:メール・チャットツール・Lambdaなどへ届ける</li>
+<li><strong>EC2アクション</strong>:インスタンスの停止・終了・再起動・<strong>復旧</strong>(StatusCheckFailed_System のアラームで別のハードウェアに移す)</li>
+<li><strong>Auto Scalingアクション</strong>:ステップスケーリング・シンプルスケーリングのポリシーを実行する</li>
+<li><strong>Lambda関数の実行</strong>、<strong>Systems ManagerのOpsItemの作成</strong></li>
+</ul>
+<p>アラームの状態の変化はEventBridgeにもイベントとして送られるので、SSM Automationなど、アラームのアクションにない処理にもつなげられます(<a href="event-driven-remediation.html">イベント駆動の自動修復</a>)。</p>
+
+<h3 id="c1-5">アラームの種類<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>メトリクスアラーム</strong>:1つのメトリクス、または<strong>メトリクスの計算(Metric Math)</strong>の結果を監視する。例:エラー数 ÷ リクエスト数 でエラー率にしてから判定する</li>
+<li><strong>異常検出のアラーム</strong>:固定のしきい値の代わりに、過去の傾向から学習した「予測の幅」から外れたらALARMにする</li>
+<li><strong>複合アラーム</strong>:複数のアラームの状態を AND・OR・NOT で組み合わせる。「CPUが高い AND 応答が遅い」のときだけ通知して、誤報と通知の数を減らす</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="event-driven-remediation.html">イベント駆動の自動修復</a>:アラームを起点に自動で直す仕組み</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:アラームによるスケーリング</li>
+<li><a href="performance-metrics.html">IOPS・スループット・レイテンシ</a>:性能のアラームで見る指標</li>
+<li><a href="service-quotas.html">サービスクォータ</a>:クォータの使用率のアラーム</li>
+<li><a href="monitoring-logging-comparison.html">監視・記録のサービスの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:アラームを作るサービス</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:アラームの通知先</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:アラームでスケーリングする</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:基本モニタリングと詳細モニタリング、アラームによる自動復旧</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:アラームの状態の変化を受け取る</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/auto-scaling.html"><span class="title">Amazon EC2 Auto Scaling</span><span class="kind">サービス</span><span class="desc">負荷や障害に合わせてEC2の台数を自動で増減・維持する</span></a></li>
+<li><a href="../services/cloudwatch.html"><span class="title">Amazon CloudWatch</span><span class="kind">サービス</span><span class="desc">システムの状態を記録・監視・通知する統合監視サービス</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="circuit-breaker.html"><span class="label">← 前へ</span>サーキットブレーカー</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="event-driven-remediation.html"><span class="label">次へ →</span>イベント駆動の自動修復</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

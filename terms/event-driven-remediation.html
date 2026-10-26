@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>イベント駆動の自動修復 | AWS教科書</title>
+<meta name="description" content="「何かが起きた」というイベントを受けて、通知や修復の処理を自動で実行する運用の型">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">設計・運用</a>
+  <h1>イベント駆動の自動修復</h1>
+  <p class="lead">「何かが起きた」というイベントを受けて、通知や修復の処理を自動で実行する運用の型</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>運用の自動化の多くは、<strong>「検知する → 振り分ける → 対処する」</strong>という同じ型でできています。どのサービスがどの役割を受け持つかを覚えておくと、選択肢から正しい組み合わせを選べるようになります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 354" style="max-width:684px;min-width:547px" role="img" aria-label="図1 イベント駆動の自動修復の型。各サービスが出すイベントをEventBridgeのルールで選び、SSM Automation(修復)・Lambda(独自の処理)・SNS(通知)などに渡す。"><defs><marker id="dgterms-event-driven-remediation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">アラーム</text>
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">Config</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">ルールの違反</text>
+<rect x="34" y="198" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="220" text-anchor="middle" class="dg-t">GuardDuty等</text>
+<text x="109" y="238" text-anchor="middle" class="dg-s">検出結果</text>
+<rect x="34" y="278" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="300" text-anchor="middle" class="dg-t">CloudTrail</text>
+<text x="109" y="318" text-anchor="middle" class="dg-s">API呼び出し</text>
+<rect x="272" y="158" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="180" text-anchor="middle" class="dg-tb">EventBridge</text>
+<text x="347" y="198" text-anchor="middle" class="dg-s">ルールで振り分け</text>
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">SSM Automation</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">ランブックで修復</text>
+<rect x="510" y="158" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="180" text-anchor="middle" class="dg-t">Lambda</text>
+<text x="585" y="198" text-anchor="middle" class="dg-s">独自の処理</text>
+<rect x="510" y="238" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="260" text-anchor="middle" class="dg-t">SNS</text>
+<text x="585" y="278" text-anchor="middle" class="dg-s">担当者へ通知</text>
+<path d="M160.6,90.0 L295.4,158.0" class="dg-line" marker-end="url(#dgterms-event-driven-remediation-1)"/>
+<path d="M184.0,156.6 L272.0,171.4" class="dg-line" marker-end="url(#dgterms-event-driven-remediation-1)"/>
+<path d="M184.0,211.4 L272.0,196.6" class="dg-line" marker-end="url(#dgterms-event-driven-remediation-1)"/>
+<path d="M160.6,278.0 L295.4,210.0" class="dg-line" marker-end="url(#dgterms-event-driven-remediation-1)"/>
+<path d="M422.0,158.8 L510.0,129.2" class="dg-line" marker-end="url(#dgterms-event-driven-remediation-1)"/>
+<path d="M422.0,184.0 L510.0,184.0" class="dg-line" marker-end="url(#dgterms-event-driven-remediation-1)"/>
+<path d="M422.0,209.2 L510.0,238.8" class="dg-line" marker-end="url(#dgterms-event-driven-remediation-1)"/>
+</svg>
+</div>
+<figcaption>図1 イベント駆動の自動修復の型。各サービスが出すイベントをEventBridgeのルールで選び、SSM Automation(修復)・Lambda(独自の処理)・SNS(通知)などに渡す。</figcaption>
+</figure>
+
+<h3 id="c1-1">①検知:イベントを出すもの<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>イベントの出どころ</th><th>何が起きたか</th><th>例</th></tr>
+<tr><td>CloudWatchアラーム</td><td>メトリクスがしきい値を超えた(<a href="cloudwatch-alarm-states.html">状態が変わった</a>)</td><td>CPU使用率が高い、ステータスチェックの失敗</td></tr>
+<tr><td>AWS Config</td><td>リソースの設定がルールに違反した</td><td>暗号化されていないEBS、SSHを全開放したセキュリティグループ</td></tr>
+<tr><td>GuardDuty・Security Hub・Inspector</td><td>脅威・脆弱性を検出した</td><td>不審な通信をしているEC2</td></tr>
+<tr><td>CloudTrail(API呼び出し)</td><td>誰かが特定のAPIを呼んだ</td><td>バケットポリシーの変更、CloudTrailの停止</td></tr>
+<tr><td>AWS Health</td><td>AWS側の障害・予定されたメンテナンス</td><td>EC2のリタイア予定</td></tr>
+<tr><td>各サービスの状態の変化</td><td>リソースの状態が変わった</td><td>EC2の停止、Auto Scalingの起動失敗</td></tr>
+<tr><td>スケジュール</td><td>決めた時刻になった(<a href="cron-rate-expressions.html">cron式・rate式</a>)</td><td>夜間の停止、定期的な点検</td></tr>
+</table></div>
+
+<h3 id="c1-2">②振り分け:EventBridgeのルール<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>EventBridgeのルールは、<strong>イベントパターン</strong>(JSON)に一致したイベントだけをターゲットに渡します。次の例は「EC2インスタンスが停止した」イベントに一致します。</p>
+<pre class="code"><code>{
+  "source": ["aws.ec2"],
+  "detail-type": ["EC2 Instance State-change Notification"],
+  "detail": { "state": ["stopped"] }
+}</code></pre>
+<p>特定のAPIの呼び出しを捕まえるときは、<code>"detail-type": ["AWS API Call via CloudTrail"]</code> と、<code>detail</code> の <code>eventSource</code>・<code>eventName</code> を指定します。このイベントを受け取るには、<strong>CloudTrailの証跡が有効</strong>になっている必要があります。</p>
+
+<h3 id="c1-3">③対処:ターゲット<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>ターゲット</th><th>向いている処理</th></tr>
+<tr><td><strong>SSM Automation</strong>(ランブック)</td><td>決まった手順の修復。AWSが用意したランブック(例:<code>AWS-RestartEC2Instance</code>、<code>AWS-DisablePublicAccessForSecurityGroup</code>)をそのまま使える。承認の手順や複数のステップも書ける</td></tr>
+<tr><td>Lambda</td><td>ランブックにない独自の処理、外部のツールとの連携</td></tr>
+<tr><td>SNS</td><td>人への通知(メール・チャット)</td></tr>
+<tr><td>Step Functions</td><td>分岐・待ち・人の承認を含む長い処理</td></tr>
+<tr><td>SQS</td><td>あとでまとめて処理するためにためておく</td></tr>
+</table></div>
+<p>ターゲットを実行するためのロール(Automationに渡すロールなど)には、修復に必要な権限を与え、ルールを作る人には<a href="iam-passrole.html">iam:PassRole</a>の権限が必要です。</p>
+
+<h3 id="c1-4">EventBridgeを通さない近道<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>次の組み合わせは、EventBridgeのルールを作らなくても直接つなげられます。試験では「最も手間が少ない方法」として問われます。</p>
+<ul>
+<li><strong>Configルール → 修復アクション</strong>:違反したリソースにSSM Automationのランブックを実行する。<strong>自動修復</strong>にすると違反のたびに実行され、再試行の回数も決められる</li>
+<li><strong>CloudWatchアラーム → アラームのアクション</strong>:SNS通知、EC2の再起動・<strong>復旧</strong>、Auto Scaling、Lambda、OpsItemの作成</li>
+<li><strong>Security Hub → 自動化ルール</strong>:検出結果の重要度や状態を自動で更新する</li>
+</ul>
+<div class="point"><p>選び方の目安:<strong>設定の違反</strong>なら Config の修復アクション、<strong>メトリクスの異常</strong>ならアラームのアクション、<strong>それ以外のイベントや複数の処理</strong>なら EventBridge のルールでAutomationやLambdaにつなぎます。修復を自動にする前に、まず通知だけで運用して誤検知がないことを確かめると安全です。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>:検知の起点になるアラーム</li>
+<li><a href="cron-rate-expressions.html">cron式とrate式</a>:スケジュールで起動する</li>
+<li><a href="iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a>:ターゲットに渡すロール</li>
+<li><a href="messaging-comparison.html">メッセージングサービスの選び方</a>:EventBridge・SNS・SQSの違い</li>
+<li><a href="security-detection-comparison.html">セキュリティ検出のサービスの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:イベントの振り分け</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Automationのランブック</li>
+<li><a href="../services/config.html">AWS Config</a>:ルールと修復アクション</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:アラームとアクション</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:API呼び出しのイベント</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:独自の修復処理</li>
+<li><a href="../services/health-dashboard.html">AWS Health Dashboard</a>:AWS側のイベント</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/cloudwatch.html"><span class="title">Amazon CloudWatch</span><span class="kind">サービス</span><span class="desc">システムの状態を記録・監視・通知する統合監視サービス</span></a></li>
+<li><a href="../services/config.html"><span class="title">AWS Config</span><span class="kind">サービス</span><span class="desc">リソースの設定状態を記録・評価し、違反を検出して修復</span></a></li>
+<li><a href="../services/systems-manager.html"><span class="title">AWS Systems Manager</span><span class="kind">サービス</span><span class="desc">EC2・オンプレミスを含むシステム運用を一元管理・自動化する機能の集合体</span></a></li>
+<li><a href="../services/eventbridge.html"><span class="title">Amazon EventBridge</span><span class="kind">サービス</span><span class="desc">サーバーレスなイベント駆動型の統合サービス</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="cloudwatch-alarm-states.html"><span class="label">← 前へ</span>CloudWatchアラームの状態と評価</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cron-rate-expressions.html"><span class="label">次へ →</span>cron式とrate式</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>よく使うポート番号 | AWS教科書</title>
+<meta name="description" content="通信の種類を表す番号。セキュリティグループやネットワークACLで、どの通信を許可するかを決めるときに使う">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">ネットワーク</a>
+  <h1>よく使うポート番号</h1>
+  <p class="lead">通信の種類を表す番号。セキュリティグループやネットワークACLで、どの通信を許可するかを決めるときに使う</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>ポート番号</strong>は、1台のサーバーの中で「どのプログラム(サービス)あての通信か」を区別する番号です。IPアドレスが建物の住所なら、ポート番号は部屋番号にあたります。セキュリティグループやネットワークACLでは、<strong>送信元・プロトコル(TCP/UDP)・ポート番号</strong>の組み合わせで通信を許可します。</p>
+
+<h3 id="c1-1">覚えておきたいポート番号<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>ポート</th><th>プロトコル</th><th>用途</th><th>AWSでの例</th></tr>
+<tr><td data-label="ポート"><strong>22</strong></td><td data-label="プロトコル">TCP</td><td data-label="用途">SSH(Linuxへのログイン)</td><td data-label="AWSでの例">EC2への接続。Session Managerを使えば開けなくてよい</td></tr>
+<tr><td data-label="ポート"><strong>3389</strong></td><td data-label="プロトコル">TCP</td><td data-label="用途">RDP(Windowsのリモートデスクトップ)</td><td data-label="AWSでの例">Windowsインスタンスへの接続</td></tr>
+<tr><td data-label="ポート"><strong>80</strong></td><td data-label="プロトコル">TCP</td><td data-label="用途">HTTP</td><td data-label="AWSでの例">ALB・Webサーバー(HTTPSへのリダイレクト用にも使う)</td></tr>
+<tr><td data-label="ポート"><strong>443</strong></td><td data-label="プロトコル">TCP</td><td data-label="用途">HTTPS</td><td data-label="AWSでの例">ALB・CloudFront・AWSのAPI・<a href="vpc-endpoint.html">インターフェイス型VPCエンドポイント</a></td></tr>
+<tr><td data-label="ポート"><strong>53</strong></td><td data-label="プロトコル">TCP・UDP</td><td data-label="用途">DNS</td><td data-label="AWSでの例">Route 53 Resolverのエンドポイント</td></tr>
+<tr><td data-label="ポート">3306</td><td data-label="プロトコル">TCP</td><td data-label="用途">MySQL・MariaDB</td><td data-label="AWSでの例">RDS・Aurora MySQL</td></tr>
+<tr><td data-label="ポート">5432</td><td data-label="プロトコル">TCP</td><td data-label="用途">PostgreSQL</td><td data-label="AWSでの例">RDS・Aurora PostgreSQL</td></tr>
+<tr><td data-label="ポート">1433</td><td data-label="プロトコル">TCP</td><td data-label="用途">SQL Server</td><td data-label="AWSでの例">RDS for SQL Server</td></tr>
+<tr><td data-label="ポート">1521</td><td data-label="プロトコル">TCP</td><td data-label="用途">Oracle</td><td data-label="AWSでの例">RDS for Oracle</td></tr>
+<tr><td data-label="ポート">6379</td><td data-label="プロトコル">TCP</td><td data-label="用途">Redis・Valkey</td><td data-label="AWSでの例">ElastiCache・MemoryDB</td></tr>
+<tr><td data-label="ポート">11211</td><td data-label="プロトコル">TCP</td><td data-label="用途">Memcached</td><td data-label="AWSでの例">ElastiCache for Memcached</td></tr>
+<tr><td data-label="ポート">2049</td><td data-label="プロトコル">TCP</td><td data-label="用途">NFS</td><td data-label="AWSでの例">EFS(マウントターゲットのセキュリティグループで許可)</td></tr>
+<tr><td data-label="ポート">445</td><td data-label="プロトコル">TCP</td><td data-label="用途">SMB</td><td data-label="AWSでの例">FSx for Windows File Server</td></tr>
+<tr><td data-label="ポート">25・587</td><td data-label="プロトコル">TCP</td><td data-label="用途">SMTP(メール送信)</td><td data-label="AWSでの例">SES。EC2からの25番の送信は既定で制限されている</td></tr>
+<tr><td data-label="ポート">123</td><td data-label="プロトコル">UDP</td><td data-label="用途">NTP(時刻合わせ)</td><td data-label="AWSでの例">Amazon Time Sync Service</td></tr>
+<tr><td data-label="ポート">500・4500</td><td data-label="プロトコル">UDP</td><td data-label="用途">IPsec(IKE・NATトラバーサル)</td><td data-label="AWSでの例">Site-to-Site VPN</td></tr>
+<tr><td data-label="ポート">179</td><td data-label="プロトコル">TCP</td><td data-label="用途">BGP(経路の交換)</td><td data-label="AWSでの例">Direct Connect・VPNの動的ルーティング</td></tr>
+<tr><td data-label="ポート">1024〜65535</td><td data-label="プロトコル">TCP・UDP</td><td data-label="用途"><strong>エフェメラルポート</strong>(戻りの通信)</td><td data-label="AWSでの例">ネットワークACLで戻りの通信を許可する</td></tr>
+</table></div>
+
+<h3 id="c1-2">通信の向きとポート<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>クライアントは、接続先のポート(例:443)あてに、<strong>自分の側は空いている一時的なポート(エフェメラルポート)</strong>を使って接続します。サーバーからの応答は、そのエフェメラルポートあてに返ります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 548 186" style="max-width:548px;min-width:520px" role="img" aria-label="図1 行きと戻りのポート。セキュリティグループはステートフルなので戻りの通信は自動で許可されるが、ネットワークACLはステートレスなので、戻りのエフェメラルポート(1024〜65535)を明示的に許可する必要がある。"><defs><marker id="dgterms-port-numbers-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">クライアント</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">ポート 50123</text>
+<rect x="374" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="449" y="62" text-anchor="middle" class="dg-tb">Webサーバー</text>
+<text x="449" y="80" text-anchor="middle" class="dg-s">ポート 443</text>
+<path d="M184.0,66.5 L374.0,66.5" class="dg-line" marker-end="url(#dgterms-port-numbers-1)"/>
+<text x="279" y="70" text-anchor="middle" class="dg-s dg-halo">宛先ポート 443</text>
+<text x="296" y="156" text-anchor="middle" class="dg-s">応答は宛先ポート 50123(エフェメラル)へ戻る</text>
+</svg>
+</div>
+<figcaption>図1 行きと戻りのポート。セキュリティグループはステートフルなので戻りの通信は自動で許可されるが、ネットワークACLはステートレスなので、戻りのエフェメラルポート(1024〜65535)を明示的に許可する必要がある。</figcaption>
+</figure>
+<div class="point"><p>試験では「DBに接続できない」「EFSをマウントできない」といった問題で、<strong>セキュリティグループで正しいポートを、正しい送信元(アプリのセキュリティグループ)から許可しているか</strong>が問われます。SSH(22)・RDP(3389)を 0.0.0.0/0 に開けている設定は、Trusted AdvisorやSecurity Hub・Configで指摘される代表的な問題です。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:ポートを使って通信を許可する仕組み</li>
+<li><a href="inbound-traffic.html">インバウンド通信</a>・<a href="outbound-traffic.html">アウトバウンド通信</a>:通信の向き</li>
+<li><a href="tls-termination.html">TLS終端と証明書の配置</a>:HTTPS(443)の終端</li>
+<li><a href="dns.html">DNS</a>:53番の通信</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:セキュリティグループとネットワークACL</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:SSH・RDPでの接続</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:ポートを開けずに接続するSession Manager</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:データベースのポート</li>
+<li><a href="../services/efs.html">Amazon EFS</a>:NFS(2049)</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/ec2.html"><span class="title">Amazon EC2</span><span class="kind">サービス</span><span class="desc">AWS上で仮想サーバを動かすサービス(Elastic Compute Cloud)</span></a></li>
+<li><a href="../services/rds.html"><span class="title">Amazon RDS</span><span class="kind">サービス</span><span class="desc">リレーショナルデータベースの構築・運用を任せられるマネージドDB</span></a></li>
+<li><a href="../services/vpc.html"><span class="title">Amazon VPC</span><span class="kind">サービス</span><span class="desc">AWS上に論理的に分離された仮想ネットワークを作るサービス</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="outbound-traffic.html"><span class="label">← 前へ</span>アウトバウンド通信</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="http-status-codes.html"><span class="label">次へ →</span>HTTPステータスコードと切り分け</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

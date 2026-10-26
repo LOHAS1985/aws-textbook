@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTPステータスコードと切り分け | AWS教科書</title>
+<meta name="description" content="Webのエラーの番号(4xx・5xx)の意味と、CloudFront・ALB・API Gatewayのどこで起きたかを見分ける方法">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">ネットワーク</a>
+  <h1>HTTPステータスコードと切り分け</h1>
+  <p class="lead">Webのエラーの番号(4xx・5xx)の意味と、CloudFront・ALB・API Gatewayのどこで起きたかを見分ける方法</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>HTTPの応答には3桁の<strong>ステータスコード</strong>が付きます。1桁目で大きく分かれ、<strong>4xxは利用者(リクエスト)側の問題</strong>、<strong>5xxはサーバー側の問題</strong>を表します。障害の調査では、まず「何番が」「どこから」返っているかを確かめます。</p>
+<div class="table-wrap"><table>
+<tr><th>分類</th><th>意味</th><th>例</th></tr>
+<tr><td>2xx</td><td>成功</td><td>200 OK</td></tr>
+<tr><td>3xx</td><td>リダイレクト(別のURLへ)</td><td>301・302(CloudFrontやALBでHTTPからHTTPSへの転送)</td></tr>
+<tr><td>4xx</td><td>リクエストの誤り・権限がない</td><td>400・403・404・429</td></tr>
+<tr><td>5xx</td><td>サーバー側のエラー</td><td>500・502・503・504</td></tr>
+</table></div>
+
+<h3 id="c1-1">よく出るステータスコード<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>コード</th><th>意味</th><th>AWSでのよくある原因</th></tr>
+<tr><td>400 Bad Request</td><td>リクエストの形式が不正</td><td>パラメータの誤り、ヘッダーが大きすぎる</td></tr>
+<tr><td>401 Unauthorized</td><td>認証されていない</td><td>トークンがない・期限切れ(Cognito・API Gatewayのオーソライザー)</td></tr>
+<tr><td><strong>403 Forbidden</strong></td><td>アクセスが許可されていない</td><td>S3のバケットポリシー・OACの設定漏れ、<strong>WAFでブロック</strong>、CloudFrontの地理的制限、API Gatewayの存在しないパス(Missing Authentication Token)</td></tr>
+<tr><td>404 Not Found</td><td>対象がない</td><td>オブジェクトのキーやパスの誤り</td></tr>
+<tr><td>429 Too Many Requests</td><td>リクエストが多すぎる</td><td>API Gatewayのスロットリング、WAFのレートベースルール(<a href="throttling-retry.html">スロットリングとリトライ</a>)</td></tr>
+<tr><td>500 Internal Server Error</td><td>サーバー内部のエラー</td><td>アプリの例外</td></tr>
+<tr><td><strong>502 Bad Gateway</strong></td><td>中継先から不正な応答が返った</td><td>ターゲットが接続を切った・応答の形式が不正、<strong>Lambdaの戻り値の形式の誤り</strong>、CloudFrontとオリジンのTLSの不一致(証明書の名前が合わない)</td></tr>
+<tr><td><strong>503 Service Unavailable</strong></td><td>処理できる相手がいない・混んでいる</td><td>ALBのターゲットグループに<strong>ターゲットが登録されていない</strong>、S3の Slow Down</td></tr>
+<tr><td><strong>504 Gateway Timeout</strong></td><td>中継先から時間内に応答がない</td><td>ターゲットの処理が遅い(アイドルタイムアウト超え)、セキュリティグループでオリジンへの通信が止められている、API Gatewayの統合のタイムアウト(既定29秒)</td></tr>
+</table></div>
+<div class="point"><p>ALBは、ターゲットグループの<strong>すべてのターゲットがヘルスチェックに失敗しているときは、全ターゲットにリクエストを送ります</strong>(フェイルオープン)。そのため「全台が異常」でも503にならず、ターゲット自身のエラー(5xx)やタイムアウトとして見えることがあります。</p></div>
+
+<h3 id="c1-2">どこで返されたかを見分ける<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>CloudFront・ALB・API Gatewayのような<strong>中継役</strong>は、自分自身でエラーを返すことも、後ろのサーバーが返したエラーをそのまま中継することもあります。どちらなのかで、調べる場所が変わります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 116" style="max-width:718px;min-width:574px" role="img" aria-label="図1 エラーを返しうる場所。それぞれの中継役は自分でエラーを作ることもあれば、後ろから返ったエラーを中継することもある。メトリクスやログで「誰が作ったエラーか」を見分ける。"><defs><marker id="dgterms-http-status-codes-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="70" text-anchor="middle" class="dg-t">利用者</text>
+<rect x="204" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="279" y="62" text-anchor="middle" class="dg-t">CloudFront</text>
+<text x="279" y="80" text-anchor="middle" class="dg-s">403・502・504</text>
+<rect x="374" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="449" y="62" text-anchor="middle" class="dg-tb">ALB</text>
+<text x="449" y="80" text-anchor="middle" class="dg-s">502・503・504</text>
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">ターゲット</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">アプリの500など</text>
+<path d="M184.0,66.5 L204.0,66.5" class="dg-line" marker-end="url(#dgterms-http-status-codes-1)"/>
+<path d="M354.0,66.5 L374.0,66.5" class="dg-line" marker-end="url(#dgterms-http-status-codes-1)"/>
+<path d="M524.0,66.5 L544.0,66.5" class="dg-line" marker-end="url(#dgterms-http-status-codes-1)"/>
+</svg>
+</div>
+<figcaption>図1 エラーを返しうる場所。それぞれの中継役は自分でエラーを作ることもあれば、後ろから返ったエラーを中継することもある。メトリクスやログで「誰が作ったエラーか」を見分ける。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>場所</th><th>中継役自身のエラー</th><th>後ろが返したエラー</th></tr>
+<tr><td>ALB</td><td><code>HTTPCode_ELB_5XX_Count</code>(ALBが作った5xx)</td><td><code>HTTPCode_Target_5XX_Count</code>(ターゲットが返した5xx)</td></tr>
+<tr><td>CloudFront</td><td>標準ログ・リアルタイムログの <code>x-edge-detailed-result-type</code> など</td><td>オリジン(ALB・S3)のメトリクスやログ</td></tr>
+<tr><td>API Gateway</td><td><code>4XXError</code>・<code>5XXError</code> と実行ログ</td><td><code>IntegrationLatency</code>、Lambdaのエラー数・ログ</td></tr>
+</table></div>
+<p>ALBのアクセスログには、ALBが返したコード(<code>elb_status_code</code>)とターゲットが返したコード(<code>target_status_code</code>)が別々に記録されます。ターゲット側のコードが「<code>-</code>」なら、ターゲットから応答が返っていません。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="throttling-retry.html">スロットリングとリトライ</a>:429・503のときの対処</li>
+<li><a href="tls-termination.html">TLS終端と証明書の配置</a>:TLSの不一致による502</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:通信が止められて504になる</li>
+<li><a href="cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>:5xxの数のアラーム</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:ALBのエラーとアクセスログ</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:エッジで返るエラーとログ</li>
+<li><a href="../services/api-gateway.html">Amazon API Gateway</a>:4XXError・5XXErrorとタイムアウト</li>
+<li><a href="../services/waf.html">AWS WAF</a>:ブロックしたときの403</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:エラー数のメトリクス</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/elb.html"><span class="title">Elastic Load Balancing (ELB)</span><span class="kind">サービス</span><span class="desc">通信を複数のターゲットへ分散するロードバランサー群</span></a></li>
+<li><a href="../services/cloudfront.html"><span class="title">Amazon CloudFront</span><span class="kind">サービス</span><span class="desc">コンテンツを世界中へ高速配信するCDN</span></a></li>
+<li><a href="../services/api-gateway.html"><span class="title">Amazon API Gateway</span><span class="kind">サービス</span><span class="desc">APIの作成・公開・管理のためのサービス</span></a></li>
+<li><a href="../services/cloudwatch.html"><span class="title">Amazon CloudWatch</span><span class="kind">サービス</span><span class="desc">システムの状態を記録・監視・通知する統合監視サービス</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="port-numbers.html"><span class="label">← 前へ</span>よく使うポート番号</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="iam-policy-evaluation.html"><span class="label">次へ →</span>IAMポリシーと評価ロジック</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
