@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>料金の基本 | AWS教科書</title>
+<meta name="description" content="使った分だけ払う従量課金の考え方と、見落としやすいデータ転送料金・無料利用枠・割引の仕組み">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>料金の基本</h1>
+  <p class="lead">使った分だけ払う従量課金の考え方と、見落としやすいデータ転送料金・無料利用枠・割引の仕組み</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWSの料金は、基本的に<strong>使った分だけ払う従量課金</strong>です。初期費用や長期の契約はなく、止めたり削除したりすれば料金もかからなくなります。料金は主に次の要素の組み合わせで決まります。</p>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>単位</th><th>例</th></tr>
+<tr><td>コンピューティング</td><td>動かした時間(秒・時間)、リクエスト数</td><td>EC2(Linuxは秒単位、最低60秒)、Lambda(リクエスト数と実行時間)</td></tr>
+<tr><td>ストレージ</td><td>保存した量 × 期間(GB・月)</td><td>S3、EBS(<strong>アタッチしていなくても</strong>確保した容量に課金)、スナップショット</td></tr>
+<tr><td>リクエスト・処理量</td><td>回数・処理したデータ量</td><td>S3のPUT・GET、NATゲートウェイの処理量、CloudWatch Logsの取り込み量</td></tr>
+<tr><td><strong>データ転送</strong></td><td>送ったデータ量(GB)</td><td>インターネットへの送信、AZ間・リージョン間の通信</td></tr>
+<tr><td>時間単位の固定費</td><td>存在する時間</td><td>NATゲートウェイ、ロードバランサー、パブリックIPv4アドレス、インターフェイス型VPCエンドポイント</td></tr>
+</table></div>
+
+<h3 id="c1-1">データ転送料金<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>見落としやすく、想定外の請求の原因になりやすいのがデータ転送料金です。<strong>入ってくる通信は無料、出ていく通信は有料</strong>が基本です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 データ転送料金の基本。インターネットからの受信は無料、インターネットへの送信は有料。同じリージョンでもAZをまたぐ通信は両方向で課金され、リージョン間の通信も有料。同じAZ内のプライベートIPアドレスでの通信は無料。"><defs><marker id="dgterms-pricing-basics-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="89" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="113" text-anchor="middle" class="dg-t">インターネット</text>
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">AZ-a</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">EC2</text>
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="147" text-anchor="middle" class="dg-tb">AZ-c</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">EC2</text>
+<rect x="510" y="89" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="113" text-anchor="middle" class="dg-t">別のリージョン</text>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line dg-dash" marker-end="url(#dgterms-pricing-basics-1)"/>
+<text x="228" y="92" text-anchor="middle" class="dg-s dg-halo">受信は無料</text>
+<path d="M272.0,79.9 L184.0,95.6" class="dg-line" marker-end="url(#dgterms-pricing-basics-1)"/>
+<text x="228" y="92" text-anchor="middle" class="dg-s dg-halo">送信は有料</text>
+<path d="M347.0,92.5 L347.0,125.5" class="dg-line" marker-end="url(#dgterms-pricing-basics-1)" marker-start="url(#dgterms-pricing-basics-1)"/>
+<text x="347" y="113" text-anchor="middle" class="dg-s dg-halo">AZ間は有料</text>
+<path d="M422.0,79.9 L510.0,95.6" class="dg-line" marker-end="url(#dgterms-pricing-basics-1)"/>
+<text x="466" y="92" text-anchor="middle" class="dg-s dg-halo">有料</text>
+</svg>
+</div>
+<figcaption>図1 データ転送料金の基本。インターネットからの受信は無料、インターネットへの送信は有料。同じリージョンでもAZをまたぐ通信は両方向で課金され、リージョン間の通信も有料。同じAZ内のプライベートIPアドレスでの通信は無料。</figcaption>
+</figure>
+<ul>
+<li>インターネットへの送信は、毎月一定量(全サービス合計で100GB)まで無料</li>
+<li>同じリージョンのS3・DynamoDBとの通信は、ゲートウェイ型のVPCエンドポイントを使えば無料で、NATゲートウェイの処理料金もかからない</li>
+<li>CloudFrontからの配信は、EC2やS3から直接インターネットに送るより安くなることが多い。オリジン(AWS内)からCloudFrontへの転送は無料</li>
+<li>NATゲートウェイは、時間料金に加えて<strong>処理したデータ量</strong>でも課金される。他のAZのNATゲートウェイを通すと、AZ間の転送料金も加わる</li>
+</ul>
+
+<h3 id="c1-2">割引の仕組み<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>内容</th><th>向いている使い方</th></tr>
+<tr><td>オンデマンド</td><td>割引なし。いつでも開始・停止できる</td><td>短期間・予測できない使い方</td></tr>
+<tr><td><a href="../services/savings-plans.html">Savings Plans</a></td><td>1年か3年、1時間あたりの利用額を約束して割引</td><td>ずっと動かし続ける部分(EC2・Fargate・Lambda)</td></tr>
+<tr><td>リザーブドインスタンス</td><td>1年か3年、インスタンスの種類などを約束して割引</td><td>RDS・ElastiCache・OpenSearchなど、Savings Plansの対象外のサービス</td></tr>
+<tr><td>スポットインスタンス</td><td>余っている容量を大幅な割引で使う。2分前の通知で中断されることがある</td><td>中断されてもよい処理(バッチ・CI・ステートレスな処理)</td></tr>
+</table></div>
+
+<h3 id="c1-3">無料利用枠<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>新しく作ったアカウントには<strong>クレジット</strong>(最初に100ドル、主要なサービスを試すとさらに最大100ドル)が付きます。アカウントの作成時に次の2つのプランを選びます。</p>
+<ul>
+<li><strong>無料プラン</strong>:クレジットと無料の範囲だけで使え、料金は請求されない。作成から6か月か、クレジットを使い切ると終了する(続けるには有料プランに切り替える)。使えるサービスに制限がある</li>
+<li><strong>有料プラン</strong>:すべてのサービスを従量課金で使える。クレジットは料金に自動で充当される</li>
+</ul>
+<p>どちらのプランでも、30以上のサービスには毎月一定量まで<strong>ずっと無料</strong>の枠があります(Lambdaのリクエスト、DynamoDBの容量など)。</p>
+
+<h3 id="c1-4">費用を見て、管理する<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>AWS Pricing Calculator</strong>:作る前に費用を見積もる</li>
+<li><strong>AWS Budgets</strong>:予算を決めて、超えそう・超えたときに通知する(予算アクションで権限の制限やインスタンスの停止も可能)</li>
+<li><strong>Cost Explorer</strong>:費用の内訳と推移を見る。<a href="tags.html">コスト配分タグ</a>でプロジェクトごとに集計する</li>
+<li><strong>コスト異常検出</strong>:いつもと違う費用の増え方を見つけて通知する</li>
+</ul>
+<div class="point"><p>「使っていないのに請求が続く」原因の典型は、<strong>停止したEC2のEBSボリューム</strong>、アタッチしていないEBS・Elastic IP、古いスナップショット、使っていないNATゲートウェイやロードバランサーです。EC2は停止すればインスタンスの料金は止まりますが、EBSの料金はかかり続けます。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="cost-management-comparison.html">コスト管理ツールの選び方</a>:Budgets・Cost Explorer・CURなどの使い分け</li>
+<li><a href="tags.html">タグ</a>:コスト配分タグ</li>
+<li><a href="vpc-endpoint.html">VPCエンドポイント</a>:NATゲートウェイの料金を減らす</li>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:AZ間・リージョン間の通信</li>
+<li><a href="support-plans.html">サポートプラン</a>:サポートの料金</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cost-explorer.html">AWS Cost Explorer</a>:費用の分析</li>
+<li><a href="../services/cost-and-usage-reports.html">AWS Cost and Usage Reports</a>:詳細な請求データ</li>
+<li><a href="../services/savings-plans.html">Savings Plans</a>:利用額の約束による割引</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:購入オプション(オンデマンド・RI・スポット)</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:配信の転送料金を下げる</li>
+<li><a href="../services/compute-optimizer.html">AWS Compute Optimizer</a>:サイズの見直し</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/cost-explorer.html"><span class="title">AWS Cost Explorer</span><span class="kind">サービス</span><span class="desc">AWSの料金と使用量をグラフで分析し、将来の費用を予測する</span></a></li>
+<li><a href="../services/cost-and-usage-reports.html"><span class="title">AWS Cost and Usage Reports</span><span class="kind">サービス</span><span class="desc">最も詳細な料金・使用量のデータを、S3にファイルとして定期的に出力する</span></a></li>
+<li><a href="../services/savings-plans.html"><span class="title">Savings Plans</span><span class="kind">サービス</span><span class="desc">1年または3年の利用額(1時間あたりの金額)を約束して、コンピューティングなどの料金を割り引く</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="tags.html"><span class="label">← 前へ</span>タグ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="support-plans.html"><span class="label">次へ →</span>サポートプラン</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

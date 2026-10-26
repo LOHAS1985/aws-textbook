@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SLAと可用性 | AWS教科書</title>
+<meta name="description" content="「どれだけ止まらないか」を表す可用性の数字(何ナイン)と、AWSが約束するSLA、データを失わない耐久性の違い">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>SLAと可用性</h1>
+  <p class="lead">「どれだけ止まらないか」を表す可用性の数字(何ナイン)と、AWSが約束するSLA、データを失わない耐久性の違い</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>可用性</strong>は、システムが使える状態にある時間の割合です。99.9%のように<strong>9の数(ナイン)</strong>で表し、9が1つ増えるごとに、止まってよい時間は10分の1になります。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th>可用性</th><th>呼び方</th><th>1年で止まってよい時間</th><th>1か月で止まってよい時間</th></tr>
+<tr><td data-label="可用性">99%</td><td data-label="呼び方">ツーナイン</td><td data-label="1年で止まってよい時間">約3.65日</td><td data-label="1か月で止まってよい時間">約7.3時間</td></tr>
+<tr><td data-label="可用性">99.9%</td><td data-label="呼び方">スリーナイン</td><td data-label="1年で止まってよい時間">約8.8時間</td><td data-label="1か月で止まってよい時間">約43分</td></tr>
+<tr><td data-label="可用性">99.95%</td><td data-label="呼び方"></td><td data-label="1年で止まってよい時間">約4.4時間</td><td data-label="1か月で止まってよい時間">約22分</td></tr>
+<tr><td data-label="可用性">99.99%</td><td data-label="呼び方">フォーナイン</td><td data-label="1年で止まってよい時間">約53分</td><td data-label="1か月で止まってよい時間">約4.3分</td></tr>
+<tr><td data-label="可用性">99.999%</td><td data-label="呼び方">ファイブナイン</td><td data-label="1年で止まってよい時間">約5.3分</td><td data-label="1か月で止まってよい時間">約26秒</td></tr>
+</table></div>
+
+<h3 id="c1-1">SLA(サービスレベルアグリーメント)<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>SLA</strong>は、AWSがサービスごとに約束する可用性の目標です。月の稼働率が約束を下回ったとき、利用者が申請すると<strong>サービスクレジット</strong>(料金の一部の返金)を受けられます。損害そのものを補償するものではありません。</p>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>SLAの例</th><th>条件</th></tr>
+<tr><td>EC2</td><td>リージョン単位で99.99%</td><td><strong>複数のAZ</strong>にインスタンスを置いている場合。1台のインスタンス単位では99.5%</td></tr>
+<tr><td>S3(標準)</td><td>99.9%</td><td>ストレージクラスによって異なる(低頻度アクセス・1ゾーンは低い)</td></tr>
+<tr><td>RDS</td><td>99.95%</td><td><strong>Multi-AZ</strong>の場合</td></tr>
+</table></div>
+<p>SLAの多くは、<strong>マルチAZ構成にしていることが前提</strong>です。1つのAZだけに置いたシステムは、SLAの約束の範囲外になる場合があります。</p>
+
+<h3 id="c1-2">組み合わせたときの可用性<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 548 280" style="max-width:548px;min-width:520px" role="img" aria-label="図1 構成と可用性。直列(すべて動かないと使えない)では可用性を掛け算するので下がり、並列(どれか1つが動けばよい)では「すべてが同時に止まる確率」だけが残るので上がる。"><defs><marker id="dgterms-sla-availability-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="46" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="70" text-anchor="middle" class="dg-t">Web 99.9%</text>
+<rect x="204" y="46" width="150" height="40" rx="8" class="dg-box"/>
+<text x="279" y="70" text-anchor="middle" class="dg-t">DB 99.9%</text>
+<rect x="374" y="40" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="449" y="62" text-anchor="middle" class="dg-t">直列</text>
+<text x="449" y="80" text-anchor="middle" class="dg-s">約99.8%に下がる</text>
+<rect x="34" y="132" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="156" text-anchor="middle" class="dg-t">Web 99.9%</text>
+<rect x="34" y="216" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="240" text-anchor="middle" class="dg-t">Web 99.9%</text>
+<rect x="374" y="168" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="449" y="190" text-anchor="middle" class="dg-t">並列(2台)</text>
+<text x="449" y="208" text-anchor="middle" class="dg-s">約99.9999%に上がる</text>
+<path d="M184.0,66.5 L204.0,66.5" class="dg-line" marker-end="url(#dgterms-sla-availability-1)"/>
+<path d="M354.0,66.5 L374.0,66.5" class="dg-line" marker-end="url(#dgterms-sla-availability-1)"/>
+<path d="M184.0,160.9 L374.0,184.6" class="dg-line" marker-end="url(#dgterms-sla-availability-1)"/>
+<path d="M184.0,227.1 L374.0,203.4" class="dg-line" marker-end="url(#dgterms-sla-availability-1)"/>
+</svg>
+</div>
+<figcaption>図1 構成と可用性。直列(すべて動かないと使えない)では可用性を掛け算するので下がり、並列(どれか1つが動けばよい)では「すべてが同時に止まる確率」だけが残るので上がる。</figcaption>
+</figure>
+<ul>
+<li><strong>直列</strong>:A × B(例:99.9% × 99.9% ≒ 99.8%)。部品が増えるほど下がる</li>
+<li><strong>並列</strong>:1 −(1 − A)×(1 − B)(例:1 − 0.001 × 0.001 = 99.9999%)。冗長化すると上がる</li>
+</ul>
+<p>マルチAZやAuto Scalingで同じ役割のサーバーを並べるのは、並列にして可用性を上げるためです。</p>
+
+<h3 id="c1-3">可用性と耐久性の違い<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>可用性</th><th>耐久性</th></tr>
+<tr><td>意味</td><td>今、<strong>使える</strong>か</td><td>データを<strong>失わない</strong>か</td></tr>
+<tr><td>S3(標準)の設計値</td><td>99.99%</td><td><strong>99.999999999%</strong>(イレブンナイン)</td></tr>
+<tr><td>下がると</td><td>一時的にアクセスできない</td><td>データが消える</td></tr>
+</table></div>
+<div class="point"><p>可用性の目標は、業務の要件として決める<strong>RTO</strong>(どれだけ早く復旧するか)・<strong>RPO</strong>(どの時点までのデータを守るか)とあわせて設計します(<a href="dr-strategies.html">DR戦略</a>)。高い可用性ほど費用がかかるので、必要な水準を決めてから構成を選びます。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:可用性を上げる構成</li>
+<li><a href="dr-strategies.html">DR戦略</a>:RTO・RPOと復旧の方法</li>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:マルチAZの前提</li>
+<li><a href="well-architected.html">AWS Well-Architected フレームワーク</a>:信頼性の柱</li>
+<li><a href="support-plans.html">サポートプラン</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/ec2.html">Amazon EC2</a>:複数AZでのSLA</li>
+<li><a href="../services/s3.html">Amazon S3</a>:可用性と耐久性</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:Multi-AZでのSLA</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:並列にしたサーバーへの振り分け</li>
+<li><a href="../services/health-dashboard.html">AWS Health Dashboard</a>:AWS側の障害の確認</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/ec2.html"><span class="title">Amazon EC2</span><span class="kind">サービス</span><span class="desc">AWS上で仮想サーバを動かすサービス(Elastic Compute Cloud)</span></a></li>
+<li><a href="../services/s3.html"><span class="title">Amazon S3</span><span class="kind">サービス</span><span class="desc">容量無制限で使えるオブジェクトストレージ</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="service-quotas.html"><span class="label">← 前へ</span>サービスクォータ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="managed-serverless.html"><span class="label">次へ →</span>マネージドサービスとサーバーレス</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

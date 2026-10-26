@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>タグ | AWS教科書</title>
+<meta name="description" content="リソースに付ける「キーと値」のラベル。費用の集計・権限の制御・自動化の対象の指定に使う">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>タグ</h1>
+  <p class="lead">リソースに付ける「キーと値」のラベル。費用の集計・権限の制御・自動化の対象の指定に使う</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>タグ</strong>は、リソースに付ける<strong>キーと値の組</strong>のラベルです(例:<code>Environment = prod</code>、<code>Project = shop</code>)。名前を付けて見分けるだけでなく、<strong>費用の集計</strong>・<strong>権限の制御</strong>・<strong>自動化の対象の指定</strong>に使えるため、運用の基本になります。</p>
+<ul>
+<li>キーと値は<strong>大文字・小文字を区別</strong>する(<code>env</code> と <code>Env</code> は別のタグ)</li>
+<li>1つのリソースに付けられるタグは最大50個</li>
+<li><code>aws:</code> で始まるタグはAWSが付けるもので、利用者は作成・変更できない</li>
+<li>EC2の <code>Name</code> タグは、コンソールの「名前」の列に表示される</li>
+</ul>
+
+<h3 id="c1-1">タグの使い道<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>使い道</th><th>仕組み</th><th>例</th></tr>
+<tr><td><strong>費用の集計</strong></td><td><strong>コスト配分タグ</strong>として有効にすると、Cost ExplorerやCURでタグごとに集計できる</td><td>プロジェクト・部署ごとの請求額</td></tr>
+<tr><td><strong>権限の制御(ABAC)</strong></td><td>IAMポリシーの条件で、ユーザーとリソースのタグが一致するときだけ許可する</td><td>自分のチームのタグが付いたEC2だけ停止できる</td></tr>
+<tr><td><strong>自動化の対象</strong></td><td>Systems Managerやスケジュールの処理で、タグで対象を選ぶ</td><td><code>Patch Group</code> タグでパッチの適用先を分ける、<code>AutoStop=true</code> のインスタンスを夜間に止める</td></tr>
+<tr><td>リソースの整理</td><td>Resource Groups・Tag Editorでタグごとにまとめて検索・一括で編集する</td><td>本番環境のリソースの一覧</td></tr>
+<tr><td>バックアップの対象</td><td>AWS Backupのバックアッププランで、タグでリソースを選ぶ</td><td><code>Backup=daily</code> のリソースを毎日バックアップ</td></tr>
+</table></div>
+
+<h3 id="c1-2">コスト配分タグ<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>利用者が付けたタグは、<strong>請求とコスト管理のコンソールでコスト配分タグとして有効化</strong>しないと、費用の集計には使えない(管理アカウントで有効化する)</li>
+<li>有効化した<strong>あとの費用</strong>から集計される。過去の分にはさかのぼらない</li>
+<li>AWSが付ける <code>aws:createdBy</code>(作成者)も、有効化するとコスト配分タグとして使える</li>
+</ul>
+
+<h3 id="c1-3">ABAC(属性ベースのアクセス制御)<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>次のポリシーは、「呼び出した人の <code>Team</code> タグと、EC2インスタンスの <code>Team</code> タグが同じときだけ、停止・起動を許可する」という意味です。チームやリソースが増えても、タグを付けるだけでよく、ポリシーを書き換えずに済みます。</p>
+<pre class="code"><code>{
+  "Effect": "Allow",
+  "Action": ["ec2:StopInstances", "ec2:StartInstances"],
+  "Resource": "*",
+  "Condition": {
+    "StringEquals": { "aws:ResourceTag/Team": "${aws:PrincipalTag/Team}" }
+  }
+}</code></pre>
+<div class="table-wrap"><table>
+<tr><th>条件キー</th><th>意味</th></tr>
+<tr><td><code>aws:ResourceTag/キー</code></td><td>操作する<strong>リソースに付いている</strong>タグ</td></tr>
+<tr><td><code>aws:RequestTag/キー</code></td><td>作成・タグ付けの<strong>リクエストで付けようとしている</strong>タグ(作成時にタグを必須にする)</td></tr>
+<tr><td><code>aws:TagKeys</code></td><td>リクエストに含まれるタグのキーの一覧(付けてよいキーを制限する)</td></tr>
+<tr><td><code>aws:PrincipalTag/キー</code></td><td>呼び出した<strong>ユーザー・ロールに付いている</strong>タグ</td></tr>
+</table></div>
+
+<h3 id="c1-4">タグを付け忘れないようにする<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 186" style="max-width:684px;min-width:547px" role="img" aria-label="図1 タグの統制。Organizationsのタグポリシーで表記をそろえ、SCPやIAMポリシーの aws:RequestTag で作成時に必須にし、Configのマネージドルール required-tags で付いていないリソースを見つける。"><defs><marker id="dgterms-tags-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">タグポリシー</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">キー名・値の表記を統一</text>
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">SCP・IAM</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">タグなしの作成を拒否</text>
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">Config</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">required-tags で検出</text>
+<text x="347" y="156" text-anchor="middle" class="dg-s">決める → 作成時に強制する → 付いていないものを見つける</text>
+</svg>
+</div>
+<figcaption>図1 タグの統制。Organizationsのタグポリシーで表記をそろえ、SCPやIAMポリシーの aws:RequestTag で作成時に必須にし、Configのマネージドルール required-tags で付いていないリソースを見つける。</figcaption>
+</figure>
+<ul>
+<li>CloudFormationのスタックに付けたタグは、スタックの中のリソースにも付く</li>
+<li>Auto Scalingグループのタグは、「起動時に伝播」を有効にすると、起動するEC2インスタンスにも付く</li>
+<li>EC2の起動テンプレートでは、インスタンスとEBSボリュームの両方にタグを指定できる</li>
+</ul>
+<div class="point"><p>試験では「部署ごとの費用を出したい」には<strong class="em">コスト配分タグの有効化</strong>、「タグのないリソースを見つけたい」には Config の required-tags、「チームごとに操作できるリソースを分けたい」には ABAC が答えになることが多いです。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:タグを使った条件</li>
+<li><a href="pricing-basics.html">料金の基本</a>:費用の集計</li>
+<li><a href="cost-management-comparison.html">コスト管理ツールの選び方</a></li>
+<li><a href="json-yaml.html">JSONとYAMLの読み方</a>:ポリシーの読み方</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cost-explorer.html">AWS Cost Explorer</a>:タグごとの費用の集計</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:タグポリシー・SCP</li>
+<li><a href="../services/config.html">AWS Config</a>:required-tags ルール</li>
+<li><a href="../services/iam.html">AWS IAM</a>:ABAC</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:タグで対象を選ぶ自動化</li>
+<li><a href="../services/backup.html">AWS Backup</a>:タグでバックアップの対象を選ぶ</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/backup.html"><span class="title">AWS Backup</span><span class="kind">サービス</span><span class="desc">AWSサービスのバックアップを一元管理</span></a></li>
+<li><a href="../services/iam.html"><span class="title">AWS IAM</span><span class="kind">サービス</span><span class="desc">AWSの認証・認可を管理するサービス</span></a></li>
+<li><a href="../services/organizations.html"><span class="title">AWS Organizations</span><span class="kind">サービス</span><span class="desc">複数のAWSアカウントをまとめて管理するサービス</span></a></li>
+<li><a href="../services/config.html"><span class="title">AWS Config</span><span class="kind">サービス</span><span class="desc">リソースの設定状態を記録・評価し、違反を検出して修復</span></a></li>
+<li><a href="../services/cost-explorer.html"><span class="title">AWS Cost Explorer</span><span class="kind">サービス</span><span class="desc">AWSの料金と使用量をグラフで分析し、将来の費用を予測する</span></a></li>
+<li><a href="../services/cost-and-usage-reports.html"><span class="title">AWS Cost and Usage Reports</span><span class="kind">サービス</span><span class="desc">最も詳細な料金・使用量のデータを、S3にファイルとして定期的に出力する</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="arn.html"><span class="label">← 前へ</span>ARN</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="pricing-basics.html"><span class="label">次へ →</span>料金の基本</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

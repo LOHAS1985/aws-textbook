@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルートユーザーとアカウントの保護 | AWS教科書</title>
+<meta name="description" content="AWSアカウントを作ったときのメールアドレスでログインする、すべての権限を持つユーザーと、その守り方">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>ルートユーザーとアカウントの保護</h1>
+  <p class="lead">AWSアカウントを作ったときのメールアドレスでログインする、すべての権限を持つユーザーと、その守り方</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>ルートユーザー</strong>は、AWSアカウントを作成したときのメールアドレスとパスワードでログインするユーザーです。アカウントの<strong>すべての操作ができ、IAMのポリシーで権限を絞ることもできません</strong>(OrganizationsのSCPは、メンバーアカウントのルートユーザーにも効きます)。乗っ取られると被害が大きいため、<strong>日常の作業には使わず</strong>、厳重に保護します。</p>
+
+<h3 id="c1-1">ルートユーザーでしかできない作業<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>アカウントの設定の変更(アカウント名・メールアドレス・ルートユーザーのパスワード)</li>
+<li>アカウントの解約</li>
+<li>権限を誤って失ったIAM管理者の権限の復旧</li>
+<li>S3バケットの<strong>MFA削除</strong>の有効化</li>
+<li>全員を拒否してしまったS3バケットポリシー・SQSキューポリシーの削除</li>
+<li>リザーブドインスタンスのマーケットプレイスへの出品者登録 など</li>
+</ul>
+<p>これ以外の作業は、IAM Identity CenterのユーザーやIAMロールなど、権限を絞ったIDで行います。</p>
+
+<h3 id="c1-2">守り方<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>対策</th><th>内容</th></tr>
+<tr><td><strong class="em">MFAを有効にする</strong></td><td>パスワードに加えて、認証アプリやパスキー・セキュリティキーで認証する。AWSはルートユーザーのMFAを必須にする方針で、ログイン時に登録を求める</td></tr>
+<tr><td><strong>アクセスキーを作らない</strong></td><td>ルートユーザーのアクセスキーがあれば削除する。プログラムからの操作はIAMロールで行う</td></tr>
+<tr><td>強いパスワードと連絡先</td><td>共有のメールアドレス(配布リスト)を使い、担当者が替わってもメールを受け取れるようにする。代替の連絡先(請求・運用・セキュリティ)も登録する</td></tr>
+<tr><td>ログインの監視</td><td>CloudTrailに記録されるルートユーザーのログインを、EventBridgeのルールで検知してSNSで通知する</td></tr>
+<tr><td>組織での一元管理</td><td>Organizationsの<strong>ルートアクセスの一元管理</strong>で、メンバーアカウントのルートユーザーの認証情報をなくし、必要な作業は管理アカウントから行う</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 ルートユーザーのログインの検知。CloudTrailの「AWS Console Sign In」イベントのうち、userIdentity.type が Root のものをEventBridgeで拾って通知する。Security HubやGuardDutyでもルートユーザーの利用は指摘される。"><defs><marker id="dgterms-root-user-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">ルートユーザー</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">ログイン</text>
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">CloudTrail</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">ログインを記録</text>
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="62" text-anchor="middle" class="dg-tb">EventBridge</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">Rootのログインに一致</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">SNS</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">管理者へ通知</text>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgterms-root-user-1)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgterms-root-user-1)"/>
+<path d="M585.0,92.5 L585.0,125.5" class="dg-line" marker-end="url(#dgterms-root-user-1)"/>
+</svg>
+</div>
+<figcaption>図1 ルートユーザーのログインの検知。CloudTrailの「AWS Console Sign In」イベントのうち、userIdentity.type が Root のものをEventBridgeで拾って通知する。Security HubやGuardDutyでもルートユーザーの利用は指摘される。</figcaption>
+</figure>
+
+<h3 id="c1-3">IAMユーザーとの違い<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>ルートユーザー</th><th>IAMユーザー・IAMロール</th></tr>
+<tr><td>数</td><td>アカウントに1つ</td><td>必要なだけ作れる</td></tr>
+<tr><td>権限</td><td>すべて(IAMで制限できない)</td><td>ポリシーで与えた分だけ</td></tr>
+<tr><td>ログイン</td><td>メールアドレスとパスワード</td><td>アカウントID(または別名)・ユーザー名・パスワード、Identity Centerのポータル</td></tr>
+<tr><td>使う場面</td><td>ルートユーザーでしかできない作業だけ</td><td>日常の作業すべて</td></tr>
+</table></div>
+<div class="point"><p>試験で「アカウントを守る最初の対策」を問われたら、<strong>ルートユーザーのMFAの有効化</strong>と<strong>アクセスキーの削除</strong>、日常の作業は権限を絞ったIDで行うこと、が答えになります。IAMの認証情報レポートでは、ルートユーザーのMFAやアクセスキーの有無も確認できます。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>:日常の作業で使う権限</li>
+<li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:SCPがルートユーザーにも効く仕組み</li>
+<li><a href="shared-responsibility.html">責任共有モデル</a>:アカウントの保護は利用者の責任</li>
+<li><a href="event-driven-remediation.html">イベント駆動の自動修復</a>:ログインの検知と通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:MFA・認証情報レポート・ルートアクセスの一元管理</li>
+<li><a href="../services/identity-center.html">AWS IAM Identity Center</a>:日常のログイン</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:SCPとメンバーアカウントの管理</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:ログインの記録</li>
+<li><a href="../services/security-hub.html">AWS Security Hub</a>:ルートユーザーのMFAなどのチェック</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/iam.html"><span class="title">AWS IAM</span><span class="kind">サービス</span><span class="desc">AWSの認証・認可を管理するサービス</span></a></li>
+<li><a href="../services/identity-center.html"><span class="title">AWS IAM Identity Center</span><span class="kind">サービス</span><span class="desc">複数のAWSアカウントやアプリへのシングルサインオンと権限を一元管理するサービス</span></a></li>
+<li><a href="../services/organizations.html"><span class="title">AWS Organizations</span><span class="kind">サービス</span><span class="desc">複数のAWSアカウントをまとめて管理するサービス</span></a></li>
+<li><a href="../services/cloudtrail.html"><span class="title">AWS CloudTrail</span><span class="kind">サービス</span><span class="desc">「誰が・いつ・何をしたか」を記録する監査サービス</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="default-vpc.html"><span class="label">← 前へ</span>デフォルトVPC</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="access-methods.html"><span class="label">次へ →</span>AWSの操作方法(コンソール・CLI・SDK・API)</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
