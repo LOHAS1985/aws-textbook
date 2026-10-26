@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,104 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>プライベートサブネットのEC2から、S3への大量のデータの読み書きや、Systems Manager・Secrets Managerの利用をしている。今はNATゲートウェイ経由のため、<strong>データ処理料金が高く</strong>、通信がインターネット側に出るのもセキュリティ上避けたい。特定のバケット以外にはアクセスさせたくない。</p>
+<ul>
+<li>プライベートサブネットのEC2から、<strong>S3のオブジェクトを読み書き</strong>したい。</li>
+<li>同じEC2に、<strong>Session Manager</strong>で接続して操作したい。</li>
+<li>費用とインターネットへの経路をなくすため、<strong>NATゲートウェイは使わない</strong>。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 718 274" style="max-width:718px;min-width:574px" role="img" aria-label="図1 VPCエンドポイントによる接続。S3とDynamoDBはゲートウェイ型(無料)で、ルートテーブルに経路を追加する。その他のサービスはインターフェイス型で、サブネットにENIを置き、プライベートDNSで通常のエンドポイント名のまま接続する。"><defs><marker id="dgusecases-private-subnet-endpoints-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 718 194" style="max-width:718px;min-width:574px" role="img" aria-label="図1 VPCエンドポイントによる接続の構成。①・②に入る接続方法を選ぶ。"><defs><marker id="dgusecases-private-subnet-endpoints-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ec2">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">プライベート</text>
+</g>
+<g data-node="a">
+<rect x="289" y="38" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="364" y="60" text-anchor="middle" class="dg-t">①</text>
+<text x="364" y="78" text-anchor="middle" class="dg-s">S3への経路</text>
+</g>
+<g data-node="b">
+<rect x="289" y="118" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="364" y="140" text-anchor="middle" class="dg-t">②</text>
+<text x="364" y="158" text-anchor="middle" class="dg-s">SSMへの経路</text>
+</g>
+<g data-node="s3">
+<rect x="544" y="44" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="619" y="68" text-anchor="middle" class="dg-t">S3</text>
+</g>
+<g data-node="ssm">
+<rect x="544" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="140" text-anchor="middle" class="dg-t">Systems Manager</text>
+<text x="619" y="158" text-anchor="middle" class="dg-s">Session Manager</text>
+</g>
+<path d="M184.0,92.2 L289.0,75.8" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+<path d="M184.0,115.8 L289.0,132.2" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+<path d="M439.0,64.0 L544.0,64.0" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+<path d="M439.0,144.0 L544.0,144.0" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+</svg>
+</div>
+<figcaption>図1 VPCエンドポイントによる接続の構成。①・②に入る接続方法を選ぶ。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="a">
+<p class="ex-q">① EC2からS3への経路として、NATを使わず、費用もかからないものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="GW型エンドポイント">ゲートウェイ型VPCエンドポイント<span class="ex-why">S3とDynamoDB用のエンドポイントで、<strong>料金がかかりません</strong>。ルートテーブルに経路を追加して使います。</span></li>
+<li data-short="NATゲートウェイ">NATゲートウェイ<span class="ex-why">要件で使わないと決めています。時間料金と処理したデータ量の料金がかかり、インターネットへの経路にもなります。</span></li>
+<li data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">パブリックIPアドレスとインターネットへの経路が必要になり、プライベートサブネットのままでは使えません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="b">
+<p class="ex-q">② EC2からSystems Manager(Session Manager)への経路は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="IF型エンドポイント">インターフェイス型VPCエンドポイント<span class="ex-why">サブネットにENIを置き、プライベートIPアドレスでサービスに接続します。Session Managerには <code>ssm</code>・<code>ssmmessages</code> などのエンドポイントを作ります。</span></li>
+<li data-short="GW型エンドポイント">ゲートウェイ型VPCエンドポイント<span class="ex-why">ゲートウェイ型があるのはS3とDynamoDBだけです。</span></li>
+<li data-short="VPCピアリング">VPCピアリング<span class="ex-why">VPC同士をつなぐ仕組みで、AWSのサービスのAPIへの経路にはなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ ゲートウェイ型エンドポイントを使うために必要な設定は?</p>
+<ul class="ex-choices">
+<li data-ok>EC2のサブネットのルートテーブルにエンドポイントを関連付ける<span class="ex-why">S3のプレフィックスリストあての経路がルートテーブルに追加され、S3への通信がエンドポイントを通ります(<a href="../terms/route-table.html">ルートテーブル</a>)。</span></li>
+<li>エンドポイントにセキュリティグループを付ける<span class="ex-why">ゲートウェイ型にはセキュリティグループを付けません。セキュリティグループを使うのはインターフェイス型です。</span></li>
+<li>プライベートDNS名を有効にする<span class="ex-why">インターフェイス型の設定です。ゲートウェイ型はDNSではなくルートテーブルで経路を変えます。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ インターフェイス型エンドポイントのセキュリティグループで許可する通信は?</p>
+<ul class="ex-choices">
+<li data-ok>インバウンドのHTTPS(443)を、EC2(またはVPCのCIDR)から許可<span class="ex-why">EC2はHTTPSでエンドポイントのENIに接続します(<a href="../terms/port-numbers.html">よく使うポート番号</a>)。</span></li>
+<li>インバウンドのSSH(22)を、EC2から許可<span class="ex-why">Session ManagerはSSHのポートを使いません。EC2側でも22番を開ける必要はありません。</span></li>
+<li>何も許可しない(エンドポイントには不要)<span class="ex-why">インターフェイス型はENIなので、セキュリティグループで443を許可しないと接続できません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">⑤ インターフェイス型エンドポイントの「プライベートDNS名を有効にする」の効果は?</p>
+<ul class="ex-choices">
+<li data-ok>通常のエンドポイント名(例:<code>ssm.ap-northeast-1.amazonaws.com</code>)のまま、エンドポイントのプライベートIPアドレスに接続される<span class="ex-why">エージェントやアプリの設定を変えずにエンドポイントを使えます。VPCの「DNS解決」と「DNSホスト名」の両方を有効にしておく必要があります。</span></li>
+<li>エンドポイント専用の名前に、エージェントの設定を書き換える必要がある<span class="ex-why">プライベートDNS名を<strong>無効</strong>にした場合の動きです。</span></li>
+<li>通信がインターネット経由に切り替わる<span class="ex-why">エンドポイントの通信はAWSのネットワークの中だけを通ります。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>S3へは無料の<strong>ゲートウェイ型</strong>エンドポイントをルートテーブルに関連付け、Systems Managerへは<strong>インターフェイス型</strong>エンドポイントを作ってセキュリティグループで443を許可し、プライベートDNS名を有効にします。EC2には <code>AmazonSSMManagedInstanceCore</code> を付けたIAMロールが必要です。</p>
+<p>2種類のエンドポイントの違いは「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」、NATゲートウェイとの費用の比較は「<a href="../terms/pricing-basics.html">料金の基本</a>」で説明しています。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 274" style="max-width:718px;min-width:574px" role="img" aria-label="図2 VPCエンドポイントによる接続。S3とDynamoDBはゲートウェイ型(無料)で、ルートテーブルに経路を追加する。その他のサービスはインターフェイス型で、サブネットにENIを置き、プライベートDNSで通常のエンドポイント名のまま接続する。"><defs><marker id="dgusecases-private-subnet-endpoints-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="ec2">
 <rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="100" text-anchor="middle" class="dg-t">EC2</text>
@@ -79,19 +169,19 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="364" y="220" text-anchor="middle" class="dg-t">NATゲートウェイ</text>
 <text x="364" y="238" text-anchor="middle" class="dg-s">使わない</text>
 </g>
-<path d="M184.0,92.2 L289.0,75.8" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
-<path d="M184.0,115.8 L289.0,132.2" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
-<path d="M439.0,64.0 L544.0,64.0" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
-<path d="M439.0,144.0 L544.0,144.0" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
-<path d="M164.2,130.0 L308.8,198.0" class="dg-line dg-dash" marker-end="url(#dgusecases-private-subnet-endpoints-1)"/>
+<path d="M184.0,92.2 L289.0,75.8" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-2)"/>
+<path d="M184.0,115.8 L289.0,132.2" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-2)"/>
+<path d="M439.0,64.0 L544.0,64.0" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-2)"/>
+<path d="M439.0,144.0 L544.0,144.0" class="dg-line" marker-end="url(#dgusecases-private-subnet-endpoints-2)"/>
+<path d="M164.2,130.0 L308.8,198.0" class="dg-line dg-dash" marker-end="url(#dgusecases-private-subnet-endpoints-2)"/>
 </svg>
 </div>
-<figcaption>図1 VPCエンドポイントによる接続。S3とDynamoDBはゲートウェイ型(無料)で、ルートテーブルに経路を追加する。その他のサービスはインターフェイス型で、サブネットにENIを置き、プライベートDNSで通常のエンドポイント名のまま接続する。</figcaption>
+<figcaption>図2 VPCエンドポイントによる接続。S3とDynamoDBはゲートウェイ型(無料)で、ルートテーブルに経路を追加する。その他のサービスはインターフェイス型で、サブネットにENIを置き、プライベートDNSで通常のエンドポイント名のまま接続する。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/vpc.html">Amazon VPC</a>:<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>(ゲートウェイ型・インターフェイス型)、エンドポイントポリシー、ルートテーブル</li>
 <li><a href="../services/s3.html">Amazon S3</a>:バケットポリシーで、特定のVPCエンドポイント経由のアクセスだけを許可(<code>aws:SourceVpce</code>)</li>
@@ -101,7 +191,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>S3の<strong>ゲートウェイ型エンドポイント</strong>を作り、プライベートサブネットのルートテーブルに関連付ける</li>
 <li>SSMには <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>、Secrets Managerには <code>secretsmanager</code> の<strong>インターフェイス型エンドポイント</strong>を、各AZのサブネットに作る</li>
@@ -112,7 +202,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>S3・DynamoDB → <strong class="em">ゲートウェイ型</strong>(無料、ルートテーブルで経路を追加)。その他のサービス → <strong class="em">インターフェイス型</strong>(PrivateLink、時間とデータ量の料金)。</li>
 <li>ゲートウェイ型はオンプレミスやピアリング先のVPCからは使えない。オンプレミスからS3に私的に接続するならS3のインターフェイス型エンドポイントを使う。</li>
@@ -120,35 +210,33 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>大量のS3の通信をNAT経由にしていると、NATゲートウェイのデータ処理料金がかさむ。</li>
 <li>ゲートウェイ型エンドポイントは同じリージョンのS3にだけ使える。</li>
 </ul></div>
+<p>あわせて読む:<a href="../usecases/bastionless-access.html">踏み台サーバーなしでプライベートなEC2を操作する</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/private-subnet-endpoints.html"><span class="title">プライベートサブネットからNATなしでAWSを使う構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
+<summary>つながり図を開く(リンク先 8件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="プライベートサブネットからNATなしでAWSのサービスを使うとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="プライベートサブネットからNATなしでAWSのサービスを使うとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/cost-explorer.html"><title>サービス:AWS Cost Explorer</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Cost Explorer</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/secrets-manager.html"><title>サービス:AWS Secrets Manager</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Secrets Manager</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Systems Manager</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon S3</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon VPC</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
 <a href="../terms/vpc-endpoint.html"><title>用語:VPCエンドポイント</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">VPCエンドポイント</text></a>
-<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">プライベートサブネッ…</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">料金の基本</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/bastionless-access.html"><title>運用シナリオ:踏み台サーバーなしでプライベートなEC2を操作する</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="560" y="260" class="gr-t">踏み台サーバーなしでプライベー…</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">プライベートサブネッ…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -162,5 +250,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "ec2", "label": "EC2", "sub": "プライベート", "x": 0.0, "y": 0.5}, {"id": "a", "label": "GW型エンドポイント", "sub": "", "x": 1.5, "y": 0.0}, {"id": "b", "label": "IF型エンドポイント", "sub": "", "x": 1.5, "y": 1.0}, {"id": "s3", "label": "S3", "sub": "", "x": 3.0, "y": 0.0}, {"id": "ssm", "label": "Systems Manager", "sub": "Session Manager", "x": 3.0, "y": 1.0}], "edges": [["ec2", "a", false, false], ["ec2", "b", false, false], ["a", "s3", false, false], ["b", "ssm", false, false]], "distractors": ["NATゲートウェイ", "VPCピアリング", "インターネットGW"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

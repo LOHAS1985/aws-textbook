@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,89 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>注文を受け付けると同時に、重い処理(在庫の引き当て・帳票の作成など)を行っているため、アクセスが急増すると受付まで遅くなる。処理側が止まると注文も失われる。<strong>受付と処理を切り離し</strong>、処理側が追いつかなくても注文を失わないようにしたい。</p>
+<ul>
+<li>注文の受付と重い処理を同時に行っているため、<strong>アクセスが急増すると受付まで遅くなる</strong>。</li>
+<li>処理側が止まっても、<strong>注文を失わない</strong>ようにしたい。</li>
+<li>何度処理しても失敗する注文は、ほかの注文の邪魔にならないよう隔離したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 632 242" style="max-width:632px;min-width:520px" role="img" aria-label="図1 SQSによる分離。受付はキューに入れるだけですぐ応答し、処理側は自分のペースで取り出す。キューの長さに応じて処理側の台数を増減し、何度も失敗するメッセージはデッドレターキュー(DLQ)に移す。"><defs><marker id="dgusecases-sqs-decoupling-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 632 242" style="max-width:632px;min-width:520px" role="img" aria-label="図1 キューによる分離の構成。"><defs><marker id="dgusecases-sqs-decoupling-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="web">
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">受付</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">API・Webサーバー</text>
+</g>
+<g data-node="q">
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="321" y="100" text-anchor="middle" class="dg-t">①</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">注文をためる</text>
+</g>
+<g data-node="wk">
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">処理側</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">Auto Scaling</text>
+</g>
+<g data-node="dlq">
+<rect x="248" y="166" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="321" y="188" text-anchor="middle" class="dg-t">②</text>
+<text x="321" y="206" text-anchor="middle" class="dg-s">失敗を隔離</text>
+</g>
+<g data-node="cw">
+<rect x="463" y="166" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="188" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="536" y="206" text-anchor="middle" class="dg-s">キューの長さ</text>
+</g>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<text x="428" y="108" text-anchor="middle" class="dg-s dg-halo">取得・削除</text>
+<path d="M321.0,130.0 L321.0,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<path d="M384.4,130.0 L472.1,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<path d="M535.5,166.0 L535.5,130.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<text x="536" y="152" text-anchor="middle" class="dg-s dg-halo">台数を調整</text>
+</svg>
+</div>
+<figcaption>図1 キューによる分離の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="q">
+<p class="ex-q">① 受付と処理の間で注文をためるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="SQSキュー">Amazon SQSのキュー<span class="ex-why">受付はキューに入れるだけですぐ応答し、処理側は自分のペースで取り出します。処理側が止まってもメッセージは保持されます。</span></li>
+<li data-short="SNSトピック">Amazon SNSのトピック<span class="ex-why">受け取ったら即座に配るだけで、ためておけません。処理側が止まっていると届きません(<a href="../terms/messaging-comparison.html">メッセージングサービスの選び方</a>)。</span></li>
+<li data-short="ElastiCache">Amazon ElastiCache<span class="ex-why">読み取りを速くするキャッシュで、処理待ちの仕事をためる仕組みではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="dlq">
+<p class="ex-q">② 何度も失敗するメッセージを移す先は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="DLQ">デッドレターキュー(DLQ)<span class="ex-why">最大受信回数を超えたメッセージを移し、ほかのメッセージの処理を止めないようにします。原因を直したら元のキューに戻せます。</span></li>
+<li data-short="FIFOキュー">FIFOキュー<span class="ex-why">順序を守るキューの種類で、失敗の隔離先ではありません。</span></li>
+<li data-short="S3">Amazon S3<span class="ex-why">SQSのメッセージを自動で移す先として指定できません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 同じ注文が二重に処理されるときの原因は?</p>
+<ul class="ex-choices">
+<li data-ok>可視性タイムアウトが処理時間より短い<span class="ex-why">処理中にタイムアウトするとメッセージが再び見えるようになり、別の処理側が取り出します。処理時間より長くします。</span></li>
+<li>メッセージの保持期間が短い<span class="ex-why">保持期間を過ぎたメッセージは消えるだけで、二重には処理されません。</span></li>
+<li>ロングポーリングを有効にしている<span class="ex-why">空の応答を減らす設定で、二重処理の原因ではありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>受付と処理の間に<strong>SQSのキュー</strong>を置き、キューの長さ(1台あたりのバックログ)に応じて処理側の台数を増減します。何度も失敗するメッセージは<strong>DLQ</strong>に隔離します。標準キューは「少なくとも1回」届ける仕組みなので、処理は<a href="../terms/throttling-retry.html">べき等</a>に作ります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 632 242" style="max-width:632px;min-width:520px" role="img" aria-label="図2 SQSによる分離。受付はキューに入れるだけですぐ応答し、処理側は自分のペースで取り出す。キューの長さに応じて処理側の台数を増減し、何度も失敗するメッセージはデッドレターキュー(DLQ)に移す。"><defs><marker id="dgusecases-sqs-decoupling-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="web">
 <rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
 <text x="106" y="100" text-anchor="middle" class="dg-t">受付</text>
@@ -75,22 +150,22 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="536" y="188" text-anchor="middle" class="dg-t">CloudWatch</text>
 <text x="536" y="206" text-anchor="middle" class="dg-s">キューの長さ</text>
 </g>
-<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
-<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-2)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-2)"/>
 <text x="428" y="108" text-anchor="middle" class="dg-s dg-halo">取得・削除</text>
-<path d="M321.0,130.0 L321.0,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<path d="M321.0,130.0 L321.0,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-sqs-decoupling-2)"/>
 <text x="321" y="152" text-anchor="middle" class="dg-s dg-halo">最大受信回数超え</text>
-<path d="M384.4,130.0 L472.1,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
-<path d="M535.5,166.0 L535.5,130.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-1)"/>
+<path d="M384.4,130.0 L472.1,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-sqs-decoupling-2)"/>
+<path d="M535.5,166.0 L535.5,130.0" class="dg-line" marker-end="url(#dgusecases-sqs-decoupling-2)"/>
 <text x="536" y="152" text-anchor="middle" class="dg-s dg-halo">台数を調整</text>
 </svg>
 </div>
-<figcaption>図1 SQSによる分離。受付はキューに入れるだけですぐ応答し、処理側は自分のペースで取り出す。キューの長さに応じて処理側の台数を増減し、何度も失敗するメッセージはデッドレターキュー(DLQ)に移す。</figcaption>
+<figcaption>図2 SQSによる分離。受付はキューに入れるだけですぐ応答し、処理側は自分のペースで取り出す。キューの長さに応じて処理側の台数を増減し、何度も失敗するメッセージはデッドレターキュー(DLQ)に移す。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/sqs.html">Amazon SQS</a>:メッセージを保持するキュー、可視性タイムアウト、デッドレターキュー</li>
 <li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:キューの長さに応じた処理側のスケーリング(ECSやLambdaでもよい)</li>
@@ -101,7 +176,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>SQSキューを作る。順序と重複排除が必要ならFIFOキュー、そうでなければ標準キューにする</li>
 <li><strong>可視性タイムアウト</strong>を処理時間より長くする(処理中に他の処理側が同じメッセージを受け取らないように)</li>
@@ -112,7 +187,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>受付と処理を切り離して急増を吸収する(疎結合)→ <strong class="em">SQS</strong>。</li>
 <li>同じメッセージが二重に処理される → <strong>可視性タイムアウト</strong>が処理時間より短い。標準キューは「少なくとも1回」の配信なので、処理側は同じメッセージが来ても問題ないように作る。</li>
@@ -121,35 +196,30 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>スケーリングの指標は、キューの長さそのものより「1台あたりのバックログ」が適している。</li>
 </ul></div>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/sqs-decoupling.html"><span class="title">キューで処理を分離する構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 5件・リンク元 1件)</summary>
+<summary>つながり図を開く(リンク先 6件・リンク元 1件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="キューで処理を分離し、急増や障害に強くするとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
-<a href="../terms/messaging-comparison.html"><title>用語:メッセージングサービスの選び方</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">メッセージングサービスの選び方</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="キューで処理を分離し、急増や障害に強くするとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,120 C265.0,120 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
+<a href="../terms/messaging-comparison.html"><title>用語:メッセージングサービスの選び方</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="124" class="gr-t">メッセージングサービスの選び方</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Lambda</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon EC2 Auto Scaling</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon SNS</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/sqs.html"><title>サービス:Amazon SQS</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon SQS</text></a>
-<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">キューで処理を分離し…</text>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/throttling-retry.html"><title>用語:スロットリングとリトライ</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">スロットリングとリトライ</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">キューで処理を分離し…</text>
 <text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -163,5 +233,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 165.0, "rowh": 80.0, "nodes": [{"id": "web", "label": "受付", "sub": "API・Webサーバー", "x": 0.0, "y": 0.5}, {"id": "q", "label": "SQSキュー", "sub": "", "x": 1.3, "y": 0.5}, {"id": "wk", "label": "処理側", "sub": "Auto Scaling", "x": 2.6, "y": 0.5}, {"id": "dlq", "label": "DLQ", "sub": "", "x": 1.3, "y": 1.6}, {"id": "cw", "label": "CloudWatch", "sub": "キューの長さ", "x": 2.6, "y": 1.6}], "edges": [["web", "q", false, false], ["q", "wk", false, false], ["q", "dlq", true, false], ["q", "cw", true, false], ["cw", "wk", false, false]], "distractors": ["ElastiCache", "FIFOキュー", "S3", "SNSトピック"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

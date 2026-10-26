@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,17 +42,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>ECS(Fargate)で動くWebアプリの新しいバージョンを、<strong>サービスを止めずに</strong>リリースしたい。新しいタスクが起動に失敗し続けたり、リリース後にエラーが増えたりした場合は、人が気づく前に<strong>自動で前のバージョンに戻したい</strong>。</p>
+<ul>
+<li>ECS(Fargate)のアプリの新しいバージョンを、<strong>止めずに</strong>リリースしたい。</li>
+<li>新しいタスクが起動に失敗し続けたり、エラーが増えたりしたら、<strong>自動で前のバージョンに戻したい</strong>。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 846 194" style="max-width:846px;min-width:677px" role="img" aria-label="図1 ECSの安全なデプロイ。新しいタスク定義でサービスを更新すると、新しいタスクを起動してから古いタスクを止める。タスクの起動が失敗し続けたり、指定したアラームが鳴ったりすると、前のデプロイに自動で戻る。"><defs><marker id="dgusecases-ecs-safe-deploy-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 846 194" style="max-width:846px;min-width:677px" role="img" aria-label="図1 ECSの安全なデプロイの構成。"><defs><marker id="dgusecases-ecs-safe-deploy-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="ecr">
-<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
-<text x="106" y="100" text-anchor="middle" class="dg-t">ECR</text>
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">①</text>
 <text x="106" y="118" text-anchor="middle" class="dg-s">新しいイメージ</text>
 </g>
 <g data-node="svc">
@@ -80,15 +83,84 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <path d="M393.5,117.5 L463.0,130.5" class="dg-line" marker-end="url(#dgusecases-ecs-safe-deploy-1)"/>
 <path d="M608.0,144.0 L677.5,144.0" class="dg-line dg-dash" marker-end="url(#dgusecases-ecs-safe-deploy-1)"/>
 <path d="M680.3,118.0 L605.2,90.0" class="dg-line dg-dash" marker-end="url(#dgusecases-ecs-safe-deploy-1)"/>
+</svg>
+</div>
+<figcaption>図1 ECSの安全なデプロイの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ecr">
+<p class="ex-q">① 新しいコンテナイメージの保存先は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="ECR">Amazon ECR<span class="ex-why">コンテナイメージのレジストリです。タスク実行ロールに、イメージを取得する権限が必要です。</span></li>
+<li data-short="CodeArtifact">AWS CodeArtifact<span class="ex-why">npmやMavenなどのパッケージの保管先で、コンテナイメージは置きません。</span></li>
+<li data-short="EFS">Amazon EFS<span class="ex-why">共有のファイルストレージで、イメージの取得元にはなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② 起動に失敗し続けるデプロイを、自動で止めて戻す機能は?</p>
+<ul class="ex-choices">
+<li data-ok>デプロイサーキットブレーカー(ロールバックを有効)<span class="ex-why">新しいタスクが正常にならない状態が続くと、デプロイを失敗とし、前のデプロイに戻します(<a href="../terms/circuit-breaker.html">サーキットブレーカー</a>)。</span></li>
+<li>サービスの自動スケーリング<span class="ex-why">タスクの数を増減するもので、失敗したデプロイは戻しません。</span></li>
+<li>タスク定義のメモリの上限を増やす<span class="ex-why">原因によっては直りますが、自動で戻す仕組みではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ リリース後のエラーの増加で戻すには?</p>
+<ul class="ex-choices">
+<li data-ok>CloudWatchアラーム(5xxのエラー率など)をデプロイに設定する<span class="ex-why">デプロイ中にアラームがALARMになると、前のバージョンに戻ります。</span></li>
+<li>minimumHealthyPercent を0にする<span class="ex-why">更新中に全タスクが止まりうる設定で、戻す仕組みではありません。</span></li>
+<li>ECRのイメージを削除する<span class="ex-why">新しいタスクが起動できなくなるだけです。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>ローリング更新で、新しいタスクを起動してから古いタスクを止めます。起動の失敗は<strong>デプロイサーキットブレーカー</strong>で、エラーの増加は<strong>CloudWatchアラーム</strong>で検知して自動で戻します。新旧を並べて一度に切り替えるならBlue/Greenデプロイを使います(<a href="../terms/deploy-strategies.html">デプロイ戦略</a>)。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 194" style="max-width:846px;min-width:677px" role="img" aria-label="図2 ECSの安全なデプロイ。新しいタスク定義でサービスを更新すると、新しいタスクを起動してから古いタスクを止める。タスクの起動が失敗し続けたり、指定したアラームが鳴ったりすると、前のデプロイに自動で戻る。"><defs><marker id="dgusecases-ecs-safe-deploy-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ecr">
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">ECR</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">新しいイメージ</text>
+</g>
+<g data-node="svc">
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="321" y="100" text-anchor="middle" class="dg-tb">ECSサービス</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">タスク定義を更新</text>
+</g>
+<g data-node="old">
+<rect x="463" y="38" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="60" text-anchor="middle" class="dg-t">旧タスク</text>
+<text x="536" y="78" text-anchor="middle" class="dg-s">順に停止</text>
+</g>
+<g data-node="new">
+<rect x="463" y="118" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="536" y="140" text-anchor="middle" class="dg-t">新タスク</text>
+<text x="536" y="158" text-anchor="middle" class="dg-s">ヘルスチェック</text>
+</g>
+<g data-node="cb">
+<rect x="678" y="118" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="750" y="140" text-anchor="middle" class="dg-t">失敗を検知</text>
+<text x="750" y="158" text-anchor="middle" class="dg-s">起動失敗・アラーム</text>
+</g>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-ecs-safe-deploy-2)"/>
+<path d="M393.5,90.5 L463.0,77.5" class="dg-line" marker-end="url(#dgusecases-ecs-safe-deploy-2)"/>
+<path d="M393.5,117.5 L463.0,130.5" class="dg-line" marker-end="url(#dgusecases-ecs-safe-deploy-2)"/>
+<path d="M608.0,144.0 L677.5,144.0" class="dg-line dg-dash" marker-end="url(#dgusecases-ecs-safe-deploy-2)"/>
+<path d="M680.3,118.0 L605.2,90.0" class="dg-line dg-dash" marker-end="url(#dgusecases-ecs-safe-deploy-2)"/>
 <text x="643" y="108" text-anchor="middle" class="dg-s dg-halo">旧に戻す</text>
 </svg>
 </div>
-<figcaption>図1 ECSの安全なデプロイ。新しいタスク定義でサービスを更新すると、新しいタスクを起動してから古いタスクを止める。タスクの起動が失敗し続けたり、指定したアラームが鳴ったりすると、前のデプロイに自動で戻る。</figcaption>
+<figcaption>図2 ECSの安全なデプロイ。新しいタスク定義でサービスを更新すると、新しいタスクを起動してから古いタスクを止める。タスクの起動が失敗し続けたり、指定したアラームが鳴ったりすると、前のデプロイに自動で戻る。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/ecs.html">Amazon ECS</a>:ローリング更新(<code>minimumHealthyPercent</code>・<code>maximumPercent</code>)、デプロイサーキットブレーカー、Blue/Greenデプロイ</li>
 <li><a href="../services/ecr.html">Amazon ECR</a>:コンテナイメージの保存</li>
@@ -99,7 +171,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>新しいイメージをECRにプッシュし、そのイメージを使う新しいタスク定義のリビジョンを作る</li>
 <li>サービスのデプロイ設定で <code>minimumHealthyPercent</code>(例:100)と <code>maximumPercent</code>(例:200)を決める。100/200なら、台数を減らさずに新しいタスクを先に起動する</li>
@@ -110,7 +182,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>起動に失敗し続けるデプロイを自動で止めて戻す → <strong class="em">デプロイサーキットブレーカー</strong>。リリース後のエラー増加で戻す → <strong>CloudWatchアラーム</strong>によるロールバック。</li>
 <li><code>minimumHealthyPercent</code> を下げると、追加の容量なしで更新できるが、更新中の処理能力が下がる。</li>
@@ -118,32 +190,27 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>新しいタスクがすぐ止まる → 「停止したタスク」の停止理由、コンテナのログ、イメージの取得権限(タスク実行ロール)を確認する。</li>
 </ul></div>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/ecs-safe-deploy.html"><span class="title">ECSを止めずに更新する構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 5件・リンク元 0件)</summary>
+<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="ECSのサービスを止めずに更新し、失敗したら自動で戻すとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="ECSのサービスを止めずに更新し、失敗したら自動で戻すとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CodePipeline</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/ecr.html"><title>サービス:Amazon ECR</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon ECR</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon ECS</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Elastic Load Balancing (E…</text></a>
-<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">ECSのサービスを止め…</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">デプロイ戦略</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">ECSのサービスを止め…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -157,5 +224,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 165.0, "rowh": 80.0, "nodes": [{"id": "ecr", "label": "ECR", "sub": "", "x": 0.0, "y": 0.5}, {"id": "svc", "label": "ECSサービス", "sub": "タスク定義を更新", "x": 1.3, "y": 0.5}, {"id": "old", "label": "旧タスク", "sub": "順に停止", "x": 2.6, "y": 0.0}, {"id": "new", "label": "新タスク", "sub": "ヘルスチェック", "x": 2.6, "y": 1.0}, {"id": "cb", "label": "失敗を検知", "sub": "起動失敗・アラーム", "x": 3.9, "y": 1.0}], "edges": [["ecr", "svc", false, false], ["svc", "old", false, false], ["svc", "new", false, false], ["new", "cb", true, false], ["cb", "old", true, false]], "distractors": ["CodeArtifact", "EFS"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

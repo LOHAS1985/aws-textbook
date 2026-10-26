@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,86 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>CloudFormationで作った環境なのに、障害対応のときにコンソールでセキュリティグループのルールやインスタンスタイプを手で変えた人がいる。テンプレートと実際の設定が食い違うと、次のスタックの更新で失敗したり、変更が消えたりする。<strong>ずれ(ドリフト)を定期的に見つけて</strong>、どちらかに合わせたい。</p>
+<ul>
+<li>CloudFormationで作った環境を、<strong>コンソールで手作業で変えた人</strong>がいる。</li>
+<li>テンプレートと実際の設定のずれを、<strong>定期的に自動で</strong>見つけて知らせたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 905 242" style="max-width:905px;min-width:724px" role="img" aria-label="図1 ドリフトの検出。テンプレートの外で手作業の変更が入ると、実際の設定とずれる。AWS Configのマネージドルールが定期的にドリフトを確認し、非準拠になったらEventBridgeで通知する。"><defs><marker id="dgusecases-cloudformation-drift-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 905 242" style="max-width:905px;min-width:724px" role="img" aria-label="図1 ドリフトの検出の構成。"><defs><marker id="dgusecases-cloudformation-drift-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="st">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">スタック</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">テンプレート</text>
+</g>
+<g data-node="man">
+<rect x="34" y="166" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="109" y="188" text-anchor="middle" class="dg-t">手作業の変更</text>
+<text x="109" y="206" text-anchor="middle" class="dg-s">コンソールで変更</text>
+</g>
+<g data-node="res">
+<rect x="272" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="347" y="148" text-anchor="middle" class="dg-t">実際のリソース</text>
+</g>
+<g data-node="cfg">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">①</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">ずれを定期確認</text>
+</g>
+<g data-node="eb">
+<rect x="731" y="118" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="806" y="140" text-anchor="middle" class="dg-t">②</text>
+<text x="806" y="158" text-anchor="middle" class="dg-s">通知につなぐ</text>
+</g>
+<path d="M184.0,116.6 L272.0,131.4" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<path d="M184.0,176.9 L272.0,159.1" class="dg-line dg-dash" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<path d="M510.0,144.0 L422.0,144.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<text x="466" y="148" text-anchor="middle" class="dg-s dg-halo">比較</text>
+<path d="M660.0,144.0 L731.0,144.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<text x="696" y="148" text-anchor="middle" class="dg-s dg-halo">非準拠</text>
+</svg>
+</div>
+<figcaption>図1 ドリフトの検出の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="cfg">
+<p class="ex-q">① スタックのドリフトを定期的に自動で確認するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Configルール">AWS Configのマネージドルール<span class="ex-why"><code>cloudformation-stack-drift-detection-check</code> が定期的にドリフト検出を実行し、ずれがあれば非準拠にします。</span></li>
+<li data-short="CloudTrail">AWS CloudTrail<span class="ex-why">誰が変えたかは記録しますが、テンプレートとのずれは判定しません。</span></li>
+<li data-short="変更セット">変更セット<span class="ex-why">これからの更新の影響を見るもので、手作業の変更は見つけません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="eb">
+<p class="ex-q">② 非準拠になったことを受けて、通知につなぐものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="EventBridge">Amazon EventBridge<span class="ex-why">Configの準拠状況の変化のイベントをルールで拾い、SNSなどに送ります(<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a>)。</span></li>
+<li data-short="SQS">Amazon SQS<span class="ex-why">メッセージをためるだけで、人への通知にはなりません。</span></li>
+<li data-short="Athena">Amazon Athena<span class="ex-why">S3のデータをSQLで検索するもので、通知はしません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ ドリフトが見つかったあとの対応は?</p>
+<ul class="ex-choices">
+<li data-ok>テンプレートか実際のリソースのどちらかに合わせる<span class="ex-why">ドリフト検出は見つけるだけで、自動では直しません。</span></li>
+<li>何もしなくても次の更新で自動的に直る<span class="ex-why">ずれたままだと、次の更新が失敗したり、手作業の変更が消えたりします。</span></li>
+<li>スタックを削除して作り直すしかない<span class="ex-why">データのあるリソースまで消えるおそれがあり、必要ありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Configのマネージドルール</strong>でドリフトを定期的に確認し、<strong>EventBridge</strong>からSNSで知らせます。そもそも本番でコンソールの変更ができないよう、IAMやSCPで権限を絞るのが根本的な対策です。CloudFormationの外で作ったリソースは、リソースのインポートでスタックに取り込めます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 242" style="max-width:905px;min-width:724px" role="img" aria-label="図2 ドリフトの検出。テンプレートの外で手作業の変更が入ると、実際の設定とずれる。AWS Configのマネージドルールが定期的にドリフトを確認し、非準拠になったらEventBridgeで通知する。"><defs><marker id="dgusecases-cloudformation-drift-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="st">
 <rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="100" text-anchor="middle" class="dg-t">スタック</text>
@@ -74,20 +146,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="806" y="140" text-anchor="middle" class="dg-t">EventBridge</text>
 <text x="806" y="158" text-anchor="middle" class="dg-s">通知・対応</text>
 </g>
-<path d="M184.0,116.6 L272.0,131.4" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
-<path d="M184.0,176.9 L272.0,159.1" class="dg-line dg-dash" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
-<path d="M510.0,144.0 L422.0,144.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<path d="M184.0,116.6 L272.0,131.4" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-2)"/>
+<path d="M184.0,176.9 L272.0,159.1" class="dg-line dg-dash" marker-end="url(#dgusecases-cloudformation-drift-2)"/>
+<path d="M510.0,144.0 L422.0,144.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-2)"/>
 <text x="466" y="148" text-anchor="middle" class="dg-s dg-halo">比較</text>
-<path d="M660.0,144.0 L731.0,144.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-1)"/>
+<path d="M660.0,144.0 L731.0,144.0" class="dg-line" marker-end="url(#dgusecases-cloudformation-drift-2)"/>
 <text x="696" y="148" text-anchor="middle" class="dg-s dg-halo">非準拠</text>
 </svg>
 </div>
-<figcaption>図1 ドリフトの検出。テンプレートの外で手作業の変更が入ると、実際の設定とずれる。AWS Configのマネージドルールが定期的にドリフトを確認し、非準拠になったらEventBridgeで通知する。</figcaption>
+<figcaption>図2 ドリフトの検出。テンプレートの外で手作業の変更が入ると、実際の設定とずれる。AWS Configのマネージドルールが定期的にドリフトを確認し、非準拠になったらEventBridgeで通知する。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/cloudformation.html">AWS CloudFormation</a>:ドリフト検出(スタック・StackSets)、リソースのインポート</li>
 <li><a href="../services/config.html">AWS Config</a>:マネージドルール <code>cloudformation-stack-drift-detection-check</code> による定期的な確認</li>
@@ -97,7 +169,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>CloudFormationのコンソールまたはCLI(<code>detect-stack-drift</code>)でドリフト検出を実行し、<code>DRIFTED</code> のリソースと、期待値・実際の値の差分を確認する</li>
 <li>Configのルール <code>cloudformation-stack-drift-detection-check</code> を有効にし、ドリフト検出を定期的に実行させる</li>
@@ -108,7 +180,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>テンプレートと実際の設定のずれを見つける → <strong class="em">ドリフト検出</strong>。定期的に自動で → <strong>Configルール</strong>。</li>
 <li>ドリフト検出は<strong>見つけるだけ</strong>で、自動では直さない。テンプレートか実際のリソースのどちらかに合わせる。</li>
@@ -116,35 +188,31 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>CloudFormationの外で作ったリソースをスタックの管理下に入れる → <strong>リソースのインポート</strong>。</li>
 <li>複数アカウント・リージョンに展開したスタックは、StackSetsのドリフト検出でまとめて確認できる。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/terraform-git.html">TerraformとGit</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/cloudformation-drift.html"><span class="title">手作業の変更(ドリフト)を見つける構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
+<summary>つながり図を開く(リンク先 7件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="手作業による設定変更(ドリフト)を見つけて戻すとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 246" style="max-width:784px;min-width:600px" role="img" aria-label="手作業による設定変更(ドリフト)を見つけて戻すとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudFormation</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/config.html"><title>サービス:AWS Config</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Config</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS IAM</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Organizations</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EventBridge</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
 <a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon SNS</text></a>
-<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">手作業による設定変更(…</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">TerraformとGit</text></a>
+<rect x="300" y="115" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="140" text-anchor="middle" class="gr-tb">手作業による設定変更(…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -158,5 +226,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "st", "label": "スタック", "sub": "テンプレート", "x": 0.0, "y": 0.5}, {"id": "man", "label": "手作業の変更", "sub": "コンソールで変更", "x": 0.0, "y": 1.6}, {"id": "res", "label": "実際のリソース", "sub": "", "x": 1.4, "y": 1.0}, {"id": "cfg", "label": "Configルール", "sub": "", "x": 2.8, "y": 1.0}, {"id": "eb", "label": "EventBridge", "sub": "", "x": 4.1, "y": 1.0}], "edges": [["st", "res", false, false], ["man", "res", true, false], ["cfg", "res", false, false], ["cfg", "eb", false, false]], "distractors": ["Athena", "CloudTrail", "SQS", "変更セット"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

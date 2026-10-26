@@ -140,7 +140,8 @@
     var found = main.querySelectorAll("section.chapter :is(" + BLOCKS + ")");
     for (var i = 0; i < found.length; i++) {
       var e = found[i];
-      if (e.closest(SKIP) || e.closest("tr") && e.tagName !== "TR") continue;
+      // 閉じているタブ(運用シナリオの解説など)は読まない
+      if (e.closest(SKIP) || e.closest("[hidden]") || e.closest("tr") && e.tagName !== "TR") continue;
       var text = blockText(e);
       if (text) list.push({ el: e, text: text });
     }
@@ -266,8 +267,7 @@
     var text = main && main.querySelector(".page-head.hero .hero-text");
     if (!text) return;
     var tools = el("div", "page-tools");
-    // 構成演習は解説(答え)まで読み上げてしまうので、読み上げは付けない
-    if (!/\/exercises\//.test(location.pathname)) setupReader(main, tools);
+    setupReader(main, tools);
     var print = el("button", "page-tool", '<span aria-hidden="true">⎙</span> 印刷');
     print.type = "button";
     print.title = "このページを印刷・PDFに保存";

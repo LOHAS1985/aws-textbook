@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,93 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>数百台のEC2(とオンプレミスのサーバー)に、毎週決まった時間帯にOSのセキュリティパッチを自動で適用したい。本番と開発でタイミングを分け、適用状況(準拠しているか)を一覧で確認したい。</p>
+<ul>
+<li>数百台のEC2に、<strong>毎週決まった時間帯</strong>にOSのセキュリティパッチを自動で適用したい。</li>
+<li>本番と開発で、適用のタイミングを分けたい。</li>
+<li>パッチが適用されているかを、一覧で確認したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 メンテナンスウィンドウの日時に、パッチベースライン(当てるパッチ)とパッチグループ(当てるノード)に従ってPatch Managerがパッチを適用する。結果はコンプライアンスで確認できる。"><defs><marker id="dgusecases-patch-management-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 パッチの自動適用の構成。"><defs><marker id="dgusecases-patch-management-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="bl">
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">②</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">当てるパッチ</text>
+</g>
+<g data-node="mw">
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">①</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">毎週日曜 2:00</text>
+</g>
+<g data-node="pm">
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">Patch Manager</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">Run Commandで適用</text>
+</g>
+<g data-node="pg">
+<rect x="272" y="198" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="220" text-anchor="middle" class="dg-t">パッチグループ</text>
+<text x="347" y="238" text-anchor="middle" class="dg-s">タグで対象を分類</text>
+</g>
+<g data-node="ec2">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">対象のEC2</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">SSM Agent</text>
+</g>
+<g data-node="cmp">
+<rect x="510" y="198" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="220" text-anchor="middle" class="dg-t">コンプライアンス</text>
+<text x="585" y="238" text-anchor="middle" class="dg-s">適用状況を確認</text>
+</g>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgusecases-patch-management-1)"/>
+<text x="228" y="148" text-anchor="middle" class="dg-s dg-halo">起動</text>
+<path d="M347.0,90.0 L347.0,118.0" class="dg-line dg-dash" marker-end="url(#dgusecases-patch-management-1)"/>
+<path d="M347.0,198.0 L347.0,170.0" class="dg-line dg-dash" marker-end="url(#dgusecases-patch-management-1)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgusecases-patch-management-1)"/>
+<path d="M585.0,170.0 L585.0,198.0" class="dg-line" marker-end="url(#dgusecases-patch-management-1)"/>
+</svg>
+</div>
+<figcaption>図1 パッチの自動適用の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="mw">
+<p class="ex-q">① 業務時間外の決まった時間帯に、パッチの適用を起動するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="メンテナンスW">Systems Managerのメンテナンスウィンドウ<span class="ex-why">スケジュール(cron式・タイムゾーン)と所要時間を決め、その間にタスクを実行します(<a href="../terms/cron-rate-expressions.html">cron式とrate式</a>)。</span></li>
+<li data-short="CWアラーム">CloudWatchアラーム<span class="ex-why">メトリクスのしきい値で動くもので、時間帯を決めた実行はできません。</span></li>
+<li data-short="Inspector">Amazon Inspector<span class="ex-why">足りないパッチ(脆弱性)を見つけますが、パッチを当てる時間帯は決めません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="bl">
+<p class="ex-q">② どのパッチを承認して当てるかを決めるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="ベースライン">パッチベースライン<span class="ex-why">重要度・分類や、公開から何日後に承認するかなどを決めます。</span></li>
+<li data-short="起動テンプレート">起動テンプレート<span class="ex-why">EC2の起動の設定で、パッチの承認とは関係ありません。</span></li>
+<li data-short="SCP">SCP<span class="ex-why">組織の権限の上限を決めるもので、パッチは選びません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 本番と開発で適用の対象を分けるには?</p>
+<ul class="ex-choices">
+<li data-ok>タグでパッチグループを分け、別々のメンテナンスウィンドウを割り当てる<span class="ex-why">台数が増えても、タグを付けるだけで正しいグループに入ります(<a href="../terms/tags.html">タグ</a>)。</span></li>
+<li>本番のインスタンスだけ手作業で適用する<span class="ex-why">自動化の要件に合いません。</span></li>
+<li>アカウントを分けないと分けられない<span class="ex-why">同じアカウントでも、タグで分けられます。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>メンテナンスウィンドウ</strong>の時刻に、<strong>パッチベースライン</strong>(当てるパッチ)と<strong>パッチグループ</strong>(当てる対象)に従ってPatch Managerが適用し、結果をコンプライアンスで確認します。まず「スキャンのみ」で足りないパッチを把握し、同時実行数とエラーのしきい値を決めて少しずつ適用すると安全です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図2 メンテナンスウィンドウの日時に、パッチベースライン(当てるパッチ)とパッチグループ(当てるノード)に従ってPatch Managerがパッチを適用する。結果はコンプライアンスで確認できる。"><defs><marker id="dgusecases-patch-management-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="bl">
 <rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
 <text x="347" y="60" text-anchor="middle" class="dg-t">パッチベースライン</text>
@@ -81,20 +160,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="585" y="220" text-anchor="middle" class="dg-t">コンプライアンス</text>
 <text x="585" y="238" text-anchor="middle" class="dg-s">適用状況を確認</text>
 </g>
-<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgusecases-patch-management-1)"/>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgusecases-patch-management-2)"/>
 <text x="228" y="148" text-anchor="middle" class="dg-s dg-halo">起動</text>
-<path d="M347.0,90.0 L347.0,118.0" class="dg-line dg-dash" marker-end="url(#dgusecases-patch-management-1)"/>
-<path d="M347.0,198.0 L347.0,170.0" class="dg-line dg-dash" marker-end="url(#dgusecases-patch-management-1)"/>
-<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgusecases-patch-management-1)"/>
-<path d="M585.0,170.0 L585.0,198.0" class="dg-line" marker-end="url(#dgusecases-patch-management-1)"/>
+<path d="M347.0,90.0 L347.0,118.0" class="dg-line dg-dash" marker-end="url(#dgusecases-patch-management-2)"/>
+<path d="M347.0,198.0 L347.0,170.0" class="dg-line dg-dash" marker-end="url(#dgusecases-patch-management-2)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgusecases-patch-management-2)"/>
+<path d="M585.0,170.0 L585.0,198.0" class="dg-line" marker-end="url(#dgusecases-patch-management-2)"/>
 </svg>
 </div>
-<figcaption>図1 メンテナンスウィンドウの日時に、パッチベースライン(当てるパッチ)とパッチグループ(当てるノード)に従ってPatch Managerがパッチを適用する。結果はコンプライアンスで確認できる。</figcaption>
+<figcaption>図2 メンテナンスウィンドウの日時に、パッチベースライン(当てるパッチ)とパッチグループ(当てるノード)に従ってPatch Managerがパッチを適用する。結果はコンプライアンスで確認できる。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Patch Manager、Maintenance Windows、Run Command、コンプライアンス</li>
 <li><a href="../services/iam.html">AWS IAM</a>:EC2のロールに <code>AmazonSSMManagedInstanceCore</code> を付ける</li>
@@ -103,7 +182,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>EC2にSSM AgentとIAMロールを用意し、Systems Managerの管理対象になっていることを確認する</li>
 <li>パッチベースラインで、承認するパッチ(例:重要度Critical、リリース7日後に自動承認)を定義する</li>
@@ -114,36 +193,34 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(またはVPCエンドポイント)</strong>を確認。</li>
 <li>業務時間外に実行 → <strong>メンテナンスウィンドウ</strong>。対象の分類 → <strong>パッチグループ(タグ)</strong>。</li>
 <li>まずは「スキャンのみ」で不足パッチを把握し、その後「インストール」を実行するのが安全。</li>
 <li>一度に全台へ適用せず、同時実行数とエラーのしきい値を設定して少しずつ進める。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/shared-responsibility.html">責任共有モデル</a>、<a href="../services/inspector.html">Amazon Inspector</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/patch-management.html"><span class="title">多数のEC2にパッチを適用する構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 3件・リンク元 0件)</summary>
+<summary>つながり図を開く(リンク先 5件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 126" style="max-width:784px;min-width:600px" role="img" aria-label="多数のEC2に定期的にパッチを適用するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M480,75 C515.0,75 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="多数のEC2に定期的にパッチを適用するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS IAM</text></a>
-<path class="gr-line" d="M480,75 C515.0,75 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Systems Manager</text></a>
-<path class="gr-line" d="M480,75 C515.0,75 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon EC2</text></a>
-<rect x="300" y="55" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="80" text-anchor="middle" class="gr-tb">多数のEC2に定期的に…</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(3)</text>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/inspector.html"><title>サービス:Amazon Inspector</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon Inspector</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/shared-responsibility.html"><title>用語:責任共有モデル</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">責任共有モデル</text></a>
+<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">多数のEC2に定期的に…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -157,5 +234,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "bl", "label": "ベースライン", "sub": "", "x": 1.4, "y": 0.0}, {"id": "mw", "label": "メンテナンスW", "sub": "", "x": 0.0, "y": 1.0}, {"id": "pm", "label": "Patch Manager", "sub": "Run Commandで適用", "x": 1.4, "y": 1.0}, {"id": "pg", "label": "パッチグループ", "sub": "タグで対象を分類", "x": 1.4, "y": 2.0}, {"id": "ec2", "label": "対象のEC2", "sub": "SSM Agent", "x": 2.8, "y": 1.0}, {"id": "cmp", "label": "コンプライアンス", "sub": "適用状況を確認", "x": 2.8, "y": 2.0}], "edges": [["mw", "pm", false, false], ["bl", "pm", true, false], ["pg", "pm", true, false], ["pm", "ec2", false, false], ["ec2", "cmp", false, false]], "distractors": ["CWアラーム", "Inspector", "SCP", "起動テンプレート"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>
