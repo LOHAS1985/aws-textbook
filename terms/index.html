@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>用語 | AWS教科書</title>
 <meta name="description" content="AWSを学ぶうえで押さえておきたい用語の解説">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -16,6 +24,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("../sw.js").catch(function () {});
 }
 </script>
+<script src="../js/site.js" defer></script>
 </head>
 <body>
 <header class="site-header" id="top">
@@ -26,6 +35,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </header>
 <main>
 <div class="page-head"><h1>用語</h1><p class="lead">AWSを学ぶうえで押さえておきたい用語の解説</p></div>
+<p class="booklet-link"><a href="../print/terms.html">まとめて印刷・PDFに保存(全54ページを1つに)</a></p>
 <div class="toc-search">
   <input type="search" id="toc-q" placeholder="用語・キーワードで絞り込み(例: IP、暗号化、DNS)" aria-label="絞り込み" autocomplete="off">
   <span class="toc-hits" id="toc-hits"></span>
@@ -33,85 +43,85 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="toc-category" id="cat1">
 <h2>AWSの基礎 <span class="count">(15)</span></h2>
 <ul class="card-list">
-  <li data-keys="責任共有モデル shared-responsibility awsの基礎 セキュリティと運用の責任を、awsと利用者のどちらが持つかの分担。使うサービスによって境界が変わる"><a href="shared-responsibility.html"><span class="name">責任共有モデル</span><span class="desc">セキュリティと運用の責任を、AWSと利用者のどちらが持つかの分担。使うサービスによって境界が変わる</span></a></li>
-  <li data-keys="リージョンとアベイラビリティーゾーン region-az awsの基礎 awsのデータセンターの配置単位。リージョンの中に複数のazがある"><a href="region-az.html"><span class="name">リージョンとアベイラビリティーゾーン</span><span class="desc">AWSのデータセンターの配置単位。リージョンの中に複数のAZがある</span></a></li>
-  <li data-keys="デフォルトvpc default-vpc awsの基礎 各リージョンに最初から用意されている、すぐにインターネットにつながるvpcと、その注意点"><a href="default-vpc.html"><span class="name">デフォルトVPC</span><span class="desc">各リージョンに最初から用意されている、すぐにインターネットにつながるVPCと、その注意点</span></a></li>
-  <li data-keys="ルートユーザーとアカウントの保護 root-user awsの基礎 awsアカウントを作ったときのメールアドレスでログインする、すべての権限を持つユーザーと、その守り方"><a href="root-user.html"><span class="name">ルートユーザーとアカウントの保護</span><span class="desc">AWSアカウントを作ったときのメールアドレスでログインする、すべての権限を持つユーザーと、その守り方</span></a></li>
-  <li data-keys="awsの操作方法(コンソール・cli・sdk・api) access-methods awsの基礎 awsを操作する4つの方法と、どれも最後はapiの呼び出しになるという共通の仕組み"><a href="access-methods.html"><span class="name">AWSの操作方法(コンソール・CLI・SDK・API)</span><span class="desc">AWSを操作する4つの方法と、どれも最後はAPIの呼び出しになるという共通の仕組み</span></a></li>
-  <li data-keys="arn arn awsの基礎 awsのリソースを世界で一意に指し示す名前(amazon resource name)"><a href="arn.html"><span class="name">ARN</span><span class="desc">AWSのリソースを世界で一意に指し示す名前(Amazon Resource Name)</span></a></li>
-  <li data-keys="タグ tags awsの基礎 リソースに付ける「キーと値」のラベル。費用の集計・権限の制御・自動化の対象の指定に使う"><a href="tags.html"><span class="name">タグ</span><span class="desc">リソースに付ける「キーと値」のラベル。費用の集計・権限の制御・自動化の対象の指定に使う</span></a></li>
-  <li data-keys="料金の基本 pricing-basics awsの基礎 使った分だけ払う従量課金の考え方と、見落としやすいデータ転送料金・無料利用枠・割引の仕組み"><a href="pricing-basics.html"><span class="name">料金の基本</span><span class="desc">使った分だけ払う従量課金の考え方と、見落としやすいデータ転送料金・無料利用枠・割引の仕組み</span></a></li>
-  <li data-keys="サポートプラン support-plans awsの基礎 awsに技術的な問い合わせをするための契約。プランによって応答時間や使える機能(trusted advisor・health apiなど)が変わる"><a href="support-plans.html"><span class="name">サポートプラン</span><span class="desc">AWSに技術的な問い合わせをするための契約。プランによって応答時間や使える機能(Trusted Advisor・Health APIなど)が変わる</span></a></li>
-  <li data-keys="サービスクォータ service-quotas awsの基礎 アカウント・リージョンごとに決められた、リソース数やapi呼び出し回数の上限"><a href="service-quotas.html"><span class="name">サービスクォータ</span><span class="desc">アカウント・リージョンごとに決められた、リソース数やAPI呼び出し回数の上限</span></a></li>
-  <li data-keys="slaと可用性 sla-availability awsの基礎 「どれだけ止まらないか」を表す可用性の数字(何ナイン)と、awsが約束するsla、データを失わない耐久性の違い"><a href="sla-availability.html"><span class="name">SLAと可用性</span><span class="desc">「どれだけ止まらないか」を表す可用性の数字(何ナイン)と、AWSが約束するSLA、データを失わない耐久性の違い</span></a></li>
-  <li data-keys="マネージドサービスとサーバーレス managed-serverless awsの基礎 サーバーの管理をどこまでawsに任せるかによるサービスの分類(iaas・paas・saas、マネージド、サーバーレス)"><a href="managed-serverless.html"><span class="name">マネージドサービスとサーバーレス</span><span class="desc">サーバーの管理をどこまでAWSに任せるかによるサービスの分類(IaaS・PaaS・SaaS、マネージド、サーバーレス)</span></a></li>
-  <li data-keys="aws well-architected フレームワーク well-architected awsの基礎 awsが示す「良い設計」の考え方を6つの柱にまとめたもの。設計の見直しや、試験の選択肢を選ぶ基準になる"><a href="well-architected.html"><span class="name">AWS Well-Architected フレームワーク</span><span class="desc">AWSが示す「良い設計」の考え方を6つの柱にまとめたもの。設計の見直しや、試験の選択肢を選ぶ基準になる</span></a></li>
-  <li data-keys="コンプライアンスとaws artifact compliance-artifact awsの基礎 法令や業界の基準を守っていることを示すための、awsの第三者認証・監査レポートの入手方法と、利用者側の確認の仕組み"><a href="compliance-artifact.html"><span class="name">コンプライアンスとAWS Artifact</span><span class="desc">法令や業界の基準を守っていることを示すための、AWSの第三者認証・監査レポートの入手方法と、利用者側の確認の仕組み</span></a></li>
-  <li data-keys="jsonとyamlの読み方 json-yaml awsの基礎 iamポリシー・cloudformationのテンプレート・イベントパターンなどを書くための2つのデータの書き方"><a href="json-yaml.html"><span class="name">JSONとYAMLの読み方</span><span class="desc">IAMポリシー・CloudFormationのテンプレート・イベントパターンなどを書くための2つのデータの書き方</span></a></li>
+  <li data-keys="責任共有モデル shared-responsibility awsの基礎 セキュリティと運用の責任を、awsと利用者のどちらが持つかの分担。使うサービスによって境界が変わる aws iam aws lambda aws systems manager amazon ec2 amazon rds "><a href="shared-responsibility.html"><span class="name">責任共有モデル</span><span class="desc">セキュリティと運用の責任を、AWSと利用者のどちらが持つかの分担。使うサービスによって境界が変わる</span></a></li>
+  <li data-keys="リージョンとアベイラビリティーゾーン region-az awsの基礎 awsのデータセンターの配置単位。リージョンの中に複数のazがある aws global accelerator amazon cloudfront amazon ebs amazon ec2 amazon rds amazon route 53 amazon vpc "><a href="region-az.html"><span class="name">リージョンとアベイラビリティーゾーン</span><span class="desc">AWSのデータセンターの配置単位。リージョンの中に複数のAZがある</span></a></li>
+  <li data-keys="デフォルトvpc default-vpc awsの基礎 各リージョンに最初から用意されている、すぐにインターネットにつながるvpcと、その注意点 aws control tower aws security hub amazon ec2 amazon vpc "><a href="default-vpc.html"><span class="name">デフォルトVPC</span><span class="desc">各リージョンに最初から用意されている、すぐにインターネットにつながるVPCと、その注意点</span></a></li>
+  <li data-keys="ルートユーザーとアカウントの保護 root-user awsの基礎 awsアカウントを作ったときのメールアドレスでログインする、すべての権限を持つユーザーと、その守り方 aws cloudtrail aws iam aws iam identity center aws organizations aws security hub "><a href="root-user.html"><span class="name">ルートユーザーとアカウントの保護</span><span class="desc">AWSアカウントを作ったときのメールアドレスでログインする、すべての権限を持つユーザーと、その守り方</span></a></li>
+  <li data-keys="awsの操作方法(コンソール・cli・sdk・api) access-methods awsの基礎 awsを操作する4つの方法と、どれも最後はapiの呼び出しになるという共通の仕組み aws cloudformation aws cloudshell aws cloudtrail aws iam identity center aws sdk "><a href="access-methods.html"><span class="name">AWSの操作方法(コンソール・CLI・SDK・API)</span><span class="desc">AWSを操作する4つの方法と、どれも最後はAPIの呼び出しになるという共通の仕組み</span></a></li>
+  <li data-keys="arn arn awsの基礎 awsのリソースを世界で一意に指し示す名前(amazon resource name) aws cloudformation aws iam aws lambda amazon s3 "><a href="arn.html"><span class="name">ARN</span><span class="desc">AWSのリソースを世界で一意に指し示す名前(Amazon Resource Name)</span></a></li>
+  <li data-keys="タグ tags awsの基礎 リソースに付ける「キーと値」のラベル。費用の集計・権限の制御・自動化の対象の指定に使う aws backup aws config aws cost explorer aws iam aws organizations aws systems manager "><a href="tags.html"><span class="name">タグ</span><span class="desc">リソースに付ける「キーと値」のラベル。費用の集計・権限の制御・自動化の対象の指定に使う</span></a></li>
+  <li data-keys="料金の基本 pricing-basics awsの基礎 使った分だけ払う従量課金の考え方と、見落としやすいデータ転送料金・無料利用枠・割引の仕組み aws compute optimizer aws cost explorer aws cost and usage reports amazon cloudfront amazon ec2 savings plans "><a href="pricing-basics.html"><span class="name">料金の基本</span><span class="desc">使った分だけ払う従量課金の考え方と、見落としやすいデータ転送料金・無料利用枠・割引の仕組み</span></a></li>
+  <li data-keys="サポートプラン support-plans awsの基礎 awsに技術的な問い合わせをするための契約。プランによって応答時間や使える機能(trusted advisor・health apiなど)が変わる aws devops agent aws health dashboard aws trusted advisor "><a href="support-plans.html"><span class="name">サポートプラン</span><span class="desc">AWSに技術的な問い合わせをするための契約。プランによって応答時間や使える機能(Trusted Advisor・Health APIなど)が変わる</span></a></li>
+  <li data-keys="サービスクォータ service-quotas awsの基礎 アカウント・リージョンごとに決められた、リソース数やapi呼び出し回数の上限 aws lambda aws organizations aws trusted advisor amazon cloudwatch amazon ec2 auto scaling "><a href="service-quotas.html"><span class="name">サービスクォータ</span><span class="desc">アカウント・リージョンごとに決められた、リソース数やAPI呼び出し回数の上限</span></a></li>
+  <li data-keys="slaと可用性 sla-availability awsの基礎 「どれだけ止まらないか」を表す可用性の数字(何ナイン)と、awsが約束するsla、データを失わない耐久性の違い aws health dashboard amazon ec2 amazon rds amazon s3 elastic load balancing (elb) "><a href="sla-availability.html"><span class="name">SLAと可用性</span><span class="desc">「どれだけ止まらないか」を表す可用性の数字(何ナイン)と、AWSが約束するSLA、データを失わない耐久性の違い</span></a></li>
+  <li data-keys="マネージドサービスとサーバーレス managed-serverless awsの基礎 サーバーの管理をどこまでawsに任せるかによるサービスの分類(iaas・paas・saas、マネージド、サーバーレス) aws elastic beanstalk aws lambda amazon dynamodb amazon ec2 amazon ecs amazon rds "><a href="managed-serverless.html"><span class="name">マネージドサービスとサーバーレス</span><span class="desc">サーバーの管理をどこまでAWSに任せるかによるサービスの分類(IaaS・PaaS・SaaS、マネージド、サーバーレス)</span></a></li>
+  <li data-keys="aws well-architected フレームワーク well-architected awsの基礎 awsが示す「良い設計」の考え方を6つの柱にまとめたもの。設計の見直しや、試験の選択肢を選ぶ基準になる aws cloudformation aws compute optimizer aws systems manager aws trusted advisor amazon cloudwatch "><a href="well-architected.html"><span class="name">AWS Well-Architected フレームワーク</span><span class="desc">AWSが示す「良い設計」の考え方を6つの柱にまとめたもの。設計の見直しや、試験の選択肢を選ぶ基準になる</span></a></li>
+  <li data-keys="コンプライアンスとaws artifact compliance-artifact awsの基礎 法令や業界の基準を守っていることを示すための、awsの第三者認証・監査レポートの入手方法と、利用者側の確認の仕組み aws cloudtrail aws config aws control tower aws organizations aws security hub "><a href="compliance-artifact.html"><span class="name">コンプライアンスとAWS Artifact</span><span class="desc">法令や業界の基準を守っていることを示すための、AWSの第三者認証・監査レポートの入手方法と、利用者側の確認の仕組み</span></a></li>
+  <li data-keys="jsonとyamlの読み方 json-yaml awsの基礎 iamポリシー・cloudformationのテンプレート・イベントパターンなどを書くための2つのデータの書き方 aws cloudformation aws codebuild aws iam aws systems manager amazon eventbridge "><a href="json-yaml.html"><span class="name">JSONとYAMLの読み方</span><span class="desc">IAMポリシー・CloudFormationのテンプレート・イベントパターンなどを書くための2つのデータの書き方</span></a></li>
 </ul>
 </section>
 <section class="toc-category" id="cat2">
 <h2>ネットワーク <span class="count">(13)</span></h2>
 <ul class="card-list">
-  <li data-keys="dns dns ネットワーク ドメイン名をipアドレスに変換する名前解決の仕組み"><a href="dns.html"><span class="name">DNS</span><span class="desc">ドメイン名をIPアドレスに変換する名前解決の仕組み</span></a></li>
-  <li data-keys="dnsレコードタイプ dns-record-types ネットワーク dnsに登録する情報の種類(a・cname・mx・txtなど)"><a href="dns-record-types.html"><span class="name">DNSレコードタイプ</span><span class="desc">DNSに登録する情報の種類(A・CNAME・MX・TXTなど)</span></a></li>
-  <li data-keys="cidr cidr ネットワーク 「10.0.0.0/16」のように、ipアドレスの範囲をまとめて表す書き方"><a href="cidr.html"><span class="name">CIDR</span><span class="desc">「10.0.0.0/16」のように、IPアドレスの範囲をまとめて表す書き方</span></a></li>
-  <li data-keys="ルートテーブル route-table ネットワーク 宛先ごとに通信の転送先を決めるルール表"><a href="route-table.html"><span class="name">ルートテーブル</span><span class="desc">宛先ごとに通信の転送先を決めるルール表</span></a></li>
-  <li data-keys="ネットワークaclとセキュリティグループ nacl-security-group ネットワーク vpcで通信を許可・拒否する2つの仕組み"><a href="nacl-security-group.html"><span class="name">ネットワークACLとセキュリティグループ</span><span class="desc">VPCで通信を許可・拒否する2つの仕組み</span></a></li>
-  <li data-keys="vpcフローログ vpc-flow-logs ネットワーク vpc内のネットワークインターフェイスを通る通信の記録(誰から誰へ・許可か拒否か)"><a href="vpc-flow-logs.html"><span class="name">VPCフローログ</span><span class="desc">VPC内のネットワークインターフェイスを通る通信の記録(誰から誰へ・許可か拒否か)</span></a></li>
-  <li data-keys="eniとelastic ip eni-elastic-ip ネットワーク eniはvpc内の仮想的なネットワークカード、elastic ipは固定のパブリックipアドレス"><a href="eni-elastic-ip.html"><span class="name">ENIとElastic IP</span><span class="desc">ENIはVPC内の仮想的なネットワークカード、Elastic IPは固定のパブリックIPアドレス</span></a></li>
-  <li data-keys="vpcエンドポイント vpc-endpoint ネットワーク インターネットを経由せずに、vpcからawsのサービスへプライベートに接続する入り口"><a href="vpc-endpoint.html"><span class="name">VPCエンドポイント</span><span class="desc">インターネットを経由せずに、VPCからAWSのサービスへプライベートに接続する入り口</span></a></li>
-  <li data-keys="vpcピアリング vpc-peering ネットワーク 2つのvpcを1対1でつなぎ、プライベートipで通信できるようにする接続"><a href="vpc-peering.html"><span class="name">VPCピアリング</span><span class="desc">2つのVPCを1対1でつなぎ、プライベートIPで通信できるようにする接続</span></a></li>
-  <li data-keys="インバウンド通信 inbound-traffic ネットワーク 外部からvpc内のリソースへ入ってくる通信と、その4つの入口"><a href="inbound-traffic.html"><span class="name">インバウンド通信</span><span class="desc">外部からVPC内のリソースへ入ってくる通信と、その4つの入口</span></a></li>
-  <li data-keys="アウトバウンド通信 outbound-traffic ネットワーク vpc内のリソースから外へ出ていく通信と、その4つのパターン"><a href="outbound-traffic.html"><span class="name">アウトバウンド通信</span><span class="desc">VPC内のリソースから外へ出ていく通信と、その4つのパターン</span></a></li>
-  <li data-keys="よく使うポート番号 port-numbers ネットワーク 通信の種類を表す番号。セキュリティグループやネットワークaclで、どの通信を許可するかを決めるときに使う"><a href="port-numbers.html"><span class="name">よく使うポート番号</span><span class="desc">通信の種類を表す番号。セキュリティグループやネットワークACLで、どの通信を許可するかを決めるときに使う</span></a></li>
-  <li data-keys="httpステータスコードと切り分け http-status-codes ネットワーク webのエラーの番号(4xx・5xx)の意味と、cloudfront・alb・api gatewayのどこで起きたかを見分ける方法"><a href="http-status-codes.html"><span class="name">HTTPステータスコードと切り分け</span><span class="desc">Webのエラーの番号(4xx・5xx)の意味と、CloudFront・ALB・API Gatewayのどこで起きたかを見分ける方法</span></a></li>
+  <li data-keys="dns dns ネットワーク ドメイン名をipアドレスに変換する名前解決の仕組み amazon cloudfront amazon route 53 elastic load balancing (elb) "><a href="dns.html"><span class="name">DNS</span><span class="desc">ドメイン名をIPアドレスに変換する名前解決の仕組み</span></a></li>
+  <li data-keys="dnsレコードタイプ dns-record-types ネットワーク dnsに登録する情報の種類(a・cname・mx・txtなど) aws certificate manager amazon route 53 "><a href="dns-record-types.html"><span class="name">DNSレコードタイプ</span><span class="desc">DNSに登録する情報の種類(A・CNAME・MX・TXTなど)</span></a></li>
+  <li data-keys="cidr cidr ネットワーク 「10.0.0.0/16」のように、ipアドレスの範囲をまとめて表す書き方 aws transit gateway amazon eks amazon vpc "><a href="cidr.html"><span class="name">CIDR</span><span class="desc">「10.0.0.0/16」のように、IPアドレスの範囲をまとめて表す書き方</span></a></li>
+  <li data-keys="ルートテーブル route-table ネットワーク 宛先ごとに通信の転送先を決めるルール表 aws resource access manager aws transit gateway amazon vpc "><a href="route-table.html"><span class="name">ルートテーブル</span><span class="desc">宛先ごとに通信の転送先を決めるルール表</span></a></li>
+  <li data-keys="ネットワークaclとセキュリティグループ nacl-security-group ネットワーク vpcで通信を許可・拒否する2つの仕組み aws config aws security hub amazon ec2 amazon vpc "><a href="nacl-security-group.html"><span class="name">ネットワークACLとセキュリティグループ</span><span class="desc">VPCで通信を許可・拒否する2つの仕組み</span></a></li>
+  <li data-keys="vpcフローログ vpc-flow-logs ネットワーク vpc内のネットワークインターフェイスを通る通信の記録(誰から誰へ・許可か拒否か) aws transit gateway amazon athena amazon cloudwatch amazon s3 amazon vpc "><a href="vpc-flow-logs.html"><span class="name">VPCフローログ</span><span class="desc">VPC内のネットワークインターフェイスを通る通信の記録(誰から誰へ・許可か拒否か)</span></a></li>
+  <li data-keys="eniとelastic ip eni-elastic-ip ネットワーク eniはvpc内の仮想的なネットワークカード、elastic ipは固定のパブリックipアドレス aws global accelerator aws lambda amazon ec2 amazon vpc elastic load balancing (elb) "><a href="eni-elastic-ip.html"><span class="name">ENIとElastic IP</span><span class="desc">ENIはVPC内の仮想的なネットワークカード、Elastic IPは固定のパブリックIPアドレス</span></a></li>
+  <li data-keys="vpcエンドポイント vpc-endpoint ネットワーク インターネットを経由せずに、vpcからawsのサービスへプライベートに接続する入り口 aws systems manager amazon dynamodb amazon ecr amazon s3 amazon vpc elastic load balancing (elb) "><a href="vpc-endpoint.html"><span class="name">VPCエンドポイント</span><span class="desc">インターネットを経由せずに、VPCからAWSのサービスへプライベートに接続する入り口</span></a></li>
+  <li data-keys="vpcピアリング vpc-peering ネットワーク 2つのvpcを1対1でつなぎ、プライベートipで通信できるようにする接続 aws transit gateway amazon route 53 amazon vpc "><a href="vpc-peering.html"><span class="name">VPCピアリング</span><span class="desc">2つのVPCを1対1でつなぎ、プライベートIPで通信できるようにする接続</span></a></li>
+  <li data-keys="インバウンド通信 inbound-traffic ネットワーク 外部からvpc内のリソースへ入ってくる通信と、その4つの入口 aws direct connect aws resource access manager aws site-to-site vpn aws transit gateway amazon vpc elastic load balancing (elb) "><a href="inbound-traffic.html"><span class="name">インバウンド通信</span><span class="desc">外部からVPC内のリソースへ入ってくる通信と、その4つの入口</span></a></li>
+  <li data-keys="アウトバウンド通信 outbound-traffic ネットワーク vpc内のリソースから外へ出ていく通信と、その4つのパターン amazon dynamodb amazon s3 amazon vpc "><a href="outbound-traffic.html"><span class="name">アウトバウンド通信</span><span class="desc">VPC内のリソースから外へ出ていく通信と、その4つのパターン</span></a></li>
+  <li data-keys="よく使うポート番号 port-numbers ネットワーク 通信の種類を表す番号。セキュリティグループやネットワークaclで、どの通信を許可するかを決めるときに使う aws systems manager amazon ec2 amazon efs amazon rds amazon vpc "><a href="port-numbers.html"><span class="name">よく使うポート番号</span><span class="desc">通信の種類を表す番号。セキュリティグループやネットワークACLで、どの通信を許可するかを決めるときに使う</span></a></li>
+  <li data-keys="httpステータスコードと切り分け http-status-codes ネットワーク webのエラーの番号(4xx・5xx)の意味と、cloudfront・alb・api gatewayのどこで起きたかを見分ける方法 aws waf amazon api gateway amazon cloudfront amazon cloudwatch elastic load balancing (elb) "><a href="http-status-codes.html"><span class="name">HTTPステータスコードと切り分け</span><span class="desc">Webのエラーの番号(4xx・5xx)の意味と、CloudFront・ALB・API Gatewayのどこで起きたかを見分ける方法</span></a></li>
 </ul>
 </section>
 <section class="toc-category" id="cat3">
 <h2>セキュリティ・認証 <span class="count">(7)</span></h2>
 <ul class="card-list">
-  <li data-keys="iamポリシーと評価ロジック iam-policy-evaluation セキュリティ・認証 ポリシーの書き方と、複数のポリシーから「許可か拒否か」が決まる順番"><a href="iam-policy-evaluation.html"><span class="name">IAMポリシーと評価ロジック</span><span class="desc">ポリシーの書き方と、複数のポリシーから「許可か拒否か」が決まる順番</span></a></li>
-  <li data-keys="iamロールと一時的な認証情報 iam-roles-credentials セキュリティ・認証 長期のアクセスキーの代わりに、ロールを引き受けて期限付きの認証情報で操作する仕組みと、ec2・lambda・別アカウントでの使い方"><a href="iam-roles-credentials.html"><span class="name">IAMロールと一時的な認証情報</span><span class="desc">長期のアクセスキーの代わりに、ロールを引き受けて期限付きの認証情報で操作する仕組みと、EC2・Lambda・別アカウントでの使い方</span></a></li>
-  <li data-keys="iam:passroleとサービスにリンクされたロール iam-passrole セキュリティ・認証 awsのサービスにロールを渡すときに必要な権限と、サービスが自動で作る専用のロール"><a href="iam-passrole.html"><span class="name">iam:PassRoleとサービスにリンクされたロール</span><span class="desc">AWSのサービスにロールを渡すときに必要な権限と、サービスが自動で作る専用のロール</span></a></li>
-  <li data-keys="保存時の暗号化と転送時の暗号化 encryption セキュリティ・認証 保存しているデータと、通信中のデータを、それぞれ暗号化して守る考え方"><a href="encryption.html"><span class="name">保存時の暗号化と転送時の暗号化</span><span class="desc">保存しているデータと、通信中のデータを、それぞれ暗号化して守る考え方</span></a></li>
-  <li data-keys="tls終端と証明書の配置 tls-termination セキュリティ・認証 httpsの暗号化をどこで解くか(tls終端)と、cloudfront・alb・nlb・ec2のどこにどの証明書を置くか"><a href="tls-termination.html"><span class="name">TLS終端と証明書の配置</span><span class="desc">HTTPSの暗号化をどこで解くか(TLS終端)と、CloudFront・ALB・NLB・EC2のどこにどの証明書を置くか</span></a></li>
-  <li data-keys="oidc(openid connect) oidc セキュリティ・認証 oauth 2.0を拡張した、ユーザー認証のためのプロトコル"><a href="oidc.html"><span class="name">OIDC(OpenID Connect)</span><span class="desc">OAuth 2.0を拡張した、ユーザー認証のためのプロトコル</span></a></li>
-  <li data-keys="spf(sender policy framework) spf セキュリティ・認証 dnsに正当な送信元を宣言し、メールのなりすましを検知する技術"><a href="spf.html"><span class="name">SPF(Sender Policy Framework)</span><span class="desc">DNSに正当な送信元を宣言し、メールのなりすましを検知する技術</span></a></li>
+  <li data-keys="iamポリシーと評価ロジック iam-policy-evaluation セキュリティ・認証 ポリシーの書き方と、複数のポリシーから「許可か拒否か」が決まる順番 aws cloudtrail aws iam aws kms aws organizations aws sts amazon s3 "><a href="iam-policy-evaluation.html"><span class="name">IAMポリシーと評価ロジック</span><span class="desc">ポリシーの書き方と、複数のポリシーから「許可か拒否か」が決まる順番</span></a></li>
+  <li data-keys="iamロールと一時的な認証情報 iam-roles-credentials セキュリティ・認証 長期のアクセスキーの代わりに、ロールを引き受けて期限付きの認証情報で操作する仕組みと、ec2・lambda・別アカウントでの使い方 aws iam aws iam identity center aws lambda aws sts amazon ec2 amazon ecs "><a href="iam-roles-credentials.html"><span class="name">IAMロールと一時的な認証情報</span><span class="desc">長期のアクセスキーの代わりに、ロールを引き受けて期限付きの認証情報で操作する仕組みと、EC2・Lambda・別アカウントでの使い方</span></a></li>
+  <li data-keys="iam:passroleとサービスにリンクされたロール iam-passrole セキュリティ・認証 awsのサービスにロールを渡すときに必要な権限と、サービスが自動で作る専用のロール aws cloudformation aws iam aws kms aws lambda amazon ec2 amazon ec2 auto scaling "><a href="iam-passrole.html"><span class="name">iam:PassRoleとサービスにリンクされたロール</span><span class="desc">AWSのサービスにロールを渡すときに必要な権限と、サービスが自動で作る専用のロール</span></a></li>
+  <li data-keys="保存時の暗号化と転送時の暗号化 encryption セキュリティ・認証 保存しているデータと、通信中のデータを、それぞれ暗号化して守る考え方 aws certificate manager aws config aws database encryption sdk aws kms aws site-to-site vpn amazon cloudfront amazon ebs amazon rds amazon s3 elastic load balancing (elb) "><a href="encryption.html"><span class="name">保存時の暗号化と転送時の暗号化</span><span class="desc">保存しているデータと、通信中のデータを、それぞれ暗号化して守る考え方</span></a></li>
+  <li data-keys="tls終端と証明書の配置 tls-termination セキュリティ・認証 httpsの暗号化をどこで解くか(tls終端)と、cloudfront・alb・nlb・ec2のどこにどの証明書を置くか aws certificate manager aws config aws private ca amazon api gateway amazon cloudfront elastic load balancing (elb) "><a href="tls-termination.html"><span class="name">TLS終端と証明書の配置</span><span class="desc">HTTPSの暗号化をどこで解くか(TLS終端)と、CloudFront・ALB・NLB・EC2のどこにどの証明書を置くか</span></a></li>
+  <li data-keys="oidc(openid connect) oidc セキュリティ・認証 oauth 2.0を拡張した、ユーザー認証のためのプロトコル aws iam aws sts amazon cognito amazon eks "><a href="oidc.html"><span class="name">OIDC(OpenID Connect)</span><span class="desc">OAuth 2.0を拡張した、ユーザー認証のためのプロトコル</span></a></li>
+  <li data-keys="spf(sender policy framework) spf セキュリティ・認証 dnsに正当な送信元を宣言し、メールのなりすましを検知する技術 amazon route 53 amazon simple email service(ses) "><a href="spf.html"><span class="name">SPF(Sender Policy Framework)</span><span class="desc">DNSに正当な送信元を宣言し、メールのなりすましを検知する技術</span></a></li>
 </ul>
 </section>
 <section class="toc-category" id="cat4">
 <h2>ストレージ <span class="count">(2)</span></h2>
 <ul class="card-list">
-  <li data-keys="ブロック・ファイル・オブジェクトストレージ storage-types ストレージ 3種類のストレージの違い(ebs・efs・s3)"><a href="storage-types.html"><span class="name">ブロック・ファイル・オブジェクトストレージ</span><span class="desc">3種類のストレージの違い(EBS・EFS・S3)</span></a></li>
-  <li data-keys="iops・スループット・レイテンシー performance-metrics ストレージ ストレージやデータベースの性能を表す3つの指標と、どこが詰まっているか(ボトルネック)の見つけ方"><a href="performance-metrics.html"><span class="name">IOPS・スループット・レイテンシー</span><span class="desc">ストレージやデータベースの性能を表す3つの指標と、どこが詰まっているか(ボトルネック)の見つけ方</span></a></li>
+  <li data-keys="ブロック・ファイル・オブジェクトストレージ storage-types ストレージ 3種類のストレージの違い(ebs・efs・s3) amazon ebs amazon efs amazon fsx amazon s3 "><a href="storage-types.html"><span class="name">ブロック・ファイル・オブジェクトストレージ</span><span class="desc">3種類のストレージの違い(EBS・EFS・S3)</span></a></li>
+  <li data-keys="iops・スループット・レイテンシー performance-metrics ストレージ ストレージやデータベースの性能を表す3つの指標と、どこが詰まっているか(ボトルネック)の見つけ方 amazon cloudwatch amazon ebs amazon ec2 amazon efs amazon rds "><a href="performance-metrics.html"><span class="name">IOPS・スループット・レイテンシー</span><span class="desc">ストレージやデータベースの性能を表す3つの指標と、どこが詰まっているか(ボトルネック)の見つけ方</span></a></li>
 </ul>
 </section>
 <section class="toc-category" id="cat5">
 <h2>設計・運用 <span class="count">(9)</span></h2>
 <ul class="card-list">
-  <li data-keys="高可用性とスケーリング high-availability-scaling 設計・運用 止まらないシステム(高可用性)と、負荷に合わせて性能を変える方法(スケーリング)の基本"><a href="high-availability-scaling.html"><span class="name">高可用性とスケーリング</span><span class="desc">止まらないシステム(高可用性)と、負荷に合わせて性能を変える方法(スケーリング)の基本</span></a></li>
-  <li data-keys="デプロイ戦略 deploy-strategies 設計・運用 新しいバージョンを本番に反映する方法(rolling・blue/green・canaryなど)"><a href="deploy-strategies.html"><span class="name">デプロイ戦略</span><span class="desc">新しいバージョンを本番に反映する方法(Rolling・Blue/Green・Canaryなど)</span></a></li>
-  <li data-keys="dr戦略 dr-strategies 設計・運用 災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ"><a href="dr-strategies.html"><span class="name">DR戦略</span><span class="desc">災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ</span></a></li>
-  <li data-keys="サーキットブレーカー circuit-breaker 設計・運用 呼び出し先の障害時に呼び出しを止め、障害の連鎖を防ぐ設計パターン"><a href="circuit-breaker.html"><span class="name">サーキットブレーカー</span><span class="desc">呼び出し先の障害時に呼び出しを止め、障害の連鎖を防ぐ設計パターン</span></a></li>
-  <li data-keys="cloudwatchアラームの状態と評価 cloudwatch-alarm-states 設計・運用 アラームの3つの状態(ok・alarm・insufficient_data)と、期間・データポイント数・欠落データの扱いでアラームが鳴る条件が決まる仕組み"><a href="cloudwatch-alarm-states.html"><span class="name">CloudWatchアラームの状態と評価</span><span class="desc">アラームの3つの状態(OK・ALARM・INSUFFICIENT_DATA)と、期間・データポイント数・欠落データの扱いでアラームが鳴る条件が決まる仕組み</span></a></li>
-  <li data-keys="イベント駆動の自動修復 event-driven-remediation 設計・運用 「何かが起きた」というイベントを受けて、通知や修復の処理を自動で実行する運用の型"><a href="event-driven-remediation.html"><span class="name">イベント駆動の自動修復</span><span class="desc">「何かが起きた」というイベントを受けて、通知や修復の処理を自動で実行する運用の型</span></a></li>
-  <li data-keys="cron式とrate式 cron-rate-expressions 設計・運用 「毎日10時」「5分ごと」のような実行スケジュールを書くための記法と、awsでの書き方の注意点"><a href="cron-rate-expressions.html"><span class="name">cron式とrate式</span><span class="desc">「毎日10時」「5分ごと」のような実行スケジュールを書くための記法と、AWSでの書き方の注意点</span></a></li>
-  <li data-keys="スロットリングとリトライ throttling-retry 設計・運用 apiの呼び出しが上限を超えて断られること(スロットリング)と、待つ時間を伸ばしながらやり直す対処(エクスポネンシャルバックオフ)"><a href="throttling-retry.html"><span class="name">スロットリングとリトライ</span><span class="desc">APIの呼び出しが上限を超えて断られること(スロットリング)と、待つ時間を伸ばしながらやり直す対処(エクスポネンシャルバックオフ)</span></a></li>
-  <li data-keys="terraformとgit terraform-git 設計・運用 aws以外の会社が作ったiacツール(terraform)と、コードの変更履歴を管理するバージョン管理(git)の基本と、awsでの使い方"><a href="terraform-git.html"><span class="name">TerraformとGit</span><span class="desc">AWS以外の会社が作ったIaCツール(Terraform)と、コードの変更履歴を管理するバージョン管理(Git)の基本と、AWSでの使い方</span></a></li>
+  <li data-keys="高可用性とスケーリング high-availability-scaling 設計・運用 止まらないシステム(高可用性)と、負荷に合わせて性能を変える方法(スケーリング)の基本 amazon aurora amazon ec2 auto scaling amazon elasticache amazon rds amazon sqs elastic load balancing (elb) "><a href="high-availability-scaling.html"><span class="name">高可用性とスケーリング</span><span class="desc">止まらないシステム(高可用性)と、負荷に合わせて性能を変える方法(スケーリング)の基本</span></a></li>
+  <li data-keys="デプロイ戦略 deploy-strategies 設計・運用 新しいバージョンを本番に反映する方法(rolling・blue/green・canaryなど) aws codedeploy aws elastic beanstalk aws lambda aws systems manager amazon route 53 "><a href="deploy-strategies.html"><span class="name">デプロイ戦略</span><span class="desc">新しいバージョンを本番に反映する方法(Rolling・Blue/Green・Canaryなど)</span></a></li>
+  <li data-keys="dr戦略 dr-strategies 設計・運用 災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ aws backup amazon aurora amazon route 53 amazon s3 "><a href="dr-strategies.html"><span class="name">DR戦略</span><span class="desc">災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ</span></a></li>
+  <li data-keys="サーキットブレーカー circuit-breaker 設計・運用 呼び出し先の障害時に呼び出しを止め、障害の連鎖を防ぐ設計パターン aws step functions amazon ecs amazon sqs "><a href="circuit-breaker.html"><span class="name">サーキットブレーカー</span><span class="desc">呼び出し先の障害時に呼び出しを止め、障害の連鎖を防ぐ設計パターン</span></a></li>
+  <li data-keys="cloudwatchアラームの状態と評価 cloudwatch-alarm-states 設計・運用 アラームの3つの状態(ok・alarm・insufficient_data)と、期間・データポイント数・欠落データの扱いでアラームが鳴る条件が決まる仕組み amazon cloudwatch amazon ec2 amazon ec2 auto scaling amazon eventbridge amazon sns "><a href="cloudwatch-alarm-states.html"><span class="name">CloudWatchアラームの状態と評価</span><span class="desc">アラームの3つの状態(OK・ALARM・INSUFFICIENT_DATA)と、期間・データポイント数・欠落データの扱いでアラームが鳴る条件が決まる仕組み</span></a></li>
+  <li data-keys="イベント駆動の自動修復 event-driven-remediation 設計・運用 「何かが起きた」というイベントを受けて、通知や修復の処理を自動で実行する運用の型 aws cloudtrail aws config aws health dashboard aws lambda aws systems manager amazon cloudwatch amazon eventbridge "><a href="event-driven-remediation.html"><span class="name">イベント駆動の自動修復</span><span class="desc">「何かが起きた」というイベントを受けて、通知や修復の処理を自動で実行する運用の型</span></a></li>
+  <li data-keys="cron式とrate式 cron-rate-expressions 設計・運用 「毎日10時」「5分ごと」のような実行スケジュールを書くための記法と、awsでの書き方の注意点 aws backup aws systems manager amazon ebs amazon ec2 auto scaling amazon eventbridge "><a href="cron-rate-expressions.html"><span class="name">cron式とrate式</span><span class="desc">「毎日10時」「5分ごと」のような実行スケジュールを書くための記法と、AWSでの書き方の注意点</span></a></li>
+  <li data-keys="スロットリングとリトライ throttling-retry 設計・運用 apiの呼び出しが上限を超えて断られること(スロットリング)と、待つ時間を伸ばしながらやり直す対処(エクスポネンシャルバックオフ) aws lambda aws sdk amazon api gateway amazon dynamodb amazon s3 amazon sqs "><a href="throttling-retry.html"><span class="name">スロットリングとリトライ</span><span class="desc">APIの呼び出しが上限を超えて断られること(スロットリング)と、待つ時間を伸ばしながらやり直す対処(エクスポネンシャルバックオフ)</span></a></li>
+  <li data-keys="terraformとgit terraform-git 設計・運用 aws以外の会社が作ったiacツール(terraform)と、コードの変更履歴を管理するバージョン管理(git)の基本と、awsでの使い方 aws cdk aws cloudformation aws codebuild aws codepipeline aws control tower amazon s3 "><a href="terraform-git.html"><span class="name">TerraformとGit</span><span class="desc">AWS以外の会社が作ったIaCツール(Terraform)と、コードの変更履歴を管理するバージョン管理(Git)の基本と、AWSでの使い方</span></a></li>
 </ul>
 </section>
 <section class="toc-category" id="cat6">
 <h2>サービスの選び方 <span class="count">(8)</span></h2>
 <ul class="card-list">
-  <li data-keys="監視・記録のサービスの選び方 monitoring-logging-comparison サービスの選び方 cloudwatch・cloudtrail・config・x-ray・vpcフローログを「何を知りたいか」で使い分ける"><a href="monitoring-logging-comparison.html"><span class="name">監視・記録のサービスの選び方</span><span class="desc">CloudWatch・CloudTrail・Config・X-Ray・VPCフローログを「何を知りたいか」で使い分ける</span></a></li>
-  <li data-keys="メッセージングサービスの選び方 messaging-comparison サービスの選び方 sqs・sns・eventbridge・kinesis data streamsの違いと使い分け"><a href="messaging-comparison.html"><span class="name">メッセージングサービスの選び方</span><span class="desc">SQS・SNS・EventBridge・Kinesis Data Streamsの違いと使い分け</span></a></li>
-  <li data-keys="キャッシュの選び方 caching-comparison サービスの選び方 cloudfront・api gatewayのキャッシュ・elasticache・daxを、置く場所と対象で使い分ける"><a href="caching-comparison.html"><span class="name">キャッシュの選び方</span><span class="desc">CloudFront・API Gatewayのキャッシュ・ElastiCache・DAXを、置く場所と対象で使い分ける</span></a></li>
-  <li data-keys="オンプレミスとawsをつなぐ方法の選び方 hybrid-connectivity サービスの選び方 site-to-site vpn・direct connect・client vpnの違いと、冗長化の組み合わせ"><a href="hybrid-connectivity.html"><span class="name">オンプレミスとAWSをつなぐ方法の選び方</span><span class="desc">Site-to-Site VPN・Direct Connect・Client VPNの違いと、冗長化の組み合わせ</span></a></li>
-  <li data-keys="vpc同士をつなぐ方法の選び方 vpc-connectivity サービスの選び方 vpcピアリング・transit gateway・privatelink・vpcの共有の違いと使い分け"><a href="vpc-connectivity.html"><span class="name">VPC同士をつなぐ方法の選び方</span><span class="desc">VPCピアリング・Transit Gateway・PrivateLink・VPCの共有の違いと使い分け</span></a></li>
-  <li data-keys="セキュリティ検出のサービスの選び方 security-detection-comparison サービスの選び方 guardduty・inspector・macie・config・security hub cspmなどを「何を見つけるか」で使い分ける"><a href="security-detection-comparison.html"><span class="name">セキュリティ検出のサービスの選び方</span><span class="desc">GuardDuty・Inspector・Macie・Config・Security Hub CSPMなどを「何を見つけるか」で使い分ける</span></a></li>
-  <li data-keys="機密情報・設定値の保存先の選び方 secrets-config-comparison サービスの選び方 secrets manager・parameter store・appconfig・kmsの違いと使い分け"><a href="secrets-config-comparison.html"><span class="name">機密情報・設定値の保存先の選び方</span><span class="desc">Secrets Manager・Parameter Store・AppConfig・KMSの違いと使い分け</span></a></li>
-  <li data-keys="コスト管理ツールの選び方 cost-management-comparison サービスの選び方 cost explorer・budgets・cur・compute optimizer・trusted advisor・savings plansを目的で使い分ける"><a href="cost-management-comparison.html"><span class="name">コスト管理ツールの選び方</span><span class="desc">Cost Explorer・Budgets・CUR・Compute Optimizer・Trusted Advisor・Savings Plansを目的で使い分ける</span></a></li>
+  <li data-keys="監視・記録のサービスの選び方 monitoring-logging-comparison サービスの選び方 cloudwatch・cloudtrail・config・x-ray・vpcフローログを「何を知りたいか」で使い分ける aws cloudtrail aws config aws health dashboard aws x-ray amazon cloudwatch amazon vpc "><a href="monitoring-logging-comparison.html"><span class="name">監視・記録のサービスの選び方</span><span class="desc">CloudWatch・CloudTrail・Config・X-Ray・VPCフローログを「何を知りたいか」で使い分ける</span></a></li>
+  <li data-keys="メッセージングサービスの選び方 messaging-comparison サービスの選び方 sqs・sns・eventbridge・kinesis data streamsの違いと使い分け aws lambda aws step functions amazon data firehose amazon eventbridge amazon kinesis amazon sns amazon sqs "><a href="messaging-comparison.html"><span class="name">メッセージングサービスの選び方</span><span class="desc">SQS・SNS・EventBridge・Kinesis Data Streamsの違いと使い分け</span></a></li>
+  <li data-keys="キャッシュの選び方 caching-comparison サービスの選び方 cloudfront・api gatewayのキャッシュ・elasticache・daxを、置く場所と対象で使い分ける amazon api gateway amazon aurora amazon cloudfront amazon dynamodb amazon elasticache amazon memorydb amazon rds "><a href="caching-comparison.html"><span class="name">キャッシュの選び方</span><span class="desc">CloudFront・API Gatewayのキャッシュ・ElastiCache・DAXを、置く場所と対象で使い分ける</span></a></li>
+  <li data-keys="オンプレミスとawsをつなぐ方法の選び方 hybrid-connectivity サービスの選び方 site-to-site vpn・direct connect・client vpnの違いと、冗長化の組み合わせ aws client vpn aws direct connect aws site-to-site vpn aws systems manager aws transit gateway amazon route 53 "><a href="hybrid-connectivity.html"><span class="name">オンプレミスとAWSをつなぐ方法の選び方</span><span class="desc">Site-to-Site VPN・Direct Connect・Client VPNの違いと、冗長化の組み合わせ</span></a></li>
+  <li data-keys="vpc同士をつなぐ方法の選び方 vpc-connectivity サービスの選び方 vpcピアリング・transit gateway・privatelink・vpcの共有の違いと使い分け aws resource access manager aws transit gateway amazon vpc amazon vpc ip address manager (ipam) elastic load balancing (elb) "><a href="vpc-connectivity.html"><span class="name">VPC同士をつなぐ方法の選び方</span><span class="desc">VPCピアリング・Transit Gateway・PrivateLink・VPCの共有の違いと使い分け</span></a></li>
+  <li data-keys="セキュリティ検出のサービスの選び方 security-detection-comparison サービスの選び方 guardduty・inspector・macie・config・security hub cspmなどを「何を見つけるか」で使い分ける aws config aws iam aws security hub aws trusted advisor amazon eventbridge amazon guardduty amazon inspector amazon macie "><a href="security-detection-comparison.html"><span class="name">セキュリティ検出のサービスの選び方</span><span class="desc">GuardDuty・Inspector・Macie・Config・Security Hub CSPMなどを「何を見つけるか」で使い分ける</span></a></li>
+  <li data-keys="機密情報・設定値の保存先の選び方 secrets-config-comparison サービスの選び方 secrets manager・parameter store・appconfig・kmsの違いと使い分け aws cloudformation aws kms aws lambda aws secrets manager aws systems manager amazon ecs "><a href="secrets-config-comparison.html"><span class="name">機密情報・設定値の保存先の選び方</span><span class="desc">Secrets Manager・Parameter Store・AppConfig・KMSの違いと使い分け</span></a></li>
+  <li data-keys="コスト管理ツールの選び方 cost-management-comparison サービスの選び方 cost explorer・budgets・cur・compute optimizer・trusted advisor・savings plansを目的で使い分ける aws compute optimizer aws cost explorer aws cost and usage reports aws organizations aws trusted advisor amazon ec2 savings plans "><a href="cost-management-comparison.html"><span class="name">コスト管理ツールの選び方</span><span class="desc">Cost Explorer・Budgets・CUR・Compute Optimizer・Trusted Advisor・Savings Plansを目的で使い分ける</span></a></li>
 </ul>
 </section>
 <p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>
@@ -120,16 +130,42 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   var q = document.getElementById("toc-q");
   var hits = document.getElementById("toc-hits");
   var none = document.getElementById("toc-none");
+  var SYN = [["ec2", "仮想サーバー", "仮想マシン", "vm", "elastic compute cloud"], ["elb", "alb", "nlb", "gwlb", "ロードバランサー", "ロードバランサ", "負荷分散", "load balancer", "elastic load balancing"], ["s3", "オブジェクトストレージ", "simple storage service"], ["ebs", "ブロックストレージ", "elastic block store"], ["efs", "nfs", "ファイル共有", "elastic file system"], ["rds", "rdb", "リレーショナルデータベース", "mysql", "postgresql", "relational database service"], ["dynamodb", "nosql", "キーバリュー", "ddb"], ["elasticache", "redis", "memcached", "valkey"], ["キャッシュ", "cache", "caching"], ["lambda", "ラムダ", "サーバーレス", "serverless", "関数"], ["iam", "identity and access management", "アクセス許可", "権限"], ["sso", "シングルサインオン", "identity center", "saml"], ["kms", "key management service", "暗号化キー", "cmk", "カスタマーマネージドキー"], ["暗号化", "encryption", "sse", "sse-kms", "sse-s3"], ["cloudwatch", "cw", "メトリクス", "metrics", "アラーム", "alarm"], ["監視", "モニタリング", "monitoring"], ["ログ", "log", "logs"], ["cloudtrail", "証跡", "監査ログ"], ["config", "aws config", "構成変更", "準拠"], ["ssm", "systems manager", "session manager", "patch manager", "run command", "state manager", "パラメータストア", "parameter store"], ["cfn", "cloudformation", "iac", "infrastructure as code", "スタック", "stack"], ["route53", "route 53", "dns", "名前解決"], ["cloudfront", "cdn", "コンテンツ配信", "エッジ", "edge"], ["vpc", "virtual private cloud", "仮想ネットワーク"], ["sg", "セキュリティグループ", "security group", "nacl", "ネットワークacl", "ファイアウォール", "firewall"], ["nat", "natゲートウェイ", "nat gateway"], ["vpn", "ipsec", "site-to-site", "client vpn", "リモートアクセス"], ["dx", "direct connect", "専用線"], ["tgw", "transit gateway"], ["エンドポイント", "endpoint", "privatelink", "vpce"], ["sqs", "キュー", "queue", "dlq", "デッドレターキュー"], ["sns", "通知", "notification", "pub/sub"], ["eventbridge", "イベントバス", "cloudwatch events", "scheduler", "スケジューラー"], ["step functions", "sfn", "ワークフロー", "ステートマシン"], ["asg", "auto scaling", "オートスケーリング", "スケーリング", "scaling"], ["コンテナ", "container", "docker", "ecs", "eks", "fargate", "kubernetes", "k8s"], ["ci/cd", "cicd", "パイプライン", "pipeline", "codepipeline", "codebuild", "codedeploy"], ["デプロイ", "deploy", "リリース", "release"], ["x-ray", "xray", "トレース", "trace", "tracing", "分散トレーシング"], ["waf", "ウェブacl", "web acl", "sqlインジェクション", "xss"], ["shield", "ddos"], ["guardduty", "脅威の検出", "脅威検出"], ["inspector", "脆弱性", "cve"], ["macie", "個人情報", "pii", "機密データ"], ["secrets manager", "シークレット", "パスワード", "password", "ローテーション", "rotation"], ["acm", "証明書", "certificate", "ssl", "tls", "https"], ["organizations", "scp", "マルチアカウント", "複数アカウント", "ou"], ["backup", "バックアップ", "スナップショット", "snapshot"], ["dr", "災害対策", "ディザスタリカバリ", "disaster recovery"], ["フェイルオーバー", "failover", "切り替え"], ["高可用性", "multi-az", "マルチaz", "冗長化", "ha"], ["料金", "費用", "コスト", "cost", "請求", "billing"], ["ri", "リザーブドインスタンス", "reserved instance", "savings plans"], ["kinesis", "ストリーム", "stream", "firehose"], ["sts", "assumerole", "一時的な認証情報", "ロールの引き受け"], ["cognito", "ユーザー認証", "サインイン"], ["api gateway", "apigw", "rest api"], ["imds", "imdsv2", "メタデータ", "metadata"], ["ami", "マシンイメージ", "ゴールデンイメージ", "image builder"], ["az", "アベイラビリティーゾーン", "availability zone"], ["リージョン", "region"], ["cidr", "ipアドレス", "ip address", "サブネットマスク", "ipam"], ["踏み台", "bastion", "ssh", "rdp"], ["パッチ", "patch", "更新プログラム"]];
+  function norm(s) { return (s.normalize ? s.normalize("NFKC") : s).toLowerCase(); }
+  // 言い換えに含まれる短い英字(dr・ha・ri など)は、ほかの語の一部(address・share など)に当たらないよう単語として探す
+  function word(a) { return /^[a-z0-9]{1,3}$/.test(a) ? new RegExp("(^|[^a-z0-9])" + a + "([^a-z0-9]|$)") : a; }
+  function terms(v) {
+    return norm(v).trim().split(/\s+/).filter(Boolean).map(function (w) {
+      var alts = [], known = false;
+      SYN.forEach(function (g) {
+        if (g.indexOf(w) < 0) return;
+        known = true;
+        g.forEach(function (a) { if (a !== w) alts.push(word(a)); });
+      });
+      alts.unshift(known ? word(w) : w);
+      return alts;
+    });
+  }
+  function hit(keys, alts) {
+    return alts.some(function (a) { return typeof a === "string" ? keys.indexOf(a) >= 0 : a.test(keys); });
+  }
+  function hitAll(keys, ts) { return ts.every(function (alts) { return hit(keys, alts); }); }
+  // 「/」キーで検索欄へ移る
+  document.addEventListener("keydown", function (e) {
+    var t = e.target.tagName;
+    if (e.key === "/" && t !== "INPUT" && t !== "TEXTAREA" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); q.focus(); }
+  });
+
   var sections = document.querySelectorAll(".toc-category");
   var total = document.querySelectorAll(".toc-category li").length;
   function apply() {
-    var words = q.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    var words = terms(q.value);
     var shown = 0;
     sections.forEach(function (sec) {
       var n = 0;
       sec.querySelectorAll("li").forEach(function (li) {
         var keys = li.getAttribute("data-keys");
-        var ok = words.every(function (w) { return keys.indexOf(w) >= 0; });
+        var ok = hitAll(keys, words);
         li.hidden = !ok;
         if (ok) n++;
       });

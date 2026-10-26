@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Health Dashboard | AWS教科書</title>
 <meta name="description" content="AWS側の障害や予定されたメンテナンスが、自分のリソースに影響するかを知らせる">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -16,6 +24,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("../sw.js").catch(function () {});
 }
 </script>
+<script src="../js/site.js" defer></script>
 </head>
 <body>
 <header class="site-header" id="top">
@@ -213,10 +222,50 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter backlinks">
 <h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
 <ul class="backlink-list">
-<li><a href="../usecases/health-event-response.html"><span class="title">AWSの予定メンテナンスや障害の通知に自動で対応する</span><span class="desc">AWS HealthのイベントをEventBridgeで受け取り、通知や自動対応につなげる</span></a></li>
+<li><a href="../usecases/health-event-response.html"><span class="title">AWSの予定メンテナンスや障害の通知に自動で対応する</span></a></li>
 </ul>
 </section>
 
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 8件・リンク元 4件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Health Dashboardとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/devops-agent.html"><title>サービス:AWS DevOps Agent</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS DevOps Agent</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/sla-availability.html"><title>用語:SLAと可用性</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">SLAと可用性</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">イベント駆動の自動修復</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/health-event-response.html"><title>運用シナリオ:AWSの予定メンテナンスや障害の通知に自動で対応する</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="200" class="gr-t">AWSの予定メンテナンスや障害の…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/trusted-advisor.html"><title>サービス:AWS Trusted Advisor</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Trusted Advisor</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon SNS</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/support-plans.html"><title>用語:サポートプラン</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">サポートプラン</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/monitoring-logging-comparison.html"><title>用語:監視・記録のサービスの選び方</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">監視・記録のサービスの選び方</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">AWS Health Dashbo…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(4)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
 <nav class="pager">
   <a class="prev" href="trusted-advisor.html"><span class="label">← 前へ</span>AWS Trusted Advisor</a>
   <a class="toc" href="index.html">目次へ戻る</a>

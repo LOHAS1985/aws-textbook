@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>静的サイトを安全に配信する構成を組み立てる | AWS教科書</title>
 <meta name="description" content="独自ドメインとHTTPSで世界中に高速配信し、S3バケットは公開しない">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -16,6 +24,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("../sw.js").catch(function () {});
 }
 </script>
+<script src="../js/site.js" defer></script>
 </head>
 <body>
 <header class="site-header" id="top">
@@ -121,7 +130,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter">
 <h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li>運用シナリオ:<a href="../usecases/static-site-cloudfront.html">S3とCloudFrontで静的サイトを安全に配信する</a></li>
+<li>運用シナリオ:<a href="../usecases/static-site-cloudfront.html">静的サイトを独自ドメイン・HTTPSで安全に配信する</a></li>
 <li>用語:<a href="../terms/tls-termination.html">TLS終端と証明書の配置</a>、<a href="../terms/caching-comparison.html">キャッシュの選び方</a></li>
 <li>サービス:<a href="../services/cloudfront.html">Amazon CloudFront</a>、<a href="../services/acm.html">AWS Certificate Manager</a>、<a href="../services/s3.html">Amazon S3</a></li>
 </ul>

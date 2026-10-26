@@ -47,13 +47,14 @@
     return e;
   }
 
-  // ---- 目次:解いたことのある演習に結果を表示する ----
+  // ---- 目次:解いたことのある演習に結果を表示する(運用シナリオの一覧でも、同じ slug の演習の結果を出す) ----
   function markIndex() {
     var links = document.querySelectorAll(".toc-category li a");
     for (var i = 0; i < links.length; i++) {
+      var name = links[i].querySelector(".name");
+      if (!name) continue;
       var slug = slugOf(links[i].getAttribute("href"));
       var r = store(KEY + slug), f = store(FREE_KEY + slug);
-      var name = links[i].querySelector(".name");
       if (r) {
         var b = el("span", "ex-badge" + (r.score === r.total ? " ex-badge-ok" : ""));
         b.textContent = "穴埋め " + r.score + "/" + r.total;

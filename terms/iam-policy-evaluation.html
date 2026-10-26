@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IAMポリシーと評価ロジック | AWS教科書</title>
 <meta name="description" content="ポリシーの書き方と、複数のポリシーから「許可か拒否か」が決まる順番">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -16,6 +24,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("../sw.js").catch(function () {});
 }
 </script>
+<script src="../js/site.js" defer></script>
 </head>
 <body>
 <header class="site-header" id="top">
@@ -194,6 +203,56 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </section>
 
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 9件・リンク元 8件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 306" style="max-width:784px;min-width:600px" role="img" aria-label="IAMポリシーと評価ロジックとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,60 C265.0,60 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/identity-center.html"><title>サービス:AWS IAM Identity Center</title><rect x="0" y="49" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="64" class="gr-t">AWS IAM Identity Center</text></a>
+<path class="gr-line" d="M230,90 C265.0,90 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="0" y="79" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="94" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M230,120 C265.0,120 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/json-yaml.html"><title>用語:JSONとYAMLの読み方</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="124" class="gr-t">JSONとYAMLの読み方</text></a>
+<path class="gr-line" d="M230,150 C265.0,150 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-passrole.html"><title>用語:iam:PassRoleとサービスにリンクされたロール</title><rect x="0" y="139" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="154" class="gr-t">iam:PassRoleとサービスにリ…</text></a>
+<path class="gr-line" d="M230,180 C265.0,180 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/security-detection-comparison.html"><title>用語:セキュリティ検出のサービスの選び方</title><rect x="0" y="169" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="184" class="gr-t">セキュリティ検出のサービスの選…</text></a>
+<path class="gr-line" d="M230,210 C265.0,210 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/tags.html"><title>用語:タグ</title><rect x="0" y="199" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="214" class="gr-t">タグ</text></a>
+<path class="gr-line" d="M230,240 C265.0,240 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/root-user.html"><title>用語:ルートユーザーとアカウントの保護</title><rect x="0" y="229" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="244" class="gr-t">ルートユーザーとアカウントの保護</text></a>
+<path class="gr-line" d="M230,270 C265.0,270 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/secrets-config-comparison.html"><title>用語:機密情報・設定値の保存先の選び方</title><rect x="0" y="259" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="274" class="gr-t">機密情報・設定値の保存先の選び方</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/kms.html"><title>サービス:AWS KMS</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS KMS</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/sts.html"><title>サービス:AWS STS</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS STS</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/arn.html"><title>用語:ARN</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">ARN</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../terms/oidc.html"><title>用語:OIDC(OpenID Connect)</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">OIDC(OpenID Connect)</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/encryption.html"><title>用語:保存時の暗号化と転送時の暗号化</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">保存時の暗号化と転送時の暗号化</text></a>
+<rect x="300" y="145" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="170" text-anchor="middle" class="gr-tb">IAMポリシーと評価ロ…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(8)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(9)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
 <nav class="pager">
   <a class="prev" href="http-status-codes.html"><span class="label">← 前へ</span>HTTPステータスコードと切り分け</a>
   <a class="toc" href="index.html">目次へ戻る</a>

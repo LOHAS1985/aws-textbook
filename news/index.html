@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ニュース | AWS教科書</title>
 <meta name="description" content="AWSの新しい発表を、図解つきで分かりやすく解説(毎日更新)">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -16,6 +24,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("../sw.js").catch(function () {});
 }
 </script>
+<script src="../js/site.js" defer></script>
 </head>
 <body>
 <header class="site-header" id="top">
@@ -33,7 +42,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="toc-category" id="cat1">
 <h2>2026年10月 <span class="count">(1)</span></h2>
 <ul class="card-list">
-  <li data-keys="2026年10月26日のawsニュース:transit gatewayの1:1 natなど 2026-10-26 2026年10月 transit gatewayとcloud wanの接続だけで、cidrが重なったネットワーク同士をつなげるようになった。"><a href="2026-10-26.html"><span class="name">2026年10月26日のAWSニュース:Transit Gatewayの1:1 NATなど</span><span class="desc">Transit GatewayとCloud WANの接続だけで、CIDRが重なったネットワーク同士をつなげるようになった。</span></a></li>
+  <li data-keys="2026年10月26日のawsニュース:transit gatewayの1:1 natなど 2026-10-26 2026年10月 transit gatewayとcloud wanの接続だけで、cidrが重なったネットワーク同士をつなげるようになった。  "><a href="2026-10-26.html"><span class="name">2026年10月26日のAWSニュース:Transit Gatewayの1:1 NATなど</span><span class="desc">Transit GatewayとCloud WANの接続だけで、CIDRが重なったネットワーク同士をつなげるようになった。</span></a></li>
 </ul>
 </section>
 <p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>
@@ -42,16 +51,42 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   var q = document.getElementById("toc-q");
   var hits = document.getElementById("toc-hits");
   var none = document.getElementById("toc-none");
+  var SYN = [["ec2", "仮想サーバー", "仮想マシン", "vm", "elastic compute cloud"], ["elb", "alb", "nlb", "gwlb", "ロードバランサー", "ロードバランサ", "負荷分散", "load balancer", "elastic load balancing"], ["s3", "オブジェクトストレージ", "simple storage service"], ["ebs", "ブロックストレージ", "elastic block store"], ["efs", "nfs", "ファイル共有", "elastic file system"], ["rds", "rdb", "リレーショナルデータベース", "mysql", "postgresql", "relational database service"], ["dynamodb", "nosql", "キーバリュー", "ddb"], ["elasticache", "redis", "memcached", "valkey"], ["キャッシュ", "cache", "caching"], ["lambda", "ラムダ", "サーバーレス", "serverless", "関数"], ["iam", "identity and access management", "アクセス許可", "権限"], ["sso", "シングルサインオン", "identity center", "saml"], ["kms", "key management service", "暗号化キー", "cmk", "カスタマーマネージドキー"], ["暗号化", "encryption", "sse", "sse-kms", "sse-s3"], ["cloudwatch", "cw", "メトリクス", "metrics", "アラーム", "alarm"], ["監視", "モニタリング", "monitoring"], ["ログ", "log", "logs"], ["cloudtrail", "証跡", "監査ログ"], ["config", "aws config", "構成変更", "準拠"], ["ssm", "systems manager", "session manager", "patch manager", "run command", "state manager", "パラメータストア", "parameter store"], ["cfn", "cloudformation", "iac", "infrastructure as code", "スタック", "stack"], ["route53", "route 53", "dns", "名前解決"], ["cloudfront", "cdn", "コンテンツ配信", "エッジ", "edge"], ["vpc", "virtual private cloud", "仮想ネットワーク"], ["sg", "セキュリティグループ", "security group", "nacl", "ネットワークacl", "ファイアウォール", "firewall"], ["nat", "natゲートウェイ", "nat gateway"], ["vpn", "ipsec", "site-to-site", "client vpn", "リモートアクセス"], ["dx", "direct connect", "専用線"], ["tgw", "transit gateway"], ["エンドポイント", "endpoint", "privatelink", "vpce"], ["sqs", "キュー", "queue", "dlq", "デッドレターキュー"], ["sns", "通知", "notification", "pub/sub"], ["eventbridge", "イベントバス", "cloudwatch events", "scheduler", "スケジューラー"], ["step functions", "sfn", "ワークフロー", "ステートマシン"], ["asg", "auto scaling", "オートスケーリング", "スケーリング", "scaling"], ["コンテナ", "container", "docker", "ecs", "eks", "fargate", "kubernetes", "k8s"], ["ci/cd", "cicd", "パイプライン", "pipeline", "codepipeline", "codebuild", "codedeploy"], ["デプロイ", "deploy", "リリース", "release"], ["x-ray", "xray", "トレース", "trace", "tracing", "分散トレーシング"], ["waf", "ウェブacl", "web acl", "sqlインジェクション", "xss"], ["shield", "ddos"], ["guardduty", "脅威の検出", "脅威検出"], ["inspector", "脆弱性", "cve"], ["macie", "個人情報", "pii", "機密データ"], ["secrets manager", "シークレット", "パスワード", "password", "ローテーション", "rotation"], ["acm", "証明書", "certificate", "ssl", "tls", "https"], ["organizations", "scp", "マルチアカウント", "複数アカウント", "ou"], ["backup", "バックアップ", "スナップショット", "snapshot"], ["dr", "災害対策", "ディザスタリカバリ", "disaster recovery"], ["フェイルオーバー", "failover", "切り替え"], ["高可用性", "multi-az", "マルチaz", "冗長化", "ha"], ["料金", "費用", "コスト", "cost", "請求", "billing"], ["ri", "リザーブドインスタンス", "reserved instance", "savings plans"], ["kinesis", "ストリーム", "stream", "firehose"], ["sts", "assumerole", "一時的な認証情報", "ロールの引き受け"], ["cognito", "ユーザー認証", "サインイン"], ["api gateway", "apigw", "rest api"], ["imds", "imdsv2", "メタデータ", "metadata"], ["ami", "マシンイメージ", "ゴールデンイメージ", "image builder"], ["az", "アベイラビリティーゾーン", "availability zone"], ["リージョン", "region"], ["cidr", "ipアドレス", "ip address", "サブネットマスク", "ipam"], ["踏み台", "bastion", "ssh", "rdp"], ["パッチ", "patch", "更新プログラム"]];
+  function norm(s) { return (s.normalize ? s.normalize("NFKC") : s).toLowerCase(); }
+  // 言い換えに含まれる短い英字(dr・ha・ri など)は、ほかの語の一部(address・share など)に当たらないよう単語として探す
+  function word(a) { return /^[a-z0-9]{1,3}$/.test(a) ? new RegExp("(^|[^a-z0-9])" + a + "([^a-z0-9]|$)") : a; }
+  function terms(v) {
+    return norm(v).trim().split(/\s+/).filter(Boolean).map(function (w) {
+      var alts = [], known = false;
+      SYN.forEach(function (g) {
+        if (g.indexOf(w) < 0) return;
+        known = true;
+        g.forEach(function (a) { if (a !== w) alts.push(word(a)); });
+      });
+      alts.unshift(known ? word(w) : w);
+      return alts;
+    });
+  }
+  function hit(keys, alts) {
+    return alts.some(function (a) { return typeof a === "string" ? keys.indexOf(a) >= 0 : a.test(keys); });
+  }
+  function hitAll(keys, ts) { return ts.every(function (alts) { return hit(keys, alts); }); }
+  // 「/」キーで検索欄へ移る
+  document.addEventListener("keydown", function (e) {
+    var t = e.target.tagName;
+    if (e.key === "/" && t !== "INPUT" && t !== "TEXTAREA" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); q.focus(); }
+  });
+
   var sections = document.querySelectorAll(".toc-category");
   var total = document.querySelectorAll(".toc-category li").length;
   function apply() {
-    var words = q.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    var words = terms(q.value);
     var shown = 0;
     sections.forEach(function (sec) {
       var n = 0;
       sec.querySelectorAll("li").forEach(function (li) {
         var keys = li.getAttribute("data-keys");
-        var ok = words.every(function (w) { return keys.indexOf(w) >= 0; });
+        var ok = hitAll(keys, words);
         li.hidden = !ok;
         if (ok) n++;
       });
