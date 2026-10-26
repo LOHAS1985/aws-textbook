@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSONとYAMLの読み方 | AWS教科書</title>
+<meta name="description" content="IAMポリシー・CloudFormationのテンプレート・イベントパターンなどを書くための2つのデータの書き方">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>JSONとYAMLの読み方</h1>
+  <p class="lead">IAMポリシー・CloudFormationのテンプレート・イベントパターンなどを書くための2つのデータの書き方</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWSの設定の多くは、<strong>JSON</strong>か<strong>YAML</strong>で書きます。どちらも「名前と値の組」と「並び(リスト)」を組み合わせてデータを表す書き方で、同じ内容をどちらでも表せます。試験でもポリシーやテンプレートの一部が示され、内容を読み取る問題が出ます。</p>
+<div class="table-wrap"><table>
+<tr><th>使う場所</th><th>書き方</th></tr>
+<tr><td>IAMポリシー・バケットポリシー・キーポリシー</td><td>JSON</td></tr>
+<tr><td>CloudFormationのテンプレート</td><td>JSON または YAML(YAMLが一般的)</td></tr>
+<tr><td>EventBridgeのイベントパターン、Step Functionsの定義</td><td>JSON</td></tr>
+<tr><td>Systems Managerのドキュメント(ランブック)</td><td>JSON または YAML</td></tr>
+<tr><td>CodeBuildの buildspec、CodeDeployの appspec、SAMのテンプレート</td><td>YAML</td></tr>
+<tr><td>AWS CLIの出力、APIのリクエストと応答</td><td>JSON(CLIは <code>--output yaml</code> なども可)</td></tr>
+</table></div>
+
+<h3 id="c1-1">同じ内容をJSONとYAMLで書く<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>次の2つは、どちらも「名前が web、ポートが 80 と 443、公開する」という同じデータです。</p>
+<pre class="code"><code>{
+  "Name": "web",
+  "Ports": [80, 443],
+  "Public": true
+}</code></pre>
+<pre class="code"><code>Name: web
+Ports:
+  - 80
+  - 443
+Public: true</code></pre>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>JSON</th><th>YAML</th></tr>
+<tr><td>名前と値の組(オブジェクト)</td><td><code>{ "キー": 値 }</code>。キーは必ず <code>"</code> で囲む</td><td><code>キー: 値</code>(コロンのあとに空白)</td></tr>
+<tr><td>並び(リスト・配列)</td><td><code>[値1, 値2]</code></td><td>行頭の <code>- </code>(または <code>[値1, 値2]</code>)</td></tr>
+<tr><td>入れ子</td><td><code>{ }</code> と <code>[ ]</code> の中に書く</td><td><strong>字下げ(インデント)</strong>で表す。タブは使えず空白だけ</td></tr>
+<tr><td>文字列</td><td>必ず <code>"</code> で囲む</td><td>多くの場合、囲まなくてよい</td></tr>
+<tr><td>コメント</td><td>書けない</td><td><code>#</code> から行末まで</td></tr>
+</table></div>
+<div class="point"><p>YAMLは<strong>字下げの深さで構造が決まる</strong>ので、空白が1つずれただけで意味が変わったりエラーになったりします。JSONは<strong>カンマの付け忘れ・付けすぎ</strong>(最後の要素のあとにカンマを付けるとエラー)が典型的な間違いです。</p></div>
+
+<h3 id="c1-2">読み方の例:IAMポリシー<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<pre class="code"><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Action": "s3:*",
+      "Resource": ["arn:aws:s3:::logs", "arn:aws:s3:::logs/*"],
+      "Condition": { "Bool": { "aws:SecureTransport": "false" } }
+    }
+  ]
+}</code></pre>
+<p><code>Statement</code> は <code>[ ]</code> なので、許可・拒否のかたまりを複数並べられます。この例は1つだけで、「HTTPSでない(<code>aws:SecureTransport</code> が false の)S3の操作をすべて拒否する」という意味です。<code>Resource</code> にバケット自体(<code>logs</code>)と中のオブジェクト(<code>logs/*</code>)の両方を並べている点もよく問われます。</p>
+
+<h3 id="c1-3">読み方の例:CloudFormationのテンプレート(YAML)<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<pre class="code"><code>Resources:
+  LogBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+Outputs:
+  BucketName:
+    Value: !Ref LogBucket</code></pre>
+<p>字下げから、<code>LogBucket</code> は <code>Resources</code> の中の1つのリソースで、<code>DeletionPolicy</code>(スタックを消してもバケットを残す)と <code>Properties</code> を持つことが読み取れます。<code>!Ref</code> のような <code>!</code> で始まる書き方は、YAMLで使えるCloudFormationの組み込み関数の短縮形です(JSONでは <code>{"Ref": "LogBucket"}</code> と書く)。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:ポリシーの要素の意味</li>
+<li><a href="event-driven-remediation.html">イベント駆動の自動修復</a>:イベントパターンの書き方</li>
+<li><a href="terraform-git.html">TerraformとGit</a>:Terraformは別の書き方(HCL)を使う</li>
+<li><a href="arn.html">ARN</a>:ポリシーの Resource に書く</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:JSONのポリシー</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:JSON・YAMLのテンプレート</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:JSONのイベントパターン</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:ドキュメント(ランブック)</li>
+<li><a href="../services/codebuild.html">AWS CodeBuild</a>:YAMLの buildspec</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/iam.html"><span class="title">AWS IAM</span><span class="kind">サービス</span><span class="desc">AWSの認証・認可を管理するサービス</span></a></li>
+<li><a href="../services/cloudformation.html"><span class="title">AWS CloudFormation</span><span class="kind">サービス</span><span class="desc">AWSリソースをテンプレート(コード)で定義し、自動構築・管理</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="service-quotas.html"><span class="label">← 前へ</span>サービスクォータ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="dns.html"><span class="label">次へ →</span>DNS</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
