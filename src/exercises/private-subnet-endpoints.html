@@ -1,0 +1,92 @@
+<!-- title: プライベートサブネットからNATなしでAWSを使う構成を組み立てる -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: インターネットへの経路を持たないEC2から、S3とSession Managerを使えるようにする -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>プライベートサブネットのEC2から、<strong>S3のオブジェクトを読み書き</strong>したい。</li>
+<li>同じEC2に、<strong>Session Manager</strong>で接続して操作したい。</li>
+<li>費用とインターネットへの経路をなくすため、<strong>NATゲートウェイは使わない</strong>。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<p>図の空欄(①・②)と、設定(③〜⑤)を選んで「答え合わせ」を押してください。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node ec2 0 0.5 blue "EC2" "プライベート"
+node a 1.5 0 blank "①" "S3への経路"
+node b 1.5 1 blank "②" "SSMへの経路"
+node s3 3 0 ok "S3"
+node ssm 3 1 ok "Systems Manager" "Session Manager"
+edge ec2 a
+edge ec2 b
+edge a s3
+edge b ssm
+<figcaption>図1 VPCエンドポイントによる接続の構成。①・②に入る接続方法を選ぶ。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="a">
+<p class="ex-q">① EC2からS3への経路として、NATを使わず、費用もかからないものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="GW型エンドポイント">ゲートウェイ型VPCエンドポイント<span class="ex-why">S3とDynamoDB用のエンドポイントで、<strong>料金がかかりません</strong>。ルートテーブルに経路を追加して使います。</span></li>
+<li data-short="NATゲートウェイ">NATゲートウェイ<span class="ex-why">要件で使わないと決めています。時間料金と処理したデータ量の料金がかかり、インターネットへの経路にもなります。</span></li>
+<li data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">パブリックIPアドレスとインターネットへの経路が必要になり、プライベートサブネットのままでは使えません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="b">
+<p class="ex-q">② EC2からSystems Manager(Session Manager)への経路は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="IF型エンドポイント">インターフェイス型VPCエンドポイント<span class="ex-why">サブネットにENIを置き、プライベートIPアドレスでサービスに接続します。Session Managerには <code>ssm</code>・<code>ssmmessages</code> などのエンドポイントを作ります。</span></li>
+<li data-short="GW型エンドポイント">ゲートウェイ型VPCエンドポイント<span class="ex-why">ゲートウェイ型があるのはS3とDynamoDBだけです。</span></li>
+<li data-short="VPCピアリング">VPCピアリング<span class="ex-why">VPC同士をつなぐ仕組みで、AWSのサービスのAPIへの経路にはなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ ゲートウェイ型エンドポイントを使うために必要な設定は?</p>
+<ul class="ex-choices">
+<li data-ok>EC2のサブネットのルートテーブルにエンドポイントを関連付ける<span class="ex-why">S3のプレフィックスリストあての経路がルートテーブルに追加され、S3への通信がエンドポイントを通ります(<a href="../terms/route-table.html">ルートテーブル</a>)。</span></li>
+<li>エンドポイントにセキュリティグループを付ける<span class="ex-why">ゲートウェイ型にはセキュリティグループを付けません。セキュリティグループを使うのはインターフェイス型です。</span></li>
+<li>プライベートDNS名を有効にする<span class="ex-why">インターフェイス型の設定です。ゲートウェイ型はDNSではなくルートテーブルで経路を変えます。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ インターフェイス型エンドポイントのセキュリティグループで許可する通信は?</p>
+<ul class="ex-choices">
+<li data-ok>インバウンドのHTTPS(443)を、EC2(またはVPCのCIDR)から許可<span class="ex-why">EC2はHTTPSでエンドポイントのENIに接続します(<a href="../terms/port-numbers.html">よく使うポート番号</a>)。</span></li>
+<li>インバウンドのSSH(22)を、EC2から許可<span class="ex-why">Session ManagerはSSHのポートを使いません。EC2側でも22番を開ける必要はありません。</span></li>
+<li>何も許可しない(エンドポイントには不要)<span class="ex-why">インターフェイス型はENIなので、セキュリティグループで443を許可しないと接続できません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">⑤ インターフェイス型エンドポイントの「プライベートDNS名を有効にする」の効果は?</p>
+<ul class="ex-choices">
+<li data-ok>通常のエンドポイント名(例:<code>ssm.ap-northeast-1.amazonaws.com</code>)のまま、エンドポイントのプライベートIPアドレスに接続される<span class="ex-why">エージェントやアプリの設定を変えずにエンドポイントを使えます。VPCの「DNS解決」と「DNSホスト名」の両方を有効にしておく必要があります。</span></li>
+<li>エンドポイント専用の名前に、エージェントの設定を書き換える必要がある<span class="ex-why">プライベートDNS名を<strong>無効</strong>にした場合の動きです。</span></li>
+<li>通信がインターネット経由に切り替わる<span class="ex-why">エンドポイントの通信はAWSのネットワークの中だけを通ります。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>S3へは無料の<strong>ゲートウェイ型</strong>エンドポイントをルートテーブルに関連付け、Systems Managerへは<strong>インターフェイス型</strong>エンドポイントを作ってセキュリティグループで443を許可し、プライベートDNS名を有効にします。EC2には <code>AmazonSSMManagedInstanceCore</code> を付けたIAMロールが必要です。</p>
+<p>2種類のエンドポイントの違いは「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」、NATゲートウェイとの費用の比較は「<a href="../terms/pricing-basics.html">料金の基本</a>」で説明しています。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/private-subnet-endpoints.html">プライベートサブネットからNATなしでAWSのサービスを使う</a>、<a href="../usecases/bastionless-access.html">踏み台サーバーなしでプライベートなEC2を操作する</a></li>
+<li>用語:<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>、<a href="../terms/route-table.html">ルートテーブル</a>、<a href="../terms/port-numbers.html">よく使うポート番号</a></li>
+<li>サービス:<a href="../services/vpc.html">Amazon VPC</a>、<a href="../services/systems-manager.html">AWS Systems Manager</a>、<a href="../services/s3.html">Amazon S3</a></li>
+</ul>
+</section>

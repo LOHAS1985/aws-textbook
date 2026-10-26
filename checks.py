@@ -13,12 +13,15 @@ build.py の main() から check_pages() が呼ばれる。検査の内容:
 import posixpath
 import re
 
+from diagrams import text_width
+
 # ページの種類ごとの章(h2)。見出しはこの文字列で始まること(後ろに補足の語を付けてもよい)
 CHAPTERS = {
     "services": ["1. サービス概要", "2. 主な機能・特徴", "3. ユースケース", "4. 料金の考え方",
                  "5. 関連サービス", "6. 試験・実務でのポイント", "7. まとめ"],
     "terms": ["1. 詳しい説明", "2. 関連する用語", "3. 関連サービス"],
     "usecases": ["1. やりたいこと", "2. 構成図", "3. 使うサービスと役割", "4. 構築の流れ", "5. ポイント・注意点"],
+    "exercises": ["1. 要件", "2. 構成を組み立てる", "3. 解説", "4. 関連ページ"],
 }
 
 # 表記の統一:(使わない表記の正規表現, 使う表記)
@@ -126,6 +129,8 @@ def check_pages(collections, loaded, extra_pages, out_dir, warnings):
         _check_chapters(key, raw, where, warnings)
         _check_links(f"{key}/{p['slug']}.html", raw, targets, out_dir, where, warnings)
         _check_style(raw, where, warnings)
+        if key == "exercises":
+            _check_exercise(raw, where, warnings)
     for path, raw in extra_pages.items():
         _check_links(path, raw, targets, out_dir, path, warnings)
         _check_style(raw, path, warnings)
@@ -164,6 +169,39 @@ def _check_links(page_path, raw, targets, out_dir, where, warnings):
             warnings.append(f"{where}:{line}: リンク切れ {href}")
         elif frag and targets[target] is not None and frag not in targets[target] and frag != "top":
             warnings.append(f"{where}:{line}: リンク先に見出し #{frag} がありません({href})")
+
+
+def _check_exercise(raw, where, warnings):
+    """構成演習:各問に正解が1つあるか、図の空欄と問いが対応しているか、図に出す名前が枠に収まるか。"""
+    colw = 170.0
+    m = re.search(r"^\s*grid\s+([\d.]+)", raw, re.M)
+    if m:
+        colw = float(m.group(1))
+    blanks = {}  # 空欄のノードID → 文字を置ける幅
+    for nid, opts in re.findall(r'^\s*node\s+(\S+)\s+\S+\s+\S+\s+blank\b(.*)$', raw, re.M):
+        w = re.search(r"\bw=([\d.]+)", opts)
+        blanks[nid] = (float(w.group(1)) if w else 1) * colw - 32
+    items = re.findall(r'<div class="ex-item"([^>]*)>(.*?)</ul>\s*</div>', raw, re.S)
+    if not items:
+        warnings.append(f"{where}: 問い(ex-item)がありません")
+    used = set()
+    for n, (attrs, inner) in enumerate(items, 1):
+        choices = re.findall(r"<li\b([^>]*)>", inner)
+        if len(choices) < 2 or sum("data-ok" in c for c in choices) != 1:
+            warnings.append(f"{where}: {n}問目は、選択肢が2つ以上・正解(data-ok)がちょうど1つになるようにしてください")
+        node = re.search(r'data-node="([^"]+)"', attrs)
+        if not node:
+            continue
+        nid = node.group(1)
+        used.add(nid)
+        if nid not in blanks:
+            warnings.append(f"{where}: {n}問目の data-node「{nid}」が図の空欄(blank)にありません")
+            continue
+        for short in re.findall(r'data-short="([^"]+)"', inner):
+            if text_width(short, 14) > blanks[nid]:
+                warnings.append(f"{where}: {n}問目の data-short「{short}」が図の枠からはみ出します")
+    for nid in blanks.keys() - used:
+        warnings.append(f"{where}: 図の空欄「{nid}」に対応する問いがありません")
 
 
 def _check_style(raw, where, warnings):

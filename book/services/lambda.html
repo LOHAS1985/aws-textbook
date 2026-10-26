@@ -56,27 +56,41 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Lambdaの全体像。イベントをきっかけに関数が実行され、処理結果はデスティネーション(成功時・失敗時の送信先)に送れる。"><defs><marker id="dgservices-lambda-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s3">
 <rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="60" text-anchor="middle" class="dg-t">S3</text>
 <text x="109" y="78" text-anchor="middle" class="dg-s">ファイルのアップロード</text>
+</g>
+<g data-node="api">
 <rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="140" text-anchor="middle" class="dg-t">API Gateway</text>
 <text x="109" y="158" text-anchor="middle" class="dg-s">HTTPリクエスト</text>
+</g>
+<g data-node="sqs">
 <rect x="34" y="198" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="220" text-anchor="middle" class="dg-t">SQS など</text>
 <text x="109" y="238" text-anchor="middle" class="dg-s">メッセージ・イベント</text>
+</g>
+<g data-node="fn">
 <rect x="272" y="38" width="150" height="212" rx="8" class="dg-accent"/>
 <text x="347" y="140" text-anchor="middle" class="dg-tb">Lambda関数</text>
 <text x="347" y="158" text-anchor="middle" class="dg-s">ハンドラーを実行</text>
+</g>
+<g data-node="ddb">
 <rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
 <text x="585" y="60" text-anchor="middle" class="dg-t">DynamoDB など</text>
 <text x="585" y="78" text-anchor="middle" class="dg-s">AWSサービスを操作</text>
+</g>
+<g data-node="ok">
 <rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="585" y="140" text-anchor="middle" class="dg-t">成功時の送信先</text>
 <text x="585" y="158" text-anchor="middle" class="dg-s">デスティネーション</text>
+</g>
+<g data-node="ng">
 <rect x="510" y="198" width="150" height="52" rx="8" class="dg-ng"/>
 <text x="585" y="220" text-anchor="middle" class="dg-t">失敗時の送信先</text>
 <text x="585" y="238" text-anchor="middle" class="dg-s">デスティネーション</text>
+</g>
 <path d="M184.0,89.2 L272.0,118.8" class="dg-line" marker-end="url(#dgservices-lambda-1)"/>
 <path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgservices-lambda-1)"/>
 <path d="M184.0,198.8 L272.0,169.2" class="dg-line" marker-end="url(#dgservices-lambda-1)"/>
@@ -137,21 +151,31 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 718 209" style="max-width:718px;min-width:574px" role="img" aria-label="図2 実行環境のライフサイクル。待機中の実行環境が次のリクエストで再利用されると、初期化が省かれて高速に動く(ウォームスタート)。"><defs><marker id="dgservices-lambda-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="init">
 <rect x="34" y="43" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="64" text-anchor="middle" class="dg-t">初期化</text>
 <text x="109" y="82" text-anchor="middle" class="dg-s">環境作成・コード読込</text>
+</g>
+<g data-node="run">
 <rect x="204" y="43" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="279" y="64" text-anchor="middle" class="dg-tb">実行</text>
 <text x="279" y="82" text-anchor="middle" class="dg-s">ハンドラーを呼ぶ</text>
+</g>
+<g data-node="idle">
 <rect x="374" y="43" width="150" height="52" rx="8" class="dg-box"/>
 <text x="449" y="64" text-anchor="middle" class="dg-t">待機</text>
 <text x="449" y="82" text-anchor="middle" class="dg-s">メモリを保持</text>
+</g>
+<g data-node="down">
 <rect x="544" y="43" width="150" height="52" rx="8" class="dg-ng"/>
 <text x="619" y="64" text-anchor="middle" class="dg-t">シャットダウン</text>
 <text x="619" y="82" text-anchor="middle" class="dg-s">AWSが破棄</text>
+</g>
+<g data-node="reuse">
 <rect x="289" y="133" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="364" y="154" text-anchor="middle" class="dg-t">次のリクエスト</text>
 <text x="364" y="172" text-anchor="middle" class="dg-s">初期化をスキップ</text>
+</g>
 <path d="M184.0,69.0 L204.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-2)"/>
 <path d="M354.0,69.0 L374.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-2)"/>
 <path d="M524.0,69.0 L544.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-2)"/>
@@ -179,20 +203,30 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 896 202" style="max-width:896px;min-width:716px" role="img" aria-label="図3 非同期呼び出しの流れ。イベントはLambdaの内部キューに入り、エラーなら再試行される。再試行しても失敗したイベントは、失敗時のデスティネーションかDLQに送られる。"><defs><marker id="dgservices-lambda-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
 <rect x="34" y="83" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="112" y="104" text-anchor="middle" class="dg-t">S3・SNSなど</text>
 <text x="112" y="122" text-anchor="middle" class="dg-s">非同期呼び出し</text>
+</g>
+<g data-node="q">
 <rect x="262" y="83" width="155" height="52" rx="8" class="dg-box"/>
 <text x="339" y="104" text-anchor="middle" class="dg-t">内部キュー</text>
 <text x="339" y="122" text-anchor="middle" class="dg-s">最大2回再試行</text>
+</g>
+<g data-node="fn">
 <rect x="489" y="89" width="155" height="40" rx="8" class="dg-accent"/>
 <text x="566" y="113" text-anchor="middle" class="dg-tb">Lambda関数</text>
+</g>
+<g data-node="ok">
 <rect x="716" y="40" width="155" height="52" rx="8" class="dg-ok"/>
 <text x="794" y="62" text-anchor="middle" class="dg-t">成功時の送信先</text>
 <text x="794" y="80" text-anchor="middle" class="dg-s">デスティネーション</text>
+</g>
+<g data-node="ng">
 <rect x="716" y="126" width="155" height="52" rx="8" class="dg-ng"/>
 <text x="794" y="147" text-anchor="middle" class="dg-t">失敗時の送信先</text>
 <text x="794" y="165" text-anchor="middle" class="dg-s">またはDLQ</text>
+</g>
 <path d="M189.0,109.0 L261.5,109.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
 <path d="M416.5,109.0 L489.0,109.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
 <path d="M644.0,94.5 L716.5,81.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
@@ -221,14 +255,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 774 114" style="max-width:774px;min-width:619px" role="img" aria-label="図4 Lambdaの2つの権限。呼び出してよい相手はリソースベースのポリシー、関数がアクセスしてよい先は実行ロールで許可する。"><defs><marker id="dgservices-lambda-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s3">
 <rect x="34" y="38" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="60" text-anchor="middle" class="dg-t">S3・SNS</text>
 <text x="104" y="78" text-anchor="middle" class="dg-s">呼び出す側</text>
+</g>
+<g data-node="fn">
 <rect x="354" y="44" width="140" height="40" rx="8" class="dg-accent"/>
 <text x="424" y="68" text-anchor="middle" class="dg-tb">Lambda関数</text>
+</g>
+<g data-node="ddb">
 <rect x="610" y="38" width="140" height="52" rx="8" class="dg-box"/>
 <text x="680" y="60" text-anchor="middle" class="dg-t">DynamoDB</text>
 <text x="680" y="78" text-anchor="middle" class="dg-s">アクセス先</text>
+</g>
 <path d="M174.0,64.0 L354.0,64.0" class="dg-line" marker-end="url(#dgservices-lambda-4)"/>
 <text x="264" y="68" text-anchor="middle" class="dg-s dg-halo">リソースベースのポリシー</text>
 <path d="M494.0,64.0 L610.0,64.0" class="dg-line" marker-end="url(#dgservices-lambda-4)"/>
@@ -253,16 +293,24 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 179" style="max-width:684px;min-width:547px" role="img" aria-label="図5 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。"><defs><marker id="dgservices-lambda-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
 <rect x="34" y="68" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="90" text-anchor="middle" class="dg-t">イベントソース</text>
 <text x="109" y="108" text-anchor="middle" class="dg-s">S3など</text>
+</g>
+<g data-node="alias">
 <rect x="272" y="74" width="150" height="40" rx="8" class="dg-accent"/>
 <text x="347" y="98" text-anchor="middle" class="dg-tb">エイリアス prod</text>
+</g>
+<g data-node="v1">
 <rect x="510" y="39" width="150" height="40" rx="8" class="dg-box"/>
 <text x="585" y="63" text-anchor="middle" class="dg-t">バージョン1</text>
+</g>
+<g data-node="v2">
 <rect x="510" y="103" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="585" y="124" text-anchor="middle" class="dg-t">バージョン2</text>
 <text x="585" y="142" text-anchor="middle" class="dg-s">新しいコード</text>
+</g>
 <path d="M184.0,94.0 L272.0,94.0" class="dg-line" marker-end="url(#dgservices-lambda-5)"/>
 <text x="228" y="98" text-anchor="middle" class="dg-s dg-halo">ARNを指定</text>
 <path d="M422.0,83.0 L510.0,70.0" class="dg-line" marker-end="url(#dgservices-lambda-5)"/>
@@ -289,14 +337,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="272" y="35" class="dg-s">VPC</text>
 <rect x="24" y="20" width="170" height="90" rx="10" class="dg-group"/>
 <text x="34" y="35" class="dg-s">AWS管理の環境</text>
+<g data-node="fn">
 <rect x="34" y="54" width="150" height="40" rx="8" class="dg-accent"/>
 <text x="109" y="78" text-anchor="middle" class="dg-tb">Lambda関数</text>
+</g>
+<g data-node="eni">
 <rect x="272" y="48" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="347" y="70" text-anchor="middle" class="dg-t">ENI</text>
 <text x="347" y="88" text-anchor="middle" class="dg-s">サブネット+SG</text>
+</g>
+<g data-node="rds">
 <rect x="442" y="48" width="150" height="52" rx="8" class="dg-box"/>
 <text x="517" y="70" text-anchor="middle" class="dg-t">RDS など</text>
 <text x="517" y="88" text-anchor="middle" class="dg-s">VPC内のリソース</text>
+</g>
 <path d="M184.0,74.0 L272.0,74.0" class="dg-line" marker-end="url(#dgservices-lambda-6)"/>
 <path d="M422.0,74.0 L442.0,74.0" class="dg-line" marker-end="url(#dgservices-lambda-6)"/>
 </svg>
@@ -312,21 +366,33 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 878 227" style="max-width:878px;min-width:702px" role="img" aria-label="図7 VPC接続したLambdaの外への通信。インターネットへはプライベートサブネットからNATゲートウェイ経由で出る。AWSサービスへはVPCエンドポイントでも接続できる。"><defs><marker id="dgservices-lambda-7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="fn">
 <rect x="34" y="151" width="155" height="52" rx="8" class="dg-accent"/>
 <text x="112" y="172" text-anchor="middle" class="dg-tb">Lambda</text>
 <text x="112" y="190" text-anchor="middle" class="dg-s">プライベートサブネット</text>
+</g>
+<g data-node="nat">
 <rect x="262" y="43" width="155" height="52" rx="8" class="dg-ok"/>
 <text x="339" y="64" text-anchor="middle" class="dg-t">NATゲートウェイ</text>
 <text x="339" y="82" text-anchor="middle" class="dg-s">パブリックサブネット</text>
+</g>
+<g data-node="igw">
 <rect x="489" y="49" width="155" height="40" rx="8" class="dg-box"/>
 <text x="566" y="73" text-anchor="middle" class="dg-t">IGW</text>
+</g>
+<g data-node="net">
 <rect x="699" y="43" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="776" y="64" text-anchor="middle" class="dg-t">インターネット</text>
 <text x="776" y="82" text-anchor="middle" class="dg-s">外部API</text>
+</g>
+<g data-node="vpce">
 <rect x="262" y="157" width="155" height="40" rx="8" class="dg-ok"/>
 <text x="339" y="181" text-anchor="middle" class="dg-t">VPCエンドポイント</text>
+</g>
+<g data-node="s3">
 <rect x="489" y="157" width="155" height="40" rx="8" class="dg-box"/>
 <text x="566" y="181" text-anchor="middle" class="dg-t">S3・DynamoDBなど</text>
+</g>
 <path d="M166.3,151.0 L284.2,95.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
 <text x="225" y="127" text-anchor="middle" class="dg-s dg-halo">0.0.0.0/0</text>
 <path d="M416.5,69.0 L489.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>

@@ -149,6 +149,24 @@ COLLECTIONS = [
         ],
     },
     {
+        # 運用シナリオの構成を、空欄を選んで組み立てる演習。答え合わせは book/js/sim.js が行う。
+        # ヘッダーのナビゲーションには出さず、トップページと運用シナリオのページ末尾から案内する
+        "key": "exercises",
+        "label": "構成演習",
+        "desc": "要件を読み、空欄に入るサービスや設定を選んで構成を組み立てる演習(AWSアカウントは不要)",
+        "categories": [
+            "監視・ログ・自動修復", "信頼性・事業継続", "デプロイ・自動化",
+            "セキュリティ・コンプライアンス", "ネットワーク・コンテンツ配信",
+        ],
+        "search": "やりたいこと・サービス名で絞り込み(例: エンドポイント、アラーム)",
+        "order": [
+            "ec2-memory-monitoring", "auto-scaling-web", "scheduled-start-stop",
+            "config-auto-remediation", "private-subnet-endpoints",
+        ],
+        "nav": False,
+        "script": "sim.js",
+    },
+    {
         # src/news/YYYY-MM-DD.html を毎日1件、クラウドの定期エージェントが追加する。
         # category は「YYYY年M月」。新しい日付から順に並べ、ヘッダーのナビゲーションには出さない
         "key": "news",
@@ -232,6 +250,7 @@ def load_pages(col, warnings, updated):
 BACKLINKS = [
     ("services", ["usecases"], "このサービスが登場する運用シナリオ"),
     ("terms", ["services", "usecases"], "この用語が出てくるページ"),
+    ("usecases", ["exercises"], "この構成を組み立てる演習"),
 ]
 
 
@@ -428,7 +447,13 @@ def render_page(col, pages, i):
             + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
             + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
             + f'{fmt_date(p["updated"])}</time></p>\n'
-            + "  </div>\n</div>\n" + page_toc(items) + body + "\n" + pager(prev, nxt) + "</main>\n" + TO_TOP + TAIL)
+            + "  </div>\n</div>\n" + page_toc(items) + body + "\n" + pager(prev, nxt) + "</main>\n" + TO_TOP
+            + page_script(col) + TAIL)
+
+
+def page_script(col):
+    """コレクション専用のスクリプト(構成演習の答え合わせなど)を読み込むタグ。"""
+    return f'<script src="../js/{col["script"]}" defer></script>\n' if col.get("script") else ""
 
 
 def cat_style(col, category):
@@ -485,7 +510,7 @@ def render_collection_index(col, pages):
     if col.get("search") and pages:
         parts.append('<p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>\n'
                      + SEARCH_SCRIPT)
-    parts += ["</main>\n", TAIL]
+    parts += ["</main>\n", page_script(col), TAIL]
     return "".join(parts)
 
 

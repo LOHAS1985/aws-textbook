@@ -70,21 +70,31 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 480 262" style="max-width:480px;min-width:480px" role="img" aria-label="図1 パーティションキー(UserID)で保存先のパーティションが決まり、同じパーティション内はソートキー(OrderDate)の順に並ぶ。値が偏ると特定のパーティションに負荷が集中する。"><defs><marker id="dgservices-dynamodb-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="i1">
 <rect x="34" y="36" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="57" text-anchor="middle" class="dg-t">UserID = u1</text>
 <text x="109" y="75" text-anchor="middle" class="dg-s">OrderDate = 0401</text>
+</g>
+<g data-node="i2">
 <rect x="34" y="110" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="132" text-anchor="middle" class="dg-t">UserID = u1</text>
 <text x="109" y="150" text-anchor="middle" class="dg-s">OrderDate = 0405</text>
+</g>
+<g data-node="i3">
 <rect x="34" y="186" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="207" text-anchor="middle" class="dg-t">UserID = u2</text>
 <text x="109" y="225" text-anchor="middle" class="dg-s">OrderDate = 0402</text>
+</g>
+<g data-node="p1">
 <rect x="306" y="73" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="381" y="94" text-anchor="middle" class="dg-tb">パーティションA</text>
 <text x="381" y="112" text-anchor="middle" class="dg-s">u1 のアイテム</text>
+</g>
+<g data-node="p2">
 <rect x="306" y="186" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="381" y="207" text-anchor="middle" class="dg-tb">パーティションB</text>
 <text x="381" y="225" text-anchor="middle" class="dg-s">u2 のアイテム</text>
+</g>
 <path d="M184.0,71.8 L306.0,88.7" class="dg-line" marker-end="url(#dgservices-dynamodb-1)"/>
 <path d="M184.0,126.2 L306.0,109.3" class="dg-line" marker-end="url(#dgservices-dynamodb-1)"/>
 <path d="M184.0,211.5 L306.0,211.5" class="dg-line" marker-end="url(#dgservices-dynamodb-1)"/>
@@ -119,15 +129,21 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 588 194" style="max-width:588px;min-width:520px" role="img" aria-label="図2 LSIとGSI。LSIはパーティションキーをそのままにソートキーだけを変える(テーブル作成時のみ)。GSIはパーティションキーから変えられ、後から追加できる(結果整合性のみ)。"><defs><marker id="dgservices-dynamodb-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="base">
 <rect x="34" y="78" width="200" height="52" rx="8" class="dg-accent"/>
 <text x="134" y="100" text-anchor="middle" class="dg-tb">テーブル</text>
 <text x="134" y="118" text-anchor="middle" class="dg-s">PK=UserID・SK=OrderDate</text>
+</g>
+<g data-node="lsi">
 <rect x="364" y="38" width="200" height="52" rx="8" class="dg-box"/>
 <text x="464" y="60" text-anchor="middle" class="dg-t">LSI</text>
 <text x="464" y="78" text-anchor="middle" class="dg-s">PKはそのまま・SKを変更</text>
+</g>
+<g data-node="gsi">
 <rect x="364" y="118" width="200" height="52" rx="8" class="dg-ok"/>
 <text x="464" y="140" text-anchor="middle" class="dg-t">GSI</text>
 <text x="464" y="158" text-anchor="middle" class="dg-s">PKごと変更(例: OrderID)</text>
+</g>
 <path d="M234.0,91.9 L364.0,76.1" class="dg-line" marker-end="url(#dgservices-dynamodb-2)"/>
 <text x="299" y="88" text-anchor="middle" class="dg-s dg-halo">作成時のみ</text>
 <path d="M234.0,116.1 L364.0,131.9" class="dg-line" marker-end="url(#dgservices-dynamodb-2)"/>
@@ -165,19 +181,29 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 871 202" style="max-width:871px;min-width:697px" role="img" aria-label="図3 DAXとDynamoDB Streams。DAXは読み取りをマイクロ秒レベルに高速化するキャッシュ。Streamsはテーブルの変更を記録し、Lambdaがポーリングして後続処理を行う(若干の遅延あり)。"><defs><marker id="dgservices-dynamodb-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
 <rect x="34" y="132" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="156" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="dax">
 <rect x="255" y="40" width="150" height="52" rx="8" class="dg-box"/>
 <text x="330" y="62" text-anchor="middle" class="dg-t">DAX</text>
 <text x="330" y="80" text-anchor="middle" class="dg-s">キャッシュ(μ秒)</text>
+</g>
+<g data-node="ddb">
 <rect x="255" y="132" width="150" height="40" rx="8" class="dg-accent"/>
 <text x="330" y="156" text-anchor="middle" class="dg-tb">DynamoDB</text>
+</g>
+<g data-node="st">
 <rect x="476" y="126" width="150" height="52" rx="8" class="dg-box"/>
 <text x="551" y="147" text-anchor="middle" class="dg-t">Streams</text>
 <text x="551" y="165" text-anchor="middle" class="dg-s">変更を記録</text>
+</g>
+<g data-node="fn">
 <rect x="697" y="126" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="772" y="147" text-anchor="middle" class="dg-t">Lambda</text>
 <text x="772" y="165" text-anchor="middle" class="dg-s">ポーリングして処理</text>
+</g>
 <path d="M161.0,131.5 L262.4,92.5" class="dg-line" marker-end="url(#dgservices-dynamodb-3)"/>
 <text x="212" y="116" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
 <path d="M330.0,92.5 L330.0,131.5" class="dg-line" marker-end="url(#dgservices-dynamodb-3)"/>

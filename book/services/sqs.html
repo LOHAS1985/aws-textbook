@@ -56,17 +56,25 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 263" style="max-width:684px;min-width:547px" role="img" aria-label="図1 SQSの基本。プロデューサーがキューにメッセージを送り、コンシューマーがポーリングして受け取る(プル型)。何度も処理に失敗したメッセージはデッドレターキューに移る。"><defs><marker id="dgservices-sqs-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="p">
 <rect x="34" y="88" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="110" text-anchor="middle" class="dg-t">プロデューサー</text>
 <text x="109" y="128" text-anchor="middle" class="dg-s">送信者</text>
+</g>
+<g data-node="q">
 <rect x="272" y="94" width="150" height="40" rx="8" class="dg-accent"/>
 <text x="347" y="118" text-anchor="middle" class="dg-tb">SQSキュー</text>
+</g>
+<g data-node="c">
 <rect x="510" y="88" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="585" y="110" text-anchor="middle" class="dg-t">コンシューマー</text>
 <text x="585" y="128" text-anchor="middle" class="dg-s">ポーリングして受信</text>
+</g>
+<g data-node="dlq">
 <rect x="272" y="187" width="150" height="52" rx="8" class="dg-ng"/>
 <text x="347" y="208" text-anchor="middle" class="dg-t">デッドレターキュー</text>
 <text x="347" y="226" text-anchor="middle" class="dg-s">何度も失敗したもの</text>
+</g>
 <path d="M184.0,114.0 L272.0,114.0" class="dg-line" marker-end="url(#dgservices-sqs-1)"/>
 <text x="228" y="118" text-anchor="middle" class="dg-s dg-halo">送信</text>
 <path d="M422.0,114.0 L510.0,114.0" class="dg-line" marker-end="url(#dgservices-sqs-1)"/>
@@ -92,18 +100,26 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 703 202" style="max-width:703px;min-width:562px" role="img" aria-label="図2 可視性タイムアウト。受信したメッセージは一定時間、ほかのコンシューマーから見えなくなる。時間内に処理して削除すれば完了。処理が長引いて時間切れになると再び見えるようになり、二重処理の原因になる。"><defs><marker id="dgservices-sqs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="r">
 <rect x="34" y="83" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="112" y="104" text-anchor="middle" class="dg-t">コンシューマーA</text>
 <text x="112" y="122" text-anchor="middle" class="dg-s">メッセージを受信</text>
+</g>
+<g data-node="inv">
 <rect x="279" y="83" width="155" height="52" rx="8" class="dg-accent"/>
 <text x="356" y="104" text-anchor="middle" class="dg-tb">可視性タイムアウト</text>
 <text x="356" y="122" text-anchor="middle" class="dg-s">他から見えない</text>
+</g>
+<g data-node="del">
 <rect x="524" y="40" width="155" height="52" rx="8" class="dg-ok"/>
 <text x="602" y="62" text-anchor="middle" class="dg-t">処理成功</text>
 <text x="602" y="80" text-anchor="middle" class="dg-s">メッセージを削除</text>
+</g>
+<g data-node="re">
 <rect x="524" y="126" width="155" height="52" rx="8" class="dg-ng"/>
 <text x="602" y="147" text-anchor="middle" class="dg-t">時間切れ</text>
 <text x="602" y="165" text-anchor="middle" class="dg-s">再び見える → 再処理</text>
+</g>
 <path d="M189.0,109.0 L279.0,109.0" class="dg-line" marker-end="url(#dgservices-sqs-2)"/>
 <path d="M434.0,95.6 L524.0,79.9" class="dg-line" marker-end="url(#dgservices-sqs-2)"/>
 <text x="479" y="92" text-anchor="middle" class="dg-s dg-halo">時間内</text>
@@ -146,15 +162,21 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 127" style="max-width:684px;min-width:547px" role="img" aria-label="図3 イベントソースマッピング。Lambda側がSQSをポーリングしてメッセージをまとめて取得し(バッチサイズ・バッチウィンドウ)、関数を起動する。"><defs><marker id="dgservices-sqs-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="q">
 <rect x="34" y="49" width="150" height="40" rx="8" class="dg-accent"/>
 <text x="109" y="73" text-anchor="middle" class="dg-tb">SQSキュー</text>
+</g>
+<g data-node="esm">
 <rect x="272" y="35" width="150" height="68" rx="8" class="dg-box"/>
 <text x="347" y="56" text-anchor="middle" class="dg-t">イベントソース</text>
 <text x="347" y="74" text-anchor="middle" class="dg-t">マッピング</text>
 <text x="347" y="92" text-anchor="middle" class="dg-s">Lambda側の機能</text>
+</g>
+<g data-node="fn">
 <rect x="510" y="43" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="585" y="64" text-anchor="middle" class="dg-t">Lambda関数</text>
 <text x="585" y="82" text-anchor="middle" class="dg-s">バッチで実行</text>
+</g>
 <path d="M272.0,69.0 L184.0,69.0" class="dg-line" marker-end="url(#dgservices-sqs-3)"/>
 <text x="228" y="73" text-anchor="middle" class="dg-s dg-halo">ポーリング</text>
 <path d="M422.0,69.0 L510.0,69.0" class="dg-line" marker-end="url(#dgservices-sqs-3)"/>

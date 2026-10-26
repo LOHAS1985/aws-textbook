@@ -3,7 +3,7 @@
 記法(<figure class="figure" data-diagram> と <figcaption> の間に書く):
   grid 170 90                       1マスの幅・高さ(px。省略時 170 90)
   node ID 列 行 スタイル "本文" ["補足行"] [w=横マス数] [h=縦マス数]
-        スタイル: box / blue / accent / ok / ng / plain(枠なし)
+        スタイル: box / blue / accent / ok / ng / plain(枠なし) / blank(構成演習の空欄。本文は「①」など)
         本文中の \\n は改行。列・行は小数も可
   edge ID1 ID2 ["ラベル"] [dash] [both] [hv|vh]    矢印(hv/vh は折れ線)
   group 列1 行1 列2 行2 "ラベル" [pad=8] [accent]  点線の囲み
@@ -16,7 +16,7 @@ import shlex
 MARGIN = 24
 OPTION_RE = re.compile(r"^(w|h|pad|cls|anchor|dy)=\S+$")
 STYLE_CLASS = {"box": "dg-box", "blue": "dg-blue", "accent": "dg-accent",
-               "ok": "dg-ok", "ng": "dg-ng", "plain": None}
+               "ok": "dg-ok", "ng": "dg-ng", "plain": None, "blank": "dg-blank"}
 
 FIGURE_RE = re.compile(
     r'<figure class="figure" data-diagram>\s*(.*?)\s*(<figcaption>.*?</figcaption>)\s*</figure>', re.S)
@@ -128,8 +128,10 @@ class Diagram:
                 out.append(f'<text x="{left + 10:.0f}" y="{top + 15:.0f}" class="dg-s">{esc(g["label"])}</text>')
             grow(right, bottom)
 
-        for n in self.nodes.values():
+        for nid, n in self.nodes.items():
             cls = STYLE_CLASS.get(n["style"], "dg-box")
+            # 構成演習のスクリプトが空欄の文字と色を書き換えられるよう、ノードごとにまとめる
+            out.append(f'<g data-node="{esc(nid)}">')
             if cls:
                 out.append(f'<rect x="{n["x"]:.0f}" y="{n["y"]:.0f}" width="{n["w"]:.0f}" '
                            f'height="{n["h"]:.0f}" rx="8" class="{cls}"/>')
@@ -142,6 +144,7 @@ class Diagram:
             for t, c, lh in lines:
                 out.append(f'<text x="{cx:.0f}" y="{y:.0f}" text-anchor="middle" class="{c}">{esc(t)}</text>')
                 y += lh
+            out.append("</g>")
             grow(n["x"] + n["w"], n["y"] + n["h"])
 
         mid = f"dg{self.uid}"

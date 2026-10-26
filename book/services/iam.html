@@ -72,22 +72,34 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 738 290" style="max-width:738px;min-width:590px" role="img" aria-label="図1 IAMの基本構造。ユーザーやグループにはIAMポリシーで権限を与える。ロールは信頼ポリシーで「誰が引き受けられるか」、権限ポリシーで「何ができるか」を決め、EC2などのサービスやユーザーが一時的に引き受ける。"><defs><marker id="dgservices-iam-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
 <rect x="34" y="44" width="155" height="40" rx="8" class="dg-blue"/>
 <text x="112" y="68" text-anchor="middle" class="dg-t">IAMユーザー</text>
+</g>
+<g data-node="grp">
 <rect x="34" y="124" width="155" height="40" rx="8" class="dg-blue"/>
 <text x="112" y="148" text-anchor="middle" class="dg-t">IAMグループ</text>
+</g>
+<g data-node="svc">
 <rect x="34" y="214" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="112" y="236" text-anchor="middle" class="dg-t">EC2 / Lambda</text>
 <text x="112" y="254" text-anchor="middle" class="dg-s">AWSサービス</text>
+</g>
+<g data-node="pol">
 <rect x="296" y="78" width="155" height="52" rx="8" class="dg-box"/>
 <text x="374" y="100" text-anchor="middle" class="dg-t">IAMポリシー</text>
 <text x="374" y="118" text-anchor="middle" class="dg-s">何ができるか</text>
+</g>
+<g data-node="role">
 <rect x="296" y="214" width="155" height="52" rx="8" class="dg-accent"/>
 <text x="374" y="236" text-anchor="middle" class="dg-tb">IAMロール</text>
 <text x="374" y="254" text-anchor="middle" class="dg-s">権限ポリシーを持つ</text>
+</g>
+<g data-node="res">
 <rect x="559" y="146" width="155" height="52" rx="8" class="dg-ok"/>
 <text x="636" y="168" text-anchor="middle" class="dg-t">AWSリソース</text>
 <text x="636" y="186" text-anchor="middle" class="dg-s">S3・DynamoDBなど</text>
+</g>
 <path d="M189.0,75.8 L296.5,92.2" class="dg-line" marker-end="url(#dgservices-iam-1)"/>
 <path d="M189.0,132.2 L296.5,115.8" class="dg-line" marker-end="url(#dgservices-iam-1)"/>
 <path d="M189.0,240.0 L296.5,240.0" class="dg-line" marker-end="url(#dgservices-iam-1)"/>
@@ -141,20 +153,32 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 912 210" style="max-width:912px;min-width:730px" role="img" aria-label="図2 ポリシー評価の基本。明示的なDenyが最優先で、次に明示的なAllow。どちらもなければ拒否される。"><defs><marker id="dgservices-iam-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="req">
 <rect x="34" y="44" width="170" height="40" rx="8" class="dg-blue"/>
 <text x="119" y="68" text-anchor="middle" class="dg-t">リクエスト</text>
+</g>
+<g data-node="d">
 <rect x="262" y="44" width="170" height="40" rx="8" class="dg-box"/>
 <text x="347" y="68" text-anchor="middle" class="dg-t">明示的なDenyがある?</text>
+</g>
+<g data-node="a">
 <rect x="490" y="44" width="170" height="40" rx="8" class="dg-box"/>
 <text x="575" y="68" text-anchor="middle" class="dg-t">明示的なAllowがある?</text>
+</g>
+<g data-node="ng1">
 <rect x="262" y="134" width="170" height="52" rx="8" class="dg-ng"/>
 <text x="347" y="156" text-anchor="middle" class="dg-t">拒否</text>
 <text x="347" y="174" text-anchor="middle" class="dg-s">明示的な拒否</text>
+</g>
+<g data-node="ok">
 <rect x="718" y="44" width="170" height="40" rx="8" class="dg-ok"/>
 <text x="803" y="68" text-anchor="middle" class="dg-t">許可</text>
+</g>
+<g data-node="ng2">
 <rect x="490" y="134" width="170" height="52" rx="8" class="dg-ng"/>
 <text x="575" y="156" text-anchor="middle" class="dg-t">拒否</text>
 <text x="575" y="174" text-anchor="middle" class="dg-s">暗黙的な拒否</text>
+</g>
 <path d="M204.0,64.0 L262.0,64.0" class="dg-line" marker-end="url(#dgservices-iam-2)"/>
 <path d="M347.0,84.0 L347.0,134.0" class="dg-line" marker-end="url(#dgservices-iam-2)"/>
 <text x="347" y="113" text-anchor="middle" class="dg-s dg-halo">はい</text>
@@ -184,15 +208,21 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 722 114" style="max-width:722px;min-width:578px" role="img" aria-label="図3 アクセス許可の境界。実際の権限は、ポリシーと境界の両方で許可された部分(重なり)だけになる。"><defs><marker id="dgservices-iam-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="pol">
 <rect x="34" y="38" width="160" height="52" rx="8" class="dg-box"/>
 <text x="114" y="60" text-anchor="middle" class="dg-t">IAMポリシー</text>
 <text x="114" y="78" text-anchor="middle" class="dg-s">S3・EC2・IAM</text>
+</g>
+<g data-node="bd">
 <rect x="268" y="38" width="160" height="52" rx="8" class="dg-box"/>
 <text x="348" y="60" text-anchor="middle" class="dg-t">アクセス許可の境界</text>
 <text x="348" y="78" text-anchor="middle" class="dg-s">S3・EC2・CloudWatch</text>
+</g>
+<g data-node="eff">
 <rect x="538" y="38" width="160" height="52" rx="8" class="dg-ok"/>
 <text x="618" y="60" text-anchor="middle" class="dg-t">実際に使える権限</text>
 <text x="618" y="78" text-anchor="middle" class="dg-s">S3・EC2のみ</text>
+</g>
 <path d="M194.0,64.0 L538.0,64.0" class="dg-line" marker-end="url(#dgservices-iam-3)"/>
 <path d="M428.0,64.0 L538.0,64.0" class="dg-line" marker-end="url(#dgservices-iam-3)"/>
 </svg>
@@ -257,21 +287,33 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 548 194" style="max-width:548px;min-width:520px" role="img" aria-label="図4 AWS CLI/SDKが認証情報を探す順番。上位で見つかった認証情報が使われるため、環境変数にキーが残っていると、EC2のロールより優先されてしまう。"><defs><marker id="dgservices-iam-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="n1">
 <rect x="34" y="44" width="150" height="40" rx="8" class="dg-accent"/>
 <text x="109" y="68" text-anchor="middle" class="dg-tb">① コード内で指定</text>
+</g>
+<g data-node="n2">
 <rect x="204" y="44" width="150" height="40" rx="8" class="dg-box"/>
 <text x="279" y="68" text-anchor="middle" class="dg-t">② 環境変数</text>
+</g>
+<g data-node="n3">
 <rect x="374" y="38" width="150" height="52" rx="8" class="dg-box"/>
 <text x="449" y="60" text-anchor="middle" class="dg-t">③ credentials</text>
 <text x="449" y="78" text-anchor="middle" class="dg-s">~/.aws/credentials</text>
+</g>
+<g data-node="n4">
 <rect x="374" y="118" width="150" height="52" rx="8" class="dg-box"/>
 <text x="449" y="140" text-anchor="middle" class="dg-t">④ config</text>
 <text x="449" y="158" text-anchor="middle" class="dg-s">~/.aws/config</text>
+</g>
+<g data-node="n5">
 <rect x="204" y="124" width="150" height="40" rx="8" class="dg-box"/>
 <text x="279" y="148" text-anchor="middle" class="dg-t">⑤ ECSタスクロール</text>
+</g>
+<g data-node="n6">
 <rect x="34" y="118" width="150" height="52" rx="8" class="dg-box"/>
 <text x="109" y="140" text-anchor="middle" class="dg-t">⑥ EC2のロール</text>
 <text x="109" y="158" text-anchor="middle" class="dg-s">プロファイル経由</text>
+</g>
 <path d="M184.0,64.0 L204.0,64.0" class="dg-line" marker-end="url(#dgservices-iam-4)"/>
 <path d="M354.0,64.0 L374.0,64.0" class="dg-line" marker-end="url(#dgservices-iam-4)"/>
 <path d="M449.0,90.0 L449.0,118.0" class="dg-line" marker-end="url(#dgservices-iam-4)"/>
