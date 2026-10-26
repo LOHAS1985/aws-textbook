@@ -1,0 +1,102 @@
+<!-- title: TerraformとGit -->
+<!-- category: 設計・運用 -->
+<!-- lead: AWS以外の会社が作ったIaCツール(Terraform)と、コードの変更履歴を管理するバージョン管理(Git)の基本と、AWSでの使い方 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>インフラをコードで管理する(IaC)ツールには、AWSのCloudFormation・CDKのほかに、HashiCorp社の<strong>Terraform</strong>があります。また、テンプレートやコードは<strong>Git</strong>で変更履歴を管理し、レビューしてから反映するのが一般的です。SOA-C03では、CloudFormation・CDKに加えて、こうした<strong>サードパーティのツール</strong>を使った運用も出題範囲に含まれます。</p>
+
+<h3>Terraformの仕組み</h3>
+<p>Terraformは、作りたいリソースを<strong>HCL</strong>という書き方で記述し、コマンドで実際の環境に反映します。</p>
+<pre class="code"><code>provider "aws" {
+  region = "ap-northeast-1"
+}
+
+resource "aws_s3_bucket" "logs" {
+  bucket = "example-logs-bucket"
+}</code></pre>
+<div class="table-wrap"><table>
+<tr><th>用語・コマンド</th><th>意味</th></tr>
+<tr><td>プロバイダー</td><td>操作する相手(AWS・他のクラウド・SaaS)ごとのプラグイン。AWSは <code>aws</code> プロバイダー</td></tr>
+<tr><td>リソース</td><td>作るもの(<code>aws_s3_bucket</code>、<code>aws_instance</code> など)</td></tr>
+<tr><td><code>terraform init</code></td><td>プロバイダーのダウンロードなど、作業の準備</td></tr>
+<tr><td><code>terraform plan</code></td><td>実行すると<strong>何が作られ・変わり・消されるか</strong>を確認する(CloudFormationの変更セットにあたる)</td></tr>
+<tr><td><code>terraform apply</code></td><td>変更を反映する</td></tr>
+<tr><td><code>terraform destroy</code></td><td>管理しているリソースをすべて削除する</td></tr>
+<tr><td><code>terraform import</code></td><td>手で作った既存のリソースを、Terraformの管理下に取り込む</td></tr>
+</table></div>
+
+<h3>ステートファイル</h3>
+<p>Terraformは、自分が作ったリソースと実際のIDの対応を<strong>ステートファイル</strong>(<code>terraform.tfstate</code>)に記録します。CloudFormationではこの記録をAWSが持ちますが、Terraformでは<strong>利用者が保管</strong>します。</p>
+<ul>
+<li>チームで使うときは、ステートを<strong>S3バケット</strong>に置く(リモートバックエンド)。バケットはバージョニングと暗号化を有効にし、アクセスを絞る</li>
+<li>同時に2人が反映して壊れないように、<strong>ロック</strong>をかける。S3のロックファイル(<code>use_lockfile</code>)を使うのが現在の方法で、以前はDynamoDBのテーブルを使っていた</li>
+<li>ステートにはパスワードなどの値がそのまま入ることがあるので、Gitには入れない</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node dev 0 0.5 blue "開発者・CI" "plan・apply"
+node state 1.4 0 box "S3" "ステートとロック"
+node aws 1.4 1 accent "AWSのAPI" "IAMロールで認証"
+node res 2.8 1 ok "リソース" "VPC・EC2など"
+edge dev state "読み書き"
+edge dev aws
+edge aws res
+<figcaption>図1 Terraformの動き。ステートをS3に置いてチームで共有し、ロックで同時の反映を防ぐ。AWSへの操作は、CIならOIDCで引き受けたIAMロールの一時的な認証情報で行う。</figcaption>
+</figure>
+
+<h3>CloudFormationとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>CloudFormation</th><th>Terraform</th></tr>
+<tr><td>提供元</td><td>AWS</td><td>HashiCorp(サードパーティ)</td></tr>
+<tr><td>対象</td><td>AWS</td><td>AWS・他のクラウド・SaaSなど</td></tr>
+<tr><td>書き方</td><td>JSON・YAML(CDKならプログラミング言語)</td><td>HCL</td></tr>
+<tr><td>状態の管理</td><td>AWSがスタックとして管理</td><td>利用者がステートファイルを管理</td></tr>
+<tr><td>変更の確認</td><td>変更セット</td><td><code>terraform plan</code></td></tr>
+<tr><td>手作業の変更の検出</td><td>ドリフト検出</td><td><code>terraform plan</code> で差分として出る</td></tr>
+<tr><td>失敗時</td><td>自動でロールバック</td><td>途中まで反映された状態で止まる(直して再実行)</td></tr>
+</table></div>
+<p>AWS Control Towerでは、アカウントの払い出しをTerraformで行う <strong>Account Factory for Terraform(AFT)</strong>も使えます。</p>
+
+<h3>Gitの基本</h3>
+<div class="table-wrap"><table>
+<tr><th>用語</th><th>意味</th></tr>
+<tr><td>リポジトリ</td><td>コードとその変更履歴の保管場所(GitHub・GitLab・Bitbucketなど)</td></tr>
+<tr><td>コミット</td><td>変更を1つの単位として履歴に記録すること</td></tr>
+<tr><td>ブランチ</td><td>本流(main)から分けた作業用の流れ。本番に影響を与えずに変更を進める</td></tr>
+<tr><td>プルリクエスト</td><td>ブランチの変更を本流に取り込むよう依頼し、<strong>レビューを受ける</strong>仕組み</td></tr>
+<tr><td>マージ</td><td>ブランチの変更を本流に取り込むこと</td></tr>
+<tr><td><code>.gitignore</code></td><td>リポジトリに入れないファイルの指定(ステートファイル・認証情報など)</td></tr>
+</table></div>
+
+<h3>GitとAWSをつなぐ流れ</h3>
+<ol>
+<li>開発者がブランチで変更し、プルリクエストを作る</li>
+<li>CI(CodeBuildやGitHub Actions)が <code>terraform plan</code> や <code>cfn-lint</code>・変更セットの作成を行い、結果をレビューする</li>
+<li>承認されたら本流にマージし、CodePipelineなどが自動で反映する</li>
+</ol>
+<p>CodePipelineは、<strong>CodeConnections</strong>(旧CodeStar Connections)でGitHub・GitLab・Bitbucketのリポジトリとつなぎ、マージをきっかけにパイプラインを動かせます。CloudFormationにも、Gitリポジトリのテンプレートの変更を自動でスタックに反映する<strong>Git同期</strong>があります。</p>
+<div class="point"><p>Gitを使う運用では、<strong>手作業で本番を変更しない</strong>のが原則です(変更の履歴・レビュー・やり直しがすべてGitに残るため)。アクセスキーやパスワードをリポジトリに入れてしまう事故が多いので、認証にはIAMロールを使い、機密情報はSecrets ManagerやParameter Storeに置きます。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="json-yaml.html">JSONとYAMLの読み方</a>:CloudFormationのテンプレートの書き方</li>
+<li><a href="deploy-strategies.html">デプロイ戦略</a>:反映するときの切り替え方</li>
+<li><a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>:CIからAWSを操作するときの認証</li>
+<li><a href="oidc.html">OIDC(OpenID Connect)</a>:GitHub ActionsからIAMロールを引き受ける</li>
+<li><a href="secrets-config-comparison.html">機密情報・設定値の保存先の選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:AWSのIaCサービス</li>
+<li><a href="../services/cdk.html">AWS CDK</a>:プログラミング言語で書くIaC</li>
+<li><a href="../services/codepipeline.html">AWS CodePipeline</a>:Gitの変更をきっかけに反映する</li>
+<li><a href="../services/codebuild.html">AWS CodeBuild</a>:plan・テストの実行</li>
+<li><a href="../services/control-tower.html">AWS Control Tower</a>:Account Factory for Terraform</li>
+<li><a href="../services/s3.html">Amazon S3</a>:Terraformのステートの保管場所</li>
+</ul>
+</section>

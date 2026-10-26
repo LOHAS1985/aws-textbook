@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iam:PassRoleとサービスにリンクされたロール | AWS教科書</title>
+<meta name="description" content="AWSのサービスにロールを渡すときに必要な権限と、サービスが自動で作る専用のロール">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">ユースケース</a><a href="../links.html">リンク集</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">セキュリティ・認証</a>
+  <h1>iam:PassRoleとサービスにリンクされたロール</h1>
+  <p class="lead">AWSのサービスにロールを渡すときに必要な権限と、サービスが自動で作る専用のロール</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+
+<h3 id="c1-1">iam:PassRole とは<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>EC2にインスタンスプロファイルを付ける、Lambda関数に実行ロールを設定する、といった操作では、利用者がAWSのサービスに<strong>ロールを渡し</strong>、サービスがそのロールで動きます。このとき、渡す人には操作そのもの(<code>lambda:CreateFunction</code> など)の権限に加えて、<strong class="em">そのロールに対する <code>iam:PassRole</code> の権限</strong>が必要です。</p>
+<p>PassRoleはAPIの名前ではなく、ロールを渡す操作のときに確認される<strong>権限</strong>です。もしこの確認がなければ、自分には権限がなくても、強い権限のロールをEC2やLambdaに渡してそこから何でもできてしまいます(権限の昇格)。PassRoleは「どのロールなら渡してよいか」を絞るための権限です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 ロールを渡す流れ。開発者自身はS3を操作できなくても、渡したロールの権限でLambdaが操作する。そのため、渡せるロールを iam:PassRole で制限する。"><defs><marker id="dgterms-iam-passrole-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">開発者</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">PassRoleの権限</text>
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">Lambda関数</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">作成・更新</text>
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">実行ロール</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">強い権限でもよい</text>
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">S3など</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">ロールの権限で操作</text>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgterms-iam-passrole-1)"/>
+<text x="228" y="70" text-anchor="middle" class="dg-s dg-halo">ロールを渡す</text>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgterms-iam-passrole-1)"/>
+<text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">引き受ける</text>
+<path d="M585.0,92.5 L585.0,125.5" class="dg-line" marker-end="url(#dgterms-iam-passrole-1)"/>
+</svg>
+</div>
+<figcaption>図1 ロールを渡す流れ。開発者自身はS3を操作できなくても、渡したロールの権限でLambdaが操作する。そのため、渡せるロールを iam:PassRole で制限する。</figcaption>
+</figure>
+
+<h3 id="c1-2">PassRoleが必要になる主な操作<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>操作</th><th>渡すロール</th></tr>
+<tr><td>EC2インスタンスの起動(<code>RunInstances</code>)、起動中のインスタンスへのロールの付与</td><td>インスタンスプロファイルのロール</td></tr>
+<tr><td>Lambda関数の作成・設定の変更</td><td>実行ロール</td></tr>
+<tr><td>ECSのタスク定義の登録</td><td>タスクロール・タスク実行ロール</td></tr>
+<tr><td>CloudFormationのスタックの作成・更新(サービスロールを指定したとき)</td><td>CloudFormationのサービスロール</td></tr>
+<tr><td>SSM Automationの実行、Config・EventBridgeのターゲットの設定</td><td>Automationやターゲットが使うロール</td></tr>
+<tr><td>Auto Scalingの起動テンプレートを使った起動</td><td>起動テンプレートのインスタンスプロファイル</td></tr>
+</table></div>
+<p>権限が足りないと、<code>User: arn:aws:iam::111122223333:user/dev is not authorized to perform: iam:PassRole on resource: arn:aws:iam::111122223333:role/MyRole</code> のようなエラーになります。</p>
+
+<h3 id="c1-3">PassRoleの書き方<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>渡してよいロールを <code>Resource</code> で絞り、<code>iam:PassedToService</code> の条件で渡し先のサービスも絞ります。</p>
+<pre class="code"><code>{
+  "Effect": "Allow",
+  "Action": "iam:PassRole",
+  "Resource": "arn:aws:iam::111122223333:role/app-lambda-*",
+  "Condition": {
+    "StringEquals": { "iam:PassedToService": "lambda.amazonaws.com" }
+  }
+}</code></pre>
+<div class="point"><p>CloudFormationの<strong>サービスロール</strong>を使うと、開発者自身にはリソースを作る権限を与えず、「スタックの操作」と「決められたサービスロールのPassRole」だけを与えて、リソースはサービスロールの権限で作らせることができます。最小権限でデプロイさせる定番の方法です。</p></div>
+
+<h3 id="c1-4">サービスロールとサービスにリンクされたロール<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>サービスロール</th><th>サービスにリンクされたロール</th></tr>
+<tr><td>作る人</td><td>利用者</td><td><strong>サービスが自動で作る</strong>(機能を最初に使ったとき)</td></tr>
+<tr><td>権限の変更</td><td>自由に変更できる</td><td><strong>変更できない</strong>(サービスが決めた内容)</td></tr>
+<tr><td>信頼ポリシー</td><td>利用者が書く</td><td>そのサービスだけに固定</td></tr>
+<tr><td>名前の例</td><td>任意(例:<code>MyLambdaRole</code>)</td><td><code>AWSServiceRoleForAutoScaling</code>、<code>AWSServiceRoleForElasticLoadBalancing</code>(パスは <code>/aws-service-role/</code>)</td></tr>
+<tr><td>削除</td><td>いつでも削除できる</td><td>そのロールを使うリソースをなくしてから削除する</td></tr>
+<tr><td>PassRole</td><td>サービスに設定するとき必要</td><td>不要(初回の作成時に <code>iam:CreateServiceLinkedRole</code> の権限が必要)</td></tr>
+</table></div>
+<p>Auto ScalingやELB、Organizationsなどは、サービスにリンクされたロールで動きます。Auto ScalingグループのEC2が暗号化されたEBSボリュームで起動できないときは、そのKMSキーのキーポリシーで、Auto Scalingのサービスにリンクされたロールにキーの利用を許可しているかを確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>:ロールの基本と使い方</li>
+<li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:ポリシーの書き方と許可・拒否の決まり方</li>
+<li><a href="event-driven-remediation.html">イベント駆動の自動修復</a>:Automationなどに渡すロール</li>
+<li><a href="arn.html">ARN</a>:Resourceでロールを指定する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:ロールとPassRoleの権限</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:サービスロールによるデプロイ</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:実行ロール</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:インスタンスプロファイル</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:サービスにリンクされたロール</li>
+<li><a href="../services/kms.html">AWS KMS</a>:キーポリシーでサービスにリンクされたロールを許可する</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/lambda.html"><span class="title">AWS Lambda</span><span class="kind">サービス</span><span class="desc">サーバーレスでプログラムを実行するサービス</span></a></li>
+<li><a href="../services/iam.html"><span class="title">AWS IAM</span><span class="kind">サービス</span><span class="desc">AWSの認証・認可を管理するサービス</span></a></li>
+<li><a href="../services/cloudformation.html"><span class="title">AWS CloudFormation</span><span class="kind">サービス</span><span class="desc">AWSリソースをテンプレート(コード)で定義し、自動構築・管理</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="iam-roles-credentials.html"><span class="label">← 前へ</span>IAMロールと一時的な認証情報</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="encryption.html"><span class="label">次へ →</span>保存時の暗号化と転送時の暗号化</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

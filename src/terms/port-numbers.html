@@ -1,0 +1,63 @@
+<!-- title: よく使うポート番号 -->
+<!-- category: ネットワーク -->
+<!-- lead: 通信の種類を表す番号。セキュリティグループやネットワークACLで、どの通信を許可するかを決めるときに使う -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>ポート番号</strong>は、1台のサーバーの中で「どのプログラム(サービス)あての通信か」を区別する番号です。IPアドレスが建物の住所なら、ポート番号は部屋番号にあたります。セキュリティグループやネットワークACLでは、<strong>送信元・プロトコル(TCP/UDP)・ポート番号</strong>の組み合わせで通信を許可します。</p>
+
+<h3>覚えておきたいポート番号</h3>
+<div class="table-wrap"><table>
+<tr><th>ポート</th><th>プロトコル</th><th>用途</th><th>AWSでの例</th></tr>
+<tr><td><strong>22</strong></td><td>TCP</td><td>SSH(Linuxへのログイン)</td><td>EC2への接続。Session Managerを使えば開けなくてよい</td></tr>
+<tr><td><strong>3389</strong></td><td>TCP</td><td>RDP(Windowsのリモートデスクトップ)</td><td>Windowsインスタンスへの接続</td></tr>
+<tr><td><strong>80</strong></td><td>TCP</td><td>HTTP</td><td>ALB・Webサーバー(HTTPSへのリダイレクト用にも使う)</td></tr>
+<tr><td><strong>443</strong></td><td>TCP</td><td>HTTPS</td><td>ALB・CloudFront・AWSのAPI・<a href="vpc-endpoint.html">インターフェイス型VPCエンドポイント</a></td></tr>
+<tr><td><strong>53</strong></td><td>TCP・UDP</td><td>DNS</td><td>Route 53 Resolverのエンドポイント</td></tr>
+<tr><td>3306</td><td>TCP</td><td>MySQL・MariaDB</td><td>RDS・Aurora MySQL</td></tr>
+<tr><td>5432</td><td>TCP</td><td>PostgreSQL</td><td>RDS・Aurora PostgreSQL</td></tr>
+<tr><td>1433</td><td>TCP</td><td>SQL Server</td><td>RDS for SQL Server</td></tr>
+<tr><td>1521</td><td>TCP</td><td>Oracle</td><td>RDS for Oracle</td></tr>
+<tr><td>6379</td><td>TCP</td><td>Redis・Valkey</td><td>ElastiCache・MemoryDB</td></tr>
+<tr><td>11211</td><td>TCP</td><td>Memcached</td><td>ElastiCache for Memcached</td></tr>
+<tr><td>2049</td><td>TCP</td><td>NFS</td><td>EFS(マウントターゲットのセキュリティグループで許可)</td></tr>
+<tr><td>445</td><td>TCP</td><td>SMB</td><td>FSx for Windows File Server</td></tr>
+<tr><td>25・587</td><td>TCP</td><td>SMTP(メール送信)</td><td>SES。EC2からの25番の送信は既定で制限されている</td></tr>
+<tr><td>123</td><td>UDP</td><td>NTP(時刻合わせ)</td><td>Amazon Time Sync Service</td></tr>
+<tr><td>500・4500</td><td>UDP</td><td>IPsec(IKE・NATトラバーサル)</td><td>Site-to-Site VPN</td></tr>
+<tr><td>179</td><td>TCP</td><td>BGP(経路の交換)</td><td>Direct Connect・VPNの動的ルーティング</td></tr>
+<tr><td>1024〜65535</td><td>TCP・UDP</td><td><strong>エフェメラルポート</strong>(戻りの通信)</td><td>ネットワークACLで戻りの通信を許可する</td></tr>
+</table></div>
+
+<h3>通信の向きとポート</h3>
+<p>クライアントは、接続先のポート(例:443)あてに、<strong>自分の側は空いている一時的なポート(エフェメラルポート)</strong>を使って接続します。サーバーからの応答は、そのエフェメラルポートあてに返ります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node c 0 0 blue "クライアント" "ポート 50123"
+node s 2 0 accent "Webサーバー" "ポート 443"
+edge c s "宛先ポート 443"
+label 1.1 1 "応答は宛先ポート 50123(エフェメラル)へ戻る" cls=dg-s
+<figcaption>図1 行きと戻りのポート。セキュリティグループはステートフルなので戻りの通信は自動で許可されるが、ネットワークACLはステートレスなので、戻りのエフェメラルポート(1024〜65535)を明示的に許可する必要がある。</figcaption>
+</figure>
+<div class="point"><p>試験では「DBに接続できない」「EFSをマウントできない」といった問題で、<strong>セキュリティグループで正しいポートを、正しい送信元(アプリのセキュリティグループ)から許可しているか</strong>が問われます。SSH(22)・RDP(3389)を 0.0.0.0/0 に開けている設定は、Trusted AdvisorやSecurity Hub・Configで指摘される代表的な問題です。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:ポートを使って通信を許可する仕組み</li>
+<li><a href="inbound-traffic.html">インバウンド通信</a>・<a href="outbound-traffic.html">アウトバウンド通信</a>:通信の向き</li>
+<li><a href="tls-termination.html">TLS終端と証明書の配置</a>:HTTPS(443)の終端</li>
+<li><a href="dns.html">DNS</a>:53番の通信</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:セキュリティグループとネットワークACL</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:SSH・RDPでの接続</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:ポートを開けずに接続するSession Manager</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:データベースのポート</li>
+<li><a href="../services/efs.html">Amazon EFS</a>:NFS(2049)</li>
+</ul>
+</section>

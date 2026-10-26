@@ -1,0 +1,71 @@
+<!-- title: HTTPステータスコードと切り分け -->
+<!-- category: ネットワーク -->
+<!-- lead: Webのエラーの番号(4xx・5xx)の意味と、CloudFront・ALB・API Gatewayのどこで起きたかを見分ける方法 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>HTTPの応答には3桁の<strong>ステータスコード</strong>が付きます。1桁目で大きく分かれ、<strong>4xxは利用者(リクエスト)側の問題</strong>、<strong>5xxはサーバー側の問題</strong>を表します。障害の調査では、まず「何番が」「どこから」返っているかを確かめます。</p>
+<div class="table-wrap"><table>
+<tr><th>分類</th><th>意味</th><th>例</th></tr>
+<tr><td>2xx</td><td>成功</td><td>200 OK</td></tr>
+<tr><td>3xx</td><td>リダイレクト(別のURLへ)</td><td>301・302(CloudFrontやALBでHTTPからHTTPSへの転送)</td></tr>
+<tr><td>4xx</td><td>リクエストの誤り・権限がない</td><td>400・403・404・429</td></tr>
+<tr><td>5xx</td><td>サーバー側のエラー</td><td>500・502・503・504</td></tr>
+</table></div>
+
+<h3>よく出るステータスコード</h3>
+<div class="table-wrap"><table>
+<tr><th>コード</th><th>意味</th><th>AWSでのよくある原因</th></tr>
+<tr><td>400 Bad Request</td><td>リクエストの形式が不正</td><td>パラメータの誤り、ヘッダーが大きすぎる</td></tr>
+<tr><td>401 Unauthorized</td><td>認証されていない</td><td>トークンがない・期限切れ(Cognito・API Gatewayのオーソライザー)</td></tr>
+<tr><td><strong>403 Forbidden</strong></td><td>アクセスが許可されていない</td><td>S3のバケットポリシー・OACの設定漏れ、<strong>WAFでブロック</strong>、CloudFrontの地理的制限、API Gatewayの存在しないパス(Missing Authentication Token)</td></tr>
+<tr><td>404 Not Found</td><td>対象がない</td><td>オブジェクトのキーやパスの誤り</td></tr>
+<tr><td>429 Too Many Requests</td><td>リクエストが多すぎる</td><td>API Gatewayのスロットリング、WAFのレートベースルール(<a href="throttling-retry.html">スロットリングとリトライ</a>)</td></tr>
+<tr><td>500 Internal Server Error</td><td>サーバー内部のエラー</td><td>アプリの例外</td></tr>
+<tr><td><strong>502 Bad Gateway</strong></td><td>中継先から不正な応答が返った</td><td>ターゲットが接続を切った・応答の形式が不正、<strong>Lambdaの戻り値の形式の誤り</strong>、CloudFrontとオリジンのTLSの不一致(証明書の名前が合わない)</td></tr>
+<tr><td><strong>503 Service Unavailable</strong></td><td>処理できる相手がいない・混んでいる</td><td>ALBのターゲットグループに<strong>ターゲットが登録されていない</strong>、S3の Slow Down</td></tr>
+<tr><td><strong>504 Gateway Timeout</strong></td><td>中継先から時間内に応答がない</td><td>ターゲットの処理が遅い(アイドルタイムアウト超え)、セキュリティグループでオリジンへの通信が止められている、API Gatewayの統合のタイムアウト(既定29秒)</td></tr>
+</table></div>
+<div class="point"><p>ALBは、ターゲットグループの<strong>すべてのターゲットがヘルスチェックに失敗しているときは、全ターゲットにリクエストを送ります</strong>(フェイルオープン)。そのため「全台が異常」でも503にならず、ターゲット自身のエラー(5xx)やタイムアウトとして見えることがあります。</p></div>
+
+<h3>どこで返されたかを見分ける</h3>
+<p>CloudFront・ALB・API Gatewayのような<strong>中継役</strong>は、自分自身でエラーを返すことも、後ろのサーバーが返したエラーをそのまま中継することもあります。どちらなのかで、調べる場所が変わります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node user 0 0 blue "利用者"
+node cf 1 0 box "CloudFront" "403・502・504"
+node alb 2 0 accent "ALB" "502・503・504"
+node app 3 0 box "ターゲット" "アプリの500など"
+edge user cf
+edge cf alb
+edge alb app
+<figcaption>図1 エラーを返しうる場所。それぞれの中継役は自分でエラーを作ることもあれば、後ろから返ったエラーを中継することもある。メトリクスやログで「誰が作ったエラーか」を見分ける。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>場所</th><th>中継役自身のエラー</th><th>後ろが返したエラー</th></tr>
+<tr><td>ALB</td><td><code>HTTPCode_ELB_5XX_Count</code>(ALBが作った5xx)</td><td><code>HTTPCode_Target_5XX_Count</code>(ターゲットが返した5xx)</td></tr>
+<tr><td>CloudFront</td><td>標準ログ・リアルタイムログの <code>x-edge-detailed-result-type</code> など</td><td>オリジン(ALB・S3)のメトリクスやログ</td></tr>
+<tr><td>API Gateway</td><td><code>4XXError</code>・<code>5XXError</code> と実行ログ</td><td><code>IntegrationLatency</code>、Lambdaのエラー数・ログ</td></tr>
+</table></div>
+<p>ALBのアクセスログには、ALBが返したコード(<code>elb_status_code</code>)とターゲットが返したコード(<code>target_status_code</code>)が別々に記録されます。ターゲット側のコードが「<code>-</code>」なら、ターゲットから応答が返っていません。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="throttling-retry.html">スロットリングとリトライ</a>:429・503のときの対処</li>
+<li><a href="tls-termination.html">TLS終端と証明書の配置</a>:TLSの不一致による502</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:通信が止められて504になる</li>
+<li><a href="cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>:5xxの数のアラーム</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:ALBのエラーとアクセスログ</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:エッジで返るエラーとログ</li>
+<li><a href="../services/api-gateway.html">Amazon API Gateway</a>:4XXError・5XXErrorとタイムアウト</li>
+<li><a href="../services/waf.html">AWS WAF</a>:ブロックしたときの403</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:エラー数のメトリクス</li>
+</ul>
+</section>

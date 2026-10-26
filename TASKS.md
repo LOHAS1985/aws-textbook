@@ -152,3 +152,19 @@ SOA-C03の出題範囲(タスクステートメント)に沿った、運用担�
 - [x] デプロイ・自動化:State Managerによる構成管理、ゴールデンAMI、CloudFormationの安全な更新、ドリフト検出、ECSの安全なデプロイ、定時の停止・起動
 - [x] セキュリティ・コンプライアンス:Identity CenterによるSSO、AccessDeniedの調査と最小権限、脆弱性管理、GuardDutyによる自動隔離、WAFによるWebの保護
 - [x] ネットワーク・コンテンツ配信:IPAMによるCIDRの払い出し、VPCエンドポイント、外向き通信の制限、ハイブリッドDNS、Client VPN、Route 53のルーティングポリシー
+
+# 残タスク(SOA-C03の前提知識の用語ページ追加)※完了
+
+多くの問題で前提になるのに説明がなかった概念を、用語ページとして追加する。関連するサービスページの「関連する用語」からもリンクする。
+- [x] CloudWatchアラームの状態と評価(cloudwatch-alarm-states)
+- [x] IAMロールと一時的な認証情報(iam-roles-credentials)
+- [x] iam:PassRoleとサービスにリンクされたロール(iam-passrole)
+- [x] TerraformとGit(terraform-git)
+- [x] スロットリングとリトライ(throttling-retry)
+- [x] イベント駆動の自動修復(event-driven-remediation)
+- [x] cron式とrate式(cron-rate-expressions)
+- [x] HTTPステータスコードと切り分け(http-status-codes)
+- [x] TLS終端と証明書の配置(tls-termination)
+- [x] IOPS・スループット・レイテンシ(performance-metrics)
+- [x] よく使うポート番号(port-numbers)
+- [x] JSONとYAMLの読み方(json-yaml)

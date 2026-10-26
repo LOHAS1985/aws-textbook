@@ -1,0 +1,91 @@
+<!-- title: イベント駆動の自動修復 -->
+<!-- category: 設計・運用 -->
+<!-- lead: 「何かが起きた」というイベントを受けて、通知や修復の処理を自動で実行する運用の型 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>運用の自動化の多くは、<strong>「検知する → 振り分ける → 対処する」</strong>という同じ型でできています。どのサービスがどの役割を受け持つかを覚えておくと、選択肢から正しい組み合わせを選べるようになります。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node a1 0 0 blue "CloudWatch" "アラーム"
+node a2 0 1 blue "Config" "ルールの違反"
+node a3 0 2 blue "GuardDuty等" "検出結果"
+node a4 0 3 blue "CloudTrail" "API呼び出し"
+node eb 1.4 1.5 accent "EventBridge" "ルールで振り分け"
+node t1 2.8 0.5 ok "SSM Automation" "ランブックで修復"
+node t2 2.8 1.5 ok "Lambda" "独自の処理"
+node t3 2.8 2.5 box "SNS" "担当者へ通知"
+edge a1 eb
+edge a2 eb
+edge a3 eb
+edge a4 eb
+edge eb t1
+edge eb t2
+edge eb t3
+<figcaption>図1 イベント駆動の自動修復の型。各サービスが出すイベントをEventBridgeのルールで選び、SSM Automation(修復)・Lambda(独自の処理)・SNS(通知)などに渡す。</figcaption>
+</figure>
+
+<h3>①検知:イベントを出すもの</h3>
+<div class="table-wrap"><table>
+<tr><th>イベントの出どころ</th><th>何が起きたか</th><th>例</th></tr>
+<tr><td>CloudWatchアラーム</td><td>メトリクスがしきい値を超えた(<a href="cloudwatch-alarm-states.html">状態が変わった</a>)</td><td>CPU使用率が高い、ステータスチェックの失敗</td></tr>
+<tr><td>AWS Config</td><td>リソースの設定がルールに違反した</td><td>暗号化されていないEBS、SSHを全開放したセキュリティグループ</td></tr>
+<tr><td>GuardDuty・Security Hub・Inspector</td><td>脅威・脆弱性を検出した</td><td>不審な通信をしているEC2</td></tr>
+<tr><td>CloudTrail(API呼び出し)</td><td>誰かが特定のAPIを呼んだ</td><td>バケットポリシーの変更、CloudTrailの停止</td></tr>
+<tr><td>AWS Health</td><td>AWS側の障害・予定されたメンテナンス</td><td>EC2のリタイア予定</td></tr>
+<tr><td>各サービスの状態の変化</td><td>リソースの状態が変わった</td><td>EC2の停止、Auto Scalingの起動失敗</td></tr>
+<tr><td>スケジュール</td><td>決めた時刻になった(<a href="cron-rate-expressions.html">cron式・rate式</a>)</td><td>夜間の停止、定期的な点検</td></tr>
+</table></div>
+
+<h3>②振り分け:EventBridgeのルール</h3>
+<p>EventBridgeのルールは、<strong>イベントパターン</strong>(JSON)に一致したイベントだけをターゲットに渡します。次の例は「EC2インスタンスが停止した」イベントに一致します。</p>
+<pre class="code"><code>{
+  "source": ["aws.ec2"],
+  "detail-type": ["EC2 Instance State-change Notification"],
+  "detail": { "state": ["stopped"] }
+}</code></pre>
+<p>特定のAPIの呼び出しを捕まえるときは、<code>"detail-type": ["AWS API Call via CloudTrail"]</code> と、<code>detail</code> の <code>eventSource</code>・<code>eventName</code> を指定します。このイベントを受け取るには、<strong>CloudTrailの証跡が有効</strong>になっている必要があります。</p>
+
+<h3>③対処:ターゲット</h3>
+<div class="table-wrap"><table>
+<tr><th>ターゲット</th><th>向いている処理</th></tr>
+<tr><td><strong>SSM Automation</strong>(ランブック)</td><td>決まった手順の修復。AWSが用意したランブック(例:<code>AWS-RestartEC2Instance</code>、<code>AWS-DisablePublicAccessForSecurityGroup</code>)をそのまま使える。承認の手順や複数のステップも書ける</td></tr>
+<tr><td>Lambda</td><td>ランブックにない独自の処理、外部のツールとの連携</td></tr>
+<tr><td>SNS</td><td>人への通知(メール・チャット)</td></tr>
+<tr><td>Step Functions</td><td>分岐・待ち・人の承認を含む長い処理</td></tr>
+<tr><td>SQS</td><td>あとでまとめて処理するためにためておく</td></tr>
+</table></div>
+<p>ターゲットを実行するためのロール(Automationに渡すロールなど)には、修復に必要な権限を与え、ルールを作る人には<a href="iam-passrole.html">iam:PassRole</a>の権限が必要です。</p>
+
+<h3>EventBridgeを通さない近道</h3>
+<p>次の組み合わせは、EventBridgeのルールを作らなくても直接つなげられます。試験では「最も手間が少ない方法」として問われます。</p>
+<ul>
+<li><strong>Configルール → 修復アクション</strong>:違反したリソースにSSM Automationのランブックを実行する。<strong>自動修復</strong>にすると違反のたびに実行され、再試行の回数も決められる</li>
+<li><strong>CloudWatchアラーム → アラームのアクション</strong>:SNS通知、EC2の再起動・<strong>復旧</strong>、Auto Scaling、Lambda、OpsItemの作成</li>
+<li><strong>Security Hub → 自動化ルール</strong>:検出結果の重要度や状態を自動で更新する</li>
+</ul>
+<div class="point"><p>選び方の目安:<strong>設定の違反</strong>なら Config の修復アクション、<strong>メトリクスの異常</strong>ならアラームのアクション、<strong>それ以外のイベントや複数の処理</strong>なら EventBridge のルールでAutomationやLambdaにつなぎます。修復を自動にする前に、まず通知だけで運用して誤検知がないことを確かめると安全です。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>:検知の起点になるアラーム</li>
+<li><a href="cron-rate-expressions.html">cron式とrate式</a>:スケジュールで起動する</li>
+<li><a href="iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a>:ターゲットに渡すロール</li>
+<li><a href="messaging-comparison.html">メッセージングサービスの選び方</a>:EventBridge・SNS・SQSの違い</li>
+<li><a href="security-detection-comparison.html">セキュリティ検出のサービスの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:イベントの振り分け</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Automationのランブック</li>
+<li><a href="../services/config.html">AWS Config</a>:ルールと修復アクション</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:アラームとアクション</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:API呼び出しのイベント</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:独自の修復処理</li>
+<li><a href="../services/health-dashboard.html">AWS Health Dashboard</a>:AWS側のイベント</li>
+</ul>
+</section>

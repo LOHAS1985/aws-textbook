@@ -1,0 +1,85 @@
+<!-- title: CloudWatchアラームの状態と評価 -->
+<!-- category: 設計・運用 -->
+<!-- lead: アラームの3つの状態(OK・ALARM・INSUFFICIENT_DATA)と、期間・データポイント数・欠落データの扱いでアラームが鳴る条件が決まる仕組み -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>CloudWatchアラームは、1つのメトリクス(またはメトリクスの計算結果)を一定の間隔で調べ、しきい値を超えているかどうかで<strong>状態</strong>を切り替えます。アクション(通知や自動修復)は、<strong>状態が変わったとき</strong>に実行されます。そのため「なぜ鳴らないのか」「なぜ鳴りすぎるのか」は、状態と評価の設定から切り分けます。</p>
+
+<h3>3つの状態</h3>
+<div class="table-wrap"><table>
+<tr><th>状態</th><th>意味</th><th>よくある原因</th></tr>
+<tr><td><code>OK</code></td><td>メトリクスがしきい値の範囲内</td><td>正常</td></tr>
+<tr><td><code>ALARM</code></td><td>メトリクスがしきい値を超えた(条件を満たした)</td><td>負荷の増加、エラーの発生</td></tr>
+<tr><td><strong class="em"><code>INSUFFICIENT_DATA</code></strong></td><td>判定に使えるデータが足りない</td><td>作成した直後、メトリクスが送られていない(エージェントの停止・インスタンスの停止)、メトリクス名やディメンションの指定の誤り</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 85
+node ok 0 0 ok "OK" "しきい値の範囲内"
+node al 2 0 ng "ALARM" "しきい値を超えた"
+node ins 1 1 box "INSUFFICIENT_DATA" "データが足りない" w=1.4
+edge ok al "超えた" both
+edge ok ins dash
+edge al ins dash
+<figcaption>図1 アラームの状態の移り変わり。どの状態からどの状態へも移る。アクションは状態が変わったときに1回だけ実行される(Auto Scalingのアクションだけは、ALARMの間くり返し実行される)。</figcaption>
+</figure>
+<p>アクションは状態ごとに設定できます。ALARMになったときだけでなく、<strong>OKに戻ったとき</strong>(復旧の通知)や、<strong>INSUFFICIENT_DATAになったとき</strong>(監視が止まったことの通知)にも通知できます。</p>
+
+<h3>評価の設定(いつALARMになるか)</h3>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>意味</th><th>例</th></tr>
+<tr><td>統計</td><td>期間内のデータを何でまとめるか</td><td>平均(Average)、合計(Sum)、最大(Maximum)、パーセンタイル(p99)</td></tr>
+<tr><td>期間(Period)</td><td>1つのデータポイントにまとめる時間</td><td>60秒、300秒。高解像度メトリクスなら10秒・30秒も可</td></tr>
+<tr><td>評価期間の数(N)</td><td>直近いくつのデータポイントを見るか</td><td>5</td></tr>
+<tr><td>アラームを実行するデータポイント数(M)</td><td>N個のうちいくつが超えたらALARMにするか</td><td>3(「5個中3個」)</td></tr>
+<tr><td>欠落データの扱い</td><td>データがないときにどう数えるか</td><td>下の表を参照</td></tr>
+</table></div>
+<p>例えば「期間60秒・5個中3個」なら、直近5分のうち3分でしきい値を超えたときにALARMになります。<strong>「M/N」にすると一瞬の急増では鳴らず</strong>、誤報を減らせます。逆に、検知を早くしたいときは期間を短くし、M・Nを小さくします。なお、EC2の基本モニタリングはメトリクスが<strong>5分ごと</strong>なので、1分単位で判定したい場合は詳細モニタリング(1分ごと)を有効にします。</p>
+
+<h3>欠落データの扱い</h3>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>動き</th><th>向いているメトリクス</th></tr>
+<tr><td><code>missing</code>(既定)</td><td>欠落したデータポイントは数えない。評価範囲がすべて欠落すると INSUFFICIENT_DATA になる</td><td>常に送られてくるメトリクス</td></tr>
+<tr><td><code>notBreaching</code></td><td>欠落を「正常」として数える</td><td><strong>何か起きたときだけ送られる</strong>メトリクス(エラー数、ALBの5xxの数など)</td></tr>
+<tr><td><code>breaching</code></td><td>欠落を「しきい値超え」として数える</td><td>データが来ないこと自体が異常なもの(ハートビート、定期処理の完了数)</td></tr>
+<tr><td><code>ignore</code></td><td>今の状態を保つ</td><td>まばらに送られるメトリクスで、状態をむやみに変えたくないとき</td></tr>
+</table></div>
+<div class="point"><p>エラー数のアラームがエラーのないときに INSUFFICIENT_DATA のままになるのは、エラーがない時間はメトリクス自体が送られないためです。<strong class="em">欠落データを notBreaching(正常として扱う)</strong>にすると、エラーがないときはOKになります。</p></div>
+
+<h3>アラームのアクション</h3>
+<ul>
+<li><strong>SNSトピックへの通知</strong>:メール・チャットツール・Lambdaなどへ届ける</li>
+<li><strong>EC2アクション</strong>:インスタンスの停止・終了・再起動・<strong>復旧</strong>(StatusCheckFailed_System のアラームで別のハードウェアに移す)</li>
+<li><strong>Auto Scalingアクション</strong>:ステップスケーリング・シンプルスケーリングのポリシーを実行する</li>
+<li><strong>Lambda関数の実行</strong>、<strong>Systems ManagerのOpsItemの作成</strong></li>
+</ul>
+<p>アラームの状態の変化はEventBridgeにもイベントとして送られるので、SSM Automationなど、アラームのアクションにない処理にもつなげられます(<a href="event-driven-remediation.html">イベント駆動の自動修復</a>)。</p>
+
+<h3>アラームの種類</h3>
+<ul>
+<li><strong>メトリクスアラーム</strong>:1つのメトリクス、または<strong>メトリクスの計算(Metric Math)</strong>の結果を監視する。例:エラー数 ÷ リクエスト数 でエラー率にしてから判定する</li>
+<li><strong>異常検出のアラーム</strong>:固定のしきい値の代わりに、過去の傾向から学習した「予測の幅」から外れたらALARMにする</li>
+<li><strong>複合アラーム</strong>:複数のアラームの状態を AND・OR・NOT で組み合わせる。「CPUが高い AND 応答が遅い」のときだけ通知して、誤報と通知の数を減らす</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="event-driven-remediation.html">イベント駆動の自動修復</a>:アラームを起点に自動で直す仕組み</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:アラームによるスケーリング</li>
+<li><a href="performance-metrics.html">IOPS・スループット・レイテンシ</a>:性能のアラームで見る指標</li>
+<li><a href="service-quotas.html">サービスクォータ</a>:クォータの使用率のアラーム</li>
+<li><a href="monitoring-logging-comparison.html">監視・記録のサービスの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:アラームを作るサービス</li>
+<li><a href="../services/sns.html">Amazon SNS</a>:アラームの通知先</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:アラームでスケーリングする</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:基本モニタリングと詳細モニタリング、アラームによる自動復旧</li>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:アラームの状態の変化を受け取る</li>
+</ul>
+</section>

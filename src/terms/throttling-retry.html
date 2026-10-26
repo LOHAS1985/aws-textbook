@@ -1,0 +1,77 @@
+<!-- title: スロットリングとリトライ -->
+<!-- category: 設計・運用 -->
+<!-- lead: APIの呼び出しが上限を超えて断られること(スロットリング)と、待つ時間を伸ばしながらやり直す対処(エクスポネンシャルバックオフ) -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>AWSのAPIやサービスには、1秒あたりに受け付けるリクエスト数の上限があります。上限を超えた分は処理されずに<strong>エラーで断られます</strong>。これを<strong>スロットリング</strong>と呼びます。一時的なエラーなので、少し待ってやり直せば成功することがほとんどです。</p>
+
+<h3>スロットリングのエラーの例</h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>エラー</th><th>主な原因と対処</th></tr>
+<tr><td>多くのAWSのAPI</td><td><code>ThrottlingException</code>、<code>Throttling</code>、<code>Rate exceeded</code></td><td>短い時間に呼びすぎ。リトライ、呼び出しをまとめる、結果をキャッシュする</td></tr>
+<tr><td>EC2のAPI</td><td><code>RequestLimitExceeded</code></td><td>同上。監視スクリプトがDescribe系を頻繁に呼んでいることが多い</td></tr>
+<tr><td>Lambda</td><td><code>TooManyRequestsException</code>(429)</td><td>同時実行数の上限。予約された同時実行数・クォータの引き上げ・SQSで受けて流量をならす</td></tr>
+<tr><td>DynamoDB</td><td><code>ProvisionedThroughputExceededException</code></td><td>キャパシティ不足や、特定のパーティションへの集中(ホットキー)。オンデマンドモード・Auto Scaling・キーの設計の見直し</td></tr>
+<tr><td>S3</td><td><code>503 Slow Down</code></td><td>1つのプレフィックスに集中(1秒あたりPUT等3,500・GET等5,500が目安)。プレフィックスを分ける</td></tr>
+<tr><td>API Gateway</td><td><code>429 Too Many Requests</code></td><td>スロットリングの設定・使用量プランの上限。上限の見直し、利用者側のリトライ</td></tr>
+</table></div>
+
+<h3>エクスポネンシャルバックオフとジッター</h3>
+<p>失敗したらすぐにやり直すと、混んでいるところにさらに負荷をかけてしまいます。そこで、<strong>やり直すたびに待つ時間を倍に伸ばし</strong>(1秒、2秒、4秒…)、さらに待つ時間に<strong>ランダムなずれ(ジッター)</strong>を加えます。ジッターがないと、同時に失敗した多数のクライアントが同じタイミングでやり直して、また一斉に失敗するためです。</p>
+<figure class="figure" data-diagram>
+grid 150 80
+node r1 0 0 ng "1回目" "失敗"
+node r2 1 0 ng "2回目" "失敗"
+node r3 2 0 ng "3回目" "失敗"
+node r4 3 0 ok "4回目" "成功"
+edge r1 r2 "約1秒"
+edge r2 r3 "約2秒"
+edge r3 r4 "約4秒"
+<figcaption>図1 エクスポネンシャルバックオフ。待つ時間を倍々に伸ばしながらやり直し、実際の待ち時間にはランダムなずれ(ジッター)を加えて、リトライのタイミングを分散させる。</figcaption>
+</figure>
+<p><strong>AWS SDK・AWS CLIには、この仕組みが最初から組み込まれています</strong>。設定で調整できるのは次の2つです。</p>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>内容</th></tr>
+<tr><td>リトライモード(<code>retry_mode</code>)</td><td><code>standard</code>(標準。最大3回まで試す)、<code>adaptive</code>(standardに加えて、クライアント側で送る速さを自動で落とす)、<code>legacy</code>(古い動き)</td></tr>
+<tr><td>最大試行回数(<code>max_attempts</code>)</td><td>最初の1回を含めた回数。増やすと一時的なエラーに強くなる</td></tr>
+</table></div>
+<p>設定は <code>~/.aws/config</code> か、環境変数 <code>AWS_RETRY_MODE</code>・<code>AWS_MAX_ATTEMPTS</code> で行います。</p>
+
+<h3>リトライの前提:べき等性</h3>
+<p>リトライすると、同じ処理が2回以上実行されることがあります(1回目は実は成功していたが、応答が届かなかった場合など)。そのため、<strong>何回実行しても結果が同じになる(べき等)</strong>ように作ります。</p>
+<ul>
+<li>EC2の <code>RunInstances</code> などは<strong>クライアントトークン</strong>を付けると、同じトークンの2回目の呼び出しでインスタンスが重複して作られない</li>
+<li>SQS(標準キュー)やLambdaの非同期呼び出しは「少なくとも1回」届ける仕組みなので、同じメッセージが重複して届くことがある。処理済みのIDを記録して2回目は飛ばす</li>
+<li>Lambdaの非同期呼び出しは、失敗すると<strong>最大2回</strong>リトライし、それでも失敗したらデッドレターキューや失敗時の送信先に送る</li>
+</ul>
+
+<h3>リトライ以外の対策</h3>
+<ul>
+<li><strong>呼び出しを減らす</strong>:結果のキャッシュ、バッチ処理(まとめて送るAPIを使う)、ポーリングをやめてEventBridgeでイベントを受ける</li>
+<li><strong>流量をならす</strong>:SQSにいったんためて、処理する側のペースで取り出す</li>
+<li><strong>上限を上げる</strong>:調整できる上限は<a href="service-quotas.html">Service Quotas</a>で引き上げを申請する</li>
+</ul>
+<div class="point"><p>試験では「APIの呼び出しが断続的に失敗する(ThrottlingException)」に対して、<strong class="em">エクスポネンシャルバックオフとジッターによるリトライ</strong>が第一の答えになることが多く、クォータの引き上げはそのあとに検討します。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="service-quotas.html">サービスクォータ</a>:APIの呼び出し回数の上限と引き上げ</li>
+<li><a href="circuit-breaker.html">サーキットブレーカー</a>:失敗が続くときに呼び出しを止める</li>
+<li><a href="http-status-codes.html">HTTPステータスコードと切り分け</a>:429・503の意味</li>
+<li><a href="messaging-comparison.html">メッセージングサービスの選び方</a>:SQSで流量をならす</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/sdk.html">AWS SDK</a>:リトライの仕組みと設定</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:同時実行数と非同期呼び出しのリトライ</li>
+<li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:キャパシティとスロットリング</li>
+<li><a href="../services/api-gateway.html">Amazon API Gateway</a>:スロットリングの設定と使用量プラン</li>
+<li><a href="../services/sqs.html">Amazon SQS</a>:流量をならすキュー</li>
+<li><a href="../services/s3.html">Amazon S3</a>:プレフィックスあたりのリクエスト数</li>
+</ul>
+</section>

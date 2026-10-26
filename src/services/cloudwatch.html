@@ -180,7 +180,7 @@ edge stat alarm
 <h4 id="m-network">ネットワーク・コンテンツ配信</h4>
 <div class="table-wrap"><table>
 <tr><th>サービス</th><th>メトリクス</th><th>意味</th><th>試験での見どころ</th></tr>
-<tr><td rowspan="7">ALB<br><code>AWS/ApplicationELB</code></td><td><strong class="em"><code>HTTPCode_ELB_5XX_Count</code></strong></td><td>ロードバランサー自身が返した5xx</td><td>502=ターゲットの応答が不正、<strong>503=正常なターゲットがない</strong>、<strong>504=ターゲットがタイムアウト</strong>(<code>HTTPCode_ELB_502_Count</code> などコード別のメトリクスもある)</td></tr>
+<tr><td rowspan="7">ALB<br><code>AWS/ApplicationELB</code></td><td><strong class="em"><code>HTTPCode_ELB_5XX_Count</code></strong></td><td>ロードバランサー自身が返した5xx</td><td>502=ターゲットの応答が不正、<strong>503=ターゲットが登録されていない</strong>、<strong>504=ターゲットがタイムアウト</strong>(<code>HTTPCode_ELB_502_Count</code> などコード別のメトリクスもある)</td></tr>
 <tr><td><strong class="em"><code>HTTPCode_Target_5XX_Count</code></strong>、<code>HTTPCode_Target_4XX_Count</code></td><td>ターゲット(アプリ)が返したエラー</td><td>ELB側とターゲット側のどちらの問題かを切り分ける</td></tr>
 <tr><td><strong class="em"><code>TargetResponseTime</code></strong></td><td>ALBがリクエストを送ってからターゲットが応答するまでの時間</td><td>p99やAverageでレイテンシーを監視</td></tr>
 <tr><td><strong class="em"><code>HealthyHostCount</code>/<code>UnHealthyHostCount</code></strong></td><td>正常・異常なターゲットの数</td><td>ターゲットグループ単位。異常ならヘルスチェックのパス・セキュリティグループを見直す</td></tr>
@@ -235,7 +235,7 @@ edge stat alarm
 <tr><td>EC2がハードウェア障害で止まったら自動で復旧したい</td><td><code>StatusCheckFailed_System</code></td><td>アラームアクション「復旧」</td></tr>
 <tr><td>T系インスタンスがときどき極端に遅くなる</td><td><code>CPUCreditBalance</code></td><td>unlimitedモード、またはM系など固定性能のタイプへ</td></tr>
 <tr><td>EBSが最初は速いが途中から遅くなる</td><td><code>BurstBalance</code></td><td>gp3へ変更してIOPSを指定</td></tr>
-<tr><td>ALBが503を返す</td><td><code>HTTPCode_ELB_5XX_Count</code>、<code>HealthyHostCount</code></td><td>正常なターゲットがない → ヘルスチェック・ターゲットの登録を確認</td></tr>
+<tr><td>ALBが503を返す</td><td><code>HTTPCode_ELB_5XX_Count</code>、<code>HealthyHostCount</code></td><td>ターゲットグループにターゲットが登録されていない → ターゲットの登録・Auto Scalingグループとの関連付けを確認(全ターゲットが異常なときは503ではなく全台に振り分けられる)</td></tr>
 <tr><td>ALBが504を返す</td><td><code>HTTPCode_ELB_5XX_Count</code>、<code>TargetResponseTime</code></td><td>ターゲットの処理が遅い → アプリの改善・アイドルタイムアウトの調整</td></tr>
 <tr><td>RDSの接続数が上限に達する(特にLambdaから)</td><td><code>DatabaseConnections</code></td><td>RDS Proxyで接続をプールする</td></tr>
 <tr><td>RDSのストレージが足りなくなりそう</td><td><code>FreeStorageSpace</code></td><td>ストレージの自動スケーリング</td></tr>
@@ -341,6 +341,7 @@ edge sf dst
 <li><a href="cloudtrail.html">AWS CloudTrail</a>:CloudWatch Logsへの配信</li>
 <li><a href="xray.html">AWS X-Ray</a>:分散トレース</li>
 <li><a href="managed-grafana.html">Amazon Managed Grafana</a>:可視化</li>
+<li>関連する用語:<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>、<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシ</a>、<a href="../terms/http-status-codes.html">HTTPステータスコードと切り分け</a>、<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a></li>
 </ul>
 </section>
 

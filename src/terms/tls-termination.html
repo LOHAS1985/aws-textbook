@@ -1,0 +1,73 @@
+<!-- title: TLS終端と証明書の配置 -->
+<!-- category: セキュリティ・認証 -->
+<!-- lead: HTTPSの暗号化をどこで解くか(TLS終端)と、CloudFront・ALB・NLB・EC2のどこにどの証明書を置くか -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>HTTPSでは、通信の途中にある機器のどこかで暗号化を解いて中身を読みます。この場所を<strong>TLS終端</strong>と呼び、<strong>証明書はTLS終端に置きます</strong>。どこで終端するかによって、置く証明書・後ろの通信の暗号化・負荷のかかる場所が変わります。</p>
+
+<h3>終端する場所の選び方</h3>
+<div class="table-wrap"><table>
+<tr><th>終端する場所</th><th>証明書</th><th>特徴</th></tr>
+<tr><td><strong>ALB</strong>(HTTPSリスナー)</td><td>ALBと同じリージョンのACM証明書</td><td>最も一般的。暗号化の処理をEC2から外せる。中身を読めるので、パスによる振り分け・WAF・認証ができる</td></tr>
+<tr><td><strong>CloudFront</strong></td><td><strong class="em">us-east-1(バージニア北部)のACM証明書</strong></td><td>利用者に近いエッジで終端する。オリジン(ALBなど)への通信は別に暗号化を設定する</td></tr>
+<tr><td>NLB(TLSリスナー)</td><td>NLBと同じリージョンのACM証明書</td><td>TCPのまま高速に処理しつつ、暗号化の処理をNLBに任せる</td></tr>
+<tr><td><strong>EC2自身</strong>(NLBのTCPリスナーで通過させる)</td><td>サーバーに入れた証明書</td><td>途中で一度も暗号を解かない<strong>エンドツーエンドの暗号化</strong>。コンプライアンスで求められる場合に使う</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 85
+node user 0 0.5 blue "利用者"
+node cf 1.2 0.5 accent "CloudFront" "us-east-1の証明書"
+node alb 2.4 0.5 accent "ALB" "同じリージョンの証明書"
+node ec2 3.6 0.5 box "EC2" "HTTPまたはHTTPS"
+edge user cf "HTTPS"
+edge cf alb "HTTPS"
+edge alb ec2 "再暗号化は任意"
+<figcaption>図1 CloudFrontとALBの両方で終端する構成。利用者〜CloudFront、CloudFront〜ALB、ALB〜EC2 の区間ごとに暗号化を設定する。ALB〜EC2も暗号化したいときは、ターゲットグループのプロトコルをHTTPSにする。</figcaption>
+</figure>
+
+<h3>区間ごとの設定</h3>
+<ul>
+<li><strong>利用者〜CloudFront</strong>:ビューワープロトコルポリシーで「HTTPをHTTPSにリダイレクト」または「HTTPSのみ」にする</li>
+<li><strong>CloudFront〜オリジン</strong>:オリジンプロトコルポリシーで「HTTPSのみ」にする。オリジンの証明書は、CloudFrontが接続するドメイン名と一致し、信頼された認証局が発行したものが必要(一致しないと502)</li>
+<li><strong>ALB〜EC2</strong>:ターゲットグループをHTTPSにすると再暗号化される。ALBはターゲットの証明書を検証しないので、自己署名の証明書でもよい</li>
+</ul>
+
+<h3>ACM証明書の決まりごと</h3>
+<ul>
+<li>ACMの証明書は<strong>リージョンごと</strong>。ALB・NLB・リージョン型のAPI Gatewayは同じリージョン、CloudFront(とエッジ最適化のAPI Gateway)は<strong>us-east-1</strong>の証明書を使う</li>
+<li>ACMの証明書は、ELB・CloudFront・API Gatewayなどの<strong>連携するサービスに付ける</strong>もので、通常はEC2に直接入れられない(EC2で使う場合は、エクスポート可能な有料の証明書や、自分で用意した証明書を使う)</li>
+<li>1つのリスナーに複数の証明書を付けると、<strong>SNI</strong>によって接続先のドメイン名ごとに証明書が選ばれる</li>
+<li>使えるTLSのバージョンや暗号方式は、リスナーの<strong>セキュリティポリシー</strong>で決める(古いTLS 1.0・1.1を止める場合など)</li>
+</ul>
+
+<h3>証明書の期限切れを防ぐ</h3>
+<div class="table-wrap"><table>
+<tr><th>証明書</th><th>更新</th></tr>
+<tr><td>ACMが発行(DNS検証)</td><td><strong>自動で更新</strong>される。検証用のCNAMEレコードを消さないこと</td></tr>
+<tr><td>ACMが発行(メール検証)</td><td>期限前に届くメールで承認が必要</td></tr>
+<tr><td><strong>ACMにインポートした証明書</strong></td><td><strong>自動では更新されない</strong>。自分で新しい証明書をインポートし直す</td></tr>
+</table></div>
+<div class="point"><p>期限の監視には、ACMの <code>DaysToExpiry</code> メトリクスのアラーム、期限の45日前から送られるEventBridgeのイベント、Configのマネージドルール <code>acm-certificate-expiration-check</code> を使います。インポートした証明書を使っている場合は、特にこの監視が必要です。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="encryption.html">保存時の暗号化と転送時の暗号化</a>:転送時の暗号化の全体像</li>
+<li><a href="http-status-codes.html">HTTPステータスコードと切り分け</a>:TLSの不一致による502</li>
+<li><a href="port-numbers.html">よく使うポート番号</a>:HTTPS(443)</li>
+<li><a href="dns-record-types.html">DNSレコードタイプ</a>:DNS検証に使うCNAMEレコード</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/acm.html">AWS Certificate Manager</a>:証明書の発行と自動更新</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:HTTPS・TLSリスナーとセキュリティポリシー</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:ビューワー側・オリジン側のプロトコルポリシー</li>
+<li><a href="../services/api-gateway.html">Amazon API Gateway</a>:カスタムドメインの証明書</li>
+<li><a href="../services/private-ca.html">AWS Private CA</a>:社内向けの証明書</li>
+<li><a href="../services/config.html">AWS Config</a>:証明書の期限のチェック</li>
+</ul>
+</section>

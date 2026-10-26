@@ -1,0 +1,81 @@
+<!-- title: cron式とrate式 -->
+<!-- category: 設計・運用 -->
+<!-- lead: 「毎日10時」「5分ごと」のような実行スケジュールを書くための記法と、AWSでの書き方の注意点 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>AWSで処理を定期的に実行するときは、スケジュールを<strong>rate式</strong>(一定の間隔)か<strong>cron式</strong>(決まった日時)で書きます。EventBridge、Systems Managerのメンテナンスウィンドウ、EBSのスナップショットの自動作成(Data Lifecycle Manager)、AWS Backupのバックアッププランなど、多くのサービスで同じ書き方を使います。</p>
+
+<h3>rate式(一定の間隔)</h3>
+<p><code>rate(値 単位)</code> の形で書きます。単位は <code>minute(s)</code>・<code>hour(s)</code>・<code>day(s)</code> で、値が1のときは単数形にします。</p>
+<ul>
+<li><code>rate(5 minutes)</code>:5分ごと</li>
+<li><code>rate(1 hour)</code>:1時間ごと(<code>rate(1 hours)</code> は誤り)</li>
+<li><code>rate(7 days)</code>:7日ごと</li>
+</ul>
+<p>rate式は「作成した時刻から数えて」の間隔になるので、決まった時刻に実行したいときはcron式を使います。</p>
+
+<h3>cron式(決まった日時)</h3>
+<p>AWSのcron式は、<strong>6つの項目</strong>を空白で区切って書きます。Linuxのcron(5項目)とは違い、最後に「年」があります。</p>
+<div class="table-wrap"><table>
+<tr><th>順番</th><th>項目</th><th>値</th></tr>
+<tr><td>1</td><td>分</td><td>0〜59</td></tr>
+<tr><td>2</td><td>時</td><td>0〜23</td></tr>
+<tr><td>3</td><td>日</td><td>1〜31</td></tr>
+<tr><td>4</td><td>月</td><td>1〜12 または JAN〜DEC</td></tr>
+<tr><td>5</td><td>曜日</td><td>1〜7(1=日曜) または SUN〜SAT</td></tr>
+<tr><td>6</td><td>年</td><td>1970〜2199</td></tr>
+</table></div>
+<p>記号:<code>*</code>(すべて)、<code>,</code>(列挙)、<code>-</code>(範囲)、<code>/</code>(間隔。<code>0/15</code> は0分から15分ごと)、<code>?</code>(指定しない)、<code>L</code>(最後の日)、<code>#</code>(第何週。<code>2#1</code> は第1月曜)。</p>
+<div class="point"><p><strong class="em">「日」と「曜日」は、どちらか一方を <code>?</code> にする</strong>決まりです。両方に <code>*</code> を書くとエラーになります。</p></div>
+
+<h3>よく使う例</h3>
+<div class="table-wrap"><table>
+<tr><th>cron式</th><th>意味(UTC)</th></tr>
+<tr><td><code>cron(0 10 * * ? *)</code></td><td>毎日 10:00</td></tr>
+<tr><td><code>cron(0/15 * * * ? *)</code></td><td>15分ごと</td></tr>
+<tr><td><code>cron(0 18 ? * MON-FRI *)</code></td><td>平日の 18:00</td></tr>
+<tr><td><code>cron(0 2 ? * SUN *)</code></td><td>毎週日曜の 2:00</td></tr>
+<tr><td><code>cron(0 0 1 * ? *)</code></td><td>毎月1日の 0:00</td></tr>
+<tr><td><code>cron(0 15 L * ? *)</code></td><td>毎月末日の 15:00</td></tr>
+</table></div>
+
+<h3>タイムゾーンに注意</h3>
+<p>EventBridgeのルールのスケジュールは<strong>UTC(協定世界時)</strong>で動きます。日本時間(JST)はUTCより9時間進んでいるので、<strong>日本時間の9:00はUTCの0:00</strong>です。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node jst 0 0 blue "日本時間 19:00" "平日に止めたい"
+node calc 1.4 0 box "9時間引く" "JST − 9 = UTC"
+node utc 2.8 0 accent "UTC 10:00" "平日の10:00(UTC)"
+edge jst calc
+edge calc utc
+<figcaption>図1 日本時間をUTCに直す。この例のcron式は cron(0 10 ? * MON-FRI *) になる。日付をまたぐときは、曜日もずれるので注意する(日本時間の月曜 8:00 は、UTCでは日曜 23:00)。</figcaption>
+</figure>
+<p>タイムゾーンを指定できるサービスなら、指定したほうが間違いがなく、夏時間のある地域でも時刻がずれません。</p>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>書き方</th><th>タイムゾーンの指定</th></tr>
+<tr><td>EventBridgeのルール</td><td>cron式(6項目)・rate式</td><td>できない(UTC)</td></tr>
+<tr><td><strong>EventBridge Scheduler</strong></td><td>cron式(6項目)・rate式・1回だけ(at式)</td><td><strong>できる</strong></td></tr>
+<tr><td>Systems Managerのメンテナンスウィンドウ</td><td>cron式・rate式</td><td>できる</td></tr>
+<tr><td>Auto Scalingのスケジュールされたアクション</td><td><strong>Linux形式のcron(5項目)</strong></td><td>できる</td></tr>
+<tr><td>AWS Backupのバックアッププラン、Data Lifecycle Manager</td><td>cron式(コンソールでは頻度と時刻を選ぶ)</td><td>サービスの設定による</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="event-driven-remediation.html">イベント駆動の自動修復</a>:スケジュールも起点の1つ</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:スケジュールによるスケーリング</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/eventbridge.html">Amazon EventBridge</a>:ルールとScheduler</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:メンテナンスウィンドウ・State Managerの関連付け</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:スケジュールされたアクション</li>
+<li><a href="../services/backup.html">AWS Backup</a>:バックアッププランの頻度</li>
+<li><a href="../services/ebs.html">Amazon EBS</a>:Data Lifecycle Managerによるスナップショットの自動作成</li>
+</ul>
+</section>
