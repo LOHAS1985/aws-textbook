@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コンテナの性能を監視する構成を組み立てる | AWS教科書</title>
+<meta name="description" content="ECS・EKSのタスクやPod単位のメトリクスとログを集め、異常を知らせる">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">監視・ログ・自動修復</a>
+  <h1>コンテナの性能を監視する構成を組み立てる</h1>
+  <p class="lead">ECS・EKSのタスクやPod単位のメトリクスとログを集め、異常を知らせる</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ECS・EKSのアプリを、<strong>タスク・Pod単位</strong>のCPU・メモリ・再起動回数で監視したい。</li>
+<li>メモリ不足や再起動のくり返しを、早く見つけて通知したい。</li>
+<li>アプリ独自のPrometheus形式のメトリクスも、ダッシュボードで見たい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 242" style="max-width:905px;min-width:724px" role="img" aria-label="図1 コンテナの監視の構成。"><defs><marker id="dgexercises-container-monitoring-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ecs">
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">ECS</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">Container Insights</text>
+</g>
+<g data-node="eks">
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">EKS</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">CloudWatchアドオン</text>
+</g>
+<g data-node="cw">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">CloudWatch</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">メトリクス・ログ</text>
+</g>
+<g data-node="al">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">アラーム</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">メモリ使用率など</text>
+</g>
+<g data-node="sns">
+<rect x="731" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="806" y="60" text-anchor="middle" class="dg-t">SNS</text>
+<text x="806" y="78" text-anchor="middle" class="dg-s">通知</text>
+</g>
+<g data-node="amp">
+<rect x="272" y="166" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="188" text-anchor="middle" class="dg-t">①</text>
+<text x="347" y="206" text-anchor="middle" class="dg-s">アプリのメトリクス</text>
+</g>
+<g data-node="amg">
+<rect x="510" y="166" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="585" y="188" text-anchor="middle" class="dg-t">②</text>
+<text x="585" y="206" text-anchor="middle" class="dg-s">ダッシュボード</text>
+</g>
+<path d="M184.0,76.6 L272.0,91.4" class="dg-line" marker-end="url(#dgexercises-container-monitoring-1)"/>
+<path d="M184.0,131.4 L272.0,116.6" class="dg-line" marker-end="url(#dgexercises-container-monitoring-1)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgexercises-container-monitoring-1)"/>
+<path d="M660.0,64.0 L731.0,64.0" class="dg-line" marker-end="url(#dgexercises-container-monitoring-1)"/>
+<path d="M184.0,159.1 L272.0,176.9" class="dg-line dg-dash" marker-end="url(#dgexercises-container-monitoring-1)"/>
+<path d="M422.0,192.0 L510.0,192.0" class="dg-line" marker-end="url(#dgexercises-container-monitoring-1)"/>
+</svg>
+</div>
+<figcaption>図1 コンテナの監視の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="amp">
+<p class="ex-q">① Prometheus形式のメトリクスを保存するマネージドサービスは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Prometheus">Amazon Managed Service for Prometheus<span class="ex-why">Prometheusと同じ形式・クエリ(PromQL)のまま、サーバーを管理せずにメトリクスを保存できます。</span></li>
+<li data-short="OpenSearch">Amazon OpenSearch Service<span class="ex-why">ログの全文検索・分析に向いたサービスで、Prometheus形式のメトリクスの保存先ではありません。</span></li>
+<li data-short="DynamoDB">Amazon DynamoDB<span class="ex-why">アプリのデータベースで、メトリクスの保存や集計の機能はありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="amg">
+<p class="ex-q">② メトリクスをダッシュボードで見るマネージドサービスは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Grafana">Amazon Managed Grafana<span class="ex-why">Prometheus・CloudWatchなど複数のデータソースをまとめて、ダッシュボードで表示します。</span></li>
+<li data-short="QuickSight">Amazon QuickSight<span class="ex-why">業務データの分析(BI)向けで、運用のメトリクスの監視には使いません。</span></li>
+<li data-short="X-Ray">AWS X-Ray<span class="ex-why">リクエストの経路と遅延を追うトレースのサービスです。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ ECSでタスク単位のCPU・メモリを見るために必要な設定は?</p>
+<ul class="ex-choices">
+<li data-ok>クラスターでContainer Insightsを有効にする<span class="ex-why">ECSの標準のメトリクスはサービス単位だけです。タスク・コンテナ単位はContainer Insightsで集めます。</span></li>
+<li>EC2の詳細モニタリングを有効にする<span class="ex-why">EC2インスタンスのメトリクスの間隔が1分になるだけで、タスク単位にはなりません。</span></li>
+<li>タスク定義のメモリの上限を増やす<span class="ex-why">メモリ不足の対策にはなりますが、監視の設定ではありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>ECSは<strong>Container Insights</strong>、EKSはCloudWatch Observabilityアドオンでタスク・Pod単位のメトリクスとログを集め、アラームとSNSで通知します。アプリ独自のメトリクスは<strong>Managed Service for Prometheus</strong>に集め、<strong>Managed Grafana</strong>で見ます。タスクが OutOfMemoryError で止まるときは、タスク定義のメモリの上限を見直します。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/container-monitoring.html">コンテナ(ECS・EKS)の性能を監視する</a></li>
+<li>用語:<a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a></li>
+<li>サービス:<a href="../services/cloudwatch.html">Amazon CloudWatch</a>、<a href="../services/managed-prometheus.html">Amazon Managed Service for Prometheus</a>、<a href="../services/managed-grafana.html">Amazon Managed Grafana</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="centralized-logging.html"><span class="label">← 前へ</span>複数アカウントのログを集約する構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="distributed-tracing.html"><span class="label">次へ →</span>マイクロサービスの遅延を特定する構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "ecs", "label": "ECS", "sub": "Container Insights", "x": 0.0, "y": 0.0}, {"id": "eks", "label": "EKS", "sub": "CloudWatchアドオン", "x": 0.0, "y": 1.0}, {"id": "cw", "label": "CloudWatch", "sub": "メトリクス・ログ", "x": 1.4, "y": 0.5}, {"id": "al", "label": "アラーム", "sub": "メモリ使用率など", "x": 2.8, "y": 0.0}, {"id": "sns", "label": "SNS", "sub": "通知", "x": 4.1, "y": 0.0}, {"id": "amp", "label": "Prometheus", "sub": "", "x": 1.4, "y": 1.6}, {"id": "amg", "label": "Grafana", "sub": "", "x": 2.8, "y": 1.6}], "edges": [["ecs", "cw", false, false], ["eks", "cw", false, false], ["cw", "al", false, false], ["al", "sns", false, false], ["eks", "amp", true, false], ["amp", "amg", false, false]], "distractors": ["DynamoDB", "OpenSearch", "QuickSight", "X-Ray"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

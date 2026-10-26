@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>外形監視と誤報の少ないアラームを組み立てる | AWS教科書</title>
+<meta name="description" content="利用者と同じ操作を定期的に試し、本当に必要なときだけ通知する">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">監視・ログ・自動修復</a>
+  <h1>外形監視と誤報の少ないアラームを組み立てる</h1>
+  <p class="lead">利用者と同じ操作を定期的に試し、本当に必要なときだけ通知する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>サーバーのメトリクスが正常でも「ログインできない」ことがある。<strong>利用者と同じ操作を定期的に試したい</strong>。</li>
+<li>アクセス数は時間帯や月末で大きく変わり、固定のしきい値では誤報が多い。</li>
+<li>通知が多すぎるので、<strong>本当に異常なときだけ1件</strong>知らせたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 194" style="max-width:846px;min-width:677px" role="img" aria-label="図1 外形監視と誤報の少ないアラームの構成。"><defs><marker id="dgexercises-smart-alarms-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="cn">
+<rect x="34" y="38" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="106" y="60" text-anchor="middle" class="dg-t">①</text>
+<text x="106" y="78" text-anchor="middle" class="dg-s">ログインを試す</text>
+</g>
+<g data-node="m1">
+<rect x="34" y="118" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="140" text-anchor="middle" class="dg-t">リクエスト数</text>
+<text x="106" y="158" text-anchor="middle" class="dg-s">予測の幅で判定</text>
+</g>
+<g data-node="a1">
+<rect x="248" y="38" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="60" text-anchor="middle" class="dg-t">アラームA</text>
+<text x="321" y="78" text-anchor="middle" class="dg-s">成功率 &lt; 90%</text>
+</g>
+<g data-node="a2">
+<rect x="248" y="118" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="140" text-anchor="middle" class="dg-t">アラームB</text>
+<text x="321" y="158" text-anchor="middle" class="dg-s">予測の幅の外</text>
+</g>
+<g data-node="ca">
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">②</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">A AND B</text>
+</g>
+<g data-node="sns">
+<rect x="678" y="78" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="750" y="100" text-anchor="middle" class="dg-t">SNS</text>
+<text x="750" y="118" text-anchor="middle" class="dg-s">通知は1件</text>
+</g>
+<path d="M179.0,64.0 L248.5,64.0" class="dg-line" marker-end="url(#dgexercises-smart-alarms-1)"/>
+<path d="M179.0,144.0 L248.5,144.0" class="dg-line" marker-end="url(#dgexercises-smart-alarms-1)"/>
+<path d="M393.5,77.5 L463.0,90.5" class="dg-line" marker-end="url(#dgexercises-smart-alarms-1)"/>
+<path d="M393.5,130.5 L463.0,117.5" class="dg-line" marker-end="url(#dgexercises-smart-alarms-1)"/>
+<path d="M608.0,104.0 L677.5,104.0" class="dg-line" marker-end="url(#dgexercises-smart-alarms-1)"/>
+</svg>
+</div>
+<figcaption>図1 外形監視と誤報の少ないアラームの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="cn">
+<p class="ex-q">① 利用者と同じ操作を定期的に試すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Canary">CloudWatch SyntheticsのCanary<span class="ex-why">スクリプトでログインなどの操作を定期的に実行し、成功率や応答時間をメトリクスにします(外形監視)。</span></li>
+<li data-short="Logs Insights">CloudWatch Logs Insights<span class="ex-why">出力済みのログを検索するもので、利用者の操作を試すことはしません。</span></li>
+<li data-short="ヘルスチェック">ALBのヘルスチェック<span class="ex-why">決まったパスが応答するかを見るだけで、ログインのような一連の操作は確かめられません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="ca">
+<p class="ex-q">② 2つのアラームが両方とも異常のときだけ通知するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="複合アラーム">複合アラーム<span class="ex-why">複数のアラームの状態を AND・OR・NOT で組み合わせます。元のアラームは通知せず、材料として使います。</span></li>
+<li data-short="メトリクス数式">メトリクスの計算(Metric Math)<span class="ex-why">複数のメトリクスから新しい値を計算する機能で、アラームの状態を組み合わせるものではありません。</span></li>
+<li data-short="EventBridge">EventBridgeのルール<span class="ex-why">1つ1つのアラームの状態の変化を受けて動くため、「両方のとき」の判定には向きません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 時間帯で変わるリクエスト数に合うアラームは?</p>
+<ul class="ex-choices">
+<li data-ok>異常検出(予測の幅)のアラーム<span class="ex-why">過去の傾向から時間帯ごとの「いつもの幅」を学習し、そこから外れたときにALARMになります。</span></li>
+<li>固定のしきい値のアラーム<span class="ex-why">夜間の少ないアクセスや月末の多いアクセスで、誤報や見逃しが起きます。</span></li>
+<li>評価期間を1分・1個中1個にする<span class="ex-why">一瞬の跳ね上がりでも鳴るため、誤報がかえって増えます(<a href="../terms/cloudwatch-alarm-states.html">アラームの評価</a>)。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p><strong>Canary</strong>で利用者の操作を定期的に試し、時間帯で変わるメトリクスには<strong>異常検出</strong>のアラームを使います。両方を<strong>複合アラーム</strong>でまとめると、本当に異常なときだけ1件の通知になります。VPCの中の非公開のサイトを監視するときは、CanaryをVPCの中で動かします。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/smart-alarms.html">外形監視と、誤報の少ないアラームを作る</a></li>
+<li>用語:<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a></li>
+<li>サービス:<a href="../services/cloudwatch.html">Amazon CloudWatch</a>、<a href="../services/sns.html">Amazon SNS</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="log-error-alert.html"><span class="label">← 前へ</span>アプリのエラーログを検知して通知する構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="ec2-auto-recovery.html"><span class="label">次へ →</span>EC2の障害から自動で復旧する構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 165.0, "rowh": 80.0, "nodes": [{"id": "cn", "label": "Canary", "sub": "", "x": 0.0, "y": 0.0}, {"id": "m1", "label": "リクエスト数", "sub": "予測の幅で判定", "x": 0.0, "y": 1.0}, {"id": "a1", "label": "アラームA", "sub": "成功率 < 90%", "x": 1.3, "y": 0.0}, {"id": "a2", "label": "アラームB", "sub": "予測の幅の外", "x": 1.3, "y": 1.0}, {"id": "ca", "label": "複合アラーム", "sub": "", "x": 2.6, "y": 0.5}, {"id": "sns", "label": "SNS", "sub": "通知は1件", "x": 3.9, "y": 0.5}], "edges": [["cn", "a1", false, false], ["m1", "a2", false, false], ["a1", "ca", false, false], ["a2", "ca", false, false], ["ca", "sns", false, false]], "distractors": ["EventBridge", "Logs Insights", "ヘルスチェック", "メトリクス数式"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

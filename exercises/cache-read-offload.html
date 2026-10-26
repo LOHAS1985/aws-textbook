@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>キャッシュでDBの負荷を下げる構成を組み立てる | AWS教科書</title>
+<meta name="description" content="よく読まれるデータと静的なコンテンツを手前で返し、DBを大きくせずに急増に耐える">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">信頼性・事業継続</a>
+  <h1>キャッシュでDBの負荷を下げる構成を組み立てる</h1>
+  <p class="lead">よく読まれるデータと静的なコンテンツを手前で返し、DBを大きくせずに急増に耐える</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>セール中は同じ商品情報を何度もDBから読むため、<strong>RDSのCPUが上がって遅くなる</strong>。</li>
+<li>DBを大きくせずに、<strong>よく読まれるデータ</strong>をキャッシュしたい。</li>
+<li>画像などの静的なファイルは、利用者の近くから返したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 194" style="max-width:846px;min-width:677px" role="img" aria-label="図1 キャッシュの構成。"><defs><marker id="dgexercises-cache-read-offload-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="84" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="108" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="cf">
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="321" y="100" text-anchor="middle" class="dg-t">①</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">画像・静的ページ</text>
+</g>
+<g data-node="app">
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">EC2・Lambda</text>
+</g>
+<g data-node="ec">
+<rect x="678" y="38" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="750" y="60" text-anchor="middle" class="dg-t">②</text>
+<text x="750" y="78" text-anchor="middle" class="dg-s">まずここを読む</text>
+</g>
+<g data-node="db">
+<rect x="678" y="118" width="145" height="52" rx="8" class="dg-box"/>
+<text x="750" y="140" text-anchor="middle" class="dg-t">RDS</text>
+<text x="750" y="158" text-anchor="middle" class="dg-s">キャッシュにない時</text>
+</g>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgexercises-cache-read-offload-1)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgexercises-cache-read-offload-1)"/>
+<text x="428" y="108" text-anchor="middle" class="dg-s dg-halo">動的な要求</text>
+<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgexercises-cache-read-offload-1)"/>
+<path d="M608.0,117.5 L677.5,130.5" class="dg-line dg-dash" marker-end="url(#dgexercises-cache-read-offload-1)"/>
+</svg>
+</div>
+<figcaption>図1 キャッシュの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="cf">
+<p class="ex-q">① 静的なファイルを利用者の近くのエッジから返すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="CloudFront">Amazon CloudFront<span class="ex-why">世界中のエッジロケーションでキャッシュして返します。キャッシュできない要求だけを後ろのアプリに送ります。</span></li>
+<li data-short="Accelerator">AWS Global Accelerator<span class="ex-why">AWSのネットワークで通信の経路を速くするもので、コンテンツをキャッシュしません。</span></li>
+<li data-short="NLB">Network Load Balancer<span class="ex-why">リージョンの中で通信を振り分けるもので、キャッシュの機能はありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="ec">
+<p class="ex-q">② アプリがDBの前に読む、インメモリのキャッシュは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="ElastiCache">Amazon ElastiCache<span class="ex-why">メモリ上でデータを保持し、マイクロ秒〜ミリ秒で返します。DBの読み取りの回数を減らせます。</span></li>
+<li data-short="DAX">DynamoDB Accelerator(DAX)<span class="ex-why">DynamoDB専用のキャッシュで、RDSの前には置けません。</span></li>
+<li data-short="EFS">Amazon EFS<span class="ex-why">共有のファイルストレージで、キャッシュではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 遅延読み込み(必要になったらキャッシュする)の弱点は?</p>
+<ul class="ex-choices">
+<li data-ok>初回は必ずミスし、データが古くなることがある<span class="ex-why">TTLで古いデータを消すか、更新時にキャッシュも書き換える(ライトスルー)と組み合わせます(<a href="../terms/caching-comparison.html">キャッシュの選び方</a>)。</span></li>
+<li>使われないデータまでキャッシュされる<span class="ex-why">ライトスルーの弱点です。遅延読み込みは必要なデータだけをキャッシュします。</span></li>
+<li>DBへの書き込みができなくなる<span class="ex-why">書き込みはこれまでどおりDBに行います。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>静的なコンテンツは<strong>CloudFront</strong>で、くり返し読まれるデータは<strong>ElastiCache</strong>で返し、DBにはキャッシュにないときだけ読みに行きます。ElastiCacheの <code>Evictions</code> が多いときはメモリ不足なので、ノードを大きくするかシャードを増やします。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/cache-read-offload.html">キャッシュでDBの読み取り負荷を下げる</a></li>
+<li>用語:<a href="../terms/caching-comparison.html">キャッシュの選び方</a></li>
+<li>サービス:<a href="../services/elasticache.html">Amazon ElastiCache</a>、<a href="../services/cloudfront.html">Amazon CloudFront</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="sqs-decoupling.html"><span class="label">← 前へ</span>キューで処理を分離する構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="rds-high-availability.html"><span class="label">次へ →</span>データベースの高可用性の構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 165.0, "rowh": 80.0, "nodes": [{"id": "u", "label": "利用者", "sub": "", "x": 0.0, "y": 0.5}, {"id": "cf", "label": "CloudFront", "sub": "", "x": 1.3, "y": 0.5}, {"id": "app", "label": "アプリ", "sub": "EC2・Lambda", "x": 2.6, "y": 0.5}, {"id": "ec", "label": "ElastiCache", "sub": "", "x": 3.9, "y": 0.0}, {"id": "db", "label": "RDS", "sub": "キャッシュにない時", "x": 3.9, "y": 1.0}], "edges": [["u", "cf", false, false], ["cf", "app", false, false], ["app", "ec", false, false], ["app", "db", true, false]], "distractors": ["Accelerator", "DAX", "EFS", "NLB"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

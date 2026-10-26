@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>バックアップを一元管理する構成を組み立てる | AWS教科書</title>
+<meta name="description" content="複数のサービスのバックアップをまとめて自動化し、別のリージョンにも保管する">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">信頼性・事業継続</a>
+  <h1>バックアップを一元管理する構成を組み立てる</h1>
+  <p class="lead">複数のサービスのバックアップをまとめて自動化し、別のリージョンにも保管する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>EC2・EBS・RDS・EFSのバックアップを、<strong>サービスごとではなく一元管理</strong>したい。</li>
+<li>新しく作ったリソースも、<strong>自動で対象</strong>にしたい。</li>
+<li>リージョンの障害に備えて、別のリージョンにもコピーを残したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 209" style="max-width:684px;min-width:547px" role="img" aria-label="図1 バックアップの一元管理の構成。"><defs><marker id="dgexercises-backup-cross-region-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="res">
+<rect x="34" y="88" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="110" text-anchor="middle" class="dg-t">EC2・EBS・RDS…</text>
+<text x="109" y="128" text-anchor="middle" class="dg-s">タグ Backup=daily</text>
+</g>
+<g data-node="plan">
+<rect x="272" y="88" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="110" text-anchor="middle" class="dg-t">①</text>
+<text x="347" y="128" text-anchor="middle" class="dg-s">毎日・35日保持</text>
+</g>
+<g data-node="v1">
+<rect x="510" y="43" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="64" text-anchor="middle" class="dg-t">ボールト</text>
+<text x="585" y="82" text-anchor="middle" class="dg-s">東京リージョン</text>
+</g>
+<g data-node="v2">
+<rect x="510" y="133" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="154" text-anchor="middle" class="dg-t">ボールト(大阪)</text>
+<text x="585" y="172" text-anchor="middle" class="dg-s">コピーを保管</text>
+</g>
+<path d="M184.0,114.0 L272.0,114.0" class="dg-line" marker-end="url(#dgexercises-backup-cross-region-1)"/>
+<text x="228" y="118" text-anchor="middle" class="dg-s dg-halo">タグで選択</text>
+<path d="M422.0,99.8 L510.0,83.2" class="dg-line" marker-end="url(#dgexercises-backup-cross-region-1)"/>
+<path d="M585.0,95.0 L585.0,133.0" class="dg-line" marker-end="url(#dgexercises-backup-cross-region-1)"/>
+<text x="585" y="118" text-anchor="middle" class="dg-s dg-halo">コピー</text>
+</svg>
+</div>
+<figcaption>図1 バックアップの一元管理の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="plan">
+<p class="ex-q">① スケジュール・保持期間・コピー先をまとめて決めるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="バックアッププラン">AWS Backupのバックアッププラン<span class="ex-why">複数のサービスのバックアップを、1つのプランでスケジュール・保持期間・別リージョンへのコピーまで決められます。</span></li>
+<li data-short="DLM">Data Lifecycle Manager<span class="ex-why">EBSのスナップショットとAMIだけが対象で、RDSやEFSは管理できません。</span></li>
+<li data-short="ライフサイクル">S3のライフサイクルルール<span class="ex-why">S3のオブジェクトの移動・削除の設定で、ほかのサービスのバックアップは取りません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② 新しく作ったリソースも自動で対象にするには?</p>
+<ul class="ex-choices">
+<li data-ok>リソースの割り当てをタグで指定する<span class="ex-why"><code>Backup=daily</code> のタグを付けるだけで対象になります(<a href="../terms/tags.html">タグ</a>)。</span></li>
+<li>リソースのARNを1つずつ指定する<span class="ex-why">新しいリソースのたびに設定の追加が必要です。</span></li>
+<li>リソースごとに手動でバックアップを取る<span class="ex-why">一元管理にも自動化にもなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ バックアップを誰にも削除させないようにするには?</p>
+<ul class="ex-choices">
+<li data-ok>ボールトロックを設定する<span class="ex-why">保持期間中は、管理者を含めて誰もバックアップを削除できなくなります。</span></li>
+<li>バックアップの保持期間を長くする<span class="ex-why">期間が延びるだけで、手動の削除は防げません。</span></li>
+<li>ボールトを暗号化する<span class="ex-why">中身を守る対策で、削除は防げません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p><strong>AWS Backup</strong>のバックアッププランで、タグの付いたリソースを毎日バックアップし、別リージョンのボールトにコピーします。Organizationsのバックアップポリシーを使うと、組織の全アカウントに同じプランを適用できます。これはDR戦略の「バックアップと復元」にあたります(<a href="../terms/dr-strategies.html">DR戦略</a>)。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/backup-cross-region.html">バックアップを一元管理して別リージョンに保管する</a></li>
+<li>用語:<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/tags.html">タグ</a></li>
+<li>サービス:<a href="../services/backup.html">AWS Backup</a>、<a href="../services/organizations.html">AWS Organizations</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="s3-data-protection.html"><span class="label">← 前へ</span>S3のデータを守る構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="multi-region-failover.html"><span class="label">次へ →</span>別リージョンへ切り替える構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 90.0, "nodes": [{"id": "res", "label": "EC2・EBS・RDS…", "sub": "", "x": 0.0, "y": 0.5}, {"id": "plan", "label": "バックアッププラン", "sub": "", "x": 1.4, "y": 0.5}, {"id": "v1", "label": "ボールト", "sub": "東京リージョン", "x": 2.8, "y": 0.0}, {"id": "v2", "label": "ボールト(大阪)", "sub": "コピーを保管", "x": 2.8, "y": 1.0}], "edges": [["res", "plan", false, false], ["plan", "v1", false, false], ["v1", "v2", false, false]], "distractors": ["DLM", "ライフサイクル"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

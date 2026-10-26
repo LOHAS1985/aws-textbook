@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S3のデータを守る構成を組み立てる | AWS教科書</title>
+<meta name="description" content="誤削除・リージョンの障害・ランサムウェアからデータを守り、費用の増加も防ぐ">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">信頼性・事業継続</a>
+  <h1>S3のデータを守る構成を組み立てる</h1>
+  <p class="lead">誤削除・リージョンの障害・ランサムウェアからデータを守り、費用の増加も防ぐ</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>誤って<strong>上書き・削除</strong>しても、元に戻せるようにしたい。</li>
+<li>リージョンの障害に備えて、<strong>別のリージョンにもコピー</strong>を置きたい。</li>
+<li>一定期間は<strong>誰も消せない</strong>ようにしたい。古いバージョンの費用も抑えたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図1 S3のデータ保護の構成。"><defs><marker id="dgexercises-s3-data-protection-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="84" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="108" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="src">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">S3(東京)</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">バージョニング</text>
+</g>
+<g data-node="dst">
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">S3(大阪)</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">レプリカ</text>
+</g>
+<g data-node="lc">
+<rect x="272" y="166" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="188" text-anchor="middle" class="dg-t">②</text>
+<text x="347" y="206" text-anchor="middle" class="dg-s">旧バージョンを整理</text>
+</g>
+<g data-node="ol">
+<rect x="510" y="166" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="585" y="188" text-anchor="middle" class="dg-t">①</text>
+<text x="585" y="206" text-anchor="middle" class="dg-s">期間中は削除不可</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgexercises-s3-data-protection-1)"/>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgexercises-s3-data-protection-1)"/>
+<text x="466" y="108" text-anchor="middle" class="dg-s dg-halo">CRR</text>
+<path d="M347.0,130.0 L347.0,166.0" class="dg-line dg-dash" marker-end="url(#dgexercises-s3-data-protection-1)"/>
+<path d="M585.0,130.0 L585.0,166.0" class="dg-line dg-dash" marker-end="url(#dgexercises-s3-data-protection-1)"/>
+</svg>
+</div>
+<figcaption>図1 S3のデータ保護の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ol">
+<p class="ex-q">① 決めた期間、誰もオブジェクトを消せないようにする機能は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Object Lock">S3 Object Lock(コンプライアンスモード)<span class="ex-why">保持期間中は、ルートユーザーも含めて誰も削除・上書きできません。</span></li>
+<li data-short="MFA Delete">MFA Delete<span class="ex-why">削除にMFAが必要になるだけで、権限のある人は期間に関係なく削除できます。</span></li>
+<li data-short="バケットポリシー">バケットポリシーで削除を拒否<span class="ex-why">ポリシーを書き換えられる管理者なら削除できてしまいます。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="lc">
+<p class="ex-q">② 増え続ける古いバージョンを整理するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="ライフサイクル">ライフサイクルルール(非現行バージョン)<span class="ex-why">古いバージョンを一定日数後に安いストレージクラスへ移したり、削除したりします。</span></li>
+<li data-short="Intelligent">S3 Intelligent-Tiering<span class="ex-why">アクセスの頻度で自動的に階層を変えますが、古いバージョンを削除はしません。</span></li>
+<li data-short="Transfer Acc.">Transfer Acceleration<span class="ex-why">遠くからのアップロードを速くする機能です。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ クロスリージョンレプリケーションに必要な設定は?</p>
+<ul class="ex-choices">
+<li data-ok>両方のバケットでバージョニングを有効にする<span class="ex-why">レプリケーションにはバージョニングが必要です。既存のオブジェクトはバッチレプリケーションで複製します。</span></li>
+<li>コピー先のバケットを公開する<span class="ex-why">公開は不要です。レプリケーション用のIAMロールで複製します。</span></li>
+<li>同じバケット名にする<span class="ex-why">バケット名は世界で一意なので、同じ名前にはできません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ バージョニングが有効なバケットで削除したオブジェクトを戻すには?</p>
+<ul class="ex-choices">
+<li data-ok>削除マーカーを削除する<span class="ex-why">通常の削除では削除マーカーが付くだけなので、マーカーを消すと元のバージョンが見えるようになります。</span></li>
+<li>バージョニングを停止する<span class="ex-why">今後のバージョンが作られなくなるだけで、戻りません。</span></li>
+<li>レプリカからコピーし直すしかない<span class="ex-why">バージョニングがあれば、同じバケットの中で戻せます。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p><strong>バージョニング</strong>で上書き・削除を戻せるようにし、<strong>クロスリージョンレプリケーション</strong>で別リージョンにコピーします。コピー先には<strong>Object Lock</strong>で消せない期間を設け、古いバージョンはライフサイクルルールで整理します。特別な権限があれば解除できるようにしたいときは、Object Lockのガバナンスモードを使います。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/s3-data-protection.html">S3のデータを誤削除やリージョン障害から守る</a></li>
+<li>用語:<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/storage-types.html">ブロック・ファイル・オブジェクトストレージ</a></li>
+<li>サービス:<a href="../services/s3.html">Amazon S3</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="rds-point-in-time-restore.html"><span class="label">← 前へ</span>RDSのデータを特定の時点に戻す構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="backup-cross-region.html"><span class="label">次へ →</span>バックアップを一元管理する構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "app", "label": "アプリ", "sub": "", "x": 0.0, "y": 0.5}, {"id": "src", "label": "S3(東京)", "sub": "バージョニング", "x": 1.4, "y": 0.5}, {"id": "dst", "label": "S3(大阪)", "sub": "レプリカ", "x": 2.8, "y": 0.5}, {"id": "lc", "label": "ライフサイクル", "sub": "", "x": 1.4, "y": 1.6}, {"id": "ol", "label": "Object Lock", "sub": "", "x": 2.8, "y": 1.6}], "edges": [["app", "src", false, false], ["src", "dst", false, false], ["src", "lc", true, false], ["dst", "ol", true, false]], "distractors": ["Intelligent", "MFA Delete", "Transfer Acc.", "バケットポリシー"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC2・EBSの性能を改善する構成を組み立てる | AWS教科書</title>
+<meta name="description" content="遅さの原因がボリュームかインスタンスかを切り分け、止めずに性能を上げる">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">監視・ログ・自動修復</a>
+  <h1>EC2・EBSの性能を改善する構成を組み立てる</h1>
+  <p class="lead">遅さの原因がボリュームかインスタンスかを切り分け、止めずに性能を上げる</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>EC2上のDBのディスクの読み書きが遅い。原因が<strong>EBSボリューム</strong>か<strong>インスタンス</strong>かを切り分けたい。</li>
+<li>サービスを<strong>止めずに</strong>性能を上げたい。</li>
+<li>性能を持て余しているリソースは小さくして、費用を下げたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図1 性能の改善の構成。"><defs><marker id="dgexercises-ebs-performance-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ec2">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">EBSボリューム</text>
+</g>
+<g data-node="cw">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">CloudWatch</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">EBS・EC2の指標</text>
+</g>
+<g data-node="co">
+<rect x="272" y="166" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="188" text-anchor="middle" class="dg-t">②</text>
+<text x="347" y="206" text-anchor="middle" class="dg-s">過不足の推奨</text>
+</g>
+<g data-node="ev">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">①</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">止めずに変更</text>
+</g>
+<g data-node="it">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">インスタンス変更</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">EBS帯域の大きい型</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgexercises-ebs-performance-1)"/>
+<path d="M179.3,130.0 L276.7,166.0" class="dg-line dg-dash" marker-end="url(#dgexercises-ebs-performance-1)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgexercises-ebs-performance-1)"/>
+<text x="466" y="88" text-anchor="middle" class="dg-s dg-halo">ボリューム側</text>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgexercises-ebs-performance-1)"/>
+<text x="466" y="128" text-anchor="middle" class="dg-s dg-halo">インスタンス側</text>
+</svg>
+</div>
+<figcaption>図1 性能の改善の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ev">
+<p class="ex-q">① アタッチしたまま、ボリュームのタイプやIOPSを変える機能は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Elastic Volumes">Elastic Volumes<span class="ex-why">サイズ・タイプ・IOPS・スループットを、インスタンスを止めずに変更できます。gp2からgp3への変更もこれで行います。</span></li>
+<li data-short="スナップショット">スナップショットから作り直す<span class="ex-why">新しいボリュームに付け替えるために停止が必要で、要件に合いません。</span></li>
+<li data-short="マルチアタッチ">マルチアタッチ<span class="ex-why">1つのボリュームを複数のインスタンスに付ける機能で、性能を上げるものではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="co">
+<p class="ex-q">② EC2・EBSの過不足を分析し、適切なサイズを推奨するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Optimizer">AWS Compute Optimizer<span class="ex-why">使用状況のメトリクスから、大きすぎる・小さすぎるリソースと推奨のタイプを示します。</span></li>
+<li data-short="Cost Explorer">AWS Cost Explorer<span class="ex-why">費用の内訳を見るもので、性能から見たサイズの推奨は出しません。</span></li>
+<li data-short="Inspector">Amazon Inspector<span class="ex-why">脆弱性を見つけるサービスです。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ I/Oが詰まっていることを示すEBSのメトリクスは?</p>
+<ul class="ex-choices">
+<li data-ok><code>VolumeQueueLength</code><span class="ex-why">処理待ちの読み書きの数です。高いままなら、ボリュームの性能が足りていません(<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>)。</span></li>
+<li><code>CPUUtilization</code><span class="ex-why">EC2のCPUの使用率で、ディスクの詰まりは分かりません。</span></li>
+<li><code>StatusCheckFailed</code><span class="ex-why">インスタンスやホストの障害を示すもので、性能の指標ではありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>CloudWatchのメトリクスで、ボトルネックがボリュームかインスタンスかを切り分けます。ボリューム側なら<strong>Elastic Volumes</strong>でgp3のIOPSを足し、インスタンス側ならEBS帯域の大きいタイプに変えます。サイズを増やしたら、OS側でファイルシステムの拡張も必要です。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/ebs-performance.html">EC2・EBSの性能不足を見つけて改善する</a></li>
+<li>用語:<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a></li>
+<li>サービス:<a href="../services/ebs.html">Amazon EBS</a>、<a href="../services/compute-optimizer.html">AWS Compute Optimizer</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="distributed-tracing.html"><span class="label">← 前へ</span>マイクロサービスの遅延を特定する構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="rds-performance.html"><span class="label">次へ →</span>RDSの負荷と接続数の問題を解消する構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "ec2", "label": "EC2", "sub": "EBSボリューム", "x": 0.0, "y": 0.5}, {"id": "cw", "label": "CloudWatch", "sub": "EBS・EC2の指標", "x": 1.4, "y": 0.5}, {"id": "co", "label": "Optimizer", "sub": "", "x": 1.4, "y": 1.6}, {"id": "ev", "label": "Elastic Volumes", "sub": "", "x": 2.8, "y": 0.0}, {"id": "it", "label": "インスタンス変更", "sub": "EBS帯域の大きい型", "x": 2.8, "y": 1.0}], "edges": [["ec2", "cw", false, false], ["ec2", "co", true, false], ["cw", "ev", false, false], ["cw", "it", false, false]], "distractors": ["Cost Explorer", "Inspector", "スナップショット", "マルチアタッチ"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1つのAZの障害を切り離す構成を組み立てる | AWS教科書</title>
+<meta name="description" content="ヘルスチェックでは分からない部分的な障害が出たAZから、通信を一時的に移す">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">信頼性・事業継続</a>
+  <h1>1つのAZの障害を切り離す構成を組み立てる</h1>
+  <p class="lead">ヘルスチェックでは分からない部分的な障害が出たAZから、通信を一時的に移す</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ALB+Auto Scalingで、3つのAZにまたがるWebアプリを動かしている。</li>
+<li>あるAZだけで、<strong>ヘルスチェックは通るのにエラーや遅延が増える</strong>(部分的な障害)。</li>
+<li>そのAZを一時的に切り離し、残りのAZで処理を続けたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 282" style="max-width:684px;min-width:547px" role="img" aria-label="図1 AZの切り離しの構成。"><defs><marker id="dgexercises-az-failure-isolation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="124" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="148" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="alb">
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">ALB</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">ゾーンシフト中</text>
+</g>
+<g data-node="arc">
+<rect x="272" y="206" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="228" text-anchor="middle" class="dg-t">①</text>
+<text x="347" y="246" text-anchor="middle" class="dg-s">AZを切り離す</text>
+</g>
+<g data-node="a">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">AZ-a</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">エラーが増加</text>
+</g>
+<g data-node="b">
+<rect x="510" y="124" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="148" text-anchor="middle" class="dg-t">AZ-b</text>
+</g>
+<g data-node="c">
+<rect x="510" y="204" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="228" text-anchor="middle" class="dg-t">AZ-c</text>
+</g>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgexercises-az-failure-isolation-1)"/>
+<path d="M347.0,206.0 L347.0,170.0" class="dg-line dg-dash" marker-end="url(#dgexercises-az-failure-isolation-1)"/>
+<path d="M422.0,118.8 L510.0,89.2" class="dg-line dg-dash" marker-end="url(#dgexercises-az-failure-isolation-1)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgexercises-az-failure-isolation-1)"/>
+<path d="M422.0,169.2 L525.5,204.0" class="dg-line" marker-end="url(#dgexercises-az-failure-isolation-1)"/>
+</svg>
+</div>
+<figcaption>図1 AZの切り離しの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="arc">
+<p class="ex-q">① ALBが特定のAZに通信を送らないようにするものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="ゾーンシフト">ARCのゾーンシフト<span class="ex-why">Application Recovery Controllerの機能で、指定したAZへの通信を一時的に止めます。期限が切れると元に戻ります。</span></li>
+<li data-short="ヘルスチェック">ALBのヘルスチェックの調整<span class="ex-why">部分的な障害はヘルスチェックを通ってしまうため、確実に切り離せません。</span></li>
+<li data-short="Route 53">Route 53のフェイルオーバー<span class="ex-why">リージョンやエンドポイントの単位の切り替えで、ALBの中の特定のAZを外すものではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② 切り離した後も処理を続けるための備えは?</p>
+<ul class="ex-choices">
+<li data-ok>残りのAZに、あらかじめ容量の余裕を持たせておく<span class="ex-why">障害時にスケールアウトが間に合うとは限らないので、2つのAZだけでも負荷を受けられるようにしておきます。</span></li>
+<li>AZ-aのインスタンスを大きくする<span class="ex-why">切り離すAZを強くしても意味がありません。</span></li>
+<li>Auto Scalingグループを1つのAZにまとめる<span class="ex-why">そのAZの障害で全体が止まります。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ AWSが障害を検知して、自動でAZを切り離すようにするには?</p>
+<ul class="ex-choices">
+<li data-ok>ゾーンオートシフトを有効にする<span class="ex-why">AWSがAZの障害を検知すると、自動でゾーンシフトを行います。</span></li>
+<li>CloudWatchアラームでインスタンスを終了する<span class="ex-why">Auto Scalingが同じAZに入れ替えを起動するだけで、通信は止まりません。</span></li>
+<li>Multi-AZのRDSを使う<span class="ex-why">DBの障害対策で、ALBの通信の切り離しではありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>ヘルスチェックで分からない部分的な障害は、<strong>ARCのゾーンシフト</strong>で人の判断で切り離し、AWSに任せるなら<strong>ゾーンオートシフト</strong>を有効にします。リージョン全体の障害への備えは、マルチリージョンの構成で行います(<a href="../terms/dr-strategies.html">DR戦略</a>)。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/az-failure-isolation.html">1つのAZの障害からアプリを切り離す</a></li>
+<li>用語:<a href="../terms/region-az.html">リージョンとアベイラビリティーゾーン</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></li>
+<li>サービス:<a href="../services/application-recovery-controller.html">Amazon Application Recovery Controller</a>、<a href="../services/elb.html">Elastic Load Balancing</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="rds-high-availability.html"><span class="label">← 前へ</span>データベースの高可用性の構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="dynamodb-scaling-recovery.html"><span class="label">次へ →</span>DynamoDBのスケーリングと復旧の構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "u", "label": "利用者", "sub": "", "x": 0.0, "y": 1.0}, {"id": "alb", "label": "ALB", "sub": "ゾーンシフト中", "x": 1.4, "y": 1.0}, {"id": "arc", "label": "ゾーンシフト", "sub": "", "x": 1.4, "y": 2.1}, {"id": "a", "label": "AZ-a", "sub": "エラーが増加", "x": 2.8, "y": 0.0}, {"id": "b", "label": "AZ-b", "sub": "", "x": 2.8, "y": 1.0}, {"id": "c", "label": "AZ-c", "sub": "", "x": 2.8, "y": 2.0}], "edges": [["u", "alb", false, false], ["arc", "alb", true, false], ["alb", "a", true, false], ["alb", "b", false, false], ["alb", "c", false, false]], "distractors": ["Route 53", "ヘルスチェック"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>
