@@ -521,11 +521,15 @@ a:focus-visible, summary:focus-visible, input:focus-visible {
 .recent-list .badge { margin: 0; }
 
 @media (max-width: 600px) {
-  /* ヘッダーを1行に収める */
-  .site-header .inner { padding: 10px 12px; flex-wrap: nowrap; gap: 8px; }
+  /* ヘッダーはサイト名とナビの2段。ナビは1行のまま横にスクロールできる */
+  .site-header .inner { padding: 8px 12px 6px; flex-wrap: wrap; gap: 4px; }
   .site-title { font-size: 15px; white-space: nowrap; }
-  .site-nav { flex-wrap: nowrap; gap: 0; }
-  .site-nav a { padding: 4px 6px; font-size: 13px; white-space: nowrap; }
+  .site-nav {
+    flex-wrap: nowrap; gap: 2px; width: 100%; margin: 0 -12px; padding: 0 12px;
+    box-sizing: content-box; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .site-nav::-webkit-scrollbar { display: none; }
+  .site-nav a { flex: none; padding: 4px 9px; font-size: 13px; white-space: nowrap; }
 
   /* 列の多い表は、行ごとのカード表示にする */
   table.stack { min-width: 0; }
@@ -592,27 +596,49 @@ a:focus-visible, summary:focus-visible, input:focus-visible {
 }
 .backlink-list .desc { display: block; margin-top: 4px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 
-/* 構成演習(book/js/sim.js が選択肢をラジオボタンにし、答え合わせの結果をクラスで付ける) */
-.ex-item { border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius); padding: 10px 16px; margin: 14px 0; background: var(--surface); }
-.ex-item.is-ok { border-left-color: var(--ok); }
-.ex-item.is-ng { border-left-color: var(--danger); }
-.ex-q { margin: 4px 0 8px; font-weight: 700; }
+/* 構成演習(book/js/sim.js が選択肢をボタンにし、答え合わせの結果をクラスで付ける) */
+.ex-tabs { display: inline-flex; gap: 2px; padding: 3px; margin: 4px 0 12px; border-radius: 999px; background: var(--accent-soft); }
+.ex-tab { font: inherit; font-size: 14px; padding: 5px 16px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+.ex-tab[aria-pressed="true"] { background: var(--surface); color: var(--accent); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.ex-item { padding: 10px 0 12px; border-bottom: 1px dashed var(--border); }
+.ex-q { margin: 0 0 6px; font-size: 15px; font-weight: 700; }
 .ex-choices { list-style: none; padding-left: 0; margin: 0; }
-.ex-choices li { margin: 6px 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; }
-.ex-choices label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
-.ex-choices input { margin-top: 5px; flex: none; }
-.ex-why { display: block; margin-top: 4px; font-size: 13.5px; color: var(--muted); }
+.ex-why { display: block; font-size: 13.5px; color: var(--muted); }
+/* JavaScriptが動くときは、選択肢を横に並ぶ小さなボタンにし、解説は答え合わせのあとに問いの下へまとめて出す */
 .ex-js .ex-why { display: none; }
-.ex-js .ex-answer .ex-why, .ex-js .ex-chosen .ex-why { display: block; }
-.ex-answer { border-color: var(--ok) !important; background: var(--ok-bg); }
-.ex-chosen:not(.ex-answer) { border-color: var(--danger) !important; background: var(--danger-bg); }
-.ex-answer > label::after { content: "正解"; margin-left: auto; font-size: 12px; font-weight: 700; color: var(--ok); white-space: nowrap; }
-.ex-chosen:not(.ex-answer) > label::after { content: "あなたの答え"; margin-left: auto; font-size: 12px; font-weight: 700; color: var(--danger); white-space: nowrap; }
-.ex-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 18px 0; }
-.ex-actions button { font: inherit; font-weight: 700; padding: 8px 22px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
-.ex-actions .ex-reset { background: transparent; color: var(--accent); }
+.ex-js .ex-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.ex-js .ex-choices li { margin: 0; }
+.ex-js .ex-choices label { display: inline-block; padding: 4px 12px; border: 1px solid var(--border-strong); border-radius: 999px; font-size: 14px; cursor: pointer; background: var(--surface); }
+.ex-js .ex-choices input { position: absolute; opacity: 0; pointer-events: none; }
+.ex-js .ex-choices label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ex-js .ex-selected label { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.ex-js .ex-answer label { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); font-weight: 700; }
+.ex-js .ex-wrong label { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); text-decoration: line-through; }
+.ex-js .ex-choices li:has(input:disabled) label { cursor: default; }
+.ex-feedback:empty { display: none; }
+.ex-feedback { margin-top: 8px; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+.ex-feedback p { margin: 2px 0; }
+.ex-mark { display: inline-block; width: 1.4em; font-weight: 700; }
+.ex-mark.ok { color: var(--ok); }
+.ex-mark.ng { color: var(--danger); }
+.ex-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 14px 0; }
+.ex-actions button { font: inherit; font-size: 14px; font-weight: 700; padding: 6px 18px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+.ex-actions .ex-reset, .ex-actions .ex-sub { background: transparent; color: var(--accent); font-weight: 400; }
 .ex-actions button[hidden] { display: none; }
 .ex-result { margin: 0; font-weight: 700; }
+/* 自由構成 */
+.ex-free-help { font-size: 14px; color: var(--muted); margin: 0 0 8px; }
+.ex-palette { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.ex-part { font: inherit; font-size: 13.5px; padding: 4px 12px; border: 1px dashed var(--accent); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; }
+.ex-part::before { content: "+ "; color: var(--accent); }
+.ex-part:disabled { opacity: .35; cursor: default; }
+.ex-canvas-wrap { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+.ex-canvas { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+.ex-node { cursor: grab; }
+.ex-node:focus { outline: none; }
+.ex-node:focus-visible rect, .ex-sel { stroke: var(--accent) !important; stroke-width: 3 !important; }
+.ex-free-result { list-style: none; padding-left: 0; margin: 4px 0; font-size: 14px; }
+.ex-free-result li { margin: 2px 0; }
 .ex-badge { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--accent-soft); color: var(--accent); vertical-align: middle; }
 .ex-badge-ok { background: var(--ok-bg); color: var(--ok); }
 
