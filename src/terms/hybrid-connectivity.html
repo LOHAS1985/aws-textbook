@@ -37,7 +37,7 @@ edge cvpn vpc
 <tr><td>暗号化</td><td>IPsec</td><td>標準ではなし(MACsec、またはDXの上にVPN)</td><td>TLS(OpenVPNベース)</td></tr>
 <tr><td>費用の考え方</td><td>接続時間+データ転送</td><td>ポートの時間+データ転送(転送料金は安め)</td><td>関連付けたサブネット数と接続数の時間</td></tr>
 </table></div>
-<p>運用者がサーバーを操作したいだけなら、ネットワークをつながなくても、Systems ManagerのSession Managerでブラウザやコマンドから接続できます(ユースケース「<a href="../usecases/bastionless-access.html">踏み台サーバーなしでプライベートなEC2を操作する</a>」)。</p>
+<p>運用者がサーバーを操作したいだけなら、ネットワークをつながなくても、Systems ManagerのSession Managerでブラウザやコマンドから接続できます(運用シナリオ「<a href="../usecases/bastionless-access.html">踏み台サーバーなしでプライベートなEC2を操作する</a>」)。</p>
 
 <h3>選び方の流れ</h3>
 <figure class="figure" data-diagram>
@@ -61,7 +61,7 @@ edge q2 dx "はい"
 <li><strong>DXを2本以上</strong>:重要な接続は、別々のDXロケーションに回線を用意して、ロケーション単位の障害にも備える。</li>
 <li><strong>DXの上にVPN</strong>:専用線の安定性に加えて、IPsecで暗号化したいとき。</li>
 </ul>
-<p>つなぐVPCが多いときは、VPCごとに接続を作るのではなく、Transit Gatewayを中心に置いてVPN・DX(Direct Connectゲートウェイ経由)をまとめます(<a href="vpc-connectivity.html">VPC同士をつなぐ方法の選び方</a>、ユースケース「<a href="../usecases/hybrid-multi-vpc.html">複数のVPCとオンプレミスを接続する</a>」)。</p>
+<p>つなぐVPCが多いときは、VPCごとに接続を作るのではなく、Transit Gatewayを中心に置いてVPN・DX(Direct Connectゲートウェイ経由)をまとめます(<a href="vpc-connectivity.html">VPC同士をつなぐ方法の選び方</a>、運用シナリオ「<a href="../usecases/hybrid-multi-vpc.html">複数のVPCとオンプレミスを接続する</a>」)。</p>
 
 <h3>選び方のポイント</h3>
 <div class="point"><ul>
@@ -69,10 +69,10 @@ edge q2 dx "はい"
 <li>大量のデータを安定した帯域・遅延で送りたい → <strong class="em">Direct Connect</strong>。開通までに時間がかかるので、それまではVPNでつなぐ。</li>
 <li>DXの障害に備えて安く冗長化したい → DXの予備にSite-to-Site VPN。</li>
 <li>DXの通信を暗号化したい → MACsec、またはDXの上にSite-to-Site VPN。</li>
-<li>在宅勤務の社員がVPCの社内システムを使いたい → <strong>Client VPN</strong>(ユースケース「<a href="../usecases/remote-access-vpn.html">社員の端末からVPCの社内システムに安全に接続する</a>」)。</li>
+<li>在宅勤務の社員がVPCの社内システムを使いたい → <strong>Client VPN</strong>(運用シナリオ「<a href="../usecases/remote-access-vpn.html">社員の端末からVPCの社内システムに安全に接続する</a>」)。</li>
 <li>Site-to-Site VPNは1つの接続に2本のトンネルがある。両方を使えるように、カスタマーゲートウェイ側も2本とも設定する。</li>
 <li>VPNのトンネルが切れたことに気づきたい → CloudWatchのメトリクス <code>TunnelState</code> にアラームを設定する。</li>
-<li>オンプレミスとVPCで互いの名前を引きたい → Route 53 Resolverのエンドポイント(ユースケース「<a href="../usecases/hybrid-dns-resolver.html">オンプレミスとVPCで互いの名前を解決する</a>」)。</li>
+<li>オンプレミスとVPCで互いの名前を引きたい → Route 53 Resolverのエンドポイント(運用シナリオ「<a href="../usecases/hybrid-dns-resolver.html">オンプレミスとVPCで互いの名前を解決する</a>」)。</li>
 <li>オンプレミスとVPCのCIDRが重なるとルーティングできない。つなぐ前にIPアドレスを計画する(<a href="cidr.html">CIDR</a>)。</li>
 </ul></div>
 </section>

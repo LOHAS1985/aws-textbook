@@ -2,13 +2,13 @@
 
 使い方: python build.py
 
-コレクション(サービス・用語・ユースケース)ごとに src/{コレクション}/*.html を置く。
+コレクション(サービス・用語・運用シナリオ)ごとに src/{コレクション}/*.html を置く。
 本文ファイルの先頭には次のメタ情報を書く。
     <!-- title: ページ名 -->
     <!-- category: カテゴリ名 -->
     <!-- lead: 一言説明 -->
 図は diagrams.py の記法で書くとSVGに変換される。
-リンク集(book/links.html)は、src/links.html の本文と src/links.json(サービスごとの公式ページ)から作る。
+公式リンク(book/links.html)は、src/links.html の本文と src/links.json(サービスごとの公式ページ)から作る。
 """
 import hashlib
 import html
@@ -113,7 +113,7 @@ COLLECTIONS = [
     },
     {
         "key": "usecases",
-        "label": "ユースケース",
+        "label": "運用シナリオ",
         "desc": "やりたいこと別の構成例と、使うサービスの組み合わせ",
         "categories": [
             "監視・ログ・自動修復", "信頼性・事業継続", "デプロイ・自動化",
@@ -159,7 +159,7 @@ COLLECTIONS = [
     },
 ]
 
-# SOA-C03の出題分野(試験ガイドより)。ユースケースのカテゴリと同じ順番で対応させる。
+# SOA-C03の出題分野(試験ガイドより)。運用シナリオのカテゴリと同じ順番で対応させる。
 EXAM_DOMAINS = [
     ("モニタリング、ログ記録、分析、修復、パフォーマンスの最適化", 22),
     ("信頼性と事業の継続性", 22),
@@ -226,7 +226,7 @@ def load_pages(col, warnings, updated):
 
 # 被リンクの一覧を付けるページ:(リンク先のコレクション, リンク元のコレクション, 見出し)
 BACKLINKS = [
-    ("services", ["usecases"], "このサービスが登場するユースケース"),
+    ("services", ["usecases"], "このサービスが登場する運用シナリオ"),
     ("terms", ["services", "usecases"], "この用語が出てくるページ"),
 ]
 
@@ -380,7 +380,7 @@ def header(prefix, current=None):
     links = "".join(
         f'<a href="{prefix}{c["key"]}/index.html"{cur if c["key"] == current else ""}>'
         f'{c["label"]}</a>' for c in COLLECTIONS if c.get("nav", True))
-    links += f'<a href="{prefix}links.html"{cur if current == "links" else ""}>リンク集</a>'
+    links += f'<a href="{prefix}links.html"{cur if current == "links" else ""}>公式リンク</a>'
     return f"""<header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="{prefix}index.html">{SITE_TITLE}</a>
@@ -522,7 +522,7 @@ SEARCH_SCRIPT = """<script>
 
 
 def render_top(loaded):
-    desc = "AWS認定(SOA-C03を中心)の学習用に、サービス・用語・ユースケースを図解でまとめた教科書"
+    desc = "AWS認定(SOA-C03を中心)の学習用に、サービス・用語・運用シナリオを図解でまとめた教科書"
     parts = [head(SITE_TITLE, "", desc), header(""), "<main>\n",
              f'<div class="page-head"><h1>{SITE_TITLE}</h1><p class="lead">{desc}</p></div>\n']
 
@@ -549,13 +549,13 @@ def render_top(loaded):
         badge = f"{n}ページ" if n else "準備中"
         parts.append(f'  <li><a href="{c["key"]}/index.html"><span class="name">{c["label"]}'
                      f'<span class="badge">{badge}</span></span><span class="desc">{c["desc"]}</span></a></li>\n')
-    parts.append('  <li><a href="links.html"><span class="name">リンク集</span>'
+    parts.append('  <li><a href="links.html"><span class="name">公式リンク</span>'
                  '<span class="desc">試験ガイドや各サービスの公式ページ・ドキュメントへのリンク</span></a></li>\n')
     parts.append("</ul>\n")
 
-    # 試験分野ごとの入口(ユースケースのカテゴリへ)
+    # 試験分野ごとの入口(運用シナリオのカテゴリへ)
     parts.append('<section class="top-section">\n<h2>試験分野から学ぶ(SOA-C03)</h2>\n'
-                 '<p class="cat-desc">分野ごとのユースケースから読み始め、出てくるサービス・用語のページへ進むのがおすすめです。</p>\n'
+                 '<p class="cat-desc">分野ごとの運用シナリオから読み始め、出てくるサービス・用語のページへ進むのがおすすめです。</p>\n'
                  '<ol class="domain-list">\n')
     for i, (name, weight) in enumerate(EXAM_DOMAINS, 1):
         parts.append(f'  <li><a href="usecases/index.html#cat{i}"><span class="name">{html.escape(name)}</span>'
@@ -645,7 +645,7 @@ def render_links(services, warnings):
                         f'<td>{cells[0]}</td><td>{cells[1]}</td></tr>\n')
         rows.append("</table></div>\n")
     body = META_RE.sub("", text).strip().replace("<!-- SERVICE_LINKS -->", "".join(rows))
-    title = meta.get("title", "リンク集")
+    title = meta.get("title", "公式リンク")
     return (head(f"{title} | {SITE_TITLE}", "", meta.get("lead", "")) + header("", "links")
             + f'<main>\n<div class="page-head">\n  <h1>{html.escape(title)}</h1>\n'
             + (f'  <p class="lead">{meta["lead"]}</p>\n' if meta.get("lead") else "")
