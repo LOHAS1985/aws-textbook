@@ -14,6 +14,7 @@ import hashlib
 import html
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import time
@@ -150,7 +151,7 @@ COLLECTIONS = [
     },
     {
         # 運用シナリオの構成を、空欄を選んで組み立てる演習。答え合わせは book/js/sim.js が行う。
-        # ヘッダーのナビゲーションには出さず、トップページと運用シナリオのページ末尾から案内する
+        # トップページ・ヘッダー・運用シナリオのページ末尾から案内する
         "key": "exercises",
         "label": "構成演習",
         "desc": "要件を読み、空欄に入るサービスや設定を選んで構成を組み立てる演習(AWSアカウントは不要)",
@@ -163,12 +164,11 @@ COLLECTIONS = [
             "ec2-memory-monitoring", "auto-scaling-web", "scheduled-start-stop",
             "config-auto-remediation", "private-subnet-endpoints",
         ],
-        "nav": False,
         "script": "sim.js",
     },
     {
         # src/news/YYYY-MM-DD.html を毎日1件、クラウドの定期エージェントが追加する。
-        # category は「YYYY年M月」。新しい日付から順に並べ、ヘッダーのナビゲーションには出さない
+        # category は「YYYY年M月」。新しい日付から順に並べる
         "key": "news",
         "label": "ニュース",
         "desc": "AWSの新しい発表を、図解つきで分かりやすく解説(毎日更新)",
@@ -176,7 +176,6 @@ COLLECTIONS = [
         "search": "サービス名・キーワードで絞り込み(例: Lambda、料金、東京リージョン)",
         "order": [],
         "newest_first": True,
-        "nav": False,
     },
 ]
 
@@ -448,7 +447,59 @@ def render_page(col, pages, i):
             + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
             + f'{fmt_date(p["updated"])}</time></p>\n'
             + "  </div>\n</div>\n" + page_toc(items) + body + "\n" + pager(prev, nxt) + "</main>\n" + TO_TOP
-            + page_script(col) + TAIL)
+            + exercise_graph(col, p) + page_script(col) + TAIL)
+
+
+def exercise_graph(col, p):
+    """構成演習の「自由構成」で使う正解の構成を、2章の図と問いから取り出して JSON で埋め込む。
+    空欄(blank)のノードは正解の選択肢の名前に置き換え、不正解の選択肢は紛らわしい部品として渡す。"""
+    if col["key"] != "exercises":
+        return ""
+    raw = p["raw"]
+    answers, distractors = {}, []
+    for attrs, inner in re.findall(r'<div class="ex-item"([^>]*)>(.*?)</ul>\s*</div>', raw, re.S):
+        node = re.search(r'data-node="([^"]+)"', attrs)
+        if not node:
+            continue
+        for li_attrs, text in re.findall(r'<li\b([^>]*)>(.*?)<span class="ex-why"', inner, re.S):
+            short = re.search(r'data-short="([^"]+)"', li_attrs)
+            label = html.unescape(short.group(1)) if short else plain(text).strip()
+            if "data-ok" in li_attrs:
+                answers[node.group(1)] = label
+            else:
+                distractors.append(label)
+    m = re.search(r'<figure class="figure" data-diagram>\s*(.*?)\s*<figcaption>', raw, re.S)
+    if not m:
+        return ""
+    colw, rowh, nodes, edges = 170.0, 90.0, [], []
+    for line in m.group(1).splitlines():
+        try:
+            tok = shlex.split(line.strip())
+        except ValueError:
+            continue
+        if not tok:
+            continue
+        if tok[0] == "grid":
+            colw, rowh = float(tok[1]), float(tok[2])
+        elif tok[0] == "node" and tok[4] != "plain":
+            nid, style, main = tok[1], tok[4], tok[5].replace("\\n", " ")
+            sub = tok[6] if len(tok) > 6 and "=" not in tok[6] else ""
+            label = answers.get(nid, main) if style == "blank" else main
+            nodes.append({"id": nid, "label": label, "sub": "" if style == "blank" else sub,
+                          "x": float(tok[2]), "y": float(tok[3])})
+        elif tok[0] == "edge":
+            flags = set(tok[3:])
+            edges.append([tok[1], tok[2], "dash" in flags, "both" in flags])
+    # 同じ名前のノード(2台のEC2など)は補足で見分ける
+    names = [n["label"] for n in nodes]
+    for n in nodes:
+        if names.count(n["label"]) > 1 and n["sub"]:
+            n["label"] += f"({n['sub']})"
+    labels = {n["label"] for n in nodes}
+    data = {"colw": colw, "rowh": rowh, "nodes": nodes, "edges": edges,
+            "distractors": sorted({d for d in distractors if d not in labels})}
+    js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
+    return f'<script type="application/json" id="ex-graph">{js}</script>\n'
 
 
 def page_script(col):
