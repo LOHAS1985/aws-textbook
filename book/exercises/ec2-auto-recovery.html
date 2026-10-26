@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC2の障害から自動で復旧する構成を組み立てる | AWS教科書</title>
+<meta name="description" content="ステータスチェックの失敗を検知し、ホスト側とOS側で対処を分けて自動で直す">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">監視・ログ・自動修復</a>
+  <h1>EC2の障害から自動で復旧する構成を組み立てる</h1>
+  <p class="lead">ステータスチェックの失敗を検知し、ホスト側とOS側で対処を分けて自動で直す</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>EC2が障害で応答しなくなったら、<strong>人手を介さず自動で復旧</strong>させたい。</li>
+<li>物理ホストの障害と、OSの中の問題とで、対処を分けたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 798 202" style="max-width:798px;min-width:638px" role="img" aria-label="図1 ステータスチェックの種類ごとに対処を分ける構成。"><defs><marker id="dgexercises-ec2-auto-recovery-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ec2">
+<rect x="34" y="83" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="104" text-anchor="middle" class="dg-t">EC2</text>
+<text x="104" y="122" text-anchor="middle" class="dg-s">ステータスチェック</text>
+</g>
+<g data-node="cw">
+<rect x="234" y="83" width="140" height="52" rx="8" class="dg-box"/>
+<text x="304" y="104" text-anchor="middle" class="dg-t">アラーム</text>
+<text x="304" y="122" text-anchor="middle" class="dg-s">StatusCheckFailed</text>
+</g>
+<g data-node="rec">
+<rect x="434" y="40" width="140" height="52" rx="8" class="dg-blank"/>
+<text x="504" y="62" text-anchor="middle" class="dg-t">①</text>
+<text x="504" y="80" text-anchor="middle" class="dg-s">ホストの障害</text>
+</g>
+<g data-node="eb">
+<rect x="434" y="126" width="140" height="52" rx="8" class="dg-box"/>
+<text x="504" y="147" text-anchor="middle" class="dg-t">EventBridge</text>
+<text x="504" y="165" text-anchor="middle" class="dg-s">アラームの状態変化</text>
+</g>
+<g data-node="sns">
+<rect x="634" y="40" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="704" y="62" text-anchor="middle" class="dg-t">SNS</text>
+<text x="704" y="80" text-anchor="middle" class="dg-s">通知</text>
+</g>
+<g data-node="ssm">
+<rect x="634" y="126" width="140" height="52" rx="8" class="dg-blank"/>
+<text x="704" y="147" text-anchor="middle" class="dg-t">②</text>
+<text x="704" y="165" text-anchor="middle" class="dg-s">OSの問題を対処</text>
+</g>
+<path d="M174.0,109.0 L234.0,109.0" class="dg-line" marker-end="url(#dgexercises-ec2-auto-recovery-1)"/>
+<path d="M374.0,94.1 L434.0,81.4" class="dg-line" marker-end="url(#dgexercises-ec2-auto-recovery-1)"/>
+<text x="404" y="92" text-anchor="middle" class="dg-s dg-halo">システム</text>
+<path d="M374.0,123.9 L434.0,136.6" class="dg-line" marker-end="url(#dgexercises-ec2-auto-recovery-1)"/>
+<text x="404" y="134" text-anchor="middle" class="dg-s dg-halo">インスタンス</text>
+<path d="M574.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgexercises-ec2-auto-recovery-1)"/>
+<path d="M574.0,151.5 L634.0,151.5" class="dg-line" marker-end="url(#dgexercises-ec2-auto-recovery-1)"/>
+</svg>
+</div>
+<figcaption>図1 ステータスチェックの種類ごとに対処を分ける構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="rec">
+<p class="ex-q">① システムステータスチェックの失敗(ホストの障害)への対処は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="復旧アクション">アラームの復旧アクション<span class="ex-why">インスタンスを別の物理ホストに移して起動し直します。インスタンスID・プライベートIP・EBSのデータは引き継がれます。</span></li>
+<li data-short="再起動アクション">アラームの再起動アクション<span class="ex-why">再起動では同じホストのままなので、ホストの障害は解消しません。</span></li>
+<li data-short="終了アクション">アラームの終了アクション<span class="ex-why">インスタンスが削除されるだけで、復旧になりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="ssm">
+<p class="ex-q">② インスタンスステータスチェックの失敗(OSの問題)に対処する手順を実行するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="SSM Automation">Systems Manager Automation<span class="ex-why"><code>AWS-RestartEC2Instance</code> などのランブックで、再起動などの手順を自動で実行します(<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a>)。</span></li>
+<li data-short="Patch Manager">Systems Manager Patch Manager<span class="ex-why">パッチを適用する機能で、障害の対処の手順を実行するものではありません。</span></li>
+<li data-short="AWS Backup">AWS Backup<span class="ex-why">バックアップの取得と保管のサービスです。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 復旧アクションで失われるものは?</p>
+<ul class="ex-choices">
+<li data-ok>インスタンスストアのデータ<span class="ex-why">インスタンスストアは物理ホストに付いたディスクなので、別のホストに移ると消えます。残したいデータはEBSに置きます。</span></li>
+<li>EBSボリュームのデータ<span class="ex-why">EBSはホストとは別のストレージなので、そのまま引き継がれます。</span></li>
+<li>プライベートIPアドレス<span class="ex-why">復旧アクションでは、プライベートIPアドレスもインスタンスIDも変わりません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>システムステータスチェックの失敗はAWS側(ホスト)の問題なので、アラームの<strong>復旧アクション</strong>で別のホストに移します。インスタンスステータスチェックの失敗はOS側の問題なので、EventBridgeから<strong>SSM Automation</strong>で再起動などの手順を実行します。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/ec2-auto-recovery.html">EC2の障害を検知して自動で復旧する</a></li>
+<li>用語:<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>、<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a></li>
+<li>サービス:<a href="../services/ec2.html">Amazon EC2</a>、<a href="../services/cloudwatch.html">Amazon CloudWatch</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="smart-alarms.html"><span class="label">← 前へ</span>外形監視と誤報の少ないアラームを組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="health-event-response.html"><span class="label">次へ →</span>AWSのメンテナンス通知に自動で対応する構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 160.0, "rowh": 85.0, "nodes": [{"id": "ec2", "label": "EC2", "sub": "ステータスチェック", "x": 0.0, "y": 0.5}, {"id": "cw", "label": "アラーム", "sub": "StatusCheckFailed", "x": 1.25, "y": 0.5}, {"id": "rec", "label": "復旧アクション", "sub": "", "x": 2.5, "y": 0.0}, {"id": "eb", "label": "EventBridge", "sub": "アラームの状態変化", "x": 2.5, "y": 1.0}, {"id": "sns", "label": "SNS", "sub": "通知", "x": 3.75, "y": 0.0}, {"id": "ssm", "label": "SSM Automation", "sub": "", "x": 3.75, "y": 1.0}], "edges": [["ec2", "cw", false, false], ["cw", "rec", false, false], ["cw", "eb", false, false], ["rec", "sns", false, false], ["eb", "ssm", false, false]], "distractors": ["AWS Backup", "Patch Manager", "再起動アクション", "終了アクション"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

@@ -160,10 +160,7 @@ COLLECTIONS = [
             "セキュリティ・コンプライアンス", "ネットワーク・コンテンツ配信",
         ],
         "search": "やりたいこと・サービス名で絞り込み(例: エンドポイント、アラーム)",
-        "order": [
-            "ec2-memory-monitoring", "auto-scaling-web", "scheduled-start-stop",
-            "config-auto-remediation", "private-subnet-endpoints",
-        ],
+        "order": [],  # 運用シナリオと同じ順番(下で設定する)
         "script": "sim.js",
     },
     {
@@ -178,6 +175,8 @@ COLLECTIONS = [
         "newest_first": True,
     },
 ]
+_by_key = {c["key"]: c for c in COLLECTIONS}
+_by_key["exercises"]["order"] = _by_key["usecases"]["order"]
 
 # SOA-C03の出題分野(試験ガイドより)。運用シナリオのカテゴリと同じ順番で対応させる。
 EXAM_DOMAINS = [

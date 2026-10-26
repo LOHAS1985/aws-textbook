@@ -1,0 +1,73 @@
+<!-- title: データベースの高可用性の構成を組み立てる -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: AZの障害で自動で切り替わり、重い読み取りと大量の接続にも耐えるDBにする -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>DBの<strong>AZの障害</strong>に備えて、自動で切り替えたい。</li>
+<li>レポート作成などの<strong>重い読み取り</strong>を、本番の書き込みと分けたい。</li>
+<li>Lambdaからの<strong>大量の接続</strong>にも耐えたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 165 90
+node app 0 0.65 blue "アプリ" "Lambda / EC2"
+node proxy 1.3 0 box "RDS Proxy" "接続を集約"
+node pri 2.6 0 accent "プライマリ" "AZ-a・読み書き"
+node stb 3.9 0 blank "①" "AZ-c・待機"
+node rr 2.6 1.3 blank "②" "読み取り専用"
+edge app proxy "書き込み"
+edge proxy pri
+edge pri stb "同期"
+edge pri rr "非同期"
+edge app rr "読み取り"
+<figcaption>図1 DBの高可用性と読み取りの分散の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="stb">
+<p class="ex-q">① 別のAZで待機し、障害時に自動で切り替わるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="スタンバイ">Multi-AZのスタンバイ<span class="ex-why">同期で複製され、プライマリの障害時に自動でフェイルオーバーします。エンドポイント名は変わりません。</span></li>
+<li data-short="スナップショット">別のAZへのスナップショットのコピー<span class="ex-why">復元に時間がかかり、自動では切り替わりません。</span></li>
+<li data-short="別リージョンRR">別のリージョンのリードレプリカ<span class="ex-why">リージョンの障害への備えにはなりますが、昇格は手動で、AZの障害への自動の切り替えにはなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="rr">
+<p class="ex-q">② 重い読み取りを受け持つものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="リードレプリカ">リードレプリカ<span class="ex-why">非同期で複製された読み取り専用のDBで、本番の負荷を減らせます。わずかに遅れることがあります。</span></li>
+<li data-short="スタンバイ">Multi-AZのスタンバイ<span class="ex-why">従来のMulti-AZのスタンバイは待機専用で、読み取りには使えません。</span></li>
+<li data-short="RDS Proxy">RDS Proxy<span class="ex-why">接続を集約するもので、読み取りの処理を受け持つDBではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ フェイルオーバーのあと、アプリ側で必要な変更は?</p>
+<ul class="ex-choices">
+<li data-ok>なし(エンドポイント名は同じまま切り替わる)<span class="ex-why">DNSの向き先が新しいプライマリに変わるだけです。DNSを長くキャッシュしないようにしておきます。</span></li>
+<li>接続先をスタンバイのIPアドレスに書き換える<span class="ex-why">IPアドレスを直接使うと切り替わりに追従できません。</span></li>
+<li>リードレプリカを手動で昇格させる<span class="ex-why">Multi-AZでは自動でスタンバイに切り替わるので不要です。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>障害対策は<strong>Multi-AZ</strong>、読み取りの分散は<strong>リードレプリカ</strong>、接続の急増は<strong>RDS Proxy</strong>と、目的ごとに使い分けます。さらに高い可用性が必要ならAurora(3つのAZに6つのコピー)を検討します(<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>)。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/rds-high-availability.html">データベースの高可用性と読み取り分散</a></li>
+<li>用語:<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>、<a href="../terms/sla-availability.html">SLAと可用性</a></li>
+<li>サービス:<a href="../services/rds.html">Amazon RDS</a>、<a href="../services/aurora.html">Amazon Aurora</a></li>
+</ul>
+</section>

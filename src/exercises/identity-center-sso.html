@@ -1,0 +1,72 @@
+<!-- title: 複数アカウントへのシングルサインオンを組み立てる -->
+<!-- category: セキュリティ・コンプライアンス -->
+<!-- lead: 社内のIDで一度ログインし、権限のあるアカウントに切り替えて使えるようにする -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>20個のアカウントにそれぞれIAMユーザーを作っていて、<strong>退職者の消し忘れ</strong>が起きている。</li>
+<li>社内のIDで<strong>一度ログインすれば</strong>、権限のあるアカウントを使えるようにしたい。</li>
+<li>長期のアクセスキーもなくしたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node idp 0 0.5 blue "社内のIdP" "Entra IDなど"
+node ic 1.4 0.5 blank "①" "グループ×権限"
+node a1 2.8 0 ok "本番アカウント" "ReadOnly"
+node a2 2.8 1 ok "開発アカウント" "Admin"
+node cli 1.4 1.6 box "CLI" "aws sso login"
+edge idp ic "SAML・SCIM"
+edge ic a1
+edge ic a2
+edge cli ic dash
+<figcaption>図1 シングルサインオンの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ic">
+<p class="ex-q">① 社内のIdPと連携し、アカウントごとの権限を割り当てるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Identity Center">AWS IAM Identity Center<span class="ex-why">グループごとに「どのアカウントで、どの権限を使えるか」を割り当て、一時的な認証情報でログインさせます。</span></li>
+<li data-short="Cognito">Amazon Cognito<span class="ex-why">自社のアプリの利用者のログイン向けで、社員のAWSアカウントへのログインには使いません。</span></li>
+<li data-short="Directory Svc">AWS Directory Service<span class="ex-why">Active Directoryを用意するサービスで、それだけではアカウントへの権限の割り当てはできません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② アカウントで使える権限を定義する単位は?</p>
+<ul class="ex-choices">
+<li data-ok>パーミッションセット<span class="ex-why">割り当てると、各アカウントにIAMロールが自動で作られます。そのロールは直接編集しません。</span></li>
+<li>各アカウントのIAMユーザー<span class="ex-why">アカウントごとに管理が必要になり、今の問題が解決しません。</span></li>
+<li>SCP<span class="ex-why">組織の権限の上限を決めるもので、権限を与えるものではありません(<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>)。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 退職者がすべてのアカウントに入れないようにするには?</p>
+<ul class="ex-choices">
+<li data-ok>社内のIdPでユーザーを無効にする<span class="ex-why">SCIMで同期されるので、すべてのアカウントへのアクセスがまとめて止まります。</span></li>
+<li>20個のアカウントで順にロールを削除する<span class="ex-why">手間がかかり、消し忘れの問題が残ります。</span></li>
+<li>パスワードポリシーを厳しくする<span class="ex-why">退職者のアクセスは止まりません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p><strong>IAM Identity Center</strong>を社内のIdPとつなぎ、グループに<strong>パーミッションセット</strong>を割り当てます。CLIも <code>aws sso login</code> で一時的な認証情報を使えるので、長期のアクセスキーが不要になります(<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>)。組織全体で禁止したい操作は、SCPで制限します。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/identity-center-sso.html">複数アカウントへのログインをシングルサインオンにまとめる</a></li>
+<li>用語:<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>、<a href="../terms/access-methods.html">AWSの操作方法</a></li>
+<li>サービス:<a href="../services/identity-center.html">AWS IAM Identity Center</a>、<a href="../services/organizations.html">AWS Organizations</a></li>
+</ul>
+</section>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudFormationで安全に更新する構成を組み立てる | AWS教科書</title>
+<meta name="description" content="更新の影響を事前に確かめ、重要なリソースの置き換えや削除を防ぎ、失敗したら元に戻す">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">デプロイ・自動化</a>
+  <h1>CloudFormationで安全に更新する構成を組み立てる</h1>
+  <p class="lead">更新の影響を事前に確かめ、重要なリソースの置き換えや削除を防ぎ、失敗したら元に戻す</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>本番のスタックの更新で、<strong>RDSが置き換え(作り直し)</strong>になり、データが消えかけた。</li>
+<li>更新の前に<strong>影響を確かめ</strong>、失敗したら元に戻せるようにしたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 194" style="max-width:846px;min-width:677px" role="img" aria-label="図1 安全な更新の構成。"><defs><marker id="dgexercises-cloudformation-safe-update-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="tp">
+<rect x="34" y="84" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="108" text-anchor="middle" class="dg-t">新テンプレート</text>
+</g>
+<g data-node="cs">
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="321" y="100" text-anchor="middle" class="dg-t">①</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">影響を確認</text>
+</g>
+<g data-node="rv">
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">レビュー</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">置換・削除はないか</text>
+</g>
+<g data-node="ex">
+<rect x="678" y="38" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="750" y="60" text-anchor="middle" class="dg-t">実行</text>
+<text x="750" y="78" text-anchor="middle" class="dg-s">更新成功</text>
+</g>
+<g data-node="rb">
+<rect x="678" y="118" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="750" y="140" text-anchor="middle" class="dg-t">②</text>
+<text x="750" y="158" text-anchor="middle" class="dg-s">アラームで発動</text>
+</g>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgexercises-cloudformation-safe-update-1)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgexercises-cloudformation-safe-update-1)"/>
+<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgexercises-cloudformation-safe-update-1)"/>
+<path d="M750.0,90.0 L750.0,118.0" class="dg-line dg-dash" marker-end="url(#dgexercises-cloudformation-safe-update-1)"/>
+</svg>
+</div>
+<figcaption>図1 安全な更新の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="cs">
+<p class="ex-q">① 何が変更・置換・削除されるかを、実行前に確かめるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="変更セット">変更セット<span class="ex-why">テンプレートの差分から、各リソースが変更・置換・削除のどれになるかを示します。確認してから実行します。</span></li>
+<li data-short="ドリフト検出">ドリフト検出<span class="ex-why">手作業の変更によるずれを見つける機能で、これからの更新の影響は示しません。</span></li>
+<li data-short="StackSets">StackSets<span class="ex-why">複数のアカウント・リージョンに展開する機能です。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="rb">
+<p class="ex-q">② 更新中・直後にアラームが鳴ったら、自動で前の状態に戻すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="ロールバック">ロールバックトリガー<span class="ex-why">指定したCloudWatchアラームがALARMになると、更新を取り消して前の状態に戻します。</span></li>
+<li data-short="終了保護">終了保護<span class="ex-why">スタックの削除を防ぐ設定で、更新の取り消しはしません。</span></li>
+<li data-short="DeletionPolicy">DeletionPolicy<span class="ex-why">スタックを消したときにリソースを残す設定で、更新の失敗には働きません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 本番のRDSの更新・置換を、スタックの更新で禁止するには?</p>
+<ul class="ex-choices">
+<li data-ok>スタックポリシーで、そのリソースの更新を拒否する<span class="ex-why">スタックの更新のときに、指定したリソースの変更・置換を防ぎます。</span></li>
+<li>IAMポリシーで、自分の権限を絞る<span class="ex-why">サービスロールを使う更新では、本人の権限では防げません(<a href="../terms/iam-passrole.html">iam:PassRole</a>)。</span></li>
+<li>テンプレートからRDSを削除する<span class="ex-why">RDSがスタックから削除されてしまいます。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p><strong>変更セット</strong>で影響を確かめ、重要なリソースは<strong>スタックポリシー</strong>で守り、<strong>ロールバックトリガー</strong>で異常時に戻します。DBにはDeletionPolicy・UpdateReplacePolicy(Snapshot・Retain)も付けておきます。テンプレートの書き方は「<a href="../terms/json-yaml.html">JSONとYAMLの読み方</a>」を参照してください。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/cloudformation-safe-update.html">CloudFormationで本番環境を安全に更新する</a></li>
+<li>用語:<a href="../terms/json-yaml.html">JSONとYAMLの読み方</a>、<a href="../terms/terraform-git.html">TerraformとGit</a></li>
+<li>サービス:<a href="../services/cloudformation.html">AWS CloudFormation</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="golden-ami-pipeline.html"><span class="label">← 前へ</span>ゴールデンAMIを作って反映する構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cloudformation-drift.html"><span class="label">次へ →</span>手作業の変更(ドリフト)を見つける構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 165.0, "rowh": 80.0, "nodes": [{"id": "tp", "label": "新テンプレート", "sub": "", "x": 0.0, "y": 0.5}, {"id": "cs", "label": "変更セット", "sub": "", "x": 1.3, "y": 0.5}, {"id": "rv", "label": "レビュー", "sub": "置換・削除はないか", "x": 2.6, "y": 0.5}, {"id": "ex", "label": "実行", "sub": "更新成功", "x": 3.9, "y": 0.0}, {"id": "rb", "label": "ロールバック", "sub": "", "x": 3.9, "y": 1.0}], "edges": [["tp", "cs", false, false], ["cs", "rv", false, false], ["rv", "ex", false, false], ["ex", "rb", true, false]], "distractors": ["DeletionPolicy", "StackSets", "ドリフト検出", "終了保護"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

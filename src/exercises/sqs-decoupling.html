@@ -1,0 +1,73 @@
+<!-- title: キューで処理を分離する構成を組み立てる -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: 受付と重い処理を切り離し、急増や処理側の停止でも注文を失わないようにする -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>注文の受付と重い処理を同時に行っているため、<strong>アクセスが急増すると受付まで遅くなる</strong>。</li>
+<li>処理側が止まっても、<strong>注文を失わない</strong>ようにしたい。</li>
+<li>何度処理しても失敗する注文は、ほかの注文の邪魔にならないよう隔離したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node web 0 0.5 blue "受付" "API・Webサーバー"
+node q 1.3 0.5 blank "①" "注文をためる"
+node wk 2.6 0.5 box "処理側" "Auto Scaling"
+node dlq 1.3 1.6 blank "②" "失敗を隔離"
+node cw 2.6 1.6 box "CloudWatch" "キューの長さ"
+edge web q
+edge q wk "取得・削除"
+edge q dlq dash
+edge q cw dash
+edge cw wk "台数を調整"
+<figcaption>図1 キューによる分離の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="q">
+<p class="ex-q">① 受付と処理の間で注文をためるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="SQSキュー">Amazon SQSのキュー<span class="ex-why">受付はキューに入れるだけですぐ応答し、処理側は自分のペースで取り出します。処理側が止まってもメッセージは保持されます。</span></li>
+<li data-short="SNSトピック">Amazon SNSのトピック<span class="ex-why">受け取ったら即座に配るだけで、ためておけません。処理側が止まっていると届きません(<a href="../terms/messaging-comparison.html">メッセージングサービスの選び方</a>)。</span></li>
+<li data-short="ElastiCache">Amazon ElastiCache<span class="ex-why">読み取りを速くするキャッシュで、処理待ちの仕事をためる仕組みではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="dlq">
+<p class="ex-q">② 何度も失敗するメッセージを移す先は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="DLQ">デッドレターキュー(DLQ)<span class="ex-why">最大受信回数を超えたメッセージを移し、ほかのメッセージの処理を止めないようにします。原因を直したら元のキューに戻せます。</span></li>
+<li data-short="FIFOキュー">FIFOキュー<span class="ex-why">順序を守るキューの種類で、失敗の隔離先ではありません。</span></li>
+<li data-short="S3">Amazon S3<span class="ex-why">SQSのメッセージを自動で移す先として指定できません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 同じ注文が二重に処理されるときの原因は?</p>
+<ul class="ex-choices">
+<li data-ok>可視性タイムアウトが処理時間より短い<span class="ex-why">処理中にタイムアウトするとメッセージが再び見えるようになり、別の処理側が取り出します。処理時間より長くします。</span></li>
+<li>メッセージの保持期間が短い<span class="ex-why">保持期間を過ぎたメッセージは消えるだけで、二重には処理されません。</span></li>
+<li>ロングポーリングを有効にしている<span class="ex-why">空の応答を減らす設定で、二重処理の原因ではありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>受付と処理の間に<strong>SQSのキュー</strong>を置き、キューの長さ(1台あたりのバックログ)に応じて処理側の台数を増減します。何度も失敗するメッセージは<strong>DLQ</strong>に隔離します。標準キューは「少なくとも1回」届ける仕組みなので、処理は<a href="../terms/throttling-retry.html">べき等</a>に作ります。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/sqs-decoupling.html">キューで処理を分離し、急増や障害に強くする</a></li>
+<li>用語:<a href="../terms/messaging-comparison.html">メッセージングサービスの選び方</a>、<a href="../terms/throttling-retry.html">スロットリングとリトライ</a></li>
+<li>サービス:<a href="../services/sqs.html">Amazon SQS</a>、<a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a></li>
+</ul>
+</section>

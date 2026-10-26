@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>静的サイトを安全に配信する構成を組み立てる | AWS教科書</title>
+<meta name="description" content="独自ドメインとHTTPSで世界中に高速配信し、S3バケットは公開しない">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワーク・コンテンツ配信</a>
+  <h1>静的サイトを安全に配信する構成を組み立てる</h1>
+  <p class="lead">独自ドメインとHTTPSで世界中に高速配信し、S3バケットは公開しない</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>会社のWebサイト(静的ファイル)を、<strong>独自ドメインとHTTPS</strong>で世界中に高速配信したい。</li>
+<li>S3バケットは公開せず、<strong>CloudFront経由のアクセスだけ</strong>を許可したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 798 227" style="max-width:798px;min-width:638px" role="img" aria-label="図1 静的サイトの配信の構成。"><defs><marker id="dgexercises-static-site-cloudfront-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="43" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="64" text-anchor="middle" class="dg-t">利用者</text>
+<text x="104" y="82" text-anchor="middle" class="dg-s">www.example.com</text>
+</g>
+<g data-node="r53">
+<rect x="234" y="43" width="140" height="52" rx="8" class="dg-box"/>
+<text x="304" y="64" text-anchor="middle" class="dg-t">Route 53</text>
+<text x="304" y="82" text-anchor="middle" class="dg-s">エイリアスレコード</text>
+</g>
+<g data-node="cf">
+<rect x="434" y="43" width="140" height="52" rx="8" class="dg-blank"/>
+<text x="504" y="64" text-anchor="middle" class="dg-t">①</text>
+<text x="504" y="82" text-anchor="middle" class="dg-s">HTTPS・キャッシュ</text>
+</g>
+<g data-node="s3">
+<rect x="634" y="43" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="704" y="64" text-anchor="middle" class="dg-t">S3バケット</text>
+<text x="704" y="82" text-anchor="middle" class="dg-s">非公開</text>
+</g>
+<g data-node="acm">
+<rect x="434" y="151" width="140" height="52" rx="8" class="dg-blank"/>
+<text x="504" y="172" text-anchor="middle" class="dg-t">②</text>
+<text x="504" y="190" text-anchor="middle" class="dg-s">us-east-1の証明書</text>
+</g>
+<path d="M174.0,69.0 L234.0,69.0" class="dg-line" marker-end="url(#dgexercises-static-site-cloudfront-1)"/>
+<text x="204" y="73" text-anchor="middle" class="dg-s dg-halo">名前解決</text>
+<path d="M374.0,69.0 L434.0,69.0" class="dg-line" marker-end="url(#dgexercises-static-site-cloudfront-1)"/>
+<path d="M574.0,69.0 L634.0,69.0" class="dg-line" marker-end="url(#dgexercises-static-site-cloudfront-1)"/>
+<text x="604" y="73" text-anchor="middle" class="dg-s dg-halo">OAC</text>
+<path d="M504.0,151.0 L504.0,95.0" class="dg-line dg-dash" marker-end="url(#dgexercises-static-site-cloudfront-1)"/>
+</svg>
+</div>
+<figcaption>図1 静的サイトの配信の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="cf">
+<p class="ex-q">① 世界中のエッジでキャッシュして配信するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="CloudFront">Amazon CloudFront<span class="ex-why">エッジロケーションでキャッシュして返し、オリジンのS3にはOACでアクセスします。</span></li>
+<li data-short="S3ホスティング">S3の静的ウェブサイトホスティングだけ<span class="ex-why">バケットの公開が必要で、HTTPSにも対応しません。</span></li>
+<li data-short="ALB">Application Load Balancer<span class="ex-why">リージョンの中の振り分けで、S3をオリジンにしたキャッシュ配信はできません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="acm">
+<p class="ex-q">② 独自ドメインのHTTPSに使う証明書は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="ACM">us-east-1で発行したACMの証明書<span class="ex-why">CloudFrontはus-east-1のACM証明書だけを使えます(<a href="../terms/tls-termination.html">TLS終端と証明書の配置</a>)。</span></li>
+<li data-short="東京のACM">東京リージョンのACMの証明書<span class="ex-why">CloudFrontには関連付けられません(ALB用ならこちら)。</span></li>
+<li data-short="自己署名">自己署名の証明書<span class="ex-why">ブラウザに警告が出るので、公開のサイトには使えません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ ファイルを更新しても、古い内容が表示されるときの対処は?</p>
+<ul class="ex-choices">
+<li data-ok>キャッシュの無効化(インバリデーション)を行う<span class="ex-why">エッジのキャッシュを消して、次のアクセスで新しい内容を取りに行かせます。TTLを短くする方法もあります。</span></li>
+<li>S3のバージョニングを有効にする<span class="ex-why">S3の中の履歴が残るだけで、エッジのキャッシュは消えません。</span></li>
+<li>OACを削除する<span class="ex-why">S3にアクセスできなくなります。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>Route 53のエイリアスレコードで独自ドメインを<strong>CloudFront</strong>に向け、<strong>us-east-1のACM証明書</strong>でHTTPSにします。S3はOACでCloudFrontからのアクセスだけを許可し、ビューワープロトコルポリシーでHTTPをHTTPSにリダイレクトします。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/static-site-cloudfront.html">S3とCloudFrontで静的サイトを安全に配信する</a></li>
+<li>用語:<a href="../terms/tls-termination.html">TLS終端と証明書の配置</a>、<a href="../terms/caching-comparison.html">キャッシュの選び方</a></li>
+<li>サービス:<a href="../services/cloudfront.html">Amazon CloudFront</a>、<a href="../services/acm.html">AWS Certificate Manager</a>、<a href="../services/s3.html">Amazon S3</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="route53-traffic-routing.html"><span class="label">← 前へ</span>利用者を速いリージョンへ振り分ける構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="network-troubleshooting.html"><span class="label">次へ →</span>EC2に接続できない原因を調べる構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 160.0, "rowh": 90.0, "nodes": [{"id": "u", "label": "利用者", "sub": "www.example.com", "x": 0.0, "y": 0.0}, {"id": "r53", "label": "Route 53", "sub": "エイリアスレコード", "x": 1.25, "y": 0.0}, {"id": "cf", "label": "CloudFront", "sub": "", "x": 2.5, "y": 0.0}, {"id": "s3", "label": "S3バケット", "sub": "非公開", "x": 3.75, "y": 0.0}, {"id": "acm", "label": "ACM", "sub": "", "x": 2.5, "y": 1.2}], "edges": [["u", "r53", false, false], ["r53", "cf", false, false], ["cf", "s3", false, false], ["acm", "cf", true, false]], "distractors": ["ALB", "S3ホスティング", "東京のACM", "自己署名"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

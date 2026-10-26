@@ -1,0 +1,72 @@
+<!-- title: DynamoDBのスケーリングと復旧の構成を組み立てる -->
+<!-- category: 信頼性・事業継続 -->
+<!-- lead: 負荷に合わせて容量を増減し、誤った上書きから直前の状態に戻せるようにする -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>アクセスの急増時に、DynamoDBで<strong>スロットリング</strong>が出る。</li>
+<li>負荷に合わせて容量が自動で増減するようにしたい。</li>
+<li>バグで大量のデータを上書きしたときに、<strong>直前の状態に戻したい</strong>。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node app 0 0.5 blue "アプリ" "再試行あり"
+node t 1.4 0.5 accent "DynamoDB" "テーブル"
+node as 2.8 0 box "自動スケーリング" "使用率70%を維持"
+node pitr 2.8 1 blank "①" "秒単位で戻す"
+node nt 4.1 1 ok "新しいテーブル" "そこに復元"
+edge app t
+edge as t "容量を調整"
+edge t pitr
+edge pitr nt
+<figcaption>図1 DynamoDBのスケーリングと復旧の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="pitr">
+<p class="ex-q">① 過去35日以内の任意の時点に戻せる機能は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="PITR">ポイントインタイムリカバリ(PITR)<span class="ex-why">有効にしておくと、秒単位で指定した時点の状態を、新しいテーブルとして復元できます。</span></li>
+<li data-short="グローバルテーブル">グローバルテーブル<span class="ex-why">別のリージョンに複製する機能で、誤った上書きも複製されてしまいます。</span></li>
+<li data-short="DAX">DynamoDB Accelerator(DAX)<span class="ex-why">読み取りを速くするキャッシュで、復旧の機能はありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② 予測できない急増に最も強いキャパシティモードは?</p>
+<ul class="ex-choices">
+<li data-ok>オンデマンドモード<span class="ex-why">リクエストに応じて自動で処理し、容量の設定が不要です。自動スケーリングは反応に数分かかります。</span></li>
+<li>プロビジョンドモード(自動スケーリングなし)<span class="ex-why">設定した容量を超えるとスロットリングします。</span></li>
+<li>読み取りキャパシティだけを増やす<span class="ex-why">書き込みのスロットリングは解消しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ PITRで復元したあとに、手作業で設定し直すものは?</p>
+<ul class="ex-choices">
+<li data-ok>自動スケーリング・IAMポリシー・アラームなど<span class="ex-why">復元先は新しいテーブルなので、これらは引き継がれません。アプリの接続先の切り替えも必要です。</span></li>
+<li>テーブルのデータ<span class="ex-why">データは指定した時点の状態で復元されます。</span></li>
+<li>何もない(元のテーブルが上書きされる)<span class="ex-why">PITRは元のテーブルを上書きせず、新しいテーブルに復元します。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>急増にはオンデマンドモード、または自動スケーリングで容量を保ちます。特定のキーにアクセスが集中すると、全体の容量に余裕があってもスロットリングするので、キーの設計も見直します。誤った上書きには<strong>PITR</strong>で新しいテーブルに復元し、アプリの接続先を切り替えます(<a href="../terms/throttling-retry.html">スロットリングとリトライ</a>)。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/dynamodb-scaling-recovery.html">DynamoDBを負荷に合わせてスケールし、誤操作から復旧する</a></li>
+<li>用語:<a href="../terms/throttling-retry.html">スロットリングとリトライ</a>、<a href="../terms/dr-strategies.html">DR戦略</a></li>
+<li>サービス:<a href="../services/dynamodb.html">Amazon DynamoDB</a>、<a href="../services/backup.html">AWS Backup</a></li>
+</ul>
+</section>

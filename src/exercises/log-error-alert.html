@@ -1,0 +1,82 @@
+<!-- title: アプリのエラーログを検知して通知する構成を組み立てる -->
+<!-- category: 監視・ログ・自動修復 -->
+<!-- lead: ログに「ERROR」が出たらメールで知らせ、過去のログも条件で検索できるようにする -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>アプリのログに「ERROR」が出たら、<strong>すぐに開発者へメールで知らせたい</strong>。</li>
+<li>原因を調べるために、過去のログを条件で検索したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 175 85
+node app 0 0 blue "アプリ" "EC2 / Lambda"
+node lg 1.3 0 box "ロググループ" "CloudWatch Logs"
+node mf 2.6 0 blank "①" "ERROR を数える"
+node al 2.6 1.2 box "アラーム" "1件以上で発報"
+node sns 1.3 1.2 ok "SNS" "開発者へメール"
+node li 0 1.2 blank "②" "過去のログを検索"
+edge app lg "ログ出力"
+edge lg mf
+edge mf al
+edge al sns
+edge li lg dash "クエリ"
+<figcaption>図1 エラーログの検知と調査の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="mf">
+<p class="ex-q">① ログの「ERROR」の数をメトリクスにするものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="メトリクスフィルター">メトリクスフィルター<span class="ex-why">ロググループに設定し、パターンに一致したログの数をメトリクスにします。そのメトリクスでアラームを作れます。</span></li>
+<li data-short="サブスクリプション">サブスクリプションフィルター<span class="ex-why">ログをLambdaやData Firehoseへそのまま流す仕組みで、数を数えてアラームにするものではありません。</span></li>
+<li data-short="CloudTrail">AWS CloudTrail<span class="ex-why">AWSのAPIの呼び出しの記録で、アプリが出したログは扱いません(<a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>)。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="li">
+<p class="ex-q">② 過去のログを条件で検索・集計するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Logs Insights">CloudWatch Logs Insights<span class="ex-why">ロググループに対して、専用のクエリで検索・集計できます。ログを別の場所に移す必要はありません。</span></li>
+<li data-short="X-Ray">AWS X-Ray<span class="ex-why">リクエストがどのサービスでどれだけ時間がかかったかを追うトレースのサービスで、ログの検索はしません。</span></li>
+<li data-short="Config">AWS Config<span class="ex-why">リソースの設定の履歴を記録するサービスで、アプリのログは扱いません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ エラーがない時間にアラームを「OK」にする欠落データの扱いは?</p>
+<ul class="ex-choices">
+<li data-ok>notBreaching(正常として扱う)<span class="ex-why">一致するログがない時間はデータが送られないことがあるため、欠落を正常とみなします(<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>)。</span></li>
+<li>breaching(しきい値超えとして扱う)<span class="ex-why">エラーがないのにALARMになり、誤報になります。</span></li>
+<li>missing(既定のまま)<span class="ex-why">データがない期間が続くと INSUFFICIENT_DATA になり、状態が分かりにくくなります。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ ログの保存の費用を抑えるには?</p>
+<ul class="ex-choices">
+<li data-ok>保持期間を決め、長期保存するログはS3に移す<span class="ex-why">CloudWatch Logsの保持期間は既定で無期限です。必要な期間を決め、長く残すログは安いS3に置きます。</span></li>
+<li>アラームの評価期間を短くする<span class="ex-why">アラームの設定はログの保存の費用に関係しません。</span></li>
+<li>メトリクスフィルターを削除する<span class="ex-why">通知ができなくなるだけで、ログの保存量は変わりません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>アプリのログをCloudWatch Logsのロググループに送り、<strong>メトリクスフィルター</strong>で「ERROR」の数をメトリクスにして、アラームからSNSでメールを送ります。調査は<strong>Logs Insights</strong>で行います。ログを即座に別の処理に流したいときは、サブスクリプションフィルターを使います。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/log-error-alert.html">アプリのエラーログを検知して通知する</a></li>
+<li>用語:<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>、<a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a></li>
+<li>サービス:<a href="../services/cloudwatch.html">Amazon CloudWatch</a>、<a href="../services/sns.html">Amazon SNS</a></li>
+</ul>
+</section>

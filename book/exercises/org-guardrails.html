@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>組織全体のガードレールを組み立てる | AWS教科書</title>
+<meta name="description" content="全アカウントで禁止事項を強制し、操作と設定をまとめて監視する">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../exercises/index.html" class="current">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
+  <h1>組織全体のガードレールを組み立てる</h1>
+  <p class="lead">全アカウントで禁止事項を強制し、操作と設定をまとめて監視する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 要件<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>全アカウントで「<strong>東京・大阪以外のリージョンを使わせない</strong>」「<strong>CloudTrailを止めさせない</strong>」を強制したい。</li>
+<li>全アカウントの操作の記録と、設定の準拠状況をまとめて確認したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 組織のガードレールの構成。"><defs><marker id="dgexercises-org-guardrails-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="mgmt">
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="140" text-anchor="middle" class="dg-tb">管理アカウント</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">Organizations</text>
+</g>
+<g data-node="scp">
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">①</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">禁止事項を設定</text>
+</g>
+<g data-node="trail">
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="140" text-anchor="middle" class="dg-t">②</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">全アカウントを記録</text>
+</g>
+<g data-node="cfg">
+<rect x="272" y="198" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="220" text-anchor="middle" class="dg-t">Config</text>
+<text x="347" y="238" text-anchor="middle" class="dg-s">組織全体のルール</text>
+</g>
+<g data-node="ou">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">メンバーアカウント</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">OU配下すべて</text>
+</g>
+<path d="M184.0,118.8 L272.0,89.2" class="dg-line" marker-end="url(#dgexercises-org-guardrails-1)"/>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgexercises-org-guardrails-1)"/>
+<path d="M184.0,169.2 L272.0,198.8" class="dg-line" marker-end="url(#dgexercises-org-guardrails-1)"/>
+<path d="M422.0,89.2 L510.0,118.8" class="dg-line" marker-end="url(#dgexercises-org-guardrails-1)"/>
+<text x="466" y="108" text-anchor="middle" class="dg-s dg-halo">上限</text>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgexercises-org-guardrails-1)"/>
+<text x="466" y="148" text-anchor="middle" class="dg-s dg-halo">記録</text>
+<path d="M422.0,198.8 L510.0,169.2" class="dg-line" marker-end="url(#dgexercises-org-guardrails-1)"/>
+<text x="466" y="188" text-anchor="middle" class="dg-s dg-halo">評価</text>
+</svg>
+</div>
+<figcaption>図1 組織のガードレールの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="scp">
+<p class="ex-q">① 全アカウントで、特定のリージョンや操作を禁止するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="SCP">サービスコントロールポリシー(SCP)<span class="ex-why">OU配下のアカウントの権限の上限を決めます。IAMで許可していても、SCPで拒否された操作はできません。</span></li>
+<li data-short="IAMポリシー">各アカウントのIAMポリシー<span class="ex-why">アカウントの管理者が書き換えられるため、組織として強制できません。</span></li>
+<li data-short="セキュリティG">セキュリティグループ<span class="ex-why">通信を制限するもので、APIの操作は禁止できません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="trail">
+<p class="ex-q">② 全アカウントの操作を記録し、メンバーが止められないようにするものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="組織の証跡">CloudTrailの組織の証跡<span class="ex-why">管理アカウントで作り、メンバーアカウントからは停止・削除できません。</span></li>
+<li data-short="Logs Insights">CloudWatch Logs Insights<span class="ex-why">ログを検索するもので、操作の記録は作りません。</span></li>
+<li data-short="Health">AWS Health<span class="ex-why">AWS側のイベントの通知で、利用者の操作は記録しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ SCPについて正しいものは?</p>
+<ul class="ex-choices">
+<li data-ok>権限を与えず、上限を決めるだけ<span class="ex-why">実際に操作するには、IAMでの許可も必要です(<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>)。</span></li>
+<li>SCPで許可すれば、IAMの許可がなくても操作できる<span class="ex-why">SCPは許可を与えません。</span></li>
+<li>管理アカウントにも適用される<span class="ex-why">SCPは管理アカウントには適用されません。管理アカウントで日常の作業をしないのはこのためです。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 解説<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p><strong>SCP</strong>で禁止事項の上限を決め、<strong>組織の証跡</strong>で操作を記録し、Configの組織全体のルールで設定を評価します。Security Hubを委任管理者のアカウントで有効にすると、組織全体の検出結果もまとめて確認できます(<a href="../terms/compliance-artifact.html">コンプライアンスとAWS Artifact</a>)。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 関連ページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/org-guardrails.html">組織全体にセキュリティのガードレールを設ける</a></li>
+<li>用語:<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>、<a href="../terms/root-user.html">ルートユーザーとアカウントの保護</a></li>
+<li>サービス:<a href="../services/organizations.html">AWS Organizations</a>、<a href="../services/cloudtrail.html">AWS CloudTrail</a>、<a href="../services/control-tower.html">AWS Control Tower</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <a class="prev" href="access-denied-troubleshooting.html"><span class="label">← 前へ</span>AccessDeniedの原因を調べる構成を組み立てる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="config-auto-remediation.html"><span class="label">次へ →</span>公開されたS3バケットを自動で修復する構成を組み立てる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "mgmt", "label": "管理アカウント", "sub": "Organizations", "x": 0.0, "y": 1.0}, {"id": "scp", "label": "SCP", "sub": "", "x": 1.4, "y": 0.0}, {"id": "trail", "label": "組織の証跡", "sub": "", "x": 1.4, "y": 1.0}, {"id": "cfg", "label": "Config", "sub": "組織全体のルール", "x": 1.4, "y": 2.0}, {"id": "ou", "label": "メンバーアカウント", "sub": "OU配下すべて", "x": 2.8, "y": 1.0}], "edges": [["mgmt", "scp", false, false], ["mgmt", "trail", false, false], ["mgmt", "cfg", false, false], ["scp", "ou", false, false], ["trail", "ou", false, false], ["cfg", "ou", false, false]], "distractors": ["Health", "IAMポリシー", "Logs Insights", "セキュリティG"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

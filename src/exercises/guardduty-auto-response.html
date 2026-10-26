@@ -1,0 +1,74 @@
+<!-- title: 乗っ取られたEC2を自動で隔離する構成を組み立てる -->
+<!-- category: セキュリティ・コンプライアンス -->
+<!-- lead: 脅威の検出をきっかけに、通信の遮断と証拠の保全を夜間でも自動で行う -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>EC2が乗っ取られたら、<strong>すぐにネットワークから切り離したい</strong>。</li>
+<li>調査のため、インスタンスを削除せずに<strong>ディスクの状態を保存</strong>したい。</li>
+<li>夜間でも自動で対応し、担当者にも知らせたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node gd 0 0.5 blank "①" "脅威を検出"
+node eb 1.3 0.5 box "EventBridge" "種類・重要度で判定"
+node au 2.6 0.5 box "SSM Automation" "またはLambda"
+node sg 3.9 0 ng "隔離用SG" "通信をすべて遮断"
+node snap 3.9 1 blank "②" "証拠を保全"
+node sns 1.3 1.6 ok "SNS" "担当者へ通知"
+edge gd eb
+edge eb au
+edge eb sns
+edge au sg
+edge au snap
+<figcaption>図1 侵害されたEC2の自動隔離の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="gd">
+<p class="ex-q">① 不審な通信やマイニングなどの脅威を検出するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="GuardDuty">Amazon GuardDuty<span class="ex-why">VPCフローログ・DNSのログ・CloudTrailなどを分析して、脅威を検出します。リージョンごとに有効にします。</span></li>
+<li data-short="Inspector">Amazon Inspector<span class="ex-why">ソフトウェアの脆弱性を見つけるもので、実際の攻撃の兆候は検出しません(<a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>)。</span></li>
+<li data-short="Macie">Amazon Macie<span class="ex-why">S3の機密データを見つけるサービスです。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="snap">
+<p class="ex-q">② 調査のためにディスクの状態を残すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="スナップショット">EBSのスナップショット<span class="ex-why">その時点のボリュームの状態を保存し、あとで別の環境で調べられます。</span></li>
+<li data-short="インスタンス終了">インスタンスの終了<span class="ex-why">証拠が消えてしまいます。終了保護をかけておきます。</span></li>
+<li data-short="再起動">インスタンスの再起動<span class="ex-why">メモリの状態などの証拠が失われ、隔離にもなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ Auto Scalingグループのインスタンスを隔離するときの注意は?</p>
+<ul class="ex-choices">
+<li data-ok>先にグループから切り離す(デタッチする)<span class="ex-why">グループに入ったままだと、ヘルスチェックで置き換えられて証拠が消えます。</span></li>
+<li>グループの希望容量を0にする<span class="ex-why">全台が終了し、証拠も消えます。</span></li>
+<li>特に注意はいらない<span class="ex-why">自動で置き換えられるおそれがあります。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p><strong>GuardDuty</strong>の検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、<strong>スナップショット</strong>で証拠を残します。追跡中の通信はセキュリティグループを替えても切れないことがあるので、ネットワークACLでの遮断も併用します(<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>)。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/guardduty-auto-response.html">乗っ取られたEC2を自動で隔離する</a></li>
+<li>用語:<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a>、<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a></li>
+<li>サービス:<a href="../services/guardduty.html">Amazon GuardDuty</a>、<a href="../services/eventbridge.html">Amazon EventBridge</a></li>
+</ul>
+</section>

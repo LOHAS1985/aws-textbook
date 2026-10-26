@@ -1,0 +1,83 @@
+<!-- title: Webアプリを攻撃から守る構成を組み立てる -->
+<!-- category: セキュリティ・コンプライアンス -->
+<!-- lead: アプリを改修せずに、前段でSQLインジェクションや大量のアクセスを止める -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>SQLインジェクションを狙うリクエストや、ログイン画面への<strong>大量の試行</strong>が来ている。</li>
+<li>アプリを改修せずに、<strong>前段で攻撃を止めたい</strong>。DDoSにも備えたい。</li>
+<li>ブロックしたリクエストの記録を残したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node u 0 0 blue "利用者"
+node atk 0 1 ng "攻撃者" "SQLi・大量試行"
+node cf 1.3 0.5 accent "CloudFront" "Web ACLを関連付け"
+node waf 1.3 1.6 blank "①" "攻撃を判定"
+node alb 2.6 0.5 box "ALB" "CloudFrontからのみ"
+node app 3.9 0.5 ok "アプリ"
+edge u cf
+edge atk cf dash
+edge waf cf dash
+edge cf alb
+edge alb app
+<figcaption>図1 Webアプリの保護の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="waf">
+<p class="ex-q">① SQLインジェクションなどアプリ層の攻撃を、前段で止めるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="AWS WAF">AWS WAF<span class="ex-why">Web ACLのマネージドルールで、SQLインジェクションや既知の悪い入力をブロックします。</span></li>
+<li data-short="Shield Std">AWS Shield Standard<span class="ex-why">ネットワーク層(L3・L4)のDDoS対策で、SQLインジェクションは止めません。</span></li>
+<li data-short="NACL">ネットワークACL<span class="ex-why">IPアドレスとポートでしか判定できず、リクエストの中身は見られません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② 同じIPアドレスからの大量のログイン試行を止めるルールは?</p>
+<ul class="ex-choices">
+<li data-ok>レートベースルール<span class="ex-why">一定時間内のリクエスト数が上限を超えたIPアドレスを、一時的にブロックします。</span></li>
+<li>ジオマッチルール<span class="ex-why">国や地域で判定するもので、同じ国からの大量の試行は止められません。</span></li>
+<li>セキュリティグループで443を閉じる<span class="ex-why">すべての利用者がアクセスできなくなります。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ CloudFrontに関連付けるWeb ACLを作るリージョンは?</p>
+<ul class="ex-choices">
+<li data-ok>us-east-1(バージニア北部)<span class="ex-why">CloudFrontはグローバルなサービスなので、us-east-1で作ります。ALB用はALBと同じリージョンで作ります(<a href="../terms/region-az.html">サービスの範囲</a>)。</span></li>
+<li>アプリと同じリージョン<span class="ex-why">CloudFront用のWeb ACLは、そのリージョンでは作れません。</span></li>
+<li>どこでもよい<span class="ex-why">関連付けられるのは、対象に合ったリージョン(スコープ)のWeb ACLだけです。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ WAFを迂回して、ALBに直接アクセスされないようにするには?</p>
+<ul class="ex-choices">
+<li data-ok>ALBへの経路をCloudFrontからだけに絞る<span class="ex-why">CloudFrontのマネージドプレフィックスリストをセキュリティグループに使い、カスタムヘッダーの確認も組み合わせます。</span></li>
+<li>ALBを削除する<span class="ex-why">アプリにつながらなくなります。</span></li>
+<li>NLBに変える<span class="ex-why">迂回の対策にならず、WAFも付けられなくなります。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>CloudFrontに<strong>AWS WAF</strong>のWeb ACLを関連付け、マネージドルールとレートベースルールで攻撃を止めます。DDoSはShield Standardで自動的に守られ、大規模な攻撃への支援が必要ならShield Advancedを使います。ブロックの記録はWAFのログに残します。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/waf-web-protection.html">Webアプリを攻撃や大量アクセスから守る</a></li>
+<li>用語:<a href="../terms/http-status-codes.html">HTTPステータスコードと切り分け</a>、<a href="../terms/tls-termination.html">TLS終端と証明書の配置</a></li>
+<li>サービス:<a href="../services/waf.html">AWS WAF</a>、<a href="../services/shield.html">AWS Shield</a>、<a href="../services/cloudfront.html">Amazon CloudFront</a></li>
+</ul>
+</section>

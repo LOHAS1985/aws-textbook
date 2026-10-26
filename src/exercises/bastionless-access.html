@@ -1,0 +1,72 @@
+<!-- title: 踏み台なしでEC2に接続する構成を組み立てる -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: ポートを開けずにプライベートなEC2にシェルで接続し、操作の記録も残す -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>インターネットに出られないプライベートサブネットのEC2に、<strong>シェルで接続</strong>したい。</li>
+<li><strong>踏み台サーバーやSSHの22番ポートは使わない</strong>。</li>
+<li>誰がいつ何をしたかの記録を残したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 160 95
+node admin 0 0 blue "運用担当者" "コンソール / CLI"
+node ssm 1.25 0 blank "①" "シェルを開く"
+node vpce 2.5 0 blank "②" "インターフェイス型"
+node ec2 3.75 0 ok "EC2" "SSM Agent"
+node logs 0 1.2 box "操作ログ" "S3・Logsに記録"
+edge admin ssm
+edge ec2 vpce "HTTPS"
+edge vpce ssm
+edge ssm logs dash
+<figcaption>図1 踏み台なしの接続の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ssm">
+<p class="ex-q">① ポートを開けずに、ブラウザやCLIからシェルを開くものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Session Manager">Systems Manager Session Manager<span class="ex-why">EC2のSSM Agentが外向きのHTTPSでつなぐため、受信のポートは不要です。接続できる人はIAMで制御します。</span></li>
+<li data-short="踏み台サーバー">パブリックサブネットの踏み台サーバー<span class="ex-why">要件で使わないと決めています。22番を開け、鍵も管理する必要があります。</span></li>
+<li data-short="Client VPN">AWS Client VPN<span class="ex-why">VPCにつなぐことはできますが、その先はSSHなどのポートが必要です。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="vpce">
+<p class="ex-q">② インターネットに出られないEC2から、Systems Managerにつなぐ経路は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="VPCエンドポイント">インターフェイス型VPCエンドポイント<span class="ex-why"><code>ssm</code>・<code>ssmmessages</code> などのエンドポイントを作り、プライベートなまま接続します(<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>)。</span></li>
+<li data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">パブリックIPが必要になり、プライベートなままでは使えません。</span></li>
+<li data-short="VPCピアリング">VPCピアリング<span class="ex-why">VPC同士をつなぐもので、AWSのサービスへの経路にはなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ EC2のロールに付けるポリシーは?</p>
+<ul class="ex-choices">
+<li data-ok><code>AmazonSSMManagedInstanceCore</code><span class="ex-why">EC2をSystems Managerの管理対象にするための最小限の権限です。</span></li>
+<li><code>AmazonEC2FullAccess</code><span class="ex-why">EC2の操作の権限で、Systems Managerへの接続には足りず、広すぎます。</span></li>
+<li>何も付けなくてよい<span class="ex-why">ロールがないと、Systems Managerに登録されません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>EC2のSSM Agentが<strong>VPCエンドポイント</strong>経由でSystems Managerにつなぎ、運用担当者は<strong>Session Manager</strong>からシェルを開きます。操作はS3やCloudWatch Logsに記録でき、セッションの開始・終了はCloudTrailに残ります。SSHの鍵を配らずにSSHで接続したい場合は、EC2 Instance Connectも使えます。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/bastionless-access.html">踏み台サーバーなしでプライベートなEC2を操作する</a></li>
+<li>用語:<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>、<a href="../terms/port-numbers.html">よく使うポート番号</a></li>
+<li>サービス:<a href="../services/systems-manager.html">AWS Systems Manager</a>、<a href="../services/vpc.html">Amazon VPC</a></li>
+</ul>
+</section>

@@ -1,0 +1,73 @@
+<!-- title: オンプレミスとVPCの名前解決をつなぐ構成を組み立てる -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: VPCからは社内の名前を、オンプレミスからはVPCの名前を引けるようにする -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>Direct ConnectでオンプレミスとVPCをつないでいる。</li>
+<li>VPCのEC2から、<strong>社内のDNSの corp.example.com</strong> を引きたい。</li>
+<li>オンプレミスから、<strong>VPCのプライベートホストゾーンの aws.example.com</strong> を引きたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node ec2 0 0 blue "EC2" "corp.example.com"
+node res 1.4 0.5 accent "Route 53" "Resolver"
+node out 2.8 0 blank "①" "転送ルール"
+node inb 2.8 1 blank "②" "IPアドレスで受付"
+node onp 4.4 0.5 blue "社内のDNS" "条件付き転送"
+edge ec2 res
+edge res out
+edge out onp "Direct Connect"
+edge onp inb
+edge inb res
+<figcaption>図1 ハイブリッドの名前解決の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="out">
+<p class="ex-q">① VPCからの corp.example.com の問い合わせを、社内のDNSへ送るものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="アウトバウンド">アウトバウンドエンドポイント+転送ルール<span class="ex-why">指定したドメインの問い合わせを、社内のDNSサーバーのIPアドレスへ転送します。</span></li>
+<li data-short="インバウンド">インバウンドエンドポイント<span class="ex-why">オンプレミスからVPCへの問い合わせを受け付けるもので、向きが逆です。</span></li>
+<li data-short="プライベートHZ">プライベートホストゾーン<span class="ex-why">VPCの中の名前を定義するもので、社内のDNSには問い合わせません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="inb">
+<p class="ex-q">② オンプレミスからの aws.example.com の問い合わせを受け付けるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="インバウンド">インバウンドエンドポイント<span class="ex-why">VPCの中にIPアドレスを持ち、社内のDNSの条件付き転送の先として指定します。</span></li>
+<li data-short="VPCのResolver">VPCのResolver(CIDR+2)に直接問い合わせる<span class="ex-why">VPCのResolverには、オンプレミスから直接問い合わせできません。</span></li>
+<li data-short="パブリックHZ">パブリックホストゾーン<span class="ex-why">インターネットに公開されてしまい、社内向けの名前には使いません(<a href="../terms/dns.html">DNS</a>)。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ エンドポイントのセキュリティグループで許可する通信は?</p>
+<ul class="ex-choices">
+<li data-ok>53番(TCP・UDP)<span class="ex-why">DNSの通信です。オンプレミス側のファイアウォールでも許可します(<a href="../terms/port-numbers.html">よく使うポート番号</a>)。</span></li>
+<li>443番だけ<span class="ex-why">DNSの問い合わせは53番を使います。</span></li>
+<li>22番<span class="ex-why">SSHのポートで、DNSには関係ありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>VPCからオンプレミスへは<strong>アウトバウンドエンドポイント</strong>と転送ルール、オンプレミスからVPCへは<strong>インバウンドエンドポイント</strong>を使います。エンドポイントは複数のAZに置いて冗長にし、転送ルールはRAMでほかのアカウントと共有できます。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/hybrid-dns-resolver.html">オンプレミスとVPCで互いの名前を解決する</a></li>
+<li>用語:<a href="../terms/dns.html">DNS</a>、<a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a></li>
+<li>サービス:<a href="../services/route53.html">Amazon Route 53</a>、<a href="../services/direct-connect.html">AWS Direct Connect</a></li>
+</ul>
+</section>

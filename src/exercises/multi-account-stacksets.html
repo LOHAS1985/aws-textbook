@@ -1,0 +1,73 @@
+<!-- title: 複数アカウントに共通設定を展開する構成を組み立てる -->
+<!-- category: デプロイ・自動化 -->
+<!-- lead: 1つのテンプレートを組織の全アカウント・リージョンに展開し、新しいアカウントにも自動で入れる -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>組織の<strong>すべてのアカウント・リージョン</strong>に、監視用のIAMロールやConfigルールを同じ内容で作りたい。</li>
+<li>新しいアカウントを追加したときも、<strong>自動で同じ設定</strong>が入るようにしたい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 160 80
+node tpl 0 1 blue "テンプレート" "共通の設定"
+node ss 1.25 1 blank "①" "管理アカウント"
+node ou 2.5 1 blank "②" "展開先に指定"
+node a1 3.75 0 ok "アカウントA" "東京・大阪"
+node a2 3.75 1 ok "アカウントB" "東京・大阪"
+node a3 3.75 2 ok "新しいアカウント" "自動で展開"
+edge tpl ss
+edge ss ou
+edge ou a1
+edge ou a2
+edge ou a3
+<figcaption>図1 複数アカウントへの展開の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ss">
+<p class="ex-q">① 1つのテンプレートを、複数のアカウント・リージョンに展開するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="StackSets">CloudFormation StackSets<span class="ex-why">管理アカウントから、指定したアカウント・リージョンにまとめてスタックを作ります。</span></li>
+<li data-short="変更セット">変更セット<span class="ex-why">1つのスタックの更新の影響を確かめる機能です。</span></li>
+<li data-short="Image Builder">EC2 Image Builder<span class="ex-why">AMIを作って配布するもので、IAMロールやConfigルールは作りません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="ou">
+<p class="ex-q">② 展開先を「この組織単位の全アカウント」と指定するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="OU">Organizationsの組織単位(OU)<span class="ex-why">OUを展開先にして自動デプロイを有効にすると、OUに追加されたアカウントにも自動でスタックが作られます。</span></li>
+<li data-short="リソースグループ">Resource Groups<span class="ex-why">タグなどでリソースをまとめる機能で、アカウントの展開先にはなりません。</span></li>
+<li data-short="VPC">VPC<span class="ex-why">ネットワークの単位で、アカウントの集まりではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ テンプレートにIAMロールを含めるときに必要なことは?</p>
+<ul class="ex-choices">
+<li data-ok><code>CAPABILITY_IAM</code>(または <code>CAPABILITY_NAMED_IAM</code>)を許可する<span class="ex-why">IAMリソースを作ることを明示的に認めないと、作成は失敗します。</span></li>
+<li>ルートユーザーで実行する<span class="ex-why">ルートユーザーは使いません(<a href="../terms/root-user.html">ルートユーザーとアカウントの保護</a>)。</span></li>
+<li>テンプレートにアクセスキーを書く<span class="ex-why">機密情報はテンプレートに書かず、ダイナミックリファレンスで参照します。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p><strong>StackSets</strong>で展開先を<strong>OU</strong>にし、自動デプロイを有効にすると、新しいアカウントにも同じ設定が入ります。決まった構成を利用者自身に起動させたい場合は、Service Catalogも候補です。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/multi-account-stacksets.html">複数アカウント・リージョンに共通設定を展開する</a></li>
+<li>用語:<a href="../terms/json-yaml.html">JSONとYAMLの読み方</a></li>
+<li>サービス:<a href="../services/cloudformation.html">AWS CloudFormation</a>、<a href="../services/organizations.html">AWS Organizations</a>、<a href="../services/service-catalog.html">AWS Service Catalog</a></li>
+</ul>
+</section>

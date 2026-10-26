@@ -1,0 +1,80 @@
+<!-- title: EC2に接続できない原因を調べる構成を組み立てる -->
+<!-- category: ネットワーク・コンテンツ配信 -->
+<!-- lead: 通信の経路と許可を確かめ、どこで止まっているかを記録と解析で絞り込む -->
+<section class="chapter">
+<h2>1. 要件</h2>
+<ul>
+<li>インターネットからEC2のWebサーバーにアクセスできない。</li>
+<li>どこで通信が止まっているかを、<strong>記録と解析で</strong>特定したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node u 0 0 blue "利用者"
+node igw 1.4 0 blank "①" "VPCの出入り口"
+node ec2 2.8 0 box "EC2" "Webサーバー"
+node fl 2.8 1.2 blank "②" "通信を記録"
+node li 1.4 1.2 ok "Logs Insights" "REJECTを検索"
+edge u igw
+edge igw ec2
+edge ec2 fl dash
+edge fl li
+<figcaption>図1 通信の経路と調査の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="igw">
+<p class="ex-q">① インターネットとVPCの間の出入り口は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">VPCにアタッチし、サブネットのルートテーブルに <code>0.0.0.0/0</code> への経路を作ります。EC2にはパブリックIPも必要です。</span></li>
+<li data-short="NATゲートウェイ">NATゲートウェイ<span class="ex-why">内から外への通信のためのもので、外から内へのアクセスは受け付けません(<a href="../terms/inbound-traffic.html">インバウンド通信</a>)。</span></li>
+<li data-short="VPCエンドポイント">VPCエンドポイント<span class="ex-why">AWSのサービスへのプライベートな経路で、インターネットの出入り口ではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="fl">
+<p class="ex-q">② 通信が許可・拒否されたかを記録するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="VPCフローログ">VPCフローログ<span class="ex-why">ENIごとの通信を ACCEPT・REJECT とともに記録します(<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>)。</span></li>
+<li data-short="CloudTrail">AWS CloudTrail<span class="ex-why">APIの操作の記録で、パケットの通信は記録しません。設定を変えた人を調べるのには使えます。</span></li>
+<li data-short="X-Ray">AWS X-Ray<span class="ex-why">アプリの処理の流れを追うもので、ネットワークの拒否は記録しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 受信はACCEPTなのに、戻りの通信がREJECTのときの原因は?</p>
+<ul class="ex-choices">
+<li data-ok>ネットワークACLのアウトバウンドでエフェメラルポートを許可していない<span class="ex-why">ネットワークACLはステートレスなので、戻りの通信(1024〜65535)も許可が必要です(<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>)。</span></li>
+<li>セキュリティグループのアウトバウンドが空<span class="ex-why">セキュリティグループはステートフルで、戻りの通信は自動で許可されます。</span></li>
+<li>ルートテーブルが拒否している<span class="ex-why">ルートテーブルは経路を決めるだけで、許可・拒否はしません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ 実際に通信せずに、設定上の経路を自動で解析するものは?</p>
+<ul class="ex-choices">
+<li data-ok>VPC Reachability Analyzer<span class="ex-why">送信元と宛先を指定すると、どの設定で止まるかを解析して示します。</span></li>
+<li>VPCフローログ<span class="ex-why">実際に流れた通信の記録で、設定の解析はしません。</span></li>
+<li>Trusted Advisor<span class="ex-why">ベストプラクティスのチェックで、2点間の経路は解析しません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 解説</h2>
+<details>
+<summary>解説を見る(答え合わせのあとに読む)</summary>
+<p>ルートテーブル → <strong>インターネットゲートウェイ</strong> → セキュリティグループ → ネットワークACL → パブリックIPの順に確認し、<strong>VPCフローログ</strong>のREJECTをLogs Insightsで検索して止まっている場所を絞り込みます。設定上の経路は<strong>Reachability Analyzer</strong>で自動で解析できます。</p>
+</details>
+</section>
+
+<section class="chapter">
+<h2>4. 関連ページ</h2>
+<ul>
+<li>運用シナリオ:<a href="../usecases/network-troubleshooting.html">EC2に接続できない原因を調査する</a></li>
+<li>用語:<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>、<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>、<a href="../terms/route-table.html">ルートテーブル</a></li>
+<li>サービス:<a href="../services/vpc.html">Amazon VPC</a>、<a href="../services/cloudwatch.html">Amazon CloudWatch</a></li>
+</ul>
+</section>
