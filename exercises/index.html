@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>構成演習 | AWS教科書</title>
 <meta name="description" content="要件を読み、空欄に入るサービスや設定を選んで構成を組み立てる演習(AWSアカウントは不要)">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -16,6 +24,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("../sw.js").catch(function () {});
 }
 </script>
+<script src="../js/site.js" defer></script>
 </head>
 <body>
 <header class="site-header" id="top">
@@ -33,76 +42,76 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="toc-category" id="cat1">
 <h2>監視・ログ・自動修復 <span class="count">(10)</span></h2>
 <ul class="card-list">
-  <li data-keys="ec2のメモリ使用率を監視する構成を組み立てる ec2-memory-monitoring 監視・ログ・自動修復 標準のメトリクスにないメモリ・ディスクの使用率を集め、しきい値を超えたらメールで知らせる"><a href="ec2-memory-monitoring.html"><span class="name">EC2のメモリ使用率を監視する構成を組み立てる</span><span class="desc">標準のメトリクスにないメモリ・ディスクの使用率を集め、しきい値を超えたらメールで知らせる</span></a></li>
-  <li data-keys="アプリのエラーログを検知して通知する構成を組み立てる log-error-alert 監視・ログ・自動修復 ログに「error」が出たらメールで知らせ、過去のログも条件で検索できるようにする"><a href="log-error-alert.html"><span class="name">アプリのエラーログを検知して通知する構成を組み立てる</span><span class="desc">ログに「ERROR」が出たらメールで知らせ、過去のログも条件で検索できるようにする</span></a></li>
-  <li data-keys="外形監視と誤報の少ないアラームを組み立てる smart-alarms 監視・ログ・自動修復 利用者と同じ操作を定期的に試し、本当に必要なときだけ通知する"><a href="smart-alarms.html"><span class="name">外形監視と誤報の少ないアラームを組み立てる</span><span class="desc">利用者と同じ操作を定期的に試し、本当に必要なときだけ通知する</span></a></li>
-  <li data-keys="ec2の障害から自動で復旧する構成を組み立てる ec2-auto-recovery 監視・ログ・自動修復 ステータスチェックの失敗を検知し、ホスト側とos側で対処を分けて自動で直す"><a href="ec2-auto-recovery.html"><span class="name">EC2の障害から自動で復旧する構成を組み立てる</span><span class="desc">ステータスチェックの失敗を検知し、ホスト側とOS側で対処を分けて自動で直す</span></a></li>
-  <li data-keys="awsのメンテナンス通知に自動で対応する構成を組み立てる health-event-response 監視・ログ・自動修復 aws側の予定メンテナンスや障害のイベントを受け取り、通知と自動対応につなげる"><a href="health-event-response.html"><span class="name">AWSのメンテナンス通知に自動で対応する構成を組み立てる</span><span class="desc">AWS側の予定メンテナンスや障害のイベントを受け取り、通知と自動対応につなげる</span></a></li>
-  <li data-keys="複数アカウントのログを集約する構成を組み立てる centralized-logging 監視・ログ・自動修復 各アカウントのログとapiの記録を1つのs3に集め、長期保存してsqlで分析する"><a href="centralized-logging.html"><span class="name">複数アカウントのログを集約する構成を組み立てる</span><span class="desc">各アカウントのログとAPIの記録を1つのS3に集め、長期保存してSQLで分析する</span></a></li>
-  <li data-keys="コンテナの性能を監視する構成を組み立てる container-monitoring 監視・ログ・自動修復 ecs・eksのタスクやpod単位のメトリクスとログを集め、異常を知らせる"><a href="container-monitoring.html"><span class="name">コンテナの性能を監視する構成を組み立てる</span><span class="desc">ECS・EKSのタスクやPod単位のメトリクスとログを集め、異常を知らせる</span></a></li>
-  <li data-keys="マイクロサービスの遅延を特定する構成を組み立てる distributed-tracing 監視・ログ・自動修復 複数のサービスをまたぐ処理のどこが遅いか・どこでエラーが出ているかを、トレースで突き止める"><a href="distributed-tracing.html"><span class="name">マイクロサービスの遅延を特定する構成を組み立てる</span><span class="desc">複数のサービスをまたぐ処理のどこが遅いか・どこでエラーが出ているかを、トレースで突き止める</span></a></li>
-  <li data-keys="ec2・ebsの性能を改善する構成を組み立てる ebs-performance 監視・ログ・自動修復 遅さの原因がボリュームかインスタンスかを切り分け、止めずに性能を上げる"><a href="ebs-performance.html"><span class="name">EC2・EBSの性能を改善する構成を組み立てる</span><span class="desc">遅さの原因がボリュームかインスタンスかを切り分け、止めずに性能を上げる</span></a></li>
-  <li data-keys="rdsの負荷と接続数の問題を解消する構成を組み立てる rds-performance 監視・ログ・自動修復 重いsqlを特定し、接続の急増と読み取りの負荷をdbの手前で吸収する"><a href="rds-performance.html"><span class="name">RDSの負荷と接続数の問題を解消する構成を組み立てる</span><span class="desc">重いSQLを特定し、接続の急増と読み取りの負荷をDBの手前で吸収する</span></a></li>
+  <li data-keys="ec2のメモリ使用率を監視する構成を組み立てる ec2-memory-monitoring 監視・ログ・自動修復 標準のメトリクスにないメモリ・ディスクの使用率を集め、しきい値を超えたらメールで知らせる  "><a href="ec2-memory-monitoring.html"><span class="name">EC2のメモリ使用率を監視する構成を組み立てる</span><span class="desc">標準のメトリクスにないメモリ・ディスクの使用率を集め、しきい値を超えたらメールで知らせる</span></a></li>
+  <li data-keys="アプリのエラーログを検知して通知する構成を組み立てる log-error-alert 監視・ログ・自動修復 ログに「error」が出たらメールで知らせ、過去のログも条件で検索できるようにする  "><a href="log-error-alert.html"><span class="name">アプリのエラーログを検知して通知する構成を組み立てる</span><span class="desc">ログに「ERROR」が出たらメールで知らせ、過去のログも条件で検索できるようにする</span></a></li>
+  <li data-keys="外形監視と誤報の少ないアラームを組み立てる smart-alarms 監視・ログ・自動修復 利用者と同じ操作を定期的に試し、本当に必要なときだけ通知する  "><a href="smart-alarms.html"><span class="name">外形監視と誤報の少ないアラームを組み立てる</span><span class="desc">利用者と同じ操作を定期的に試し、本当に必要なときだけ通知する</span></a></li>
+  <li data-keys="ec2の障害から自動で復旧する構成を組み立てる ec2-auto-recovery 監視・ログ・自動修復 ステータスチェックの失敗を検知し、ホスト側とos側で対処を分けて自動で直す  "><a href="ec2-auto-recovery.html"><span class="name">EC2の障害から自動で復旧する構成を組み立てる</span><span class="desc">ステータスチェックの失敗を検知し、ホスト側とOS側で対処を分けて自動で直す</span></a></li>
+  <li data-keys="awsのメンテナンス通知に自動で対応する構成を組み立てる health-event-response 監視・ログ・自動修復 aws側の予定メンテナンスや障害のイベントを受け取り、通知と自動対応につなげる  "><a href="health-event-response.html"><span class="name">AWSのメンテナンス通知に自動で対応する構成を組み立てる</span><span class="desc">AWS側の予定メンテナンスや障害のイベントを受け取り、通知と自動対応につなげる</span></a></li>
+  <li data-keys="複数アカウントのログを集約する構成を組み立てる centralized-logging 監視・ログ・自動修復 各アカウントのログとapiの記録を1つのs3に集め、長期保存してsqlで分析する  "><a href="centralized-logging.html"><span class="name">複数アカウントのログを集約する構成を組み立てる</span><span class="desc">各アカウントのログとAPIの記録を1つのS3に集め、長期保存してSQLで分析する</span></a></li>
+  <li data-keys="コンテナの性能を監視する構成を組み立てる container-monitoring 監視・ログ・自動修復 ecs・eksのタスクやpod単位のメトリクスとログを集め、異常を知らせる  "><a href="container-monitoring.html"><span class="name">コンテナの性能を監視する構成を組み立てる</span><span class="desc">ECS・EKSのタスクやPod単位のメトリクスとログを集め、異常を知らせる</span></a></li>
+  <li data-keys="マイクロサービスの遅延を特定する構成を組み立てる distributed-tracing 監視・ログ・自動修復 複数のサービスをまたぐ処理のどこが遅いか・どこでエラーが出ているかを、トレースで突き止める  "><a href="distributed-tracing.html"><span class="name">マイクロサービスの遅延を特定する構成を組み立てる</span><span class="desc">複数のサービスをまたぐ処理のどこが遅いか・どこでエラーが出ているかを、トレースで突き止める</span></a></li>
+  <li data-keys="ec2・ebsの性能を改善する構成を組み立てる ebs-performance 監視・ログ・自動修復 遅さの原因がボリュームかインスタンスかを切り分け、止めずに性能を上げる  "><a href="ebs-performance.html"><span class="name">EC2・EBSの性能を改善する構成を組み立てる</span><span class="desc">遅さの原因がボリュームかインスタンスかを切り分け、止めずに性能を上げる</span></a></li>
+  <li data-keys="rdsの負荷と接続数の問題を解消する構成を組み立てる rds-performance 監視・ログ・自動修復 重いsqlを特定し、接続の急増と読み取りの負荷をdbの手前で吸収する  "><a href="rds-performance.html"><span class="name">RDSの負荷と接続数の問題を解消する構成を組み立てる</span><span class="desc">重いSQLを特定し、接続の急増と読み取りの負荷をDBの手前で吸収する</span></a></li>
 </ul>
 </section>
 <section class="toc-category" id="cat2">
 <h2>信頼性・事業継続 <span class="count">(10)</span></h2>
 <ul class="card-list">
-  <li data-keys="負荷に応じて自動でスケールするwebシステムを組み立てる auto-scaling-web 信頼性・事業継続 1つのazが止まっても動き続け、アクセスの増減に合わせて台数を自動で調整する"><a href="auto-scaling-web.html"><span class="name">負荷に応じて自動でスケールするWebシステムを組み立てる</span><span class="desc">1つのAZが止まっても動き続け、アクセスの増減に合わせて台数を自動で調整する</span></a></li>
-  <li data-keys="キューで処理を分離する構成を組み立てる sqs-decoupling 信頼性・事業継続 受付と重い処理を切り離し、急増や処理側の停止でも注文を失わないようにする"><a href="sqs-decoupling.html"><span class="name">キューで処理を分離する構成を組み立てる</span><span class="desc">受付と重い処理を切り離し、急増や処理側の停止でも注文を失わないようにする</span></a></li>
-  <li data-keys="キャッシュでdbの負荷を下げる構成を組み立てる cache-read-offload 信頼性・事業継続 よく読まれるデータと静的なコンテンツを手前で返し、dbを大きくせずに急増に耐える"><a href="cache-read-offload.html"><span class="name">キャッシュでDBの負荷を下げる構成を組み立てる</span><span class="desc">よく読まれるデータと静的なコンテンツを手前で返し、DBを大きくせずに急増に耐える</span></a></li>
-  <li data-keys="データベースの高可用性の構成を組み立てる rds-high-availability 信頼性・事業継続 azの障害で自動で切り替わり、重い読み取りと大量の接続にも耐えるdbにする"><a href="rds-high-availability.html"><span class="name">データベースの高可用性の構成を組み立てる</span><span class="desc">AZの障害で自動で切り替わり、重い読み取りと大量の接続にも耐えるDBにする</span></a></li>
-  <li data-keys="1つのazの障害を切り離す構成を組み立てる az-failure-isolation 信頼性・事業継続 ヘルスチェックでは分からない部分的な障害が出たazから、通信を一時的に移す"><a href="az-failure-isolation.html"><span class="name">1つのAZの障害を切り離す構成を組み立てる</span><span class="desc">ヘルスチェックでは分からない部分的な障害が出たAZから、通信を一時的に移す</span></a></li>
-  <li data-keys="dynamodbのスケーリングと復旧の構成を組み立てる dynamodb-scaling-recovery 信頼性・事業継続 負荷に合わせて容量を増減し、誤った上書きから直前の状態に戻せるようにする"><a href="dynamodb-scaling-recovery.html"><span class="name">DynamoDBのスケーリングと復旧の構成を組み立てる</span><span class="desc">負荷に合わせて容量を増減し、誤った上書きから直前の状態に戻せるようにする</span></a></li>
-  <li data-keys="rdsのデータを特定の時点に戻す構成を組み立てる rds-point-in-time-restore 信頼性・事業継続 誤操作の直前の状態のdbを作り直し、アプリの接続先を切り替える"><a href="rds-point-in-time-restore.html"><span class="name">RDSのデータを特定の時点に戻す構成を組み立てる</span><span class="desc">誤操作の直前の状態のDBを作り直し、アプリの接続先を切り替える</span></a></li>
-  <li data-keys="s3のデータを守る構成を組み立てる s3-data-protection 信頼性・事業継続 誤削除・リージョンの障害・ランサムウェアからデータを守り、費用の増加も防ぐ"><a href="s3-data-protection.html"><span class="name">S3のデータを守る構成を組み立てる</span><span class="desc">誤削除・リージョンの障害・ランサムウェアからデータを守り、費用の増加も防ぐ</span></a></li>
-  <li data-keys="バックアップを一元管理する構成を組み立てる backup-cross-region 信頼性・事業継続 複数のサービスのバックアップをまとめて自動化し、別のリージョンにも保管する"><a href="backup-cross-region.html"><span class="name">バックアップを一元管理する構成を組み立てる</span><span class="desc">複数のサービスのバックアップをまとめて自動化し、別のリージョンにも保管する</span></a></li>
-  <li data-keys="別リージョンへ切り替える構成を組み立てる multi-region-failover 信頼性・事業継続 リージョン全体の障害でも、数分〜数十分で別のリージョンでサービスを再開する"><a href="multi-region-failover.html"><span class="name">別リージョンへ切り替える構成を組み立てる</span><span class="desc">リージョン全体の障害でも、数分〜数十分で別のリージョンでサービスを再開する</span></a></li>
+  <li data-keys="負荷に応じて自動でスケールするwebシステムを組み立てる auto-scaling-web 信頼性・事業継続 1つのazが止まっても動き続け、アクセスの増減に合わせて台数を自動で調整する  "><a href="auto-scaling-web.html"><span class="name">負荷に応じて自動でスケールするWebシステムを組み立てる</span><span class="desc">1つのAZが止まっても動き続け、アクセスの増減に合わせて台数を自動で調整する</span></a></li>
+  <li data-keys="キューで処理を分離する構成を組み立てる sqs-decoupling 信頼性・事業継続 受付と重い処理を切り離し、急増や処理側の停止でも注文を失わないようにする  "><a href="sqs-decoupling.html"><span class="name">キューで処理を分離する構成を組み立てる</span><span class="desc">受付と重い処理を切り離し、急増や処理側の停止でも注文を失わないようにする</span></a></li>
+  <li data-keys="キャッシュでdbの負荷を下げる構成を組み立てる cache-read-offload 信頼性・事業継続 よく読まれるデータと静的なコンテンツを手前で返し、dbを大きくせずに急増に耐える  "><a href="cache-read-offload.html"><span class="name">キャッシュでDBの負荷を下げる構成を組み立てる</span><span class="desc">よく読まれるデータと静的なコンテンツを手前で返し、DBを大きくせずに急増に耐える</span></a></li>
+  <li data-keys="データベースの高可用性の構成を組み立てる rds-high-availability 信頼性・事業継続 azの障害で自動で切り替わり、重い読み取りと大量の接続にも耐えるdbにする  "><a href="rds-high-availability.html"><span class="name">データベースの高可用性の構成を組み立てる</span><span class="desc">AZの障害で自動で切り替わり、重い読み取りと大量の接続にも耐えるDBにする</span></a></li>
+  <li data-keys="1つのazの障害を切り離す構成を組み立てる az-failure-isolation 信頼性・事業継続 ヘルスチェックでは分からない部分的な障害が出たazから、通信を一時的に移す  "><a href="az-failure-isolation.html"><span class="name">1つのAZの障害を切り離す構成を組み立てる</span><span class="desc">ヘルスチェックでは分からない部分的な障害が出たAZから、通信を一時的に移す</span></a></li>
+  <li data-keys="dynamodbのスケーリングと復旧の構成を組み立てる dynamodb-scaling-recovery 信頼性・事業継続 負荷に合わせて容量を増減し、誤った上書きから直前の状態に戻せるようにする  "><a href="dynamodb-scaling-recovery.html"><span class="name">DynamoDBのスケーリングと復旧の構成を組み立てる</span><span class="desc">負荷に合わせて容量を増減し、誤った上書きから直前の状態に戻せるようにする</span></a></li>
+  <li data-keys="rdsのデータを特定の時点に戻す構成を組み立てる rds-point-in-time-restore 信頼性・事業継続 誤操作の直前の状態のdbを作り直し、アプリの接続先を切り替える  "><a href="rds-point-in-time-restore.html"><span class="name">RDSのデータを特定の時点に戻す構成を組み立てる</span><span class="desc">誤操作の直前の状態のDBを作り直し、アプリの接続先を切り替える</span></a></li>
+  <li data-keys="s3のデータを守る構成を組み立てる s3-data-protection 信頼性・事業継続 誤削除・リージョンの障害・ランサムウェアからデータを守り、費用の増加も防ぐ  "><a href="s3-data-protection.html"><span class="name">S3のデータを守る構成を組み立てる</span><span class="desc">誤削除・リージョンの障害・ランサムウェアからデータを守り、費用の増加も防ぐ</span></a></li>
+  <li data-keys="バックアップを一元管理する構成を組み立てる backup-cross-region 信頼性・事業継続 複数のサービスのバックアップをまとめて自動化し、別のリージョンにも保管する  "><a href="backup-cross-region.html"><span class="name">バックアップを一元管理する構成を組み立てる</span><span class="desc">複数のサービスのバックアップをまとめて自動化し、別のリージョンにも保管する</span></a></li>
+  <li data-keys="別リージョンへ切り替える構成を組み立てる multi-region-failover 信頼性・事業継続 リージョン全体の障害でも、数分〜数十分で別のリージョンでサービスを再開する  "><a href="multi-region-failover.html"><span class="name">別リージョンへ切り替える構成を組み立てる</span><span class="desc">リージョン全体の障害でも、数分〜数十分で別のリージョンでサービスを再開する</span></a></li>
 </ul>
 </section>
 <section class="toc-category" id="cat3">
 <h2>デプロイ・自動化 <span class="count">(10)</span></h2>
 <ul class="card-list">
-  <li data-keys="多数のec2の設定を一定に保つ構成を組み立てる ssm-fleet-configuration デプロイ・自動化 タグで選んだインスタンスに、決めた状態をsshなしで適用し続ける"><a href="ssm-fleet-configuration.html"><span class="name">多数のEC2の設定を一定に保つ構成を組み立てる</span><span class="desc">タグで選んだインスタンスに、決めた状態をSSHなしで適用し続ける</span></a></li>
-  <li data-keys="多数のec2にパッチを適用する構成を組み立てる patch-management デプロイ・自動化 決まった時間帯に、決めたパッチを、タグで分けたグループごとに自動で適用する"><a href="patch-management.html"><span class="name">多数のEC2にパッチを適用する構成を組み立てる</span><span class="desc">決まった時間帯に、決めたパッチを、タグで分けたグループごとに自動で適用する</span></a></li>
-  <li data-keys="ゴールデンamiを作って反映する構成を組み立てる golden-ami-pipeline デプロイ・自動化 パッチ適用済みのamiを毎月自動で作り、動いているインスタンスを順に入れ替える"><a href="golden-ami-pipeline.html"><span class="name">ゴールデンAMIを作って反映する構成を組み立てる</span><span class="desc">パッチ適用済みのAMIを毎月自動で作り、動いているインスタンスを順に入れ替える</span></a></li>
-  <li data-keys="cloudformationで安全に更新する構成を組み立てる cloudformation-safe-update デプロイ・自動化 更新の影響を事前に確かめ、重要なリソースの置き換えや削除を防ぎ、失敗したら元に戻す"><a href="cloudformation-safe-update.html"><span class="name">CloudFormationで安全に更新する構成を組み立てる</span><span class="desc">更新の影響を事前に確かめ、重要なリソースの置き換えや削除を防ぎ、失敗したら元に戻す</span></a></li>
-  <li data-keys="手作業の変更(ドリフト)を見つける構成を組み立てる cloudformation-drift デプロイ・自動化 テンプレートと実際の設定のずれを定期的に見つけて知らせる"><a href="cloudformation-drift.html"><span class="name">手作業の変更(ドリフト)を見つける構成を組み立てる</span><span class="desc">テンプレートと実際の設定のずれを定期的に見つけて知らせる</span></a></li>
-  <li data-keys="複数アカウントに共通設定を展開する構成を組み立てる multi-account-stacksets デプロイ・自動化 1つのテンプレートを組織の全アカウント・リージョンに展開し、新しいアカウントにも自動で入れる"><a href="multi-account-stacksets.html"><span class="name">複数アカウントに共通設定を展開する構成を組み立てる</span><span class="desc">1つのテンプレートを組織の全アカウント・リージョンに展開し、新しいアカウントにも自動で入れる</span></a></li>
-  <li data-keys="ec2のアプリをblue/greenでデプロイする構成を組み立てる ec2-blue-green-pipeline デプロイ・自動化 プッシュから本番までを自動化し、ダウンタイムなしで切り替え、すぐ戻せるようにする"><a href="ec2-blue-green-pipeline.html"><span class="name">EC2のアプリをBlue/Greenでデプロイする構成を組み立てる</span><span class="desc">プッシュから本番までを自動化し、ダウンタイムなしで切り替え、すぐ戻せるようにする</span></a></li>
-  <li data-keys="ecsを止めずに更新する構成を組み立てる ecs-safe-deploy デプロイ・自動化 新しいバージョンを止めずにリリースし、失敗したら自動で前のバージョンに戻す"><a href="ecs-safe-deploy.html"><span class="name">ECSを止めずに更新する構成を組み立てる</span><span class="desc">新しいバージョンを止めずにリリースし、失敗したら自動で前のバージョンに戻す</span></a></li>
-  <li data-keys="lambdaを段階的にリリースする構成を組み立てる lambda-canary-release デプロイ・自動化 新しいバージョンに少しずつ通信を移し、エラーが増えたら自動で戻す"><a href="lambda-canary-release.html"><span class="name">Lambdaを段階的にリリースする構成を組み立てる</span><span class="desc">新しいバージョンに少しずつ通信を移し、エラーが増えたら自動で戻す</span></a></li>
-  <li data-keys="開発環境を夜間に自動で停止する構成を組み立てる scheduled-start-stop デプロイ・自動化 決まった時刻に、タグの付いたec2・rdsを停止・起動して費用を下げる"><a href="scheduled-start-stop.html"><span class="name">開発環境を夜間に自動で停止する構成を組み立てる</span><span class="desc">決まった時刻に、タグの付いたEC2・RDSを停止・起動して費用を下げる</span></a></li>
+  <li data-keys="多数のec2の設定を一定に保つ構成を組み立てる ssm-fleet-configuration デプロイ・自動化 タグで選んだインスタンスに、決めた状態をsshなしで適用し続ける  "><a href="ssm-fleet-configuration.html"><span class="name">多数のEC2の設定を一定に保つ構成を組み立てる</span><span class="desc">タグで選んだインスタンスに、決めた状態をSSHなしで適用し続ける</span></a></li>
+  <li data-keys="多数のec2にパッチを適用する構成を組み立てる patch-management デプロイ・自動化 決まった時間帯に、決めたパッチを、タグで分けたグループごとに自動で適用する  "><a href="patch-management.html"><span class="name">多数のEC2にパッチを適用する構成を組み立てる</span><span class="desc">決まった時間帯に、決めたパッチを、タグで分けたグループごとに自動で適用する</span></a></li>
+  <li data-keys="ゴールデンamiを作って反映する構成を組み立てる golden-ami-pipeline デプロイ・自動化 パッチ適用済みのamiを毎月自動で作り、動いているインスタンスを順に入れ替える  "><a href="golden-ami-pipeline.html"><span class="name">ゴールデンAMIを作って反映する構成を組み立てる</span><span class="desc">パッチ適用済みのAMIを毎月自動で作り、動いているインスタンスを順に入れ替える</span></a></li>
+  <li data-keys="cloudformationで安全に更新する構成を組み立てる cloudformation-safe-update デプロイ・自動化 更新の影響を事前に確かめ、重要なリソースの置き換えや削除を防ぎ、失敗したら元に戻す  "><a href="cloudformation-safe-update.html"><span class="name">CloudFormationで安全に更新する構成を組み立てる</span><span class="desc">更新の影響を事前に確かめ、重要なリソースの置き換えや削除を防ぎ、失敗したら元に戻す</span></a></li>
+  <li data-keys="手作業の変更(ドリフト)を見つける構成を組み立てる cloudformation-drift デプロイ・自動化 テンプレートと実際の設定のずれを定期的に見つけて知らせる  "><a href="cloudformation-drift.html"><span class="name">手作業の変更(ドリフト)を見つける構成を組み立てる</span><span class="desc">テンプレートと実際の設定のずれを定期的に見つけて知らせる</span></a></li>
+  <li data-keys="複数アカウントに共通設定を展開する構成を組み立てる multi-account-stacksets デプロイ・自動化 1つのテンプレートを組織の全アカウント・リージョンに展開し、新しいアカウントにも自動で入れる  "><a href="multi-account-stacksets.html"><span class="name">複数アカウントに共通設定を展開する構成を組み立てる</span><span class="desc">1つのテンプレートを組織の全アカウント・リージョンに展開し、新しいアカウントにも自動で入れる</span></a></li>
+  <li data-keys="ec2のアプリをblue/greenでデプロイする構成を組み立てる ec2-blue-green-pipeline デプロイ・自動化 プッシュから本番までを自動化し、ダウンタイムなしで切り替え、すぐ戻せるようにする  "><a href="ec2-blue-green-pipeline.html"><span class="name">EC2のアプリをBlue/Greenでデプロイする構成を組み立てる</span><span class="desc">プッシュから本番までを自動化し、ダウンタイムなしで切り替え、すぐ戻せるようにする</span></a></li>
+  <li data-keys="ecsを止めずに更新する構成を組み立てる ecs-safe-deploy デプロイ・自動化 新しいバージョンを止めずにリリースし、失敗したら自動で前のバージョンに戻す  "><a href="ecs-safe-deploy.html"><span class="name">ECSを止めずに更新する構成を組み立てる</span><span class="desc">新しいバージョンを止めずにリリースし、失敗したら自動で前のバージョンに戻す</span></a></li>
+  <li data-keys="lambdaを段階的にリリースする構成を組み立てる lambda-canary-release デプロイ・自動化 新しいバージョンに少しずつ通信を移し、エラーが増えたら自動で戻す  "><a href="lambda-canary-release.html"><span class="name">Lambdaを段階的にリリースする構成を組み立てる</span><span class="desc">新しいバージョンに少しずつ通信を移し、エラーが増えたら自動で戻す</span></a></li>
+  <li data-keys="開発環境を夜間に自動で停止する構成を組み立てる scheduled-start-stop デプロイ・自動化 決まった時刻に、タグの付いたec2・rdsを停止・起動して費用を下げる  "><a href="scheduled-start-stop.html"><span class="name">開発環境を夜間に自動で停止する構成を組み立てる</span><span class="desc">決まった時刻に、タグの付いたEC2・RDSを停止・起動して費用を下げる</span></a></li>
 </ul>
 </section>
 <section class="toc-category" id="cat4">
 <h2>セキュリティ・コンプライアンス <span class="count">(10)</span></h2>
 <ul class="card-list">
-  <li data-keys="複数アカウントへのシングルサインオンを組み立てる identity-center-sso セキュリティ・コンプライアンス 社内のidで一度ログインし、権限のあるアカウントに切り替えて使えるようにする"><a href="identity-center-sso.html"><span class="name">複数アカウントへのシングルサインオンを組み立てる</span><span class="desc">社内のIDで一度ログインし、権限のあるアカウントに切り替えて使えるようにする</span></a></li>
-  <li data-keys="別アカウントのリソースを使う構成を組み立てる cross-account-access セキュリティ・コンプライアンス アクセスキーを渡さずに、別アカウントのロールを引き受けて一時的な認証情報で操作する"><a href="cross-account-access.html"><span class="name">別アカウントのリソースを使う構成を組み立てる</span><span class="desc">アクセスキーを渡さずに、別アカウントのロールを引き受けて一時的な認証情報で操作する</span></a></li>
-  <li data-keys="accessdeniedの原因を調べる構成を組み立てる access-denied-troubleshooting セキュリティ・コンプライアンス 拒否の記録から原因のポリシーを特定し、実際に使っている権限だけに絞る"><a href="access-denied-troubleshooting.html"><span class="name">AccessDeniedの原因を調べる構成を組み立てる</span><span class="desc">拒否の記録から原因のポリシーを特定し、実際に使っている権限だけに絞る</span></a></li>
-  <li data-keys="組織全体のガードレールを組み立てる org-guardrails セキュリティ・コンプライアンス 全アカウントで禁止事項を強制し、操作と設定をまとめて監視する"><a href="org-guardrails.html"><span class="name">組織全体のガードレールを組み立てる</span><span class="desc">全アカウントで禁止事項を強制し、操作と設定をまとめて監視する</span></a></li>
-  <li data-keys="公開されたs3バケットを自動で修復する構成を組み立てる config-auto-remediation セキュリティ・コンプライアンス 設定のルール違反を検出し、人手を介さずに元に戻して、担当者にも知らせる"><a href="config-auto-remediation.html"><span class="name">公開されたS3バケットを自動で修復する構成を組み立てる</span><span class="desc">設定のルール違反を検出し、人手を介さずに元に戻して、担当者にも知らせる</span></a></li>
-  <li data-keys="dbのパスワードを自動で変更する構成を組み立てる secrets-rotation セキュリティ・コンプライアンス パスワードをコードに書かずに管理し、接続を止めずに定期的に自動で変更する"><a href="secrets-rotation.html"><span class="name">DBのパスワードを自動で変更する構成を組み立てる</span><span class="desc">パスワードをコードに書かずに管理し、接続を止めずに定期的に自動で変更する</span></a></li>
-  <li data-keys="機密データのs3を暗号化・監査する構成を組み立てる s3-encryption-audit セキュリティ・コンプライアンス キーの利用まで追える暗号化をし、操作を記録し、個人情報の置き場所も点検する"><a href="s3-encryption-audit.html"><span class="name">機密データのS3を暗号化・監査する構成を組み立てる</span><span class="desc">キーの利用まで追える暗号化をし、操作を記録し、個人情報の置き場所も点検する</span></a></li>
-  <li data-keys="脆弱性を検出してパッチまで自動化する構成を組み立てる vulnerability-management セキュリティ・コンプライアンス 既知の脆弱性を常に把握し、重大なものは通知とパッチの適用につなげる"><a href="vulnerability-management.html"><span class="name">脆弱性を検出してパッチまで自動化する構成を組み立てる</span><span class="desc">既知の脆弱性を常に把握し、重大なものは通知とパッチの適用につなげる</span></a></li>
-  <li data-keys="乗っ取られたec2を自動で隔離する構成を組み立てる guardduty-auto-response セキュリティ・コンプライアンス 脅威の検出をきっかけに、通信の遮断と証拠の保全を夜間でも自動で行う"><a href="guardduty-auto-response.html"><span class="name">乗っ取られたEC2を自動で隔離する構成を組み立てる</span><span class="desc">脅威の検出をきっかけに、通信の遮断と証拠の保全を夜間でも自動で行う</span></a></li>
-  <li data-keys="webアプリを攻撃から守る構成を組み立てる waf-web-protection セキュリティ・コンプライアンス アプリを改修せずに、前段でsqlインジェクションや大量のアクセスを止める"><a href="waf-web-protection.html"><span class="name">Webアプリを攻撃から守る構成を組み立てる</span><span class="desc">アプリを改修せずに、前段でSQLインジェクションや大量のアクセスを止める</span></a></li>
+  <li data-keys="複数アカウントへのシングルサインオンを組み立てる identity-center-sso セキュリティ・コンプライアンス 社内のidで一度ログインし、権限のあるアカウントに切り替えて使えるようにする  "><a href="identity-center-sso.html"><span class="name">複数アカウントへのシングルサインオンを組み立てる</span><span class="desc">社内のIDで一度ログインし、権限のあるアカウントに切り替えて使えるようにする</span></a></li>
+  <li data-keys="別アカウントのリソースを使う構成を組み立てる cross-account-access セキュリティ・コンプライアンス アクセスキーを渡さずに、別アカウントのロールを引き受けて一時的な認証情報で操作する  "><a href="cross-account-access.html"><span class="name">別アカウントのリソースを使う構成を組み立てる</span><span class="desc">アクセスキーを渡さずに、別アカウントのロールを引き受けて一時的な認証情報で操作する</span></a></li>
+  <li data-keys="accessdeniedの原因を調べる構成を組み立てる access-denied-troubleshooting セキュリティ・コンプライアンス 拒否の記録から原因のポリシーを特定し、実際に使っている権限だけに絞る  "><a href="access-denied-troubleshooting.html"><span class="name">AccessDeniedの原因を調べる構成を組み立てる</span><span class="desc">拒否の記録から原因のポリシーを特定し、実際に使っている権限だけに絞る</span></a></li>
+  <li data-keys="組織全体のガードレールを組み立てる org-guardrails セキュリティ・コンプライアンス 全アカウントで禁止事項を強制し、操作と設定をまとめて監視する  "><a href="org-guardrails.html"><span class="name">組織全体のガードレールを組み立てる</span><span class="desc">全アカウントで禁止事項を強制し、操作と設定をまとめて監視する</span></a></li>
+  <li data-keys="公開されたs3バケットを自動で修復する構成を組み立てる config-auto-remediation セキュリティ・コンプライアンス 設定のルール違反を検出し、人手を介さずに元に戻して、担当者にも知らせる  "><a href="config-auto-remediation.html"><span class="name">公開されたS3バケットを自動で修復する構成を組み立てる</span><span class="desc">設定のルール違反を検出し、人手を介さずに元に戻して、担当者にも知らせる</span></a></li>
+  <li data-keys="dbのパスワードを自動で変更する構成を組み立てる secrets-rotation セキュリティ・コンプライアンス パスワードをコードに書かずに管理し、接続を止めずに定期的に自動で変更する  "><a href="secrets-rotation.html"><span class="name">DBのパスワードを自動で変更する構成を組み立てる</span><span class="desc">パスワードをコードに書かずに管理し、接続を止めずに定期的に自動で変更する</span></a></li>
+  <li data-keys="機密データのs3を暗号化・監査する構成を組み立てる s3-encryption-audit セキュリティ・コンプライアンス キーの利用まで追える暗号化をし、操作を記録し、個人情報の置き場所も点検する  "><a href="s3-encryption-audit.html"><span class="name">機密データのS3を暗号化・監査する構成を組み立てる</span><span class="desc">キーの利用まで追える暗号化をし、操作を記録し、個人情報の置き場所も点検する</span></a></li>
+  <li data-keys="脆弱性を検出してパッチまで自動化する構成を組み立てる vulnerability-management セキュリティ・コンプライアンス 既知の脆弱性を常に把握し、重大なものは通知とパッチの適用につなげる  "><a href="vulnerability-management.html"><span class="name">脆弱性を検出してパッチまで自動化する構成を組み立てる</span><span class="desc">既知の脆弱性を常に把握し、重大なものは通知とパッチの適用につなげる</span></a></li>
+  <li data-keys="乗っ取られたec2を自動で隔離する構成を組み立てる guardduty-auto-response セキュリティ・コンプライアンス 脅威の検出をきっかけに、通信の遮断と証拠の保全を夜間でも自動で行う  "><a href="guardduty-auto-response.html"><span class="name">乗っ取られたEC2を自動で隔離する構成を組み立てる</span><span class="desc">脅威の検出をきっかけに、通信の遮断と証拠の保全を夜間でも自動で行う</span></a></li>
+  <li data-keys="webアプリを攻撃から守る構成を組み立てる waf-web-protection セキュリティ・コンプライアンス アプリを改修せずに、前段でsqlインジェクションや大量のアクセスを止める  "><a href="waf-web-protection.html"><span class="name">Webアプリを攻撃から守る構成を組み立てる</span><span class="desc">アプリを改修せずに、前段でSQLインジェクションや大量のアクセスを止める</span></a></li>
 </ul>
 </section>
 <section class="toc-category" id="cat5">
 <h2>ネットワーク・コンテンツ配信 <span class="count">(10)</span></h2>
 <ul class="card-list">
-  <li data-keys="vpcのipアドレスを重ならずに払い出す構成を組み立てる vpc-ip-planning ネットワーク・コンテンツ配信 組織全体のvpcに、決めた範囲から重ならないcidrを自動で割り当てる"><a href="vpc-ip-planning.html"><span class="name">VPCのIPアドレスを重ならずに払い出す構成を組み立てる</span><span class="desc">組織全体のVPCに、決めた範囲から重ならないCIDRを自動で割り当てる</span></a></li>
-  <li data-keys="プライベートサブネットからnatなしでawsを使う構成を組み立てる private-subnet-endpoints ネットワーク・コンテンツ配信 インターネットへの経路を持たないec2から、s3とsession managerを使えるようにする"><a href="private-subnet-endpoints.html"><span class="name">プライベートサブネットからNATなしでAWSを使う構成を組み立てる</span><span class="desc">インターネットへの経路を持たないEC2から、S3とSession Managerを使えるようにする</span></a></li>
-  <li data-keys="踏み台なしでec2に接続する構成を組み立てる bastionless-access ネットワーク・コンテンツ配信 ポートを開けずにプライベートなec2にシェルで接続し、操作の記録も残す"><a href="bastionless-access.html"><span class="name">踏み台なしでEC2に接続する構成を組み立てる</span><span class="desc">ポートを開けずにプライベートなEC2にシェルで接続し、操作の記録も残す</span></a></li>
-  <li data-keys="外向きの通信を制限する構成を組み立てる egress-filtering ネットワーク・コンテンツ配信 サーバーから外への通信と名前解決を、許可したドメインだけに絞る"><a href="egress-filtering.html"><span class="name">外向きの通信を制限する構成を組み立てる</span><span class="desc">サーバーから外への通信と名前解決を、許可したドメインだけに絞る</span></a></li>
-  <li data-keys="複数のvpcとオンプレミスをつなぐ構成を組み立てる hybrid-multi-vpc ネットワーク・コンテンツ配信 vpcが増えても管理が複雑にならないよう、ハブを中心にオンプレミスと相互につなぐ"><a href="hybrid-multi-vpc.html"><span class="name">複数のVPCとオンプレミスをつなぐ構成を組み立てる</span><span class="desc">VPCが増えても管理が複雑にならないよう、ハブを中心にオンプレミスと相互につなぐ</span></a></li>
-  <li data-keys="オンプレミスとvpcの名前解決をつなぐ構成を組み立てる hybrid-dns-resolver ネットワーク・コンテンツ配信 vpcからは社内の名前を、オンプレミスからはvpcの名前を引けるようにする"><a href="hybrid-dns-resolver.html"><span class="name">オンプレミスとVPCの名前解決をつなぐ構成を組み立てる</span><span class="desc">VPCからは社内の名前を、オンプレミスからはVPCの名前を引けるようにする</span></a></li>
-  <li data-keys="社員の端末からvpcに接続する構成を組み立てる remote-access-vpn ネットワーク・コンテンツ配信 テレワーク中の社員を、社内のidで認証し、部署ごとに許された宛先だけにつなぐ"><a href="remote-access-vpn.html"><span class="name">社員の端末からVPCに接続する構成を組み立てる</span><span class="desc">テレワーク中の社員を、社内のIDで認証し、部署ごとに許された宛先だけにつなぐ</span></a></li>
-  <li data-keys="利用者を速いリージョンへ振り分ける構成を組み立てる route53-traffic-routing ネットワーク・コンテンツ配信 dnsで応答の速いリージョンへ振り分け、片方が落ちたら自動でもう片方へ送る"><a href="route53-traffic-routing.html"><span class="name">利用者を速いリージョンへ振り分ける構成を組み立てる</span><span class="desc">DNSで応答の速いリージョンへ振り分け、片方が落ちたら自動でもう片方へ送る</span></a></li>
-  <li data-keys="静的サイトを安全に配信する構成を組み立てる static-site-cloudfront ネットワーク・コンテンツ配信 独自ドメインとhttpsで世界中に高速配信し、s3バケットは公開しない"><a href="static-site-cloudfront.html"><span class="name">静的サイトを安全に配信する構成を組み立てる</span><span class="desc">独自ドメインとHTTPSで世界中に高速配信し、S3バケットは公開しない</span></a></li>
-  <li data-keys="ec2に接続できない原因を調べる構成を組み立てる network-troubleshooting ネットワーク・コンテンツ配信 通信の経路と許可を確かめ、どこで止まっているかを記録と解析で絞り込む"><a href="network-troubleshooting.html"><span class="name">EC2に接続できない原因を調べる構成を組み立てる</span><span class="desc">通信の経路と許可を確かめ、どこで止まっているかを記録と解析で絞り込む</span></a></li>
+  <li data-keys="vpcのipアドレスを重ならずに払い出す構成を組み立てる vpc-ip-planning ネットワーク・コンテンツ配信 組織全体のvpcに、決めた範囲から重ならないcidrを自動で割り当てる  "><a href="vpc-ip-planning.html"><span class="name">VPCのIPアドレスを重ならずに払い出す構成を組み立てる</span><span class="desc">組織全体のVPCに、決めた範囲から重ならないCIDRを自動で割り当てる</span></a></li>
+  <li data-keys="プライベートサブネットからnatなしでawsを使う構成を組み立てる private-subnet-endpoints ネットワーク・コンテンツ配信 インターネットへの経路を持たないec2から、s3とsession managerを使えるようにする  "><a href="private-subnet-endpoints.html"><span class="name">プライベートサブネットからNATなしでAWSを使う構成を組み立てる</span><span class="desc">インターネットへの経路を持たないEC2から、S3とSession Managerを使えるようにする</span></a></li>
+  <li data-keys="踏み台なしでec2に接続する構成を組み立てる bastionless-access ネットワーク・コンテンツ配信 ポートを開けずにプライベートなec2にシェルで接続し、操作の記録も残す  "><a href="bastionless-access.html"><span class="name">踏み台なしでEC2に接続する構成を組み立てる</span><span class="desc">ポートを開けずにプライベートなEC2にシェルで接続し、操作の記録も残す</span></a></li>
+  <li data-keys="外向きの通信を制限する構成を組み立てる egress-filtering ネットワーク・コンテンツ配信 サーバーから外への通信と名前解決を、許可したドメインだけに絞る  "><a href="egress-filtering.html"><span class="name">外向きの通信を制限する構成を組み立てる</span><span class="desc">サーバーから外への通信と名前解決を、許可したドメインだけに絞る</span></a></li>
+  <li data-keys="複数のvpcとオンプレミスをつなぐ構成を組み立てる hybrid-multi-vpc ネットワーク・コンテンツ配信 vpcが増えても管理が複雑にならないよう、ハブを中心にオンプレミスと相互につなぐ  "><a href="hybrid-multi-vpc.html"><span class="name">複数のVPCとオンプレミスをつなぐ構成を組み立てる</span><span class="desc">VPCが増えても管理が複雑にならないよう、ハブを中心にオンプレミスと相互につなぐ</span></a></li>
+  <li data-keys="オンプレミスとvpcの名前解決をつなぐ構成を組み立てる hybrid-dns-resolver ネットワーク・コンテンツ配信 vpcからは社内の名前を、オンプレミスからはvpcの名前を引けるようにする  "><a href="hybrid-dns-resolver.html"><span class="name">オンプレミスとVPCの名前解決をつなぐ構成を組み立てる</span><span class="desc">VPCからは社内の名前を、オンプレミスからはVPCの名前を引けるようにする</span></a></li>
+  <li data-keys="社員の端末からvpcに接続する構成を組み立てる remote-access-vpn ネットワーク・コンテンツ配信 テレワーク中の社員を、社内のidで認証し、部署ごとに許された宛先だけにつなぐ  "><a href="remote-access-vpn.html"><span class="name">社員の端末からVPCに接続する構成を組み立てる</span><span class="desc">テレワーク中の社員を、社内のIDで認証し、部署ごとに許された宛先だけにつなぐ</span></a></li>
+  <li data-keys="利用者を速いリージョンへ振り分ける構成を組み立てる route53-traffic-routing ネットワーク・コンテンツ配信 dnsで応答の速いリージョンへ振り分け、片方が落ちたら自動でもう片方へ送る  "><a href="route53-traffic-routing.html"><span class="name">利用者を速いリージョンへ振り分ける構成を組み立てる</span><span class="desc">DNSで応答の速いリージョンへ振り分け、片方が落ちたら自動でもう片方へ送る</span></a></li>
+  <li data-keys="静的サイトを安全に配信する構成を組み立てる static-site-cloudfront ネットワーク・コンテンツ配信 独自ドメインとhttpsで世界中に高速配信し、s3バケットは公開しない  "><a href="static-site-cloudfront.html"><span class="name">静的サイトを安全に配信する構成を組み立てる</span><span class="desc">独自ドメインとHTTPSで世界中に高速配信し、S3バケットは公開しない</span></a></li>
+  <li data-keys="ec2に接続できない原因を調べる構成を組み立てる network-troubleshooting ネットワーク・コンテンツ配信 通信の経路と許可を確かめ、どこで止まっているかを記録と解析で絞り込む  "><a href="network-troubleshooting.html"><span class="name">EC2に接続できない原因を調べる構成を組み立てる</span><span class="desc">通信の経路と許可を確かめ、どこで止まっているかを記録と解析で絞り込む</span></a></li>
 </ul>
 </section>
 <p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>
@@ -111,16 +120,42 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   var q = document.getElementById("toc-q");
   var hits = document.getElementById("toc-hits");
   var none = document.getElementById("toc-none");
+  var SYN = [["ec2", "仮想サーバー", "仮想マシン", "vm", "elastic compute cloud"], ["elb", "alb", "nlb", "gwlb", "ロードバランサー", "ロードバランサ", "負荷分散", "load balancer", "elastic load balancing"], ["s3", "オブジェクトストレージ", "simple storage service"], ["ebs", "ブロックストレージ", "elastic block store"], ["efs", "nfs", "ファイル共有", "elastic file system"], ["rds", "rdb", "リレーショナルデータベース", "mysql", "postgresql", "relational database service"], ["dynamodb", "nosql", "キーバリュー", "ddb"], ["elasticache", "redis", "memcached", "valkey"], ["キャッシュ", "cache", "caching"], ["lambda", "ラムダ", "サーバーレス", "serverless", "関数"], ["iam", "identity and access management", "アクセス許可", "権限"], ["sso", "シングルサインオン", "identity center", "saml"], ["kms", "key management service", "暗号化キー", "cmk", "カスタマーマネージドキー"], ["暗号化", "encryption", "sse", "sse-kms", "sse-s3"], ["cloudwatch", "cw", "メトリクス", "metrics", "アラーム", "alarm"], ["監視", "モニタリング", "monitoring"], ["ログ", "log", "logs"], ["cloudtrail", "証跡", "監査ログ"], ["config", "aws config", "構成変更", "準拠"], ["ssm", "systems manager", "session manager", "patch manager", "run command", "state manager", "パラメータストア", "parameter store"], ["cfn", "cloudformation", "iac", "infrastructure as code", "スタック", "stack"], ["route53", "route 53", "dns", "名前解決"], ["cloudfront", "cdn", "コンテンツ配信", "エッジ", "edge"], ["vpc", "virtual private cloud", "仮想ネットワーク"], ["sg", "セキュリティグループ", "security group", "nacl", "ネットワークacl", "ファイアウォール", "firewall"], ["nat", "natゲートウェイ", "nat gateway"], ["vpn", "ipsec", "site-to-site", "client vpn", "リモートアクセス"], ["dx", "direct connect", "専用線"], ["tgw", "transit gateway"], ["エンドポイント", "endpoint", "privatelink", "vpce"], ["sqs", "キュー", "queue", "dlq", "デッドレターキュー"], ["sns", "通知", "notification", "pub/sub"], ["eventbridge", "イベントバス", "cloudwatch events", "scheduler", "スケジューラー"], ["step functions", "sfn", "ワークフロー", "ステートマシン"], ["asg", "auto scaling", "オートスケーリング", "スケーリング", "scaling"], ["コンテナ", "container", "docker", "ecs", "eks", "fargate", "kubernetes", "k8s"], ["ci/cd", "cicd", "パイプライン", "pipeline", "codepipeline", "codebuild", "codedeploy"], ["デプロイ", "deploy", "リリース", "release"], ["x-ray", "xray", "トレース", "trace", "tracing", "分散トレーシング"], ["waf", "ウェブacl", "web acl", "sqlインジェクション", "xss"], ["shield", "ddos"], ["guardduty", "脅威の検出", "脅威検出"], ["inspector", "脆弱性", "cve"], ["macie", "個人情報", "pii", "機密データ"], ["secrets manager", "シークレット", "パスワード", "password", "ローテーション", "rotation"], ["acm", "証明書", "certificate", "ssl", "tls", "https"], ["organizations", "scp", "マルチアカウント", "複数アカウント", "ou"], ["backup", "バックアップ", "スナップショット", "snapshot"], ["dr", "災害対策", "ディザスタリカバリ", "disaster recovery"], ["フェイルオーバー", "failover", "切り替え"], ["高可用性", "multi-az", "マルチaz", "冗長化", "ha"], ["料金", "費用", "コスト", "cost", "請求", "billing"], ["ri", "リザーブドインスタンス", "reserved instance", "savings plans"], ["kinesis", "ストリーム", "stream", "firehose"], ["sts", "assumerole", "一時的な認証情報", "ロールの引き受け"], ["cognito", "ユーザー認証", "サインイン"], ["api gateway", "apigw", "rest api"], ["imds", "imdsv2", "メタデータ", "metadata"], ["ami", "マシンイメージ", "ゴールデンイメージ", "image builder"], ["az", "アベイラビリティーゾーン", "availability zone"], ["リージョン", "region"], ["cidr", "ipアドレス", "ip address", "サブネットマスク", "ipam"], ["踏み台", "bastion", "ssh", "rdp"], ["パッチ", "patch", "更新プログラム"]];
+  function norm(s) { return (s.normalize ? s.normalize("NFKC") : s).toLowerCase(); }
+  // 言い換えに含まれる短い英字(dr・ha・ri など)は、ほかの語の一部(address・share など)に当たらないよう単語として探す
+  function word(a) { return /^[a-z0-9]{1,3}$/.test(a) ? new RegExp("(^|[^a-z0-9])" + a + "([^a-z0-9]|$)") : a; }
+  function terms(v) {
+    return norm(v).trim().split(/\s+/).filter(Boolean).map(function (w) {
+      var alts = [], known = false;
+      SYN.forEach(function (g) {
+        if (g.indexOf(w) < 0) return;
+        known = true;
+        g.forEach(function (a) { if (a !== w) alts.push(word(a)); });
+      });
+      alts.unshift(known ? word(w) : w);
+      return alts;
+    });
+  }
+  function hit(keys, alts) {
+    return alts.some(function (a) { return typeof a === "string" ? keys.indexOf(a) >= 0 : a.test(keys); });
+  }
+  function hitAll(keys, ts) { return ts.every(function (alts) { return hit(keys, alts); }); }
+  // 「/」キーで検索欄へ移る
+  document.addEventListener("keydown", function (e) {
+    var t = e.target.tagName;
+    if (e.key === "/" && t !== "INPUT" && t !== "TEXTAREA" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); q.focus(); }
+  });
+
   var sections = document.querySelectorAll(".toc-category");
   var total = document.querySelectorAll(".toc-category li").length;
   function apply() {
-    var words = q.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    var words = terms(q.value);
     var shown = 0;
     sections.forEach(function (sec) {
       var n = 0;
       sec.querySelectorAll("li").forEach(function (li) {
         var keys = li.getAttribute("data-keys");
-        var ok = words.every(function (w) { return keys.indexOf(w) >= 0; });
+        var ok = hitAll(keys, words);
         li.hidden = !ok;
         if (ok) n++;
       });

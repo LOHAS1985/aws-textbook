@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Organizations | AWS教科書</title>
 <meta name="description" content="複数のAWSアカウントをまとめて管理するサービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -16,6 +24,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("../sw.js").catch(function () {});
 }
 </script>
+<script src="../js/site.js" defer></script>
 </head>
 <body>
 <header class="site-header" id="top">
@@ -195,18 +204,100 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter backlinks">
 <h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
 <ul class="backlink-list">
-<li><a href="../usecases/health-event-response.html"><span class="title">AWSの予定メンテナンスや障害の通知に自動で対応する</span><span class="desc">AWS HealthのイベントをEventBridgeで受け取り、通知や自動対応につなげる</span></a></li>
-<li><a href="../usecases/centralized-logging.html"><span class="title">複数アカウントのログを集約して分析する</span><span class="desc">各アカウントのログを1つのS3に集め、長期保存とSQL分析を行う</span></a></li>
-<li><a href="../usecases/backup-cross-region.html"><span class="title">バックアップを一元管理して別リージョンに保管する</span><span class="desc">AWS Backupのプランとタグで自動バックアップし、別リージョンへコピーする</span></a></li>
-<li><a href="../usecases/cloudformation-drift.html"><span class="title">手作業による設定変更(ドリフト)を見つけて戻す</span><span class="desc">CloudFormationのドリフト検出とConfigルールで、テンプレートと実際の設定のずれを定期的に見つける</span></a></li>
-<li><a href="../usecases/multi-account-stacksets.html"><span class="title">複数アカウント・リージョンに共通設定を展開する</span><span class="desc">CloudFormation StackSetsとOrganizationsで、新しいアカウントにも自動で展開する</span></a></li>
-<li><a href="../usecases/identity-center-sso.html"><span class="title">複数アカウントへのログインをシングルサインオンにまとめる</span><span class="desc">IAM Identity Centerとパーミッションセットで、社員の権限をグループ単位・アカウント単位で一元管理する</span></a></li>
-<li><a href="../usecases/access-denied-troubleshooting.html"><span class="title">「AccessDenied」の原因を調べ、最小権限に直す</span><span class="desc">CloudTrailのエラー記録とポリシーの評価順から拒否の原因を特定し、Access Analyzerで必要な権限だけに絞る</span></a></li>
-<li><a href="../usecases/org-guardrails.html"><span class="title">組織全体にセキュリティのガードレールを設ける</span><span class="desc">SCPで禁止事項を決め、組織の証跡とConfigで全アカウントを監視する</span></a></li>
-<li><a href="../usecases/vpc-ip-planning.html"><span class="title">組織全体のVPCのIPアドレスを重ならないように払い出す</span><span class="desc">VPC IPAMのプールをRAMで共有し、各アカウントのVPCに重ならないCIDRを自動で割り当てる</span></a></li>
+<li><a href="../usecases/health-event-response.html"><span class="title">AWSの予定メンテナンスや障害の通知に自動で対応する</span></a></li>
+<li><a href="../usecases/centralized-logging.html"><span class="title">複数アカウントのログを集約して分析する</span></a></li>
+<li><a href="../usecases/backup-cross-region.html"><span class="title">バックアップを一元管理して別リージョンに保管する</span></a></li>
+<li><a href="../usecases/cloudformation-drift.html"><span class="title">手作業による設定変更(ドリフト)を見つけて戻す</span></a></li>
+<li><a href="../usecases/multi-account-stacksets.html"><span class="title">複数アカウント・リージョンに共通設定を展開する</span></a></li>
+<li><a href="../usecases/identity-center-sso.html"><span class="title">複数アカウントへのログインをシングルサインオンにまとめる</span></a></li>
+<li><a href="../usecases/access-denied-troubleshooting.html"><span class="title">「AccessDenied」の原因を調べ、最小権限に直す</span></a></li>
+<li><a href="../usecases/org-guardrails.html"><span class="title">組織全体にセキュリティのガードレールを設ける</span></a></li>
+<li><a href="../usecases/vpc-ip-planning.html"><span class="title">組織全体のVPCのIPアドレスを重ならないように払い出す</span></a></li>
 </ul>
 </section>
 
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 10件・リンク元 23件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 726" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Organizationsとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/compute-optimizer.html"><title>サービス:AWS Compute Optimizer</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Compute Optimizer</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/cost-explorer.html"><title>サービス:AWS Cost Explorer</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Cost Explorer</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/cost-and-usage-reports.html"><title>サービス:AWS Cost and Usage Reports</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Cost and Usage Reports</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/health-dashboard.html"><title>サービス:AWS Health Dashboard</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS Health Dashboard</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/sts.html"><title>サービス:AWS STS</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS STS</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/service-catalog.html"><title>サービス:AWS Service Catalog</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">AWS Service Catalog</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/waf.html"><title>サービス:AWS WAF</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">AWS WAF</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">Amazon GuardDuty</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/ipam.html"><title>サービス:Amazon VPC IP Address Manager (IPAM)</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="290" class="gr-t">Amazon VPC IP Address Man…</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/savings-plans.html"><title>サービス:Savings Plans</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="320" class="gr-t">Savings Plans</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-policy-evaluation.html"><title>用語:IAMポリシーと評価ロジック</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="350" class="gr-t">IAMポリシーと評価ロジック</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="380" class="gr-t">コスト管理ツールの選び方</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../terms/compliance-artifact.html"><title>用語:コンプライアンスとAWS Artifact</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="410" class="gr-t">コンプライアンスとAWS Artifa…</text></a>
+<path class="gr-line" d="M230,435 C265.0,435 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../terms/service-quotas.html"><title>用語:サービスクォータ</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="440" class="gr-t">サービスクォータ</text></a>
+<path class="gr-line" d="M230,465 C265.0,465 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/health-event-response.html"><title>運用シナリオ:AWSの予定メンテナンスや障害の通知に自動で対応する</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="470" class="gr-t">AWSの予定メンテナンスや障害の…</text></a>
+<path class="gr-line" d="M230,495 C265.0,495 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/access-denied-troubleshooting.html"><title>運用シナリオ:「AccessDenied」の原因を調べ、最小権限に直す</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="500" class="gr-t">「AccessDenied」の原因を調…</text></a>
+<path class="gr-line" d="M230,525 C265.0,525 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/backup-cross-region.html"><title>運用シナリオ:バックアップを一元管理して別リージョンに保管する</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="530" class="gr-t">バックアップを一元管理して別リ…</text></a>
+<path class="gr-line" d="M230,555 C265.0,555 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cloudformation-drift.html"><title>運用シナリオ:手作業による設定変更(ドリフト)を見つけて戻す</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="560" class="gr-t">手作業による設定変更(ドリフト…</text></a>
+<path class="gr-line" d="M230,585 C265.0,585 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/org-guardrails.html"><title>運用シナリオ:組織全体にセキュリティのガードレールを設ける</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="590" class="gr-t">組織全体にセキュリティのガード…</text></a>
+<path class="gr-line" d="M230,615 C265.0,615 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/vpc-ip-planning.html"><title>運用シナリオ:組織全体のVPCのIPアドレスを重ならないように払い出す</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="620" class="gr-t">組織全体のVPCのIPアドレスを重…</text></a>
+<path class="gr-line" d="M230,645 C265.0,645 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/centralized-logging.html"><title>運用シナリオ:複数アカウントのログを集約して分析する</title><rect x="0" y="634" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="650" class="gr-t">複数アカウントのログを集約して…</text></a>
+<path class="gr-line" d="M230,675 C265.0,675 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/identity-center-sso.html"><title>運用シナリオ:複数アカウントへのログインをシングルサインオンにまとめる</title><rect x="0" y="664" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="680" class="gr-t">複数アカウントへのログインをシ…</text></a>
+<path class="gr-line" d="M230,705 C265.0,705 265.0,375 300,375" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/multi-account-stacksets.html"><title>運用シナリオ:複数アカウント・リージョンに共通設定を展開する</title><rect x="0" y="694" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="710" class="gr-t">複数アカウント・リージョンに共…</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,240 550,240" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="229" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="244" class="gr-t">AWS Backup</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,270 550,270" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="259" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="274" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,300 550,300" marker-end="url(#gr-arrow)"/>
+<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="550" y="289" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="304" class="gr-t">AWS Config</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,330 550,330" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="550" y="319" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="334" class="gr-t">AWS Control Tower</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,360 550,360" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="349" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="364" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,390 550,390" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/identity-center.html"><title>サービス:AWS IAM Identity Center</title><rect x="550" y="379" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="394" class="gr-t">AWS IAM Identity Center</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,420 550,420" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ram.html"><title>サービス:AWS Resource Access Manager</title><rect x="550" y="409" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="424" class="gr-t">AWS Resource Access Manag…</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,450 550,450" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="550" y="439" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="454" class="gr-t">AWS Security Hub</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,480 550,480" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="469" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="484" class="gr-t">タグ</text></a>
+<path class="gr-line" d="M480,375 C515.0,375 515.0,510 550,510" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/root-user.html"><title>用語:ルートユーザーとアカウントの保護</title><rect x="550" y="499" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="514" class="gr-t">ルートユーザーとアカウントの保護</text></a>
+<rect x="300" y="355" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="380" text-anchor="middle" class="gr-tb">AWS Organizations</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(23)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(10)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
 <nav class="pager">
   <a class="prev" href="sts.html"><span class="label">← 前へ</span>AWS STS</a>
   <a class="toc" href="index.html">目次へ戻る</a>
