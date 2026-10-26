@@ -1,0 +1,74 @@
+<!-- title: マネージドサービスとサーバーレス -->
+<!-- category: AWSの基礎 -->
+<!-- lead: サーバーの管理をどこまでAWSに任せるかによるサービスの分類(IaaS・PaaS・SaaS、マネージド、サーバーレス) -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>AWSのサービスは、<strong>利用者が管理する範囲</strong>の広さで分類できます。自分で管理する範囲が狭いほど運用の手間が減り、その分だけ自由度(OSに入る、細かく設定する)も小さくなります。試験で「運用の手間を最小にする方法」を問われたら、マネージドサービスやサーバーレスが答えになることがほとんどです。</p>
+
+<h3>IaaS・PaaS・SaaS</h3>
+<div class="table-wrap"><table>
+<tr><th>分類</th><th>提供されるもの</th><th>利用者が管理するもの</th><th>AWSの例</th></tr>
+<tr><td><strong>IaaS</strong>(Infrastructure as a Service)</td><td>仮想サーバー・ストレージ・ネットワーク</td><td>OS・ミドルウェア・アプリ・データ</td><td>EC2、EBS、VPC</td></tr>
+<tr><td><strong>PaaS</strong>(Platform as a Service)</td><td>アプリを動かす環境(OS・ミドルウェアまで)</td><td>アプリ・データ・設定</td><td>RDS、Elastic Beanstalk、ECS on Fargate</td></tr>
+<tr><td><strong>SaaS</strong>(Software as a Service)</td><td>完成したソフトウェア</td><td>データ・利用者の設定</td><td>Amazon WorkMail、Amazon Connect、Amazon Q</td></tr>
+</table></div>
+
+<h3>マネージドサービス</h3>
+<p><strong>マネージドサービス</strong>は、サーバーの用意・OSやソフトウェアのパッチ・バックアップ・障害時の切り替えなどを<strong>AWSが代わりに行う</strong>サービスです。例えば、データベースをEC2に自分で入れる代わりにRDSを使うと、次の作業をAWSに任せられます。</p>
+<div class="table-wrap"><table>
+<tr><th>作業</th><th>EC2に自分で入れたDB</th><th>RDS(マネージド)</th></tr>
+<tr><td>OS・DBエンジンのパッチ</td><td>自分で適用</td><td>メンテナンスウィンドウで自動適用</td></tr>
+<tr><td>バックアップ</td><td>自分で仕組みを作る</td><td>自動バックアップ・ポイントインタイムリカバリ</td></tr>
+<tr><td>障害時の切り替え</td><td>自分で冗長化を作る</td><td>Multi-AZで自動フェイルオーバー</td></tr>
+<tr><td>OSへのログイン</td><td>できる</td><td><strong>できない</strong>(RDS Customを除く)</td></tr>
+</table></div>
+
+<h3>サーバーレス</h3>
+<p><strong>サーバーレス</strong>は、マネージドサービスをさらに進めて、<strong>サーバーの台数やサイズを考える必要すらない</strong>サービスです。サーバーは存在しますが、利用者からは見えません。</p>
+<ul>
+<li>サーバーの用意・パッチ・台数の調整が不要</li>
+<li>使った量に応じて<strong>自動でスケール</strong>し、使っていないときは0に近づく</li>
+<li><strong>使った分だけ課金</strong>(リクエスト数・実行時間・保存量)され、待機しているだけのサーバーの費用がかからない</li>
+<li>可用性(複数のAZへの分散)が最初から組み込まれている</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>分野</th><th>サーバーレスのサービス</th></tr>
+<tr><td>コンピューティング</td><td>Lambda、Fargate(ECS・EKSのコンテナ)</td></tr>
+<tr><td>データベース・ストレージ</td><td>DynamoDB、Aurora Serverless v2、S3</td></tr>
+<tr><td>アプリケーションの連携</td><td>API Gateway、SQS、SNS、EventBridge、Step Functions</td></tr>
+<tr><td>分析</td><td>Athena、Data Firehose</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 80
+node e 0 0 box "EC2" "OSから自分で管理"
+node r 1 0 box "RDS・Beanstalk" "アプリと設定を管理"
+node l 2 0 ok "Lambda・DynamoDB" "コードとデータだけ"
+edge e r
+edge r l
+label 1 1 "右へ行くほど運用の手間が減り、自由度も小さくなる" cls=dg-s
+<figcaption>図1 管理する範囲の違い。要件(OSの設定が必要か・常に高い負荷がかかるか)を満たす範囲で、できるだけ右側のサービスを選ぶと運用が楽になる。</figcaption>
+</figure>
+<div class="point"><p>サーバーレスにも制限があります(Lambdaは最大15分、同時実行数の上限、起動直後の遅れ=コールドスタート)。<strong>長時間の処理や、OSの細かい設定が必要な処理</strong>はEC2やコンテナを選びます。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="shared-responsibility.html">責任共有モデル</a>:サービスごとの責任の範囲</li>
+<li><a href="well-architected.html">AWS Well-Architected フレームワーク</a>:マネージドサービスを使う設計の原則</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a></li>
+<li><a href="storage-types.html">ブロック・ファイル・オブジェクトストレージ</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/lambda.html">AWS Lambda</a>:サーバーレスのコンピューティング</li>
+<li><a href="../services/ecs.html">Amazon ECS</a>:Fargateで動かすコンテナ</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:マネージドのリレーショナルデータベース</li>
+<li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:サーバーレスのNoSQLデータベース</li>
+<li><a href="../services/elastic-beanstalk.html">AWS Elastic Beanstalk</a>:アプリを置くだけで動く環境</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:自分で管理する仮想サーバー</li>
+</ul>
+</section>

@@ -1,0 +1,70 @@
+<!-- title: ルートユーザーとアカウントの保護 -->
+<!-- category: AWSの基礎 -->
+<!-- lead: AWSアカウントを作ったときのメールアドレスでログインする、すべての権限を持つユーザーと、その守り方 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>ルートユーザー</strong>は、AWSアカウントを作成したときのメールアドレスとパスワードでログインするユーザーです。アカウントの<strong>すべての操作ができ、IAMのポリシーで権限を絞ることもできません</strong>(OrganizationsのSCPは、メンバーアカウントのルートユーザーにも効きます)。乗っ取られると被害が大きいため、<strong>日常の作業には使わず</strong>、厳重に保護します。</p>
+
+<h3>ルートユーザーでしかできない作業</h3>
+<ul>
+<li>アカウントの設定の変更(アカウント名・メールアドレス・ルートユーザーのパスワード)</li>
+<li>アカウントの解約</li>
+<li>権限を誤って失ったIAM管理者の権限の復旧</li>
+<li>S3バケットの<strong>MFA削除</strong>の有効化</li>
+<li>全員を拒否してしまったS3バケットポリシー・SQSキューポリシーの削除</li>
+<li>リザーブドインスタンスのマーケットプレイスへの出品者登録 など</li>
+</ul>
+<p>これ以外の作業は、IAM Identity CenterのユーザーやIAMロールなど、権限を絞ったIDで行います。</p>
+
+<h3>守り方</h3>
+<div class="table-wrap"><table>
+<tr><th>対策</th><th>内容</th></tr>
+<tr><td><strong class="em">MFAを有効にする</strong></td><td>パスワードに加えて、認証アプリやパスキー・セキュリティキーで認証する。AWSはルートユーザーのMFAを必須にする方針で、ログイン時に登録を求める</td></tr>
+<tr><td><strong>アクセスキーを作らない</strong></td><td>ルートユーザーのアクセスキーがあれば削除する。プログラムからの操作はIAMロールで行う</td></tr>
+<tr><td>強いパスワードと連絡先</td><td>共有のメールアドレス(配布リスト)を使い、担当者が替わってもメールを受け取れるようにする。代替の連絡先(請求・運用・セキュリティ)も登録する</td></tr>
+<tr><td>ログインの監視</td><td>CloudTrailに記録されるルートユーザーのログインを、EventBridgeのルールで検知してSNSで通知する</td></tr>
+<tr><td>組織での一元管理</td><td>Organizationsの<strong>ルートアクセスの一元管理</strong>で、メンバーアカウントのルートユーザーの認証情報をなくし、必要な作業は管理アカウントから行う</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 85
+node root 0 0 ng "ルートユーザー" "ログイン"
+node ct 1.4 0 box "CloudTrail" "ログインを記録"
+node eb 2.8 0 accent "EventBridge" "Rootのログインに一致"
+node sns 2.8 1 ok "SNS" "管理者へ通知"
+edge root ct
+edge ct eb
+edge eb sns
+<figcaption>図1 ルートユーザーのログインの検知。CloudTrailの「AWS Console Sign In」イベントのうち、userIdentity.type が Root のものをEventBridgeで拾って通知する。Security HubやGuardDutyでもルートユーザーの利用は指摘される。</figcaption>
+</figure>
+
+<h3>IAMユーザーとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>ルートユーザー</th><th>IAMユーザー・IAMロール</th></tr>
+<tr><td>数</td><td>アカウントに1つ</td><td>必要なだけ作れる</td></tr>
+<tr><td>権限</td><td>すべて(IAMで制限できない)</td><td>ポリシーで与えた分だけ</td></tr>
+<tr><td>ログイン</td><td>メールアドレスとパスワード</td><td>アカウントID(または別名)・ユーザー名・パスワード、Identity Centerのポータル</td></tr>
+<tr><td>使う場面</td><td>ルートユーザーでしかできない作業だけ</td><td>日常の作業すべて</td></tr>
+</table></div>
+<div class="point"><p>試験で「アカウントを守る最初の対策」を問われたら、<strong>ルートユーザーのMFAの有効化</strong>と<strong>アクセスキーの削除</strong>、日常の作業は権限を絞ったIDで行うこと、が答えになります。IAMの認証情報レポートでは、ルートユーザーのMFAやアクセスキーの有無も確認できます。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>:日常の作業で使う権限</li>
+<li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:SCPがルートユーザーにも効く仕組み</li>
+<li><a href="shared-responsibility.html">責任共有モデル</a>:アカウントの保護は利用者の責任</li>
+<li><a href="event-driven-remediation.html">イベント駆動の自動修復</a>:ログインの検知と通知</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:MFA・認証情報レポート・ルートアクセスの一元管理</li>
+<li><a href="../services/identity-center.html">AWS IAM Identity Center</a>:日常のログイン</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:SCPとメンバーアカウントの管理</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:ログインの記録</li>
+<li><a href="../services/security-hub.html">AWS Security Hub</a>:ルートユーザーのMFAなどのチェック</li>
+</ul>
+</section>

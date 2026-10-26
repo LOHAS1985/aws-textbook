@@ -1,0 +1,69 @@
+<!-- title: 責任共有モデル -->
+<!-- category: AWSの基礎 -->
+<!-- lead: セキュリティと運用の責任を、AWSと利用者のどちらが持つかの分担。使うサービスによって境界が変わる -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>責任共有モデル</strong>は、AWSを使うときのセキュリティと運用の責任を、AWSと利用者で分け合う考え方です。AWSは<strong>「クラウドのセキュリティ」</strong>(クラウドそのものを守る)を、利用者は<strong>「クラウドにおけるセキュリティ」</strong>(クラウドの上に置いたものを守る)を受け持ちます。</p>
+<div class="table-wrap"><table>
+<tr><th>担当</th><th>範囲</th><th>例</th></tr>
+<tr><td><strong>AWS</strong></td><td>クラウドのセキュリティ</td><td>データセンターの建物・入退室管理、電源・空調、サーバー・ストレージ・ネットワークの機器、仮想化の基盤(ハイパーバイザー)、マネージドサービスの基盤のソフトウェア</td></tr>
+<tr><td><strong>利用者</strong></td><td>クラウドにおけるセキュリティ</td><td>データ(暗号化・バックアップ)、IAMの権限、ネットワークの設定(セキュリティグループ・ネットワークACL)、EC2のOSとアプリ、ログの確認</td></tr>
+</table></div>
+
+<h3>サービスによって境界が変わる</h3>
+<p>AWSが管理してくれる範囲が広いサービスほど、利用者の責任は小さくなります。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node h1 0 0 plain "EC2"
+node h2 1 0 plain "RDS"
+node h3 2 0 plain "Lambda"
+node a1 0 1 blue "データ・権限" "利用者"
+node a2 1 1 blue "データ・権限" "利用者"
+node a3 2 1 blue "データ・権限" "利用者"
+node b1 0 2 blue "OS・ミドルウェア" "利用者"
+node b2 1 2 accent "OS・DBエンジン" "AWS"
+node b3 2 2 accent "OS・ランタイム" "AWS"
+node c1 0 3 accent "ハードウェア" "AWS"
+node c2 1 3 accent "ハードウェア" "AWS"
+node c3 2 3 accent "ハードウェア" "AWS"
+<figcaption>図1 サービスごとの責任の範囲(blue=利用者、accent=AWS)。EC2ではOSから上が利用者の責任だが、RDSやLambdaではOSやランタイムもAWSが管理する。どのサービスでも、データと権限の管理は利用者の責任。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>作業</th><th>EC2</th><th>RDS</th><th>Lambda</th></tr>
+<tr><td>OSのパッチ</td><td><strong>利用者</strong>(Patch Managerなど)</td><td>AWS(適用する時間帯はメンテナンスウィンドウで利用者が選ぶ)</td><td>AWS</td></tr>
+<tr><td>DBエンジン・ランタイムの更新</td><td>利用者</td><td>AWSが提供し、メジャーバージョンの更新は利用者が実施</td><td>AWS(サポートが終わるランタイムからの移行は利用者)</td></tr>
+<tr><td>バックアップの設定</td><td>利用者</td><td>自動バックアップの保持期間は利用者が設定</td><td>コードとデータの管理は利用者</td></tr>
+<tr><td>ネットワークの制限</td><td>利用者(セキュリティグループ)</td><td>利用者(セキュリティグループ・公開するか)</td><td>利用者(VPCに接続するか・権限)</td></tr>
+<tr><td>データの暗号化</td><td>利用者が設定</td><td>利用者が設定(作成時に指定)</td><td>利用者が設定</td></tr>
+</table></div>
+
+<h3>両方で受け持つもの</h3>
+<ul>
+<li><strong>パッチの管理</strong>:AWSは基盤のパッチ、利用者はOSとアプリのパッチ</li>
+<li><strong>設定の管理</strong>:AWSは基盤の設定、利用者はOS・データベース・アプリの設定</li>
+<li><strong>教育</strong>:AWSは自社の社員、利用者は自社の社員</li>
+</ul>
+<p>反対に、データセンターの物理的なセキュリティや環境(電源・空調)は、利用者がAWSから<strong>そのまま引き継ぐ</strong>もので、利用者が手を出すことはできません。監査で求められる証明書類は<a href="compliance-artifact.html">AWS Artifact</a>から入手します。</p>
+<div class="point"><p>試験では「誰がやるべきか」が問われます。<strong class="em">EC2のOSのパッチは利用者</strong>、RDSのOSのパッチはAWS(適用の時間帯は利用者が選ぶ)、どのサービスでも<strong>データの暗号化・IAMの権限・バックアップの設定</strong>は利用者、と整理しておきます。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="managed-serverless.html">マネージドサービスとサーバーレス</a>:AWSに任せる範囲が広いサービス</li>
+<li><a href="compliance-artifact.html">コンプライアンスとAWS Artifact</a>:AWS側の責任を証明する書類</li>
+<li><a href="encryption.html">保存時の暗号化と転送時の暗号化</a>:利用者が設定する暗号化</li>
+<li><a href="well-architected.html">AWS Well-Architected フレームワーク</a>:セキュリティの柱</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/ec2.html">Amazon EC2</a>:OSから上が利用者の責任</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:OS・DBエンジンのパッチをAWSが行う</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:実行環境をAWSが管理する</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:EC2のパッチの適用(Patch Manager)</li>
+<li><a href="../services/iam.html">AWS IAM</a>:権限の管理は利用者の責任</li>
+</ul>
+</section>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>マネージドサービスとサーバーレス | AWS教科書</title>
+<meta name="description" content="サーバーの管理をどこまでAWSに任せるかによるサービスの分類(IaaS・PaaS・SaaS、マネージド、サーバーレス)">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>マネージドサービスとサーバーレス</h1>
+  <p class="lead">サーバーの管理をどこまでAWSに任せるかによるサービスの分類(IaaS・PaaS・SaaS、マネージド、サーバーレス)</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWSのサービスは、<strong>利用者が管理する範囲</strong>の広さで分類できます。自分で管理する範囲が狭いほど運用の手間が減り、その分だけ自由度(OSに入る、細かく設定する)も小さくなります。試験で「運用の手間を最小にする方法」を問われたら、マネージドサービスやサーバーレスが答えになることがほとんどです。</p>
+
+<h3 id="c1-1">IaaS・PaaS・SaaS<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>分類</th><th>提供されるもの</th><th>利用者が管理するもの</th><th>AWSの例</th></tr>
+<tr><td data-label="分類"><strong>IaaS</strong>(Infrastructure as a Service)</td><td data-label="提供されるもの">仮想サーバー・ストレージ・ネットワーク</td><td data-label="利用者が管理するもの">OS・ミドルウェア・アプリ・データ</td><td data-label="AWSの例">EC2、EBS、VPC</td></tr>
+<tr><td data-label="分類"><strong>PaaS</strong>(Platform as a Service)</td><td data-label="提供されるもの">アプリを動かす環境(OS・ミドルウェアまで)</td><td data-label="利用者が管理するもの">アプリ・データ・設定</td><td data-label="AWSの例">RDS、Elastic Beanstalk、ECS on Fargate</td></tr>
+<tr><td data-label="分類"><strong>SaaS</strong>(Software as a Service)</td><td data-label="提供されるもの">完成したソフトウェア</td><td data-label="利用者が管理するもの">データ・利用者の設定</td><td data-label="AWSの例">Amazon WorkMail、Amazon Connect、Amazon Q</td></tr>
+</table></div>
+
+<h3 id="c1-2">マネージドサービス<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>マネージドサービス</strong>は、サーバーの用意・OSやソフトウェアのパッチ・バックアップ・障害時の切り替えなどを<strong>AWSが代わりに行う</strong>サービスです。例えば、データベースをEC2に自分で入れる代わりにRDSを使うと、次の作業をAWSに任せられます。</p>
+<div class="table-wrap"><table>
+<tr><th>作業</th><th>EC2に自分で入れたDB</th><th>RDS(マネージド)</th></tr>
+<tr><td>OS・DBエンジンのパッチ</td><td>自分で適用</td><td>メンテナンスウィンドウで自動適用</td></tr>
+<tr><td>バックアップ</td><td>自分で仕組みを作る</td><td>自動バックアップ・ポイントインタイムリカバリ</td></tr>
+<tr><td>障害時の切り替え</td><td>自分で冗長化を作る</td><td>Multi-AZで自動フェイルオーバー</td></tr>
+<tr><td>OSへのログイン</td><td>できる</td><td><strong>できない</strong>(RDS Customを除く)</td></tr>
+</table></div>
+
+<h3 id="c1-3">サーバーレス<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>サーバーレス</strong>は、マネージドサービスをさらに進めて、<strong>サーバーの台数やサイズを考える必要すらない</strong>サービスです。サーバーは存在しますが、利用者からは見えません。</p>
+<ul>
+<li>サーバーの用意・パッチ・台数の調整が不要</li>
+<li>使った量に応じて<strong>自動でスケール</strong>し、使っていないときは0に近づく</li>
+<li><strong>使った分だけ課金</strong>(リクエスト数・実行時間・保存量)され、待機しているだけのサーバーの費用がかからない</li>
+<li>可用性(複数のAZへの分散)が最初から組み込まれている</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>分野</th><th>サーバーレスのサービス</th></tr>
+<tr><td>コンピューティング</td><td>Lambda、Fargate(ECS・EKSのコンテナ)</td></tr>
+<tr><td>データベース・ストレージ</td><td>DynamoDB、Aurora Serverless v2、S3</td></tr>
+<tr><td>アプリケーションの連携</td><td>API Gateway、SQS、SNS、EventBridge、Step Functions</td></tr>
+<tr><td>分析</td><td>Athena、Data Firehose</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 548 179" style="max-width:548px;min-width:520px" role="img" aria-label="図1 管理する範囲の違い。要件(OSの設定が必要か・常に高い負荷がかかるか)を満たす範囲で、できるだけ右側のサービスを選ぶと運用が楽になる。"><defs><marker id="dgterms-managed-serverless-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">OSから自分で管理</text>
+<rect x="204" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="279" y="60" text-anchor="middle" class="dg-t">RDS・Beanstalk</text>
+<text x="279" y="78" text-anchor="middle" class="dg-s">アプリと設定を管理</text>
+<rect x="374" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="449" y="60" text-anchor="middle" class="dg-t">Lambda・DynamoDB</text>
+<text x="449" y="78" text-anchor="middle" class="dg-s">コードとデータだけ</text>
+<path d="M184.0,64.0 L204.0,64.0" class="dg-line" marker-end="url(#dgterms-managed-serverless-1)"/>
+<path d="M354.0,64.0 L374.0,64.0" class="dg-line" marker-end="url(#dgterms-managed-serverless-1)"/>
+<text x="279" y="149" text-anchor="middle" class="dg-s">右へ行くほど運用の手間が減り、自由度も小さくなる</text>
+</svg>
+</div>
+<figcaption>図1 管理する範囲の違い。要件(OSの設定が必要か・常に高い負荷がかかるか)を満たす範囲で、できるだけ右側のサービスを選ぶと運用が楽になる。</figcaption>
+</figure>
+<div class="point"><p>サーバーレスにも制限があります(Lambdaは最大15分、同時実行数の上限、起動直後の遅れ=コールドスタート)。<strong>長時間の処理や、OSの細かい設定が必要な処理</strong>はEC2やコンテナを選びます。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="shared-responsibility.html">責任共有モデル</a>:サービスごとの責任の範囲</li>
+<li><a href="well-architected.html">AWS Well-Architected フレームワーク</a>:マネージドサービスを使う設計の原則</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a></li>
+<li><a href="storage-types.html">ブロック・ファイル・オブジェクトストレージ</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/lambda.html">AWS Lambda</a>:サーバーレスのコンピューティング</li>
+<li><a href="../services/ecs.html">Amazon ECS</a>:Fargateで動かすコンテナ</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:マネージドのリレーショナルデータベース</li>
+<li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:サーバーレスのNoSQLデータベース</li>
+<li><a href="../services/elastic-beanstalk.html">AWS Elastic Beanstalk</a>:アプリを置くだけで動く環境</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:自分で管理する仮想サーバー</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/lambda.html"><span class="title">AWS Lambda</span><span class="kind">サービス</span><span class="desc">サーバーレスでプログラムを実行するサービス</span></a></li>
+<li><a href="../services/rds.html"><span class="title">Amazon RDS</span><span class="kind">サービス</span><span class="desc">リレーショナルデータベースの構築・運用を任せられるマネージドDB</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="sla-availability.html"><span class="label">← 前へ</span>SLAと可用性</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="well-architected.html"><span class="label">次へ →</span>AWS Well-Architected フレームワーク</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

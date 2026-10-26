@@ -1,0 +1,84 @@
+<!-- title: AWSの操作方法(コンソール・CLI・SDK・API) -->
+<!-- category: AWSの基礎 -->
+<!-- lead: AWSを操作する4つの方法と、どれも最後はAPIの呼び出しになるという共通の仕組み -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>AWSの操作は、画面(マネジメントコンソール)・コマンド(CLI)・プログラム(SDK)・テンプレート(IaC)のどれで行っても、最後は<strong>AWSのAPI(HTTPSのリクエスト)の呼び出し</strong>になります。そのため、権限(IAM)・記録(CloudTrail)・上限(スロットリング)の考え方はどの方法でも同じです。</p>
+<figure class="figure" data-diagram>
+grid 170 75
+node c 0 0 blue "コンソール" "ブラウザ"
+node cli 0 1 blue "CLI・CloudShell" "コマンド"
+node sdk 0 2 blue "SDK" "プログラム"
+node iac 0 3 blue "CloudFormation等" "IaC"
+node api 1.4 1.5 accent "AWSのAPI" "HTTPS・署名付き"
+node iam 2.8 1 box "IAMで許可を判定"
+node ct 2.8 2 box "CloudTrailに記録"
+edge c api
+edge cli api
+edge sdk api
+edge iac api
+edge api iam
+edge api ct
+<figcaption>図1 どの方法もAPIの呼び出しになる。リクエストには認証情報による署名(Signature Version 4)が付き、IAMで許可を判定され、CloudTrailに記録される。</figcaption>
+</figure>
+
+<h3>4つの方法の使い分け</h3>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>向いている場面</th><th>認証</th></tr>
+<tr><td><strong>マネジメントコンソール</strong></td><td>状態の確認、初めての設定、たまにしかしない操作</td><td>Identity Centerのポータル、IAMユーザー、フェデレーション</td></tr>
+<tr><td><strong>AWS CLI</strong></td><td>くり返しの操作、スクリプトでの自動化、一括の確認</td><td>プロファイル(Identity Centerのログイン・ロール)、EC2のロール</td></tr>
+<tr><td><strong>CloudShell</strong></td><td>CLIをインストールせずに、ブラウザからすぐコマンドを使う</td><td>コンソールにログインしているユーザーの権限がそのまま使われる</td></tr>
+<tr><td><strong>SDK</strong></td><td>アプリケーションの中からAWSを使う</td><td>実行環境のIAMロール(EC2・Lambda・ECS)</td></tr>
+<tr><td>IaC(CloudFormation・CDK・Terraform)</td><td>環境の構築・変更を再現できる形で管理する</td><td>実行する人やCIのロール、CloudFormationのサービスロール</td></tr>
+</table></div>
+<p>認証情報が使われる順番や、長期のアクセスキーを使わない方法は「<a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」で説明しています。</p>
+
+<h3>AWS CLIの基本</h3>
+<pre class="code"><code># プロファイルの作成(IAM Identity Centerでログインする場合)
+aws configure sso
+aws sso login --profile dev
+
+# 使うプロファイルとリージョンを指定して実行
+aws ec2 describe-instances --profile dev --region ap-northeast-1
+
+# 必要な項目だけを表形式で取り出す(--query)
+aws ec2 describe-instances \
+  --query "Reservations[].Instances[].[InstanceId,State.Name]" --output table
+
+# 今どの権限で動いているかを確認
+aws sts get-caller-identity</code></pre>
+<div class="table-wrap"><table>
+<tr><th>設定・オプション</th><th>意味</th></tr>
+<tr><td>プロファイル(<code>--profile</code>)</td><td><code>~/.aws/config</code> に名前を付けて保存した設定(アカウント・ロール・リージョン)。複数のアカウントを切り替えて使う</td></tr>
+<tr><td>リージョン(<code>--region</code>)</td><td>操作するリージョン。指定がないとプロファイルや環境変数 <code>AWS_REGION</code> の値を使う。「リソースが見つからない」ときはリージョンの違いを疑う</td></tr>
+<tr><td>出力形式(<code>--output</code>)</td><td><code>json</code>(既定)・<code>table</code>・<code>text</code>・<code>yaml</code></td></tr>
+<tr><td><code>--query</code></td><td>結果から必要な項目だけを取り出す(JMESPathという書き方)</td></tr>
+<tr><td><code>--dry-run</code></td><td>EC2などで、実際には実行せずに権限があるかだけを確かめる</td></tr>
+</table></div>
+
+<h3>エンドポイント</h3>
+<p>APIの送り先のURLを<strong>エンドポイント</strong>と呼び、多くはリージョンごとに <code>サービス名.リージョン.amazonaws.com</code>(例:<code>ec2.ap-northeast-1.amazonaws.com</code>)の形です。インターネットに出られないプライベートサブネットからAPIを呼ぶには、<a href="vpc-endpoint.html">VPCエンドポイント</a>か、NATゲートウェイが必要です。</p>
+<div class="point"><p>コンソールの操作も、CloudTrailには<strong>APIの呼び出しとして記録</strong>されます。誰が何をしたかを調べるときは、操作した方法に関係なくCloudTrailを見ます。また、コンソールで「権限がありません」と出る操作は、CLIやSDKでも同じ理由で失敗します。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>:CLI・SDKの認証情報</li>
+<li><a href="json-yaml.html">JSONとYAMLの読み方</a>:CLIの出力とテンプレート</li>
+<li><a href="throttling-retry.html">スロットリングとリトライ</a>:APIの呼び出しの上限</li>
+<li><a href="vpc-endpoint.html">VPCエンドポイント</a>:VPCの中からAPIを呼ぶ</li>
+<li><a href="terraform-git.html">TerraformとGit</a>:IaCでの操作</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/cloudshell.html">AWS CloudShell</a>:ブラウザで使うCLI</li>
+<li><a href="../services/sdk.html">AWS SDK</a>:プログラムからの操作</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:テンプレートでの操作</li>
+<li><a href="../services/identity-center.html">AWS IAM Identity Center</a>:コンソール・CLIへのログイン</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:APIの呼び出しの記録</li>
+</ul>
+</section>

@@ -1,0 +1,64 @@
+<!-- title: AWS Well-Architected フレームワーク -->
+<!-- category: AWSの基礎 -->
+<!-- lead: AWSが示す「良い設計」の考え方を6つの柱にまとめたもの。設計の見直しや、試験の選択肢を選ぶ基準になる -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>AWS Well-Architected フレームワーク</strong>は、AWSが多くの利用者の経験から作った、クラウドでの設計のベストプラクティス集です。良い設計の観点を<strong>6つの柱</strong>に分け、それぞれに設計の原則と確認の質問を用意しています。試験の「最も適切な方法」を選ぶ問題は、この考え方に沿った選択肢が正解になります。</p>
+
+<h3>6つの柱</h3>
+<div class="table-wrap"><table>
+<tr><th>柱</th><th>目指すこと</th><th>代表的な設計の原則・例</th></tr>
+<tr><td><strong>運用上の優秀性</strong></td><td>システムを動かし、監視し、改善し続ける</td><td>運用をコードで行う(IaC・ランブック)、小さく頻繁に変更する、失敗を予測して手順を用意する。CloudWatch・Systems Manager・CloudFormation</td></tr>
+<tr><td><strong>セキュリティ</strong></td><td>データ・システム・資産を守る</td><td>最小権限、すべての層で守る、記録して追跡できるようにする、保存時・転送時の暗号化、セキュリティの対応を自動化する。IAM・KMS・GuardDuty</td></tr>
+<tr><td><strong>信頼性</strong></td><td>求められる機能を、求められるときに正しく果たす</td><td>障害から自動で復旧する、復旧の手順をテストする、需要に合わせて水平にスケールする、変更を自動化する。マルチAZ・Auto Scaling・Backup</td></tr>
+<tr><td><strong>パフォーマンス効率</strong></td><td>資源を効率よく使い、需要の変化にも対応する</td><td>マネージドサービス・サーバーレスを使う、数分で世界に展開する、実験してから選ぶ。CloudFront・ElastiCache・適切なインスタンスタイプ</td></tr>
+<tr><td><strong>コスト最適化</strong></td><td>必要な価値を、最も低い費用で届ける</td><td>使った分だけ払う、費用を測って誰が使ったか分かるようにする、使っていないものを止める。Savings Plans・タグ・Compute Optimizer</td></tr>
+<tr><td><strong>持続可能性</strong></td><td>環境への影響を減らす</td><td>使用率を上げて無駄な資源を減らす、効率の良いハードウェア(Graviton)・マネージドサービスを使う</td></tr>
+</table></div>
+
+<h3>柱同士のトレードオフ</h3>
+<p>6つの柱は、ときに<strong>ぶつかり合います</strong>。例えば、マルチリージョンにすれば信頼性は上がりますが、費用も増えます。どの柱を優先するかは、業務の要件(止まってよい時間・失ってよいデータの量・予算)で決めます。試験でも「費用を最小にしつつ」「運用の手間を最小にしつつ」などの条件が付き、その条件に合う選択肢を選びます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node req 0 0.5 blue "業務の要件" "RTO・RPO・予算"
+node rel 1.4 0 accent "信頼性" "マルチAZ・DR"
+node cost 1.4 1 accent "コスト" "最小限の構成"
+node d 2.8 0.5 ok "設計を決める" "要件を満たす最小"
+edge req rel
+edge req cost
+edge rel d
+edge cost d
+<figcaption>図1 トレードオフの考え方。信頼性を上げるほど費用は増えるので、要件を満たす範囲で最も費用の少ない構成を選ぶ。</figcaption>
+</figure>
+
+<h3>Well-Architected Tool</h3>
+<p><strong>AWS Well-Architected Tool</strong>は、コンソールで自分のワークロードについて柱ごとの質問に答え、リスク(高・中)と改善の計画を確認できる無料のサービスです。</p>
+<ul>
+<li><strong>レンズ</strong>:サーバーレス・コンテナ・SaaS・生成AIなど、分野ごとの追加の観点。自社独自のカスタムレンズも作れる</li>
+<li>レビューの結果を保存して、改善の前後を比べる(マイルストーン)</li>
+</ul>
+<div class="point"><p>SOA-C03は運用担当者の試験なので、特に<strong>運用上の優秀性</strong>(手作業をなくし自動化する)・<strong>信頼性</strong>(自動で復旧する)・<strong>セキュリティ</strong>(最小権限・記録)の考え方がよく問われます。「手作業で定期的に確認する」より「自動で検知して自動で直す」選択肢が正解になりやすいのは、このためです。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:信頼性の柱の中心</li>
+<li><a href="dr-strategies.html">DR戦略</a>:信頼性とコストのトレードオフ</li>
+<li><a href="event-driven-remediation.html">イベント駆動の自動修復</a>:運用上の優秀性の実践</li>
+<li><a href="shared-responsibility.html">責任共有モデル</a>:セキュリティの柱の前提</li>
+<li><a href="pricing-basics.html">料金の基本</a>:コスト最適化の前提</li>
+<li><a href="sla-availability.html">SLAと可用性</a>:信頼性の目標</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/trusted-advisor.html">AWS Trusted Advisor</a>:柱に沿ったチェック</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:運用上の優秀性・信頼性の監視</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:運用の自動化</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:運用をコードで行う</li>
+<li><a href="../services/compute-optimizer.html">AWS Compute Optimizer</a>:コストとパフォーマンスの見直し</li>
+</ul>
+</section>

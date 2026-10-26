@@ -1,0 +1,71 @@
+<!-- title: デフォルトVPC -->
+<!-- category: AWSの基礎 -->
+<!-- lead: 各リージョンに最初から用意されている、すぐにインターネットにつながるVPCと、その注意点 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>デフォルトVPC</strong>は、AWSアカウントの<strong>各リージョンに最初から作られている</strong>VPCです。VPCを自分で作らなくても、EC2を起動するとすぐにインターネットから接続できるよう、必要なものがそろっています。手軽な反面、<strong>すべてのサブネットがパブリック</strong>なので、本番環境には自分で設計したVPCを使います。</p>
+
+<h3>最初から用意されているもの</h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>VPCのCIDR</td><td><code>172.31.0.0/16</code>(どのアカウント・リージョンでも同じ)</td></tr>
+<tr><td>サブネット</td><td><strong>各AZに1つずつ</strong>、<code>/20</code> のデフォルトサブネット(4,096個のアドレス)</td></tr>
+<tr><td>パブリックIPアドレス</td><td>デフォルトサブネットで起動したインスタンスには、<strong>パブリックIPv4アドレスが自動で付く</strong></td></tr>
+<tr><td>インターネットゲートウェイ</td><td>アタッチ済み</td></tr>
+<tr><td>メインルートテーブル</td><td><code>0.0.0.0/0</code> → インターネットゲートウェイ のルートがある</td></tr>
+<tr><td>セキュリティグループ</td><td>デフォルトのセキュリティグループ(同じグループ同士の通信だけを許可、外向きはすべて許可)</td></tr>
+<tr><td>ネットワークACL</td><td>デフォルトのネットワークACL(すべて許可)</td></tr>
+<tr><td>DHCPオプションセット</td><td>AmazonProvidedDNS を使う設定</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 85
+node igw 1 0 accent "インターネットGW" "アタッチ済み"
+node s1 0 1 box "サブネット" "AZ-a /20"
+node s2 1 1 box "サブネット" "AZ-c /20"
+node s3 2 1 box "サブネット" "AZ-d /20"
+group 0 1 2 1 "デフォルトVPC 172.31.0.0/16(すべてパブリック)" pad=10
+edge s1 igw
+edge s2 igw
+edge s3 igw
+<figcaption>図1 デフォルトVPCの構成。各AZにパブリックなデフォルトサブネットがあり、どのサブネットからもインターネットゲートウェイを通して外とつながる。</figcaption>
+</figure>
+
+<h3>自分で作るVPCとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>デフォルトVPC</th><th>自分で作るVPC</th></tr>
+<tr><td>サブネット</td><td>全AZにパブリックサブネット</td><td>パブリック・プライベートを設計して作る</td></tr>
+<tr><td>パブリックIPの自動割り当て</td><td>有効</td><td>無効(サブネットごとに設定できる)</td></tr>
+<tr><td>インターネットゲートウェイ</td><td>あり</td><td>自分で作ってアタッチする</td></tr>
+<tr><td>CIDR</td><td>172.31.0.0/16 で固定</td><td>自由に決められる(オンプレミスや他のVPCと重ならないように)</td></tr>
+</table></div>
+
+<h3>注意点</h3>
+<ul>
+<li><strong>どのアカウントでも同じCIDR</strong>なので、デフォルトVPC同士はVPCピアリングやTransit Gatewayでつなげない(アドレスが重なる)</li>
+<li>使っていないリージョンのデフォルトVPCも、誤ってリソースを作るとすぐにインターネットに公開される。セキュリティの基準(CIS など)では、使わないデフォルトVPCの削除や、デフォルトのセキュリティグループのルールを空にすることが推奨される</li>
+<li>削除しても、コンソールやCLI(<code>aws ec2 create-default-vpc</code>)で<strong>作り直せる</strong>。ただし削除した後は、VPCを指定しないで起動する操作(サブネットを指定しないEC2の起動など)が失敗する</li>
+<li>Control TowerやOrganizationsで新しいアカウントを作るときに、デフォルトVPCを削除する設定にできる</li>
+</ul>
+<div class="point"><p>試験では、「EC2を起動したら意図せずインターネットから見えていた」原因として、<strong>デフォルトVPC(パブリックIPの自動割り当て)で起動したこと</strong>が出てきます。セキュリティグループの設定と合わせて確認します。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="cidr.html">CIDR</a>:VPC・サブネットのアドレスの範囲</li>
+<li><a href="route-table.html">ルートテーブル</a>:インターネットゲートウェイへのルート</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:デフォルトの設定</li>
+<li><a href="eni-elastic-ip.html">ENIとElastic IP</a>:パブリックIPアドレス</li>
+<li><a href="vpc-peering.html">VPCピアリング</a>:CIDRが重なるとつなげない</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:VPCの設計</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:デフォルトサブネットでの起動</li>
+<li><a href="../services/control-tower.html">AWS Control Tower</a>:新しいアカウントのVPCの設定</li>
+<li><a href="../services/security-hub.html">AWS Security Hub</a>:デフォルトのセキュリティグループのチェック</li>
+</ul>
+</section>

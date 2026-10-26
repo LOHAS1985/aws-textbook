@@ -30,9 +30,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat1">AWSの基礎</a>
   <h1>リージョンとアベイラビリティーゾーン</h1>
   <p class="lead">AWSのデータセンターの配置単位。リージョンの中に複数のAZがある</p>
-  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(9項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">リージョン</a></li><li><a href="#c1-2">アベイラビリティーゾーン(AZ)</a></li><li><a href="#c1-3">エッジロケーション</a></li><li><a href="#c1-4">リージョンの外に広げる拠点(Local Zones・Wavelength・Outposts)</a></li><li><a href="#c1-5">サービスの範囲(グローバル・リージョン・AZ)</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+<li><a href="#c4">この用語が出てくるページ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p>AWSのサービスは、世界中に置かれたデータセンターで動いています。その配置の単位が<strong>リージョン</strong>と<strong>アベイラビリティーゾーン(AZ)</strong>です。どのサービスも「どのリージョンの、どのAZで動いているか」を意識して設計します。</p>
@@ -80,7 +91,16 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h3 id="c1-3">エッジロケーション<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>エッジロケーション</strong>は、利用者の近くからコンテンツを届けたり、通信を受け付けたりするための拠点です。リージョンよりずっと数が多く、世界中の都市にあります。<a href="../services/cloudfront.html">CloudFront</a>のキャッシュ、<a href="../services/route53.html">Route 53</a>のDNS応答、<a href="../services/global-accelerator.html">Global Accelerator</a>の入り口などに使われます。</p>
 
-<h3 id="c1-4">サービスの範囲(グローバル・リージョン・AZ)<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c1-4">リージョンの外に広げる拠点(Local Zones・Wavelength・Outposts)<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>リージョンから離れた場所で、より低いレイテンシーが必要なときのために、AWSの設備をリージョンの外に置く仕組みもあります。どれも<strong>親になるリージョンのVPCを広げる形</strong>で使い(サブネットを作る)、管理はリージョンから行います。</p>
+<div class="table-wrap"><table>
+<tr><th>拠点</th><th>置かれる場所</th><th>向いている用途</th></tr>
+<tr><td><strong>Local Zones</strong></td><td>リージョンから離れた大都市(AWSが運用)</td><td>その都市の利用者向けの、数ミリ秒の応答が必要な処理(ゲーム・動画編集・リアルタイムの処理)</td></tr>
+<tr><td><strong>Wavelength</strong></td><td>通信会社の5Gネットワークの中</td><td>スマートフォン・IoT機器向けの超低遅延のアプリ</td></tr>
+<tr><td><strong>Outposts</strong></td><td><strong>利用者自身のデータセンター</strong>(AWSが機器を設置・保守)</td><td>データを社外に出せない、工場などの設備のすぐ近くで処理したい、オンプレミスとの低遅延の通信が必要</td></tr>
+</table></div>
+
+<h3 id="c1-5">サービスの範囲(グローバル・リージョン・AZ)<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>AWSのサービスやリソースは、どの範囲で動くかによって3種類に分けられます。障害の影響範囲や、作成・コピーの方法を考えるときに重要です。</p>
 <div class="table-wrap"><table>
 <tr><th>範囲</th><th>意味</th><th>例</th></tr>
@@ -119,9 +139,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <nav class="pager">
-  <span class="prev empty"></span>
+  <a class="prev" href="shared-responsibility.html"><span class="label">← 前へ</span>責任共有モデル</a>
   <a class="toc" href="index.html">目次へ戻る</a>
-  <a class="next" href="arn.html"><span class="label">次へ →</span>ARN</a>
+  <a class="next" href="default-vpc.html"><span class="label">次へ →</span>デフォルトVPC</a>
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>

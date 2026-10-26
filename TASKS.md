@@ -168,3 +168,19 @@ SOA-C03の出題範囲(タスクステートメント)に沿った、運用担�
 - [x] IOPS・スループット・レイテンシ(performance-metrics)
 - [x] よく使うポート番号(port-numbers)
 - [x] JSONとYAMLの読み方(json-yaml)
+
+# 残タスク(「AWSの基礎」カテゴリの用語ページ追加)※完了
+
+最初に読む基礎知識を、用語の「AWSの基礎」カテゴリに追加する(別のセクションには分けない)。
+- [x] 責任共有モデル(shared-responsibility)
+- [x] デフォルトVPC(default-vpc)
+- [x] ルートユーザーとアカウントの保護(root-user)
+- [x] AWSの操作方法(コンソール・CLI・SDK・API)(access-methods)
+- [x] タグ(tags)
+- [x] 料金の基本(pricing-basics)
+- [x] サポートプラン(support-plans)。Health Dashboard・Trusted Advisor・Shield などの旧プラン名も更新
+- [x] SLAと可用性(sla-availability)
+- [x] マネージドサービスとサーバーレス(managed-serverless)
+- [x] AWS Well-Architected フレームワーク(well-architected)
+- [x] コンプライアンスとAWS Artifact(compliance-artifact)
+- [x] リージョンとAZのページに Local Zones・Wavelength・Outposts を追記

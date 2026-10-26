@@ -1,0 +1,64 @@
+<!-- title: コンプライアンスとAWS Artifact -->
+<!-- category: AWSの基礎 -->
+<!-- lead: 法令や業界の基準を守っていることを示すための、AWSの第三者認証・監査レポートの入手方法と、利用者側の確認の仕組み -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>コンプライアンス</strong>は、法令や業界の基準(クレジットカード情報の扱い、個人情報の保護、内部統制など)を守ることです。<a href="shared-responsibility.html">責任共有モデル</a>のとおり、AWSを使うシステムでは、<strong>AWS側(データセンター・基盤)の証明はAWSが</strong>、<strong>利用者側(設定・データ・権限)の証明は利用者が</strong>用意します。</p>
+
+<h3>AWS Artifact</h3>
+<p><strong>AWS Artifact</strong>は、AWS自身が受けた監査のレポートや認証の証明書を、コンソールから<strong>無料でダウンロード</strong>できるサービスです。監査人に「AWS側はこの基準を満たしている」と示すときに使います。</p>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>内容</th><th>例</th></tr>
+<tr><td><strong>Artifact Reports</strong></td><td>第三者の監査人によるAWSの監査レポート・認証</td><td>SOC 1・SOC 2・SOC 3レポート、ISO 27001などの認証、PCI DSSの準拠証明</td></tr>
+<tr><td><strong>Artifact Agreements</strong></td><td>AWSとの契約(同意書)の確認・締結</td><td>BAA(米国の医療情報の取り扱い)、NDA</td></tr>
+</table></div>
+<ul>
+<li>新しいレポートが公開されたときに通知を受け取れる</li>
+<li>Organizationsの管理アカウントで、組織全体の契約をまとめて結べる</li>
+<li>ダウンロードには、IAMで Artifact の権限が必要</li>
+</ul>
+
+<h3>利用者側の準拠を確かめる仕組み</h3>
+<p>AWSが認証を受けていても、利用者の設定が基準を満たしているとは限りません。利用者側は、次のサービスで設定を<strong>継続的にチェック</strong>し、証拠を集めます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node art 0 0 box "AWS Artifact" "AWS側の証明"
+node cfg 1.4 0 accent "Config" "設定のルール・記録"
+node sh 1.4 1 accent "Security Hub" "基準ごとのスコア"
+node am 2.8 0.5 ok "Audit Manager" "監査の証拠を集める"
+edge art am dash
+edge cfg am
+edge sh am
+<figcaption>図1 コンプライアンスの証明に使うサービス。AWS側はArtifactのレポート、利用者側はConfigやSecurity Hubのチェック結果を、Audit Managerが監査の枠組みごとに証拠としてまとめる。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>役割</th></tr>
+<tr><td><a href="../services/config.html">AWS Config</a></td><td>リソースの設定の履歴を記録し、ルールに違反していないかを評価する。基準ごとのルールの組み合わせ(コンフォーマンスパック)も使える</td></tr>
+<tr><td><a href="../services/security-hub.html">AWS Security Hub</a></td><td>CIS AWS Foundations Benchmark・PCI DSS・AWS基礎セキュリティのベストプラクティスなどの基準に照らして、アカウントの設定をスコア化する</td></tr>
+<tr><td>AWS Audit Manager</td><td>監査の枠組み(PCI DSS・GDPRなど)に合わせて、Config・Security Hub・CloudTrailから証拠を自動で集めて報告書にする</td></tr>
+<tr><td><a href="../services/cloudtrail.html">AWS CloudTrail</a></td><td>誰がいつ何をしたかの記録。ログファイルの整合性の検証で、改ざんされていないことを示せる</td></tr>
+<tr><td><a href="../services/control-tower.html">AWS Control Tower</a></td><td>複数のアカウントに予防・検出のコントロール(ガードレール)を適用する</td></tr>
+</table></div>
+<div class="point"><p>試験では「監査人に<strong>AWSの</strong>SOCレポートやPCIの準拠証明を提出したい」には <strong class="em">AWS Artifact</strong>、「<strong>自社のリソース</strong>が基準を満たしているかを継続的に確認したい」には Config や Security Hub が答えになります。どちらの側の証明かを見分けます。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="shared-responsibility.html">責任共有モデル</a>:AWS側と利用者側の責任の分担</li>
+<li><a href="security-detection-comparison.html">セキュリティ検出のサービスの選び方</a></li>
+<li><a href="monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>:CloudTrail・Configの使い分け</li>
+<li><a href="encryption.html">保存時の暗号化と転送時の暗号化</a>:基準でよく求められる対策</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/config.html">AWS Config</a>:設定の評価と記録</li>
+<li><a href="../services/security-hub.html">AWS Security Hub</a>:セキュリティ基準のチェック</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:操作の記録</li>
+<li><a href="../services/control-tower.html">AWS Control Tower</a>:複数アカウントのコントロール</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:組織全体の契約</li>
+</ul>
+</section>

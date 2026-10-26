@@ -98,7 +98,9 @@ COLLECTIONS = [
         "categories": ["AWSの基礎", "ネットワーク", "セキュリティ・認証", "ストレージ", "設計・運用", "サービスの選び方"],
         "search": "用語・キーワードで絞り込み(例: IP、暗号化、DNS)",
         "order": [
-            "region-az", "arn", "service-quotas", "json-yaml",
+            "shared-responsibility", "region-az", "default-vpc", "root-user", "access-methods", "arn", "tags",
+            "pricing-basics", "support-plans", "service-quotas", "sla-availability", "managed-serverless",
+            "well-architected", "compliance-artifact", "json-yaml",
             "dns", "dns-record-types", "cidr", "route-table", "nacl-security-group", "vpc-flow-logs",
             "eni-elastic-ip", "vpc-endpoint", "vpc-peering",
             "inbound-traffic", "outbound-traffic", "port-numbers", "http-status-codes",

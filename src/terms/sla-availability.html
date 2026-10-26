@@ -1,0 +1,77 @@
+<!-- title: SLAと可用性 -->
+<!-- category: AWSの基礎 -->
+<!-- lead: 「どれだけ止まらないか」を表す可用性の数字(何ナイン)と、AWSが約束するSLA、データを失わない耐久性の違い -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>可用性</strong>は、システムが使える状態にある時間の割合です。99.9%のように<strong>9の数(ナイン)</strong>で表し、9が1つ増えるごとに、止まってよい時間は10分の1になります。</p>
+<div class="table-wrap"><table>
+<tr><th>可用性</th><th>呼び方</th><th>1年で止まってよい時間</th><th>1か月で止まってよい時間</th></tr>
+<tr><td>99%</td><td>ツーナイン</td><td>約3.65日</td><td>約7.3時間</td></tr>
+<tr><td>99.9%</td><td>スリーナイン</td><td>約8.8時間</td><td>約43分</td></tr>
+<tr><td>99.95%</td><td></td><td>約4.4時間</td><td>約22分</td></tr>
+<tr><td>99.99%</td><td>フォーナイン</td><td>約53分</td><td>約4.3分</td></tr>
+<tr><td>99.999%</td><td>ファイブナイン</td><td>約5.3分</td><td>約26秒</td></tr>
+</table></div>
+
+<h3>SLA(サービスレベルアグリーメント)</h3>
+<p><strong>SLA</strong>は、AWSがサービスごとに約束する可用性の目標です。月の稼働率が約束を下回ったとき、利用者が申請すると<strong>サービスクレジット</strong>(料金の一部の返金)を受けられます。損害そのものを補償するものではありません。</p>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>SLAの例</th><th>条件</th></tr>
+<tr><td>EC2</td><td>リージョン単位で99.99%</td><td><strong>複数のAZ</strong>にインスタンスを置いている場合。1台のインスタンス単位では99.5%</td></tr>
+<tr><td>S3(標準)</td><td>99.9%</td><td>ストレージクラスによって異なる(低頻度アクセス・1ゾーンは低い)</td></tr>
+<tr><td>RDS</td><td>99.95%</td><td><strong>Multi-AZ</strong>の場合</td></tr>
+</table></div>
+<p>SLAの多くは、<strong>マルチAZ構成にしていることが前提</strong>です。1つのAZだけに置いたシステムは、SLAの約束の範囲外になる場合があります。</p>
+
+<h3>組み合わせたときの可用性</h3>
+<figure class="figure" data-diagram>
+grid 170 85
+node a 0 0 box "Web 99.9%"
+node b 1 0 box "DB 99.9%"
+node s 2 0 ng "直列" "約99.8%に下がる"
+node c 0 1 box "Web 99.9%"
+node d 0 2 box "Web 99.9%"
+node p 2 1.5 ok "並列(2台)" "約99.9999%に上がる"
+edge a b
+edge b s
+edge c p
+edge d p
+<figcaption>図1 構成と可用性。直列(すべて動かないと使えない)では可用性を掛け算するので下がり、並列(どれか1つが動けばよい)では「すべてが同時に止まる確率」だけが残るので上がる。</figcaption>
+</figure>
+<ul>
+<li><strong>直列</strong>:A × B(例:99.9% × 99.9% ≒ 99.8%)。部品が増えるほど下がる</li>
+<li><strong>並列</strong>:1 −(1 − A)×(1 − B)(例:1 − 0.001 × 0.001 = 99.9999%)。冗長化すると上がる</li>
+</ul>
+<p>マルチAZやAuto Scalingで同じ役割のサーバーを並べるのは、並列にして可用性を上げるためです。</p>
+
+<h3>可用性と耐久性の違い</h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>可用性</th><th>耐久性</th></tr>
+<tr><td>意味</td><td>今、<strong>使える</strong>か</td><td>データを<strong>失わない</strong>か</td></tr>
+<tr><td>S3(標準)の設計値</td><td>99.99%</td><td><strong>99.999999999%</strong>(イレブンナイン)</td></tr>
+<tr><td>下がると</td><td>一時的にアクセスできない</td><td>データが消える</td></tr>
+</table></div>
+<div class="point"><p>可用性の目標は、業務の要件として決める<strong>RTO</strong>(どれだけ早く復旧するか)・<strong>RPO</strong>(どの時点までのデータを守るか)とあわせて設計します(<a href="dr-strategies.html">DR戦略</a>)。高い可用性ほど費用がかかるので、必要な水準を決めてから構成を選びます。</p></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:可用性を上げる構成</li>
+<li><a href="dr-strategies.html">DR戦略</a>:RTO・RPOと復旧の方法</li>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:マルチAZの前提</li>
+<li><a href="well-architected.html">AWS Well-Architected フレームワーク</a>:信頼性の柱</li>
+<li><a href="support-plans.html">サポートプラン</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/ec2.html">Amazon EC2</a>:複数AZでのSLA</li>
+<li><a href="../services/s3.html">Amazon S3</a>:可用性と耐久性</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:Multi-AZでのSLA</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:並列にしたサーバーへの振り分け</li>
+<li><a href="../services/health-dashboard.html">AWS Health Dashboard</a>:AWS側の障害の確認</li>
+</ul>
+</section>
