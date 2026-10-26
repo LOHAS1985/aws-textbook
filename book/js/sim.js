@@ -417,23 +417,21 @@
   if (!graphEl) return;
   var graph = JSON.parse(graphEl.textContent);
   var tabs = el("div", "ex-tabs",
-    '<button type="button" class="ex-tab" aria-pressed="true">穴埋めで解く</button>'
-    + '<button type="button" class="ex-tab" aria-pressed="false">自由に組み立てる</button>');
+    '<button type="button" class="ex-tab">穴埋めで解く</button>'
+    + '<button type="button" class="ex-tab">自由に組み立てる</button>');
   var free = el("div", "ex-free");
-  free.hidden = true;
   section.insertBefore(tabs, fill);
   section.appendChild(free);
   var built = false;
   var buttons = tabs.querySelectorAll(".ex-tab");
-  for (var t = 0; t < 2; t++) {
-    buttons[t].addEventListener("click", (function (t) {
-      return function () {
-        buttons[0].setAttribute("aria-pressed", t === 0);
-        buttons[1].setAttribute("aria-pressed", t === 1);
-        fill.hidden = t !== 0;
-        free.hidden = t !== 1;
-        if (t === 1 && !built) { setupFree(graph, slug, free); built = true; }
-      };
-    })(t));
+  function show(t) {
+    buttons[0].setAttribute("aria-pressed", t === 0);
+    buttons[1].setAttribute("aria-pressed", t === 1);
+    fill.hidden = t !== 0;
+    free.hidden = t !== 1;
+    if (t === 1 && !built) { setupFree(graph, slug, free); built = true; }
   }
+  for (var t = 0; t < 2; t++) buttons[t].addEventListener("click", show.bind(null, t));
+  // 最初は「自由に組み立てる」を開く
+  show(1);
 })();
