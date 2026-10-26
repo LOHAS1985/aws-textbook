@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWSの操作方法(コンソール・CLI・SDK・API) | AWS教科書</title>
+<meta name="description" content="AWSを操作する4つの方法と、どれも最後はAPIの呼び出しになるという共通の仕組み">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>AWSの操作方法(コンソール・CLI・SDK・API)</h1>
+  <p class="lead">AWSを操作する4つの方法と、どれも最後はAPIの呼び出しになるという共通の仕組み</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWSの操作は、画面(マネジメントコンソール)・コマンド(CLI)・プログラム(SDK)・テンプレート(IaC)のどれで行っても、最後は<strong>AWSのAPI(HTTPSのリクエスト)の呼び出し</strong>になります。そのため、権限(IAM)・記録(CloudTrail)・上限(スロットリング)の考え方はどの方法でも同じです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 336" style="max-width:684px;min-width:547px" role="img" aria-label="図1 どの方法もAPIの呼び出しになる。リクエストには認証情報による署名(Signature Version 4)が付き、IAMで許可を判定され、CloudTrailに記録される。"><defs><marker id="dgterms-access-methods-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="34" y="36" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="57" text-anchor="middle" class="dg-t">コンソール</text>
+<text x="109" y="75" text-anchor="middle" class="dg-s">ブラウザ</text>
+<rect x="34" y="110" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="132" text-anchor="middle" class="dg-t">CLI・CloudShell</text>
+<text x="109" y="150" text-anchor="middle" class="dg-s">コマンド</text>
+<rect x="34" y="186" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="207" text-anchor="middle" class="dg-t">SDK</text>
+<text x="109" y="225" text-anchor="middle" class="dg-s">プログラム</text>
+<rect x="34" y="260" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="282" text-anchor="middle" class="dg-t">CloudFormation等</text>
+<text x="109" y="300" text-anchor="middle" class="dg-s">IaC</text>
+<rect x="272" y="148" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="170" text-anchor="middle" class="dg-tb">AWSのAPI</text>
+<text x="347" y="188" text-anchor="middle" class="dg-s">HTTPS・署名付き</text>
+<rect x="510" y="116" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">IAMで許可を判定</text>
+<rect x="510" y="192" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="216" text-anchor="middle" class="dg-t">CloudTrailに記録</text>
+<path d="M164.0,87.5 L292.0,148.0" class="dg-line" marker-end="url(#dgterms-access-methods-1)"/>
+<path d="M184.0,148.3 L272.0,162.2" class="dg-line" marker-end="url(#dgterms-access-methods-1)"/>
+<path d="M184.0,199.7 L272.0,185.8" class="dg-line" marker-end="url(#dgterms-access-methods-1)"/>
+<path d="M164.0,260.5 L292.0,200.0" class="dg-line" marker-end="url(#dgterms-access-methods-1)"/>
+<path d="M422.0,162.2 L510.0,148.3" class="dg-line" marker-end="url(#dgterms-access-methods-1)"/>
+<path d="M422.0,185.8 L510.0,199.7" class="dg-line" marker-end="url(#dgterms-access-methods-1)"/>
+</svg>
+</div>
+<figcaption>図1 どの方法もAPIの呼び出しになる。リクエストには認証情報による署名(Signature Version 4)が付き、IAMで許可を判定され、CloudTrailに記録される。</figcaption>
+</figure>
+
+<h3 id="c1-1">4つの方法の使い分け<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>向いている場面</th><th>認証</th></tr>
+<tr><td><strong>マネジメントコンソール</strong></td><td>状態の確認、初めての設定、たまにしかしない操作</td><td>Identity Centerのポータル、IAMユーザー、フェデレーション</td></tr>
+<tr><td><strong>AWS CLI</strong></td><td>くり返しの操作、スクリプトでの自動化、一括の確認</td><td>プロファイル(Identity Centerのログイン・ロール)、EC2のロール</td></tr>
+<tr><td><strong>CloudShell</strong></td><td>CLIをインストールせずに、ブラウザからすぐコマンドを使う</td><td>コンソールにログインしているユーザーの権限がそのまま使われる</td></tr>
+<tr><td><strong>SDK</strong></td><td>アプリケーションの中からAWSを使う</td><td>実行環境のIAMロール(EC2・Lambda・ECS)</td></tr>
+<tr><td>IaC(CloudFormation・CDK・Terraform)</td><td>環境の構築・変更を再現できる形で管理する</td><td>実行する人やCIのロール、CloudFormationのサービスロール</td></tr>
+</table></div>
+<p>認証情報が使われる順番や、長期のアクセスキーを使わない方法は「<a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」で説明しています。</p>
+
+<h3 id="c1-2">AWS CLIの基本<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<pre class="code"><code># プロファイルの作成(IAM Identity Centerでログインする場合)
+aws configure sso
+aws sso login --profile dev
+
+# 使うプロファイルとリージョンを指定して実行
+aws ec2 describe-instances --profile dev --region ap-northeast-1
+
+# 必要な項目だけを表形式で取り出す(--query)
+aws ec2 describe-instances \
+  --query "Reservations[].Instances[].[InstanceId,State.Name]" --output table
+
+# 今どの権限で動いているかを確認
+aws sts get-caller-identity</code></pre>
+<div class="table-wrap"><table>
+<tr><th>設定・オプション</th><th>意味</th></tr>
+<tr><td>プロファイル(<code>--profile</code>)</td><td><code>~/.aws/config</code> に名前を付けて保存した設定(アカウント・ロール・リージョン)。複数のアカウントを切り替えて使う</td></tr>
+<tr><td>リージョン(<code>--region</code>)</td><td>操作するリージョン。指定がないとプロファイルや環境変数 <code>AWS_REGION</code> の値を使う。「リソースが見つからない」ときはリージョンの違いを疑う</td></tr>
+<tr><td>出力形式(<code>--output</code>)</td><td><code>json</code>(既定)・<code>table</code>・<code>text</code>・<code>yaml</code></td></tr>
+<tr><td><code>--query</code></td><td>結果から必要な項目だけを取り出す(JMESPathという書き方)</td></tr>
+<tr><td><code>--dry-run</code></td><td>EC2などで、実際には実行せずに権限があるかだけを確かめる</td></tr>
+</table></div>
+
+<h3 id="c1-3">エンドポイント<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>APIの送り先のURLを<strong>エンドポイント</strong>と呼び、多くはリージョンごとに <code>サービス名.リージョン.amazonaws.com</code>(例:<code>ec2.ap-northeast-1.amazonaws.com</code>)の形です。インターネットに出られないプライベートサブネットからAPIを呼ぶには、<a href="vpc-endpoint.html">VPCエンドポイント</a>か、NATゲートウェイが必要です。</p>
+<div class="point"><p>コンソールの操作も、CloudTrailには<strong>APIの呼び出しとして記録</strong>されます。誰が何をしたかを調べるときは、操作した方法に関係なくCloudTrailを見ます。また、コンソールで「権限がありません」と出る操作は、CLIやSDKでも同じ理由で失敗します。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>:CLI・SDKの認証情報</li>
+<li><a href="json-yaml.html">JSONとYAMLの読み方</a>:CLIの出力とテンプレート</li>
+<li><a href="throttling-retry.html">スロットリングとリトライ</a>:APIの呼び出しの上限</li>
+<li><a href="vpc-endpoint.html">VPCエンドポイント</a>:VPCの中からAPIを呼ぶ</li>
+<li><a href="terraform-git.html">TerraformとGit</a>:IaCでの操作</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudshell.html">AWS CloudShell</a>:ブラウザで使うCLI</li>
+<li><a href="../services/sdk.html">AWS SDK</a>:プログラムからの操作</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:テンプレートでの操作</li>
+<li><a href="../services/identity-center.html">AWS IAM Identity Center</a>:コンソール・CLIへのログイン</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:APIの呼び出しの記録</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/identity-center.html"><span class="title">AWS IAM Identity Center</span><span class="kind">サービス</span><span class="desc">複数のAWSアカウントやアプリへのシングルサインオンと権限を一元管理するサービス</span></a></li>
+<li><a href="../services/cloudshell.html"><span class="title">AWS CloudShell</span><span class="kind">サービス</span><span class="desc">ブラウザから使える認証済みのシェル環境</span></a></li>
+<li><a href="../services/sdk.html"><span class="title">AWS SDK</span><span class="kind">サービス</span><span class="desc">アプリからAWSサービスを操作するための公式ライブラリ群</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="root-user.html"><span class="label">← 前へ</span>ルートユーザーとアカウントの保護</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="arn.html"><span class="label">次へ →</span>ARN</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

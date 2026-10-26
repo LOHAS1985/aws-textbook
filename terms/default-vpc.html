@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>デフォルトVPC | AWS教科書</title>
+<meta name="description" content="各リージョンに最初から用意されている、すぐにインターネットにつながるVPCと、その注意点">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>デフォルトVPC</h1>
+  <p class="lead">各リージョンに最初から用意されている、すぐにインターネットにつながるVPCと、その注意点</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>デフォルトVPC</strong>は、AWSアカウントの<strong>各リージョンに最初から作られている</strong>VPCです。VPCを自分で作らなくても、EC2を起動するとすぐにインターネットから接続できるよう、必要なものがそろっています。手軽な反面、<strong>すべてのサブネットがパブリック</strong>なので、本番環境には自分で設計したVPCを使います。</p>
+
+<h3 id="c1-1">最初から用意されているもの<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>VPCのCIDR</td><td><code>172.31.0.0/16</code>(どのアカウント・リージョンでも同じ)</td></tr>
+<tr><td>サブネット</td><td><strong>各AZに1つずつ</strong>、<code>/20</code> のデフォルトサブネット(4,096個のアドレス)</td></tr>
+<tr><td>パブリックIPアドレス</td><td>デフォルトサブネットで起動したインスタンスには、<strong>パブリックIPv4アドレスが自動で付く</strong></td></tr>
+<tr><td>インターネットゲートウェイ</td><td>アタッチ済み</td></tr>
+<tr><td>メインルートテーブル</td><td><code>0.0.0.0/0</code> → インターネットゲートウェイ のルートがある</td></tr>
+<tr><td>セキュリティグループ</td><td>デフォルトのセキュリティグループ(同じグループ同士の通信だけを許可、外向きはすべて許可)</td></tr>
+<tr><td>ネットワークACL</td><td>デフォルトのネットワークACL(すべて許可)</td></tr>
+<tr><td>DHCPオプションセット</td><td>AmazonProvidedDNS を使う設定</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 558 212" style="max-width:558px;min-width:520px" role="img" aria-label="図1 デフォルトVPCの構成。各AZにパブリックなデフォルトサブネットがあり、どのサブネットからもインターネットゲートウェイを通して外とつながる。"><defs><marker id="dgterms-default-vpc-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="24" y="98" width="510" height="90" rx="10" class="dg-group"/>
+<text x="34" y="112" class="dg-s">デフォルトVPC 172.31.0.0/16(すべてパブリック)</text>
+<rect x="204" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="279" y="62" text-anchor="middle" class="dg-tb">インターネットGW</text>
+<text x="279" y="80" text-anchor="middle" class="dg-s">アタッチ済み</text>
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="147" text-anchor="middle" class="dg-t">サブネット</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">AZ-a /20</text>
+<rect x="204" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="279" y="147" text-anchor="middle" class="dg-t">サブネット</text>
+<text x="279" y="165" text-anchor="middle" class="dg-s">AZ-c /20</text>
+<rect x="374" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="449" y="147" text-anchor="middle" class="dg-t">サブネット</text>
+<text x="449" y="165" text-anchor="middle" class="dg-s">AZ-d /20</text>
+<path d="M161.0,125.5 L227.0,92.5" class="dg-line" marker-end="url(#dgterms-default-vpc-1)"/>
+<path d="M279.0,125.5 L279.0,92.5" class="dg-line" marker-end="url(#dgterms-default-vpc-1)"/>
+<path d="M397.0,125.5 L331.0,92.5" class="dg-line" marker-end="url(#dgterms-default-vpc-1)"/>
+</svg>
+</div>
+<figcaption>図1 デフォルトVPCの構成。各AZにパブリックなデフォルトサブネットがあり、どのサブネットからもインターネットゲートウェイを通して外とつながる。</figcaption>
+</figure>
+
+<h3 id="c1-2">自分で作るVPCとの違い<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>デフォルトVPC</th><th>自分で作るVPC</th></tr>
+<tr><td>サブネット</td><td>全AZにパブリックサブネット</td><td>パブリック・プライベートを設計して作る</td></tr>
+<tr><td>パブリックIPの自動割り当て</td><td>有効</td><td>無効(サブネットごとに設定できる)</td></tr>
+<tr><td>インターネットゲートウェイ</td><td>あり</td><td>自分で作ってアタッチする</td></tr>
+<tr><td>CIDR</td><td>172.31.0.0/16 で固定</td><td>自由に決められる(オンプレミスや他のVPCと重ならないように)</td></tr>
+</table></div>
+
+<h3 id="c1-3">注意点<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>どのアカウントでも同じCIDR</strong>なので、デフォルトVPC同士はVPCピアリングやTransit Gatewayでつなげない(アドレスが重なる)</li>
+<li>使っていないリージョンのデフォルトVPCも、誤ってリソースを作るとすぐにインターネットに公開される。セキュリティの基準(CIS など)では、使わないデフォルトVPCの削除や、デフォルトのセキュリティグループのルールを空にすることが推奨される</li>
+<li>削除しても、コンソールやCLI(<code>aws ec2 create-default-vpc</code>)で<strong>作り直せる</strong>。ただし削除した後は、VPCを指定しないで起動する操作(サブネットを指定しないEC2の起動など)が失敗する</li>
+<li>Control TowerやOrganizationsで新しいアカウントを作るときに、デフォルトVPCを削除する設定にできる</li>
+</ul>
+<div class="point"><p>試験では、「EC2を起動したら意図せずインターネットから見えていた」原因として、<strong>デフォルトVPC(パブリックIPの自動割り当て)で起動したこと</strong>が出てきます。セキュリティグループの設定と合わせて確認します。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="cidr.html">CIDR</a>:VPC・サブネットのアドレスの範囲</li>
+<li><a href="route-table.html">ルートテーブル</a>:インターネットゲートウェイへのルート</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:デフォルトの設定</li>
+<li><a href="eni-elastic-ip.html">ENIとElastic IP</a>:パブリックIPアドレス</li>
+<li><a href="vpc-peering.html">VPCピアリング</a>:CIDRが重なるとつなげない</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:VPCの設計</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:デフォルトサブネットでの起動</li>
+<li><a href="../services/control-tower.html">AWS Control Tower</a>:新しいアカウントのVPCの設定</li>
+<li><a href="../services/security-hub.html">AWS Security Hub</a>:デフォルトのセキュリティグループのチェック</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/ec2.html"><span class="title">Amazon EC2</span><span class="kind">サービス</span><span class="desc">AWS上で仮想サーバを動かすサービス(Elastic Compute Cloud)</span></a></li>
+<li><a href="../services/vpc.html"><span class="title">Amazon VPC</span><span class="kind">サービス</span><span class="desc">AWS上に論理的に分離された仮想ネットワークを作るサービス</span></a></li>
+</ul>
+</section>
+
+<nav class="pager">
+  <a class="prev" href="region-az.html"><span class="label">← 前へ</span>リージョンとアベイラビリティーゾーン</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="root-user.html"><span class="label">次へ →</span>ルートユーザーとアカウントの保護</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
