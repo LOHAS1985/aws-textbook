@@ -70,7 +70,7 @@ edge sg ec2
 <tr><td>10.0.0.3</td><td>将来の利用のための予約</td></tr>
 <tr><td>10.0.0.255</td><td>ブロードキャストアドレス(VPCはブロードキャストに対応していないが予約される)</td></tr>
 </table></div>
-<p>たとえば <code>/24</code>(256個)のサブネットで使えるのは251個、最小の <code>/28</code>(16個)では11個です。必要なIP数を見積もるときは、この5個を差し引いて考えます。CIDRの読み方は用語ページ「<a href="../terms/cidr.html">CIDR</a>」を参照してください。</p>
+<p>例えば <code>/24</code>(256個)のサブネットで使えるのは251個、最小の <code>/28</code>(16個)では11個です。必要なIP数を見積もるときは、この5個を差し引いて考えます。CIDRの読み方は用語ページ「<a href="../terms/cidr.html">CIDR</a>」を参照してください。</p>
 
 <h3>Elastic IP</h3>
 <p>EC2インスタンスに自動で付くパブリックIPv4アドレスは、インスタンスを<strong>停止・起動すると変わります</strong>。固定のパブリックIPが必要な場合は、<strong>Elastic IPアドレス</strong>(アカウントに確保する静的なパブリックIPv4アドレス)を取得してインスタンスやENIに関連付けます。</p>
@@ -106,9 +106,9 @@ node x 1 1.1 ng "AからCへは通信できない" "推移的ルーティング�
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>対応サービス</th><th>仕組み</th><th>料金</th></tr>
 <tr><td>ゲートウェイ型</td><td><strong>S3とDynamoDBのみ</strong></td><td>ルートテーブルに、サービスへの経路(プレフィックスリスト → エンドポイント)が追加される</td><td>無料</td></tr>
-<tr><td>インターフェース型(AWS PrivateLink)</td><td>SQS・SNS・KMS・Systems Manager・CloudWatchなど多数(S3も可)</td><td>サブネットに<strong>ENI(プライベートIP)</strong>が作られ、セキュリティグループで制御する</td><td>時間料金+データ処理量</td></tr>
+<tr><td>インターフェイス型(AWS PrivateLink)</td><td>SQS・SNS・KMS・Systems Manager・CloudWatchなど多数(S3も可)</td><td>サブネットに<strong>ENI(プライベートIP)</strong>が作られ、セキュリティグループで制御する</td><td>時間料金+データ処理量</td></tr>
 </table></div>
-<p>オンプレミスやピアリング先のVPCから使えるのはインターフェース型だけです。エンドポイントポリシーなどの詳細は用語ページ「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」を参照してください。</p>
+<p>オンプレミスやピアリング先のVPCから使えるのはインターフェイス型だけです。エンドポイントポリシーなどの詳細は用語ページ「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」を参照してください。</p>
 
 <h3>NATゲートウェイはAZごとに作る</h3>
 <p>NATゲートウェイは、作成した<strong>1つのAZの中で冗長化</strong>されたサービスです。AZ自体に障害が起きると、そのAZのNATゲートウェイも使えなくなります。1つのNATゲートウェイを全AZのプライベートサブネットで共有していると、そのAZの障害で<strong>全AZのサーバーが外に出られなくなります</strong>。</p>
@@ -179,7 +179,7 @@ label 1.8 1.75 "戻り:アウトバウンドで 1024-65535 を許可" cls=dg-s
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>VPC・サブネット・ルートテーブル・セキュリティグループ自体は無料です。NATゲートウェイ(時間+処理データ量)、インターフェース型VPCエンドポイント、パブリックIPv4アドレスなどは有料です。</p>
+<p>VPC・サブネット・ルートテーブル・セキュリティグループ自体は無料です。NATゲートウェイ(時間+処理データ量)、インターフェイス型VPCエンドポイント、パブリックIPv4アドレスなどは有料です。</p>
 </section>
 
 <section class="chapter">
@@ -214,7 +214,7 @@ label 1.8 1.75 "戻り:アウトバウンドで 1024-65535 を許可" cls=dg-s
 <h4>外部・AWSサービスとの接続</h4>
 <ul>
 <li>プライベートサブネットから外へ出たいが外から入らせない → <strong>NATゲートウェイ</strong>。</li>
-<li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。S3・DynamoDBだけなら無料のゲートウェイ型、オンプレミスから使うならインターフェース型。</li>
+<li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。S3・DynamoDBだけなら無料のゲートウェイ型、オンプレミスから使うならインターフェイス型。</li>
 <li>NATゲートウェイの可用性を高めたい → <strong>AZごとにNATゲートウェイ</strong>を作り、各AZのルートテーブルで同じAZのものを指定する。</li>
 <li>停止・起動してもパブリックIPを変えたくない → <strong>Elastic IP</strong>。</li>
 </ul>

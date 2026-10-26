@@ -9,19 +9,19 @@
 grid 170 85
 node ec2 0 0.5 box "EC2" "プライベートサブネット"
 node gw 1.4 0 ok "ゲートウェイ型" "ルートテーブルに経路"
-node ifc 1.4 1 blue "インターフェース型" "サブネット内のENI"
+node ifc 1.4 1 blue "インターフェイス型" "サブネット内のENI"
 node s3 2.8 0 accent "S3 / DynamoDB"
 node svc 2.8 1 accent "SQS・SSMなど" "多くのサービス"
 edge ec2 gw
 edge ec2 ifc
 edge gw s3
 edge ifc svc
-<figcaption>図1 VPCエンドポイントの2つの型。ゲートウェイ型はルートテーブルの経路として働き、S3とDynamoDBだけに使える。インターフェース型(PrivateLink)はサブネット内にENIを作り、多くのサービスに使える。どちらも通信はインターネットに出ない。</figcaption>
+<figcaption>図1 VPCエンドポイントの2つの型。ゲートウェイ型はルートテーブルの経路として働き、S3とDynamoDBだけに使える。インターフェイス型(PrivateLink)はサブネット内にENIを作り、多くのサービスに使える。どちらも通信はインターネットに出ない。</figcaption>
 </figure>
 
 <h3>2つの型の比較</h3>
 <div class="table-wrap"><table>
-<tr><th>項目</th><th>ゲートウェイ型</th><th>インターフェース型(AWS PrivateLink)</th></tr>
+<tr><th>項目</th><th>ゲートウェイ型</th><th>インターフェイス型(AWS PrivateLink)</th></tr>
 <tr><td>対応サービス</td><td><strong>S3とDynamoDBのみ</strong></td><td>SQS・SNS・KMS・Secrets Manager・Systems Manager・CloudWatchなど多数(S3も可)</td></tr>
 <tr><td>仕組み</td><td>サブネットのルートテーブルに、サービスのIP範囲(プレフィックスリスト)→エンドポイントの経路が追加される</td><td>サブネットに<strong>ENI(プライベートIP)</strong>が作られ、そこへ接続する</td></tr>
 <tr><td>名前解決</td><td>通常のサービスのDNS名をそのまま使う</td><td>「プライベートDNS」を有効にすると、通常のDNS名がENIのプライベートIPに解決される</td></tr>
@@ -38,17 +38,17 @@ edge ifc svc
 
 <h3>よく使う組み合わせ</h3>
 <ul>
-<li><strong>プライベートサブネットのEC2をSystems Managerで管理</strong>:インターフェース型の <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> の3つが必要。</li>
-<li><strong>プライベートサブネットからECRのイメージを取得</strong>:<code>ecr.api</code>・<code>ecr.dkr</code>(インターフェース型)と、イメージの実体があるS3(ゲートウェイ型)が必要。</li>
+<li><strong>プライベートサブネットのEC2をSystems Managerで管理</strong>:インターフェイス型の <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> の3つが必要。</li>
+<li><strong>プライベートサブネットからECRのイメージを取得</strong>:<code>ecr.api</code>・<code>ecr.dkr</code>(インターフェイス型)と、イメージの実体があるS3(ゲートウェイ型)が必要。</li>
 <li><strong>大量のデータをS3へ送る</strong>:NATゲートウェイの代わりにゲートウェイ型エンドポイントを使うと、データ処理料金がかからない。</li>
 </ul>
-<div class="point"><p>自社のサービスをNLBの後ろに置いて「エンドポイントサービス」として公開すると、他のVPCやアカウントからインターフェース型エンドポイントで接続してもらうこともできます(これもPrivateLinkの仕組み)。VPCピアリングと違い、CIDRが重なっていても使えます。</p></div>
+<div class="point"><p>自社のサービスをNLBの後ろに置いて「エンドポイントサービス」として公開すると、他のVPCやアカウントからインターフェイス型エンドポイントで接続してもらうこともできます(これもPrivateLinkの仕組み)。VPCピアリングと違い、CIDRが重なっていても使えます。</p></div>
 </section>
 
 <section class="chapter">
 <h2>2. 関連する用語</h2>
 <ul>
-<li><a href="eni-elastic-ip.html">ENIとElastic IP</a>:インターフェース型エンドポイントの実体</li>
+<li><a href="eni-elastic-ip.html">ENIとElastic IP</a>:インターフェイス型エンドポイントの実体</li>
 <li><a href="route-table.html">ルートテーブル</a>:ゲートウェイ型エンドポイントの経路が追加される</li>
 <li><a href="outbound-traffic.html">アウトバウンド通信</a>:NATゲートウェイとの使い分け</li>
 <li><a href="vpc-peering.html">VPCピアリング</a>:VPC同士の接続(PrivateLinkはサービス単位の接続)</li>

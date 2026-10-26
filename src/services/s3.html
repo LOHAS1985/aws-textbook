@@ -98,7 +98,7 @@ edge ext b
 <li><strong>VPCエンドポイント</strong>:インターネットを経由せずにプライベート接続
   <ul>
   <li><strong>ゲートウェイ型</strong>:VPCからのみ利用可能。<strong>無料</strong>。</li>
-  <li><strong>インターフェース型</strong>:オンプレミスやピアリングVPCからもアクセス可能。ENIにプライベートIPが割り当てられる。<strong>有料</strong>。</li>
+  <li><strong>インターフェイス型</strong>:オンプレミスやピアリングVPCからもアクセス可能。ENIにプライベートIPが割り当てられる。<strong>有料</strong>。</li>
   </ul></li>
 </ol>
 
@@ -107,7 +107,7 @@ grid 170 85
 node ec2 0 0 box "EC2" "VPC内"
 node gw 1.4 0 ok "ゲートウェイ型" "無料・VPCから"
 node onp 0 1 blue "オンプレミス" "VPN / DX"
-node ifc 1.4 1 blue "インターフェース型" "ENI・有料"
+node ifc 1.4 1 blue "インターフェイス型" "ENI・有料"
 node net 0 2 box "インターネット"
 node s3 2.8 0 accent "S3" h=3
 edge ec2 gw
@@ -115,7 +115,7 @@ edge gw s3
 edge onp ifc
 edge ifc s3
 edge net s3 "パブリック"
-<figcaption>図4 S3への接続経路。VPCからはゲートウェイ型エンドポイント(無料)、オンプレミスやピアリングVPCからはインターフェース型エンドポイント(有料)を使うと、インターネットを経由せずに接続できる。</figcaption>
+<figcaption>図4 S3への接続経路。VPCからはゲートウェイ型エンドポイント(無料)、オンプレミスやピアリングVPCからはインターフェイス型エンドポイント(有料)を使うと、インターネットを経由せずに接続できる。</figcaption>
 </figure>
 <h3>イベント通知</h3>
 <p>オブジェクトの状態変化をトリガーに、他サービスへ非同期にイベントを送る仕組みです。送信先は<strong>Lambda・SNS・SQS</strong>です。</p>
@@ -331,7 +331,7 @@ edge g x
 <li>他アカウントへのアクセス許可 → <strong>バケットポリシー</strong>+相手側のIAMポリシー。</li>
 <li>一時的に外部へ共有 → <strong>署名付きURL</strong>。</li>
 <li>アカウント内のどのバケットも公開させない → アカウント単位の<strong>ブロックパブリックアクセス</strong>。</li>
-<li>VPCから無料でプライベート接続 → <strong>ゲートウェイ型</strong>。オンプレミスから → <strong>インターフェース型</strong>。</li>
+<li>VPCから無料でプライベート接続 → <strong>ゲートウェイ型</strong>。オンプレミスから → <strong>インターフェイス型</strong>。</li>
 <li>静的サイトをHTTPSで配信 → <strong>CloudFront</strong>を前に置く(ウェブサイトエンドポイントはHTTPのみ)。</li>
 <li>ブラウザから別ドメインのS3にアクセスするとエラー → バケットの<strong>CORS</strong>設定。</li>
 </ul>

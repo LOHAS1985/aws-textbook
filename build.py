@@ -19,6 +19,7 @@ import subprocess
 import time
 from pathlib import Path
 
+from checks import check_pages
 from diagrams import render_figures
 
 ROOT = Path(__file__).parent
@@ -216,6 +217,7 @@ def load_pages(col, warnings, updated):
             "title": meta.get("title", slug),
             "category": meta.get("category", "その他"),
             "lead": meta.get("lead", ""),
+            "raw": text,  # 検査用(行番号がファイルと一致するよう、メタ情報も含める)
             "body": render_figures(body, where, warnings),
             "updated": updated.get(f"src/{col['key']}/{path.name}", int(time.time())),
         })
@@ -735,6 +737,8 @@ def main():
     updated = git_updated()
     for col in COLLECTIONS:
         loaded[col["key"]] = load_pages(col, warnings, updated)
+    links_raw = (SRC / "links.html").read_text(encoding="utf-8")
+    check_pages(COLLECTIONS, loaded, {"links.html": links_raw}, OUT, warnings)
     add_backlinks(loaded)
     for col in COLLECTIONS:
         pages = loaded[col["key"]]

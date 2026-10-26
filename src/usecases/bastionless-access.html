@@ -12,7 +12,7 @@
 grid 160 95
 node admin 0 0 blue "運用担当者" "コンソール / CLI"
 node ssm 1.25 0 accent "Session Manager"
-node vpce 2.5 0 box "VPCエンドポイント" "インターフェース型"
+node vpce 2.5 0 box "VPCエンドポイント" "インターフェイス型"
 node ec2 3.75 0 ok "EC2" "SSM Agent"
 group 2.5 0 3.75 0 "プライベートサブネット" pad=10
 node iam 1.25 1.2 box "IAM" "誰が接続できるか"
@@ -30,7 +30,7 @@ edge ssm logs dash
 <h2>3. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Session Managerでブラウザ/CLIからシェル接続する</li>
-<li><a href="../services/vpc.html">Amazon VPC</a>:インターネットに出られないサブネットから、インターフェース型エンドポイント(<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>)でSystems Managerに接続する</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:インターネットに出られないサブネットから、インターフェイス型エンドポイント(<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>)でSystems Managerに接続する</li>
 <li><a href="../services/iam.html">AWS IAM</a>:EC2のロール(<code>AmazonSSMManagedInstanceCore</code>)と、利用者が接続できる範囲の制御</li>
 <li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/cloudwatch.html">CloudWatch Logs</a>:セッションの操作ログの保存先</li>
 <li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:セッションの開始・終了の記録</li>
@@ -41,7 +41,7 @@ edge ssm logs dash
 <h2>4. 構築の流れ</h2>
 <ol>
 <li>EC2のIAMロールに <code>AmazonSSMManagedInstanceCore</code> を付け、SSM Agentが動いていることを確認する</li>
-<li>プライベートサブネットに、<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のインターフェース型VPCエンドポイントを作成する(エンドポイントのSGで443番を許可)</li>
+<li>プライベートサブネットに、<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のインターフェイス型VPCエンドポイントを作成する(エンドポイントのSGで443番を許可)</li>
 <li>EC2のセキュリティグループから22番ポートのインバウンドルールを削除する</li>
 <li>Session Managerの設定で、操作ログの保存先(S3・CloudWatch Logs)を指定する</li>
 <li>運用担当者のIAMポリシーで、接続してよいインスタンスを(タグなどで)制限する</li>

@@ -27,7 +27,7 @@ edge cb old "旧に戻す" dash
 <section class="chapter">
 <h2>3. 使うサービスと役割</h2>
 <ul>
-<li><a href="../services/ecs.html">Amazon ECS</a>:ローリング更新(<code>minimumHealthyPercent</code>・<code>maximumPercent</code>)、デプロイサーキットブレーカー、ブルー/グリーンデプロイ</li>
+<li><a href="../services/ecs.html">Amazon ECS</a>:ローリング更新(<code>minimumHealthyPercent</code>・<code>maximumPercent</code>)、デプロイサーキットブレーカー、Blue/Greenデプロイ</li>
 <li><a href="../services/ecr.html">Amazon ECR</a>:コンテナイメージの保存</li>
 <li><a href="../services/elb.html">Elastic Load Balancing</a>:新しいタスクのヘルスチェックと通信の切り替え</li>
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:デプロイの失敗を判定するアラーム(5xxエラー率など)</li>
@@ -42,7 +42,7 @@ edge cb old "旧に戻す" dash
 <li>サービスのデプロイ設定で <code>minimumHealthyPercent</code>(例:100)と <code>maximumPercent</code>(例:200)を決める。100/200なら、台数を減らさずに新しいタスクを先に起動する</li>
 <li><strong>デプロイサーキットブレーカー</strong>をロールバックありで有効にする(新しいタスクが起動・ヘルスチェックに失敗し続けると、デプロイを失敗とみなして戻す)</li>
 <li>5xxエラー率などのCloudWatchアラームをデプロイの監視対象に指定し、アラームが鳴ったらロールバックするよう設定する</li>
-<li>アプリの起動に時間がかかる場合は、ヘルスチェックの猶予期間を設定する。一気に切り替えて素早く戻したい場合は、ECSのブルー/グリーンデプロイを使う</li>
+<li>アプリの起動に時間がかかる場合は、ヘルスチェックの猶予期間を設定する。一気に切り替えて素早く戻したい場合は、ECSのBlue/Greenデプロイを使う</li>
 </ol>
 </section>
 
@@ -51,7 +51,7 @@ edge cb old "旧に戻す" dash
 <div class="point"><ul>
 <li>起動に失敗し続けるデプロイを自動で止めて戻す → <strong class="em">デプロイサーキットブレーカー</strong>。リリース後のエラー増加で戻す → <strong>CloudWatchアラーム</strong>によるロールバック。</li>
 <li><code>minimumHealthyPercent</code> を下げると、追加の容量なしで更新できるが、更新中の処理能力が下がる。</li>
-<li>新旧の環境を並べ、ALBの通信を一度に切り替える → ブルー/グリーンデプロイ。少しずつ移す → カナリア・リニア。</li>
+<li>新旧の環境を並べ、ALBの通信を一度に切り替える → Blue/Greenデプロイ。少しずつ移す → Canary・Linear。</li>
 <li>新しいタスクがすぐ止まる → 「停止したタスク」の停止理由、コンテナのログ、イメージの取得権限(タスク実行ロール)を確認する。</li>
 </ul></div>
 </section>
