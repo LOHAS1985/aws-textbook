@@ -1,0 +1,73 @@
+<!-- title: 2026年10月27日のAWSニュース:Auto Scalingの先に起動する置き換え・KMSのML-KEM・Identity Centerのリージョン越え -->
+<!-- category: 2026年10月 -->
+<!-- lead: EC2 Auto Scalingで「先に新しいインスタンスを起動してから古いものを止める」動作を、アカウント全体の既定にできるようになりました。 -->
+<section class="chapter">
+<h2>1. 今日のまとめ</h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">EC2 Auto Scaling:Launch Before Terminateをアカウント単位で設定</a></td><td>インスタンスの置き換え時に、先に代わりを起動して正常確認してから古い方を終了する動作を、全グループの既定にできる</td><td><a href="../services/auto-scaling.html">Auto Scaling</a></td></tr>
+<tr><td><a href="#n2">KMS:ML-KEMに対応</a></td><td>量子コンピューターにも強い方式で、共有の秘密(鍵)を安全に取り決められる鍵の種類が追加された</td><td><a href="../services/kms.html">KMS</a></td></tr>
+<tr><td><a href="#n3">IAM Identity Center:リージョンをまたぐ信頼されたID伝播</a></td><td>利用者のIDを、別リージョンのサービスにも引き継いで権限判定と監査ができる</td><td><a href="../services/identity-center.html">IAM Identity Center</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 注目の発表</h2>
+<h3 id="n1">EC2 Auto Scaling:Launch Before Terminateをアカウント単位で設定</h3>
+<p>Auto Scalingは、不調なインスタンスや古くなったインスタンスを新しいものに置き換えます。これまでの置き換えは「終了してから起動」が基本で、その間は台数が一時的に減ることがありました。「Launch Before Terminate(終了の前に起動)」は、先に代わりのインスタンスを起動し、ヘルスチェックに合格してから古い方を終了する動作です。今回、この動作をAutoScalingグループごとではなく、アカウント全体の既定として一度に有効にできるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "終了してから起動" "一時的に台数が減る"
+node after 1.6 0 ok "これから" "先に起動し正常確認" "その後に古い方を終了"
+edge before after "アカウント設定で既定に"
+<figcaption>図1 インスタンス置き換えの動作の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>インスタンスの更新(インスタンスリフレッシュ)、AZ間のリバランス、ヘルスチェック失敗による置き換え、最大インスタンス有効期間による置き換えのどれでも、処理能力を落とさずに入れ替えられます。設定を一度するだけで、グループの追加漏れも防げます。新しい <code>PutAccountSetting</code> と <code>DescribeAccountSettings</code> のAPI(コンソール・CLI・SDKからも操作可)で管理します。</dd>
+<dt>試験・実務への影響</dt><dd>可用性を保ちながら入れ替える方法として押さえておきたい動作です。先に起動する分、置き換え中は一時的に台数が増えるため、上限や費用にも目を配ります。追加料金はなく、すべてのリージョンで使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/auto-scaling.html">Auto Scaling</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/ec2-auto-scaling-launch-before-terminate/">AWS EC2 Auto Scaling now supports Launch Before Terminate at account-level to replace instances</a>(2026-10-26)</dd>
+</dl>
+
+<h3 id="n2">KMS:ML-KEMに対応</h3>
+<p>ML-KEMは、2者が盗み見られずに「共有の秘密(暗号の鍵のもと)」を取り決めるための、ポスト量子暗号(将来の量子コンピューターでも解かれにくい暗号)の標準方式です。いま通信を記録しておき、将来解読する「今盗んで後で解読」という攻撃への備えになります。KMSがこの方式の鍵(ML-KEM-512・768・1024)を扱えるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node client 0 0 blue "相手・アプリ" "公開鍵で処理"
+node kms 1.6 0 accent "KMS" "秘密鍵はHSM内に保管"
+node secret 3.2 0 ok "共有の秘密" "32バイト"
+edge client kms "暗号文を送る"
+edge kms secret "Decapsulateで復元"
+<figcaption>図2 ML-KEMで共有の秘密を取り決める流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>公開鍵で作った暗号文から、KMS内の秘密鍵を使って共有の秘密を復元します(Decapsulate API)。秘密鍵は認証済みのHSM(専用の暗号ハードウェア)から出ません。公開鍵は GetPublicKey で取り出して取引先やアプリに配れます。</dd>
+<dt>試験・実務への影響</dt><dd>現時点で試験の中心ではありませんが、KMSで扱える鍵の種類が増えたと押さえておけば十分です。中東(UAE・バーレーン)と中国を除くKMSの提供リージョンで使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/kms.html">KMS</a>、<a href="../terms/encryption.html">暗号化</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/kms-ml-kem-post-quantum/">AWS Key Management Service now supports ML-KEM for post-quantum key encapsulation</a>(2026-10-26)</dd>
+</dl>
+
+<h3 id="n3">IAM Identity Center:リージョンをまたぐ信頼されたID伝播</h3>
+<p>信頼されたID伝播(Trusted identity propagation)は、利用者本人のIDとグループ情報をリクエストと一緒に運び、AWSサービス側が「誰がアクセスしたか」で権限を決め、記録できるようにする仕組みです。これまでは関係するサービスがすべて同じリージョンにある必要がありました。今回、別リージョンのサービスにもIDを引き継げるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "同じリージョン内のみ" "別リージョンは広いIAMロール"
+node after 1.6 0 ok "これから" "リージョンをまたいで" "利用者本人のIDを伝播"
+edge before after "リージョン越えに対応"
+<figcaption>図3 信頼されたID伝播の範囲</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>計算とデータを別リージョンに置く、空いている場所で処理する、災害対策で分けるといった構成でも、個人単位の細かな権限と監査記録を保てます。これまでの回避策だった「個人を区別できない広いIAMロール」や「1リージョンへの集約」が不要になります。</dd>
+<dt>試験・実務への影響</dt><dd>最小権限と監査の考え方が、マルチリージョン構成でも保てるようになった、という整理で十分です。IAM Identity Centerを提供するすべてのリージョンで、追加料金なしで使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/identity-center.html">IAM Identity Center</a>、<a href="../services/iam.html">IAM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-iam-identity-center-cross-region-tip/">AWS IAM Identity Center now supports cross-Region trusted identity propagation</a>(2026-10-26)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2>3. その他の発表</h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-rds-supports-latest-cumulative-update-gdr-microsoft-sql-server/">RDS:SQL Serverの最新の更新に対応</a>:2017・2019・2022・2025の各バージョンの最新の累積更新とGDRが使えるようになり、コンソールやCLIで適用を勧めている。</li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/openai-gpt-6-1-terra-on-amazon-bedrock/">Bedrock:GPT-6.1 Terraが一般提供</a>:性能と速度、費用のバランスをとったモデルが、Bedrockから利用できるようになった。</li>
+</ul>
+</section>
