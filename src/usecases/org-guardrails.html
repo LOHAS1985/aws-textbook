@@ -2,11 +2,61 @@
 <!-- category: セキュリティ・コンプライアンス -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>組織内のすべてのアカウントで、「東京・大阪以外のリージョンを使わせない」「CloudTrailを止めさせない」といったルールを強制したい。あわせて、全アカウントの操作履歴と設定の準拠状況を管理アカウントでまとめて確認したい。</p>
+<ul>
+<li>全アカウントで「<strong>東京・大阪以外のリージョンを使わせない</strong>」「<strong>CloudTrailを止めさせない</strong>」を強制したい。</li>
+<li>全アカウントの操作の記録と、設定の準拠状況をまとめて確認したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node mgmt 0 1 accent "管理アカウント" "Organizations"
+node scp 1.4 0 blank "①" "禁止事項を設定"
+node trail 1.4 1 blank "②" "全アカウントを記録"
+node cfg 1.4 2 box "Config" "組織全体のルール"
+node ou 2.8 1 ok "メンバーアカウント" "OU配下すべて"
+edge mgmt scp
+edge mgmt trail
+edge mgmt cfg
+edge scp ou "上限"
+edge trail ou "記録"
+edge cfg ou "評価"
+<figcaption>図1 組織のガードレールの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="scp">
+<p class="ex-q">① 全アカウントで、特定のリージョンや操作を禁止するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="SCP">サービスコントロールポリシー(SCP)<span class="ex-why">OU配下のアカウントの権限の上限を決めます。IAMで許可していても、SCPで拒否された操作はできません。</span></li>
+<li data-short="IAMポリシー">各アカウントのIAMポリシー<span class="ex-why">アカウントの管理者が書き換えられるため、組織として強制できません。</span></li>
+<li data-short="セキュリティG">セキュリティグループ<span class="ex-why">通信を制限するもので、APIの操作は禁止できません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="trail">
+<p class="ex-q">② 全アカウントの操作を記録し、メンバーが止められないようにするものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="組織の証跡">CloudTrailの組織の証跡<span class="ex-why">管理アカウントで作り、メンバーアカウントからは停止・削除できません。</span></li>
+<li data-short="Logs Insights">CloudWatch Logs Insights<span class="ex-why">ログを検索するもので、操作の記録は作りません。</span></li>
+<li data-short="Health">AWS Health<span class="ex-why">AWS側のイベントの通知で、利用者の操作は記録しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ SCPについて正しいものは?</p>
+<ul class="ex-choices">
+<li data-ok>権限を与えず、上限を決めるだけ<span class="ex-why">実際に操作するには、IAMでの許可も必要です(<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>)。</span></li>
+<li>SCPで許可すれば、IAMの許可がなくても操作できる<span class="ex-why">SCPは許可を与えません。</span></li>
+<li>管理アカウントにも適用される<span class="ex-why">SCPは管理アカウントには適用されません。管理アカウントで日常の作業をしないのはこのためです。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p><strong>SCP</strong>で禁止事項の上限を決め、<strong>組織の証跡</strong>で操作を記録し、Configの組織全体のルールで設定を評価します。Security Hubを委任管理者のアカウントで有効にすると、組織全体の検出結果もまとめて確認できます(<a href="../terms/compliance-artifact.html">コンプライアンスとAWS Artifact</a>)。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node mgmt 0 1 accent "管理アカウント" "Organizations"
@@ -20,12 +70,12 @@ edge mgmt cfg
 edge scp ou "上限"
 edge trail ou "記録"
 edge cfg ou "評価"
-<figcaption>図1 管理アカウントから、SCPで「やってはいけないこと」の上限を決め、CloudTrailの組織の証跡で操作を記録し、Configのルールで設定を評価する。どれもOU配下の全アカウントに適用される。</figcaption>
+<figcaption>図2 管理アカウントから、SCPで「やってはいけないこと」の上限を決め、CloudTrailの組織の証跡で操作を記録し、Configのルールで設定を評価する。どれもOU配下の全アカウントに適用される。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/organizations.html">AWS Organizations</a>:OUとSCP(サービスコントロールポリシー)</li>
 <li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:組織の証跡で全アカウントのAPI操作を記録する</li>
@@ -36,7 +86,7 @@ edge cfg ou "評価"
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>Organizationsでアカウントを OU(本番・開発など)に整理する</li>
 <li>SCPを作成し(例:許可リージョン以外の操作を拒否、CloudTrailの停止を拒否)、ルートまたはOUに適用する</li>
@@ -46,11 +96,12 @@ edge cfg ou "評価"
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>SCPは権限を<strong>与えない</strong>。上限(ガードレール)を決めるだけで、実際に操作するにはIAMでの許可も必要。</li>
 <li>IAMで許可しても、<strong>SCPで拒否されていれば実行できない</strong>。</li>
 <li>SCPは管理アカウントには適用されない。</li>
 <li>組織の証跡は、メンバーアカウント側から停止・削除できない。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/root-user.html">ルートユーザーとアカウントの保護</a>、<a href="../services/control-tower.html">AWS Control Tower</a></p>
 </section>

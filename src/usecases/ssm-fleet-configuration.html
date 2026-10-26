@@ -2,11 +2,60 @@
 <!-- category: デプロイ・自動化 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>数百台のEC2すべてに、CloudWatchエージェントを入れて同じ設定にしておきたい。新しく起動したインスタンスにも自動で入り、誰かが止めたり設定を変えたりしても<strong>決めた状態に戻る</strong>ようにしたい。SSHでログインして1台ずつ作業するのはやめたい。</p>
+<ul>
+<li>数百台のEC2に、CloudWatchエージェントを入れて<strong>同じ設定</strong>にしておきたい。</li>
+<li>新しく起動したインスタンスにも自動で入り、<strong>設定が変えられても元に戻したい</strong>。</li>
+<li>SSHでログインして1台ずつ作業するのはやめたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node sm 0 0.5 blank "①" "状態を維持"
+node rc 0 1.6 blank "②" "1回だけの作業"
+node t 1.5 1 blue "タグで選択" "Env=prod"
+node e1 3 0.5 ok "EC2(Web)" "SSMエージェント"
+node e2 3 1.5 ok "EC2(App)" "SSMエージェント"
+edge sm t "定期的に適用"
+edge rc t dash
+edge t e1
+edge t e2
+<figcaption>図1 多数のEC2の一括管理の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="sm">
+<p class="ex-q">① 決めた状態を、新しいインスタンスにも定期的に適用し続けるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="State Manager">Systems Manager State Manager<span class="ex-why">関連付けで、対象とスケジュールを決めて状態を適用し続けます。設定が変えられても次の適用で戻ります。</span></li>
+<li data-short="ユーザーデータ">EC2のユーザーデータ<span class="ex-why">起動時に1回実行されるだけで、その後の変更は元に戻せません。</span></li>
+<li data-short="Inventory">Systems Manager Inventory<span class="ex-why">導入済みのソフトなどの一覧を集めるだけで、設定は適用しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="rc">
+<p class="ex-q">② その場で1回だけ、全台にコマンドを実行するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Run Command">Systems Manager Run Command<span class="ex-why">SSHなしで、タグで選んだインスタンスにコマンドを一括実行します。同時実行数とエラーのしきい値も決められます。</span></li>
+<li data-short="Session Manager">Session Manager<span class="ex-why">1台ずつ対話的に操作するもので、一括実行には向きません。</span></li>
+<li data-short="CloudShell">AWS CloudShell<span class="ex-why">ブラウザでAWS CLIを使う環境で、インスタンスの中でコマンドは実行しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ Systems Managerの一覧にインスタンスが出ない原因は?</p>
+<ul class="ex-choices">
+<li data-ok>SSMエージェント・IAMロール・SSMへの経路のどれかが欠けている<span class="ex-why">インスタンスプロファイルに <code>AmazonSSMManagedInstanceCore</code> を付け、NATかVPCエンドポイントでSSMに届くようにします(<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>)。</span></li>
+<li>キーペアが設定されていない<span class="ex-why">Systems ManagerはSSHを使わないので、キーペアは不要です。</span></li>
+<li>セキュリティグループで22番を開けていない<span class="ex-why">エージェントは外向きのHTTPSでつなぐため、受信のポートは不要です。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p>状態の維持は<strong>State Manager</strong>、その場の作業は<strong>Run Command</strong>で行います。対象はインスタンスIDではなくタグで指定すると、台数が増えても設定を変えずに済みます。操作の記録はCloudTrail、コマンドの出力はS3やCloudWatch Logsに残ります。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node sm 0 0.5 accent "State Manager" "関連付け"
@@ -20,12 +69,12 @@ edge rc t dash
 edge t e1
 edge t e2
 edge e1 s3 dash
-<figcaption>図1 Systems Managerによる一括管理。State Managerの関連付けで、タグで選んだインスタンスに決めた状態を定期的に適用し続ける。1回だけの作業はRun Commandで実行する。実行結果はS3やCloudWatch Logsに残す。</figcaption>
+<figcaption>図2 Systems Managerによる一括管理。State Managerの関連付けで、タグで選んだインスタンスに決めた状態を定期的に適用し続ける。1回だけの作業はRun Commandで実行する。実行結果はS3やCloudWatch Logsに残す。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/systems-manager.html">AWS Systems Manager</a>:State Manager(状態の維持)、Run Command(一括実行)、Distributor(ソフトのパッケージ配布)、Inventory(導入済みソフトの一覧)、Parameter Store(エージェントの設定)</li>
 <li><a href="../services/ec2.html">Amazon EC2</a>:SSMエージェントとIAMロール(マネージドノードにする)</li>
@@ -35,7 +84,7 @@ edge e1 s3 dash
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>インスタンスを<strong>マネージドノード</strong>にする:SSMエージェント(主要なAMIには導入済み)と、<code>AmazonSSMManagedInstanceCore</code> を含むIAMロール。アカウント全体で自動化するならデフォルトのホスト管理設定(DHMC)を使う</li>
 <li>プライベートサブネットなら、SSM用のVPCエンドポイント(<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>)かNATゲートウェイを用意する</li>
@@ -46,7 +95,7 @@ edge e1 s3 dash
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>決めた状態を<strong>維持し続ける</strong>(新しいインスタンスにも自動で適用)→ <strong class="em">State Manager</strong>。その場で1回実行 → <strong class="em">Run Command</strong>。</li>
 <li>Systems Managerの一覧にインスタンスが出ない → SSMエージェント・<strong>IAMロール</strong>・SSMのエンドポイントへの経路のどれかが原因。</li>
@@ -54,4 +103,5 @@ edge e1 s3 dash
 <li>レート制御で同時実行数とエラーのしきい値を決め、失敗が広がったら止める。</li>
 <li>SSHやキーペアは不要。操作の記録はCloudTrail、コマンドの出力はS3・CloudWatch Logsに残る。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/tags.html">タグ</a>、<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a></p>
 </section>

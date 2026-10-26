@@ -2,11 +2,60 @@
 <!-- category: ネットワーク・コンテンツ配信 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>アカウントごとにチームが自由にVPCを作った結果、CIDRが重なり、Transit GatewayやオンプレミスとつなげないVPCが出てきた。これから作るVPCは、<strong>決められたアドレス範囲から重ならないCIDRを自動で割り当て</strong>、使用状況も1か所で把握したい。</p>
+<ul>
+<li>チームが自由にVPCを作った結果、<strong>CIDRが重なり</strong>、つなげないVPCが出てきた。</li>
+<li>これから作るVPCには、決めた範囲から<strong>重ならないCIDRを自動で</strong>割り当てたい。</li>
+<li>使用状況を1か所で把握したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node ipam 0 0.5 blank "①" "委任管理者"
+node pl 1.4 0.5 box "本番プール" "10.0.0.0/12"
+node ram 2.8 0.5 blank "②" "OUへ共有"
+node v1 4.2 0 ok "VPC(A)" "/20を自動割当"
+node v2 4.2 1 ok "VPC(B)" "/20を自動割当"
+edge ipam pl
+edge pl ram
+edge ram v1
+edge ram v2
+<figcaption>図1 CIDRの払い出しの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ipam">
+<p class="ex-q">① 組織全体のIPアドレスのプールを管理し、重複を防ぐものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="IPAM">Amazon VPC IP Address Manager(IPAM)<span class="ex-why">プールの階層と割り当てのルールを決め、使用状況や重複を監視します(<a href="../terms/cidr.html">CIDR</a>)。</span></li>
+<li data-short="Route 53">Amazon Route 53<span class="ex-why">DNSのサービスで、IPアドレスの範囲は管理しません。</span></li>
+<li data-short="Transit GW">Transit Gateway<span class="ex-why">VPC同士をつなぐもので、CIDRが重ならないようにはしません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="ram">
+<p class="ex-q">② プールをほかのアカウントに共有するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="RAM">AWS Resource Access Manager(RAM)<span class="ex-why">プールをOUやアカウントに共有し、各アカウントがVPCの作成時に使えるようにします。</span></li>
+<li data-short="StackSets">CloudFormation StackSets<span class="ex-why">テンプレートを展開するもので、プールの共有はしません(VPCの作成には使えます)。</span></li>
+<li data-short="VPCピアリング">VPCピアリング<span class="ex-why">VPC同士の接続で、プールの共有ではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 既存のVPCのCIDRについて正しいものは?</p>
+<ul class="ex-choices">
+<li data-ok>CIDRは後から追加できるが、元のCIDRは変更できない<span class="ex-why">セカンダリCIDRで範囲は広げられますが、重なりは作り直さないと解消できません。作る前の計画が大切です。</span></li>
+<li>元のCIDRをいつでも変更できる<span class="ex-why">VPCの元のCIDRは変更できません。</span></li>
+<li>重なっていてもTransit Gatewayで問題なくつなげる<span class="ex-why">重なった範囲は正しくルーティングできません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p>委任管理者のアカウントで<strong>IPAM</strong>とプールを作り、<strong>RAM</strong>で本番のOUに共有します。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられます。プールの使用率はCloudWatchで監視し、枯渇の前に範囲を追加します。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node ipam 0 0.5 accent "IPAM" "委任管理者"
@@ -18,12 +67,12 @@ edge ipam pl
 edge pl ram
 edge ram v1
 edge ram v2
-<figcaption>図1 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。</figcaption>
+<figcaption>図2 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/ipam.html">Amazon VPC IP Address Manager(IPAM)</a>:プールの階層、割り当てルール、使用状況・重複の監視</li>
 <li><a href="../services/organizations.html">AWS Organizations</a>:IPAMの委任管理者、組織全体のリソースの検出</li>
@@ -34,7 +83,7 @@ edge ram v2
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>Organizationsの管理アカウントで、IPAMの委任管理者アカウントを指定する(高度なティアを使う)</li>
 <li>委任管理者でIPAMを作り、管理するリージョンを指定する。最上位のプール(例:<code>10.0.0.0/8</code>)の下に、リージョン・環境ごとのプールを作る</li>
@@ -45,7 +94,7 @@ edge ram v2
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>組織全体のVPCのCIDRの重複を防ぐ・一元管理する → <strong class="em">IPAM</strong>。他のアカウントへのプールの共有 → <strong>RAM</strong>。</li>
 <li>CIDRが重なったVPCどうしは、ピアリングやTransit Gatewayで正しくルーティングできない。後から直すのは大変なので、作る前に計画する。</li>
@@ -53,4 +102,5 @@ edge ram v2
 <li>VPCのCIDRは後から追加(セカンダリCIDR)できるが、元のCIDRは変更できない。</li>
 <li>プライベートのプールや他のアカウントへの割り当てには、IPAMの<strong>高度なティア</strong>が必要。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/vpc-connectivity.html">VPC同士をつなぐ方法の選び方</a></p>
 </section>

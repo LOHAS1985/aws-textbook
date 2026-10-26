@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,110 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>GitHubへのプッシュをきっかけに、ビルド・テストから本番デプロイまでを自動化したい。本番への切り替えはダウンタイムなしで行い、問題があればすぐ元に戻したい。</p>
+<ul>
+<li>GitHubへのプッシュをきっかけに、<strong>ビルド・テストから本番デプロイまで</strong>を自動化したい。</li>
+<li>本番の前に、人の確認を入れたい。</li>
+<li>本番の切り替えは<strong>ダウンタイムなし</strong>で行い、問題があればすぐ戻したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 798 312" style="max-width:798px;min-width:638px" role="img" aria-label="図1 CodePipelineがビルド・テスト・手動承認を経てCodeDeployを起動する。CodeDeployは新しいAuto Scalingグループ(Green)にアプリを配置し、ALBの向き先をBlueからGreenへ切り替える。"><defs><marker id="dgusecases-ec2-blue-green-pipeline-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 798 312" style="max-width:798px;min-width:638px" role="img" aria-label="図1 CI/CDとBlue/Greenデプロイの構成。"><defs><marker id="dgusecases-ec2-blue-green-pipeline-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="git">
+<rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="62" text-anchor="middle" class="dg-t">GitHub</text>
+<text x="104" y="80" text-anchor="middle" class="dg-s">プッシュ</text>
+</g>
+<g data-node="cp">
+<rect x="234" y="46" width="140" height="40" rx="8" class="dg-accent"/>
+<text x="304" y="70" text-anchor="middle" class="dg-tb">CodePipeline</text>
+</g>
+<g data-node="cb">
+<rect x="434" y="40" width="140" height="52" rx="8" class="dg-blank"/>
+<text x="504" y="62" text-anchor="middle" class="dg-t">①</text>
+<text x="504" y="80" text-anchor="middle" class="dg-s">ビルド・テスト</text>
+</g>
+<g data-node="ap">
+<rect x="634" y="46" width="140" height="40" rx="8" class="dg-box"/>
+<text x="704" y="70" text-anchor="middle" class="dg-t">手動承認</text>
+</g>
+<g data-node="cd">
+<rect x="634" y="142" width="140" height="52" rx="8" class="dg-blank"/>
+<text x="704" y="164" text-anchor="middle" class="dg-t">②</text>
+<text x="704" y="182" text-anchor="middle" class="dg-s">Blue/Green</text>
+</g>
+<g data-node="green">
+<rect x="434" y="142" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="504" y="164" text-anchor="middle" class="dg-t">Green</text>
+<text x="504" y="182" text-anchor="middle" class="dg-s">新しいASG</text>
+</g>
+<g data-node="blue">
+<rect x="434" y="236" width="140" height="52" rx="8" class="dg-box"/>
+<text x="504" y="258" text-anchor="middle" class="dg-t">Blue</text>
+<text x="504" y="276" text-anchor="middle" class="dg-s">旧ASG</text>
+</g>
+<g data-node="alb">
+<rect x="234" y="189" width="140" height="52" rx="8" class="dg-box"/>
+<text x="304" y="211" text-anchor="middle" class="dg-t">ALB</text>
+<text x="304" y="229" text-anchor="middle" class="dg-s">向き先を切替</text>
+</g>
+<g data-node="u">
+<rect x="34" y="195" width="140" height="40" rx="8" class="dg-blue"/>
+<text x="104" y="219" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<path d="M174.0,66.5 L234.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M374.0,66.5 L434.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M574.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M704.0,86.5 L704.0,142.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M634.0,168.5 L574.0,168.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<text x="604" y="172" text-anchor="middle" class="dg-s dg-halo">デプロイ</text>
+<path d="M174.0,215.2 L234.0,215.2" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M374.0,198.9 L434.0,184.9" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<text x="404" y="196" text-anchor="middle" class="dg-s dg-halo">切替後</text>
+<path d="M374.0,231.6 L434.0,245.6" class="dg-line dg-dash" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<text x="404" y="243" text-anchor="middle" class="dg-s dg-halo">切替前</text>
+</svg>
+</div>
+<figcaption>図1 CI/CDとBlue/Greenデプロイの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="cb">
+<p class="ex-q">① buildspec.yml に従ってビルド・テストするものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="CodeBuild">AWS CodeBuild<span class="ex-why">サーバーを用意せずに、buildspec.yml の手順でビルドとテストを実行します。</span></li>
+<li data-short="CodeArtifact">AWS CodeArtifact<span class="ex-why">ライブラリなどのパッケージを保管するサービスで、ビルドは実行しません。</span></li>
+<li data-short="CloudFormation">AWS CloudFormation<span class="ex-why">インフラを作るサービスで、アプリのビルド・テストはしません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="cd">
+<p class="ex-q">② 新しいAuto Scalingグループに配置し、ALBの向き先を切り替えるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="CodeDeploy">AWS CodeDeploy(Blue/Green)<span class="ex-why">新しい環境(Green)に appspec.yml の手順で配置し、ALBの通信を切り替えます。旧環境(Blue)を残せるので戻しやすいです。</span></li>
+<li data-short="Image Builder">EC2 Image Builder<span class="ex-why">AMIを作るサービスで、通信の切り替えはしません。</span></li>
+<li data-short="Run Command">Systems Manager Run Command<span class="ex-why">コマンドを一括実行できますが、Blue/Greenの切り替えや自動ロールバックの仕組みはありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 本番の前に人の確認を入れるには?</p>
+<ul class="ex-choices">
+<li data-ok>CodePipelineに手動承認のアクションを入れる<span class="ex-why">承認されるまでパイプラインが止まり、承認者にはSNSで通知できます。</span></li>
+<li>CodeBuildのテストを増やす<span class="ex-why">自動のテストで、人の確認にはなりません。</span></li>
+<li>本番だけ手作業でデプロイする<span class="ex-why">自動化の要件に合わず、手順のばらつきも出ます。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>CodePipeline</strong>がSource → <strong>CodeBuild</strong> → 手動承認 → <strong>CodeDeploy</strong>の順に進めます。Blue/Greenは旧環境を残せるのでロールバックが容易です。リソースを増やしたくない場合はIn-placeも選べますが、更新中は台数が減ります(<a href="../terms/deploy-strategies.html">デプロイ戦略</a>)。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 798 312" style="max-width:798px;min-width:638px" role="img" aria-label="図2 CodePipelineがビルド・テスト・手動承認を経てCodeDeployを起動する。CodeDeployは新しいAuto Scalingグループ(Green)にアプリを配置し、ALBの向き先をBlueからGreenへ切り替える。"><defs><marker id="dgusecases-ec2-blue-green-pipeline-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="git">
 <rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="62" text-anchor="middle" class="dg-t">GitHub</text>
@@ -92,25 +188,25 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <rect x="34" y="195" width="140" height="40" rx="8" class="dg-blue"/>
 <text x="104" y="219" text-anchor="middle" class="dg-t">利用者</text>
 </g>
-<path d="M174.0,66.5 L234.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
-<path d="M374.0,66.5 L434.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
-<path d="M574.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
-<path d="M704.0,86.5 L704.0,142.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
-<path d="M634.0,168.5 L574.0,168.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M174.0,66.5 L234.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-2)"/>
+<path d="M374.0,66.5 L434.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-2)"/>
+<path d="M574.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-2)"/>
+<path d="M704.0,86.5 L704.0,142.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-2)"/>
+<path d="M634.0,168.5 L574.0,168.5" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-2)"/>
 <text x="604" y="172" text-anchor="middle" class="dg-s dg-halo">デプロイ</text>
-<path d="M174.0,215.2 L234.0,215.2" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
-<path d="M374.0,198.9 L434.0,184.9" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M174.0,215.2 L234.0,215.2" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-2)"/>
+<path d="M374.0,198.9 L434.0,184.9" class="dg-line" marker-end="url(#dgusecases-ec2-blue-green-pipeline-2)"/>
 <text x="404" y="196" text-anchor="middle" class="dg-s dg-halo">切替後</text>
-<path d="M374.0,231.6 L434.0,245.6" class="dg-line dg-dash" marker-end="url(#dgusecases-ec2-blue-green-pipeline-1)"/>
+<path d="M374.0,231.6 L434.0,245.6" class="dg-line dg-dash" marker-end="url(#dgusecases-ec2-blue-green-pipeline-2)"/>
 <text x="404" y="243" text-anchor="middle" class="dg-s dg-halo">切替前</text>
 </svg>
 </div>
-<figcaption>図1 CodePipelineがビルド・テスト・手動承認を経てCodeDeployを起動する。CodeDeployは新しいAuto Scalingグループ(Green)にアプリを配置し、ALBの向き先をBlueからGreenへ切り替える。</figcaption>
+<figcaption>図2 CodePipelineがビルド・テスト・手動承認を経てCodeDeployを起動する。CodeDeployは新しいAuto Scalingグループ(Green)にアプリを配置し、ALBの向き先をBlueからGreenへ切り替える。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/codepipeline.html">AWS CodePipeline</a>:Source → Build → Approval → Deploy の流れを自動化する</li>
 <li><a href="../services/codebuild.html">AWS CodeBuild</a>:buildspec.ymlに従ってビルド・テストする</li>
@@ -121,7 +217,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>ソースにbuildspec.yml(ビルド手順)とappspec.yml(デプロイ手順・フック)を置く</li>
 <li>CodeDeployのアプリケーションとデプロイグループを作成し、デプロイ方式をBlue/Greenにする</li>
@@ -131,42 +227,38 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>本番前に人の確認を入れる → <strong>Manual Approval Action</strong>。</li>
 <li>Blue/Greenは旧環境(Blue)を残しておけるので、<strong>ロールバックが非常に容易</strong>(<a href="../terms/deploy-strategies.html">デプロイ戦略</a>)。</li>
 <li>デプロイ後の動作確認は、appspec.ymlの <code>ValidateService</code> などのフックで行う。</li>
 <li>リソースを増やしたくない場合はIn-place(OneAtATimeなど)も選べるが、更新中は台数が減る。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/terraform-git.html">TerraformとGit</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/ec2-blue-green-pipeline.html"><span class="title">EC2のアプリをBlue/Greenでデプロイする構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
+<summary>つながり図を開く(リンク先 7件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="EC2のアプリをCI/CDでBlue/Greenデプロイするとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 246" style="max-width:784px;min-width:600px" role="img" aria-label="EC2のアプリをCI/CDでBlue/Greenデプロイするとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/codebuild.html"><title>サービス:AWS CodeBuild</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CodeBuild</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/codedeploy.html"><title>サービス:AWS CodeDeploy</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CodeDeploy</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS CodePipeline</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Elastic Load Balancing (E…</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
-<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">デプロイ戦略</text></a>
-<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">EC2のアプリをCI/CD…</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">TerraformとGit</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">デプロイ戦略</text></a>
+<rect x="300" y="115" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="140" text-anchor="middle" class="gr-tb">EC2のアプリをCI/CD…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -180,5 +272,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 160.0, "rowh": 85.0, "nodes": [{"id": "git", "label": "GitHub", "sub": "プッシュ", "x": 0.0, "y": 0.0}, {"id": "cp", "label": "CodePipeline", "sub": "", "x": 1.25, "y": 0.0}, {"id": "cb", "label": "CodeBuild", "sub": "", "x": 2.5, "y": 0.0}, {"id": "ap", "label": "手動承認", "sub": "", "x": 3.75, "y": 0.0}, {"id": "cd", "label": "CodeDeploy", "sub": "", "x": 3.75, "y": 1.2}, {"id": "green", "label": "Green", "sub": "新しいASG", "x": 2.5, "y": 1.2}, {"id": "blue", "label": "Blue", "sub": "旧ASG", "x": 2.5, "y": 2.3}, {"id": "alb", "label": "ALB", "sub": "向き先を切替", "x": 1.25, "y": 1.75}, {"id": "u", "label": "利用者", "sub": "", "x": 0.0, "y": 1.75}], "edges": [["git", "cp", false, false], ["cp", "cb", false, false], ["cb", "ap", false, false], ["ap", "cd", false, false], ["cd", "green", false, false], ["u", "alb", false, false], ["alb", "green", false, false], ["alb", "blue", true, false]], "distractors": ["CloudFormation", "CodeArtifact", "Image Builder", "Run Command"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

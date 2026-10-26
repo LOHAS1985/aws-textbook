@@ -2,11 +2,62 @@
 <!-- category: ネットワーク・コンテンツ配信 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>プライベートサブネットのサーバーは、NATゲートウェイ経由でインターネットのどこにでもつながってしまう。マルウェアに感染した場合に、外部の指令サーバーへの接続やデータの持ち出しをされないよう、<strong>OSのアップデートなど必要な宛先(ドメイン)だけ</strong>に外向きの通信を絞りたい。</p>
+<ul>
+<li>プライベートサブネットのサーバーが、NAT経由で<strong>インターネットのどこにでもつながってしまう</strong>。</li>
+<li>OSのアップデートなど、<strong>必要なドメインだけ</strong>に外向きの通信を絞りたい。</li>
+<li>不正なドメインは、名前解決の段階でも止めたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node ec2 0 0.5 blue "EC2" "プライベート"
+node dns 0 1.6 blank "②" "不正ドメインを拒否"
+node nat 1.3 0.5 box "NATゲートウェイ"
+node fw 2.6 0.5 blank "①" "許可ドメインのみ"
+node igw 3.9 0 ok "インターネット" "許可した宛先"
+node bad 3.9 1 ng "その他の宛先" "ブロック"
+edge ec2 nat
+edge ec2 dns "名前解決" dash
+edge nat fw
+edge fw igw
+edge fw bad dash
+<figcaption>図1 外向きの通信の制限の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="fw">
+<p class="ex-q">① 許可したドメイン以外への外向きの通信を止めるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="NW Firewall">AWS Network Firewall<span class="ex-why">ステートフルルールのドメインリストで、TLSのSNIやHTTPのHostヘッダーから宛先のドメインを判定します。</span></li>
+<li data-short="セキュリティG">セキュリティグループ<span class="ex-why">IPアドレスとポートでしか制御できず、ドメイン名では絞れません(<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>)。</span></li>
+<li data-short="AWS WAF">AWS WAF<span class="ex-why">外から来るWebのリクエストを守るもので、サーバーから外への通信は制限しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="dns">
+<p class="ex-q">② 不正なドメインの名前解決を止めるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="DNS Firewall">Route 53 Resolver DNS Firewall<span class="ex-why">AWS管理のドメインリストなどで、マルウェアのドメインの名前解決をブロックします(<a href="../terms/dns.html">DNS</a>)。</span></li>
+<li data-short="プライベートHZ">Route 53のプライベートホストゾーン<span class="ex-why">VPCの中だけで使う名前を定義するもので、外部のドメインのブロックはしません。</span></li>
+<li data-short="GuardDuty">Amazon GuardDuty<span class="ex-why">不審な通信を検出しますが、名前解決は止めません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ Network Firewallで通信を検査するために必要な設定は?</p>
+<ul class="ex-choices">
+<li data-ok>ルートテーブルで、通信がファイアウォールのエンドポイントを通るようにする<span class="ex-why">ルートで通さないと検査されません。行きと戻りの経路を同じにします(<a href="../terms/route-table.html">ルートテーブル</a>)。</span></li>
+<li>ファイアウォールを作るだけでよい<span class="ex-why">ルートを変えないと、通信はファイアウォールを通りません。</span></li>
+<li>EC2にエージェントを入れる<span class="ex-why">Network Firewallはエージェントを使いません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p><strong>DNS Firewall</strong>で不正なドメインの名前解決を止め、<strong>Network Firewall</strong>で許可したドメイン以外への通信を止めます。インスタンスが外部のDNSサーバーを直接使うとDNS Firewallを迂回されるので、53番の外向きの通信もファイアウォールで止めます。エンドポイントはAZごとに置きます(<a href="../terms/outbound-traffic.html">アウトバウンド通信</a>)。</p>
 <figure class="figure" data-diagram>
 grid 165 80
 node ec2 0 0.5 blue "EC2" "プライベート"
@@ -20,12 +71,12 @@ edge ec2 dns "名前解決" dash
 edge nat fw
 edge fw igw
 edge fw bad dash
-<figcaption>図1 外向きの通信の制限。DNS Firewallで不正なドメインの名前解決を止め、Network Firewallで許可したドメイン以外への通信を止める。ルートテーブルで、インターネットへの通信がファイアウォールのエンドポイントを通るようにする。</figcaption>
+<figcaption>図2 外向きの通信の制限。DNS Firewallで不正なドメインの名前解決を止め、Network Firewallで許可したドメイン以外への通信を止める。ルートテーブルで、インターネットへの通信がファイアウォールのエンドポイントを通るようにする。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/network-firewall.html">AWS Network Firewall</a>:ステートフルルールのドメインリスト(TLSのSNI・HTTPのHostヘッダーで判定)で許可リスト方式の制限</li>
 <li><a href="../services/dns-firewall.html">Route 53 Resolver DNS Firewall</a>:AWS管理のドメインリストで、マルウェアなどのドメインの名前解決をブロック</li>
@@ -36,7 +87,7 @@ edge fw bad dash
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>各AZにファイアウォール用のサブネットを作り、Network Firewallのエンドポイントを置く</li>
 <li>ルートテーブルを設定する:ワークロード → NATゲートウェイ → ファイアウォールエンドポイント → インターネットゲートウェイの順に通り、戻りの通信もファイアウォールを通るようにする</li>
@@ -47,7 +98,7 @@ edge fw bad dash
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>ドメイン名で外向きの通信を絞る、IDS/IPS → <strong class="em">Network Firewall</strong>。DNSの問い合わせの段階で止める → <strong class="em">DNS Firewall</strong>。</li>
 <li>Network Firewallは、<strong>ルートテーブル</strong>で通信をエンドポイントに通さないと検査されない。行きと戻りの経路を対称にする。</li>

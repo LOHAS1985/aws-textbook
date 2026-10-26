@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,87 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>DynamoDBのテーブルで、アクセスの急増時に <code>ProvisionedThroughputExceededException</code>(スロットリング)が出る。負荷に合わせて容量が増減するようにしたい。また、バグで大量のデータを上書きしてしまったときに、<strong>直前の状態に戻せる</strong>ようにしたい。</p>
+<ul>
+<li>アクセスの急増時に、DynamoDBで<strong>スロットリング</strong>が出る。</li>
+<li>負荷に合わせて容量が自動で増減するようにしたい。</li>
+<li>バグで大量のデータを上書きしたときに、<strong>直前の状態に戻したい</strong>。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 905 194" style="max-width:905px;min-width:724px" role="img" aria-label="図1 DynamoDBのスケーリングと復旧。プロビジョンドモードでは自動スケーリングが使用率を目標に保つ。PITRを有効にしておくと、過去35日以内の任意の時点の状態を新しいテーブルとして復元できる。"><defs><marker id="dgusecases-dynamodb-scaling-recovery-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 905 194" style="max-width:905px;min-width:724px" role="img" aria-label="図1 DynamoDBのスケーリングと復旧の構成。"><defs><marker id="dgusecases-dynamodb-scaling-recovery-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">再試行あり</text>
+</g>
+<g data-node="t">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">DynamoDB</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">テーブル</text>
+</g>
+<g data-node="as">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">自動スケーリング</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">使用率70%を維持</text>
+</g>
+<g data-node="pitr">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">①</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">秒単位で戻す</text>
+</g>
+<g data-node="nt">
+<rect x="731" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="806" y="140" text-anchor="middle" class="dg-t">新しいテーブル</text>
+<text x="806" y="158" text-anchor="middle" class="dg-s">そこに復元</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-1)"/>
+<path d="M510.0,76.6 L422.0,91.4" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-1)"/>
+<text x="466" y="88" text-anchor="middle" class="dg-s dg-halo">容量を調整</text>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-1)"/>
+<path d="M660.0,144.0 L731.0,144.0" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-1)"/>
+</svg>
+</div>
+<figcaption>図1 DynamoDBのスケーリングと復旧の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="pitr">
+<p class="ex-q">① 過去35日以内の任意の時点に戻せる機能は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="PITR">ポイントインタイムリカバリ(PITR)<span class="ex-why">有効にしておくと、秒単位で指定した時点の状態を、新しいテーブルとして復元できます。</span></li>
+<li data-short="グローバルテーブル">グローバルテーブル<span class="ex-why">別のリージョンに複製する機能で、誤った上書きも複製されてしまいます。</span></li>
+<li data-short="DAX">DynamoDB Accelerator(DAX)<span class="ex-why">読み取りを速くするキャッシュで、復旧の機能はありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② 予測できない急増に最も強いキャパシティモードは?</p>
+<ul class="ex-choices">
+<li data-ok>オンデマンドモード<span class="ex-why">リクエストに応じて自動で処理し、容量の設定が不要です。自動スケーリングは反応に数分かかります。</span></li>
+<li>プロビジョンドモード(自動スケーリングなし)<span class="ex-why">設定した容量を超えるとスロットリングします。</span></li>
+<li>読み取りキャパシティだけを増やす<span class="ex-why">書き込みのスロットリングは解消しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ PITRで復元したあとに、手作業で設定し直すものは?</p>
+<ul class="ex-choices">
+<li data-ok>自動スケーリング・IAMポリシー・アラームなど<span class="ex-why">復元先は新しいテーブルなので、これらは引き継がれません。アプリの接続先の切り替えも必要です。</span></li>
+<li>テーブルのデータ<span class="ex-why">データは指定した時点の状態で復元されます。</span></li>
+<li>何もない(元のテーブルが上書きされる)<span class="ex-why">PITRは元のテーブルを上書きせず、新しいテーブルに復元します。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>急増にはオンデマンドモード、または自動スケーリングで容量を保ちます。特定のキーにアクセスが集中すると、全体の容量に余裕があってもスロットリングするので、キーの設計も見直します。誤った上書きには<strong>PITR</strong>で新しいテーブルに復元し、アプリの接続先を切り替えます(<a href="../terms/throttling-retry.html">スロットリングとリトライ</a>)。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 194" style="max-width:905px;min-width:724px" role="img" aria-label="図2 DynamoDBのスケーリングと復旧。プロビジョンドモードでは自動スケーリングが使用率を目標に保つ。PITRを有効にしておくと、過去35日以内の任意の時点の状態を新しいテーブルとして復元できる。"><defs><marker id="dgusecases-dynamodb-scaling-recovery-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="app">
 <rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="100" text-anchor="middle" class="dg-t">アプリ</text>
@@ -75,19 +148,19 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="806" y="140" text-anchor="middle" class="dg-t">新しいテーブル</text>
 <text x="806" y="158" text-anchor="middle" class="dg-s">そこに復元</text>
 </g>
-<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-1)"/>
-<path d="M510.0,76.6 L422.0,91.4" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-1)"/>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-2)"/>
+<path d="M510.0,76.6 L422.0,91.4" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-2)"/>
 <text x="466" y="88" text-anchor="middle" class="dg-s dg-halo">容量を調整</text>
-<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-1)"/>
-<path d="M660.0,144.0 L731.0,144.0" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-1)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-2)"/>
+<path d="M660.0,144.0 L731.0,144.0" class="dg-line" marker-end="url(#dgusecases-dynamodb-scaling-recovery-2)"/>
 </svg>
 </div>
-<figcaption>図1 DynamoDBのスケーリングと復旧。プロビジョンドモードでは自動スケーリングが使用率を目標に保つ。PITRを有効にしておくと、過去35日以内の任意の時点の状態を新しいテーブルとして復元できる。</figcaption>
+<figcaption>図2 DynamoDBのスケーリングと復旧。プロビジョンドモードでは自動スケーリングが使用率を目標に保つ。PITRを有効にしておくと、過去35日以内の任意の時点の状態を新しいテーブルとして復元できる。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:キャパシティモード(オンデマンド/プロビジョンド)、自動スケーリング、PITR、オンデマンドバックアップ、グローバルテーブル</li>
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:<code>ThrottledRequests</code>・消費キャパシティの監視</li>
@@ -96,7 +169,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>アクセスが予測できない・急増する → <strong>オンデマンドモード</strong>にする。予測できて安定している → プロビジョンドモード+<strong>自動スケーリング</strong>(目標の使用率を設定)</li>
 <li>グローバルセカンダリインデックス(GSI)にも容量の設定が必要。GSIのスロットリングは元のテーブルへの書き込みも止める</li>
@@ -107,7 +180,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>予測できない急増 → <strong class="em">オンデマンドモード</strong>。自動スケーリングは反応に数分かかり、瞬間的な急増には間に合わないことがある。</li>
 <li>特定のキーにアクセスが集中する(ホットパーティション)と、全体の容量に余裕があってもスロットリングする。</li>
@@ -115,29 +188,27 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>PITRは過去<strong>35日以内</strong>(設定で1〜35日)の秒単位の時点に戻せる。</li>
 <li>読み取りの高速化・負荷の軽減 → DAX。マルチリージョンでの読み書き・リージョン障害への備え → グローバルテーブル。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/dr-strategies.html">DR戦略</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/dynamodb-scaling-recovery.html"><span class="title">DynamoDBのスケーリングと復旧の構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 3件・リンク元 0件)</summary>
+<summary>つながり図を開く(リンク先 5件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 126" style="max-width:784px;min-width:600px" role="img" aria-label="DynamoDBを負荷に合わせてスケールし、誤操作から復旧するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M480,75 C515.0,75 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="DynamoDBを負荷に合わせてスケールし、誤操作から復旧するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Backup</text></a>
-<path class="gr-line" d="M480,75 C515.0,75 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,75 C515.0,75 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon DynamoDB</text></a>
-<rect x="300" y="55" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="80" text-anchor="middle" class="gr-tb">DynamoDBを負荷に合…</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(3)</text>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="140" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/throttling-retry.html"><title>用語:スロットリングとリトライ</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">スロットリングとリトライ</text></a>
+<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">DynamoDBを負荷に合…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -151,5 +222,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "app", "label": "アプリ", "sub": "再試行あり", "x": 0.0, "y": 0.5}, {"id": "t", "label": "DynamoDB", "sub": "テーブル", "x": 1.4, "y": 0.5}, {"id": "as", "label": "自動スケーリング", "sub": "使用率70%を維持", "x": 2.8, "y": 0.0}, {"id": "pitr", "label": "PITR", "sub": "", "x": 2.8, "y": 1.0}, {"id": "nt", "label": "新しいテーブル", "sub": "そこに復元", "x": 4.1, "y": 1.0}], "edges": [["app", "t", false, false], ["as", "t", false, false], ["t", "pitr", false, false], ["pitr", "nt", false, false]], "distractors": ["DAX", "グローバルテーブル"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

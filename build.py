@@ -119,16 +119,19 @@ COLLECTIONS = [
     {
         "key": "usecases",
         "label": "運用シナリオ",
-        "desc": "やりたいこと別の構成例と、使うサービスの組み合わせ",
+        "desc": "やりたいこと別に、構成を自分で組み立ててから、解説で答えと考え方を確かめる(AWSアカウントは不要)",
         "categories": [
             "監視・ログ・自動修復", "信頼性・事業継続", "デプロイ・自動化",
             "セキュリティ・コンプライアンス", "ネットワーク・コンテンツ配信",
         ],
         "search": "やりたいこと・サービス名で絞り込み(例: バックアップ、パッチ)",
-        # 一言説明を書くと使うサービスが分かってしまうので、運用シナリオには lead を書かない。
-        # 一覧は分野ごとの番号付きリストにし、対応する構成演習へのリンクと結果を並べる
+        # 各ページは 2章で構成を組み立て(自由構成・穴埋め)、3章以降の解説は「解説を読む」で表示する(book/js/sim.js)。
+        # 一言説明を書くと使うサービスが分かってしまうので、lead は書かない。
+        # 一覧は分野ごとの番号付きリストにし、演習の結果を並べる
         "no_lead": True,
         "numbered": True,
+        "script": "sim.js",
+        "old_key": "exercises",  # 統合前の構成演習のURL(book/exercises/)は、このコレクションのページへ転送する
         "category_desc": {
             "監視・ログ・自動修復": "メトリクス・ログ・トレースで異常を見つけ、通知や自動修復・性能の改善につなげる",
             "信頼性・事業継続": "スケーリング・高可用性・バックアップ・災害対策",
@@ -155,24 +158,6 @@ COLLECTIONS = [
         ],
     },
     {
-        # 運用シナリオの構成を、空欄を選んで組み立てる演習。答え合わせは book/js/sim.js が行う。
-        # トップページ・ヘッダー・運用シナリオのページ末尾から案内する
-        "key": "exercises",
-        "label": "構成演習",
-        "desc": "要件を読み、空欄に入るサービスや設定を選んで構成を組み立てる演習(AWSアカウントは不要)",
-        "categories": [
-            "監視・ログ・自動修復", "信頼性・事業継続", "デプロイ・自動化",
-            "セキュリティ・コンプライアンス", "ネットワーク・コンテンツ配信",
-        ],
-        # 運用シナリオと同じく lead を書かず、分野ごとの番号付きリストにする(答えのサービス名を出さないため、
-        # 絞り込みもタイトル・分野だけが対象)
-        "no_lead": True,
-        "numbered": True,
-        "search": "やりたいことで絞り込み(例: バックアップ、パッチ)",
-        "order": [],  # 運用シナリオと同じ順番(下で設定する)
-        "script": "sim.js",
-    },
-    {
         # src/news/YYYY-MM-DD.html を毎日1件、クラウドの定期エージェントが追加する。
         # category は「YYYY年M月」。新しい日付から順に並べる
         "key": "news",
@@ -185,8 +170,6 @@ COLLECTIONS = [
     },
 ]
 _by_key = {c["key"]: c for c in COLLECTIONS}
-_by_key["exercises"]["order"] = _by_key["usecases"]["order"]
-_by_key["exercises"]["category_desc"] = _by_key["usecases"]["category_desc"]
 
 # SOA-C03の出題分野(試験ガイドより)。運用シナリオのカテゴリと同じ順番で対応させる。
 EXAM_DOMAINS = [
@@ -261,7 +244,6 @@ def load_pages(col, warnings, updated):
 BACKLINKS = [
     ("services", ["usecases"], "このサービスが登場する運用シナリオ"),
     ("terms", ["services", "usecases"], "この用語が出てくるページ"),
-    ("usecases", ["exercises"], "この構成を組み立てる演習"),
 ]
 
 
@@ -271,7 +253,7 @@ def add_backlinks(loaded):
     for target, sources, heading in BACKLINKS:
         for p in loaded.get(target, []):
             href = f'href="../{target}/{p["slug"]}.html'
-            refs = [(key, q) for key in sources for q in loaded.get(key, []) if href in q["body"]]
+            refs = [(key, q) for key in sources for q in loaded.get(key, []) if href in link_body(q)]
             if not refs:
                 continue
             items = "".join(
@@ -475,9 +457,9 @@ def render_page(col, pages, i):
 def exercise_graph(col, p):
     """構成演習の「自由構成」で使う正解の構成を、2章の図と問いから取り出して JSON で埋め込む。
     空欄(blank)のノードは正解の選択肢の名前に置き換え、不正解の選択肢は紛らわしい部品として渡す。"""
-    if col["key"] != "exercises":
-        return ""
     raw = p["raw"]
+    if 'class="ex-item"' not in raw:
+        return ""
     answers, distractors = {}, []
     for attrs, inner in re.findall(r'<div class="ex-item"([^>]*)>(.*?)</ul>\s*</div>', raw, re.S):
         node = re.search(r'data-node="([^"]+)"', attrs)
@@ -589,15 +571,12 @@ def render_collection_index(col, pages, loaded):
     if col.get("search") and pages:
         parts.append('<p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>\n'
                      + SEARCH_SCRIPT.replace("__HELPERS__", search_helpers()))
-    script = page_script(col) or ('<script src="../js/sim.js" defer></script>\n' if col.get("numbered") else "")
-    parts += ["</main>\n", script, TAIL]
+    parts += ["</main>\n", page_script(col), TAIL]
     return "".join(parts)
 
 
 def numbered_index(col, groups, loaded):
-    """運用シナリオ・構成演習の一覧。試験分野ごとに番号付きで並べる(番号は両方で同じ)。
-    運用シナリオには構成演習へのリンクを添える(演習の結果は sim.js が名前の横に表示する)。"""
-    exercises = {p["slug"] for p in loaded.get("exercises", [])} if col["key"] == "usecases" else set()
+    """運用シナリオの一覧。試験分野ごとに番号付きで並べる(演習の結果は sim.js が名前の横に表示する)。"""
     out = []
     for i, (category, items) in enumerate(groups, 1):
         domain = (f'<span class="uc-domain">分野{i}<span class="uc-weight">{EXAM_DOMAINS[i - 1][1]}%</span></span>'
@@ -608,10 +587,8 @@ def numbered_index(col, groups, loaded):
             out.append(f'<p class="cat-desc">{html.escape(col["category_desc"][category])}</p>\n')
         out.append('<ol class="uc-list">\n')
         for n, p in enumerate(items, 1):
-            ex = (f'<a class="uc-ex" href="../exercises/{p["slug"]}.html" '
-                  f'aria-label="「{html.escape(p["title"])}」の構成演習">演習</a>' if p["slug"] in exercises else "")
             out.append(f'  <li data-keys="{html.escape(search_keys(p, category))}"><a class="uc-link" href="{p["slug"]}.html">'
-                       f'<span class="uc-no">{i}-{n:02d}</span><span class="name">{html.escape(p["title"])}</span></a>{ex}</li>\n')
+                       f'<span class="uc-no">{i}-{n:02d}</span><span class="name">{html.escape(p["title"])}</span></a></li>\n')
         out.append("</ol>\n</section>\n")
     return "".join(out)
 
@@ -865,6 +842,14 @@ __HELPERS__
 """
 
 
+EX_ITEM_RE = re.compile(r'<div class="ex-item"[^>]*>.*?</ul>\s*</div>', re.S)
+
+
+def link_body(p):
+    """リンクを数えるための本文。構成演習の問い(不正解の選択肢の解説を含む)は除く。"""
+    return EX_ITEM_RE.sub("", p["body"])
+
+
 GRAPH_KEYS = ("services", "terms", "usecases")  # つながり図・用語のポップアップに使うコレクション
 LINK_RE = re.compile(r'href="(?:\.\./(services|terms|usecases)/)?([\w-]+)\.html')
 
@@ -875,7 +860,7 @@ def collect_links(loaded):
     pages = {(k, p["slug"]): p for k in GRAPH_KEYS for p in loaded[k]}
     out = {}
     for (key, slug), p in pages.items():
-        found = {(k or key, s) for k, s in LINK_RE.findall(p["body"])}
+        found = {(k or key, s) for k, s in LINK_RE.findall(link_body(p))}
         out[(key, slug)] = {t for t in found if t in pages and t != (key, slug)}
         p["uses"] = sorted(pages[t]["title"] for t in out[(key, slug)] if t[0] == "services")
     return out
@@ -965,7 +950,8 @@ BOOKLET_KEYS = ("services", "terms", "usecases")  # まとめ冊子(印刷・PDF
 def booklet_body(key, p):
     """冊子の1ページ分の本文。見出しの id にページの slug を付けて重ならないようにし、
     同じコレクションへのリンクは冊子の中の移動にする。"""
-    body, _ = add_heading_ids(stack_tables(p["core"]))
+    core = re.sub(r'<section class="chapter">(?:(?!</section>).)*class="ex-item".*?</section>\s*', "", p["core"], flags=re.S)
+    body, _ = add_heading_ids(stack_tables(core))
     ids = set(re.findall(r'\bid="([^"]+)"', body))
     slug = p["slug"]
 
@@ -1009,6 +995,22 @@ def render_booklet(col, pages):
                      + "</div>\n</div>\n" + booklet_body(key, p) + "\n</article>\n")
     parts += ["</main>\n", TO_TOP, TAIL]
     return "".join(parts)
+
+
+def write_redirects(col, pages):
+    """統合前のURL(book/{old_key}/)から、同じ slug の新しいページへ転送する。"""
+    old = OUT / col["old_key"]
+    if old.exists():
+        shutil.rmtree(old)
+    old.mkdir()
+    for slug in [p["slug"] for p in pages] + ["index"]:
+        url = f'../{col["key"]}/{slug}.html'
+        (old / f"{slug}.html").write_text(
+            '<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="UTF-8">\n'
+            f'<meta http-equiv="refresh" content="0; url={url}">\n<link rel="canonical" href="{url}">\n'
+            f'<title>{SITE_TITLE}</title>\n</head>\n<body>\n'
+            f'<p>このページは{col["label"]}に移りました。<a href="{url}">移動先を開く</a></p>\n</body>\n</html>\n',
+            encoding="utf-8")
 
 
 def official_url(kind, path):
@@ -1148,6 +1150,8 @@ def main():
         for i, p in enumerate(pages):
             (out_dir / f"{p['slug']}.html").write_text(render_page(col, pages, i), encoding="utf-8")
         (out_dir / "index.html").write_text(render_collection_index(col, pages, loaded), encoding="utf-8")
+        if col.get("old_key"):
+            write_redirects(col, pages)
     print_dir = OUT / "print"
     if print_dir.exists():
         shutil.rmtree(print_dir)

@@ -2,11 +2,57 @@
 <!-- category: セキュリティ・コンプライアンス -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>アカウントAのIAMユーザー/ロールから、<strong>アカウントBのリソース(S3バケットなど)を安全に操作</strong>したい。アカウントBにIAMユーザーを作ってアクセスキーを渡すのではなく、<strong>AWS STS</strong>でアカウントBのロールを引き受け、<strong>有効期限付きの一時的な認証情報</strong>(アクセスキー、シークレットキー、セッショントークン)を使ってアクセスします。</p>
+<ul>
+<li>アカウントAのロールから、<strong>アカウントBのS3バケット</strong>を操作したい。</li>
+<li>アカウントBにIAMユーザーを作って<strong>アクセスキーを渡すことはしたくない</strong>。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 180 90
+node user 0 0.5 blue "アカウントA" "IAMユーザー/ロール"
+node sts 1.4 0.5 blank "①" "一時的な認証情報"
+node role 2.8 0.5 accent "アカウントBのロール" "信頼+権限ポリシー"
+node s3 2.8 1.6 ok "アカウントBのS3" "ロールの権限で操作"
+edge user sts both
+edge sts role "確認"
+edge user s3 dash "操作"
+<figcaption>図1 クロスアカウントアクセスの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="sts">
+<p class="ex-q">① 別アカウントのロールを引き受け、一時的な認証情報を発行するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="AWS STS">AWS STS(AssumeRole)<span class="ex-why">有効期限付きのアクセスキー・シークレットキー・セッショントークンを発行します(<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>)。</span></li>
+<li data-short="KMS">AWS KMS<span class="ex-why">暗号化のキーを管理するサービスで、認証情報は発行しません。</span></li>
+<li data-short="Secrets Manager">AWS Secrets Manager<span class="ex-why">保存した秘密情報を渡せますが、長期のアクセスキーを渡すのと同じになります。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② 「アカウントAがこのロールを引き受けてよい」と決めるのは?</p>
+<ul class="ex-choices">
+<li data-ok>アカウントBのロールの信頼ポリシー<span class="ex-why">誰がロールを引き受けられるかを <code>Principal</code> で決めます。</span></li>
+<li>アカウントBのロールの権限ポリシー<span class="ex-why">引き受けたあとに何ができるかを決めるもので、誰が引き受けられるかではありません。</span></li>
+<li>アカウントBのSCP<span class="ex-why">権限の上限を決めるもので、引き受けを許可するものではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ AssumeRoleで AccessDenied になるとき、確認するものは?</p>
+<ul class="ex-choices">
+<li data-ok>アカウントA側の <code>sts:AssumeRole</code> の許可と、B側の信頼ポリシーの両方<span class="ex-why">別アカウントへのアクセスは、両方の側で許可されている必要があります(<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>)。</span></li>
+<li>アカウントBのS3バケットのバージョニング<span class="ex-why">ロールの引き受けには関係ありません。</span></li>
+<li>アカウントAのルートユーザーのMFA<span class="ex-why">ロールの引き受けの判定には関係ありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p>アカウントAが<strong>STS</strong>でアカウントBのロールを引き受け、ロールの<strong>信頼ポリシー</strong>で許可されていれば一時的な認証情報が返ります。その認証情報で、ロールの権限ポリシーの範囲でS3を操作します。CloudTrailには AssumedRole として記録されます。</p>
 <figure class="figure" data-diagram>
 grid 180 90
 node user 0 0.5 blue "アカウントA" "IAMユーザー/ロール"
@@ -17,7 +63,7 @@ group 2.8 0.5 2.8 1.6 "アカウントB" pad=12
 edge user sts both
 edge sts role "② 確認"
 edge user s3 dash "④ 操作"
-<figcaption>図1 クロスアカウントアクセスの流れ。①アカウントAがSTSにAssumeRoleを要求し、②STSがアカウントBのロールの信頼ポリシーを確認して、③一時認証情報(デフォルト1時間有効)を返す。④Aはその認証情報を使い、ロールの権限ポリシーの範囲でBのリソースを操作する。</figcaption>
+<figcaption>図2 クロスアカウントアクセスの流れ。①アカウントAがSTSにAssumeRoleを要求し、②STSがアカウントBのロールの信頼ポリシーを確認して、③一時認証情報(デフォルト1時間有効)を返す。④Aはその認証情報を使い、ロールの権限ポリシーの範囲でBのリソースを操作する。</figcaption>
 </figure>
 <figure class="figure" data-diagram>
 grid 170 90
@@ -28,12 +74,12 @@ node perm 2.5 0 ok "権限ポリシー" "ロールで何ができるか"
 group 1.5 0 2.5 0 "アカウントBのロール" pad=10
 edge idp trust
 edge trust perm
-<figcaption>図2 3つのポリシーの役割。AssumeRoleが成功するには、Aの「IDベースポリシー」とBのロールの「信頼ポリシー」の両方で許可されている必要がある。引き受けた後にできることは「権限ポリシー」で決まる。</figcaption>
+<figcaption>図3 3つのポリシーの役割。AssumeRoleが成功するには、Aの「IDベースポリシー」とBのロールの「信頼ポリシー」の両方で許可されている必要がある。引き受けた後にできることは「権限ポリシー」で決まる。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/sts.html">AWS STS</a>:有効期限付きの一時認証情報(アクセスキー、シークレットキー、セッショントークン)を発行する</li>
 <li><a href="../services/iam.html">AWS IAM</a>:アカウントAのIDベースポリシー、アカウントBのロール(信頼ポリシー・権限ポリシー)を定義する</li>
@@ -43,7 +89,7 @@ edge trust perm
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <div class="table-wrap"><table>
 <tr><th>手順</th><th>誰が</th><th>何をするか</th><th>確認・使用されるポリシー</th><th>結果</th></tr>
 <tr><td>①</td><td>アカウントAのIAMユーザー/ロール</td><td>STSに <code>sts:AssumeRole</code> を呼び出す(BのロールのARNを指定)</td><td>AのIDベースポリシー(Bのロールへの <code>sts:AssumeRole</code> が許可されているか)</td><td>引き受けのリクエストがSTSに届く</td></tr>
@@ -54,7 +100,7 @@ edge trust perm
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="table-wrap"><table>
 <tr><th>ポリシー</th><th>ひとことで</th><th>答える問い</th></tr>
 <tr><td>IDベースポリシー</td><td>「自分が何をできるか」</td><td>このユーザー/ロールは、どのリソースに何をしてよいか</td></tr>

@@ -1,6 +1,9 @@
-// 構成演習(build.py が構成演習のページと目次で読み込む。直接編集する)
+// 運用シナリオの構成演習(build.py が運用シナリオのページと目次で読み込む。直接編集する)
+// ・2章「構成を組み立てる」に、自由に組み立てる/穴埋めで解く/解説を読む のタブを付ける。
+//   3章以降(答えの構成図・使うサービス・構築の流れ・ポイント)は「解説を読む」のときだけ表示する
 // ・穴埋め:図の空欄と設定の問いを選び、答え合わせをする
 // ・自由構成:部品を図に置いて矢印でつなぎ、正解の構成(build.py が #ex-graph に埋め込む)と比べる
+// ・目次:解いたことのある演習の結果を、シナリオ名の横に表示する
 // 本文の書き方:
 //   <div class="ex-item" data-node="図のノードID(省略可)">
 //     <p class="ex-q">問い</p>
@@ -41,6 +44,7 @@
     if (html !== undefined) e.innerHTML = html;
     return e;
   }
+  function toRead() { document.dispatchEvent(new CustomEvent("ex-read")); }
   function svg(tag, attrs) {
     var e = document.createElementNS(SVGNS, tag);
     for (var k in attrs) e.setAttribute(k, attrs[k]);
@@ -117,7 +121,9 @@
     var bar = el("div", "ex-actions",
       '<button type="button" class="ex-check">答え合わせ</button>'
       + '<button type="button" class="ex-reset" hidden>もう一度解く</button>'
+      + '<button type="button" class="ex-to-read ex-sub" hidden>解説を読む</button>'
       + '<p class="ex-result" role="status"></p>');
+    bar.querySelector(".ex-to-read").addEventListener("click", toRead);
     items[items.length - 1].parentNode.insertBefore(bar, items[items.length - 1].nextSibling);
     var result = bar.querySelector(".ex-result");
     var prev = store(KEY + slug);
@@ -157,9 +163,10 @@
       }
       store(KEY + slug, { score: score, total: items.length, date: today() });
       result.textContent = items.length + "問中" + score + "問正解"
-        + (score === items.length ? "。3章の解説で、構成全体の考え方も確かめましょう。" : "。各問の下の解説で、正解との違いを確かめましょう。");
+        + (score === items.length ? "。「解説を読む」で、構成全体の考え方も確かめましょう。" : "。各問の下の解説で、正解との違いを確かめましょう。");
       this.hidden = true;
       bar.querySelector(".ex-reset").hidden = false;
+      bar.querySelector(".ex-to-read").hidden = false;
     });
 
     bar.querySelector(".ex-reset").addEventListener("click", function () {
@@ -175,6 +182,7 @@
       }
       result.textContent = "";
       this.hidden = true;
+      bar.querySelector(".ex-to-read").hidden = true;
       bar.querySelector(".ex-check").hidden = false;
       wrap.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -196,8 +204,11 @@
       + '<div class="ex-actions"><button type="button" class="ex-judge">判定する</button>'
       + '<button type="button" class="ex-del ex-sub">選んだ部品を外す</button>'
       + '<button type="button" class="ex-clear ex-sub">すべて消す</button>'
-      + '<button type="button" class="ex-show ex-sub">正解を表示</button></div>'
+      + '<button type="button" class="ex-show ex-sub">正解を表示</button>'
+      + '<button type="button" class="ex-to-read ex-sub" hidden>解説を読む</button></div>'
       + '<ul class="ex-free-result" role="status"></ul>';
+    var readBtn = box.querySelector(".ex-to-read");
+    readBtn.addEventListener("click", toRead);
     var palette = box.querySelector(".ex-palette");
     var canvas = svg("svg", { "class": "ex-canvas", viewBox: "0 0 " + W + " " + H,
       style: "max-width:" + W + "px;min-width:" + Math.min(W, 480) + "px", role: "img", "aria-label": "自由構成の作業エリア" });
@@ -356,6 +367,7 @@
       graph.edges.forEach(function (e) { links.push({ a: made[e[0]], b: made[e[1]], dash: e[2] }); });
       drawLinks();
       resultList.innerHTML = '<li>正解の構成です(点線は補足的なつながり)。「すべて消す」で、もう一度組み立てられます。</li>';
+      readBtn.hidden = false;
     });
 
     box.querySelector(".ex-judge").addEventListener("click", function () {
@@ -399,6 +411,7 @@
       }).join("");
       var prev = store(FREE_KEY + slug);
       store(FREE_KEY + slug, { ok: ok || !!(prev && prev.ok), date: today() });
+      readBtn.hidden = false;
     });
   }
 
@@ -414,25 +427,53 @@
   section.appendChild(fill);
   setupFill(items, slug, fill);
 
+  // タブ:自由に組み立てる/穴埋めで解く/解説を読む。
+  // 「解説を読む」は、この章より後ろの章(答えの構成図・使うサービス・構築の流れ・ポイント・つながり図)を表示する
+  var answers = [];
+  for (var s = section.nextElementSibling; s; s = s.nextElementSibling) {
+    if (s.matches("section.chapter")) answers.push(s);
+  }
   var graphEl = document.getElementById("ex-graph");
-  if (!graphEl) return;
-  var graph = JSON.parse(graphEl.textContent);
-  var tabs = el("div", "ex-tabs",
-    '<button type="button" class="ex-tab">穴埋めで解く</button>'
-    + '<button type="button" class="ex-tab">自由に組み立てる</button>');
+  var graph = graphEl ? JSON.parse(graphEl.textContent) : null;
   var free = el("div", "ex-free");
+  var panels = [];
+  if (graph) panels.push(["自由に組み立てる", free]);
+  panels.push(["穴埋めで解く", fill]);
+  panels.push(["解説を読む", null]);
+  var READ = panels.length - 1;
+  var tabs = el("div", "ex-tabs", panels.map(function (p) {
+    return '<button type="button" class="ex-tab">' + p[0] + "</button>";
+  }).join(""));
+  tabs.setAttribute("role", "group");
+  tabs.setAttribute("aria-label", "学び方");
   section.insertBefore(tabs, fill);
-  section.appendChild(free);
+  if (graph) section.appendChild(free);
   var built = false;
   var buttons = tabs.querySelectorAll(".ex-tab");
   function show(t) {
-    buttons[0].setAttribute("aria-pressed", t === 0);
-    buttons[1].setAttribute("aria-pressed", t === 1);
-    fill.hidden = t !== 0;
-    free.hidden = t !== 1;
-    if (t === 1 && !built) { setupFree(graph, slug, free); built = true; }
+    for (var i = 0; i < panels.length; i++) {
+      buttons[i].setAttribute("aria-pressed", i === t);
+      if (panels[i][1]) panels[i][1].hidden = i !== t;
+    }
+    for (i = 0; i < answers.length; i++) answers[i].hidden = t !== READ;
+    if (graph && panels[t][1] === free && !built) { setupFree(graph, slug, free); built = true; }
   }
-  for (var t = 0; t < 2; t++) buttons[t].addEventListener("click", show.bind(null, t));
+  for (var t = 0; t < panels.length; t++) buttons[t].addEventListener("click", show.bind(null, t));
+  // 答え合わせのあとの「解説を読む」ボタン
+  document.addEventListener("ex-read", function () {
+    show(READ);
+    if (answers[0]) answers[0].scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  // ページ内目次などで解説の章へ移るときは、「解説を読む」に切り替える
+  function follow() {
+    var target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (!target) return false;
+    for (var i = 0; i < answers.length; i++) {
+      if (answers[i].contains(target)) { show(READ); target.scrollIntoView(); return true; }
+    }
+    return false;
+  }
+  addEventListener("hashchange", follow);
   // 最初は「自由に組み立てる」を開く
-  show(1);
+  if (!follow()) show(0);
 })();

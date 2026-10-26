@@ -2,11 +2,64 @@
 <!-- category: 監視・ログ・自動修復 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>ECSやEKSで動くアプリについて、クラスター全体だけでなく<strong>サービス・タスク・Pod単位</strong>のCPU・メモリ・再起動回数を監視したい。メモリ不足でタスクが落ちる、Podが再起動を繰り返す、といった問題を早く見つけて通知したい。</p>
+<ul>
+<li>ECS・EKSのアプリを、<strong>タスク・Pod単位</strong>のCPU・メモリ・再起動回数で監視したい。</li>
+<li>メモリ不足や再起動のくり返しを、早く見つけて通知したい。</li>
+<li>アプリ独自のPrometheus形式のメトリクスも、ダッシュボードで見たい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node ecs 0 0 blue "ECS" "Container Insights"
+node eks 0 1 blue "EKS" "CloudWatchアドオン"
+node cw 1.4 0.5 accent "CloudWatch" "メトリクス・ログ"
+node al 2.8 0 box "アラーム" "メモリ使用率など"
+node sns 4.1 0 ok "SNS" "通知"
+node amp 1.4 1.6 blank "①" "アプリのメトリクス"
+node amg 2.8 1.6 blank "②" "ダッシュボード"
+edge ecs cw
+edge eks cw
+edge cw al
+edge al sns
+edge eks amp dash
+edge amp amg
+<figcaption>図1 コンテナの監視の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="amp">
+<p class="ex-q">① Prometheus形式のメトリクスを保存するマネージドサービスは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Prometheus">Amazon Managed Service for Prometheus<span class="ex-why">Prometheusと同じ形式・クエリ(PromQL)のまま、サーバーを管理せずにメトリクスを保存できます。</span></li>
+<li data-short="OpenSearch">Amazon OpenSearch Service<span class="ex-why">ログの全文検索・分析に向いたサービスで、Prometheus形式のメトリクスの保存先ではありません。</span></li>
+<li data-short="DynamoDB">Amazon DynamoDB<span class="ex-why">アプリのデータベースで、メトリクスの保存や集計の機能はありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="amg">
+<p class="ex-q">② メトリクスをダッシュボードで見るマネージドサービスは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Grafana">Amazon Managed Grafana<span class="ex-why">Prometheus・CloudWatchなど複数のデータソースをまとめて、ダッシュボードで表示します。</span></li>
+<li data-short="QuickSight">Amazon QuickSight<span class="ex-why">業務データの分析(BI)向けで、運用のメトリクスの監視には使いません。</span></li>
+<li data-short="X-Ray">AWS X-Ray<span class="ex-why">リクエストの経路と遅延を追うトレースのサービスです。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ ECSでタスク単位のCPU・メモリを見るために必要な設定は?</p>
+<ul class="ex-choices">
+<li data-ok>クラスターでContainer Insightsを有効にする<span class="ex-why">ECSの標準のメトリクスはサービス単位だけです。タスク・コンテナ単位はContainer Insightsで集めます。</span></li>
+<li>EC2の詳細モニタリングを有効にする<span class="ex-why">EC2インスタンスのメトリクスの間隔が1分になるだけで、タスク単位にはなりません。</span></li>
+<li>タスク定義のメモリの上限を増やす<span class="ex-why">メモリ不足の対策にはなりますが、監視の設定ではありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p>ECSは<strong>Container Insights</strong>、EKSはCloudWatch Observabilityアドオンでタスク・Pod単位のメトリクスとログを集め、アラームとSNSで通知します。アプリ独自のメトリクスは<strong>Managed Service for Prometheus</strong>に集め、<strong>Managed Grafana</strong>で見ます。タスクが OutOfMemoryError で止まるときは、タスク定義のメモリの上限を見直します。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node ecs 0 0 blue "ECS" "Container Insights"
@@ -22,12 +75,12 @@ edge cw al
 edge al sns
 edge eks amp dash
 edge amp amg
-<figcaption>図1 コンテナの監視の構成。ECSはクラスター単位でContainer Insightsを有効にし、EKSはCloudWatch Observabilityアドオンでエージェントを入れる。アプリ独自のPrometheus形式のメトリクスは、Managed Service for Prometheusに集めてGrafanaで見る。</figcaption>
+<figcaption>図2 コンテナの監視の構成。ECSはクラスター単位でContainer Insightsを有効にし、EKSはCloudWatch Observabilityアドオンでエージェントを入れる。アプリ独自のPrometheus形式のメトリクスは、Managed Service for Prometheusに集めてGrafanaで見る。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Container Insightsによるタスク・Pod単位のメトリクスとパフォーマンスログ、アラーム</li>
 <li><a href="../services/ecs.html">Amazon ECS</a>:クラスターの設定でContainer Insightsを有効化。コンテナのログは <code>awslogs</code> ログドライバーでCloudWatch Logsへ</li>
@@ -38,7 +91,7 @@ edge amp amg
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>ECS:クラスターでContainer Insights(オブザーバビリティ強化版)を有効にする。新しいクラスターで常に有効にするなら、アカウントの設定 <code>containerInsights</code> を有効にする</li>
 <li>ECS:タスク定義のログ設定を <code>awslogs</code> にし、ロググループを指定する。タスク実行ロールにログを書く権限を付ける</li>
@@ -49,7 +102,7 @@ edge amp amg
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>ECSの標準のメトリクスはサービス単位のCPU・メモリだけ。タスク・コンテナ単位の詳細は<strong class="em">Container Insights</strong>を有効にして初めて見られる。</li>
 <li>EKSには標準のノード・Podのメトリクスがない → <strong>CloudWatchエージェント</strong>(Observabilityアドオン)が必要。</li>
@@ -57,4 +110,5 @@ edge amp amg
 <li>タスクが <code>OutOfMemoryError</code> で止まる → タスク定義のメモリの上限を見直す。停止の理由はECSの「停止したタスク」で確認できる。</li>
 <li>負荷に応じたタスク数の増減は、ECSサービスの自動スケーリング(ターゲット追跡)で行う。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a></p>
 </section>

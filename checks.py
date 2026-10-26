@@ -20,8 +20,8 @@ CHAPTERS = {
     "services": ["1. サービス概要", "2. 主な機能・特徴", "3. ユースケース", "4. 料金の考え方",
                  "5. 関連サービス", "6. 試験・実務でのポイント", "7. まとめ"],
     "terms": ["1. 詳しい説明", "2. 関連する用語", "3. 関連サービス"],
-    "usecases": ["1. やりたいこと", "2. 構成図", "3. 使うサービスと役割", "4. 構築の流れ", "5. ポイント・注意点"],
-    "exercises": ["1. 要件", "2. 構成を組み立てる", "3. 解説", "4. 関連ページ"],
+    "usecases": ["1. やりたいこと", "2. 構成を組み立てる", "3. 構成図", "4. 使うサービスと役割", "5. 構築の流れ",
+                 "6. ポイント・注意点"],
 }
 
 # 表記の統一:(使わない表記の正規表現, 使う表記)
@@ -129,7 +129,7 @@ def check_pages(collections, loaded, extra_pages, out_dir, warnings):
         _check_chapters(key, raw, where, warnings)
         _check_links(f"{key}/{p['slug']}.html", raw, targets, out_dir, where, warnings)
         _check_style(raw, where, warnings)
-        if key == "exercises":
+        if key == "usecases":
             _check_exercise(raw, where, warnings)
     for path, raw in extra_pages.items():
         _check_links(path, raw, targets, out_dir, path, warnings)
@@ -172,7 +172,7 @@ def _check_links(page_path, raw, targets, out_dir, where, warnings):
 
 
 def _check_exercise(raw, where, warnings):
-    """構成演習:各問に正解が1つあるか、図の空欄と問いが対応しているか、図に出す名前が枠に収まるか。"""
+    """運用シナリオの構成演習(2章):各問に正解が1つあるか、図の空欄と問いが対応しているか、図に出す名前が枠に収まるか。"""
     colw = 170.0
     m = re.search(r"^\s*grid\s+([\d.]+)", raw, re.M)
     if m:

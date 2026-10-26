@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,93 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>インターネットからEC2上のWebサーバーにアクセスできない。どこで通信が止まっているのかを、順番に確認して特定したい。</p>
+<ul>
+<li>インターネットからEC2のWebサーバーにアクセスできない。</li>
+<li>どこで通信が止まっているかを、<strong>記録と解析で</strong>特定したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 818 227" style="max-width:818px;min-width:654px" role="img" aria-label="図1 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。"><defs><marker id="dgusecases-network-troubleshooting-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 210" style="max-width:684px;min-width:547px" role="img" aria-label="図1 通信の経路と調査の構成。"><defs><marker id="dgusecases-network-troubleshooting-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="44" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="68" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="igw">
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">①</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">VPCの出入り口</text>
+</g>
+<g data-node="ec2">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">EC2</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">Webサーバー</text>
+</g>
+<g data-node="fl">
+<rect x="510" y="134" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="585" y="156" text-anchor="middle" class="dg-t">②</text>
+<text x="585" y="174" text-anchor="middle" class="dg-s">通信を記録</text>
+</g>
+<g data-node="li">
+<rect x="272" y="134" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="347" y="156" text-anchor="middle" class="dg-t">Logs Insights</text>
+<text x="347" y="174" text-anchor="middle" class="dg-s">REJECTを検索</text>
+</g>
+<path d="M184.0,64.0 L272.0,64.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M422.0,64.0 L510.0,64.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M585.0,90.0 L585.0,134.0" class="dg-line dg-dash" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M510.0,160.0 L422.0,160.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+</svg>
+</div>
+<figcaption>図1 通信の経路と調査の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="igw">
+<p class="ex-q">① インターネットとVPCの間の出入り口は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">VPCにアタッチし、サブネットのルートテーブルに <code>0.0.0.0/0</code> への経路を作ります。EC2にはパブリックIPも必要です。</span></li>
+<li data-short="NATゲートウェイ">NATゲートウェイ<span class="ex-why">内から外への通信のためのもので、外から内へのアクセスは受け付けません(<a href="../terms/inbound-traffic.html">インバウンド通信</a>)。</span></li>
+<li data-short="VPCエンドポイント">VPCエンドポイント<span class="ex-why">AWSのサービスへのプライベートな経路で、インターネットの出入り口ではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="fl">
+<p class="ex-q">② 通信が許可・拒否されたかを記録するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="VPCフローログ">VPCフローログ<span class="ex-why">ENIごとの通信を ACCEPT・REJECT とともに記録します(<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>)。</span></li>
+<li data-short="CloudTrail">AWS CloudTrail<span class="ex-why">APIの操作の記録で、パケットの通信は記録しません。設定を変えた人を調べるのには使えます。</span></li>
+<li data-short="X-Ray">AWS X-Ray<span class="ex-why">アプリの処理の流れを追うもので、ネットワークの拒否は記録しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 受信はACCEPTなのに、戻りの通信がREJECTのときの原因は?</p>
+<ul class="ex-choices">
+<li data-ok>ネットワークACLのアウトバウンドでエフェメラルポートを許可していない<span class="ex-why">ネットワークACLはステートレスなので、戻りの通信(1024〜65535)も許可が必要です(<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>)。</span></li>
+<li>セキュリティグループのアウトバウンドが空<span class="ex-why">セキュリティグループはステートフルで、戻りの通信は自動で許可されます。</span></li>
+<li>ルートテーブルが拒否している<span class="ex-why">ルートテーブルは経路を決めるだけで、許可・拒否はしません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ 実際に通信せずに、設定上の経路を自動で解析するものは?</p>
+<ul class="ex-choices">
+<li data-ok>VPC Reachability Analyzer<span class="ex-why">送信元と宛先を指定すると、どの設定で止まるかを解析して示します。</span></li>
+<li>VPCフローログ<span class="ex-why">実際に流れた通信の記録で、設定の解析はしません。</span></li>
+<li>Trusted Advisor<span class="ex-why">ベストプラクティスのチェックで、2点間の経路は解析しません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>ルートテーブル → <strong>インターネットゲートウェイ</strong> → セキュリティグループ → ネットワークACL → パブリックIPの順に確認し、<strong>VPCフローログ</strong>のREJECTをLogs Insightsで検索して止まっている場所を絞り込みます。設定上の経路は<strong>Reachability Analyzer</strong>で自動で解析できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 818 227" style="max-width:818px;min-width:654px" role="img" aria-label="図2 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。"><defs><marker id="dgusecases-network-troubleshooting-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="rt">
 <rect x="34" y="40" width="136" height="52" rx="8" class="dg-box"/>
 <text x="102" y="62" text-anchor="middle" class="dg-t">① ルートテーブル</text>
@@ -85,19 +164,19 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="492" y="172" text-anchor="middle" class="dg-t">Logs Insights</text>
 <text x="492" y="190" text-anchor="middle" class="dg-s">REJECTを検索</text>
 </g>
-<path d="M170.0,66.5 L190.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
-<path d="M326.0,66.5 L346.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
-<path d="M482.0,66.5 L502.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
-<path d="M638.0,66.5 L658.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
-<path d="M326.0,177.0 L424.0,177.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M170.0,66.5 L190.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
+<path d="M326.0,66.5 L346.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
+<path d="M482.0,66.5 L502.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
+<path d="M638.0,66.5 L658.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
+<path d="M326.0,177.0 L424.0,177.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
 </svg>
 </div>
-<figcaption>図1 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。</figcaption>
+<figcaption>図2 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/vpc.html">Amazon VPC</a>:ルートテーブル、IGW、セキュリティグループ、ネットワークACL、<a href="../terms/vpc-flow-logs.html">VPCフローログ</a></li>
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:フローログの保存とLogs Insightsでの検索</li>
@@ -107,7 +186,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ(調査手順)<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ(調査手順)<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li><strong>ルートテーブル</strong>:サブネットに <code>0.0.0.0/0 → IGW</code> の経路があるか(<a href="../terms/route-table.html">ルートテーブル</a>)</li>
 <li><strong>IGW/NAT</strong>:IGWがVPCにアタッチされているか、NATゲートウェイが正常か</li>
@@ -119,7 +198,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>SGは<strong>ステートフル</strong>で戻りの通信は自動で許可。NACLは<strong>ステートレス</strong>で戻りの通信も許可が必要(<a href="../terms/nacl-security-group.html">NACLとSG</a>)。</li>
 <li>ルートテーブルは経路を決めるだけで、許可・拒否はしない。</li>
@@ -127,13 +206,6 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>設定上の経路を自動で解析するには、VPC Reachability Analyzerも使える。</li>
 </ul></div>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/network-troubleshooting.html"><span class="title">EC2に接続できない原因を調べる構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
@@ -173,5 +245,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "u", "label": "利用者", "sub": "", "x": 0.0, "y": 0.0}, {"id": "igw", "label": "インターネットGW", "sub": "", "x": 1.4, "y": 0.0}, {"id": "ec2", "label": "EC2", "sub": "Webサーバー", "x": 2.8, "y": 0.0}, {"id": "fl", "label": "VPCフローログ", "sub": "", "x": 2.8, "y": 1.2}, {"id": "li", "label": "Logs Insights", "sub": "REJECTを検索", "x": 1.4, "y": 1.2}], "edges": [["u", "igw", false, false], ["igw", "ec2", false, false], ["ec2", "fl", true, false], ["fl", "li", false, false]], "distractors": ["CloudTrail", "NATゲートウェイ", "VPCエンドポイント", "X-Ray"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

@@ -2,11 +2,60 @@
 <!-- category: 監視・ログ・自動修復 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>RDSのCPU使用率が高く、アプリの応答が遅い。また、アクセスが増えると「接続数が多すぎる(Too many connections)」エラーが出る。<strong>どのSQLが負荷の原因か</strong>を特定し、接続数の問題も含めて解消したい。</p>
+<ul>
+<li>RDSのCPU使用率が高い。<strong>どのSQLが負荷の原因か</strong>を特定したい。</li>
+<li>Lambdaからの接続が急増すると、<strong>「接続数が多すぎる」エラー</strong>が出る。</li>
+<li>読み取りの多い処理の負荷を、書き込み用のDBから逃がしたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node app 0 0.5 blue "Lambda・アプリ" "接続が急増"
+node px 1.3 0.5 blank "①" "接続を集約"
+node db 2.6 0.5 box "RDS" "書き込み"
+node rr 2.6 1.5 blank "③" "読み取りを分散"
+node pi 3.9 0.5 blank "②" "SQL別の負荷"
+edge app px
+edge px db
+edge app rr dash
+edge db pi
+<figcaption>図1 DBの負荷の対策の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="px">
+<p class="ex-q">① 急増する接続をまとめ、DBの接続数を抑えるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="RDS Proxy">RDS Proxy<span class="ex-why">接続をプールして使い回し、DBへの接続数を抑えます。フェイルオーバーの時間も短くなります。</span></li>
+<li data-short="ALB">Application Load Balancer<span class="ex-why">HTTPのリクエストを振り分けるもので、DBの接続を集約しません。</span></li>
+<li data-short="Multi-AZ">Multi-AZ配置<span class="ex-why">障害に備えた待機系で、接続数の問題は解決しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="pi">
+<p class="ex-q">② どのSQLがDBの負荷をかけているかを示すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Perf Insights">Performance Insights<span class="ex-why">SQL別・待機イベント別に負荷を表示します。</span></li>
+<li data-short="拡張モニタリング">拡張モニタリング<span class="ex-why">OSのプロセスやメモリの詳細を見るもので、SQL別の負荷は分かりません。</span></li>
+<li data-short="CloudTrail">AWS CloudTrail<span class="ex-why">AWSのAPIの操作の記録で、DBの中のSQLは記録しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="rr">
+<p class="ex-q">③ 読み取りの多い処理を逃がす先は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="リードレプリカ">リードレプリカ<span class="ex-why">非同期で複製された読み取り専用のDBです。直後の読み取りに古いデータが返ることがあります。</span></li>
+<li data-short="スタンバイ">Multi-AZのスタンバイ<span class="ex-why">従来のMulti-AZのスタンバイは読み取りに使えません(<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>)。</span></li>
+<li data-short="スナップショット">スナップショット<span class="ex-why">バックアップで、アプリから読み取ることはできません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p><strong>Performance Insights</strong>とスロークエリログで重いSQLを見つけて改善し、接続の急増は<strong>RDS Proxy</strong>で、読み取りの負荷は<strong>リードレプリカ</strong>やElastiCacheで吸収します。スロークエリログをCloudWatch Logsに出すには、パラメータグループでの出力の設定と、ログのエクスポートの設定の両方が必要です。</p>
 <figure class="figure" data-diagram>
 grid 165 80
 node app 0 0.5 blue "Lambda・アプリ" "接続が急増"
@@ -20,12 +69,12 @@ edge px db
 edge app rr dash
 edge db pi
 edge db lg
-<figcaption>図1 DBの負荷対策の構成。Performance Insightsとスロークエリログで重いSQLを見つける。接続数の急増はRDS Proxyで吸収し、読み取りの多い処理はリードレプリカに逃がす。</figcaption>
+<figcaption>図2 DBの負荷対策の構成。Performance Insightsとスロークエリログで重いSQLを見つける。接続数の急増はRDS Proxyで吸収し、読み取りの多い処理はリードレプリカに逃がす。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/rds.html">Amazon RDS</a>:Performance Insights(SQL別・待機イベント別の負荷)、拡張モニタリング(OSの詳細)、リードレプリカ、RDS Proxy</li>
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:<code>CPUUtilization</code>・<code>DatabaseConnections</code>・<code>ReadLatency</code> などの監視、スロークエリログの保存と検索(Logs Insights)</li>
@@ -35,7 +84,7 @@ edge db lg
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>Performance Insightsを有効にし、DBの負荷(平均アクティブセッション数)が多い<strong>SQL文と待機イベント</strong>を確認する</li>
 <li>パラメータグループでスロークエリログ(MySQLの <code>slow_query_log</code>・<code>long_query_time</code> など)を有効にし、CloudWatch Logsに発行する</li>
@@ -46,7 +95,7 @@ edge db lg
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>「どのSQLが負荷をかけているか」→ <strong class="em">Performance Insights</strong>。OSのプロセスやメモリの詳細 → 拡張モニタリング。</li>
 <li>Lambdaなどで接続数が急増する・接続が枯渇する → <strong class="em">RDS Proxy</strong>(フェイルオーバー時間の短縮にもなる)。</li>
@@ -54,4 +103,5 @@ edge db lg
 <li>リードレプリカは非同期なので、直後の読み取りに古いデータが返ることがある。高可用性はMulti-AZ、読み取りの分散はリードレプリカ。</li>
 <li>パラメータの変更には、すぐ反映されるもの(動的)と、再起動が必要なもの(静的)がある。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/caching-comparison.html">キャッシュの選び方</a>、<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a></p>
 </section>

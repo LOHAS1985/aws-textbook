@@ -2,11 +2,60 @@
 <!-- category: ネットワーク・コンテンツ配信 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>東京とバージニア北部の2リージョンでWebアプリを動かしている。利用者を<strong>応答の速い方のリージョンへ</strong>振り分け、片方が落ちたらもう片方だけに送りたい。また、新しいバージョンの環境に、まず通信の10%だけを流して様子を見たい。</p>
+<ul>
+<li>東京とバージニア北部の2リージョンで動かしている。利用者を<strong>応答の速いほう</strong>へ振り分けたい。</li>
+<li>片方が落ちたら、<strong>もう片方だけ</strong>に送りたい。</li>
+<li>新しいバージョンの環境に、まず通信の10%だけを流したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node u 0 0.5 blue "利用者"
+node r53 1.4 0.5 blank "①" "速いほうを返す"
+node t 2.8 0 ok "ALB(東京)"
+node v 2.8 1 ok "ALB(米国)"
+node hc 1.4 1.6 blank "②" "異常を外す"
+edge u r53 "DNS問い合わせ"
+edge r53 t
+edge r53 v
+edge hc r53 dash
+<figcaption>図1 リージョンへの振り分けの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="r53">
+<p class="ex-q">① 利用者からの遅延が小さいリージョンを返すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="レイテンシー">Route 53のレイテンシーベースルーティング<span class="ex-why">利用者からの遅延が最も小さいリージョンのレコードを返します。</span></li>
+<li data-short="位置情報">Route 53の位置情報ルーティング<span class="ex-why">国や地域で決めるもので、実際の速さでは選びません。</span></li>
+<li data-short="ALB">Application Load Balancer<span class="ex-why">リージョンの中の振り分けで、リージョンは選べません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="hc">
+<p class="ex-q">② 異常なリージョンを応答から外すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="ヘルスチェック">Route 53のヘルスチェック<span class="ex-why">レコードに関連付けると、異常と判定されたレコードは返されなくなり、もう一方に切り替わります。</span></li>
+<li data-short="CloudTrail">AWS CloudTrail<span class="ex-why">操作の記録で、異常の判定はしません。</span></li>
+<li data-short="TTLを長く">TTLを長くする<span class="ex-why">古い応答が長く使われ、切り替えが遅くなります。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 新しい環境に通信の10%だけを流すルーティングは?</p>
+<ul class="ex-choices">
+<li data-ok>加重ルーティング<span class="ex-why">レコードごとの重みの割合で応答を分けます(例:90と10)。</span></li>
+<li>フェイルオーバールーティング<span class="ex-why">正常時はプライマリだけを返すもので、割合では分けません。</span></li>
+<li>シンプルルーティング<span class="ex-why">1つのレコードを返すだけで、割合は決められません(<a href="../terms/dns-record-types.html">DNSレコードタイプ</a>)。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p><strong>レイテンシーベースルーティング</strong>と<strong>ヘルスチェック</strong>で、速いほうへ振り分けつつ、異常なリージョンを自動で外します。割合で分けたいときは加重ルーティングを使います。DNSのTTLとヘルスチェックの間隔の分だけ切り替えに時間がかかるので、すぐに切り替えたい場合はGlobal Acceleratorも候補です。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node u 0 0.5 blue "利用者"
@@ -18,12 +67,12 @@ edge u r53 "DNS問い合わせ"
 edge r53 t
 edge r53 v
 edge hc r53 dash
-<figcaption>図1 レイテンシーベースのルーティング。Route 53は、利用者からの遅延が小さいリージョンのレコードを返す。ヘルスチェックで異常と判定されたレコードは応答から外れるので、もう一方のリージョンに自動で切り替わる。</figcaption>
+<figcaption>図2 レイテンシーベースのルーティング。Route 53は、利用者からの遅延が小さいリージョンのレコードを返す。ヘルスチェックで異常と判定されたレコードは応答から外れるので、もう一方のリージョンに自動で切り替わる。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/route53.html">Amazon Route 53</a>:ルーティングポリシー(シンプル・加重・レイテンシー・フェイルオーバー・位置情報・地理的近接性・複数値回答・IPベース)、ヘルスチェック、エイリアスレコード</li>
 <li><a href="../services/elb.html">Elastic Load Balancing</a>:各リージョンの入り口</li>
@@ -33,7 +82,7 @@ edge hc r53 dash
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>各リージョンのALBを指す<strong>エイリアスレコード</strong>を、同じ名前で2つ作り、ルーティングポリシーを「レイテンシー」にしてリージョンを指定する</li>
 <li>エイリアスレコードでは「ターゲットのヘルスを評価」を有効にする(ALBの背後のターゲットの状態を見る)。独自の確認先があればヘルスチェックを作って関連付ける</li>
@@ -44,7 +93,7 @@ edge hc r53 dash
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>速い方へ → <strong>レイテンシー</strong>。割合で分ける → <strong>加重</strong>。国・地域で決める → <strong>位置情報</strong>。正常時はプライマリ、障害時だけセカンダリ → フェイルオーバー。</li>
 <li>位置情報ルーティングは、一致しない場所からの問い合わせに応答しない。<strong class="em">デフォルトのレコード</strong>を作っておく。</li>
@@ -52,4 +101,5 @@ edge hc r53 dash
 <li>ヘルスチェックの判定から切り替えまで、DNSのTTLとヘルスチェックの間隔・しきい値の分だけ時間がかかる。</li>
 <li>プライベートなリソースは、Route 53のヘルスチェック(インターネットから確認)では直接確認できない。CloudWatchアラームの状態に基づくヘルスチェックを使う。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/dns.html">DNS</a>、<a href="../terms/dr-strategies.html">DR戦略</a></p>
 </section>

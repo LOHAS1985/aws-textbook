@@ -2,11 +2,69 @@
 <!-- category: セキュリティ・コンプライアンス -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>アプリのIAMロールにS3の権限を付けたのに、オブジェクトの取得で <code>AccessDenied</code> になる。どのポリシーが拒否しているのかを調べて直したい。また、とりあえず広い権限を付けたロールが多いので、<strong>実際に使っている権限だけに絞りたい</strong>。</p>
+<ul>
+<li>アプリのロールにS3の権限を付けたのに、オブジェクトの取得で <strong>AccessDenied</strong> になる。</li>
+<li>どの呼び出しが拒否されたかを記録から調べたい。</li>
+<li>広すぎる権限のロールを、<strong>実際に使っている権限だけ</strong>に絞りたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node app 0 0.5 blue "アプリのロール" "GetObject"
+node s3 1.4 0.5 ng "S3" "AccessDenied"
+node kms 1.4 1.6 box "KMSキー" "キーポリシー"
+node ct 2.8 0 blank "①" "拒否の記録"
+node aa 2.8 1 blank "②" "必要な権限だけに"
+edge app s3
+edge s3 kms dash
+edge s3 ct "記録"
+edge ct aa
+<figcaption>図1 権限エラーの調査と最小権限化の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ct">
+<p class="ex-q">① 拒否されたAPIの呼び出しと呼び出し元を記録しているものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="CloudTrail">AWS CloudTrail<span class="ex-why"><code>errorCode</code> が AccessDenied のイベントから、誰がどの操作で拒否されたかが分かります。</span></li>
+<li data-short="VPCフローログ">VPCフローログ<span class="ex-why">IPアドレスとポートの通信の記録で、IAMの拒否は記録しません。</span></li>
+<li data-short="Config">AWS Config<span class="ex-why">リソースの設定の履歴で、APIの呼び出しの結果は記録しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="aa">
+<p class="ex-q">② 実際の利用の記録から、必要な権限だけのポリシーを作るものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Access Analyzer">IAM Access Analyzer<span class="ex-why">CloudTrailの記録からポリシーを生成し、使っていないアクセスも見つけます。</span></li>
+<li data-short="Trusted Advisor">AWS Trusted Advisor<span class="ex-why">ベストプラクティスのチェックで、ロールごとの必要な権限は作りません。</span></li>
+<li data-short="GuardDuty">Amazon GuardDuty<span class="ex-why">脅威を検出するサービスで、ポリシーは作りません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ S3の権限はあるのに、KMSで暗号化されたオブジェクトだけ読めない原因は?</p>
+<ul class="ex-choices">
+<li data-ok>KMSキーの <code>kms:Decrypt</code> の権限がない<span class="ex-why">SSE-KMSのオブジェクトは、S3の権限に加えてキーの権限も必要です(<a href="../terms/encryption.html">暗号化</a>)。</span></li>
+<li>バケットのバージョニングが無効<span class="ex-why">読み取りの権限には関係ありません。</span></li>
+<li>リージョンが違う<span class="ex-why">リージョンが違っても、エラーの種類は AccessDenied になりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ IAMで許可しているのに拒否されるとき、ほかに確認するものは?</p>
+<ul class="ex-choices">
+<li data-ok>SCP・アクセス許可の境界・バケットポリシーの明示的なDeny<span class="ex-why">どこか1つでも明示的なDenyがあれば拒否されます(<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>)。</span></li>
+<li>インスタンスタイプ<span class="ex-why">権限の判定には関係ありません。</span></li>
+<li>CloudWatchアラーム<span class="ex-why">権限の判定には関係ありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p><strong>CloudTrail</strong>の拒否の記録から操作と呼び出し元を特定し、SCP・許可境界・リソースベースのポリシー・KMSキーポリシーの順に確かめます。直したあとは、<strong>Access Analyzer</strong>のポリシー生成や、IAMの最終アクセス情報で、使っていない権限を外します。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node req 0 1 blue "リクエスト" "GetObject"
@@ -20,12 +78,12 @@ edge req id
 edge req rp
 edge id ok
 edge rp ng dash
-<figcaption>図1 拒否の原因の候補。SCP・RCP、IAMのポリシーと許可境界、バケットポリシーやKMSキーポリシーなどのリソースベースのポリシーが評価され、どこかに明示的なDenyがあれば拒否、必要な許可がそろわなければ暗黙的に拒否される。</figcaption>
+<figcaption>図2 拒否の原因の候補。SCP・RCP、IAMのポリシーと許可境界、バケットポリシーやKMSキーポリシーなどのリソースベースのポリシーが評価され、どこかに明示的なDenyがあれば拒否、必要な許可がそろわなければ暗黙的に拒否される。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:拒否されたAPI呼び出し(<code>errorCode: AccessDenied</code>)と呼び出し元の記録</li>
 <li><a href="../services/iam.html">AWS IAM</a>:ポリシーシミュレーター、IAM Access Analyzer(ポリシーの生成・未使用のアクセスの検出・外部アクセスの検出)、最終アクセス情報</li>
@@ -35,7 +93,7 @@ edge rp ng dash
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>CloudTrailのイベント履歴(またはAthena)で、拒否されたAPI・呼び出し元のロール・対象のリソースを特定する。エラーメッセージにどの種類のポリシーで拒否されたかが出ることもある</li>
 <li>ポリシーシミュレーターで、そのロールが該当の操作を許可されているかを確認する</li>
@@ -46,7 +104,7 @@ edge rp ng dash
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>評価の原則:<strong class="em">明示的なDenyが最優先</strong>、何も許可がなければ暗黙的に拒否。</li>
 <li>IAMポリシーで許可しても、SCP・許可境界の範囲外なら拒否される(実際の権限は重なった部分だけ)。</li>
@@ -54,4 +112,5 @@ edge rp ng dash
 <li>クロスアカウントのアクセスは、呼び出し元のIAMポリシーと、相手側のリソースベースのポリシー(またはロールの信頼ポリシー)の両方が必要。</li>
 <li>最小権限への絞り込み → <strong>Access Analyzer</strong>のポリシー生成・未使用のアクセスの検出、IAMの最終アクセス情報。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a></p>
 </section>

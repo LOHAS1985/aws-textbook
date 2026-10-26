@@ -2,11 +2,60 @@
 <!-- category: 信頼性・事業継続 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>セール中などにアクセスが急増すると、同じ商品情報を何度もDBから読むため、RDSのCPUが上がって応答が遅くなる。DBを大きくせずに、<strong>よく読まれるデータをキャッシュ</strong>して負荷に強くしたい。</p>
+<ul>
+<li>セール中は同じ商品情報を何度もDBから読むため、<strong>RDSのCPUが上がって遅くなる</strong>。</li>
+<li>DBを大きくせずに、<strong>よく読まれるデータ</strong>をキャッシュしたい。</li>
+<li>画像などの静的なファイルは、利用者の近くから返したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node u 0 0.5 blue "利用者"
+node cf 1.3 0.5 blank "①" "画像・静的ページ"
+node app 2.6 0.5 box "アプリ" "EC2・Lambda"
+node ec 3.9 0 blank "②" "まずここを読む"
+node db 3.9 1 box "RDS" "キャッシュにない時"
+edge u cf
+edge cf app "動的な要求"
+edge app ec
+edge app db dash
+<figcaption>図1 キャッシュの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="cf">
+<p class="ex-q">① 静的なファイルを利用者の近くのエッジから返すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="CloudFront">Amazon CloudFront<span class="ex-why">世界中のエッジロケーションでキャッシュして返します。キャッシュできない要求だけを後ろのアプリに送ります。</span></li>
+<li data-short="Accelerator">AWS Global Accelerator<span class="ex-why">AWSのネットワークで通信の経路を速くするもので、コンテンツをキャッシュしません。</span></li>
+<li data-short="NLB">Network Load Balancer<span class="ex-why">リージョンの中で通信を振り分けるもので、キャッシュの機能はありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="ec">
+<p class="ex-q">② アプリがDBの前に読む、インメモリのキャッシュは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="ElastiCache">Amazon ElastiCache<span class="ex-why">メモリ上でデータを保持し、マイクロ秒〜ミリ秒で返します。DBの読み取りの回数を減らせます。</span></li>
+<li data-short="DAX">DynamoDB Accelerator(DAX)<span class="ex-why">DynamoDB専用のキャッシュで、RDSの前には置けません。</span></li>
+<li data-short="EFS">Amazon EFS<span class="ex-why">共有のファイルストレージで、キャッシュではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 遅延読み込み(必要になったらキャッシュする)の弱点は?</p>
+<ul class="ex-choices">
+<li data-ok>初回は必ずミスし、データが古くなることがある<span class="ex-why">TTLで古いデータを消すか、更新時にキャッシュも書き換える(ライトスルー)と組み合わせます(<a href="../terms/caching-comparison.html">キャッシュの選び方</a>)。</span></li>
+<li>使われないデータまでキャッシュされる<span class="ex-why">ライトスルーの弱点です。遅延読み込みは必要なデータだけをキャッシュします。</span></li>
+<li>DBへの書き込みができなくなる<span class="ex-why">書き込みはこれまでどおりDBに行います。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p>静的なコンテンツは<strong>CloudFront</strong>で、くり返し読まれるデータは<strong>ElastiCache</strong>で返し、DBにはキャッシュにないときだけ読みに行きます。ElastiCacheの <code>Evictions</code> が多いときはメモリ不足なので、ノードを大きくするかシャードを増やします。</p>
 <figure class="figure" data-diagram>
 grid 165 80
 node u 0 0.5 blue "利用者"
@@ -18,12 +67,12 @@ edge u cf
 edge cf app "動的な要求"
 edge app ec "①"
 edge app db "②ミス時" dash
-<figcaption>図1 キャッシュの構成。静的なコンテンツはCloudFrontのエッジで返す。アプリはまずElastiCacheを読み(①)、なければDBから読んでキャッシュに書き込む(②、遅延読み込み)。</figcaption>
+<figcaption>図2 キャッシュの構成。静的なコンテンツはCloudFrontのエッジで返す。アプリはまずElastiCacheを読み(①)、なければDBから読んでキャッシュに書き込む(②、遅延読み込み)。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/elasticache.html">Amazon ElastiCache</a>:インメモリのキャッシュ(Valkey・Redis OSS・Memcached)</li>
 <li><a href="../services/cloudfront.html">Amazon CloudFront</a>:画像・静的ファイル・キャッシュできるAPIの応答をエッジで返す</li>
@@ -33,7 +82,7 @@ edge app db "②ミス時" dash
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>ElastiCacheをアプリと同じVPCのプライベートサブネットに作成する。止まると困るならレプリカを置いてMulti-AZ・自動フェイルオーバーを有効にする(Valkey・Redis OSS)</li>
 <li>アプリに、キャッシュを先に読み、なければDBから読んでキャッシュに入れる処理(<strong>遅延読み込み</strong>)を実装する</li>
@@ -44,7 +93,7 @@ edge app db "②ミス時" dash
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>「同じデータの繰り返しの読み取りでDBが重い」→ <strong class="em">ElastiCache</strong>。静的コンテンツ・地理的に分散した利用者 → CloudFront。</li>
 <li>遅延読み込みは必要なデータだけキャッシュするが、初回は必ずミスし、データが古くなりうる。ライトスルーは常に新しいが、使われないデータもキャッシュする。</li>

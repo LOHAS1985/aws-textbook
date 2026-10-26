@@ -2,11 +2,60 @@
 <!-- category: 監視・ログ・自動修復 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>EC2上のアプリやDBで、ディスクの読み書きが遅いという問い合わせがある。原因がEBSボリュームの性能不足なのか、インスタンス側の上限なのかを切り分け、<strong>サービスを止めずに</strong>性能を上げたい。逆に、性能を持て余しているリソースは小さくして費用を下げたい。</p>
+<ul>
+<li>EC2上のDBのディスクの読み書きが遅い。原因が<strong>EBSボリューム</strong>か<strong>インスタンス</strong>かを切り分けたい。</li>
+<li>サービスを<strong>止めずに</strong>性能を上げたい。</li>
+<li>性能を持て余しているリソースは小さくして、費用を下げたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node ec2 0 0.5 blue "EC2" "EBSボリューム"
+node cw 1.4 0.5 accent "CloudWatch" "EBS・EC2の指標"
+node co 1.4 1.6 blank "②" "過不足の推奨"
+node ev 2.8 0 blank "①" "止めずに変更"
+node it 2.8 1 ok "インスタンス変更" "EBS帯域の大きい型"
+edge ec2 cw
+edge ec2 co dash
+edge cw ev "ボリューム側"
+edge cw it "インスタンス側"
+<figcaption>図1 性能の改善の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ev">
+<p class="ex-q">① アタッチしたまま、ボリュームのタイプやIOPSを変える機能は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Elastic Volumes">Elastic Volumes<span class="ex-why">サイズ・タイプ・IOPS・スループットを、インスタンスを止めずに変更できます。gp2からgp3への変更もこれで行います。</span></li>
+<li data-short="スナップショット">スナップショットから作り直す<span class="ex-why">新しいボリュームに付け替えるために停止が必要で、要件に合いません。</span></li>
+<li data-short="マルチアタッチ">マルチアタッチ<span class="ex-why">1つのボリュームを複数のインスタンスに付ける機能で、性能を上げるものではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="co">
+<p class="ex-q">② EC2・EBSの過不足を分析し、適切なサイズを推奨するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Optimizer">AWS Compute Optimizer<span class="ex-why">使用状況のメトリクスから、大きすぎる・小さすぎるリソースと推奨のタイプを示します。</span></li>
+<li data-short="Cost Explorer">AWS Cost Explorer<span class="ex-why">費用の内訳を見るもので、性能から見たサイズの推奨は出しません。</span></li>
+<li data-short="Inspector">Amazon Inspector<span class="ex-why">脆弱性を見つけるサービスです。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ I/Oが詰まっていることを示すEBSのメトリクスは?</p>
+<ul class="ex-choices">
+<li data-ok><code>VolumeQueueLength</code><span class="ex-why">処理待ちの読み書きの数です。高いままなら、ボリュームの性能が足りていません(<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>)。</span></li>
+<li><code>CPUUtilization</code><span class="ex-why">EC2のCPUの使用率で、ディスクの詰まりは分かりません。</span></li>
+<li><code>StatusCheckFailed</code><span class="ex-why">インスタンスやホストの障害を示すもので、性能の指標ではありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p>CloudWatchのメトリクスで、ボトルネックがボリュームかインスタンスかを切り分けます。ボリューム側なら<strong>Elastic Volumes</strong>でgp3のIOPSを足し、インスタンス側ならEBS帯域の大きいタイプに変えます。サイズを増やしたら、OS側でファイルシステムの拡張も必要です。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node ec2 0 0.5 blue "EC2" "EBSボリューム"
@@ -18,12 +67,12 @@ edge ec2 cw
 edge ec2 co dash
 edge cw ev "ボリューム側"
 edge cw it "インスタンス側"
-<figcaption>図1 性能改善の流れ。CloudWatchのメトリクスで、ボトルネックがボリュームかインスタンスかを切り分ける。ボリューム側ならElastic Volumesで止めずにタイプやIOPSを変え、インスタンス側ならEBS帯域の大きいインスタンスタイプに変える。</figcaption>
+<figcaption>図2 性能改善の流れ。CloudWatchのメトリクスで、ボトルネックがボリュームかインスタンスかを切り分ける。ボリューム側ならElastic Volumesで止めずにタイプやIOPSを変え、インスタンス側ならEBS帯域の大きいインスタンスタイプに変える。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:<code>VolumeQueueLength</code>・<code>VolumeReadOps</code>/<code>VolumeWriteOps</code>・インスタンスのEBS関連の指標の確認とアラーム</li>
 <li><a href="../services/ebs.html">Amazon EBS</a>:Elastic Volumesでボリュームのタイプ・IOPS・スループット・サイズをオンラインで変更</li>
@@ -33,7 +82,7 @@ edge cw it "インスタンス側"
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>CloudWatchで、ボリュームの読み書き回数(IOPS)・スループット・<code>VolumeQueueLength</code> を確認する。IOPSやスループットがボリュームの上限に張り付き、キューが溜まっていればボリューム側が原因</li>
 <li>ボリュームに余裕があるのに遅い場合は、インスタンスの <code>EBSIOBalance%</code>・<code>EBSByteBalance%</code> などで、インスタンス側のEBS帯域の上限を確認する</li>
@@ -44,7 +93,7 @@ edge cw it "インスタンス側"
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>I/Oが詰まっている → <code>VolumeQueueLength</code>。ボリュームの性能を止めずに上げる → <strong class="em">Elastic Volumes</strong>。</li>
 <li>gp3はサイズに関係なく3,000IOPS・125MiB/sが付き、IOPS・スループットを個別に追加できる。gp2はサイズに比例するので、性能のために容量を増やす必要があった。</li>

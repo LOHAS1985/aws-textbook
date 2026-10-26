@@ -2,11 +2,70 @@
 <!-- category: 監視・ログ・自動修復 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>組織内の複数アカウントのアプリログやAPI操作の記録(CloudTrail)を、ログ集約用のアカウントに集めて長期保存したい。監査のときにはSQLで横断的に検索したい。</p>
+<ul>
+<li>複数アカウントのアプリのログとAPIの操作の記録を、<strong>ログ集約用のアカウントに集めて長期保存</strong>したい。</li>
+<li>監査のときは、<strong>SQLで横断的に検索</strong>したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 85
+node a1 0 0 blue "アカウントA" "CloudWatch Logs"
+node a2 0 1 blue "アカウントB" "CloudWatch Logs"
+node ct 0 2 blue "CloudTrail" "組織の証跡"
+node fh 1.4 0.5 blank "①" "S3へ配送"
+node s3 2.8 1 accent "ログ用S3" "集約アカウント"
+node ath 1.4 2 blank "②" "SQLで分析"
+edge a1 fh
+edge a2 fh
+edge fh s3
+edge ct s3
+edge ath s3 dash "クエリ"
+<figcaption>図1 複数アカウントのログの集約の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="fh">
+<p class="ex-q">① サブスクリプションフィルターから受けたログを、S3へ配送するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Data Firehose">Amazon Data Firehose<span class="ex-why">流れてくるデータをまとめて、S3などの保存先へ自動で配送します。サーバーの管理は不要です。</span></li>
+<li data-short="SQS">Amazon SQS<span class="ex-why">メッセージをためるキューで、S3へ配送する機能はありません。</span></li>
+<li data-short="DataSync">AWS DataSync<span class="ex-why">オンプレミスとAWSの間などでファイルをまとめて転送するサービスで、ログの流れを受けるものではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="ath">
+<p class="ex-q">② S3に置いたログを、そのままSQLで検索するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Athena">Amazon Athena<span class="ex-why">S3のデータに対して直接SQLを実行します。サーバーは不要で、読み取ったデータ量に応じて課金されます。</span></li>
+<li data-short="RDS">Amazon RDS<span class="ex-why">データをDBに取り込む必要があり、ログの長期保存・検索には向きません。</span></li>
+<li data-short="Logs Insights">CloudWatch Logs Insights<span class="ex-why">CloudWatch Logsのロググループを検索するもので、S3のログは対象外です。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 組織の全アカウントのAPIの記録を集めるには?</p>
+<ul class="ex-choices">
+<li data-ok>CloudTrailの組織の証跡を作る<span class="ex-why">管理アカウントで1つ作るだけで、全アカウントの記録が指定したS3に届きます。メンバーアカウントからは削除できません。</span></li>
+<li>各アカウントで別々に証跡を作る<span class="ex-why">動きはしますが、新しいアカウントで作り忘れるおそれがあります。</span></li>
+<li>Config のアグリゲーターを作る<span class="ex-why">リソースの設定の情報が集まるだけで、APIの記録は集まりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ 集めたログを削除・改ざんされないようにするには?</p>
+<ul class="ex-choices">
+<li data-ok>S3オブジェクトロックとバケットポリシーで削除を制限する<span class="ex-why">CloudTrailのログファイルの整合性の検証とあわせて、改ざんされていないことを示せます。</span></li>
+<li>ライフサイクルルールでGlacierに移す<span class="ex-why">費用は下がりますが、削除の防止にはなりません。</span></li>
+<li>Athenaの結果を別のバケットに保存する<span class="ex-why">元のログの保護にはなりません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p>各アカウントのCloudWatch Logsはサブスクリプションフィルターから<strong>Data Firehose</strong>でS3へ、APIの記録は<strong>組織の証跡</strong>でS3へ集めます。分析は<strong>Athena</strong>で行い、パーティション分割や列指向の形式にすると、読み取る量が減って費用も下がります。</p>
 <figure class="figure" data-diagram>
 grid 170 85
 node a1 0 0 blue "アカウントA" "CloudWatch Logs"
@@ -20,12 +79,12 @@ edge a2 fh
 edge fh s3
 edge ct s3
 edge ath s3 dash "クエリ"
-<figcaption>図1 各アカウントのCloudWatch Logsをサブスクリプションフィルター → Data Firehoseで、CloudTrailは組織の証跡で、集約アカウントのS3に保存する。分析はAthenaでS3を直接SQLで検索する。</figcaption>
+<figcaption>図2 各アカウントのCloudWatch Logsをサブスクリプションフィルター → Data Firehoseで、CloudTrailは組織の証跡で、集約アカウントのS3に保存する。分析はAthenaでS3を直接SQLで検索する。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:サブスクリプションフィルターでログをリアルタイムに転送する</li>
 <li><a href="../services/kinesis.html">Amazon Kinesis(Data Firehose)</a>:ログをS3へ配送する</li>
@@ -37,7 +96,7 @@ edge ath s3 dash "クエリ"
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>集約アカウントにログ用のS3バケットを作り、バケットポリシーで各アカウントからの書き込みを許可する</li>
 <li>管理アカウントでCloudTrailの組織の証跡を作成し、保存先に集約バケットを指定する</li>
@@ -48,11 +107,12 @@ edge ath s3 dash "クエリ"
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>短期・頻繁に検索するログはCloudWatch Logs、<strong>長期・たまに検索するログはS3</strong>。</li>
 <li>CloudTrailのログの改ざん検知 → <strong>ログファイルの整合性検証</strong>。</li>
 <li>Athenaのコスト削減 → パーティション分割・列指向形式。</li>
 <li>ログを削除させないために、S3オブジェクトロックやバケットポリシーで削除を制限する。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>、<a href="../terms/compliance-artifact.html">コンプライアンスとAWS Artifact</a>、<a href="../services/data-firehose.html">Amazon Data Firehose</a></p>
 </section>

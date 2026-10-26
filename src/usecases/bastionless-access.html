@@ -2,11 +2,60 @@
 <!-- category: ネットワーク・コンテンツ配信 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>インターネットに出られないプライベートサブネットのEC2に、運用担当者がシェルで接続したい。踏み台サーバーやSSHの22番ポートは使わず、誰がいつ何をしたかの記録も残したい。</p>
+<ul>
+<li>インターネットに出られないプライベートサブネットのEC2に、<strong>シェルで接続</strong>したい。</li>
+<li><strong>踏み台サーバーやSSHの22番ポートは使わない</strong>。</li>
+<li>誰がいつ何をしたかの記録を残したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 160 95
+node admin 0 0 blue "運用担当者" "コンソール / CLI"
+node ssm 1.25 0 blank "①" "シェルを開く"
+node vpce 2.5 0 blank "②" "インターフェイス型"
+node ec2 3.75 0 ok "EC2" "SSM Agent"
+node logs 0 1.2 box "操作ログ" "S3・Logsに記録"
+edge admin ssm
+edge ec2 vpce "HTTPS"
+edge vpce ssm
+edge ssm logs dash
+<figcaption>図1 踏み台なしの接続の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ssm">
+<p class="ex-q">① ポートを開けずに、ブラウザやCLIからシェルを開くものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Session Manager">Systems Manager Session Manager<span class="ex-why">EC2のSSM Agentが外向きのHTTPSでつなぐため、受信のポートは不要です。接続できる人はIAMで制御します。</span></li>
+<li data-short="踏み台サーバー">パブリックサブネットの踏み台サーバー<span class="ex-why">要件で使わないと決めています。22番を開け、鍵も管理する必要があります。</span></li>
+<li data-short="Client VPN">AWS Client VPN<span class="ex-why">VPCにつなぐことはできますが、その先はSSHなどのポートが必要です。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="vpce">
+<p class="ex-q">② インターネットに出られないEC2から、Systems Managerにつなぐ経路は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="VPCエンドポイント">インターフェイス型VPCエンドポイント<span class="ex-why"><code>ssm</code>・<code>ssmmessages</code> などのエンドポイントを作り、プライベートなまま接続します(<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>)。</span></li>
+<li data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">パブリックIPが必要になり、プライベートなままでは使えません。</span></li>
+<li data-short="VPCピアリング">VPCピアリング<span class="ex-why">VPC同士をつなぐもので、AWSのサービスへの経路にはなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ EC2のロールに付けるポリシーは?</p>
+<ul class="ex-choices">
+<li data-ok><code>AmazonSSMManagedInstanceCore</code><span class="ex-why">EC2をSystems Managerの管理対象にするための最小限の権限です。</span></li>
+<li><code>AmazonEC2FullAccess</code><span class="ex-why">EC2の操作の権限で、Systems Managerへの接続には足りず、広すぎます。</span></li>
+<li>何も付けなくてよい<span class="ex-why">ロールがないと、Systems Managerに登録されません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p>EC2のSSM Agentが<strong>VPCエンドポイント</strong>経由でSystems Managerにつなぎ、運用担当者は<strong>Session Manager</strong>からシェルを開きます。操作はS3やCloudWatch Logsに記録でき、セッションの開始・終了はCloudTrailに残ります。SSHの鍵を配らずにSSHで接続したい場合は、EC2 Instance Connectも使えます。</p>
 <figure class="figure" data-diagram>
 grid 160 95
 node admin 0 0 blue "運用担当者" "コンソール / CLI"
@@ -21,12 +70,12 @@ edge ec2 vpce "HTTPS"
 edge vpce ssm
 edge iam ssm dash
 edge ssm logs dash
-<figcaption>図1 EC2のSSM AgentがVPCエンドポイント経由でSystems Managerに接続し(アウトバウンドのHTTPS)、運用担当者はSession Managerからシェルを開く。インバウンドのポートは不要で、接続できる人はIAMで制御し、操作はログに残せる。</figcaption>
+<figcaption>図2 EC2のSSM AgentがVPCエンドポイント経由でSystems Managerに接続し(アウトバウンドのHTTPS)、運用担当者はSession Managerからシェルを開く。インバウンドのポートは不要で、接続できる人はIAMで制御し、操作はログに残せる。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Session Managerでブラウザ/CLIからシェル接続する</li>
 <li><a href="../services/vpc.html">Amazon VPC</a>:インターネットに出られないサブネットから、インターフェイス型エンドポイント(<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>)でSystems Managerに接続する</li>
@@ -37,7 +86,7 @@ edge ssm logs dash
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>EC2のIAMロールに <code>AmazonSSMManagedInstanceCore</code> を付け、SSM Agentが動いていることを確認する</li>
 <li>プライベートサブネットに、<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のインターフェイス型VPCエンドポイントを作成する(エンドポイントのSGで443番を許可)</li>
@@ -48,10 +97,11 @@ edge ssm logs dash
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>22番ポートを開けずに接続 → <strong>Session Manager</strong>。SSHの鍵を配らずにSSH接続 → <a href="../services/ec2.html">EC2 Instance Connect</a>。</li>
 <li>Session Managerで接続できない → <strong>SSM Agent</strong>、<strong>IAMロール</strong>、<strong>Systems Managerへの経路(NATまたはVPCエンドポイント)</strong>を確認する。</li>
 <li>ポートフォワーディングで、手元のPCからプライベートなRDSなどに接続することもできる。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/port-numbers.html">よく使うポート番号</a></p>
 </section>

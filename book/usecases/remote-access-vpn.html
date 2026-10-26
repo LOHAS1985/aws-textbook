@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,87 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>テレワーク中の社員が、自宅のPCからVPC内の社内システムや、オンプレミスのファイルサーバーを使えるようにしたい。ログインは社内のIDでシングルサインオンにし、<strong>部署ごとにアクセスできるネットワークを分けたい</strong>。インターネットの閲覧まですべてVPN経由にはしたくない。</p>
+<ul>
+<li>自宅のPCから、VPCの社内システムとオンプレミスのファイルサーバーを使いたい。</li>
+<li>ログインは<strong>社内のIDでシングルサインオン</strong>にし、部署ごとにアクセスできる宛先を分けたい。</li>
+<li>インターネットの閲覧まで、<strong>すべてVPN経由にはしたくない</strong>。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Client VPNによるリモートアクセス。社員はSAMLで認証してエンドポイントに接続し、認可ルールで許された宛先にだけアクセスできる。スプリットトンネルを有効にすると、それ以外の通信はPCから直接インターネットに出る。"><defs><marker id="dgusecases-remote-access-vpn-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図1 リモートアクセスの構成。"><defs><marker id="dgusecases-remote-access-vpn-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="pc">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">社員のPC</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">VPNクライアント</text>
+</g>
+<g data-node="idp">
+<rect x="272" y="166" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="188" text-anchor="middle" class="dg-t">社内のIdP</text>
+<text x="347" y="206" text-anchor="middle" class="dg-s">SAML</text>
+</g>
+<g data-node="ep">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="100" text-anchor="middle" class="dg-t">①</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">認可ルール</text>
+</g>
+<g data-node="vpc">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">VPC</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">社内システム</text>
+</g>
+<g data-node="onp">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">VPN・DX経由</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-remote-access-vpn-1)"/>
+<text x="228" y="108" text-anchor="middle" class="dg-s dg-halo">TLS</text>
+<path d="M347.0,166.0 L347.0,130.0" class="dg-line dg-dash" marker-end="url(#dgusecases-remote-access-vpn-1)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgusecases-remote-access-vpn-1)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-remote-access-vpn-1)"/>
+</svg>
+</div>
+<figcaption>図1 リモートアクセスの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ep">
+<p class="ex-q">① 社員の端末1台ずつをVPCにつなぐものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Client VPN">AWS Client VPN<span class="ex-why">VPNクライアントからTLSでつなぎ、SAMLで認証し、認可ルールで宛先を制限します。</span></li>
+<li data-short="Site-to-Site">Site-to-Site VPN<span class="ex-why">拠点のネットワーク同士をつなぐもので、社員の端末からの接続には向きません(<a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>)。</span></li>
+<li data-short="Direct Connect">AWS Direct Connect<span class="ex-why">データセンターとの専用線で、自宅からの接続には使えません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② インターネットの閲覧はVPNを通さないようにする設定は?</p>
+<ul class="ex-choices">
+<li data-ok>スプリットトンネルを有効にする<span class="ex-why">エンドポイントのルートにある宛先だけがVPNを通り、それ以外はPCから直接インターネットに出ます。</span></li>
+<li>認可ルールを削除する<span class="ex-why">社内システムにもアクセスできなくなります。</span></li>
+<li>クライアントCIDRを広げる<span class="ex-why">割り当てるアドレスの範囲で、通信の経路は変わりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 接続はできるのに目的のサーバーに届かないとき、最初に確認するものは?</p>
+<ul class="ex-choices">
+<li data-ok>認可ルールと、エンドポイントのルートテーブル<span class="ex-why">そのあと、宛先側のセキュリティグループとルートを確認します(<a href="../terms/route-table.html">ルートテーブル</a>)。</span></li>
+<li>ACMの証明書の有効期限<span class="ex-why">期限切れなら接続自体ができません。</span></li>
+<li>IdPのパスワードポリシー<span class="ex-why">認証は済んでいるので、関係ありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Client VPN</strong>のエンドポイントで、社内のIdPによるSAML認証と、部署ごとの認可ルールを設定します。スプリットトンネルで、必要な通信だけをVPN経由にします。クライアントCIDRは接続先のネットワークと重ならないようにし(作成後は変更できない)、可用性のため2つのAZに関連付けます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図2 Client VPNによるリモートアクセス。社員はSAMLで認証してエンドポイントに接続し、認可ルールで許された宛先にだけアクセスできる。スプリットトンネルを有効にすると、それ以外の通信はPCから直接インターネットに出る。"><defs><marker id="dgusecases-remote-access-vpn-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="pc">
 <rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="100" text-anchor="middle" class="dg-t">社員のPC</text>
@@ -80,21 +153,21 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="109" y="188" text-anchor="middle" class="dg-t">インターネット</text>
 <text x="109" y="206" text-anchor="middle" class="dg-s">PCから直接</text>
 </g>
-<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-remote-access-vpn-1)"/>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-remote-access-vpn-2)"/>
 <text x="228" y="108" text-anchor="middle" class="dg-s dg-halo">TLS</text>
-<path d="M347.0,166.0 L347.0,130.0" class="dg-line dg-dash" marker-end="url(#dgusecases-remote-access-vpn-1)"/>
-<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgusecases-remote-access-vpn-1)"/>
-<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-remote-access-vpn-1)"/>
-<path d="M109.0,130.0 L109.0,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-remote-access-vpn-1)"/>
+<path d="M347.0,166.0 L347.0,130.0" class="dg-line dg-dash" marker-end="url(#dgusecases-remote-access-vpn-2)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgusecases-remote-access-vpn-2)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-remote-access-vpn-2)"/>
+<path d="M109.0,130.0 L109.0,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-remote-access-vpn-2)"/>
 <text x="109" y="152" text-anchor="middle" class="dg-s dg-halo">スプリットトンネル</text>
 </svg>
 </div>
-<figcaption>図1 Client VPNによるリモートアクセス。社員はSAMLで認証してエンドポイントに接続し、認可ルールで許された宛先にだけアクセスできる。スプリットトンネルを有効にすると、それ以外の通信はPCから直接インターネットに出る。</figcaption>
+<figcaption>図2 Client VPNによるリモートアクセス。社員はSAMLで認証してエンドポイントに接続し、認可ルールで許された宛先にだけアクセスできる。スプリットトンネルを有効にすると、それ以外の通信はPCから直接インターネットに出る。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/client-vpn.html">AWS Client VPN</a>:エンドポイント、SAML認証、認可ルール、ルートテーブル、スプリットトンネル、接続ログ</li>
 <li><a href="../services/acm.html">AWS Certificate Manager</a>:エンドポイントのサーバー証明書</li>
@@ -105,7 +178,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>サーバー証明書をACMに用意し、IdPとSAMLで連携するためのIAMのSAMLプロバイダーを作る</li>
 <li>Client VPNエンドポイントを作る:クライアントCIDR(VPCやオンプレミスと<strong>重ならない</strong>範囲)、認証方法(SAML)、接続ログ、スプリットトンネルを設定する</li>
@@ -116,7 +189,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>社員の端末からのリモートアクセス → <strong class="em">Client VPN</strong>。拠点どうしの接続 → Site-to-Site VPN。</li>
 <li>VPN以外の通信までVPN経由になる → <strong class="em">スプリットトンネル</strong>を有効にする。</li>
@@ -124,38 +197,34 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>クライアントCIDRは、接続先のネットワークと重ならないようにする(作成後は変更できない)。</li>
 <li>関連付けたサブネットの数と接続時間で料金がかかる。可用性のため2つのAZに関連付ける。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/tls-termination.html">TLS終端と証明書の配置</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/remote-access-vpn.html"><span class="title">社員の端末からVPCに接続する構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 6件・リンク元 1件)</summary>
+<summary>つながり図を開く(リンク先 7件・リンク元 1件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="社員の端末からVPCの社内システムに安全に接続するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,120 C265.0,120 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../terms/hybrid-connectivity.html"><title>用語:オンプレミスとAWSをつなぐ方法の選び方</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="124" class="gr-t">オンプレミスとAWSをつなぐ方法…</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 246" style="max-width:784px;min-width:600px" role="img" aria-label="社員の端末からVPCの社内システムに安全に接続するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../terms/hybrid-connectivity.html"><title>用語:オンプレミスとAWSをつなぐ方法の選び方</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">オンプレミスとAWSをつなぐ方法…</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/acm.html"><title>サービス:AWS Certificate Manager</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Certificate Manager</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/client-vpn.html"><title>サービス:AWS Client VPN</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Client VPN</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/identity-center.html"><title>サービス:AWS IAM Identity Center</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS IAM Identity Center</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/site-to-site-vpn.html"><title>サービス:AWS Site-to-Site VPN</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Site-to-Site VPN</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/transit-gateway.html"><title>サービス:AWS Transit Gateway</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS Transit Gateway</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon CloudWatch</text></a>
-<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">社員の端末からVPCの…</text>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/tls-termination.html"><title>用語:TLS終端と証明書の配置</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">TLS終端と証明書の配置</text></a>
+<rect x="300" y="115" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="140" text-anchor="middle" class="gr-tb">社員の端末からVPCの…</text>
 <text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -169,5 +238,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "pc", "label": "社員のPC", "sub": "VPNクライアント", "x": 0.0, "y": 0.5}, {"id": "idp", "label": "社内のIdP", "sub": "SAML", "x": 1.4, "y": 1.6}, {"id": "ep", "label": "Client VPN", "sub": "", "x": 1.4, "y": 0.5}, {"id": "vpc", "label": "VPC", "sub": "社内システム", "x": 2.8, "y": 0.0}, {"id": "onp", "label": "オンプレミス", "sub": "VPN・DX経由", "x": 2.8, "y": 1.0}], "edges": [["pc", "ep", false, false], ["idp", "ep", true, false], ["ep", "vpc", false, false], ["ep", "onp", false, false]], "distractors": ["Direct Connect", "Site-to-Site"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

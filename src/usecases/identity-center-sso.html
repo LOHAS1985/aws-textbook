@@ -2,11 +2,60 @@
 <!-- category: セキュリティ・コンプライアンス -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>アカウントが20個に増え、それぞれにIAMユーザーを作っているため、異動・退職のたびに全アカウントで作業が必要で、消し忘れも起きている。社内のIDで<strong>一度ログインすれば、権限のあるアカウントに切り替えて使える</strong>ようにし、長期のアクセスキーもなくしたい。</p>
+<ul>
+<li>20個のアカウントにそれぞれIAMユーザーを作っていて、<strong>退職者の消し忘れ</strong>が起きている。</li>
+<li>社内のIDで<strong>一度ログインすれば</strong>、権限のあるアカウントを使えるようにしたい。</li>
+<li>長期のアクセスキーもなくしたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node idp 0 0.5 blue "社内のIdP" "Entra IDなど"
+node ic 1.4 0.5 blank "①" "グループ×権限"
+node a1 2.8 0 ok "本番アカウント" "ReadOnly"
+node a2 2.8 1 ok "開発アカウント" "Admin"
+node cli 1.4 1.6 box "CLI" "aws sso login"
+edge idp ic "SAML・SCIM"
+edge ic a1
+edge ic a2
+edge cli ic dash
+<figcaption>図1 シングルサインオンの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ic">
+<p class="ex-q">① 社内のIdPと連携し、アカウントごとの権限を割り当てるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Identity Center">AWS IAM Identity Center<span class="ex-why">グループごとに「どのアカウントで、どの権限を使えるか」を割り当て、一時的な認証情報でログインさせます。</span></li>
+<li data-short="Cognito">Amazon Cognito<span class="ex-why">自社のアプリの利用者のログイン向けで、社員のAWSアカウントへのログインには使いません。</span></li>
+<li data-short="Directory Svc">AWS Directory Service<span class="ex-why">Active Directoryを用意するサービスで、それだけではアカウントへの権限の割り当てはできません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② アカウントで使える権限を定義する単位は?</p>
+<ul class="ex-choices">
+<li data-ok>パーミッションセット<span class="ex-why">割り当てると、各アカウントにIAMロールが自動で作られます。そのロールは直接編集しません。</span></li>
+<li>各アカウントのIAMユーザー<span class="ex-why">アカウントごとに管理が必要になり、今の問題が解決しません。</span></li>
+<li>SCP<span class="ex-why">組織の権限の上限を決めるもので、権限を与えるものではありません(<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>)。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 退職者がすべてのアカウントに入れないようにするには?</p>
+<ul class="ex-choices">
+<li data-ok>社内のIdPでユーザーを無効にする<span class="ex-why">SCIMで同期されるので、すべてのアカウントへのアクセスがまとめて止まります。</span></li>
+<li>20個のアカウントで順にロールを削除する<span class="ex-why">手間がかかり、消し忘れの問題が残ります。</span></li>
+<li>パスワードポリシーを厳しくする<span class="ex-why">退職者のアクセスは止まりません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p><strong>IAM Identity Center</strong>を社内のIdPとつなぎ、グループに<strong>パーミッションセット</strong>を割り当てます。CLIも <code>aws sso login</code> で一時的な認証情報を使えるので、長期のアクセスキーが不要になります(<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>)。組織全体で禁止したい操作は、SCPで制限します。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node idp 0 0.5 blue "社内のIdP" "Entra IDなど"
@@ -18,12 +67,12 @@ edge idp ic "SAML・SCIM"
 edge ic a1
 edge ic a2
 edge cli ic dash
-<figcaption>図1 Identity Centerによるシングルサインオン。社内のIdPと連携し、グループごとに「どのアカウントで、どのパーミッションセット(権限)を使えるか」を割り当てる。各アカウントにはIAMロールが自動で作られ、一時的な認証情報で操作する。</figcaption>
+<figcaption>図2 Identity Centerによるシングルサインオン。社内のIdPと連携し、グループごとに「どのアカウントで、どのパーミッションセット(権限)を使えるか」を割り当てる。各アカウントにはIAMロールが自動で作られ、一時的な認証情報で操作する。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/identity-center.html">AWS IAM Identity Center</a>:シングルサインオン、パーミッションセット、アカウントへの割り当て、MFA</li>
 <li><a href="../services/organizations.html">AWS Organizations</a>:対象のアカウント群。Identity Centerは管理アカウント(または委任管理者)で有効化</li>
@@ -33,7 +82,7 @@ edge cli ic dash
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>Organizationsの管理アカウントでIdentity Centerを有効にし、日常の管理は委任管理者アカウントで行う</li>
 <li>IDソースを決める:Identity Center内のディレクトリ、Active Directory、または外部のIdP(SAML 2.0で連携し、SCIMでユーザー・グループを自動同期)</li>
@@ -44,7 +93,7 @@ edge cli ic dash
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>多数のアカウントへのシングルサインオンと権限の一元管理 → <strong class="em">IAM Identity Center</strong>。</li>
 <li>権限は<strong>パーミッションセット</strong>で定義し、割り当てると各アカウントにIAMロールが自動で作られる。そのロールを直接編集しない(パーミッションセットの更新で上書きされる)。</li>
@@ -52,4 +101,5 @@ edge cli ic dash
 <li>アカウントごとのリソースのARNを含むポリシーは、カスタマー管理ポリシーを各アカウントに同じ名前で用意して参照する。</li>
 <li>組織全体で禁止したい操作は、Identity Centerではなく<strong>SCP</strong>で制限する。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/access-methods.html">AWSの操作方法</a></p>
 </section>

@@ -2,11 +2,62 @@
 <!-- category: 信頼性・事業継続 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>東京リージョン全体に障害が起きても、数分〜数十分で大阪リージョンでサービスを再開したい(<a href="../terms/dr-strategies.html">DR戦略</a>のウォームスタンバイ)。データの損失はできるだけ小さくしたい。</p>
+<ul>
+<li>東京リージョン全体の障害でも、<strong>数分〜数十分で大阪リージョンで再開</strong>したい(ウォームスタンバイ)。</li>
+<li>データの損失は、できるだけ小さくしたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 160 85
+node u 0 1 blue "利用者"
+node r53 1.25 1 blank "①" "切り替え"
+node p 2.5 0 box "東京(プライマリ)" "ALB + EC2"
+node s 2.5 2 box "大阪(セカンダリ)" "縮小構成で待機"
+node db1 3.75 0 ok "Aurora" "プライマリ"
+node db2 3.75 2 ok "Aurora" "セカンダリ"
+edge u r53
+edge r53 p "正常時"
+edge r53 s dash "障害時"
+edge p db1
+edge s db2
+edge db1 db2 "レプリケート"
+<figcaption>図1 リージョンの切り替えの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="r53">
+<p class="ex-q">① プライマリの異常を検知して、利用者の行き先を大阪へ切り替えるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Route 53">Route 53のフェイルオーバールーティング<span class="ex-why">ヘルスチェックが失敗すると、DNSの応答をセカンダリに切り替えます。</span></li>
+<li data-short="ALB">Application Load Balancer<span class="ex-why">ALBはリージョンの中のリソースなので、リージョンをまたいで切り替えられません。</span></li>
+<li data-short="CloudTrail">AWS CloudTrail<span class="ex-why">操作の記録で、切り替えの機能はありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② データを小さな遅延で大阪に複製するDBの機能は?</p>
+<ul class="ex-choices">
+<li data-ok>Auroraグローバルデータベース<span class="ex-why">通常1秒未満の遅延で別リージョンに複製し、障害時にはセカンダリを昇格させて書き込めるようにします。</span></li>
+<li>RDSのMulti-AZ<span class="ex-why">同じリージョンの中の別のAZへの複製で、リージョンの障害には備えられません。</span></li>
+<li>1日1回のスナップショットのコピー<span class="ex-why">最大で1日分のデータを失うため、「損失を小さく」に合いません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 大阪のアプリ層を、東京と同じ構成で用意しておくには?</p>
+<ul class="ex-choices">
+<li data-ok>CloudFormation(StackSets)で両方のリージョンに同じテンプレートを展開する<span class="ex-why">手作業の差が出ず、構成のずれも防げます。</span></li>
+<li>障害が起きてから手作業で作る<span class="ex-why">時間がかかり、ウォームスタンバイの復旧時間を満たせません。</span></li>
+<li>東京のEC2をそのまま大阪に移動する<span class="ex-why">EC2はリージョンをまたいで移動できません(AMIのコピーは可能)。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p><strong>Route 53</strong>のフェイルオーバールーティングでプライマリを監視し、異常なら大阪に切り替えます。データは<strong>Auroraグローバルデータベース</strong>で複製し、大阪には縮小した構成を常に動かしておきます。切り替えをより安全に行うには、ARCのルーティングコントロールも使えます(<a href="../terms/dr-strategies.html">DR戦略</a>)。</p>
 <figure class="figure" data-diagram>
 grid 160 85
 node u 0 1 blue "利用者"
@@ -21,12 +72,12 @@ edge r53 s dash "障害時"
 edge p db1
 edge s db2
 edge db1 db2 "レプリケート"
-<figcaption>図1 Route 53がプライマリのヘルスチェックを監視し、失敗したらセカンダリ(大阪)へ切り替える。データはAuroraグローバルデータベースで、通常1秒未満の遅延で大阪にレプリケートしておく。</figcaption>
+<figcaption>図2 Route 53がプライマリのヘルスチェックを監視し、失敗したらセカンダリ(大阪)へ切り替える。データはAuroraグローバルデータベースで、通常1秒未満の遅延で大阪にレプリケートしておく。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/route53.html">Amazon Route 53</a>:フェイルオーバールーティングとヘルスチェック</li>
 <li><a href="../services/aurora.html">Amazon Aurora</a>:グローバルデータベースで別リージョンにレプリケート</li>
@@ -37,7 +88,7 @@ edge db1 db2 "レプリケート"
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>CloudFormationで、大阪にも同じ構成(縮小版)を作成する</li>
 <li>Auroraグローバルデータベースを作成し、大阪をセカンダリリージョンにする</li>
@@ -48,11 +99,12 @@ edge db1 db2 "レプリケート"
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>復旧時間(RTO)とコストのバランスで、<strong>バックアップと復元/パイロットライト/ウォームスタンバイ/マルチサイト</strong>から選ぶ。</li>
 <li>リージョン障害対策のDB → <strong>Auroraグローバルデータベース</strong>。</li>
 <li>切り替えを安全・確実に行いたい → Route 53 <strong>Application Recovery Controller</strong>(ルーティングコントロール・準備状況チェック)。</li>
 <li>DNSのキャッシュに左右されずに切り替えたい場合は<a href="../services/global-accelerator.html">Global Accelerator</a>も候補。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/dns-record-types.html">DNSレコードタイプ</a></p>
 </section>

@@ -2,11 +2,58 @@
 <!-- category: 信頼性・事業継続 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>運用中のRDSで、14時05分に誤ってテーブルのデータを削除してしまった。<strong>14時04分の状態</strong>に戻して業務を再開したい。また、こうした事態に備えて、バックアップの保持期間や別リージョンへのバックアップも整えておきたい。</p>
+<ul>
+<li>14時05分に、誤ってテーブルのデータを削除してしまった。</li>
+<li><strong>14時04分の状態</strong>に戻して、業務を再開したい。</li>
+<li>リージョンの障害にも備えて、別のリージョンにもバックアップを置きたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 170 80
+node db 0 0.5 ng "本番DB" "14:05に誤削除"
+node bk 1.4 0.5 blank "①" "スナップショット+ログ"
+node nw 2.8 0.5 ok "新しいDB" "14:04の状態"
+node app 4.1 0.5 blue "アプリ" "接続先を切替"
+edge db bk
+edge bk nw "PITR"
+edge app nw
+<figcaption>図1 特定の時点への復元の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="bk">
+<p class="ex-q">① 特定の時刻に戻すために使うものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="自動バックアップ">RDSの自動バックアップ<span class="ex-why">日次のスナップショットとトランザクションログから、保持期間(1〜35日)内の任意の時点に戻せます。</span></li>
+<li data-short="リードレプリカ">リードレプリカ<span class="ex-why">削除の操作もすぐ複製されるため、削除前の状態は残りません。</span></li>
+<li data-short="Multi-AZ">Multi-AZのスタンバイ<span class="ex-why">同期で複製されるので、誤削除もそのまま反映されます。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② ポイントインタイムリカバリの復元先は?</p>
+<ul class="ex-choices">
+<li data-ok>新しいDBインスタンス(エンドポイントが変わる)<span class="ex-why">元のDBは上書きされないので、アプリの接続先を切り替えます。Route 53のCNAMEを使うと切り替えが楽です。</span></li>
+<li>元のDBインスタンスをその場で巻き戻す<span class="ex-why">RDSのPITRは元のDBを上書きしません(Aurora MySQLのバックトラックは同じクラスターを巻き戻せます)。</span></li>
+<li>リードレプリカ<span class="ex-why">復元先にリードレプリカは選べません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ DBインスタンスを削除しても残るバックアップは?</p>
+<ul class="ex-choices">
+<li data-ok>手動スナップショット<span class="ex-why">手動スナップショットは削除するまで残ります。自動バックアップは、既定ではDBの削除とともに消えます。</span></li>
+<li>自動バックアップ(既定の設定)<span class="ex-why">既定ではDBインスタンスの削除とともに削除されます。</span></li>
+<li>トランザクションログ<span class="ex-why">自動バックアップの一部で、単独では残りません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p><strong>自動バックアップ</strong>のPITRで、14時04分の状態の新しいDBインスタンスを作り、アプリの接続先を切り替えます。リージョンの障害への備えには、スナップショットのリージョン間コピーや、自動バックアップのリージョン間レプリケーションを使います(<a href="../terms/dr-strategies.html">DR戦略</a>)。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node db 0 0.5 ng "本番DB" "14:05に誤削除"
@@ -16,12 +63,12 @@ node app 4.1 0.5 blue "アプリ" "接続先を切替"
 edge db bk
 edge bk nw "PITR"
 edge app nw
-<figcaption>図1 ポイントインタイムリカバリ。日次のスナップショットとトランザクションログから、指定した時点の状態の新しいDBインスタンスを作る。元のDBは上書きされないので、アプリの接続先を切り替える。</figcaption>
+<figcaption>図2 ポイントインタイムリカバリ。日次のスナップショットとトランザクションログから、指定した時点の状態の新しいDBインスタンスを作る。元のDBは上書きされないので、アプリの接続先を切り替える。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/rds.html">Amazon RDS</a>:自動バックアップ(保持期間1〜35日)、PITR、手動スナップショット、自動バックアップのリージョン間レプリケーション</li>
 <li><a href="../services/aurora.html">Amazon Aurora</a>:バックトラック(Aurora MySQL。同じクラスターを数秒〜数分で過去に巻き戻す)</li>
@@ -31,7 +78,7 @@ edge app nw
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>(事前)自動バックアップの保持期間を要件に合わせて設定する(0にすると無効)。長期保管は手動スナップショットかAWS Backupで行う</li>
 <li>誤操作が起きたら、コンソールの「特定時点への復元」で、誤操作の直前の時刻を指定して<strong>新しいDBインスタンス</strong>を作る(最新の復元可能時刻は通常、現在の約5分前)</li>
@@ -42,7 +89,7 @@ edge app nw
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>特定の時刻に戻す → <strong class="em">PITR</strong>。復元先は<strong>新しいDBインスタンス</strong>(エンドポイントが変わる)。</li>
 <li>スナップショットからの復元も同じく新しいインスタンスになる。元のインスタンスが上書きされることはない。</li>

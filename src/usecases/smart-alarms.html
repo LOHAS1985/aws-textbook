@@ -2,11 +2,62 @@
 <!-- category: 監視・ログ・自動修復 -->
 <section class="chapter">
 <h2>1. やりたいこと</h2>
-<p>サーバーのメトリクスは正常でも、利用者からは「ログインできない」ことがある。<strong>利用者と同じ操作を定期的に試して</strong>問題に気づきたい。また、固定のしきい値のアラームでは、夜間の少ないアクセスや月末の多いアクセスで誤報が多く、通知が多すぎて重要なものが埋もれている。</p>
+<ul>
+<li>サーバーのメトリクスが正常でも「ログインできない」ことがある。<strong>利用者と同じ操作を定期的に試したい</strong>。</li>
+<li>アクセス数は時間帯や月末で大きく変わり、固定のしきい値では誤報が多い。</li>
+<li>通知が多すぎるので、<strong>本当に異常なときだけ1件</strong>知らせたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2>2. 構成図</h2>
+<h2>2. 構成を組み立てる</h2>
+<figure class="figure" data-diagram>
+grid 165 80
+node cn 0 0 blank "①" "ログインを試す"
+node m1 0 1 blue "リクエスト数" "予測の幅で判定"
+node a1 1.3 0 box "アラームA" "成功率 < 90%"
+node a2 1.3 1 box "アラームB" "予測の幅の外"
+node ca 2.6 0.5 blank "②" "A AND B"
+node sns 3.9 0.5 ok "SNS" "通知は1件"
+edge cn a1
+edge m1 a2
+edge a1 ca
+edge a2 ca
+edge ca sns
+<figcaption>図1 外形監視と誤報の少ないアラームの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="cn">
+<p class="ex-q">① 利用者と同じ操作を定期的に試すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Canary">CloudWatch SyntheticsのCanary<span class="ex-why">スクリプトでログインなどの操作を定期的に実行し、成功率や応答時間をメトリクスにします(外形監視)。</span></li>
+<li data-short="Logs Insights">CloudWatch Logs Insights<span class="ex-why">出力済みのログを検索するもので、利用者の操作を試すことはしません。</span></li>
+<li data-short="ヘルスチェック">ALBのヘルスチェック<span class="ex-why">決まったパスが応答するかを見るだけで、ログインのような一連の操作は確かめられません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="ca">
+<p class="ex-q">② 2つのアラームが両方とも異常のときだけ通知するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="複合アラーム">複合アラーム<span class="ex-why">複数のアラームの状態を AND・OR・NOT で組み合わせます。元のアラームは通知せず、材料として使います。</span></li>
+<li data-short="メトリクス数式">メトリクスの計算(Metric Math)<span class="ex-why">複数のメトリクスから新しい値を計算する機能で、アラームの状態を組み合わせるものではありません。</span></li>
+<li data-short="EventBridge">EventBridgeのルール<span class="ex-why">1つ1つのアラームの状態の変化を受けて動くため、「両方のとき」の判定には向きません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 時間帯で変わるリクエスト数に合うアラームは?</p>
+<ul class="ex-choices">
+<li data-ok>異常検出(予測の幅)のアラーム<span class="ex-why">過去の傾向から時間帯ごとの「いつもの幅」を学習し、そこから外れたときにALARMになります。</span></li>
+<li>固定のしきい値のアラーム<span class="ex-why">夜間の少ないアクセスや月末の多いアクセスで、誤報や見逃しが起きます。</span></li>
+<li>評価期間を1分・1個中1個にする<span class="ex-why">一瞬の跳ね上がりでも鳴るため、誤報がかえって増えます(<a href="../terms/cloudwatch-alarm-states.html">アラームの評価</a>)。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>3. 構成図</h2>
+<p><strong>Canary</strong>で利用者の操作を定期的に試し、時間帯で変わるメトリクスには<strong>異常検出</strong>のアラームを使います。両方を<strong>複合アラーム</strong>でまとめると、本当に異常なときだけ1件の通知になります。VPCの中の非公開のサイトを監視するときは、CanaryをVPCの中で動かします。</p>
 <figure class="figure" data-diagram>
 grid 165 80
 node cn 0 0 blue "Canary" "ログインを試す"
@@ -20,12 +71,12 @@ edge m1 a2
 edge a1 ca
 edge a2 ca
 edge ca sns
-<figcaption>図1 外形監視と誤報の少ないアラーム。Canaryの成功率と、異常検出のアラームを複合アラームでまとめ、両方が異常のときだけ通知する。個々のアラームは通知せず、複合アラームの材料として使う。</figcaption>
+<figcaption>図2 外形監視と誤報の少ないアラーム。Canaryの成功率と、異常検出のアラームを複合アラームでまとめ、両方が異常のときだけ通知する。個々のアラームは通知せず、複合アラームの材料として使う。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2>3. 使うサービスと役割</h2>
+<h2>4. 使うサービスと役割</h2>
 <ul>
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Synthetics(Canary)、異常検出、複合アラーム</li>
 <li><a href="../services/sns.html">Amazon SNS</a>:通知</li>
@@ -35,7 +86,7 @@ edge ca sns
 </section>
 
 <section class="chapter">
-<h2>4. 構築の流れ</h2>
+<h2>5. 構築の流れ</h2>
 <ol>
 <li>CloudWatch Syntheticsで、ログインなどの操作を行うCanaryを作り、数分おきに実行する(ブループリントのAPI監視・リンク切れチェックなども使える)</li>
 <li>Canaryの <code>SuccessPercent</code> にアラームを作る</li>
@@ -46,7 +97,7 @@ edge ca sns
 </section>
 
 <section class="chapter">
-<h2>5. ポイント・注意点</h2>
+<h2>6. ポイント・注意点</h2>
 <div class="point"><ul>
 <li>利用者の視点での定期的な確認(外形監視)→ <strong class="em">CloudWatch Synthetics</strong>のCanary。</li>
 <li>時間帯や曜日で変動するメトリクスのしきい値 → <strong class="em">異常検出</strong>。</li>
