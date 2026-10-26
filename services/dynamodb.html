@@ -150,7 +150,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p>指定時刻を過ぎたアイテムを自動削除する機能です。TTL属性は<strong>Number型+UNIXエポック秒</strong>である必要があります。セッション管理・キャッシュ・一時URLや認証コードに使います。ただし<strong>削除までにラグが生じる</strong>ため、正確な時刻で処理したい場合はEventBridge+Lambdaを使います。</p>
 
 <h3 id="c2-6">エラー処理<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
-<p><code>UnprocessedKeys</code> は、スロットリングやサイズ超過で未処理になったキーのリストです。<strong>指数バックオフでリトライ</strong>して再実行します。</p>
+<p><code>UnprocessedKeys</code> は、スロットリングやサイズ超過で未処理になったキーのリストです。<strong>エクスポネンシャルバックオフでリトライ</strong>して再実行します。</p>
 
 <h3 id="c2-7">関連機能<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
@@ -230,7 +230,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>GSIは<strong>結果整合性のみ</strong>。強い整合性が必要ならベーステーブルかLSI。</li>
 <li>読み取りをマイクロ秒に → <strong>DAX</strong>。</li>
 <li>変更をトリガーに処理 → <strong>Streams+Lambda</strong>。</li>
-<li><code>UnprocessedKeys</code> → <strong>指数バックオフでリトライ</strong>。</li>
+<li><code>UnprocessedKeys</code> → <strong>エクスポネンシャルバックオフでリトライ</strong>。</li>
 <li>全件取得の <code>Scan</code> は高コスト。可能なら <code>Query</code>。</li>
 <li>CloudFront・API Gateway・ElastiCache・DAXのキャッシュの使い分け → <a href="../terms/caching-comparison.html">キャッシュの選び方</a>。</li>
 </ul></div>

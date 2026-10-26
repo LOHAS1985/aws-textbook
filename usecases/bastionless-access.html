@@ -30,7 +30,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat5">ネットワーク・コンテンツ配信</a>
   <h1>踏み台サーバーなしでプライベートなEC2を操作する</h1>
   <p class="lead">Session ManagerとVPCエンドポイントで、ポートを開けずに安全に接続する</p>
-  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -52,7 +52,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="304" y="76" text-anchor="middle" class="dg-tb">Session Manager</text>
 <rect x="434" y="46" width="140" height="52" rx="8" class="dg-box"/>
 <text x="504" y="67" text-anchor="middle" class="dg-t">VPCエンドポイント</text>
-<text x="504" y="85" text-anchor="middle" class="dg-s">インターフェース型</text>
+<text x="504" y="85" text-anchor="middle" class="dg-s">インターフェイス型</text>
 <rect x="634" y="46" width="140" height="52" rx="8" class="dg-ok"/>
 <text x="704" y="67" text-anchor="middle" class="dg-t">EC2</text>
 <text x="704" y="85" text-anchor="middle" class="dg-s">SSM Agent</text>
@@ -78,7 +78,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Session Managerでブラウザ/CLIからシェル接続する</li>
-<li><a href="../services/vpc.html">Amazon VPC</a>:インターネットに出られないサブネットから、インターフェース型エンドポイント(<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>)でSystems Managerに接続する</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:インターネットに出られないサブネットから、インターフェイス型エンドポイント(<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>)でSystems Managerに接続する</li>
 <li><a href="../services/iam.html">AWS IAM</a>:EC2のロール(<code>AmazonSSMManagedInstanceCore</code>)と、利用者が接続できる範囲の制御</li>
 <li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/cloudwatch.html">CloudWatch Logs</a>:セッションの操作ログの保存先</li>
 <li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:セッションの開始・終了の記録</li>
@@ -89,7 +89,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>EC2のIAMロールに <code>AmazonSSMManagedInstanceCore</code> を付け、SSM Agentが動いていることを確認する</li>
-<li>プライベートサブネットに、<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のインターフェース型VPCエンドポイントを作成する(エンドポイントのSGで443番を許可)</li>
+<li>プライベートサブネットに、<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のインターフェイス型VPCエンドポイントを作成する(エンドポイントのSGで443番を許可)</li>
 <li>EC2のセキュリティグループから22番ポートのインバウンドルールを削除する</li>
 <li>Session Managerの設定で、操作ログの保存先(S3・CloudWatch Logs)を指定する</li>
 <li>運用担当者のIAMポリシーで、接続してよいインスタンスを(タグなどで)制限する</li>

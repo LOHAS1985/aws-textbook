@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon EC2 | AWS教科書</title>
-<meta name="description" content="AWS上で仮想サーバを動かすサービス(Elastic Compute Cloud)">
+<meta name="description" content="AWS上で仮想サーバーを動かすサービス(Elastic Compute Cloud)">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -30,7 +30,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat1">コンピューティング</a>
   <h1>Amazon EC2</h1>
-  <p class="lead">AWS上で仮想サーバを動かすサービス(Elastic Compute Cloud)</p>
+  <p class="lead">AWS上で仮想サーバーを動かすサービス(Elastic Compute Cloud)</p>
   <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
   </div>
 </div>
@@ -51,7 +51,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>Amazon EC2(Elastic Compute Cloud)</strong>は、AWS上で仮想サーバ(インスタンス)を動かすサービスです。OSテンプレートであるAMIを選び、インスタンスタイプ(CPU・メモリの組み合わせ)を決めて起動します。</p>
+<p><strong>Amazon EC2(Elastic Compute Cloud)</strong>は、AWS上で仮想サーバー(インスタンス)を動かすサービスです。OSテンプレートであるAMIを選び、インスタンスタイプ(CPU・メモリの組み合わせ)を決めて起動します。</p>
 
 <figure class="figure">
 <div class="fig-scroll">
@@ -104,7 +104,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ul>
 <li><strong>AMI</strong>:起動イメージ(OSテンプレート)。AMIを暗号化すると、AMIが参照しているEBSスナップショットが暗号化される。</li>
 <li><strong>拡張ネットワーキング</strong>:仮想化によるネットワーク処理の負担を減らし(SR-IOVという技術で、インスタンスがネットワーク機器を直接使えるようにする)、<strong>高帯域・低レイテンシー・パケットの処理性能の向上</strong>を実現する機能。追加料金はなく、現在の多くのインスタンスタイプで使える。</li>
-<li><strong>ENA(Elastic Network Adapter)</strong>:拡張ネットワーキングを実現するためのネットワークインターフェース(ドライバー)。最大100Gbps以上の帯域に対応する。AMIにENAのドライバーが入っている必要がある。</li>
+<li><strong>ENA(Elastic Network Adapter)</strong>:拡張ネットワーキングを実現するためのネットワークインターフェイス(ドライバー)。最大100Gbps以上の帯域に対応する。AMIにENAのドライバーが入っている必要がある。</li>
 <li><strong>インスタンスストア</strong>:インスタンスが動いている物理ホストに直接接続されたディスクを使う一時的なブロックストレージ。<strong>データは永続化しない</strong>。</li>
 <li><strong class="em">インスタンスプロファイル</strong>:IAMロールを格納するコンテナ。EC2に直接IAMロールは付与できず、<code>EC2 → インスタンスプロファイル → IAMロール</code> の形になる。</li>
 </ul>
@@ -434,8 +434,8 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <section class="chapter">
 <h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li>Webサーバ・アプリケーションサーバ(m系・t系)</li>
-<li>データベースサーバ(r系)、SAPなど大容量メモリが必要なシステム(x系)</li>
+<li>Webサーバー・アプリケーションサーバー(m系・t系)</li>
+<li>データベースサーバー(r系)、SAPなど大容量メモリが必要なシステム(x系)</li>
 <li>HPC・科学計算(hpc系、クラスタープレイスメントグループ)</li>
 <li>Hadoop・Kafkaなどの大規模分散システム(パーティションプレイスメントグループ)</li>
 <li>機械学習の学習・推論(p系・trn系・inf系)</li>
@@ -505,7 +505,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <tr><td data-label="購入モデル">リザーブドインスタンス</td><td data-label="特徴">1〜3年契約割引</td><td data-label="メリット">安い</td><td data-label="デメリット">長期前提</td><td data-label="主用途">常時稼働</td></tr>
 <tr><td data-label="購入モデル">Savings Plans</td><td data-label="特徴">使用量コミット割引</td><td data-label="メリット">柔軟な割引</td><td data-label="デメリット">契約が必要</td><td data-label="主用途">長期運用</td></tr>
 <tr><td data-label="購入モデル">スポットインスタンス</td><td data-label="特徴">余剰リソースを利用</td><td data-label="メリット">超安価</td><td data-label="デメリット">中断される</td><td data-label="主用途">バッチ/HPC</td></tr>
-<tr><td data-label="購入モデル">Dedicated Hosts</td><td data-label="特徴">専用物理サーバ</td><td data-label="メリット">ライセンス対応</td><td data-label="デメリット">高価</td><td data-label="主用途">規制対応</td></tr>
+<tr><td data-label="購入モデル">Dedicated Hosts</td><td data-label="特徴">専用物理サーバー</td><td data-label="メリット">ライセンス対応</td><td data-label="デメリット">高価</td><td data-label="主用途">規制対応</td></tr>
 <tr><td data-label="購入モデル">Dedicated Instances</td><td data-label="特徴">専用ハード上のVM</td><td data-label="メリット">分離性</td><td data-label="デメリット">高価</td><td data-label="主用途">セキュリティ</td></tr>
 <tr><td data-label="購入モデル">キャパシティ予約</td><td data-label="特徴">容量を予約</td><td data-label="メリット">起動保証</td><td data-label="デメリット">割引なし</td><td data-label="主用途">災害対策</td></tr>
 </table></div>
@@ -577,7 +577,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <section class="chapter">
 <h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li>EC2はAWSの仮想サーバ。AMI+インスタンスタイプで起動する。</li>
+<li>EC2はAWSの仮想サーバー。AMI+インスタンスタイプで起動する。</li>
 <li>配置はプレイスメントグループ、料金は購入モデルで最適化する。</li>
 <li>IAMロールはインスタンスプロファイル経由、インスタンスストアは一時領域。</li>
 </ul>
