@@ -137,7 +137,7 @@ def check_pages(collections, loaded, extra_pages, out_dir, warnings):
 
 
 def _check_meta(col, p, where, warnings):
-    if not p["lead"]:
+    if not p["lead"] and not col.get("no_lead"):
         warnings.append(f"{where}: lead がありません")
     if col["categories"] and p["category"] not in col["categories"]:
         warnings.append(f"{where}: カテゴリ「{p['category']}」が build.py の categories にありません")

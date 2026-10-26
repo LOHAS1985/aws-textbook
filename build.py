@@ -18,10 +18,11 @@ import shlex
 import shutil
 import subprocess
 import time
+import unicodedata
 from pathlib import Path
 
 from checks import check_pages
-from diagrams import render_figures
+from diagrams import render_figures, text_width
 
 ROOT = Path(__file__).parent
 SRC = ROOT / "src"
@@ -124,6 +125,10 @@ COLLECTIONS = [
             "セキュリティ・コンプライアンス", "ネットワーク・コンテンツ配信",
         ],
         "search": "やりたいこと・サービス名で絞り込み(例: バックアップ、パッチ)",
+        # 一言説明を書くと使うサービスが分かってしまうので、運用シナリオには lead を書かない。
+        # 一覧は分野ごとの番号付きリストにし、対応する構成演習へのリンクと結果を並べる
+        "no_lead": True,
+        "numbered": True,
         "category_desc": {
             "監視・ログ・自動修復": "メトリクス・ログ・トレースで異常を見つけ、通知や自動修復・性能の改善につなげる",
             "信頼性・事業継続": "スケーリング・高可用性・バックアップ・災害対策",
@@ -228,6 +233,9 @@ def load_pages(col, warnings, updated):
         where = f"{col['key']}/{slug}"
         if "title" not in meta:
             warnings.append(f"{where}: title がありません")
+        if col.get("no_lead") and meta.get("lead"):
+            warnings.append(f"{where}: {col['label']}には lead を書きません(使うサービスが分かってしまうため)")
+            meta.pop("lead")
         pages.append({
             "slug": slug,
             "title": meta.get("title", slug),
@@ -292,7 +300,15 @@ def head(title, prefix, description=""):
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
-{desc}<link rel="stylesheet" href="{prefix}css/style.css">
+{desc}<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {{
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{{}}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+}} catch (e) {{}}
+</script>
+<link rel="stylesheet" href="{prefix}css/style.css">
 <link rel="icon" type="image/png" href="{prefix}icons/favicon-32.png">
 <link rel="apple-touch-icon" href="{prefix}icons/apple-touch-icon.png">
 <link rel="manifest" href="{prefix}manifest.webmanifest">
@@ -303,6 +319,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {{
   navigator.serviceWorker.register("{prefix}sw.js").catch(function () {{}});
 }}
 </script>
+<script src="{prefix}js/site.js" defer></script>
 </head>
 <body>
 """
@@ -445,7 +462,8 @@ def render_page(col, pages, i):
             + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
             + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
             + f'{fmt_date(p["updated"])}</time></p>\n'
-            + "  </div>\n</div>\n" + page_toc(items) + body + "\n" + pager(prev, nxt) + "</main>\n" + TO_TOP
+            + "  </div>\n</div>\n" + page_toc(items) + body + "\n" + p.get("graph", "")
+            + pager(prev, nxt) + "</main>\n" + TO_TOP
             + exercise_graph(col, p) + page_script(col) + TAIL)
 
 
@@ -512,9 +530,12 @@ def cat_style(col, category):
     return f' style="--cat:{color}"' if color else ""
 
 
-def render_collection_index(col, pages):
+def render_collection_index(col, pages, loaded):
     parts = [head(f"{col['label']} | {SITE_TITLE}", "../", col["desc"]), header("../", col["key"]), "<main>\n",
              f'<div class="page-head"><h1>{col["label"]}</h1><p class="lead">{col["desc"]}</p></div>\n']
+    if col["key"] in BOOKLET_KEYS and pages:
+        parts.append(f'<p class="booklet-link"><a href="../print/{col["key"]}.html">まとめて印刷・PDFに保存'
+                     f'(全{len(pages)}ページを1つに)</a></p>\n')
     if not pages:
         parts.append('<p class="empty-state">準備中です。</p>\n')
     groups = grouped(col, pages)
@@ -525,6 +546,9 @@ def render_collection_index(col, pages):
                      '  <span class="toc-hits" id="toc-hits"></span>\n</div>\n')
     descs = col.get("category_desc", {})
     compact = col.get("compact")
+    if col.get("numbered"):
+        parts.append(numbered_index(col, groups, loaded))
+        groups = []
     if compact:
         parts.append('<div class="svc-columns">\n')
     for i, (category, items) in enumerate(groups, 1):
@@ -543,25 +567,165 @@ def render_collection_index(col, pages):
             parts.append('<ul class="card-list">\n')
         for p in items:
             # 一覧には表示しない lead・カテゴリも検索対象に含める
-            keys = " ".join([p["title"], p["slug"], category, re.sub(r"<[^>]+>", "", p["lead"])])
+            keys = search_keys(p, category)
             if compact:
                 tip = html.escape(p["title"] + (":" + plain(p["lead"]) if p["lead"] else ""))
                 inner = (f'{service_icon(p["slug"], "../", 28)}'
                          f'<span class="name">{html.escape(p["title"])}</span><span class="go" aria-hidden="true">›</span>')
-                parts.append(f'  <li data-keys="{html.escape(keys.lower())}"><a href="{p["slug"]}.html" '
+                parts.append(f'  <li data-keys="{html.escape(keys)}"><a href="{p["slug"]}.html" '
                              f'title="{tip}">{inner}</a></li>\n')
             else:
                 inner = (f'<span class="name">{html.escape(p["title"])}</span>'
                          f'<span class="desc">{p["lead"]}</span>')
-                parts.append(f'  <li data-keys="{html.escape(keys.lower())}"><a href="{p["slug"]}.html">{inner}</a></li>\n')
+                parts.append(f'  <li data-keys="{html.escape(keys)}"><a href="{p["slug"]}.html">{inner}</a></li>\n')
         parts.append("</ul>\n</details>\n</section>\n" if compact else "</ul>\n</section>\n")
     if compact:
         parts.append("</div>\n")
     if col.get("search") and pages:
         parts.append('<p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>\n'
-                     + SEARCH_SCRIPT)
-    parts += ["</main>\n", page_script(col), TAIL]
+                     + SEARCH_SCRIPT.replace("__HELPERS__", search_helpers()))
+    script = page_script(col) or ('<script src="../js/sim.js" defer></script>\n' if col.get("numbered") else "")
+    parts += ["</main>\n", script, TAIL]
     return "".join(parts)
+
+
+def numbered_index(col, groups, loaded):
+    """運用シナリオの一覧。試験分野ごとに番号付きで並べ、構成演習へのリンクを添える
+    (演習の結果は sim.js が名前の横に表示する)。"""
+    exercises = {p["slug"] for p in loaded.get("exercises", [])}
+    out = []
+    for i, (category, items) in enumerate(groups, 1):
+        domain = (f'<span class="uc-domain">分野{i}<span class="uc-weight">{EXAM_DOMAINS[i - 1][1]}%</span></span>'
+                  if i <= len(EXAM_DOMAINS) else "")
+        out.append(f'<section class="toc-category uc-group" id="cat{i}">\n<h2>{domain}'
+                   f'<span class="uc-cat">{html.escape(category)}</span> <span class="count">({len(items)})</span></h2>\n')
+        if category in col.get("category_desc", {}):
+            out.append(f'<p class="cat-desc">{html.escape(col["category_desc"][category])}</p>\n')
+        out.append('<ol class="uc-list">\n')
+        for n, p in enumerate(items, 1):
+            ex = (f'<a class="uc-ex" href="../exercises/{p["slug"]}.html" '
+                  f'aria-label="「{html.escape(p["title"])}」の構成演習">演習</a>' if p["slug"] in exercises else "")
+            out.append(f'  <li data-keys="{html.escape(search_keys(p, category))}"><a class="uc-link" href="{p["slug"]}.html">'
+                       f'<span class="uc-no">{i}-{n:02d}</span><span class="name">{html.escape(p["title"])}</span></a>{ex}</li>\n')
+        out.append("</ol>\n</section>\n")
+    return "".join(out)
+
+
+def norm(s):
+    """検索用の正規化(全角英数を半角に、英字を小文字に)。"""
+    return unicodedata.normalize("NFKC", s).lower()
+
+
+def search_keys(p, category, extra=""):
+    """一覧の絞り込み・全ページ検索の対象。表示しない lead・カテゴリ・本文からリンクしているサービス名も含める
+    (運用シナリオは lead がないので、使うサービスの名前で探せるようにする)。"""
+    return norm(" ".join([p["title"], p["slug"], category, plain(p["lead"]), " ".join(p.get("uses", [])), extra]))
+
+
+# 検索で同じものとして扱う言い換え(略称・英語名・日本語の言い方)。
+# 入力した語がどれかと一致すると、同じグループの語のどれかを含むページも見つかる。小文字・半角で書く
+SYNONYMS = [
+    ["ec2", "仮想サーバー", "仮想マシン", "vm", "elastic compute cloud"],
+    ["elb", "alb", "nlb", "gwlb", "ロードバランサー", "ロードバランサ", "負荷分散", "load balancer", "elastic load balancing"],
+    ["s3", "オブジェクトストレージ", "simple storage service"],
+    ["ebs", "ブロックストレージ", "elastic block store"],
+    ["efs", "nfs", "ファイル共有", "elastic file system"],
+    ["rds", "rdb", "リレーショナルデータベース", "mysql", "postgresql", "relational database service"],
+    ["dynamodb", "nosql", "キーバリュー", "ddb"],
+    ["elasticache", "redis", "memcached", "valkey"],
+    ["キャッシュ", "cache", "caching"],
+    ["lambda", "ラムダ", "サーバーレス", "serverless", "関数"],
+    ["iam", "identity and access management", "アクセス許可", "権限"],
+    ["sso", "シングルサインオン", "identity center", "saml"],
+    ["kms", "key management service", "暗号化キー", "cmk", "カスタマーマネージドキー"],
+    ["暗号化", "encryption", "sse", "sse-kms", "sse-s3"],
+    ["cloudwatch", "cw", "メトリクス", "metrics", "アラーム", "alarm"],
+    ["監視", "モニタリング", "monitoring"],
+    ["ログ", "log", "logs"],
+    ["cloudtrail", "証跡", "監査ログ"],
+    ["config", "aws config", "構成変更", "準拠"],
+    ["ssm", "systems manager", "session manager", "patch manager", "run command", "state manager",
+     "パラメータストア", "parameter store"],
+    ["cfn", "cloudformation", "iac", "infrastructure as code", "スタック", "stack"],
+    ["route53", "route 53", "dns", "名前解決"],
+    ["cloudfront", "cdn", "コンテンツ配信", "エッジ", "edge"],
+    ["vpc", "virtual private cloud", "仮想ネットワーク"],
+    ["sg", "セキュリティグループ", "security group", "nacl", "ネットワークacl", "ファイアウォール", "firewall"],
+    ["nat", "natゲートウェイ", "nat gateway"],
+    ["vpn", "ipsec", "site-to-site", "client vpn", "リモートアクセス"],
+    ["dx", "direct connect", "専用線"],
+    ["tgw", "transit gateway"],
+    ["エンドポイント", "endpoint", "privatelink", "vpce"],
+    ["sqs", "キュー", "queue", "dlq", "デッドレターキュー"],
+    ["sns", "通知", "notification", "pub/sub"],
+    ["eventbridge", "イベントバス", "cloudwatch events", "scheduler", "スケジューラー"],
+    ["step functions", "sfn", "ワークフロー", "ステートマシン"],
+    ["asg", "auto scaling", "オートスケーリング", "スケーリング", "scaling"],
+    ["コンテナ", "container", "docker", "ecs", "eks", "fargate", "kubernetes", "k8s"],
+    ["ci/cd", "cicd", "パイプライン", "pipeline", "codepipeline", "codebuild", "codedeploy"],
+    ["デプロイ", "deploy", "リリース", "release"],
+    ["x-ray", "xray", "トレース", "trace", "tracing", "分散トレーシング"],
+    ["waf", "ウェブacl", "web acl", "sqlインジェクション", "xss"],
+    ["shield", "ddos"],
+    ["guardduty", "脅威の検出", "脅威検出"],
+    ["inspector", "脆弱性", "cve"],
+    ["macie", "個人情報", "pii", "機密データ"],
+    ["secrets manager", "シークレット", "パスワード", "password", "ローテーション", "rotation"],
+    ["acm", "証明書", "certificate", "ssl", "tls", "https"],
+    ["organizations", "scp", "マルチアカウント", "複数アカウント", "ou"],
+    ["backup", "バックアップ", "スナップショット", "snapshot"],
+    ["dr", "災害対策", "ディザスタリカバリ", "disaster recovery"],
+    ["フェイルオーバー", "failover", "切り替え"],
+    ["高可用性", "multi-az", "マルチaz", "冗長化", "ha"],
+    ["料金", "費用", "コスト", "cost", "請求", "billing"],
+    ["ri", "リザーブドインスタンス", "reserved instance", "savings plans"],
+    ["kinesis", "ストリーム", "stream", "firehose"],
+    ["sts", "assumerole", "一時的な認証情報", "ロールの引き受け"],
+    ["cognito", "ユーザー認証", "サインイン"],
+    ["api gateway", "apigw", "rest api"],
+    ["imds", "imdsv2", "メタデータ", "metadata"],
+    ["ami", "マシンイメージ", "ゴールデンイメージ", "image builder"],
+    ["az", "アベイラビリティーゾーン", "availability zone"],
+    ["リージョン", "region"],
+    ["cidr", "ipアドレス", "ip address", "サブネットマスク", "ipam"],
+    ["踏み台", "bastion", "ssh", "rdp"],
+    ["パッチ", "patch", "更新プログラム"],
+]
+
+
+def search_helpers():
+    """一覧の絞り込みと全ページ検索で共通の、言い換えを含めた一致判定(JavaScript)。"""
+    syn = json.dumps([[norm(w) for w in g] for g in SYNONYMS], ensure_ascii=False)
+    return SEARCH_HELPERS.replace("__SYN__", syn)
+
+
+# terms("ec2 ログ") → [["ec2", 言い換え…], ["ログ", 言い換え…]]。語ごとに、言い換えのどれかを含めば一致
+SEARCH_HELPERS = """  var SYN = __SYN__;
+  function norm(s) { return (s.normalize ? s.normalize("NFKC") : s).toLowerCase(); }
+  // 言い換えに含まれる短い英字(dr・ha・ri など)は、ほかの語の一部(address・share など)に当たらないよう単語として探す
+  function word(a) { return /^[a-z0-9]{1,3}$/.test(a) ? new RegExp("(^|[^a-z0-9])" + a + "([^a-z0-9]|$)") : a; }
+  function terms(v) {
+    return norm(v).trim().split(/\\s+/).filter(Boolean).map(function (w) {
+      var alts = [], known = false;
+      SYN.forEach(function (g) {
+        if (g.indexOf(w) < 0) return;
+        known = true;
+        g.forEach(function (a) { if (a !== w) alts.push(word(a)); });
+      });
+      alts.unshift(known ? word(w) : w);
+      return alts;
+    });
+  }
+  function hit(keys, alts) {
+    return alts.some(function (a) { return typeof a === "string" ? keys.indexOf(a) >= 0 : a.test(keys); });
+  }
+  function hitAll(keys, ts) { return ts.every(function (alts) { return hit(keys, alts); }); }
+  // 「/」キーで検索欄へ移る
+  document.addEventListener("keydown", function (e) {
+    var t = e.target.tagName;
+    if (e.key === "/" && t !== "INPUT" && t !== "TEXTAREA" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); q.focus(); }
+  });
+"""
 
 
 # 目次の絞り込み(スペース区切りのAND検索。該当なしのカテゴリは隠し、件数を更新する)
@@ -570,16 +734,17 @@ SEARCH_SCRIPT = """<script>
   var q = document.getElementById("toc-q");
   var hits = document.getElementById("toc-hits");
   var none = document.getElementById("toc-none");
+__HELPERS__
   var sections = document.querySelectorAll(".toc-category");
   var total = document.querySelectorAll(".toc-category li").length;
   function apply() {
-    var words = q.value.toLowerCase().trim().split(/\\s+/).filter(Boolean);
+    var words = terms(q.value);
     var shown = 0;
     sections.forEach(function (sec) {
       var n = 0;
       sec.querySelectorAll("li").forEach(function (li) {
         var keys = li.getAttribute("data-keys");
-        var ok = words.every(function (w) { return keys.indexOf(w) >= 0; });
+        var ok = hitAll(keys, words);
         li.hidden = !ok;
         if (ok) n++;
       });
@@ -614,13 +779,14 @@ def render_top(loaded):
             index.append({"t": p["title"], "c": c["label"], "u": f'{c["key"]}/{p["slug"]}.html',
                           "i": f'icons/services/{p["slug"]}.svg' if icon else "",
                           "d": plain(p["lead"]),
-                          "k": " ".join([p["title"], p["slug"], p["category"], plain(p["lead"]), h3]).lower()})
-    parts.append('<div class="toc-search site-search">\n'
-                 '  <input type="search" id="site-q" placeholder="全ページを検索(例: ライフサイクル、IMDSv2、フェイルオーバー)"'
+                          "k": search_keys(p, p["category"], h3)})
+    parts.append('<div class="toc-search site-search" id="search">\n'
+                 '  <input type="search" id="site-q" placeholder="全ページを検索(例: ロードバランサー、IMDSv2、DR)"'
                  ' aria-label="全ページを検索" autocomplete="off">\n'
                  '  <span class="toc-hits" id="site-hits"></span>\n</div>\n'
                  '<ul class="search-results" id="site-results" hidden></ul>\n'
-                 + SITE_SEARCH_SCRIPT.replace("__INDEX__", json.dumps(index, ensure_ascii=False)))
+                 + SITE_SEARCH_SCRIPT.replace("__INDEX__", json.dumps(index, ensure_ascii=False))
+                 .replace("__HELPERS__", search_helpers()))
 
     parts.append('<ul class="card-list top-cards">\n')
     for c in COLLECTIONS:
@@ -669,17 +835,15 @@ SITE_SEARCH_SCRIPT = """<script>
   var q = document.getElementById("site-q");
   var hits = document.getElementById("site-hits");
   var list = document.getElementById("site-results");
+__HELPERS__
+  if (location.hash === "#search") q.focus();
   function esc(s) { return s.replace(/[&<>"]/g, function (c) { return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }
   function apply() {
-    var words = q.value.toLowerCase().trim().split(/\\s+/).filter(Boolean);
+    var words = terms(q.value);
     if (!words.length) { list.hidden = true; hits.textContent = ""; return; }
-    var found = pages.filter(function (p) {
-      return words.every(function (w) { return p.k.indexOf(w) >= 0; });
-    });
+    var found = pages.filter(function (p) { return hitAll(p.k, words); });
     found.sort(function (a, b) {
-      var ta = words.every(function (w) { return a.t.toLowerCase().indexOf(w) >= 0; }) ? 0 : 1;
-      var tb = words.every(function (w) { return b.t.toLowerCase().indexOf(w) >= 0; }) ? 0 : 1;
-      return ta - tb;
+      return (hitAll(norm(a.t), words) ? 0 : 1) - (hitAll(norm(b.t), words) ? 0 : 1);
     });
     hits.textContent = found.length + "件";
     list.innerHTML = found.slice(0, 30).map(function (p) {
@@ -694,6 +858,152 @@ SITE_SEARCH_SCRIPT = """<script>
 })();
 </script>
 """
+
+
+GRAPH_KEYS = ("services", "terms", "usecases")  # つながり図・用語のポップアップに使うコレクション
+LINK_RE = re.compile(r'href="(?:\.\./(services|terms|usecases)/)?([\w-]+)\.html')
+
+
+def collect_links(loaded):
+    """サービス・用語・運用シナリオのページ同士のリンク。{(key, slug): {(key, slug), ...}}
+    あわせて、各ページが本文からリンクしているサービスの名前を p["uses"] に入れる(検索用)。"""
+    pages = {(k, p["slug"]): p for k in GRAPH_KEYS for p in loaded[k]}
+    out = {}
+    for (key, slug), p in pages.items():
+        found = {(k or key, s) for k, s in LINK_RE.findall(p["body"])}
+        out[(key, slug)] = {t for t in found if t in pages and t != (key, slug)}
+        p["uses"] = sorted(pages[t]["title"] for t in out[(key, slug)] if t[0] == "services")
+    return out
+
+
+def fit(text, width, size):
+    """幅に収まるように末尾を「…」で切る。"""
+    if text_width(text, size) <= width:
+        return text
+    while text and text_width(text + "…", size) > width:
+        text = text[:-1]
+    return text + "…"
+
+
+def page_graph(key, p, links, titles):
+    """このページとリンクでつながるページの図(左=リンク元、右=リンク先。互いにリンクしていれば右に両向きの矢印)。"""
+    me = (key, p["slug"])
+    kind_order = {k: i for i, k in enumerate(GRAPH_KEYS)}
+
+    def order(t):
+        return (kind_order[t[0]], titles[t])
+    outs = sorted(links.get(me, ()), key=order)
+    ins = sorted((t for t, dst in links.items() if me in dst and t not in links.get(me, ())), key=order)
+    if not outs and not ins:
+        return ""
+    row, nh, colw, cw, gap, top = 30, 22, 230, 180, 70, 30
+    rows = max(len(ins), len(outs), 1)
+    W, H = 2 * colw + 2 * gap + cw + 4, top + rows * row + 6
+    cx0, cx1, cy = colw + gap, colw + gap + cw, top + rows * row / 2
+    labels = {c["key"]: c["label"] for c in COLLECTIONS}
+
+    def node(t, x, y):
+        return (f'<a href="../{t[0]}/{t[1]}.html"><title>{html.escape(labels[t[0]])}:{html.escape(titles[t])}</title>'
+                f'<rect x="{x}" y="{y - nh / 2:.0f}" width="{colw}" height="{nh}" rx="11" class="gr-{t[0]}"/>'
+                f'<text x="{x + 10}" y="{y + 4.5:.0f}" class="gr-t">{html.escape(fit(titles[t], colw - 20, 13))}</text></a>')
+
+    def ys(n):
+        start = cy - n * row / 2 + row / 2
+        return [start + i * row for i in range(n)]
+    out = []
+    for t, y in zip(ins, ys(len(ins))):
+        out.append(f'<path class="gr-line" d="M{colw},{y:.0f} C{colw + gap / 2},{y:.0f} {cx0 - gap / 2},{cy:.0f} {cx0},{cy:.0f}" '
+                   'marker-end="url(#gr-arrow)"/>')
+        out.append(node(t, 0, y))
+    for t, y in zip(outs, ys(len(outs))):
+        both = me in links.get(t, ())
+        out.append(f'<path class="gr-line" d="M{cx1},{cy:.0f} C{cx1 + gap / 2},{cy:.0f} {cx1 + gap / 2},{y:.0f} {cx1 + gap},{y:.0f}" '
+                   'marker-end="url(#gr-arrow)"' + (' marker-start="url(#gr-arrow)"' if both else "") + "/>")
+        out.append(node(t, cx1 + gap, y))
+    out.append(f'<rect x="{cx0}" y="{cy - 20:.0f}" width="{cw}" height="40" rx="12" class="gr-me"/>'
+               f'<text x="{cx0 + cw / 2:.0f}" y="{cy + 5:.0f}" text-anchor="middle" class="gr-tb">'
+               f'{html.escape(fit(p["title"], cw - 16, 14))}</text>')
+    if ins:
+        out.append(f'<text x="{colw / 2:.0f}" y="14" text-anchor="middle" class="gr-h">リンク元({len(ins)})</text>')
+    if outs:
+        out.append(f'<text x="{cx1 + gap + colw / 2:.0f}" y="14" text-anchor="middle" class="gr-h">リンク先({len(outs)})</text>')
+    svg = (f'<svg viewBox="0 0 {W} {H:.0f}" style="max-width:{W}px;min-width:600px" role="img" '
+           f'aria-label="{html.escape(p["title"])}とリンクでつながるページの図">'
+           '<defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" '
+           'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>\n'
+           + "\n".join(out) + "\n</svg>")
+    legend = "".join(f'<span class="gr-key gr-key-{k}">{labels[k]}</span>' for k in GRAPH_KEYS)
+    return ('<section class="chapter graph-chapter">\n<h2>このページのつながり</h2>\n<details class="graph">\n'
+            f'<summary>つながり図を開く(リンク先 {len(outs)}件・リンク元 {len(ins)}件)</summary>\n'
+            f'<figure class="figure">\n<div class="fig-scroll">\n{svg}\n</div>\n'
+            f'<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ'
+            f'(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。{legend}</figcaption>\n'
+            '</figure>\n</details>\n</section>\n')
+
+
+def write_glossary(loaded):
+    """本文中のサービス・用語へのリンクに出すポップアップの内容(book/js/glossary.js)。"""
+    data = {}
+    for key in ("services", "terms"):
+        label = _by_key[key]["label"]
+        for p in loaded[key]:
+            icon = key == "services" and (ICON_DIR / f'{p["slug"]}.svg').exists()
+            data[f'{key}/{p["slug"]}'] = {"t": p["title"], "d": plain(p["lead"]), "c": label, "i": icon}
+    js = ("// build.py が生成するファイル(直接編集しない)。js/site.js が用語のポップアップに使う\n"
+          "window.AWSB_GLOSSARY = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n")
+    (OUT / "js" / "glossary.js").write_text(js, encoding="utf-8")
+
+
+BOOKLET_KEYS = ("services", "terms", "usecases")  # まとめ冊子(印刷・PDF用に全ページを1つにしたページ)を作るコレクション
+
+
+def booklet_body(key, p):
+    """冊子の1ページ分の本文。見出しの id にページの slug を付けて重ならないようにし、
+    同じコレクションへのリンクは冊子の中の移動にする。"""
+    body, _ = add_heading_ids(stack_tables(p["core"]))
+    ids = set(re.findall(r'\bid="([^"]+)"', body))
+    slug = p["slug"]
+
+    def fix_id(m):
+        return f'{m.group(1)}{slug}-{m.group(2)}{m.group(3)}' if m.group(2) in ids else m.group(0)
+    body = re.sub(r'(\bid="|href="#|url\(#)([^")]+)([")])', fix_id, body)
+
+    def fix_href(m):
+        href = m.group(1)
+        if re.match(r"(https?:|#|/|\.\./|mailto:)", href):
+            return m.group(0)
+        target = re.match(r"([\w-]+)\.html(#.*)?$", href)
+        if target and not target.group(2):
+            return f'href="#p-{target.group(1)}"'
+        return f'href="../{key}/{href}"'
+    return re.sub(r'href="([^"]*)"', fix_href, body)
+
+
+def render_booklet(col, pages):
+    key = col["key"]
+    title = f"{col['label']}のまとめ冊子"
+    parts = [head(f"{title} | {SITE_TITLE}", "../", col["desc"]), header("../", key), '<main class="booklet">\n',
+             f'<div class="page-head booklet-cover">\n<p class="booklet-site">{SITE_TITLE}</p>\n<h1>{col["label"]}</h1>\n'
+             f'<p class="lead">{col["desc"]}(全{len(pages)}ページ)</p>\n'
+             '<p class="booklet-help">このページは、印刷やPDFでの保存のために全ページを1つにまとめたものです。'
+             'ブラウザーの印刷(Ctrl+P、スマホは共有メニューの「プリント」)から、紙に印刷するかPDFとして保存してください。'
+             'ページの順番は目次と同じです。</p>\n'
+             '<p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button> '
+             f'<a href="../{key}/index.html">目次へ戻る</a></p>\n'
+             + '</div>\n<nav class="booklet-toc" aria-label="冊子の目次">\n<h2>目次</h2>\n']
+    for category, items in grouped(col, pages):
+        parts.append(f'<h3>{html.escape(category)}</h3>\n<ol>\n')
+        parts += [f'<li><a href="#p-{p["slug"]}">{html.escape(p["title"])}</a></li>\n' for p in items]
+        parts.append("</ol>\n")
+    parts.append("</nav>\n")
+    for p in pages:
+        parts.append(f'<article class="booklet-page" id="p-{p["slug"]}">\n'
+                     f'<div class="page-head hero"{cat_style(col, p["category"])}>\n<div class="hero-text">\n'
+                     f'<span class="category">{html.escape(p["category"])}</span>\n<h1>{html.escape(p["title"])}</h1>\n'
+                     + (f'<p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
+                     + "</div>\n</div>\n" + booklet_body(key, p) + "\n</article>\n")
+    parts += ["</main>\n", TO_TOP, TAIL]
+    return "".join(parts)
 
 
 def official_url(kind, path):
@@ -737,7 +1047,7 @@ def write_service_worker():
     files = {}
     for f in sorted(OUT.rglob("*")):
         rel = f.relative_to(OUT).as_posix()
-        if f.is_file() and rel != "sw.js" and not f.name.startswith("."):
+        if f.is_file() and rel != "sw.js" and not f.name.startswith(".") and not rel.startswith("print/"):
             # Windows ではテキストの改行が CRLF で書き出されるが、公開されるのは Git が LF にそろえた内容なので、LF にしてから計算する
             data = f.read_bytes()
             if f.suffix in (".html", ".css", ".js", ".json", ".svg", ".webmanifest"):
@@ -814,6 +1124,14 @@ def main():
         loaded[col["key"]] = load_pages(col, warnings, updated)
     links_raw = (SRC / "links.html").read_text(encoding="utf-8")
     check_pages(COLLECTIONS, loaded, {"links.html": links_raw}, OUT, warnings)
+    links = collect_links(loaded)
+    titles = {(k, p["slug"]): p["title"] for k in GRAPH_KEYS for p in loaded[k]}
+    for k in GRAPH_KEYS:
+        for p in loaded[k]:
+            p["graph"] = page_graph(k, p, links, titles)
+    for c in COLLECTIONS:
+        for p in loaded[c["key"]]:
+            p["core"] = p["body"]  # 被リンクの一覧を付ける前の本文(冊子に使う)
     add_backlinks(loaded)
     for col in COLLECTIONS:
         pages = loaded[col["key"]]
@@ -824,7 +1142,14 @@ def main():
         out_dir.mkdir(parents=True)
         for i, p in enumerate(pages):
             (out_dir / f"{p['slug']}.html").write_text(render_page(col, pages, i), encoding="utf-8")
-        (out_dir / "index.html").write_text(render_collection_index(col, pages), encoding="utf-8")
+        (out_dir / "index.html").write_text(render_collection_index(col, pages, loaded), encoding="utf-8")
+    print_dir = OUT / "print"
+    if print_dir.exists():
+        shutil.rmtree(print_dir)
+    print_dir.mkdir()
+    for key in BOOKLET_KEYS:
+        (print_dir / f"{key}.html").write_text(render_booklet(_by_key[key], loaded[key]), encoding="utf-8")
+    write_glossary(loaded)
     (OUT / "index.html").write_text(render_top(loaded), encoding="utf-8")
     (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
     write_service_worker()

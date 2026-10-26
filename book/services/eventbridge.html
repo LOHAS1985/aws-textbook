@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon EventBridge | AWS教科書</title>
 <meta name="description" content="サーバーレスなイベント駆動型の統合サービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -16,6 +24,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("../sw.js").catch(function () {});
 }
 </script>
+<script src="../js/site.js" defer></script>
 </head>
 <body>
 <header class="site-header" id="top">
@@ -241,16 +250,96 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter backlinks">
 <h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
 <ul class="backlink-list">
-<li><a href="../usecases/ec2-auto-recovery.html"><span class="title">EC2の障害を検知して自動で復旧する</span><span class="desc">ステータスチェックの失敗をアラームで検知し、復旧・再起動を自動で行う</span></a></li>
-<li><a href="../usecases/health-event-response.html"><span class="title">AWSの予定メンテナンスや障害の通知に自動で対応する</span><span class="desc">AWS HealthのイベントをEventBridgeで受け取り、通知や自動対応につなげる</span></a></li>
-<li><a href="../usecases/cloudformation-drift.html"><span class="title">手作業による設定変更(ドリフト)を見つけて戻す</span><span class="desc">CloudFormationのドリフト検出とConfigルールで、テンプレートと実際の設定のずれを定期的に見つける</span></a></li>
-<li><a href="../usecases/scheduled-start-stop.html"><span class="title">開発環境を夜間・休日に自動で停止して費用を下げる</span><span class="desc">EventBridge SchedulerとSSM Automationで、タグの付いたEC2・RDSを決まった時刻に停止・起動する</span></a></li>
-<li><a href="../usecases/config-auto-remediation.html"><span class="title">公開されたS3バケットを検出して自動で修復する</span><span class="desc">Configルールで非準拠を検出し、SSM Automationで設定を自動修正する</span></a></li>
-<li><a href="../usecases/vulnerability-management.html"><span class="title">脆弱性を継続的に検出し、パッチ適用まで自動化する</span><span class="desc">Inspectorで脆弱性を見つけ、重大なものはEventBridgeから通知・Patch Managerでの修正につなげる</span></a></li>
-<li><a href="../usecases/guardduty-auto-response.html"><span class="title">乗っ取られたEC2を自動で隔離する</span><span class="desc">GuardDutyの検出結果をEventBridgeで受け、隔離用のセキュリティグループへの付け替えと証拠の保全を自動で行う</span></a></li>
+<li><a href="../usecases/ec2-auto-recovery.html"><span class="title">EC2の障害を検知して自動で復旧する</span></a></li>
+<li><a href="../usecases/health-event-response.html"><span class="title">AWSの予定メンテナンスや障害の通知に自動で対応する</span></a></li>
+<li><a href="../usecases/cloudformation-drift.html"><span class="title">手作業による設定変更(ドリフト)を見つけて戻す</span></a></li>
+<li><a href="../usecases/scheduled-start-stop.html"><span class="title">開発環境を夜間・休日に自動で停止して費用を下げる</span></a></li>
+<li><a href="../usecases/config-auto-remediation.html"><span class="title">公開されたS3バケットを検出して自動で修復する</span></a></li>
+<li><a href="../usecases/vulnerability-management.html"><span class="title">脆弱性を継続的に検出し、パッチ適用まで自動化する</span></a></li>
+<li><a href="../usecases/guardduty-auto-response.html"><span class="title">乗っ取られたEC2を自動で隔離する</span></a></li>
 </ul>
 </section>
 
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 12件・リンク元 20件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 636" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon EventBridgeとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/acm.html"><title>サービス:AWS Certificate Manager</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Certificate Manager</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Config</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Security Hub</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/trusted-advisor.html"><title>サービス:AWS Trusted Advisor</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS Trusted Advisor</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">Amazon GuardDuty</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/inspector.html"><title>サービス:Amazon Inspector</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">Amazon Inspector</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/macie.html"><title>サービス:Amazon Macie</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">Amazon Macie</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/managed-prometheus.html"><title>サービス:Amazon Managed Service for Prometheus</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="290" class="gr-t">Amazon Managed Service fo…</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="320" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cloudwatch-alarm-states.html"><title>用語:CloudWatchアラームの状態と評価</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="350" class="gr-t">CloudWatchアラームの状態と評価</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/json-yaml.html"><title>用語:JSONとYAMLの読み方</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="380" class="gr-t">JSONとYAMLの読み方</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/security-detection-comparison.html"><title>用語:セキュリティ検出のサービスの選び方</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="410" class="gr-t">セキュリティ検出のサービスの選…</text></a>
+<path class="gr-line" d="M230,435 C265.0,435 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/health-event-response.html"><title>運用シナリオ:AWSの予定メンテナンスや障害の通知に自動で対応する</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="440" class="gr-t">AWSの予定メンテナンスや障害の…</text></a>
+<path class="gr-line" d="M230,465 C265.0,465 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ec2-auto-recovery.html"><title>運用シナリオ:EC2の障害を検知して自動で復旧する</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="470" class="gr-t">EC2の障害を検知して自動で復旧…</text></a>
+<path class="gr-line" d="M230,495 C265.0,495 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/guardduty-auto-response.html"><title>運用シナリオ:乗っ取られたEC2を自動で隔離する</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="500" class="gr-t">乗っ取られたEC2を自動で隔離する</text></a>
+<path class="gr-line" d="M230,525 C265.0,525 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/config-auto-remediation.html"><title>運用シナリオ:公開されたS3バケットを検出して自動で修復する</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="530" class="gr-t">公開されたS3バケットを検出し…</text></a>
+<path class="gr-line" d="M230,555 C265.0,555 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cloudformation-drift.html"><title>運用シナリオ:手作業による設定変更(ドリフト)を見つけて戻す</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="560" class="gr-t">手作業による設定変更(ドリフト…</text></a>
+<path class="gr-line" d="M230,585 C265.0,585 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/vulnerability-management.html"><title>運用シナリオ:脆弱性を継続的に検出し、パッチ適用まで自動化する</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="590" class="gr-t">脆弱性を継続的に検出し、パッチ…</text></a>
+<path class="gr-line" d="M230,615 C265.0,615 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/scheduled-start-stop.html"><title>運用シナリオ:開発環境を夜間・休日に自動で停止して費用を下げる</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="620" class="gr-t">開発環境を夜間・休日に自動で停…</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/health-dashboard.html"><title>サービス:AWS Health Dashboard</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">AWS Health Dashboard</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/step-functions.html"><title>サービス:AWS Step Functions</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">AWS Step Functions</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="320" class="gr-t">Amazon DynamoDB</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/kinesis.html"><title>サービス:Amazon Kinesis</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="350" class="gr-t">Amazon Kinesis</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="380" class="gr-t">Amazon SNS</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/sqs.html"><title>サービス:Amazon SQS</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="410" class="gr-t">Amazon SQS</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,435 550,435" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/cron-rate-expressions.html"><title>用語:cron式とrate式</title><rect x="550" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="440" class="gr-t">cron式とrate式</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,465 550,465" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="550" y="454" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="470" class="gr-t">イベント駆動の自動修復</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,495 550,495" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/messaging-comparison.html"><title>用語:メッセージングサービスの選び方</title><rect x="550" y="484" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="500" class="gr-t">メッセージングサービスの選び方</text></a>
+<rect x="300" y="310" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="335" text-anchor="middle" class="gr-tb">Amazon EventBridge</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(20)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(12)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
 <nav class="pager">
   <a class="prev" href="sns.html"><span class="label">← 前へ</span>Amazon SNS</a>
   <a class="toc" href="index.html">目次へ戻る</a>

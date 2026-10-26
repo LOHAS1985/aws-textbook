@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazon S3 | AWS教科書</title>
 <meta name="description" content="容量無制限で使えるオブジェクトストレージ">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="../css/style.css">
 <link rel="icon" type="image/png" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -16,6 +24,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("../sw.js").catch(function () {});
 }
 </script>
+<script src="../js/site.js" defer></script>
 </head>
 <body>
 <header class="site-header" id="top">
@@ -584,19 +593,125 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter backlinks">
 <h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
 <ul class="backlink-list">
-<li><a href="../usecases/smart-alarms.html"><span class="title">外形監視と、誤報の少ないアラームを作る</span><span class="desc">Synthetics Canaryで利用者の視点から監視し、異常検出と複合アラームで本当に必要な通知だけを送る</span></a></li>
-<li><a href="../usecases/centralized-logging.html"><span class="title">複数アカウントのログを集約して分析する</span><span class="desc">各アカウントのログを1つのS3に集め、長期保存とSQL分析を行う</span></a></li>
-<li><a href="../usecases/s3-data-protection.html"><span class="title">S3のデータを誤削除やリージョン障害から守る</span><span class="desc">バージョニング・レプリケーション・Object Lock・ライフサイクルを組み合わせてデータを守る</span></a></li>
-<li><a href="../usecases/multi-region-failover.html"><span class="title">リージョン障害に備えて別リージョンへ切り替える</span><span class="desc">Route 53のフェイルオーバーとAuroraグローバルデータベースで、ウォームスタンバイを構成する</span></a></li>
-<li><a href="../usecases/ssm-fleet-configuration.html"><span class="title">多数のEC2の設定やソフトウェアを一定に保つ</span><span class="desc">Systems ManagerのState ManagerとRun Commandで、タグで選んだインスタンスに設定を一括で適用し続ける</span></a></li>
-<li><a href="../usecases/cross-account-access.html"><span class="title">異なるAWSアカウントのリソースにアクセス</span><span class="desc">STSのAssumeRoleで別アカウントのロールを引き受け、一時認証情報で操作する</span></a></li>
-<li><a href="../usecases/s3-encryption-audit.html"><span class="title">機密データを保存するS3を暗号化・監査する</span><span class="desc">SSE-KMSで暗号化し、CloudTrailで操作を記録し、Macieで機密データを検出する</span></a></li>
-<li><a href="../usecases/private-subnet-endpoints.html"><span class="title">プライベートサブネットからNATなしでAWSのサービスを使う</span><span class="desc">ゲートウェイ型・インターフェイス型のVPCエンドポイントで、インターネットを通らずにS3やSSMなどへ接続する</span></a></li>
-<li><a href="../usecases/bastionless-access.html"><span class="title">踏み台サーバーなしでプライベートなEC2を操作する</span><span class="desc">Session ManagerとVPCエンドポイントで、ポートを開けずに安全に接続する</span></a></li>
-<li><a href="../usecases/static-site-cloudfront.html"><span class="title">S3とCloudFrontで静的サイトを安全に配信する</span><span class="desc">独自ドメイン・HTTPS・OACで、S3を公開せずに高速配信する</span></a></li>
+<li><a href="../usecases/smart-alarms.html"><span class="title">外形監視と、誤報の少ないアラームを作る</span></a></li>
+<li><a href="../usecases/centralized-logging.html"><span class="title">複数アカウントのログを集約して分析する</span></a></li>
+<li><a href="../usecases/s3-data-protection.html"><span class="title">S3のデータを誤削除やリージョン障害から守る</span></a></li>
+<li><a href="../usecases/multi-region-failover.html"><span class="title">リージョン障害に備えて別リージョンへ切り替える</span></a></li>
+<li><a href="../usecases/ssm-fleet-configuration.html"><span class="title">多数のEC2の設定やソフトウェアを一定に保つ</span></a></li>
+<li><a href="../usecases/cross-account-access.html"><span class="title">異なるAWSアカウントのリソースにアクセス</span></a></li>
+<li><a href="../usecases/s3-encryption-audit.html"><span class="title">機密データを保存するS3を暗号化・監査する</span></a></li>
+<li><a href="../usecases/private-subnet-endpoints.html"><span class="title">プライベートサブネットからNATなしでAWSのサービスを使う</span></a></li>
+<li><a href="../usecases/bastionless-access.html"><span class="title">踏み台サーバーなしでプライベートなEC2を操作する</span></a></li>
+<li><a href="../usecases/static-site-cloudfront.html"><span class="title">静的サイトを独自ドメイン・HTTPSで安全に配信する</span></a></li>
 </ul>
 </section>
 
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 13件・リンク元 32件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 996" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon S3とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/amplify.html"><title>サービス:AWS Amplify</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Amplify</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Backup</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/codebuild.html"><title>サービス:AWS CodeBuild</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS CodeBuild</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/cost-and-usage-reports.html"><title>サービス:AWS Cost and Usage Reports</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS Cost and Usage Reports</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/datasync.html"><title>サービス:AWS DataSync</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">AWS DataSync</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/sdk.html"><title>サービス:AWS SDK</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">AWS SDK</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/storage-gateway.html"><title>サービス:AWS Storage Gateway</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">AWS Storage Gateway</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/bedrock.html"><title>サービス:Amazon Bedrock</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="290" class="gr-t">Amazon Bedrock</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/data-firehose.html"><title>サービス:Amazon Data Firehose</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="320" class="gr-t">Amazon Data Firehose</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/ebs.html"><title>サービス:Amazon EBS</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="350" class="gr-t">Amazon EBS</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/fsx.html"><title>サービス:Amazon FSx</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="380" class="gr-t">Amazon FSx</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/kinesis.html"><title>サービス:Amazon Kinesis</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="410" class="gr-t">Amazon Kinesis</text></a>
+<path class="gr-line" d="M230,435 C265.0,435 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../services/ses.html"><title>サービス:Amazon Simple Email Service(SES)</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="440" class="gr-t">Amazon Simple Email Servi…</text></a>
+<path class="gr-line" d="M230,465 C265.0,465 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../terms/arn.html"><title>用語:ARN</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="470" class="gr-t">ARN</text></a>
+<path class="gr-line" d="M230,495 C265.0,495 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="500" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M230,525 C265.0,525 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-policy-evaluation.html"><title>用語:IAMポリシーと評価ロジック</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="530" class="gr-t">IAMポリシーと評価ロジック</text></a>
+<path class="gr-line" d="M230,555 C265.0,555 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="560" class="gr-t">TerraformとGit</text></a>
+<path class="gr-line" d="M230,585 C265.0,585 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-endpoint.html"><title>用語:VPCエンドポイント</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="590" class="gr-t">VPCエンドポイント</text></a>
+<path class="gr-line" d="M230,615 C265.0,615 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-flow-logs.html"><title>用語:VPCフローログ</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="620" class="gr-t">VPCフローログ</text></a>
+<path class="gr-line" d="M230,645 C265.0,645 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../terms/outbound-traffic.html"><title>用語:アウトバウンド通信</title><rect x="0" y="634" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="650" class="gr-t">アウトバウンド通信</text></a>
+<path class="gr-line" d="M230,675 C265.0,675 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../terms/throttling-retry.html"><title>用語:スロットリングとリトライ</title><rect x="0" y="664" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="680" class="gr-t">スロットリングとリトライ</text></a>
+<path class="gr-line" d="M230,705 C265.0,705 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/s3-data-protection.html"><title>運用シナリオ:S3のデータを誤削除やリージョン障害から守る</title><rect x="0" y="694" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="710" class="gr-t">S3のデータを誤削除やリージョ…</text></a>
+<path class="gr-line" d="M230,735 C265.0,735 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/private-subnet-endpoints.html"><title>運用シナリオ:プライベートサブネットからNATなしでAWSのサービスを使う</title><rect x="0" y="724" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="740" class="gr-t">プライベートサブネットからNAT…</text></a>
+<path class="gr-line" d="M230,765 C265.0,765 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/multi-region-failover.html"><title>運用シナリオ:リージョン障害に備えて別リージョンへ切り替える</title><rect x="0" y="754" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="770" class="gr-t">リージョン障害に備えて別リージ…</text></a>
+<path class="gr-line" d="M230,795 C265.0,795 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/smart-alarms.html"><title>運用シナリオ:外形監視と、誤報の少ないアラームを作る</title><rect x="0" y="784" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="800" class="gr-t">外形監視と、誤報の少ないアラー…</text></a>
+<path class="gr-line" d="M230,825 C265.0,825 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ssm-fleet-configuration.html"><title>運用シナリオ:多数のEC2の設定やソフトウェアを一定に保つ</title><rect x="0" y="814" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="830" class="gr-t">多数のEC2の設定やソフトウェア…</text></a>
+<path class="gr-line" d="M230,855 C265.0,855 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/s3-encryption-audit.html"><title>運用シナリオ:機密データを保存するS3を暗号化・監査する</title><rect x="0" y="844" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="860" class="gr-t">機密データを保存するS3を暗号…</text></a>
+<path class="gr-line" d="M230,885 C265.0,885 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cross-account-access.html"><title>運用シナリオ:異なるAWSアカウントのリソースにアクセス</title><rect x="0" y="874" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="890" class="gr-t">異なるAWSアカウントのリソース…</text></a>
+<path class="gr-line" d="M230,915 C265.0,915 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/centralized-logging.html"><title>運用シナリオ:複数アカウントのログを集約して分析する</title><rect x="0" y="904" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="920" class="gr-t">複数アカウントのログを集約して…</text></a>
+<path class="gr-line" d="M230,945 C265.0,945 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/bastionless-access.html"><title>運用シナリオ:踏み台サーバーなしでプライベートなEC2を操作する</title><rect x="0" y="934" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="950" class="gr-t">踏み台サーバーなしでプライベー…</text></a>
+<path class="gr-line" d="M230,975 C265.0,975 265.0,510 300,510" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/static-site-cloudfront.html"><title>運用シナリオ:静的サイトを独自ドメイン・HTTPSで安全に配信する</title><rect x="0" y="964" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="980" class="gr-t">静的サイトを独自ドメイン・HTT…</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,330 550,330" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/kms.html"><title>サービス:AWS KMS</title><rect x="550" y="319" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="334" class="gr-t">AWS KMS</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,360 550,360" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="349" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="364" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,390 550,390" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="550" y="379" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="394" class="gr-t">Amazon Athena</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,420 550,420" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cloudfront.html"><title>サービス:Amazon CloudFront</title><rect x="550" y="409" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="424" class="gr-t">Amazon CloudFront</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,450 550,450" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cognito.html"><title>サービス:Amazon Cognito</title><rect x="550" y="439" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="454" class="gr-t">Amazon Cognito</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,480 550,480" marker-end="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="469" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="484" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,510 550,510" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/macie.html"><title>サービス:Amazon Macie</title><rect x="550" y="499" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="514" class="gr-t">Amazon Macie</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,540 550,540" marker-end="url(#gr-arrow)"/>
+<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="529" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="544" class="gr-t">Amazon SNS</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,570 550,570" marker-end="url(#gr-arrow)"/>
+<a href="../services/sqs.html"><title>サービス:Amazon SQS</title><rect x="550" y="559" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="574" class="gr-t">Amazon SQS</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,600 550,600" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="589" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="604" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,630 550,630" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/sla-availability.html"><title>用語:SLAと可用性</title><rect x="550" y="619" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="634" class="gr-t">SLAと可用性</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,660 550,660" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/storage-types.html"><title>用語:ブロック・ファイル・オブジェクトストレージ</title><rect x="550" y="649" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="664" class="gr-t">ブロック・ファイル・オブジェク…</text></a>
+<path class="gr-line" d="M480,510 C515.0,510 515.0,690 550,690" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/encryption.html"><title>用語:保存時の暗号化と転送時の暗号化</title><rect x="550" y="679" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="694" class="gr-t">保存時の暗号化と転送時の暗号化</text></a>
+<rect x="300" y="490" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="515" text-anchor="middle" class="gr-tb">Amazon S3</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(32)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(13)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
 <nav class="pager">
   <a class="prev" href="copilot.html"><span class="label">← 前へ</span>AWS Copilot</a>
   <a class="toc" href="index.html">目次へ戻る</a>
