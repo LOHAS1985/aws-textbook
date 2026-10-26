@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,92 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>EC2が乗っ取られ、暗号資産のマイニングや外部への攻撃に使われた場合に、<strong>すぐにネットワークから切り離したい</strong>。調査のために、インスタンスを削除せずにディスクの状態を保存し、担当者にも通知したい。夜間でも自動で対応したい。</p>
+<ul>
+<li>EC2が乗っ取られたら、<strong>すぐにネットワークから切り離したい</strong>。</li>
+<li>調査のため、インスタンスを削除せずに<strong>ディスクの状態を保存</strong>したい。</li>
+<li>夜間でも自動で対応し、担当者にも知らせたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 846 242" style="max-width:846px;min-width:677px" role="img" aria-label="図1 侵害されたEC2の自動隔離。GuardDutyの検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、EBSのスナップショットを取って証拠を残す。"><defs><marker id="dgusecases-guardduty-auto-response-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 846 242" style="max-width:846px;min-width:677px" role="img" aria-label="図1 侵害されたEC2の自動隔離の構成。"><defs><marker id="dgusecases-guardduty-auto-response-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="gd">
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">①</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">脅威を検出</text>
+</g>
+<g data-node="eb">
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="100" text-anchor="middle" class="dg-t">EventBridge</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">種類・重要度で判定</text>
+</g>
+<g data-node="au">
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">SSM Automation</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">またはLambda</text>
+</g>
+<g data-node="sg">
+<rect x="678" y="38" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="750" y="60" text-anchor="middle" class="dg-t">隔離用SG</text>
+<text x="750" y="78" text-anchor="middle" class="dg-s">通信をすべて遮断</text>
+</g>
+<g data-node="snap">
+<rect x="678" y="118" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="750" y="140" text-anchor="middle" class="dg-t">②</text>
+<text x="750" y="158" text-anchor="middle" class="dg-s">証拠を保全</text>
+</g>
+<g data-node="sns">
+<rect x="248" y="166" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="321" y="188" text-anchor="middle" class="dg-t">SNS</text>
+<text x="321" y="206" text-anchor="middle" class="dg-s">担当者へ通知</text>
+</g>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+<path d="M321.0,130.0 L321.0,166.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+<path d="M608.0,117.5 L677.5,130.5" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+</svg>
+</div>
+<figcaption>図1 侵害されたEC2の自動隔離の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="gd">
+<p class="ex-q">① 不審な通信やマイニングなどの脅威を検出するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="GuardDuty">Amazon GuardDuty<span class="ex-why">VPCフローログ・DNSのログ・CloudTrailなどを分析して、脅威を検出します。リージョンごとに有効にします。</span></li>
+<li data-short="Inspector">Amazon Inspector<span class="ex-why">ソフトウェアの脆弱性を見つけるもので、実際の攻撃の兆候は検出しません(<a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>)。</span></li>
+<li data-short="Macie">Amazon Macie<span class="ex-why">S3の機密データを見つけるサービスです。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="snap">
+<p class="ex-q">② 調査のためにディスクの状態を残すものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="スナップショット">EBSのスナップショット<span class="ex-why">その時点のボリュームの状態を保存し、あとで別の環境で調べられます。</span></li>
+<li data-short="インスタンス終了">インスタンスの終了<span class="ex-why">証拠が消えてしまいます。終了保護をかけておきます。</span></li>
+<li data-short="再起動">インスタンスの再起動<span class="ex-why">メモリの状態などの証拠が失われ、隔離にもなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ Auto Scalingグループのインスタンスを隔離するときの注意は?</p>
+<ul class="ex-choices">
+<li data-ok>先にグループから切り離す(デタッチする)<span class="ex-why">グループに入ったままだと、ヘルスチェックで置き換えられて証拠が消えます。</span></li>
+<li>グループの希望容量を0にする<span class="ex-why">全台が終了し、証拠も消えます。</span></li>
+<li>特に注意はいらない<span class="ex-why">自動で置き換えられるおそれがあります。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>GuardDuty</strong>の検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、<strong>スナップショット</strong>で証拠を残します。追跡中の通信はセキュリティグループを替えても切れないことがあるので、ネットワークACLでの遮断も併用します(<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>)。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 242" style="max-width:846px;min-width:677px" role="img" aria-label="図2 侵害されたEC2の自動隔離。GuardDutyの検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、EBSのスナップショットを取って証拠を残す。"><defs><marker id="dgusecases-guardduty-auto-response-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="gd">
 <rect x="34" y="78" width="145" height="52" rx="8" class="dg-accent"/>
 <text x="106" y="100" text-anchor="middle" class="dg-tb">GuardDuty</text>
@@ -80,19 +158,19 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="321" y="188" text-anchor="middle" class="dg-t">SNS</text>
 <text x="321" y="206" text-anchor="middle" class="dg-s">担当者へ通知</text>
 </g>
-<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
-<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
-<path d="M321.0,130.0 L321.0,166.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
-<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
-<path d="M608.0,117.5 L677.5,130.5" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-1)"/>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-2)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-2)"/>
+<path d="M321.0,130.0 L321.0,166.0" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-2)"/>
+<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-2)"/>
+<path d="M608.0,117.5 L677.5,130.5" class="dg-line" marker-end="url(#dgusecases-guardduty-auto-response-2)"/>
 </svg>
 </div>
-<figcaption>図1 侵害されたEC2の自動隔離。GuardDutyの検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、EBSのスナップショットを取って証拠を残す。</figcaption>
+<figcaption>図2 侵害されたEC2の自動隔離。GuardDutyの検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、EBSのスナップショットを取って証拠を残す。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/guardduty.html">Amazon GuardDuty</a>:不審な通信・マイニング・認証情報の悪用などの検出</li>
 <li><a href="../services/eventbridge.html">Amazon EventBridge</a>:検出結果(<code>GuardDuty Finding</code>)を種類・重要度で絞り込んで自動処理を起動</li>
@@ -103,7 +181,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>組織の全アカウント・全リージョンでGuardDutyを有効にする(委任管理者を使う)</li>
 <li>インバウンド・アウトバウンドのルールが何もない<strong>隔離用セキュリティグループ</strong>を用意する</li>
@@ -114,7 +192,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>GuardDutyの検出結果への自動対応 → <strong class="em">EventBridge</strong>ルール+Lambda/SSM Automation。</li>
 <li>調査のため、すぐに<strong>終了しない</strong>。終了保護をかけ、スナップショットで証拠を残す。</li>
@@ -122,38 +200,36 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>Auto Scalingグループに入ったままだと、ヘルスチェックで置き換えられて証拠が消えるので、先にグループから切り離す。</li>
 <li>GuardDutyは<strong>リージョンごと</strong>に有効化が必要。使っていないリージョンも有効にしておく。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/guardduty-auto-response.html"><span class="title">乗っ取られたEC2を自動で隔離する構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 6件・リンク元 1件)</summary>
+<summary>つながり図を開く(リンク先 8件・リンク元 1件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="乗っ取られたEC2を自動で隔離するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,120 C265.0,120 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../terms/security-detection-comparison.html"><title>用語:セキュリティ検出のサービスの選び方</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="124" class="gr-t">セキュリティ検出のサービスの選…</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="乗っ取られたEC2を自動で隔離するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,150 C265.0,150 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/security-detection-comparison.html"><title>用語:セキュリティ検出のサービスの選び方</title><rect x="0" y="139" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="154" class="gr-t">セキュリティ検出のサービスの選…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Lambda</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Security Hub</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Systems Manager</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon EC2</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EventBridge</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
 <a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon GuardDuty</text></a>
-<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">乗っ取られたEC2を自…</text>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">イベント駆動の自動修復</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../terms/nacl-security-group.html"><title>用語:ネットワークACLとセキュリティグループ</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">ネットワークACLとセキュリティ…</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">乗っ取られたEC2を自…</text>
 <text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -167,5 +243,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 165.0, "rowh": 80.0, "nodes": [{"id": "gd", "label": "GuardDuty", "sub": "", "x": 0.0, "y": 0.5}, {"id": "eb", "label": "EventBridge", "sub": "種類・重要度で判定", "x": 1.3, "y": 0.5}, {"id": "au", "label": "SSM Automation", "sub": "またはLambda", "x": 2.6, "y": 0.5}, {"id": "sg", "label": "隔離用SG", "sub": "通信をすべて遮断", "x": 3.9, "y": 0.0}, {"id": "snap", "label": "スナップショット", "sub": "", "x": 3.9, "y": 1.0}, {"id": "sns", "label": "SNS", "sub": "担当者へ通知", "x": 1.3, "y": 1.6}], "edges": [["gd", "eb", false, false], ["eb", "au", false, false], ["eb", "sns", false, false], ["au", "sg", false, false], ["au", "snap", false, false]], "distractors": ["Inspector", "Macie", "インスタンス終了", "再起動"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

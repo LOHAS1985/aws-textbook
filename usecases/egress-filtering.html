@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,92 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>プライベートサブネットのサーバーは、NATゲートウェイ経由でインターネットのどこにでもつながってしまう。マルウェアに感染した場合に、外部の指令サーバーへの接続やデータの持ち出しをされないよう、<strong>OSのアップデートなど必要な宛先(ドメイン)だけ</strong>に外向きの通信を絞りたい。</p>
+<ul>
+<li>プライベートサブネットのサーバーが、NAT経由で<strong>インターネットのどこにでもつながってしまう</strong>。</li>
+<li>OSのアップデートなど、<strong>必要なドメインだけ</strong>に外向きの通信を絞りたい。</li>
+<li>不正なドメインは、名前解決の段階でも止めたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 846 242" style="max-width:846px;min-width:677px" role="img" aria-label="図1 外向きの通信の制限。DNS Firewallで不正なドメインの名前解決を止め、Network Firewallで許可したドメイン以外への通信を止める。ルートテーブルで、インターネットへの通信がファイアウォールのエンドポイントを通るようにする。"><defs><marker id="dgusecases-egress-filtering-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 846 242" style="max-width:846px;min-width:677px" role="img" aria-label="図1 外向きの通信の制限の構成。"><defs><marker id="dgusecases-egress-filtering-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ec2">
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">EC2</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">プライベート</text>
+</g>
+<g data-node="dns">
+<rect x="34" y="166" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="106" y="188" text-anchor="middle" class="dg-t">②</text>
+<text x="106" y="206" text-anchor="middle" class="dg-s">不正ドメインを拒否</text>
+</g>
+<g data-node="nat">
+<rect x="248" y="84" width="145" height="40" rx="8" class="dg-box"/>
+<text x="321" y="108" text-anchor="middle" class="dg-t">NATゲートウェイ</text>
+</g>
+<g data-node="fw">
+<rect x="463" y="78" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="536" y="100" text-anchor="middle" class="dg-t">①</text>
+<text x="536" y="118" text-anchor="middle" class="dg-s">許可ドメインのみ</text>
+</g>
+<g data-node="igw">
+<rect x="678" y="38" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="750" y="60" text-anchor="middle" class="dg-t">インターネット</text>
+<text x="750" y="78" text-anchor="middle" class="dg-s">許可した宛先</text>
+</g>
+<g data-node="bad">
+<rect x="678" y="118" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="750" y="140" text-anchor="middle" class="dg-t">その他の宛先</text>
+<text x="750" y="158" text-anchor="middle" class="dg-s">ブロック</text>
+</g>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-egress-filtering-1)"/>
+<path d="M106.5,130.0 L106.5,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-egress-filtering-1)"/>
+<text x="106" y="152" text-anchor="middle" class="dg-s dg-halo">名前解決</text>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-egress-filtering-1)"/>
+<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgusecases-egress-filtering-1)"/>
+<path d="M608.0,117.5 L677.5,130.5" class="dg-line dg-dash" marker-end="url(#dgusecases-egress-filtering-1)"/>
+</svg>
+</div>
+<figcaption>図1 外向きの通信の制限の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="fw">
+<p class="ex-q">① 許可したドメイン以外への外向きの通信を止めるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="NW Firewall">AWS Network Firewall<span class="ex-why">ステートフルルールのドメインリストで、TLSのSNIやHTTPのHostヘッダーから宛先のドメインを判定します。</span></li>
+<li data-short="セキュリティG">セキュリティグループ<span class="ex-why">IPアドレスとポートでしか制御できず、ドメイン名では絞れません(<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>)。</span></li>
+<li data-short="AWS WAF">AWS WAF<span class="ex-why">外から来るWebのリクエストを守るもので、サーバーから外への通信は制限しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="dns">
+<p class="ex-q">② 不正なドメインの名前解決を止めるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="DNS Firewall">Route 53 Resolver DNS Firewall<span class="ex-why">AWS管理のドメインリストなどで、マルウェアのドメインの名前解決をブロックします(<a href="../terms/dns.html">DNS</a>)。</span></li>
+<li data-short="プライベートHZ">Route 53のプライベートホストゾーン<span class="ex-why">VPCの中だけで使う名前を定義するもので、外部のドメインのブロックはしません。</span></li>
+<li data-short="GuardDuty">Amazon GuardDuty<span class="ex-why">不審な通信を検出しますが、名前解決は止めません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ Network Firewallで通信を検査するために必要な設定は?</p>
+<ul class="ex-choices">
+<li data-ok>ルートテーブルで、通信がファイアウォールのエンドポイントを通るようにする<span class="ex-why">ルートで通さないと検査されません。行きと戻りの経路を同じにします(<a href="../terms/route-table.html">ルートテーブル</a>)。</span></li>
+<li>ファイアウォールを作るだけでよい<span class="ex-why">ルートを変えないと、通信はファイアウォールを通りません。</span></li>
+<li>EC2にエージェントを入れる<span class="ex-why">Network Firewallはエージェントを使いません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>DNS Firewall</strong>で不正なドメインの名前解決を止め、<strong>Network Firewall</strong>で許可したドメイン以外への通信を止めます。インスタンスが外部のDNSサーバーを直接使うとDNS Firewallを迂回されるので、53番の外向きの通信もファイアウォールで止めます。エンドポイントはAZごとに置きます(<a href="../terms/outbound-traffic.html">アウトバウンド通信</a>)。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 242" style="max-width:846px;min-width:677px" role="img" aria-label="図2 外向きの通信の制限。DNS Firewallで不正なドメインの名前解決を止め、Network Firewallで許可したドメイン以外への通信を止める。ルートテーブルで、インターネットへの通信がファイアウォールのエンドポイントを通るようにする。"><defs><marker id="dgusecases-egress-filtering-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="ec2">
 <rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
 <text x="106" y="100" text-anchor="middle" class="dg-t">EC2</text>
@@ -80,20 +158,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="750" y="140" text-anchor="middle" class="dg-t">その他の宛先</text>
 <text x="750" y="158" text-anchor="middle" class="dg-s">ブロック</text>
 </g>
-<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-egress-filtering-1)"/>
-<path d="M106.5,130.0 L106.5,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-egress-filtering-1)"/>
+<path d="M179.0,104.0 L248.5,104.0" class="dg-line" marker-end="url(#dgusecases-egress-filtering-2)"/>
+<path d="M106.5,130.0 L106.5,166.0" class="dg-line dg-dash" marker-end="url(#dgusecases-egress-filtering-2)"/>
 <text x="106" y="152" text-anchor="middle" class="dg-s dg-halo">名前解決</text>
-<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-egress-filtering-1)"/>
-<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgusecases-egress-filtering-1)"/>
-<path d="M608.0,117.5 L677.5,130.5" class="dg-line dg-dash" marker-end="url(#dgusecases-egress-filtering-1)"/>
+<path d="M393.5,104.0 L463.0,104.0" class="dg-line" marker-end="url(#dgusecases-egress-filtering-2)"/>
+<path d="M608.0,90.5 L677.5,77.5" class="dg-line" marker-end="url(#dgusecases-egress-filtering-2)"/>
+<path d="M608.0,117.5 L677.5,130.5" class="dg-line dg-dash" marker-end="url(#dgusecases-egress-filtering-2)"/>
 </svg>
 </div>
-<figcaption>図1 外向きの通信の制限。DNS Firewallで不正なドメインの名前解決を止め、Network Firewallで許可したドメイン以外への通信を止める。ルートテーブルで、インターネットへの通信がファイアウォールのエンドポイントを通るようにする。</figcaption>
+<figcaption>図2 外向きの通信の制限。DNS Firewallで不正なドメインの名前解決を止め、Network Firewallで許可したドメイン以外への通信を止める。ルートテーブルで、インターネットへの通信がファイアウォールのエンドポイントを通るようにする。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/network-firewall.html">AWS Network Firewall</a>:ステートフルルールのドメインリスト(TLSのSNI・HTTPのHostヘッダーで判定)で許可リスト方式の制限</li>
 <li><a href="../services/dns-firewall.html">Route 53 Resolver DNS Firewall</a>:AWS管理のドメインリストで、マルウェアなどのドメインの名前解決をブロック</li>
@@ -104,7 +182,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>各AZにファイアウォール用のサブネットを作り、Network Firewallのエンドポイントを置く</li>
 <li>ルートテーブルを設定する:ワークロード → NATゲートウェイ → ファイアウォールエンドポイント → インターネットゲートウェイの順に通り、戻りの通信もファイアウォールを通るようにする</li>
@@ -115,7 +193,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>ドメイン名で外向きの通信を絞る、IDS/IPS → <strong class="em">Network Firewall</strong>。DNSの問い合わせの段階で止める → <strong class="em">DNS Firewall</strong>。</li>
 <li>Network Firewallは、<strong>ルートテーブル</strong>で通信をエンドポイントに通さないと検査されない。行きと戻りの経路を対称にする。</li>
@@ -124,32 +202,27 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>ファイアウォールのエンドポイントはAZごとに置き、そのAZのサブネットの通信は同じAZのエンドポイントを通す。</li>
 </ul></div>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/egress-filtering.html"><span class="title">外向きの通信を制限する構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 5件・リンク元 0件)</summary>
+<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="外向きの通信を許可したドメインだけに制限するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="外向きの通信を許可したドメインだけに制限するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/network-firewall.html"><title>サービス:AWS Network Firewall</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Network Firewall</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon GuardDuty</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon VPC</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/dns-firewall.html"><title>サービス:Route 53 Resolver DNS Firewall</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Route 53 Resolver DNS Fir…</text></a>
-<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">外向きの通信を許可し…</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/outbound-traffic.html"><title>用語:アウトバウンド通信</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">アウトバウンド通信</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">外向きの通信を許可し…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -163,5 +236,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 165.0, "rowh": 80.0, "nodes": [{"id": "ec2", "label": "EC2", "sub": "プライベート", "x": 0.0, "y": 0.5}, {"id": "dns", "label": "DNS Firewall", "sub": "", "x": 0.0, "y": 1.6}, {"id": "nat", "label": "NATゲートウェイ", "sub": "", "x": 1.3, "y": 0.5}, {"id": "fw", "label": "NW Firewall", "sub": "", "x": 2.6, "y": 0.5}, {"id": "igw", "label": "インターネット", "sub": "許可した宛先", "x": 3.9, "y": 0.0}, {"id": "bad", "label": "その他の宛先", "sub": "ブロック", "x": 3.9, "y": 1.0}], "edges": [["ec2", "nat", false, false], ["ec2", "dns", true, false], ["nat", "fw", false, false], ["fw", "igw", false, false], ["fw", "bad", true, false]], "distractors": ["AWS WAF", "GuardDuty", "セキュリティG", "プライベートHZ"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

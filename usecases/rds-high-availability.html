@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,91 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>データベースのAZ障害に備えて自動でフェイルオーバーさせたい。あわせて、レポート作成などの重い読み取り処理を本番の書き込みと分け、Lambdaからの大量接続にも耐えられるようにしたい。</p>
+<ul>
+<li>DBの<strong>AZの障害</strong>に備えて、自動で切り替えたい。</li>
+<li>レポート作成などの<strong>重い読み取り</strong>を、本番の書き込みと分けたい。</li>
+<li>Lambdaからの<strong>大量の接続</strong>にも耐えたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 846 236" style="max-width:846px;min-width:677px" role="img" aria-label="図1 書き込みはRDS Proxy経由でプライマリへ、重い読み取りはリードレプリカへ。プライマリに障害が起きると、別AZのスタンバイへ自動でフェイルオーバーする。"><defs><marker id="dgusecases-rds-high-availability-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 846 236" style="max-width:846px;min-width:677px" role="img" aria-label="図1 DBの高可用性と読み取りの分散の構成。"><defs><marker id="dgusecases-rds-high-availability-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="102" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="123" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="106" y="141" text-anchor="middle" class="dg-s">Lambda / EC2</text>
+</g>
+<g data-node="proxy">
+<rect x="248" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="64" text-anchor="middle" class="dg-t">RDS Proxy</text>
+<text x="321" y="82" text-anchor="middle" class="dg-s">接続を集約</text>
+</g>
+<g data-node="pri">
+<rect x="463" y="43" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="536" y="64" text-anchor="middle" class="dg-tb">プライマリ</text>
+<text x="536" y="82" text-anchor="middle" class="dg-s">AZ-a・読み書き</text>
+</g>
+<g data-node="stb">
+<rect x="678" y="43" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="750" y="64" text-anchor="middle" class="dg-t">①</text>
+<text x="750" y="82" text-anchor="middle" class="dg-s">AZ-c・待機</text>
+</g>
+<g data-node="rr">
+<rect x="463" y="160" width="145" height="52" rx="8" class="dg-blank"/>
+<text x="536" y="182" text-anchor="middle" class="dg-t">②</text>
+<text x="536" y="200" text-anchor="middle" class="dg-s">読み取り専用</text>
+</g>
+<path d="M179.0,107.7 L248.5,88.8" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
+<text x="214" y="102" text-anchor="middle" class="dg-s dg-halo">書き込み</text>
+<path d="M393.5,69.0 L463.0,69.0" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
+<path d="M608.0,69.0 L677.5,69.0" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
+<text x="643" y="73" text-anchor="middle" class="dg-s dg-halo">同期</text>
+<path d="M535.5,95.0 L535.5,160.0" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
+<text x="536" y="132" text-anchor="middle" class="dg-s dg-halo">非同期</text>
+<path d="M179.0,137.4 L463.0,176.1" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
+<text x="321" y="161" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
+</svg>
+</div>
+<figcaption>図1 DBの高可用性と読み取りの分散の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="stb">
+<p class="ex-q">① 別のAZで待機し、障害時に自動で切り替わるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="スタンバイ">Multi-AZのスタンバイ<span class="ex-why">同期で複製され、プライマリの障害時に自動でフェイルオーバーします。エンドポイント名は変わりません。</span></li>
+<li data-short="スナップショット">別のAZへのスナップショットのコピー<span class="ex-why">復元に時間がかかり、自動では切り替わりません。</span></li>
+<li data-short="別リージョンRR">別のリージョンのリードレプリカ<span class="ex-why">リージョンの障害への備えにはなりますが、昇格は手動で、AZの障害への自動の切り替えにはなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="rr">
+<p class="ex-q">② 重い読み取りを受け持つものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="リードレプリカ">リードレプリカ<span class="ex-why">非同期で複製された読み取り専用のDBで、本番の負荷を減らせます。わずかに遅れることがあります。</span></li>
+<li data-short="スタンバイ">Multi-AZのスタンバイ<span class="ex-why">従来のMulti-AZのスタンバイは待機専用で、読み取りには使えません。</span></li>
+<li data-short="RDS Proxy">RDS Proxy<span class="ex-why">接続を集約するもので、読み取りの処理を受け持つDBではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ フェイルオーバーのあと、アプリ側で必要な変更は?</p>
+<ul class="ex-choices">
+<li data-ok>なし(エンドポイント名は同じまま切り替わる)<span class="ex-why">DNSの向き先が新しいプライマリに変わるだけです。DNSを長くキャッシュしないようにしておきます。</span></li>
+<li>接続先をスタンバイのIPアドレスに書き換える<span class="ex-why">IPアドレスを直接使うと切り替わりに追従できません。</span></li>
+<li>リードレプリカを手動で昇格させる<span class="ex-why">Multi-AZでは自動でスタンバイに切り替わるので不要です。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>障害対策は<strong>Multi-AZ</strong>、読み取りの分散は<strong>リードレプリカ</strong>、接続の急増は<strong>RDS Proxy</strong>と、目的ごとに使い分けます。さらに高い可用性が必要ならAurora(3つのAZに6つのコピー)を検討します(<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>)。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 236" style="max-width:846px;min-width:677px" role="img" aria-label="図2 書き込みはRDS Proxy経由でプライマリへ、重い読み取りはリードレプリカへ。プライマリに障害が起きると、別AZのスタンバイへ自動でフェイルオーバーする。"><defs><marker id="dgusecases-rds-high-availability-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="app">
 <rect x="34" y="102" width="145" height="52" rx="8" class="dg-blue"/>
 <text x="106" y="123" text-anchor="middle" class="dg-t">アプリ</text>
@@ -75,23 +152,23 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="536" y="182" text-anchor="middle" class="dg-t">リードレプリカ</text>
 <text x="536" y="200" text-anchor="middle" class="dg-s">読み取り専用</text>
 </g>
-<path d="M179.0,107.7 L248.5,88.8" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
+<path d="M179.0,107.7 L248.5,88.8" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-2)"/>
 <text x="214" y="102" text-anchor="middle" class="dg-s dg-halo">書き込み</text>
-<path d="M393.5,69.0 L463.0,69.0" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
-<path d="M608.0,69.0 L677.5,69.0" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
+<path d="M393.5,69.0 L463.0,69.0" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-2)"/>
+<path d="M608.0,69.0 L677.5,69.0" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-2)"/>
 <text x="643" y="73" text-anchor="middle" class="dg-s dg-halo">同期</text>
-<path d="M535.5,95.0 L535.5,160.0" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
+<path d="M535.5,95.0 L535.5,160.0" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-2)"/>
 <text x="536" y="132" text-anchor="middle" class="dg-s dg-halo">非同期</text>
-<path d="M179.0,137.4 L463.0,176.1" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-1)"/>
+<path d="M179.0,137.4 L463.0,176.1" class="dg-line" marker-end="url(#dgusecases-rds-high-availability-2)"/>
 <text x="321" y="161" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
 </svg>
 </div>
-<figcaption>図1 書き込みはRDS Proxy経由でプライマリへ、重い読み取りはリードレプリカへ。プライマリに障害が起きると、別AZのスタンバイへ自動でフェイルオーバーする。</figcaption>
+<figcaption>図2 書き込みはRDS Proxy経由でプライマリへ、重い読み取りはリードレプリカへ。プライマリに障害が起きると、別AZのスタンバイへ自動でフェイルオーバーする。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/rds.html">Amazon RDS</a>:Multi-AZ(障害対策)、リードレプリカ(読み取り分散)、自動バックアップ</li>
 <li>RDS Proxy:大量の接続を少数のDB接続に集約・再利用する(フェイルオーバー時間の短縮にも有効)</li>
@@ -101,7 +178,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>RDSインスタンスをMulti-AZで作成する(既存のインスタンスは変更で有効化できる)</li>
 <li>読み取り用にリードレプリカを作成し、レポート処理などの接続先をレプリカにする</li>
@@ -112,7 +189,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li><strong>Multi-AZのスタンバイは読み取りに使えない</strong>。読み取り性能を上げるのはリードレプリカ。</li>
 <li>リードレプリカは<strong>非同期</strong>なので、わずかに遅延がある(最新データが必要な処理はプライマリへ)。</li>
@@ -120,31 +197,29 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>接続数の枯渇(<code>DatabaseConnections</code> の上昇)→ <strong>RDS Proxy</strong>。</li>
 <li>さらに高い可用性や読み取り性能が必要なら<a href="../services/aurora.html">Aurora</a>(3AZに6コピー、最大15レプリカ)を検討する。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/sla-availability.html">SLAと可用性</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/rds-high-availability.html"><span class="title">データベースの高可用性の構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 4件・リンク元 0件)</summary>
+<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 156" style="max-width:784px;min-width:600px" role="img" aria-label="データベースの高可用性と読み取り分散とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M480,90 C515.0,90 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="データベースの高可用性と読み取り分散とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/secrets-manager.html"><title>サービス:AWS Secrets Manager</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Secrets Manager</text></a>
-<path class="gr-line" d="M480,90 C515.0,90 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon Aurora</text></a>
-<path class="gr-line" d="M480,90 C515.0,90 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,90 C515.0,90 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon RDS</text></a>
-<rect x="300" y="70" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="95" text-anchor="middle" class="gr-tb">データベースの高可用…</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(4)</text>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/sla-availability.html"><title>用語:SLAと可用性</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">SLAと可用性</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">高可用性とスケーリング</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">データベースの高可用…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -158,5 +233,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 165.0, "rowh": 90.0, "nodes": [{"id": "app", "label": "アプリ", "sub": "Lambda / EC2", "x": 0.0, "y": 0.65}, {"id": "proxy", "label": "RDS Proxy", "sub": "接続を集約", "x": 1.3, "y": 0.0}, {"id": "pri", "label": "プライマリ", "sub": "AZ-a・読み書き", "x": 2.6, "y": 0.0}, {"id": "stb", "label": "スタンバイ", "sub": "", "x": 3.9, "y": 0.0}, {"id": "rr", "label": "リードレプリカ", "sub": "", "x": 2.6, "y": 1.3}], "edges": [["app", "proxy", false, false], ["proxy", "pri", false, false], ["pri", "stb", false, false], ["pri", "rr", false, false], ["app", "rr", false, false]], "distractors": ["スナップショット", "別リージョンRR"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

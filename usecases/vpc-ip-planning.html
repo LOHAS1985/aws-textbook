@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,86 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>アカウントごとにチームが自由にVPCを作った結果、CIDRが重なり、Transit GatewayやオンプレミスとつなげないVPCが出てきた。これから作るVPCは、<strong>決められたアドレス範囲から重ならないCIDRを自動で割り当て</strong>、使用状況も1か所で把握したい。</p>
+<ul>
+<li>チームが自由にVPCを作った結果、<strong>CIDRが重なり</strong>、つなげないVPCが出てきた。</li>
+<li>これから作るVPCには、決めた範囲から<strong>重ならないCIDRを自動で</strong>割り当てたい。</li>
+<li>使用状況を1か所で把握したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 922 194" style="max-width:922px;min-width:738px" role="img" aria-label="図1 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。"><defs><marker id="dgusecases-vpc-ip-planning-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 922 194" style="max-width:922px;min-width:738px" role="img" aria-label="図1 CIDRの払い出しの構成。"><defs><marker id="dgusecases-vpc-ip-planning-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ipam">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">①</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">委任管理者</text>
+</g>
+<g data-node="pl">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="100" text-anchor="middle" class="dg-t">本番プール</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">10.0.0.0/12</text>
+</g>
+<g data-node="ram">
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="585" y="100" text-anchor="middle" class="dg-t">②</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">OUへ共有</text>
+</g>
+<g data-node="v1">
+<rect x="748" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="823" y="60" text-anchor="middle" class="dg-t">VPC(A)</text>
+<text x="823" y="78" text-anchor="middle" class="dg-s">/20を自動割当</text>
+</g>
+<g data-node="v2">
+<rect x="748" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="823" y="140" text-anchor="middle" class="dg-t">VPC(B)</text>
+<text x="823" y="158" text-anchor="middle" class="dg-s">/20を自動割当</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
+<path d="M660.0,91.4 L748.0,76.6" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
+<path d="M660.0,116.6 L748.0,131.4" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
+</svg>
+</div>
+<figcaption>図1 CIDRの払い出しの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ipam">
+<p class="ex-q">① 組織全体のIPアドレスのプールを管理し、重複を防ぐものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="IPAM">Amazon VPC IP Address Manager(IPAM)<span class="ex-why">プールの階層と割り当てのルールを決め、使用状況や重複を監視します(<a href="../terms/cidr.html">CIDR</a>)。</span></li>
+<li data-short="Route 53">Amazon Route 53<span class="ex-why">DNSのサービスで、IPアドレスの範囲は管理しません。</span></li>
+<li data-short="Transit GW">Transit Gateway<span class="ex-why">VPC同士をつなぐもので、CIDRが重ならないようにはしません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="ram">
+<p class="ex-q">② プールをほかのアカウントに共有するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="RAM">AWS Resource Access Manager(RAM)<span class="ex-why">プールをOUやアカウントに共有し、各アカウントがVPCの作成時に使えるようにします。</span></li>
+<li data-short="StackSets">CloudFormation StackSets<span class="ex-why">テンプレートを展開するもので、プールの共有はしません(VPCの作成には使えます)。</span></li>
+<li data-short="VPCピアリング">VPCピアリング<span class="ex-why">VPC同士の接続で、プールの共有ではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 既存のVPCのCIDRについて正しいものは?</p>
+<ul class="ex-choices">
+<li data-ok>CIDRは後から追加できるが、元のCIDRは変更できない<span class="ex-why">セカンダリCIDRで範囲は広げられますが、重なりは作り直さないと解消できません。作る前の計画が大切です。</span></li>
+<li>元のCIDRをいつでも変更できる<span class="ex-why">VPCの元のCIDRは変更できません。</span></li>
+<li>重なっていてもTransit Gatewayで問題なくつなげる<span class="ex-why">重なった範囲は正しくルーティングできません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>委任管理者のアカウントで<strong>IPAM</strong>とプールを作り、<strong>RAM</strong>で本番のOUに共有します。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられます。プールの使用率はCloudWatchで監視し、枯渇の前に範囲を追加します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 922 194" style="max-width:922px;min-width:738px" role="img" aria-label="図2 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。"><defs><marker id="dgusecases-vpc-ip-planning-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="ipam">
 <rect x="34" y="78" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="100" text-anchor="middle" class="dg-tb">IPAM</text>
@@ -75,18 +147,18 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="823" y="140" text-anchor="middle" class="dg-t">VPC(B)</text>
 <text x="823" y="158" text-anchor="middle" class="dg-s">/20を自動割当</text>
 </g>
-<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
-<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
-<path d="M660.0,91.4 L748.0,76.6" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
-<path d="M660.0,116.6 L748.0,131.4" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-1)"/>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-2)"/>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-2)"/>
+<path d="M660.0,91.4 L748.0,76.6" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-2)"/>
+<path d="M660.0,116.6 L748.0,131.4" class="dg-line" marker-end="url(#dgusecases-vpc-ip-planning-2)"/>
 </svg>
 </div>
-<figcaption>図1 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。</figcaption>
+<figcaption>図2 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/ipam.html">Amazon VPC IP Address Manager(IPAM)</a>:プールの階層、割り当てルール、使用状況・重複の監視</li>
 <li><a href="../services/organizations.html">AWS Organizations</a>:IPAMの委任管理者、組織全体のリソースの検出</li>
@@ -97,7 +169,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>Organizationsの管理アカウントで、IPAMの委任管理者アカウントを指定する(高度なティアを使う)</li>
 <li>委任管理者でIPAMを作り、管理するリージョンを指定する。最上位のプール(例:<code>10.0.0.0/8</code>)の下に、リージョン・環境ごとのプールを作る</li>
@@ -108,7 +180,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>組織全体のVPCのCIDRの重複を防ぐ・一元管理する → <strong class="em">IPAM</strong>。他のアカウントへのプールの共有 → <strong>RAM</strong>。</li>
 <li>CIDRが重なったVPCどうしは、ピアリングやTransit Gatewayで正しくルーティングできない。後から直すのは大変なので、作る前に計画する。</li>
@@ -116,36 +188,29 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>VPCのCIDRは後から追加(セカンダリCIDR)できるが、元のCIDRは変更できない。</li>
 <li>プライベートのプールや他のアカウントへの割り当てには、IPAMの<strong>高度なティア</strong>が必要。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/vpc-connectivity.html">VPC同士をつなぐ方法の選び方</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/vpc-ip-planning.html"><span class="title">VPCのIPアドレスを重ならずに払い出す構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 5件・リンク元 1件)</summary>
+<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="組織全体のVPCのIPアドレスを重ならないように払い出すとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
-<a href="../terms/vpc-connectivity.html"><title>用語:VPC同士をつなぐ方法の選び方</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">VPC同士をつなぐ方法の選び方</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="組織全体のVPCのIPアドレスを重ならないように払い出すとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudFormation</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Organizations</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/ram.html"><title>サービス:AWS Resource Access Manager</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Resource Access Manag…</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/ipam.html"><title>サービス:Amazon VPC IP Address Manager (IPAM)</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon VPC IP Address Man…</text></a>
-<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">組織全体のVPCのIPア…</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/vpc-connectivity.html"><title>用語:VPC同士をつなぐ方法の選び方</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">VPC同士をつなぐ方法の選び方</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">組織全体のVPCのIPア…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -159,5 +224,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "ipam", "label": "IPAM", "sub": "", "x": 0.0, "y": 0.5}, {"id": "pl", "label": "本番プール", "sub": "10.0.0.0/12", "x": 1.4, "y": 0.5}, {"id": "ram", "label": "RAM", "sub": "", "x": 2.8, "y": 0.5}, {"id": "v1", "label": "VPC(A)", "sub": "/20を自動割当", "x": 4.2, "y": 0.0}, {"id": "v2", "label": "VPC(B)", "sub": "/20を自動割当", "x": 4.2, "y": 1.0}], "edges": [["ipam", "pl", false, false], ["pl", "ram", false, false], ["ram", "v1", false, false], ["ram", "v2", false, false]], "distractors": ["Route 53", "StackSets", "Transit GW", "VPCピアリング"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

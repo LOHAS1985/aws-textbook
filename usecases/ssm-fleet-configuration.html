@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,87 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>数百台のEC2すべてに、CloudWatchエージェントを入れて同じ設定にしておきたい。新しく起動したインスタンスにも自動で入り、誰かが止めたり設定を変えたりしても<strong>決めた状態に戻る</strong>ようにしたい。SSHでログインして1台ずつ作業するのはやめたい。</p>
+<ul>
+<li>数百台のEC2に、CloudWatchエージェントを入れて<strong>同じ設定</strong>にしておきたい。</li>
+<li>新しく起動したインスタンスにも自動で入り、<strong>設定が変えられても元に戻したい</strong>。</li>
+<li>SSHでログインして1台ずつ作業するのはやめたい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 956 242" style="max-width:956px;min-width:765px" role="img" aria-label="図1 Systems Managerによる一括管理。State Managerの関連付けで、タグで選んだインスタンスに決めた状態を定期的に適用し続ける。1回だけの作業はRun Commandで実行する。実行結果はS3やCloudWatch Logsに残す。"><defs><marker id="dgusecases-ssm-fleet-configuration-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 718 242" style="max-width:718px;min-width:574px" role="img" aria-label="図1 多数のEC2の一括管理の構成。"><defs><marker id="dgusecases-ssm-fleet-configuration-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="sm">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">①</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">状態を維持</text>
+</g>
+<g data-node="rc">
+<rect x="34" y="166" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="109" y="188" text-anchor="middle" class="dg-t">②</text>
+<text x="109" y="206" text-anchor="middle" class="dg-s">1回だけの作業</text>
+</g>
+<g data-node="t">
+<rect x="289" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="364" y="140" text-anchor="middle" class="dg-t">タグで選択</text>
+<text x="364" y="158" text-anchor="middle" class="dg-s">Env=prod</text>
+</g>
+<g data-node="e1">
+<rect x="544" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="100" text-anchor="middle" class="dg-t">EC2(Web)</text>
+<text x="619" y="118" text-anchor="middle" class="dg-s">SSMエージェント</text>
+</g>
+<g data-node="e2">
+<rect x="544" y="158" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="180" text-anchor="middle" class="dg-t">EC2(App)</text>
+<text x="619" y="198" text-anchor="middle" class="dg-s">SSMエージェント</text>
+</g>
+<path d="M184.0,115.8 L289.0,132.2" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+<text x="236" y="128" text-anchor="middle" class="dg-s dg-halo">定期的に適用</text>
+<path d="M184.0,177.9 L289.0,158.1" class="dg-line dg-dash" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+<path d="M439.0,132.2 L544.0,115.8" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+<path d="M439.0,155.8 L544.0,172.2" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+</svg>
+</div>
+<figcaption>図1 多数のEC2の一括管理の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="sm">
+<p class="ex-q">① 決めた状態を、新しいインスタンスにも定期的に適用し続けるものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="State Manager">Systems Manager State Manager<span class="ex-why">関連付けで、対象とスケジュールを決めて状態を適用し続けます。設定が変えられても次の適用で戻ります。</span></li>
+<li data-short="ユーザーデータ">EC2のユーザーデータ<span class="ex-why">起動時に1回実行されるだけで、その後の変更は元に戻せません。</span></li>
+<li data-short="Inventory">Systems Manager Inventory<span class="ex-why">導入済みのソフトなどの一覧を集めるだけで、設定は適用しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="rc">
+<p class="ex-q">② その場で1回だけ、全台にコマンドを実行するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Run Command">Systems Manager Run Command<span class="ex-why">SSHなしで、タグで選んだインスタンスにコマンドを一括実行します。同時実行数とエラーのしきい値も決められます。</span></li>
+<li data-short="Session Manager">Session Manager<span class="ex-why">1台ずつ対話的に操作するもので、一括実行には向きません。</span></li>
+<li data-short="CloudShell">AWS CloudShell<span class="ex-why">ブラウザでAWS CLIを使う環境で、インスタンスの中でコマンドは実行しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ Systems Managerの一覧にインスタンスが出ない原因は?</p>
+<ul class="ex-choices">
+<li data-ok>SSMエージェント・IAMロール・SSMへの経路のどれかが欠けている<span class="ex-why">インスタンスプロファイルに <code>AmazonSSMManagedInstanceCore</code> を付け、NATかVPCエンドポイントでSSMに届くようにします(<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>)。</span></li>
+<li>キーペアが設定されていない<span class="ex-why">Systems ManagerはSSHを使わないので、キーペアは不要です。</span></li>
+<li>セキュリティグループで22番を開けていない<span class="ex-why">エージェントは外向きのHTTPSでつなぐため、受信のポートは不要です。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>状態の維持は<strong>State Manager</strong>、その場の作業は<strong>Run Command</strong>で行います。対象はインスタンスIDではなくタグで指定すると、台数が増えても設定を変えずに済みます。操作の記録はCloudTrail、コマンドの出力はS3やCloudWatch Logsに残ります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 956 242" style="max-width:956px;min-width:765px" role="img" aria-label="図2 Systems Managerによる一括管理。State Managerの関連付けで、タグで選んだインスタンスに決めた状態を定期的に適用し続ける。1回だけの作業はRun Commandで実行する。実行結果はS3やCloudWatch Logsに残す。"><defs><marker id="dgusecases-ssm-fleet-configuration-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="sm">
 <rect x="34" y="78" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="100" text-anchor="middle" class="dg-tb">State Manager</text>
@@ -80,20 +153,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="857" y="140" text-anchor="middle" class="dg-t">S3・Logs</text>
 <text x="857" y="158" text-anchor="middle" class="dg-s">実行結果</text>
 </g>
-<path d="M184.0,115.8 L289.0,132.2" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+<path d="M184.0,115.8 L289.0,132.2" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-2)"/>
 <text x="236" y="128" text-anchor="middle" class="dg-s dg-halo">定期的に適用</text>
-<path d="M184.0,177.9 L289.0,158.1" class="dg-line dg-dash" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
-<path d="M439.0,132.2 L544.0,115.8" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
-<path d="M439.0,155.8 L544.0,172.2" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
-<path d="M694.0,116.6 L782.0,131.4" class="dg-line dg-dash" marker-end="url(#dgusecases-ssm-fleet-configuration-1)"/>
+<path d="M184.0,177.9 L289.0,158.1" class="dg-line dg-dash" marker-end="url(#dgusecases-ssm-fleet-configuration-2)"/>
+<path d="M439.0,132.2 L544.0,115.8" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-2)"/>
+<path d="M439.0,155.8 L544.0,172.2" class="dg-line" marker-end="url(#dgusecases-ssm-fleet-configuration-2)"/>
+<path d="M694.0,116.6 L782.0,131.4" class="dg-line dg-dash" marker-end="url(#dgusecases-ssm-fleet-configuration-2)"/>
 </svg>
 </div>
-<figcaption>図1 Systems Managerによる一括管理。State Managerの関連付けで、タグで選んだインスタンスに決めた状態を定期的に適用し続ける。1回だけの作業はRun Commandで実行する。実行結果はS3やCloudWatch Logsに残す。</figcaption>
+<figcaption>図2 Systems Managerによる一括管理。State Managerの関連付けで、タグで選んだインスタンスに決めた状態を定期的に適用し続ける。1回だけの作業はRun Commandで実行する。実行結果はS3やCloudWatch Logsに残す。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/systems-manager.html">AWS Systems Manager</a>:State Manager(状態の維持)、Run Command(一括実行)、Distributor(ソフトのパッケージ配布)、Inventory(導入済みソフトの一覧)、Parameter Store(エージェントの設定)</li>
 <li><a href="../services/ec2.html">Amazon EC2</a>:SSMエージェントとIAMロール(マネージドノードにする)</li>
@@ -103,7 +176,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>インスタンスを<strong>マネージドノード</strong>にする:SSMエージェント(主要なAMIには導入済み)と、<code>AmazonSSMManagedInstanceCore</code> を含むIAMロール。アカウント全体で自動化するならデフォルトのホスト管理設定(DHMC)を使う</li>
 <li>プライベートサブネットなら、SSM用のVPCエンドポイント(<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>)かNATゲートウェイを用意する</li>
@@ -114,7 +187,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>決めた状態を<strong>維持し続ける</strong>(新しいインスタンスにも自動で適用)→ <strong class="em">State Manager</strong>。その場で1回実行 → <strong class="em">Run Command</strong>。</li>
 <li>Systems Managerの一覧にインスタンスが出ない → SSMエージェント・<strong>IAMロール</strong>・SSMのエンドポイントへの経路のどれかが原因。</li>
@@ -122,31 +195,29 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>レート制御で同時実行数とエラーのしきい値を決め、失敗が広がったら止める。</li>
 <li>SSHやキーペアは不要。操作の記録はCloudTrail、コマンドの出力はS3・CloudWatch Logsに残る。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/tags.html">タグ</a>、<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/ssm-fleet-configuration.html"><span class="title">多数のEC2の設定を一定に保つ構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 4件・リンク元 0件)</summary>
+<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 156" style="max-width:784px;min-width:600px" role="img" aria-label="多数のEC2の設定やソフトウェアを一定に保つとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M480,90 C515.0,90 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="多数のEC2の設定やソフトウェアを一定に保つとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Systems Manager</text></a>
-<path class="gr-line" d="M480,90 C515.0,90 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,90 C515.0,90 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon EC2</text></a>
-<path class="gr-line" d="M480,90 C515.0,90 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon S3</text></a>
-<rect x="300" y="70" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="95" text-anchor="middle" class="gr-tb">多数のEC2の設定やソ…</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(4)</text>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">タグ</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">多数のEC2の設定やソ…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -160,5 +231,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "sm", "label": "State Manager", "sub": "", "x": 0.0, "y": 0.5}, {"id": "rc", "label": "Run Command", "sub": "", "x": 0.0, "y": 1.6}, {"id": "t", "label": "タグで選択", "sub": "", "x": 1.5, "y": 1.0}, {"id": "e1", "label": "EC2(Web)", "sub": "SSMエージェント", "x": 3.0, "y": 0.5}, {"id": "e2", "label": "EC2(App)", "sub": "SSMエージェント", "x": 3.0, "y": 1.5}], "edges": [["sm", "t", false, false], ["rc", "t", true, false], ["t", "e1", false, false], ["t", "e2", false, false]], "distractors": ["CloudShell", "Inventory", "Session Manager", "ユーザーデータ"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

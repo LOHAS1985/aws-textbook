@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,99 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>開発・検証用のEC2やRDSが、誰も使わない夜間や休日も動き続けて費用がかかっている。<strong>平日の9時に起動し、20時に停止</strong>するよう自動化したい。対象は「Schedule=office-hours」のタグを付けたリソースだけにしたい。</p>
+<ul>
+<li>開発環境のEC2とRDSを、<strong>平日の20時(日本時間)に停止</strong>し、平日の9時に起動したい。</li>
+<li>対象は <code>Env=dev</code> のタグが付いたものだけにしたい(台数は今後増える)。</li>
+<li>この処理のために、常に動かしておくサーバーは増やしたくない。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図1 定時の停止・起動。EventBridge Schedulerが決まった時刻にSSM Automationを起動し、タグで選んだEC2・RDSを停止・起動する。Auto Scalingグループは、スケジュールされたアクションで台数を0にする。"><defs><marker id="dgusecases-scheduled-start-stop-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 194" style="max-width:684px;min-width:547px" role="img" aria-label="図1 定時の停止・起動の構成。①が決まった時刻に②を起動し、②が対象のEC2・RDSを停止・起動する。"><defs><marker id="dgusecases-scheduled-start-stop-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="sch">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">①</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">決まった時刻に起動</text>
+</g>
+<g data-node="run">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="100" text-anchor="middle" class="dg-t">②</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">停止・起動の手順</text>
+</g>
+<g data-node="ec2">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">EC2</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">Env=dev</text>
+</g>
+<g data-node="rds">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">RDS</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">Env=dev</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-1)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-1)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-1)"/>
+</svg>
+</div>
+<figcaption>図1 定時の停止・起動の構成。①が決まった時刻に②を起動し、②が対象のEC2・RDSを停止・起動する。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="sch">
+<p class="ex-q">① 決まった時刻に処理を起動するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Scheduler">Amazon EventBridge Scheduler<span class="ex-why">サーバーなしで、cron式・rate式のスケジュールでターゲットを起動できます。<strong>タイムゾーンを指定できる</strong>のも利点です。</span></li>
+<li data-short="EC2上のcron">管理用のEC2で動かすcron<span class="ex-why">そのEC2を常に動かしておく必要があり、「サーバーを増やさない」という要件に反します。</span></li>
+<li data-short="CWアラーム">CloudWatchアラーム<span class="ex-why">メトリクスがしきい値を超えたときに動く仕組みで、時刻を決めて起動することはできません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="run">
+<p class="ex-q">② EC2とRDSを停止・起動する手順を実行するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="SSM Automation">Systems Manager Automation<span class="ex-why">AWSが用意したランブック(<code>AWS-StopEC2Instance</code>、<code>AWS-StopRdsInstance</code> など)で、APIを使って停止・起動できます。タグで対象を選ぶこともできます。</span></li>
+<li data-short="Run Command">Systems Manager Run Command<span class="ex-why">インスタンスの<strong>中で</strong>コマンドを実行する機能です。RDSは操作できず、インスタンスの停止・起動にも向きません。</span></li>
+<li data-short="AWS Backup">AWS Backup<span class="ex-why">バックアップの取得と保管のサービスで、インスタンスの停止・起動はしません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 「平日の20時(日本時間)」のスケジュールの指定として正しいものは?</p>
+<ul class="ex-choices">
+<li data-ok>タイムゾーンを Asia/Tokyo にして <code>cron(0 20 ? * MON-FRI *)</code><span class="ex-why">EventBridge Schedulerはタイムゾーンを指定できるので、日本時間のまま書けます。「日」と「曜日」のどちらかは <code>?</code> にします(<a href="../terms/cron-rate-expressions.html">cron式とrate式</a>)。</span></li>
+<li>タイムゾーンを指定せずに <code>cron(0 20 ? * MON-FRI *)</code><span class="ex-why">UTCとして扱われ、日本時間の翌朝5時に実行されてしまいます。</span></li>
+<li><code>rate(1 day)</code><span class="ex-why">作成した時刻から1日ごとの実行になり、時刻も曜日も指定できません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ 停止・起動する対象の選び方は?</p>
+<ul class="ex-choices">
+<li data-ok><code>Env=dev</code> のタグで選ぶ<span class="ex-why">台数が増えても、タグを付けるだけで対象に加わります(<a href="../terms/tags.html">タグ</a>)。</span></li>
+<li>インスタンスIDを1つずつ列挙する<span class="ex-why">台数が増減するたびにスケジュールの設定を書き換える必要があり、漏れが起きやすくなります。</span></li>
+<li>アカウントのすべてのインスタンスを対象にする<span class="ex-why">本番環境まで止めてしまうおそれがあります。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">⑤ RDSを停止するときの注意点として正しいものは?</p>
+<ul class="ex-choices">
+<li data-ok>停止したDBインスタンスは7日たつと自動で起動する<span class="ex-why">そのため、長期間止めておく場合も、毎日の停止の処理で止め直す必要があります。停止中は、インスタンスの料金はかからず、ストレージとバックアップの料金はかかります。</span></li>
+<li>一度停止すれば、起動するまでずっと止まったままになる<span class="ex-why">RDSは最大7日で自動的に起動します。</span></li>
+<li>停止中もインスタンスの料金がかかり続ける<span class="ex-why">停止中はインスタンスの時間料金はかかりません。かかるのはストレージとバックアップの料金です。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>EventBridge Scheduler</strong>が日本時間で指定した時刻に<strong>SSM Automation</strong>を起動し、<code>Env=dev</code> のタグが付いたEC2・RDSを停止・起動します。どちらもサーバーを用意する必要がなく、Automationに渡すIAMロールには停止・起動に必要な権限だけを与えます(<a href="../terms/iam-passrole.html">iam:PassRole</a>)。</p>
+<p>Auto Scalingグループに属するEC2は、個別に停止してもヘルスチェックで入れ替えられてしまうので、グループのスケジュールされたアクションで台数を0にします。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 242" style="max-width:684px;min-width:547px" role="img" aria-label="図2 定時の停止・起動。EventBridge Schedulerが決まった時刻にSSM Automationを起動し、タグで選んだEC2・RDSを停止・起動する。Auto Scalingグループは、スケジュールされたアクションで台数を0にする。"><defs><marker id="dgusecases-scheduled-start-stop-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="sch">
 <rect x="34" y="78" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="100" text-anchor="middle" class="dg-tb">Scheduler</text>
@@ -75,17 +160,17 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="347" y="188" text-anchor="middle" class="dg-t">Auto Scaling</text>
 <text x="347" y="206" text-anchor="middle" class="dg-s">スケジュールで0台</text>
 </g>
-<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-1)"/>
-<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-1)"/>
-<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-1)"/>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-2)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-2)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgusecases-scheduled-start-stop-2)"/>
 </svg>
 </div>
-<figcaption>図1 定時の停止・起動。EventBridge Schedulerが決まった時刻にSSM Automationを起動し、タグで選んだEC2・RDSを停止・起動する。Auto Scalingグループは、スケジュールされたアクションで台数を0にする。</figcaption>
+<figcaption>図2 定時の停止・起動。EventBridge Schedulerが決まった時刻にSSM Automationを起動し、タグで選んだEC2・RDSを停止・起動する。Auto Scalingグループは、スケジュールされたアクションで台数を0にする。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/eventbridge.html">Amazon EventBridge</a>:Scheduler(cron式・タイムゾーン指定)で決まった時刻に処理を起動</li>
 <li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Automationランブック(<code>AWS-StopEC2Instance</code>・<code>AWS-StartEC2Instance</code>・<code>AWS-StopRdsInstance</code> など)をタグの対象に実行</li>
@@ -96,7 +181,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>対象のリソースにタグ(例:<code>Schedule=office-hours</code>)を付ける</li>
 <li>Automationの実行用IAMロール(EC2・RDSの停止・起動の権限)を作る</li>
@@ -107,7 +192,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>決まった時刻に処理を起動 → <strong class="em">EventBridge Scheduler</strong>(cron式とタイムゾーン)。</li>
 <li>Auto Scalingのインスタンスを止めたい → インスタンスを止めるのではなく、<strong>スケジュールされたアクション</strong>で台数を変える。</li>
@@ -115,38 +200,36 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>EC2を停止しても、EBSボリュームとElastic IPの料金はかかる。インスタンスストアのデータは消える。</li>
 <li>多数のアカウントでまとめて管理したいなら、AWSが公開している Instance Scheduler on AWS のソリューションも使える。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/pricing-basics.html">料金の基本</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/scheduled-start-stop.html"><span class="title">開発環境を夜間に自動で停止する構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 6件・リンク元 1件)</summary>
+<summary>つながり図を開く(リンク先 8件・リンク元 1件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="開発環境を夜間・休日に自動で停止して費用を下げるとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,120 C265.0,120 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="124" class="gr-t">コスト管理ツールの選び方</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="開発環境を夜間・休日に自動で停止して費用を下げるとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,150 C265.0,150 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="0" y="139" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="154" class="gr-t">コスト管理ツールの選び方</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/cost-explorer.html"><title>サービス:AWS Cost Explorer</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Cost Explorer</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Systems Manager</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon EC2</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon EC2 Auto Scaling</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EventBridge</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
 <a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon RDS</text></a>
-<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">開発環境を夜間・休日…</text>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-passrole.html"><title>用語:iam:PassRoleとサービスにリンクされたロール</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">iam:PassRoleとサービスにリ…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">料金の基本</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">開発環境を夜間・休日…</text>
 <text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -160,5 +243,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "sch", "label": "Scheduler", "sub": "", "x": 0.0, "y": 0.5}, {"id": "run", "label": "SSM Automation", "sub": "", "x": 1.4, "y": 0.5}, {"id": "ec2", "label": "EC2", "sub": "", "x": 2.8, "y": 0.0}, {"id": "rds", "label": "RDS", "sub": "", "x": 2.8, "y": 1.0}], "edges": [["sch", "run", false, false], ["run", "ec2", false, false], ["run", "rds", false, false]], "distractors": ["AWS Backup", "CWアラーム", "EC2上のcron", "Run Command"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>

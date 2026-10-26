@@ -29,7 +29,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <header class="site-header" id="top">
   <div class="inner">
     <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../exercises/index.html">構成演習</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
   </div>
 </header>
 <main>
@@ -42,14 +42,87 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <section class="chapter">
 <h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>インターネットに出られないプライベートサブネットのEC2に、運用担当者がシェルで接続したい。踏み台サーバーやSSHの22番ポートは使わず、誰がいつ何をしたかの記録も残したい。</p>
+<ul>
+<li>インターネットに出られないプライベートサブネットのEC2に、<strong>シェルで接続</strong>したい。</li>
+<li><strong>踏み台サーバーやSSHの22番ポートは使わない</strong>。</li>
+<li>誰がいつ何をしたかの記録を残したい。</li>
+</ul>
 </section>
 
 <section class="chapter">
-<h2 id="c2">2. 構成図<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 808 236" style="max-width:808px;min-width:646px" role="img" aria-label="図1 EC2のSSM AgentがVPCエンドポイント経由でSystems Managerに接続し(アウトバウンドのHTTPS)、運用担当者はSession Managerからシェルを開く。インバウンドのポートは不要で、接続できる人はIAMで制御し、操作はログに残せる。"><defs><marker id="dgusecases-bastionless-access-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 798 236" style="max-width:798px;min-width:638px" role="img" aria-label="図1 踏み台なしの接続の構成。"><defs><marker id="dgusecases-bastionless-access-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="admin">
+<rect x="34" y="46" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="67" text-anchor="middle" class="dg-t">運用担当者</text>
+<text x="104" y="85" text-anchor="middle" class="dg-s">コンソール / CLI</text>
+</g>
+<g data-node="ssm">
+<rect x="234" y="46" width="140" height="52" rx="8" class="dg-blank"/>
+<text x="304" y="67" text-anchor="middle" class="dg-t">①</text>
+<text x="304" y="85" text-anchor="middle" class="dg-s">シェルを開く</text>
+</g>
+<g data-node="vpce">
+<rect x="434" y="46" width="140" height="52" rx="8" class="dg-blank"/>
+<text x="504" y="67" text-anchor="middle" class="dg-t">②</text>
+<text x="504" y="85" text-anchor="middle" class="dg-s">インターフェイス型</text>
+</g>
+<g data-node="ec2">
+<rect x="634" y="46" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="704" y="67" text-anchor="middle" class="dg-t">EC2</text>
+<text x="704" y="85" text-anchor="middle" class="dg-s">SSM Agent</text>
+</g>
+<g data-node="logs">
+<rect x="34" y="160" width="140" height="52" rx="8" class="dg-box"/>
+<text x="104" y="181" text-anchor="middle" class="dg-t">操作ログ</text>
+<text x="104" y="199" text-anchor="middle" class="dg-s">S3・Logsに記録</text>
+</g>
+<path d="M174.0,71.5 L234.0,71.5" class="dg-line" marker-end="url(#dgusecases-bastionless-access-1)"/>
+<path d="M634.0,71.5 L574.0,71.5" class="dg-line" marker-end="url(#dgusecases-bastionless-access-1)"/>
+<text x="604" y="76" text-anchor="middle" class="dg-s dg-halo">HTTPS</text>
+<path d="M434.0,71.5 L374.0,71.5" class="dg-line" marker-end="url(#dgusecases-bastionless-access-1)"/>
+<path d="M258.4,97.5 L149.6,159.5" class="dg-line dg-dash" marker-end="url(#dgusecases-bastionless-access-1)"/>
+</svg>
+</div>
+<figcaption>図1 踏み台なしの接続の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="ssm">
+<p class="ex-q">① ポートを開けずに、ブラウザやCLIからシェルを開くものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="Session Manager">Systems Manager Session Manager<span class="ex-why">EC2のSSM Agentが外向きのHTTPSでつなぐため、受信のポートは不要です。接続できる人はIAMで制御します。</span></li>
+<li data-short="踏み台サーバー">パブリックサブネットの踏み台サーバー<span class="ex-why">要件で使わないと決めています。22番を開け、鍵も管理する必要があります。</span></li>
+<li data-short="Client VPN">AWS Client VPN<span class="ex-why">VPCにつなぐことはできますが、その先はSSHなどのポートが必要です。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="vpce">
+<p class="ex-q">② インターネットに出られないEC2から、Systems Managerにつなぐ経路は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="VPCエンドポイント">インターフェイス型VPCエンドポイント<span class="ex-why"><code>ssm</code>・<code>ssmmessages</code> などのエンドポイントを作り、プライベートなまま接続します(<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>)。</span></li>
+<li data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">パブリックIPが必要になり、プライベートなままでは使えません。</span></li>
+<li data-short="VPCピアリング">VPCピアリング<span class="ex-why">VPC同士をつなぐもので、AWSのサービスへの経路にはなりません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ EC2のロールに付けるポリシーは?</p>
+<ul class="ex-choices">
+<li data-ok><code>AmazonSSMManagedInstanceCore</code><span class="ex-why">EC2をSystems Managerの管理対象にするための最小限の権限です。</span></li>
+<li><code>AmazonEC2FullAccess</code><span class="ex-why">EC2の操作の権限で、Systems Managerへの接続には足りず、広すぎます。</span></li>
+<li>何も付けなくてよい<span class="ex-why">ロールがないと、Systems Managerに登録されません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>EC2のSSM Agentが<strong>VPCエンドポイント</strong>経由でSystems Managerにつなぎ、運用担当者は<strong>Session Manager</strong>からシェルを開きます。操作はS3やCloudWatch Logsに記録でき、セッションの開始・終了はCloudTrailに残ります。SSHの鍵を配らずにSSHで接続したい場合は、EC2 Instance Connectも使えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 808 236" style="max-width:808px;min-width:646px" role="img" aria-label="図2 EC2のSSM AgentがVPCエンドポイント経由でSystems Managerに接続し(アウトバウンドのHTTPS)、運用担当者はSession Managerからシェルを開く。インバウンドのポートは不要で、接続できる人はIAMで制御し、操作はログに残せる。"><defs><marker id="dgusecases-bastionless-access-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="424" y="18" width="360" height="90" rx="10" class="dg-group"/>
 <text x="434" y="32" class="dg-s">プライベートサブネット</text>
 <g data-node="admin">
@@ -81,20 +154,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="104" y="181" text-anchor="middle" class="dg-t">操作ログ</text>
 <text x="104" y="199" text-anchor="middle" class="dg-s">S3・Logsに記録</text>
 </g>
-<path d="M174.0,71.5 L234.0,71.5" class="dg-line" marker-end="url(#dgusecases-bastionless-access-1)"/>
-<path d="M634.0,71.5 L574.0,71.5" class="dg-line" marker-end="url(#dgusecases-bastionless-access-1)"/>
+<path d="M174.0,71.5 L234.0,71.5" class="dg-line" marker-end="url(#dgusecases-bastionless-access-2)"/>
+<path d="M634.0,71.5 L574.0,71.5" class="dg-line" marker-end="url(#dgusecases-bastionless-access-2)"/>
 <text x="604" y="76" text-anchor="middle" class="dg-s dg-halo">HTTPS</text>
-<path d="M434.0,71.5 L374.0,71.5" class="dg-line" marker-end="url(#dgusecases-bastionless-access-1)"/>
-<path d="M304.0,159.5 L304.0,91.5" class="dg-line dg-dash" marker-end="url(#dgusecases-bastionless-access-1)"/>
-<path d="M268.9,91.5 L149.6,159.5" class="dg-line dg-dash" marker-end="url(#dgusecases-bastionless-access-1)"/>
+<path d="M434.0,71.5 L374.0,71.5" class="dg-line" marker-end="url(#dgusecases-bastionless-access-2)"/>
+<path d="M304.0,159.5 L304.0,91.5" class="dg-line dg-dash" marker-end="url(#dgusecases-bastionless-access-2)"/>
+<path d="M268.9,91.5 L149.6,159.5" class="dg-line dg-dash" marker-end="url(#dgusecases-bastionless-access-2)"/>
 </svg>
 </div>
-<figcaption>図1 EC2のSSM AgentがVPCエンドポイント経由でSystems Managerに接続し(アウトバウンドのHTTPS)、運用担当者はSession Managerからシェルを開く。インバウンドのポートは不要で、接続できる人はIAMで制御し、操作はログに残せる。</figcaption>
+<figcaption>図2 EC2のSSM AgentがVPCエンドポイント経由でSystems Managerに接続し(アウトバウンドのHTTPS)、運用担当者はSession Managerからシェルを開く。インバウンドのポートは不要で、接続できる人はIAMで制御し、操作はログに残せる。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
-<h2 id="c3">3. 使うサービスと役割<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="../services/systems-manager.html">AWS Systems Manager</a>:Session Managerでブラウザ/CLIからシェル接続する</li>
 <li><a href="../services/vpc.html">Amazon VPC</a>:インターネットに出られないサブネットから、インターフェイス型エンドポイント(<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code>)でSystems Managerに接続する</li>
@@ -105,7 +178,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c4">4. 構築の流れ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
 <ol>
 <li>EC2のIAMロールに <code>AmazonSSMManagedInstanceCore</code> を付け、SSM Agentが動いていることを確認する</li>
 <li>プライベートサブネットに、<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のインターフェイス型VPCエンドポイントを作成する(エンドポイントのSGで443番を許可)</li>
@@ -116,47 +189,44 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </section>
 
 <section class="chapter">
-<h2 id="c5">5. ポイント・注意点<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>22番ポートを開けずに接続 → <strong>Session Manager</strong>。SSHの鍵を配らずにSSH接続 → <a href="../services/ec2.html">EC2 Instance Connect</a>。</li>
 <li>Session Managerで接続できない → <strong>SSM Agent</strong>、<strong>IAMロール</strong>、<strong>Systems Managerへの経路(NATまたはVPCエンドポイント)</strong>を確認する。</li>
 <li>ポートフォワーディングで、手元のPCからプライベートなRDSなどに接続することもできる。</li>
 </ul></div>
+<p>あわせて読む:<a href="../terms/port-numbers.html">よく使うポート番号</a></p>
 </section>
-<section class="chapter backlinks">
-<h2 id="c6">この構成を組み立てる演習<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<ul class="backlink-list">
-<li><a href="../exercises/private-subnet-endpoints.html"><span class="title">プライベートサブネットからNATなしでAWSを使う構成を組み立てる</span></a></li>
-<li><a href="../exercises/bastionless-access.html"><span class="title">踏み台なしでEC2に接続する構成を組み立てる</span></a></li>
-</ul>
-</section>
-
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 7件・リンク元 1件)</summary>
+<summary>つながり図を開く(リンク先 8件・リンク元 2件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 246" style="max-width:784px;min-width:600px" role="img" aria-label="踏み台サーバーなしでプライベートなEC2を操作するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="踏み台サーバーなしでプライベートなEC2を操作するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
 <a href="../terms/hybrid-connectivity.html"><title>用語:オンプレミスとAWSをつなぐ方法の選び方</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">オンプレミスとAWSをつなぐ方法…</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/private-subnet-endpoints.html"><title>運用シナリオ:プライベートサブネットからNATなしでAWSのサービスを使う</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="170" class="gr-t">プライベートサブネットからNAT…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudTrail</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS IAM</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Systems Manager</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EC2</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
 <a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon S3</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
 <a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon VPC</text></a>
-<rect x="300" y="115" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="140" text-anchor="middle" class="gr-tb">踏み台サーバーなしで…</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../terms/port-numbers.html"><title>用語:よく使うポート番号</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">よく使うポート番号</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">踏み台サーバーなしで…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(2)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
@@ -170,5 +240,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 160.0, "rowh": 95.0, "nodes": [{"id": "admin", "label": "運用担当者", "sub": "コンソール / CLI", "x": 0.0, "y": 0.0}, {"id": "ssm", "label": "Session Manager", "sub": "", "x": 1.25, "y": 0.0}, {"id": "vpce", "label": "VPCエンドポイント", "sub": "", "x": 2.5, "y": 0.0}, {"id": "ec2", "label": "EC2", "sub": "SSM Agent", "x": 3.75, "y": 0.0}, {"id": "logs", "label": "操作ログ", "sub": "S3・Logsに記録", "x": 0.0, "y": 1.2}], "edges": [["admin", "ssm", false, false], ["ec2", "vpce", false, false], ["vpce", "ssm", false, false], ["ssm", "logs", true, false]], "distractors": ["Client VPN", "VPCピアリング", "インターネットGW", "踏み台サーバー"]}</script>
+<script src="../js/sim.js" defer></script>
 </body>
 </html>
