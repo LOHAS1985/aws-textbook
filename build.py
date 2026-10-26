@@ -164,7 +164,11 @@ COLLECTIONS = [
             "監視・ログ・自動修復", "信頼性・事業継続", "デプロイ・自動化",
             "セキュリティ・コンプライアンス", "ネットワーク・コンテンツ配信",
         ],
-        "search": "やりたいこと・サービス名で絞り込み(例: エンドポイント、アラーム)",
+        # 運用シナリオと同じく lead を書かず、分野ごとの番号付きリストにする(答えのサービス名を出さないため、
+        # 絞り込みもタイトル・分野だけが対象)
+        "no_lead": True,
+        "numbered": True,
+        "search": "やりたいことで絞り込み(例: バックアップ、パッチ)",
         "order": [],  # 運用シナリオと同じ順番(下で設定する)
         "script": "sim.js",
     },
@@ -182,6 +186,7 @@ COLLECTIONS = [
 ]
 _by_key = {c["key"]: c for c in COLLECTIONS}
 _by_key["exercises"]["order"] = _by_key["usecases"]["order"]
+_by_key["exercises"]["category_desc"] = _by_key["usecases"]["category_desc"]
 
 # SOA-C03の出題分野(試験ガイドより)。運用シナリオのカテゴリと同じ順番で対応させる。
 EXAM_DOMAINS = [
@@ -590,9 +595,9 @@ def render_collection_index(col, pages, loaded):
 
 
 def numbered_index(col, groups, loaded):
-    """運用シナリオの一覧。試験分野ごとに番号付きで並べ、構成演習へのリンクを添える
-    (演習の結果は sim.js が名前の横に表示する)。"""
-    exercises = {p["slug"] for p in loaded.get("exercises", [])}
+    """運用シナリオ・構成演習の一覧。試験分野ごとに番号付きで並べる(番号は両方で同じ)。
+    運用シナリオには構成演習へのリンクを添える(演習の結果は sim.js が名前の横に表示する)。"""
+    exercises = {p["slug"] for p in loaded.get("exercises", [])} if col["key"] == "usecases" else set()
     out = []
     for i, (category, items) in enumerate(groups, 1):
         domain = (f'<span class="uc-domain">分野{i}<span class="uc-weight">{EXAM_DOMAINS[i - 1][1]}%</span></span>'
