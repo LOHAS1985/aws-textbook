@@ -76,17 +76,25 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <svg viewBox="0 0 696 214" style="max-width:696px;min-width:557px" role="img" aria-label="図1 Systems Managerの仕組み。各ノードのSSM AgentがSystems ManagerへHTTPSで接続し、届いたタスクを実行して結果を返す。インバウンドのポートを開ける必要はない。"><defs><marker id="dgservices-systems-manager-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="498" y="10" width="174" height="179" rx="10" class="dg-group"/>
 <text x="508" y="26" class="dg-s">管理対象ノード</text>
+<g data-node="admin">
 <rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
 <text x="109" y="104" text-anchor="middle" class="dg-t">管理者</text>
 <text x="109" y="122" text-anchor="middle" class="dg-s">コンソール / CLI</text>
+</g>
+<g data-node="ssm">
 <rect x="272" y="89" width="150" height="40" rx="8" class="dg-accent"/>
 <text x="347" y="113" text-anchor="middle" class="dg-tb">Systems Manager</text>
+</g>
+<g data-node="ec2">
 <rect x="510" y="40" width="150" height="52" rx="8" class="dg-box"/>
 <text x="585" y="62" text-anchor="middle" class="dg-t">EC2</text>
 <text x="585" y="80" text-anchor="middle" class="dg-s">SSM Agent</text>
+</g>
+<g data-node="onp">
 <rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
 <text x="585" y="147" text-anchor="middle" class="dg-t">オンプレミス</text>
 <text x="585" y="165" text-anchor="middle" class="dg-s">SSM Agent</text>
+</g>
 <path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgservices-systems-manager-1)"/>
 <text x="228" y="113" text-anchor="middle" class="dg-s dg-halo">IAMで認証</text>
 <path d="M510.0,79.9 L422.0,95.6" class="dg-line" marker-end="url(#dgservices-systems-manager-1)"/>
@@ -118,18 +126,26 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 638 206" style="max-width:638px;min-width:520px" role="img" aria-label="図2 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。"><defs><marker id="dgservices-systems-manager-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="admin">
 <rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="62" text-anchor="middle" class="dg-t">管理者</text>
 <text x="104" y="80" text-anchor="middle" class="dg-s">ブラウザ / CLI</text>
+</g>
+<g data-node="sm">
 <rect x="250" y="40" width="140" height="52" rx="8" class="dg-accent"/>
 <text x="320" y="62" text-anchor="middle" class="dg-tb">Session Manager</text>
 <text x="320" y="80" text-anchor="middle" class="dg-s">IAMで認可</text>
+</g>
+<g data-node="ec2">
 <rect x="474" y="40" width="140" height="52" rx="8" class="dg-ok"/>
 <text x="544" y="62" text-anchor="middle" class="dg-t">EC2</text>
 <text x="544" y="80" text-anchor="middle" class="dg-s">プライベート</text>
+</g>
+<g data-node="log">
 <rect x="250" y="130" width="188" height="52" rx="8" class="dg-box"/>
 <text x="344" y="151" text-anchor="middle" class="dg-t">操作ログ</text>
 <text x="344" y="169" text-anchor="middle" class="dg-s">S3・CloudWatch Logs</text>
+</g>
 <path d="M174.0,66.5 L250.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-2)"/>
 <path d="M474.0,66.5 L390.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-2)"/>
 <text x="432" y="70" text-anchor="middle" class="dg-s dg-halo">HTTPS(外向き)</text>
@@ -172,21 +188,31 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図3 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。"><defs><marker id="dgservices-systems-manager-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="bl">
 <rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
 <text x="347" y="60" text-anchor="middle" class="dg-t">パッチベースライン</text>
 <text x="347" y="78" text-anchor="middle" class="dg-s">承認するパッチ</text>
+</g>
+<g data-node="mw">
 <rect x="34" y="110" width="150" height="68" rx="8" class="dg-blue"/>
 <text x="109" y="130" text-anchor="middle" class="dg-t">メンテナンス</text>
 <text x="109" y="148" text-anchor="middle" class="dg-t">ウィンドウ</text>
 <text x="109" y="166" text-anchor="middle" class="dg-s">日時を指定</text>
+</g>
+<g data-node="rc">
 <rect x="272" y="118" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="347" y="140" text-anchor="middle" class="dg-tb">Run Command</text>
 <text x="347" y="158" text-anchor="middle" class="dg-s">パッチ適用を実行</text>
+</g>
+<g data-node="pg">
 <rect x="272" y="198" width="150" height="52" rx="8" class="dg-box"/>
 <text x="347" y="220" text-anchor="middle" class="dg-t">パッチグループ</text>
 <text x="347" y="238" text-anchor="middle" class="dg-s">タグで対象を分類</text>
+</g>
+<g data-node="ec2">
 <rect x="510" y="124" width="150" height="40" rx="8" class="dg-ok"/>
 <text x="585" y="148" text-anchor="middle" class="dg-t">対象のEC2</text>
+</g>
 <path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgservices-systems-manager-3)"/>
 <text x="228" y="148" text-anchor="middle" class="dg-s dg-halo">起動</text>
 <path d="M347.0,90.0 L347.0,118.0" class="dg-line dg-dash" marker-end="url(#dgservices-systems-manager-3)"/>
@@ -258,21 +284,31 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 706 202" style="max-width:706px;min-width:565px" role="img" aria-label="図4 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。"><defs><marker id="dgservices-systems-manager-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="cfg">
 <rect x="34" y="40" width="145" height="52" rx="8" class="dg-box"/>
 <text x="106" y="62" text-anchor="middle" class="dg-t">Config</text>
 <text x="106" y="80" text-anchor="middle" class="dg-s">ルール違反を検出</text>
+</g>
+<g data-node="eb">
 <rect x="34" y="126" width="145" height="52" rx="8" class="dg-box"/>
 <text x="106" y="147" text-anchor="middle" class="dg-t">EventBridge</text>
 <text x="106" y="165" text-anchor="middle" class="dg-s">イベント・スケジュール</text>
+</g>
+<g data-node="au">
 <rect x="273" y="83" width="145" height="52" rx="8" class="dg-accent"/>
 <text x="346" y="104" text-anchor="middle" class="dg-tb">Automation</text>
 <text x="346" y="122" text-anchor="middle" class="dg-s">ランブックを実行</text>
+</g>
+<g data-node="ap">
 <rect x="512" y="40" width="145" height="52" rx="8" class="dg-blue"/>
 <text x="585" y="62" text-anchor="middle" class="dg-t">承認</text>
 <text x="585" y="80" text-anchor="middle" class="dg-s">必要なら人が確認</text>
+</g>
+<g data-node="res">
 <rect x="512" y="126" width="170" height="52" rx="8" class="dg-ok"/>
 <text x="597" y="147" text-anchor="middle" class="dg-t">AWSリソースを操作</text>
 <text x="597" y="165" text-anchor="middle" class="dg-s">停止・修正・AMI作成</text>
+</g>
 <path d="M179.0,79.4 L273.2,96.1" class="dg-line" marker-end="url(#dgservices-systems-manager-4)"/>
 <text x="226" y="92" text-anchor="middle" class="dg-s dg-halo">修復</text>
 <path d="M179.0,138.6 L273.2,121.9" class="dg-line" marker-end="url(#dgservices-systems-manager-4)"/>
@@ -341,24 +377,36 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 788 202" style="max-width:788px;min-width:630px" role="img" aria-label="図5 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。"><defs><marker id="dgservices-systems-manager-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="v">
 <rect x="34" y="40" width="130" height="52" rx="8" class="dg-blue"/>
 <text x="99" y="62" text-anchor="middle" class="dg-t">新しい設定</text>
 <text x="99" y="80" text-anchor="middle" class="dg-s">バージョン作成</text>
+</g>
+<g data-node="val">
 <rect x="184" y="40" width="130" height="52" rx="8" class="dg-box"/>
 <text x="249" y="62" text-anchor="middle" class="dg-t">Validator</text>
 <text x="249" y="80" text-anchor="middle" class="dg-s">型・必須キー</text>
+</g>
+<g data-node="dep">
 <rect x="334" y="40" width="130" height="52" rx="8" class="dg-accent"/>
 <text x="399" y="62" text-anchor="middle" class="dg-tb">段階デプロイ</text>
 <text x="399" y="80" text-anchor="middle" class="dg-s">一部に配布</text>
+</g>
+<g data-node="mon">
 <rect x="484" y="40" width="130" height="52" rx="8" class="dg-box"/>
 <text x="549" y="62" text-anchor="middle" class="dg-t">CloudWatch</text>
 <text x="549" y="80" text-anchor="middle" class="dg-s">アラームで監視</text>
+</g>
+<g data-node="ok">
 <rect x="634" y="40" width="130" height="52" rx="8" class="dg-ok"/>
 <text x="699" y="62" text-anchor="middle" class="dg-t">全体へ</text>
 <text x="699" y="80" text-anchor="middle" class="dg-s">正常なら</text>
+</g>
+<g data-node="ng">
 <rect x="484" y="126" width="130" height="52" rx="8" class="dg-ng"/>
 <text x="549" y="147" text-anchor="middle" class="dg-t">ロールバック</text>
 <text x="549" y="165" text-anchor="middle" class="dg-s">異常なら</text>
+</g>
 <path d="M164.0,66.5 L184.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-5)"/>
 <path d="M314.0,66.5 L334.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-5)"/>
 <path d="M464.0,66.5 L484.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-5)"/>

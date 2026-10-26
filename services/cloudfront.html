@@ -75,18 +75,26 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 798 116" style="max-width:798px;min-width:638px" role="img" aria-label="図1 CloudFrontの仕組み。初回はエッジからオリジンへ取りに行き、エッジにキャッシュを残す。2回目以降は近くのエッジが応答するため高速。オリジンシールドを使うと、オリジンへのリクエストをさらにまとめられる。"><defs><marker id="dgservices-cloudfront-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
 <rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="62" text-anchor="middle" class="dg-t">ユーザー</text>
 <text x="104" y="80" text-anchor="middle" class="dg-s">日本</text>
+</g>
+<g data-node="edge">
 <rect x="234" y="40" width="140" height="52" rx="8" class="dg-accent"/>
 <text x="304" y="62" text-anchor="middle" class="dg-tb">エッジロケーション</text>
 <text x="304" y="80" text-anchor="middle" class="dg-s">キャッシュ</text>
+</g>
+<g data-node="rec">
 <rect x="434" y="40" width="140" height="52" rx="8" class="dg-box"/>
 <text x="504" y="62" text-anchor="middle" class="dg-t">リージョナル</text>
 <text x="504" y="80" text-anchor="middle" class="dg-t">エッジキャッシュ</text>
+</g>
+<g data-node="origin">
 <rect x="634" y="40" width="140" height="52" rx="8" class="dg-ok"/>
 <text x="704" y="62" text-anchor="middle" class="dg-t">オリジン</text>
 <text x="704" y="80" text-anchor="middle" class="dg-s">S3 / ALB(米国)</text>
+</g>
 <path d="M174.0,66.5 L234.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-1)" marker-start="url(#dgservices-cloudfront-1)"/>
 <path d="M374.0,66.5 L434.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-1)"/>
 <text x="404" y="70" text-anchor="middle" class="dg-s dg-halo">ミス時</text>
@@ -101,20 +109,30 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 722 274" style="max-width:722px;min-width:578px" role="img" aria-label="図2 ビヘイビアによる振り分け。パスパターンごとにオリジンとキャッシュの設定を変え、どれにも一致しないリクエストは既定のビヘイビア(*)で処理する。"><defs><marker id="dgservices-cloudfront-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
 <rect x="34" y="124" width="160" height="40" rx="8" class="dg-blue"/>
 <text x="114" y="148" text-anchor="middle" class="dg-t">ユーザー</text>
+</g>
+<g data-node="cf">
 <rect x="268" y="118" width="160" height="52" rx="8" class="dg-accent"/>
 <text x="348" y="140" text-anchor="middle" class="dg-tb">CloudFront</text>
 <text x="348" y="158" text-anchor="middle" class="dg-s">ビヘイビアで判定</text>
+</g>
+<g data-node="api">
 <rect x="538" y="38" width="160" height="52" rx="8" class="dg-box"/>
 <text x="618" y="60" text-anchor="middle" class="dg-t">/api/*</text>
 <text x="618" y="78" text-anchor="middle" class="dg-s">ALB・キャッシュなし</text>
+</g>
+<g data-node="img">
 <rect x="538" y="118" width="160" height="52" rx="8" class="dg-box"/>
 <text x="618" y="140" text-anchor="middle" class="dg-t">/images/*</text>
 <text x="618" y="158" text-anchor="middle" class="dg-s">S3・長くキャッシュ</text>
+</g>
+<g data-node="def">
 <rect x="538" y="198" width="160" height="52" rx="8" class="dg-box"/>
 <text x="618" y="220" text-anchor="middle" class="dg-t">既定(*)</text>
 <text x="618" y="238" text-anchor="middle" class="dg-s">S3</text>
+</g>
 <path d="M194.0,144.0 L268.0,144.0" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
 <path d="M428.0,120.3 L538.0,87.7" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
 <path d="M428.0,144.0 L538.0,144.0" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
@@ -170,17 +188,25 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 704 202" style="max-width:704px;min-width:563px" role="img" aria-label="図3 オリジンフェイルオーバー。プライマリが指定したステータスコードを返すか接続できない場合、同じリクエストをセカンダリに送り直す。"><defs><marker id="dgservices-cloudfront-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
 <rect x="34" y="89" width="160" height="40" rx="8" class="dg-blue"/>
 <text x="114" y="113" text-anchor="middle" class="dg-t">ユーザー</text>
+</g>
+<g data-node="cf">
 <rect x="268" y="83" width="160" height="52" rx="8" class="dg-accent"/>
 <text x="348" y="104" text-anchor="middle" class="dg-tb">CloudFront</text>
 <text x="348" y="122" text-anchor="middle" class="dg-s">オリジングループ</text>
+</g>
+<g data-node="p">
 <rect x="520" y="40" width="160" height="52" rx="8" class="dg-ng"/>
 <text x="600" y="62" text-anchor="middle" class="dg-t">プライマリ</text>
 <text x="600" y="80" text-anchor="middle" class="dg-s">S3(東京)・5xx</text>
+</g>
+<g data-node="s">
 <rect x="520" y="126" width="160" height="52" rx="8" class="dg-ok"/>
 <text x="600" y="147" text-anchor="middle" class="dg-t">セカンダリ</text>
 <text x="600" y="165" text-anchor="middle" class="dg-s">S3(大阪)</text>
+</g>
 <path d="M194.0,109.0 L268.0,109.0" class="dg-line" marker-end="url(#dgservices-cloudfront-3)"/>
 <path d="M428.0,95.5 L520.0,80.0" class="dg-line" marker-end="url(#dgservices-cloudfront-3)"/>
 <text x="474" y="92" text-anchor="middle" class="dg-s dg-halo">①</text>
@@ -234,17 +260,25 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="dgservices-cloudfront-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
 <rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="70" text-anchor="middle" class="dg-t">ユーザー</text>
+</g>
+<g data-node="cf">
 <rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="347" y="62" text-anchor="middle" class="dg-tb">CloudFront</text>
 <text x="347" y="80" text-anchor="middle" class="dg-s">OACで署名</text>
+</g>
+<g data-node="s3">
 <rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
 <text x="585" y="62" text-anchor="middle" class="dg-t">S3バケット</text>
 <text x="585" y="80" text-anchor="middle" class="dg-s">OACのみ許可</text>
+</g>
+<g data-node="x">
 <rect x="272" y="126" width="150" height="52" rx="8" class="dg-ng"/>
 <text x="347" y="147" text-anchor="middle" class="dg-t">S3へ直接アクセス</text>
 <text x="347" y="165" text-anchor="middle" class="dg-s">拒否される</text>
+</g>
 <path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
 <text x="228" y="70" text-anchor="middle" class="dg-s dg-halo">Viewer側</text>
 <path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>

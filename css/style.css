@@ -231,6 +231,8 @@ th { background: var(--accent-soft); white-space: nowrap; }
 .dg-ok { fill: var(--ok-bg); stroke: var(--ok); stroke-width: 1.2; }
 .dg-ng { fill: var(--danger-bg); stroke: var(--danger); stroke-width: 1.2; }
 .dg-rack { fill: var(--bg); stroke: var(--border-strong); stroke-width: 1.2; }
+.dg-blank { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.dg-filled { fill: var(--accent-soft); }
 .dg-group { fill: none; stroke: var(--border-strong); stroke-width: 1.2; stroke-dasharray: 6 4; }
 .dg-group-a { stroke: var(--accent); }
 .dg-line { fill: none; stroke: var(--muted); stroke-width: 1.5; }
@@ -590,6 +592,30 @@ a:focus-visible, summary:focus-visible, input:focus-visible {
 }
 .backlink-list .desc { display: block; margin-top: 4px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 
+/* 構成演習(book/js/sim.js が選択肢をラジオボタンにし、答え合わせの結果をクラスで付ける) */
+.ex-item { border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius); padding: 10px 16px; margin: 14px 0; background: var(--surface); }
+.ex-item.is-ok { border-left-color: var(--ok); }
+.ex-item.is-ng { border-left-color: var(--danger); }
+.ex-q { margin: 4px 0 8px; font-weight: 700; }
+.ex-choices { list-style: none; padding-left: 0; margin: 0; }
+.ex-choices li { margin: 6px 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.ex-choices label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.ex-choices input { margin-top: 5px; flex: none; }
+.ex-why { display: block; margin-top: 4px; font-size: 13.5px; color: var(--muted); }
+.ex-js .ex-why { display: none; }
+.ex-js .ex-answer .ex-why, .ex-js .ex-chosen .ex-why { display: block; }
+.ex-answer { border-color: var(--ok) !important; background: var(--ok-bg); }
+.ex-chosen:not(.ex-answer) { border-color: var(--danger) !important; background: var(--danger-bg); }
+.ex-answer > label::after { content: "正解"; margin-left: auto; font-size: 12px; font-weight: 700; color: var(--ok); white-space: nowrap; }
+.ex-chosen:not(.ex-answer) > label::after { content: "あなたの答え"; margin-left: auto; font-size: 12px; font-weight: 700; color: var(--danger); white-space: nowrap; }
+.ex-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 18px 0; }
+.ex-actions button { font: inherit; font-weight: 700; padding: 8px 22px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+.ex-actions .ex-reset { background: transparent; color: var(--accent); }
+.ex-actions button[hidden] { display: none; }
+.ex-result { margin: 0; font-weight: 700; }
+.ex-badge { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--accent-soft); color: var(--accent); vertical-align: middle; }
+.ex-badge-ok { background: var(--ok-bg); color: var(--ok); }
+
 /* 印刷 */
 @media print {
   :root {
@@ -598,7 +624,7 @@ a:focus-visible, summary:focus-visible, input:focus-visible {
     --ok-bg: #eef7ee; --danger-bg: #fdf0ef; --caption: #333; --em-mark: #ffe08a; --link: #000;
   }
   body { font-size: 11pt; line-height: 1.6; }
-  .site-header, .pager, .to-top, .page-toc, .anchor, .toc-search, .search-results { display: none !important; }
+  .site-header, .pager, .to-top, .page-toc, .anchor, .toc-search, .search-results, .ex-actions { display: none !important; }
   main { max-width: none; padding: 0; }
   section.chapter { border: none; padding: 0; margin-bottom: 16px; }
   section.chapter > h2 { break-after: avoid; }

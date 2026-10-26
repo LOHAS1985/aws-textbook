@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>構成演習 | AWS教科書</title>
+<meta name="description" content="要件を読み、空欄に入るサービスや設定を選んで構成を組み立てる演習(AWSアカウントは不要)">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head"><h1>構成演習</h1><p class="lead">要件を読み、空欄に入るサービスや設定を選んで構成を組み立てる演習(AWSアカウントは不要)</p></div>
+<div class="toc-search">
+  <input type="search" id="toc-q" placeholder="やりたいこと・サービス名で絞り込み(例: エンドポイント、アラーム)" aria-label="絞り込み" autocomplete="off">
+  <span class="toc-hits" id="toc-hits"></span>
+</div>
+<section class="toc-category" id="cat1">
+<h2>監視・ログ・自動修復 <span class="count">(1)</span></h2>
+<ul class="card-list">
+  <li data-keys="ec2のメモリ使用率を監視する構成を組み立てる ec2-memory-monitoring 監視・ログ・自動修復 標準のメトリクスにないメモリ・ディスクの使用率を集め、しきい値を超えたらメールで知らせる"><a href="ec2-memory-monitoring.html"><span class="name">EC2のメモリ使用率を監視する構成を組み立てる</span><span class="desc">標準のメトリクスにないメモリ・ディスクの使用率を集め、しきい値を超えたらメールで知らせる</span></a></li>
+</ul>
+</section>
+<section class="toc-category" id="cat2">
+<h2>信頼性・事業継続 <span class="count">(1)</span></h2>
+<ul class="card-list">
+  <li data-keys="負荷に応じて自動でスケールするwebシステムを組み立てる auto-scaling-web 信頼性・事業継続 1つのazが止まっても動き続け、アクセスの増減に合わせて台数を自動で調整する"><a href="auto-scaling-web.html"><span class="name">負荷に応じて自動でスケールするWebシステムを組み立てる</span><span class="desc">1つのAZが止まっても動き続け、アクセスの増減に合わせて台数を自動で調整する</span></a></li>
+</ul>
+</section>
+<section class="toc-category" id="cat3">
+<h2>デプロイ・自動化 <span class="count">(1)</span></h2>
+<ul class="card-list">
+  <li data-keys="開発環境を夜間に自動で停止する構成を組み立てる scheduled-start-stop デプロイ・自動化 決まった時刻に、タグの付いたec2・rdsを停止・起動して費用を下げる"><a href="scheduled-start-stop.html"><span class="name">開発環境を夜間に自動で停止する構成を組み立てる</span><span class="desc">決まった時刻に、タグの付いたEC2・RDSを停止・起動して費用を下げる</span></a></li>
+</ul>
+</section>
+<section class="toc-category" id="cat4">
+<h2>セキュリティ・コンプライアンス <span class="count">(1)</span></h2>
+<ul class="card-list">
+  <li data-keys="公開されたs3バケットを自動で修復する構成を組み立てる config-auto-remediation セキュリティ・コンプライアンス 設定のルール違反を検出し、人手を介さずに元に戻して、担当者にも知らせる"><a href="config-auto-remediation.html"><span class="name">公開されたS3バケットを自動で修復する構成を組み立てる</span><span class="desc">設定のルール違反を検出し、人手を介さずに元に戻して、担当者にも知らせる</span></a></li>
+</ul>
+</section>
+<section class="toc-category" id="cat5">
+<h2>ネットワーク・コンテンツ配信 <span class="count">(1)</span></h2>
+<ul class="card-list">
+  <li data-keys="プライベートサブネットからnatなしでawsを使う構成を組み立てる private-subnet-endpoints ネットワーク・コンテンツ配信 インターネットへの経路を持たないec2から、s3とsession managerを使えるようにする"><a href="private-subnet-endpoints.html"><span class="name">プライベートサブネットからNATなしでAWSを使う構成を組み立てる</span><span class="desc">インターネットへの経路を持たないEC2から、S3とSession Managerを使えるようにする</span></a></li>
+</ul>
+</section>
+<p class="empty-state" id="toc-none" hidden>該当するページがありません。</p>
+<script>
+(function () {
+  var q = document.getElementById("toc-q");
+  var hits = document.getElementById("toc-hits");
+  var none = document.getElementById("toc-none");
+  var sections = document.querySelectorAll(".toc-category");
+  var total = document.querySelectorAll(".toc-category li").length;
+  function apply() {
+    var words = q.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    var shown = 0;
+    sections.forEach(function (sec) {
+      var n = 0;
+      sec.querySelectorAll("li").forEach(function (li) {
+        var keys = li.getAttribute("data-keys");
+        var ok = words.every(function (w) { return keys.indexOf(w) >= 0; });
+        li.hidden = !ok;
+        if (ok) n++;
+      });
+      sec.hidden = n === 0;
+      var det = sec.querySelector("details");
+      if (det && words.length && n) det.open = true;
+      var cnt = sec.querySelector("h2 .count");
+      cnt.textContent = cnt.textContent.charAt(0) === "(" ? "(" + n + ")" : n;
+      shown += n;
+    });
+    hits.textContent = words.length ? shown + " / " + total + "件" : "";
+    none.hidden = shown > 0;
+  }
+  q.addEventListener("input", apply);
+  q.addEventListener("keydown", function (e) { if (e.key === "Escape") { q.value = ""; apply(); } });
+})();
+</script>
+</main>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

@@ -39,34 +39,52 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 703 362" style="max-width:703px;min-width:562px" role="img" aria-label="図1 4つのサービスの届け方の違い。SQSとKinesis Data Streamsは受け手が取りに行き(プル)、SNSとEventBridgeはサービス側から受け手に届ける(プッシュ)。"><defs><marker id="dgterms-messaging-comparison-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
 <rect x="34" y="158" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="112" y="180" text-anchor="middle" class="dg-t">送信元</text>
 <text x="112" y="198" text-anchor="middle" class="dg-s">アプリ・AWSサービス</text>
+</g>
+<g data-node="sqs">
 <rect x="279" y="38" width="155" height="52" rx="8" class="dg-accent"/>
 <text x="356" y="60" text-anchor="middle" class="dg-tb">SQS</text>
 <text x="356" y="78" text-anchor="middle" class="dg-s">キューにためる</text>
+</g>
+<g data-node="sns">
 <rect x="279" y="118" width="155" height="52" rx="8" class="dg-accent"/>
 <text x="356" y="140" text-anchor="middle" class="dg-tb">SNS</text>
 <text x="356" y="158" text-anchor="middle" class="dg-s">全員に一斉配信</text>
+</g>
+<g data-node="eb">
 <rect x="279" y="198" width="155" height="52" rx="8" class="dg-accent"/>
 <text x="356" y="220" text-anchor="middle" class="dg-tb">EventBridge</text>
 <text x="356" y="238" text-anchor="middle" class="dg-s">内容で振り分け</text>
+</g>
+<g data-node="kds">
 <rect x="279" y="270" width="155" height="68" rx="8" class="dg-accent"/>
 <text x="356" y="290" text-anchor="middle" class="dg-tb">Kinesis</text>
 <text x="356" y="308" text-anchor="middle" class="dg-tb">Data Streams</text>
 <text x="356" y="326" text-anchor="middle" class="dg-s">流れを記録</text>
+</g>
+<g data-node="w">
 <rect x="524" y="38" width="155" height="52" rx="8" class="dg-box"/>
 <text x="602" y="60" text-anchor="middle" class="dg-t">ワーカー</text>
 <text x="602" y="78" text-anchor="middle" class="dg-s">取りに行く(プル)</text>
+</g>
+<g data-node="sub">
 <rect x="524" y="118" width="155" height="52" rx="8" class="dg-box"/>
 <text x="602" y="140" text-anchor="middle" class="dg-t">購読者すべて</text>
 <text x="602" y="158" text-anchor="middle" class="dg-s">届く(プッシュ)</text>
+</g>
+<g data-node="tg">
 <rect x="524" y="198" width="155" height="52" rx="8" class="dg-box"/>
 <text x="602" y="220" text-anchor="middle" class="dg-t">一致したターゲット</text>
 <text x="602" y="238" text-anchor="middle" class="dg-s">届く(プッシュ)</text>
+</g>
+<g data-node="con">
 <rect x="524" y="278" width="155" height="52" rx="8" class="dg-box"/>
 <text x="602" y="300" text-anchor="middle" class="dg-t">複数の処理</text>
 <text x="602" y="318" text-anchor="middle" class="dg-s">同じデータを読む</text>
+</g>
 <path d="M164.6,158.0 L303.4,90.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
 <path d="M189.0,171.3 L279.0,156.7" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
 <path d="M189.0,196.7 L279.0,211.3" class="dg-line" marker-end="url(#dgterms-messaging-comparison-1)"/>
@@ -98,27 +116,43 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 846 274" style="max-width:846px;min-width:677px" role="img" aria-label="図2 SNSとSQSのファンアウト。1つの注文イベントが3つのキューに複製される。分析の処理が止まっていても、メッセージは分析用のキューにたまり、復旧後に処理できる。"><defs><marker id="dgterms-messaging-comparison-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
 <rect x="34" y="124" width="145" height="40" rx="8" class="dg-blue"/>
 <text x="106" y="148" text-anchor="middle" class="dg-t">注文アプリ</text>
+</g>
+<g data-node="sns">
 <rect x="248" y="118" width="145" height="52" rx="8" class="dg-accent"/>
 <text x="321" y="140" text-anchor="middle" class="dg-tb">SNSトピック</text>
 <text x="321" y="158" text-anchor="middle" class="dg-s">注文が入った</text>
+</g>
+<g data-node="q1">
 <rect x="463" y="38" width="145" height="52" rx="8" class="dg-box"/>
 <text x="536" y="60" text-anchor="middle" class="dg-t">SQS</text>
 <text x="536" y="78" text-anchor="middle" class="dg-s">在庫の更新用</text>
+</g>
+<g data-node="q2">
 <rect x="463" y="118" width="145" height="52" rx="8" class="dg-box"/>
 <text x="536" y="140" text-anchor="middle" class="dg-t">SQS</text>
 <text x="536" y="158" text-anchor="middle" class="dg-s">メール送信用</text>
+</g>
+<g data-node="q3">
 <rect x="463" y="198" width="145" height="52" rx="8" class="dg-box"/>
 <text x="536" y="220" text-anchor="middle" class="dg-t">SQS</text>
 <text x="536" y="238" text-anchor="middle" class="dg-s">分析用</text>
+</g>
+<g data-node="w1">
 <rect x="678" y="44" width="145" height="40" rx="8" class="dg-ok"/>
 <text x="750" y="68" text-anchor="middle" class="dg-t">在庫の処理</text>
+</g>
+<g data-node="w2">
 <rect x="678" y="124" width="145" height="40" rx="8" class="dg-ok"/>
 <text x="750" y="148" text-anchor="middle" class="dg-t">メールの処理</text>
+</g>
+<g data-node="w3">
 <rect x="678" y="198" width="145" height="52" rx="8" class="dg-ng"/>
 <text x="750" y="220" text-anchor="middle" class="dg-t">分析の処理</text>
 <text x="750" y="238" text-anchor="middle" class="dg-s">停止中でもたまる</text>
+</g>
 <path d="M179.0,144.0 L248.5,144.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-2)"/>
 <path d="M390.7,118.0 L465.8,90.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-2)"/>
 <path d="M393.5,144.0 L463.0,144.0" class="dg-line" marker-end="url(#dgterms-messaging-comparison-2)"/>
