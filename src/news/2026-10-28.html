@@ -1,0 +1,46 @@
+<!-- title: 2026年10月28日のAWSニュース:Aurora Serverlessの上限384 ACU・ECRレプリケーションの後追い複製 -->
+<!-- category: 2026年10月 -->
+<!-- lead: ECRで、レプリケーション設定の前にあったイメージも、1回のAPI呼び出しで別リージョンへ複製できるようになりました。 -->
+<section class="chapter">
+<h2>1. 今日のまとめ</h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">ECR:レプリケーションバックフィル</a></td><td>設定前に保存済みのイメージも、1回のAPI呼び出しで複製先へ一括で複製できる</td><td><a href="../services/ecr.html">ECR</a></td></tr>
+<tr><td><a href="#n2">Aurora Serverless:最大384 ACUに対応</a></td><td>Aurora PostgreSQL互換で、自動で増減する容量の上限が256から384 ACUに引き上げられた</td><td><a href="../services/aurora.html">Aurora</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 注目の発表</h2>
+<h3 id="n1">ECR:レプリケーションバックフィル</h3>
+<p>ECR(コンテナイメージを保管するレジストリ)には、イメージを別のリージョンやアカウントへ自動で複製する「レプリケーション」機能があります。ただし、複製されるのは設定を有効にしたあとにプッシュされたイメージだけでした。すでにあるイメージを複製するには、タグを付け直してプッシュし直す手間がかかっていました。今回の「レプリケーションバックフィル(後追い複製)」は、すでに保存してあるイメージをまとめて複製先へ複製する機能です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "設定後の分だけ複製" "既存分は付け直し"
+node after 1.6 0 ok "これから" "既存分も一括複製" "API1回で完了"
+edge before after "バックフィルに対応"
+<figcaption>図1 レプリケーション対象の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>新しいリージョンへ展開するとき、レプリケーションのルールを変えたとき、災害対策(DR)の準備を確かめるとき、コンプライアンスのために全リージョンへ同じイメージをそろえたいときに便利です。バックフィルのジョブは同時に最大10個まで動かせ、進み具合とイメージごとの結果は新しいAPIで確認できます。途中で止めても、複製済みのイメージは削除されません。</dd>
+<dt>試験・実務への影響</dt><dd>コンテナ基盤を複数リージョンで用意する災害対策では、イメージが複製先にそろっているかが復旧の前提になります。「設定後に追加した分だけが複製される」というこれまでの決まりと、既存分は今回のバックフィルで補えることをセットで押さえておくとよいでしょう。ECRが使えるすべてのリージョンで利用できます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ecr.html">ECR</a>、<a href="../services/ecs.html">ECS</a>、<a href="../services/eks.html">EKS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/replication-backfill-amazon-ecr/">Amazon ECR now supports replication backfill for existing container images</a>(2026-10-26)</dd>
+</dl>
+
+<h3 id="n2">Aurora Serverless:最大384 ACUに対応</h3>
+<p>Aurora Serverlessは、負荷に合わせてデータベースの容量が自動で増減するAuroraの構成です。容量はACU(Aurora Capacity Unit)という単位で表し、1 ACUはおよそ2 GiBのメモリと、それに見合うCPUやネットワークの能力です。Aurora PostgreSQL互換エディションで、設定できる容量の上限が256 ACUから384 ACUへ50%引き上げられ、1つのデータベースで最大768 GiB相当のメモリまで拡張できます。処理がないときは容量がゼロまで下がる点は変わりません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "最大256 ACU" "約512 GiBのメモリ"
+node after 1.6 0 ok "これから" "最大384 ACU" "約768 GiBのメモリ"
+edge before after "上限を50%引き上げ"
+<figcaption>図2 Aurora Serverlessの容量の上限</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>負荷の波が大きく、ときどき重い処理が来るアプリでも、容量を固定で持たずに自動で増減する構成のまま対応できる範囲が広がります。新しいクラスターでは対応するエンジンのバージョンを選んで最大容量を384まで設定し、既存のクラスターはプラットフォームバージョン4であれば、停止なしで設定を変更するだけです。古いプラットフォームバージョンの場合は、保留中のメンテナンスアクションでバージョン4へ上げます。</dd>
+<dt>試験・実務への影響</dt><dd>最大容量の設定値は、性能と費用の上限を決める大事な設定です。上限を上げると、急な負荷では使った分だけ料金も増えるため、CloudWatchでACUの使用状況を見ながら決めます。対応するのはAurora PostgreSQL 18.4・17.10・16.14・15.18・14.23(プラットフォームバージョン4)です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/aurora.html">Aurora</a>、<a href="../terms/managed-serverless.html">マネージドとサーバーレス</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aurora-serverless-supports-384-acu/">Amazon Aurora serverless now supports up to 384 ACUs</a>(2026-10-27)</dd>
+</dl>
+</section>

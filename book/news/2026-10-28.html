@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2026年10月28日のAWSニュース:Aurora Serverlessの上限384 ACU・ECRレプリケーションの後追い複製 | AWS教科書</title>
+<meta name="description" content="ECRで、レプリケーション設定の前にあったイメージも、1回のAPI呼び出しで別リージョンへ複製できるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年10月</a>
+  <h1>2026年10月28日のAWSニュース:Aurora Serverlessの上限384 ACU・ECRレプリケーションの後追い複製</h1>
+  <p class="lead">ECRで、レプリケーション設定の前にあったイメージも、1回のAPI呼び出しで別リージョンへ複製できるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-10-28">2026-10-28</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 今日のまとめ<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">ECR:レプリケーションバックフィル</a></td><td>設定前に保存済みのイメージも、1回のAPI呼び出しで複製先へ一括で複製できる</td><td><a href="../services/ecr.html">ECR</a></td></tr>
+<tr><td><a href="#n2">Aurora Serverless:最大384 ACUに対応</a></td><td>Aurora PostgreSQL互換で、自動で増減する容量の上限が256から384 ACUに引き上げられた</td><td><a href="../services/aurora.html">Aurora</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 注目の発表<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="n1">ECR:レプリケーションバックフィル<a class="anchor" href="#n1" aria-label="この見出しへのリンク">#</a></h3>
+<p>ECR(コンテナイメージを保管するレジストリ)には、イメージを別のリージョンやアカウントへ自動で複製する「レプリケーション」機能があります。ただし、複製されるのは設定を有効にしたあとにプッシュされたイメージだけでした。すでにあるイメージを複製するには、タグを付け直してプッシュし直す手間がかかっていました。今回の「レプリケーションバックフィル(後追い複製)」は、すでに保存してあるイメージをまとめて複製先へ複製する機能です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 116" style="max-width:480px;min-width:480px" role="img" aria-label="図1 レプリケーション対象の違い"><defs><marker id="dgnews-2026-10-28-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">設定後の分だけ複製</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">既存分も一括複製</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-28-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">バックフィルに対応</text>
+</svg>
+</div>
+<figcaption>図1 レプリケーション対象の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>新しいリージョンへ展開するとき、レプリケーションのルールを変えたとき、災害対策(DR)の準備を確かめるとき、コンプライアンスのために全リージョンへ同じイメージをそろえたいときに便利です。バックフィルのジョブは同時に最大10個まで動かせ、進み具合とイメージごとの結果は新しいAPIで確認できます。途中で止めても、複製済みのイメージは削除されません。</dd>
+<dt>試験・実務への影響</dt><dd>コンテナ基盤を複数リージョンで用意する災害対策では、イメージが複製先にそろっているかが復旧の前提になります。「設定後に追加した分だけが複製される」というこれまでの決まりと、既存分は今回のバックフィルで補えることをセットで押さえておくとよいでしょう。ECRが使えるすべてのリージョンで利用できます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ecr.html">ECR</a>、<a href="../services/ecs.html">ECS</a>、<a href="../services/eks.html">EKS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/replication-backfill-amazon-ecr/">Amazon ECR now supports replication backfill for existing container images</a>(2026-10-26)</dd>
+</dl>
+
+<h3 id="n2">Aurora Serverless:最大384 ACUに対応<a class="anchor" href="#n2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Aurora Serverlessは、負荷に合わせてデータベースの容量が自動で増減するAuroraの構成です。容量はACU(Aurora Capacity Unit)という単位で表し、1 ACUはおよそ2 GiBのメモリと、それに見合うCPUやネットワークの能力です。Aurora PostgreSQL互換エディションで、設定できる容量の上限が256 ACUから384 ACUへ50%引き上げられ、1つのデータベースで最大768 GiB相当のメモリまで拡張できます。処理がないときは容量がゼロまで下がる点は変わりません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 116" style="max-width:480px;min-width:480px" role="img" aria-label="図2 Aurora Serverlessの容量の上限"><defs><marker id="dgnews-2026-10-28-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">最大256 ACU</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">最大384 ACU</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-28-2)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">上限を50%引き上げ</text>
+</svg>
+</div>
+<figcaption>図2 Aurora Serverlessの容量の上限</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>負荷の波が大きく、ときどき重い処理が来るアプリでも、容量を固定で持たずに自動で増減する構成のまま対応できる範囲が広がります。新しいクラスターでは対応するエンジンのバージョンを選んで最大容量を384まで設定し、既存のクラスターはプラットフォームバージョン4であれば、停止なしで設定を変更するだけです。古いプラットフォームバージョンの場合は、保留中のメンテナンスアクションでバージョン4へ上げます。</dd>
+<dt>試験・実務への影響</dt><dd>最大容量の設定値は、性能と費用の上限を決める大事な設定です。上限を上げると、急な負荷では使った分だけ料金も増えるため、CloudWatchでACUの使用状況を見ながら決めます。対応するのはAurora PostgreSQL 18.4・17.10・16.14・15.18・14.23(プラットフォームバージョン4)です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/aurora.html">Aurora</a>、<a href="../terms/managed-serverless.html">マネージドとサーバーレス</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aurora-serverless-supports-384-acu/">Amazon Aurora serverless now supports up to 384 ACUs</a>(2026-10-27)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-10-27.html"><span class="label">次へ →</span>2026年10月27日のAWSニュース:Auto Scalingの先に起動する置き換え・KMSのML-KEM・Identity Centerのリージョン越え</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
