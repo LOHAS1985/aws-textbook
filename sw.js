@@ -1,6 +1,6 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "717a31298f52";
+var CACHE = PREFIX + "3e205f6f689f";
 var FILES = {
 "css/style.css": "9cf9b0920fd7",
 "exercises/access-denied-troubleshooting.html": "3f68c538ac99",
@@ -151,7 +151,7 @@ var FILES = {
 "icons/services/vpc.svg": "7b842e6a64b2",
 "icons/services/waf.svg": "e67f918f21cf",
 "icons/services/xray.svg": "49c3a0c3f4e8",
-"index.html": "463cf924e003",
+"index.html": "c477ae33ac26",
 "js/glossary.js": "246207d3ba2f",
 "js/sim.js": "3ae9e28cc7a7",
 "js/site.js": "3f6897e97e85",
@@ -159,8 +159,9 @@ var FILES = {
 "manifest.webmanifest": "963d1eda4f4c",
 "news/2026-10-26.html": "3ed3ce47ebe1",
 "news/2026-10-27.html": "bb271c7763b7",
-"news/2026-10-28.html": "be1c1d5d3e75",
-"news/index.html": "1d4c41165b53",
+"news/2026-10-28.html": "e8b7895bbac8",
+"news/2026-10-29.html": "9130062ff56f",
+"news/index.html": "2119039f48a1",
 "services/acm.html": "c4cccf69e519",
 "services/amplify.html": "7fb5aeaa6d55",
 "services/api-gateway.html": "fedd50d7d0c4",
