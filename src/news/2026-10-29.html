@@ -1,0 +1,102 @@
+<!-- title: 2026年10月29日のAWSニュース:Backupのリストアテスト(Redshift)・Identity StoreのEventBridge通知・ECSの集約 -->
+<!-- category: 2026年10月 -->
+<!-- lead: AWS Backupのリストアテストが Redshift にも使えるようになり、バックアップから本当に復元できるかを自動で確かめられる範囲が広がりました。 -->
+<section class="chapter">
+<h2>1. 今日のまとめ</h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">AWS Backup:Redshiftのリストアテスト</a></td><td>バックアップから復元できるかの定期テストを、Redshiftにも設定できる</td><td><a href="../services/backup.html">AWS Backup</a></td></tr>
+<tr><td><a href="#n2">IAM Identity Center:Identity Storeの変更通知</a></td><td>ユーザーやグループの作成・更新・削除が、EventBridgeのイベントとして届く</td><td><a href="../services/identity-center.html">IAM Identity Center</a>、<a href="../services/eventbridge.html">EventBridge</a></td></tr>
+<tr><td><a href="#n3">ECS Managed Instances:インスタンスをまたいだ集約</a></td><td>使い切れていない複数のインスタンスのタスクをまとめ、台数を減らして費用を下げる</td><td><a href="../services/ecs.html">ECS</a></td></tr>
+<tr><td><a href="#n4">EKS Auto Mode:Gateway APIに対応</a></td><td>Kubernetesの標準的な通信の定義(Gateway・HTTPRoute)で、ロードバランサーを自動で用意できる</td><td><a href="../services/eks.html">EKS</a>、<a href="../services/elb.html">ELB</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 注目の発表</h2>
+<h3 id="n1">AWS Backup:Redshiftのリストアテスト</h3>
+<p>バックアップは、取っていても「実際に戻せるか」「どれくらい時間がかかるか」を試していないと、災害のときに困ります。AWS Backupの「リストアテスト」は、バックアップ(復旧ポイント)を選んで決まった周期で自動的に復元し、完了までの時間を測る機能です。今回、この対象にデータウェアハウスのAmazon Redshiftが加わりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node plan 0 0 blue "リストアテスト" "計画(スケジュール)"
+node rp 1.4 0 box "復旧ポイント" "最新またはランダム"
+node test 2.8 0 accent "テスト用に復元" "Redshift"
+node res 4.2 0 ok "所要時間を測定" "RTOと比べる"
+edge plan rp "選ぶ"
+edge rp test "復元"
+edge test res "検証後に削除"
+<figcaption>図1 リストアテストの流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>計画に対象のRedshiftをARNまたはタグで割り当てるだけで、復元の確認を自動化できます。復元したリソースを確かめる検証(リストアテストの検証)を付けることもでき、テスト用のリソースはそのあと削除されます。復元にかかった時間を目標復旧時間(RTO)と比べられるので、監査などで復旧の準備ができていることを示す材料にもなります。</dd>
+<dt>試験・実務への影響</dt><dd>「バックアップは取るだけでなく、復元できることを定期的に確かめる」という信頼性の考え方を、実際に仕組みにできる機能です。復旧の目標を決める考え方は災害対策のページも合わせて確認しておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/backup.html">AWS Backup</a>、<a href="../terms/dr-strategies.html">災害対策(DR)の戦略</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-backup-adds-redshift-restore-testing/">AWS Backup adds restore testing support for Amazon Redshift</a>(2026-10-28)</dd>
+</dl>
+
+<h3 id="n2">IAM Identity Center:Identity Storeの変更通知</h3>
+<p>IAM Identity Centerの「Identity Store」は、従業員のユーザーやグループを保管しておく場所です。今回、ユーザー・グループ・グループへの所属などが作成・更新・削除されたときに、EventBridge(イベントをきっかけに処理をつなぐサービス)へリアルタイムでイベントが届くようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node store 0 0 blue "Identity Store" "ユーザー・グループ" "の変更"
+node eb 1.5 0 accent "EventBridge" "ルールで絞り込み"
+node fn 3 0 box "Lambda" "監査・通知・同期"
+node out 4.5 0 ok "SIEM・社内システム" "へ連携"
+edge store eb "イベント"
+edge eb fn "起動"
+edge fn out
+<figcaption>図2 変更を検知して自動で処理する流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>変更を定期的に調べに行かなくても、起きた時点で処理を動かせます。例えば、ユーザーが追加されたことを監査ログへ残す、セキュリティ製品へ知らせる、特定のグループに入った人の権限を別のシステムにも反映する、といった自動化ができます。追加の料金はなく、EventBridgeの通常の料金だけがかかります。</dd>
+<dt>試験・実務への影響</dt><dd>「イベントを検知して自動で対応する」パターンの具体例です。誰がいつアクセス権を得たかを見張るセキュリティ運用に使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/identity-center.html">IAM Identity Center</a>、<a href="../services/eventbridge.html">EventBridge</a>、<a href="../services/lambda.html">Lambda</a>、<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-identity-store-change-notifications/">AWS IAM Identity Center's Identity Store now supports change notifications through Amazon EventBridge</a>(2026-10-28)</dd>
+</dl>
+
+<h3 id="n3">ECS Managed Instances:インスタンスをまたいだ集約</h3>
+<p>ECS Managed Instancesは、コンテナを動かすEC2インスタンスをAWSが選んで運用してくれるECSの構成です。使われていない空き容量を片付けて、負荷の低いインスタンスのタスクを寄せ集める最適化を自動で行います。これまでは1台ずつ別々に「もっと小さいものに替えられるか」を調べていたため、選べるインスタンスの種類が少ないと節約の余地が見つかりにくい状態でした。今回、複数のインスタンスを同時に見て、タスクを少ない台数に詰め直す「クロスインスタンス集約」と、スポットインスタンスにも同じ考え方を使う「スポット集約」が追加されました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "1台ずつ判断" "台数が減りにくい"
+node after 1.6 0 ok "これから" "複数台をまとめて判断" "少ない台数に詰め直す"
+edge before after "集約に対応"
+<figcaption>図3 タスクの詰め直し方の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>AWSの説明では、あるテストで19台が13台になり、CPUの使用率は42%から91%に上がっています。タスクは先に新しい場所で起動してから古い場所を止める順番で入れ替わるので、止まらずに寄せられます。追加の料金はなく、既存のものも含めてすべての容量プロバイダーに自動で適用されます。スポット集約では、置き換え先の容量があることを確かめてから動きます。</dd>
+<dt>試験・実務への影響</dt><dd>コスト最適化の問いでは、「使われていない容量を減らす」ことが基本になります。マネージドな最適化に任せられる部分と、自分で決める部分(インスタンスの種類の範囲など)を区別しておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ecs.html">ECS</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/auto-scaling.html">Auto Scaling</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/ecs-managed-instances-consolidation/">Amazon ECS Managed Instances adds cross-instance and Spot consolidation</a>(2026-10-28)</dd>
+</dl>
+
+<h3 id="n4">EKS Auto Mode:Gateway APIに対応</h3>
+<p>EKS Auto Modeは、Kubernetes(コンテナを管理する仕組み)のクラスター運用をAWSに任せられるEKSの機能です。Gateway APIは、アプリへの通信の入り口をKubernetesの標準的な書き方で定義する新しい仕組みで、従来のIngressの後継にあたります。今回、Gateway(入り口)とHTTPRoute(どのパスやヘッダーをどこへ送るか)を書くだけで、裏側のロードバランサーなどをEKS Auto Modeが自動で用意してくれるようになりました。別のコントローラーを自分で入れる必要はありません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node user 0 0 blue "利用者" "HTTP・gRPC"
+node lb 1.5 0 accent "ロードバランサー" "Auto Modeが自動作成"
+node route 3 0 box "HTTPRoute" "で定義した振り分け"
+node pod 4.5 0 ok "アプリ(Pod)"
+edge user lb
+edge lb route
+edge route pod "重み付け・ヘッダーで振り分け"
+<figcaption>図4 Gateway APIでの通信の流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>HTTPとgRPCの振り分け、複数のチームが使うときの名前空間をまたいだ振り分け、重みを付けて割合で分ける通信の分割、ヘッダーによる振り分けに対応しています。ACMの証明書も自動で見つけてTLSに使います。Ingressを使った既存のアプリはそのまま動くので、少しずつ移行できます。料金は、用意されたロードバランサーの分だけです。</dd>
+<dt>試験・実務への影響</dt><dd>重み付けの分割は、新しいバージョンを少しずつ流して確かめるカナリアリリースに使えます。ELBがKubernetesの設定から自動で作られる、という関係を押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/eks.html">EKS</a>、<a href="../services/elb.html">ELB</a>、<a href="../services/acm.html">ACM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-eks-auto-mode-kubernetes-gateway-api/">Amazon EKS Auto Mode now supports Kubernetes Gateway API</a>(2026-10-28)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2>3. その他の発表</h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/elasticache-changing-durability/">ElastiCache:Valkeyの耐久性を既存のクラスターで変更可能に</a>:作り直さずに、書き込みを複数のAZへ保存する設定(同期・非同期)を切り替えられます。<a href="../services/elasticache.html">ElastiCache</a></li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-eks-dashboard-fleet-wide-visibility-certificate-authority-ca-rotation/">EKS:ダッシュボードで証明書の更新状況を一覧表示</a>:組織内の全クラスターについて、認証局(CA)の有効期限が近いものを1か所で確認できます。<a href="../services/eks.html">EKS</a></li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/time-series-collection-next-generation-opensearch-serverless/">OpenSearch Serverless:時系列コレクション</a>:ログやメトリクス向けに、安価なウォーム階層とアラート・異常検知が加わりました。<a href="../services/opensearch.html">OpenSearch Service</a></li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/lambda-durable-telemetry/">Lambda:耐久関数の実行履歴をエクスポート</a>:実行の状態や所要時間をCloudWatch Logsなど複数の宛先へ送れます。<a href="../services/lambda.html">Lambda</a></li>
+</ul>
+</section>
