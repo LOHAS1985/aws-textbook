@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2026年10月30日のAWSニュース:RDSのストレージ自動拡張(Oracle・SQL Server)・Step FunctionsをAIエージェントの道具に・LambdaのSOCI | AWS教科書</title>
+<meta name="description" content="RDS for OracleとSQL Serverで、追加のストレージボリュームも使用量に合わせて自動で増えるようになり、容量不足による停止を防ぎやすくなりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年10月</a>
+  <h1>2026年10月30日のAWSニュース:RDSのストレージ自動拡張(Oracle・SQL Server)・Step FunctionsをAIエージェントの道具に・LambdaのSOCI</h1>
+  <p class="lead">RDS for OracleとSQL Serverで、追加のストレージボリュームも使用量に合わせて自動で増えるようになり、容量不足による停止を防ぎやすくなりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-10-30">2026-10-30</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 今日のまとめ<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">RDS:追加ボリュームのストレージ自動拡張</a></td><td>OracleとSQL Serverの追加ボリュームも、上限を決めておけば容量が自動で増える</td><td><a href="../services/rds.html">RDS</a></td></tr>
+<tr><td><a href="#n2">Step Functions:AIエージェントの道具として利用</a></td><td>作成済みのワークフローを、AIエージェントが呼び出して実行できる</td><td><a href="../services/step-functions.html">Step Functions</a>、<a href="../services/bedrock.html">Bedrock</a></td></tr>
+<tr><td><a href="#n3">Lambda:SOCIによるコンテナの高速起動</a></td><td>大きなコンテナイメージでも、必要な部分だけ読み込んで起動が速くなる</td><td><a href="../services/lambda.html">Lambda</a>、<a href="../services/ecr.html">ECR</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 注目の発表<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="n1">RDS:追加ボリュームのストレージ自動拡張<a class="anchor" href="#n1" aria-label="この見出しへのリンク">#</a></h3>
+<p>RDSには、データベースの使用量が容量に近づくと、停止せずに容量を自動で増やす「ストレージ自動拡張」があります。RDS for OracleとRDS for SQL Serverは、主となるボリュームのほかに最大3つの追加ボリュームを持てますが、これまで自動拡張は主ボリュームだけが対象で、追加ボリュームの容量は自分で見積もって用意する必要がありました。今回、追加ボリュームにも自動拡張が使えるようになりました。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 116" style="max-width:480px;min-width:480px" role="img" aria-label="図1 追加ボリュームの容量管理の違い"><defs><marker id="dgnews-2026-10-30-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">追加ボリュームは</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">上限だけ決めれば</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-30-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">自動拡張に対応</text>
+</svg>
+</div>
+<figcaption>図1 追加ボリュームの容量管理の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>容量を少なく見積もると、いっぱいになってアプリケーションが止まるおそれがあり、多く見積もると使わない分の費用がかかります。ボリュームごとに最大容量の上限を設定しておけば、RDSが実際の使用量を見て、足りなくなりそうなときに増やします。既存のDBインスタンスにも使え、自動拡張に追加の料金はなく、用意した容量の分だけ支払います。コンソール、CLI、APIで有効にできます。</dd>
+<dt>試験・実務への影響</dt><dd>「容量不足によるDBの停止を、運用の手間なく防ぐ」問いの定番は、ストレージ自動拡張です。上限を設定しておかないと際限なく増えて費用がふくらむ点も押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/rds.html">RDS</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-rds-oracle-sqlserver-autoscaling-additional-storage-volumes/">Amazon RDS for Oracle and SQL Server now support storage autoscaling on additional storage volumes</a>(2026-10-29)</dd>
+</dl>
+
+<h3 id="n2">Step Functions:AIエージェントの道具として利用<a class="anchor" href="#n2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Step Functionsは、複数の処理を決めた順番で実行する「ワークフロー」を作るサービスです。今回、Bedrock AgentCore Gatewayという仕組みを通じて、既存のワークフローをAIエージェントの「道具(ツール)」として使えるようになりました。AgentCore Gatewayは、MCP(AIが外部の道具を呼び出すための共通の決まり)でエージェントと道具をつなぐ入り口です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 973 116" style="max-width:973px;min-width:778px" role="img" aria-label="図2 エージェントがワークフローを呼び出す流れ"><defs><marker id="dgnews-2026-10-30-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="agent">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">AIエージェント</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">いつ実行するか判断</text>
+</g>
+<g data-node="gw">
+<rect x="289" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="62" text-anchor="middle" class="dg-tb">AgentCore</text>
+<text x="364" y="80" text-anchor="middle" class="dg-s">Gateway</text>
+</g>
+<g data-node="sfn">
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">Step Functions</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">ワークフロー</text>
+</g>
+<g data-node="steps">
+<rect x="799" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="874" y="62" text-anchor="middle" class="dg-t">定義した順に</text>
+<text x="874" y="80" text-anchor="middle" class="dg-s">毎回同じ手順で実行</text>
+</g>
+<path d="M184.0,66.5 L289.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-30-2)"/>
+<text x="236" y="70" text-anchor="middle" class="dg-s dg-halo">MCP</text>
+<path d="M439.0,66.5 L544.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-30-2)"/>
+<text x="492" y="70" text-anchor="middle" class="dg-s dg-halo">呼び出し</text>
+<path d="M694.0,66.5 L799.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-30-2)"/>
+</svg>
+</div>
+<figcaption>図2 エージェントがワークフローを呼び出す流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>エージェントが実行するかどうかと渡す入力を決め、手順そのものはStep Functionsが定義どおりに進めます。そのため、返金の確認・承認・処理のように守るべき手順がある業務を、毎回同じ順番で実行させられます。エージェントは実行状況も調べられ、夜間に失敗した処理がどこで止まったかを担当者に伝える、といった使い方もできます。StandardとExpressの両方のワークフローが対象で、料金はStep FunctionsとAgentCore Gatewayそれぞれの通常料金です。</dd>
+<dt>試験・実務への影響</dt><dd>AIに任せる部分と、手順を固定したい部分を分ける考え方の例です。ワークフローの実行履歴で失敗した箇所を調べる運用は、これまでと同じです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/step-functions.html">Step Functions</a>、<a href="../services/bedrock.html">Bedrock</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/step-functions-workflows-ai-agent-tools/">AWS Step Functions workflows now available as AI agent tools</a>(2026-10-29)</dd>
+</dl>
+
+<h3 id="n3">Lambda:SOCIによるコンテナの高速起動<a class="anchor" href="#n3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Lambdaは、コンテナイメージで関数を動かせます。イメージが数GBと大きいと、新しい実行環境を用意するたびに全体をダウンロードするため、起動に時間がかかります。SOCI(Seekable OCI)は、イメージの中身の目次(インデックス)を付けておき、起動の各段階で必要なファイルだけを取り込む「遅延読み込み」を可能にする仕組みです。今回、Lambda Managed Instances(Lambdaを専用のインスタンス上で動かす構成)で、これが使えるようになりました。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 116" style="max-width:480px;min-width:480px" role="img" aria-label="図3 コンテナイメージの読み込み方の違い"><defs><marker id="dgnews-2026-10-30-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">イメージ全体を</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">必要なファイルだけ</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-30-3)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">SOCIに対応</text>
+</svg>
+</div>
+<figcaption>図3 コンテナイメージの読み込み方の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>AWSの説明では、コンテナの起動時間が最大70%短くなります。大量のデータ処理や、負荷に応じて環境が増えるAPIなどで、増えるときの待ち時間を減らせます。使うには、イメージのSOCIインデックスを作ってECRに置き、関数のイメージURIをそのタグにして関数のバージョンを発行します。Lambdaが自動で見つけるので、ほかの設定は要りません。</dd>
+<dt>試験・実務への影響</dt><dd>起動の遅さ(コールドスタート)への対策として、イメージを小さくする工夫に加え、読み込み方の工夫もあると知っておくと役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/lambda.html">Lambda</a>、<a href="../services/ecr.html">ECR</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-lambda-seekable-oci-soci/">AWS Lambda supports Seekable OCI (SOCI) lazy loading for Lambda Managed Instances</a>(2026-10-28)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. その他の発表<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/acm-acme-support-govcloud-us/">ACM:GovCloud (US)でACMEに対応</a>:Certbotなど標準的なクライアントで公開証明書の発行・更新を自動化できます。<a href="../services/acm.html">ACM</a></li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-rds-oracle-september-mrp/">RDS for Oracle:2026年9月の推奨パッチに対応</a>:月ごとの推奨パッチ(MRP)を適用できるようになりました。<a href="../services/rds.html">RDS</a></li>
+</ul>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-10-29.html"><span class="label">次へ →</span>2026年10月29日のAWSニュース:Backupのリストアテスト(Redshift)・Identity StoreのEventBridge通知・ECSの集約</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
