@@ -1,0 +1,75 @@
+<!-- title: 2026年10月30日のAWSニュース:RDSのストレージ自動拡張(Oracle・SQL Server)・Step FunctionsをAIエージェントの道具に・LambdaのSOCI -->
+<!-- category: 2026年10月 -->
+<!-- lead: RDS for OracleとSQL Serverで、追加のストレージボリュームも使用量に合わせて自動で増えるようになり、容量不足による停止を防ぎやすくなりました。 -->
+<section class="chapter">
+<h2>1. 今日のまとめ</h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">RDS:追加ボリュームのストレージ自動拡張</a></td><td>OracleとSQL Serverの追加ボリュームも、上限を決めておけば容量が自動で増える</td><td><a href="../services/rds.html">RDS</a></td></tr>
+<tr><td><a href="#n2">Step Functions:AIエージェントの道具として利用</a></td><td>作成済みのワークフローを、AIエージェントが呼び出して実行できる</td><td><a href="../services/step-functions.html">Step Functions</a>、<a href="../services/bedrock.html">Bedrock</a></td></tr>
+<tr><td><a href="#n3">Lambda:SOCIによるコンテナの高速起動</a></td><td>大きなコンテナイメージでも、必要な部分だけ読み込んで起動が速くなる</td><td><a href="../services/lambda.html">Lambda</a>、<a href="../services/ecr.html">ECR</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 注目の発表</h2>
+<h3 id="n1">RDS:追加ボリュームのストレージ自動拡張</h3>
+<p>RDSには、データベースの使用量が容量に近づくと、停止せずに容量を自動で増やす「ストレージ自動拡張」があります。RDS for OracleとRDS for SQL Serverは、主となるボリュームのほかに最大3つの追加ボリュームを持てますが、これまで自動拡張は主ボリュームだけが対象で、追加ボリュームの容量は自分で見積もって用意する必要がありました。今回、追加ボリュームにも自動拡張が使えるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "追加ボリュームは" "手動で容量を用意"
+node after 1.6 0 ok "これから" "上限だけ決めれば" "自動で増える"
+edge before after "自動拡張に対応"
+<figcaption>図1 追加ボリュームの容量管理の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>容量を少なく見積もると、いっぱいになってアプリケーションが止まるおそれがあり、多く見積もると使わない分の費用がかかります。ボリュームごとに最大容量の上限を設定しておけば、RDSが実際の使用量を見て、足りなくなりそうなときに増やします。既存のDBインスタンスにも使え、自動拡張に追加の料金はなく、用意した容量の分だけ支払います。コンソール、CLI、APIで有効にできます。</dd>
+<dt>試験・実務への影響</dt><dd>「容量不足によるDBの停止を、運用の手間なく防ぐ」問いの定番は、ストレージ自動拡張です。上限を設定しておかないと際限なく増えて費用がふくらむ点も押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/rds.html">RDS</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-rds-oracle-sqlserver-autoscaling-additional-storage-volumes/">Amazon RDS for Oracle and SQL Server now support storage autoscaling on additional storage volumes</a>(2026-10-29)</dd>
+</dl>
+
+<h3 id="n2">Step Functions:AIエージェントの道具として利用</h3>
+<p>Step Functionsは、複数の処理を決めた順番で実行する「ワークフロー」を作るサービスです。今回、Bedrock AgentCore Gatewayという仕組みを通じて、既存のワークフローをAIエージェントの「道具(ツール)」として使えるようになりました。AgentCore Gatewayは、MCP(AIが外部の道具を呼び出すための共通の決まり)でエージェントと道具をつなぐ入り口です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node agent 0 0 blue "AIエージェント" "いつ実行するか判断"
+node gw 1.5 0 accent "AgentCore" "Gateway"
+node sfn 3 0 box "Step Functions" "ワークフロー"
+node steps 4.5 0 ok "定義した順に" "毎回同じ手順で実行"
+edge agent gw "MCP"
+edge gw sfn "呼び出し"
+edge sfn steps
+<figcaption>図2 エージェントがワークフローを呼び出す流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>エージェントが実行するかどうかと渡す入力を決め、手順そのものはStep Functionsが定義どおりに進めます。そのため、返金の確認・承認・処理のように守るべき手順がある業務を、毎回同じ順番で実行させられます。エージェントは実行状況も調べられ、夜間に失敗した処理がどこで止まったかを担当者に伝える、といった使い方もできます。StandardとExpressの両方のワークフローが対象で、料金はStep FunctionsとAgentCore Gatewayそれぞれの通常料金です。</dd>
+<dt>試験・実務への影響</dt><dd>AIに任せる部分と、手順を固定したい部分を分ける考え方の例です。ワークフローの実行履歴で失敗した箇所を調べる運用は、これまでと同じです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/step-functions.html">Step Functions</a>、<a href="../services/bedrock.html">Bedrock</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/step-functions-workflows-ai-agent-tools/">AWS Step Functions workflows now available as AI agent tools</a>(2026-10-29)</dd>
+</dl>
+
+<h3 id="n3">Lambda:SOCIによるコンテナの高速起動</h3>
+<p>Lambdaは、コンテナイメージで関数を動かせます。イメージが数GBと大きいと、新しい実行環境を用意するたびに全体をダウンロードするため、起動に時間がかかります。SOCI(Seekable OCI)は、イメージの中身の目次(インデックス)を付けておき、起動の各段階で必要なファイルだけを取り込む「遅延読み込み」を可能にする仕組みです。今回、Lambda Managed Instances(Lambdaを専用のインスタンス上で動かす構成)で、これが使えるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "イメージ全体を" "起動前に取得"
+node after 1.6 0 ok "これから" "必要なファイルだけ" "段階ごとに取得"
+edge before after "SOCIに対応"
+<figcaption>図3 コンテナイメージの読み込み方の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>AWSの説明では、コンテナの起動時間が最大70%短くなります。大量のデータ処理や、負荷に応じて環境が増えるAPIなどで、増えるときの待ち時間を減らせます。使うには、イメージのSOCIインデックスを作ってECRに置き、関数のイメージURIをそのタグにして関数のバージョンを発行します。Lambdaが自動で見つけるので、ほかの設定は要りません。</dd>
+<dt>試験・実務への影響</dt><dd>起動の遅さ(コールドスタート)への対策として、イメージを小さくする工夫に加え、読み込み方の工夫もあると知っておくと役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/lambda.html">Lambda</a>、<a href="../services/ecr.html">ECR</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-lambda-seekable-oci-soci/">AWS Lambda supports Seekable OCI (SOCI) lazy loading for Lambda Managed Instances</a>(2026-10-28)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2>3. その他の発表</h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/acm-acme-support-govcloud-us/">ACM:GovCloud (US)でACMEに対応</a>:Certbotなど標準的なクライアントで公開証明書の発行・更新を自動化できます。<a href="../services/acm.html">ACM</a></li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-rds-oracle-september-mrp/">RDS for Oracle:2026年9月の推奨パッチに対応</a>:月ごとの推奨パッチ(MRP)を適用できるようになりました。<a href="../services/rds.html">RDS</a></li>
+</ul>
+</section>
