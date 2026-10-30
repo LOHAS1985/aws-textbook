@@ -40,9 +40,24 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS CloudTrail</h1>
   <p class="lead">「誰が・いつ・何をしたか」を記録する監査サービス</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(16項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">証跡(トレイル)</a></li><li><a href="#c2-2">イベントの種類</a></li><li><a href="#c2-3">リージョン・グローバルの証跡</a></li><li><a href="#c2-4">CloudWatch Logsとの統合</a></li><li><a href="#c2-5">組織の証跡</a></li><li><a href="#c2-6">ログの保護</a></li><li><a href="#c2-7">ログの分析とCloudTrail Lake</a></li><li><a href="#c2-8">ログが届かないときの確認</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS CloudTrail</strong>は、AWSアカウント内の<strong>「誰が」「いつ」「何をしたか」を記録</strong>する監査サービスです。</p>
@@ -105,7 +120,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td data-label="種類">管理イベント</td><td data-label="内容">リソースを管理・設定する操作</td><td data-label="例">EC2・VPCの作成、IAMポリシーの変更</td><td data-label="備考">デフォルトで記録</td></tr>
 <tr><td data-label="種類">データイベント</td><td data-label="内容">リソースそのものに対する操作</td><td data-label="例">S3オブジェクトの取得・削除</td><td data-label="備考"><strong>有効化が必要</strong></td></tr>
 <tr><td data-label="種類">Insightsイベント</td><td data-label="内容">普段と異なる異常なAPI操作</td><td data-label="例">API呼び出し・エラー率の急増</td><td data-label="備考">有効化・追加料金が必要。EventBridge経由で通知・自動対応も可能</td></tr>
+<tr><td data-label="種類">ネットワークアクティビティイベント</td><td data-label="内容">VPCエンドポイントを通ったAPI呼び出し</td><td data-label="例">組織外のアカウントのS3へ、VPCエンドポイント経由でアクセスしようとした</td><td data-label="備考">有効化が必要。データの持ち出しの調査に使う</td></tr>
 </table></div>
+<p>データイベントは件数が多く、料金が大きくなりがちです。<strong>高度なイベントセレクター</strong>を使うと、「特定のバケットだけ」「書き込み(削除など)だけ」のように、記録するイベントを絞り込めます。</p>
 
 <h3 id="c2-3">リージョン・グローバルの証跡<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
@@ -119,6 +136,75 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>検知結果をSNS通知やLambdaによるアクションにつなげられる。</li>
 <li>CloudWatch Logs Insightsでクエリ分析もできる。</li>
 <li>設定の流れ:証跡でCloudWatch Logsへの配信を有効化 → ロググループを指定 → CloudTrailからCloudWatch Logsへ送信するための<strong>IAMロール</strong>を付与</li>
+<li>例:メトリクスフィルターで「ルートユーザーのログイン」「セキュリティグループの変更」「コンソールへのログイン失敗」を数え、CloudWatchアラームからSNSで通知する。</li>
+</ul>
+
+<h3 id="c2-5">組織の証跡<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>Organizationsの管理アカウント(または委任管理者)で<strong>組織の証跡</strong>を作ると、組織内のすべてのアカウントのイベントを、1つの証跡でまとめて記録できます。あとから組織に入ったアカウントも自動で対象になります。メンバーアカウントからは証跡を見られますが、<strong>変更・削除はできません</strong>。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 202" style="max-width:905px;min-width:724px" role="img" aria-label="図2 組織の証跡。全アカウントのイベントを、ログアーカイブ用アカウントのS3バケットに集める。S3のログはAthenaでSQLを使って分析できる。"><defs><marker id="dgservices-cloudtrail-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="mgmt">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="104" text-anchor="middle" class="dg-tb">管理アカウント</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">組織の証跡を作成</text>
+</g>
+<g data-node="a1">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">メンバーアカウント</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">変更・削除できない</text>
+</g>
+<g data-node="a2">
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="147" text-anchor="middle" class="dg-t">メンバーアカウント</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">変更・削除できない</text>
+</g>
+<g data-node="log">
+<rect x="510" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="104" text-anchor="middle" class="dg-t">ログアーカイブ用</text>
+<text x="585" y="122" text-anchor="middle" class="dg-s">S3バケット</text>
+</g>
+<g data-node="cwl">
+<rect x="731" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="806" y="104" text-anchor="middle" class="dg-t">Athena</text>
+<text x="806" y="122" text-anchor="middle" class="dg-s">SQLで分析</text>
+</g>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line dg-dash" marker-end="url(#dgservices-cloudtrail-2)"/>
+<path d="M184.0,122.4 L272.0,138.1" class="dg-line dg-dash" marker-end="url(#dgservices-cloudtrail-2)"/>
+<path d="M422.0,79.9 L510.0,95.6" class="dg-line" marker-end="url(#dgservices-cloudtrail-2)"/>
+<text x="466" y="92" text-anchor="middle" class="dg-s dg-halo">ログ</text>
+<path d="M422.0,138.1 L510.0,122.4" class="dg-line" marker-end="url(#dgservices-cloudtrail-2)"/>
+<text x="466" y="134" text-anchor="middle" class="dg-s dg-halo">ログ</text>
+<path d="M660.0,109.0 L731.0,109.0" class="dg-line dg-dash" marker-end="url(#dgservices-cloudtrail-2)"/>
+</svg>
+</div>
+<figcaption>図2 組織の証跡。全アカウントのイベントを、ログアーカイブ用アカウントのS3バケットに集める。S3のログはAthenaでSQLを使って分析できる。</figcaption>
+</figure>
+
+<h3 id="c2-6">ログの保護<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>証跡のログは、不正の証拠になるため、消されたり書き換えられたりしないように守ります。</p>
+<ul>
+<li><strong>ログファイルの整合性検証</strong>:有効にすると、1時間ごとに<strong>ダイジェストファイル</strong>(ログファイルのハッシュ値に電子署名を付けたもの)が作られる。<code>aws cloudtrail validate-logs</code> で、ログが変更・削除されていないかを確かめられる。</li>
+<li><strong>保存先を分ける</strong>:ログ専用のアカウントのS3バケットに保存し、バケットポリシーでCloudTrail以外からの書き込みと削除を制限する。S3オブジェクトロックで削除を防ぐこともできる。</li>
+<li><strong>暗号化</strong>:ログは標準でSSE-S3で暗号化される。SSE-KMS(カスタマーマネージドキー)にすると、ログを読める人をキーの権限でも絞れる。</li>
+<li><strong>止めさせない</strong>:SCPで <code>cloudtrail:StopLogging</code>・<code>cloudtrail:DeleteTrail</code> を拒否する。証跡の停止はEventBridgeで検知して通知できる。</li>
+</ul>
+
+<h3 id="c2-7">ログの分析とCloudTrail Lake<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>内容</th></tr>
+<tr><td>イベント履歴</td><td>コンソールで過去90日分の管理イベントを、ユーザー名・イベント名・リソースで絞り込んで見る</td></tr>
+<tr><td>Athena</td><td>S3に保存した証跡のログに、SQLで問い合わせる。長期間のログの分析に向く</td></tr>
+<tr><td>CloudWatch Logs Insights</td><td>CloudWatch Logsに送ったログに、クエリで問い合わせる</td></tr>
+<tr><td><strong>CloudTrail Lake</strong></td><td>イベントを<strong>イベントデータストア</strong>に集め、SQLで問い合わせる。S3やAthenaを準備しなくてよく、長期間(最長10年)保存できる。AWS以外のソースのイベントも取り込める</td></tr>
+</table></div>
+
+<h3 id="c2-8">ログが届かないときの確認<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>証跡の記録が<strong>停止</strong>されていないか(<code>StopLogging</code> がイベント履歴に残っていないか)。</li>
+<li>S3の<strong>バケットポリシー</strong>で、CloudTrailからの書き込みを許可しているか。</li>
+<li>SSE-KMSで暗号化している場合、<strong>キーポリシー</strong>でCloudTrailにキーの利用を許可しているか。</li>
+<li>見たいのがデータイベントなら、証跡でデータイベントを有効にしているか。</li>
 </ul>
 </section>
 
@@ -143,21 +229,35 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="cloudwatch.html">Amazon CloudWatch</a>:ログの監視・アラーム</li>
 <li><a href="eventbridge.html">Amazon EventBridge</a>:API操作をトリガーにした自動処理</li>
 <li><a href="config.html">AWS Config</a>:「何がどう変わったか」の記録(CloudTrailは「誰がやったか」)</li>
-<li><a href="organizations.html">AWS Organizations</a>:組織全体の証跡</li>
+<li><a href="organizations.html">AWS Organizations</a>:組織全体の証跡、証跡の停止を禁止するSCP</li>
+<li><a href="athena.html">Amazon Athena</a>:S3に保存したログのSQLでの分析</li>
+<li><a href="kms.html">AWS KMS</a>:ログの暗号化</li>
+<li><a href="control-tower.html">AWS Control Tower</a>:ログアーカイブアカウントへのログの集約</li>
 <li>関連する用語:<a href="../terms/root-user.html">ルートユーザーとアカウントの保護</a>、<a href="../terms/compliance-artifact.html">コンプライアンスとAWS Artifact</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
+<div class="point">
+<h4>記録の設定</h4>
+<ul>
 <li>「誰が」「いつ」「どのAPIを」→ <strong>CloudTrail</strong>。「設定がどう変わったか・準拠しているか」→ <strong>Config</strong>。</li>
-<li>S3のオブジェクト操作を記録 → <strong>データイベントを有効化</strong>。</li>
+<li>S3のオブジェクト操作を記録 → <strong>データイベントを有効化</strong>。料金を抑えるには<strong>高度なイベントセレクター</strong>で絞り込む。</li>
 <li>90日より前の履歴が必要 → <strong>証跡を作成</strong>してS3に保存。</li>
-<li>ログの改ざんを検知 → <strong>ログファイルの整合性検証</strong>。</li>
-<li>リアルタイムに近い通知 → <strong>CloudWatch Logsと統合</strong>。</li>
+<li>全アカウント・全リージョンをまとめて記録し、メンバーに消させない → <strong class="em">組織の証跡</strong>。</li>
+<li>普段と違うAPIの呼び出しの急増に気付きたい → <strong>Insightsイベント</strong>。</li>
+</ul>
+<h4>保護と分析</h4>
+<ul>
+<li>ログの改ざん・削除を検知 → <strong>ログファイルの整合性検証</strong>(ダイジェストファイル)。</li>
+<li>証跡を止めさせない → <strong>SCP</strong>で <code>StopLogging</code>・<code>DeleteTrail</code> を拒否する。</li>
+<li>リアルタイムに近い通知 → <strong>CloudWatch Logsと統合</strong>し、メトリクスフィルターとアラームで通知。</li>
+<li>S3に保存したログをSQLで調べる → <strong>Athena</strong>。S3を用意せずSQLで長期保存・分析 → <strong>CloudTrail Lake</strong>。</li>
+<li>ログが届かない → 記録の停止、バケットポリシー、KMSのキーポリシーを確認する。</li>
 <li>CloudWatch・CloudTrail・Config・X-Rayの使い分け → <a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
@@ -165,7 +265,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ul>
 <li>CloudTrailはAPI操作の監査ログ。90日分は自動で見られる。</li>
 <li>イベントは管理・データ・Insightsの3種類。データイベントは有効化が必要。</li>
-<li>長期保存はS3、リアルタイム監視はCloudWatch Logs。</li>
+<li>長期保存はS3、リアルタイム監視はCloudWatch Logs、SQLでの分析はAthenaかCloudTrail Lake。</li>
+<li>組織の証跡で全アカウントをまとめ、整合性検証・保存先の分離・SCPでログを守る。</li>
 </ul>
 </section>
 <section class="chapter backlinks">
@@ -186,69 +287,69 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 8件・リンク元 20件)</summary>
+<summary>つながり図を開く(リンク先 11件・リンク元 17件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 636" style="max-width:784px;min-width:600px" role="img" aria-label="AWS CloudTrailとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,45 C265.0,45 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Control Tower</text></a>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS IAM</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../services/identity-center.html"><title>サービス:AWS IAM Identity Center</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS IAM Identity Center</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../services/kms.html"><title>サービス:AWS KMS</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS KMS</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS Security Hub</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">Amazon Athena</text></a>
-<path class="gr-line" d="M230,225 C265.0,225 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../services/bedrock.html"><title>サービス:Amazon Bedrock</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">Amazon Bedrock</text></a>
-<path class="gr-line" d="M230,255 C265.0,255 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">Amazon GuardDuty</text></a>
-<path class="gr-line" d="M230,285 C265.0,285 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../terms/access-methods.html"><title>用語:AWSの操作方法(コンソール・CLI・SDK・API)</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="290" class="gr-t">AWSの操作方法(コンソール・CL…</text></a>
-<path class="gr-line" d="M230,315 C265.0,315 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../terms/iam-policy-evaluation.html"><title>用語:IAMポリシーと評価ロジック</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="320" class="gr-t">IAMポリシーと評価ロジック</text></a>
-<path class="gr-line" d="M230,345 C265.0,345 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="350" class="gr-t">イベント駆動の自動修復</text></a>
-<path class="gr-line" d="M230,375 C265.0,375 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/network-troubleshooting.html"><title>運用シナリオ:EC2に接続できない原因を調査する</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="380" class="gr-t">EC2に接続できない原因を調査する</text></a>
-<path class="gr-line" d="M230,405 C265.0,405 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/access-denied-troubleshooting.html"><title>運用シナリオ:「AccessDenied」の原因を調べ、最小権限に直す</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="410" class="gr-t">「AccessDenied」の原因を調…</text></a>
-<path class="gr-line" d="M230,435 C265.0,435 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/config-auto-remediation.html"><title>運用シナリオ:公開されたS3バケットを検出して自動で修復する</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="440" class="gr-t">公開されたS3バケットを検出し…</text></a>
-<path class="gr-line" d="M230,465 C265.0,465 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/s3-encryption-audit.html"><title>運用シナリオ:機密データを保存するS3を暗号化・監査する</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="470" class="gr-t">機密データを保存するS3を暗号…</text></a>
-<path class="gr-line" d="M230,495 C265.0,495 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/cross-account-access.html"><title>運用シナリオ:異なるAWSアカウントのリソースにアクセス</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="500" class="gr-t">異なるAWSアカウントのリソース…</text></a>
-<path class="gr-line" d="M230,525 C265.0,525 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/org-guardrails.html"><title>運用シナリオ:組織全体にセキュリティのガードレールを設ける</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="530" class="gr-t">組織全体にセキュリティのガード…</text></a>
-<path class="gr-line" d="M230,555 C265.0,555 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/centralized-logging.html"><title>運用シナリオ:複数アカウントのログを集約して分析する</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="560" class="gr-t">複数アカウントのログを集約して…</text></a>
-<path class="gr-line" d="M230,585 C265.0,585 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/identity-center-sso.html"><title>運用シナリオ:複数アカウントへのログインをシングルサインオンにまとめる</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="590" class="gr-t">複数アカウントへのログインをシ…</text></a>
-<path class="gr-line" d="M230,615 C265.0,615 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/bastionless-access.html"><title>運用シナリオ:踏み台サーバーなしでプライベートなEC2を操作する</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="620" class="gr-t">踏み台サーバーなしでプライベー…</text></a>
-<path class="gr-line" d="M480,330 C515.0,330 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">AWS Config</text></a>
-<path class="gr-line" d="M480,330 C515.0,330 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">AWS Organizations</text></a>
-<path class="gr-line" d="M480,330 C515.0,330 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 546" style="max-width:784px;min-width:600px" role="img" aria-label="AWS CloudTrailとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/identity-center.html"><title>サービス:AWS IAM Identity Center</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS IAM Identity Center</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Security Hub</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/bedrock.html"><title>サービス:Amazon Bedrock</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon Bedrock</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Amazon GuardDuty</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/access-methods.html"><title>用語:AWSの操作方法(コンソール・CLI・SDK・API)</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">AWSの操作方法(コンソール・CL…</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-policy-evaluation.html"><title>用語:IAMポリシーと評価ロジック</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">IAMポリシーと評価ロジック</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">イベント駆動の自動修復</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/network-troubleshooting.html"><title>運用シナリオ:EC2に接続できない原因を調査する</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">EC2に接続できない原因を調査する</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/access-denied-troubleshooting.html"><title>運用シナリオ:「AccessDenied」の原因を調べ、最小権限に直す</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="320" class="gr-t">「AccessDenied」の原因を調…</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/config-auto-remediation.html"><title>運用シナリオ:公開されたS3バケットを検出して自動で修復する</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="350" class="gr-t">公開されたS3バケットを検出し…</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/s3-encryption-audit.html"><title>運用シナリオ:機密データを保存するS3を暗号化・監査する</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="380" class="gr-t">機密データを保存するS3を暗号…</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cross-account-access.html"><title>運用シナリオ:異なるAWSアカウントのリソースにアクセス</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="410" class="gr-t">異なるAWSアカウントのリソース…</text></a>
+<path class="gr-line" d="M230,435 C265.0,435 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/org-guardrails.html"><title>運用シナリオ:組織全体にセキュリティのガードレールを設ける</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="440" class="gr-t">組織全体にセキュリティのガード…</text></a>
+<path class="gr-line" d="M230,465 C265.0,465 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/centralized-logging.html"><title>運用シナリオ:複数アカウントのログを集約して分析する</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="470" class="gr-t">複数アカウントのログを集約して…</text></a>
+<path class="gr-line" d="M230,495 C265.0,495 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/identity-center-sso.html"><title>運用シナリオ:複数アカウントへのログインをシングルサインオンにまとめる</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="500" class="gr-t">複数アカウントへのログインをシ…</text></a>
+<path class="gr-line" d="M230,525 C265.0,525 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/bastionless-access.html"><title>運用シナリオ:踏み台サーバーなしでプライベートなEC2を操作する</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="530" class="gr-t">踏み台サーバーなしでプライベー…</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Config</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS Control Tower</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/kms.html"><title>サービス:AWS KMS</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">AWS KMS</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon Athena</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Amazon CloudWatch</text></a>
-<path class="gr-line" d="M480,330 C515.0,330 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="320" class="gr-t">Amazon EventBridge</text></a>
-<path class="gr-line" d="M480,330 C515.0,330 515.0,345 550,345" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,345 550,345" marker-end="url(#gr-arrow)"/>
 <a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="350" class="gr-t">Amazon S3</text></a>
-<path class="gr-line" d="M480,330 C515.0,330 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../terms/compliance-artifact.html"><title>用語:コンプライアンスとAWS Artifact</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="380" class="gr-t">コンプライアンスとAWS Artifa…</text></a>
-<path class="gr-line" d="M480,330 C515.0,330 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../terms/root-user.html"><title>用語:ルートユーザーとアカウントの保護</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="410" class="gr-t">ルートユーザーとアカウントの保護</text></a>
-<path class="gr-line" d="M480,330 C515.0,330 515.0,435 550,435" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,435 550,435" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../terms/monitoring-logging-comparison.html"><title>用語:監視・記録のサービスの選び方</title><rect x="550" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="440" class="gr-t">監視・記録のサービスの選び方</text></a>
-<rect x="300" y="310" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="335" text-anchor="middle" class="gr-tb">AWS CloudTrail</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(20)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
+<rect x="300" y="265" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="290" text-anchor="middle" class="gr-tb">AWS CloudTrail</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(17)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(11)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
