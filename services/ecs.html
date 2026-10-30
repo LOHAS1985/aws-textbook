@@ -40,12 +40,28 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat2">コンテナ</a>
   <h1>Amazon ECS</h1>
   <p class="lead">AWS上でコンテナを実行・管理するオーケストレーションサービス</p>
-  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
+  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(17項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">起動タイプ</a></li><li><a href="#c2-3">タスクロールとタスク実行ロール</a></li><li><a href="#c2-4">ネットワークモード</a></li><li><a href="#c2-5">キャパシティプロバイダー</a></li><li><a href="#c2-6">サービスのAuto Scaling</a></li><li><a href="#c2-7">デプロイ</a></li><li><a href="#c2-8">ログと監視</a></li><li><a href="#c2-9">タスクが止まる・起動しないときの調べ方</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>Amazon ECS(Elastic Container Service)</strong>は、AWS上でコンテナを実行・管理するための<strong>コンテナオーケストレーションサービス</strong>です。</p>
+<p><strong>Amazon ECS(Elastic Container Service)</strong>は、AWS上でコンテナを実行・管理するための<strong>コンテナオーケストレーションサービス</strong>です。どのサーバーでコンテナを動かすか、何個動かすか、壊れたら入れ替えるか、新しいバージョンにどう切り替えるかを、ECSが代わりに管理します。</p>
+<p>Kubernetesの知識がなくても使え、IAM・ALB・CloudWatchなどのAWSのサービスと最初から連携できるのが特徴です。Kubernetesを使いたい場合は<a href="eks.html">Amazon EKS</a>を選びます。</p>
 </section>
 
 <section class="chapter">
@@ -54,11 +70,12 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ul>
 <li><strong>クラスター</strong>:実行環境のまとまり。複数のアプリや環境をまとめるときに使う。</li>
 <li><strong class="em">タスク定義</strong>:コンテナを実行するときの設計書(Dockerfileはビルド時の設計書)。
-  <ul><li>使用するイメージ(Docker Image)</li><li>CPU/メモリ</li><li>ポート(Port Mapping)</li><li><strong>環境変数(Environment Variables)</strong></li></ul></li>
+  <ul><li>使用するイメージ(Docker Image)</li><li>CPU/メモリ</li><li>ポート(Port Mapping)</li><li><strong>環境変数(Environment Variables)</strong>とシークレット</li><li>IAMロール、ログの送り先、ヘルスチェック</li></ul></li>
 <li><strong>タスク</strong>:タスク定義から起動された実体(コンテナ)。</li>
 <li><strong>サービス</strong>:タスクを常に指定数維持する仕組み。
   <ul><li>起動数の維持(Desired Count)</li><li>自動増減(Auto Scaling)</li><li>ALB連携(Load Balancer)</li><li>無停止更新(Rolling Update)</li><li>異常タスクの交換(Health Check)</li></ul></li>
 </ul>
+<p>Webアプリのように動き続ける処理はサービスで、バッチのように終わる処理はタスクを単独で(EventBridgeのスケジュールなどから)実行します。</p>
 
 <figure class="figure">
 <div class="fig-scroll">
@@ -100,14 +117,71 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 ECSの構成要素。サービスがタスク定義をもとにタスクを起動し、指定した数を維持する。ALBと連携してタスクにトラフィックを振り分ける。</figcaption>
 </figure>
+
 <h3 id="c2-2">起動タイプ<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>起動タイプ</th><th>内容</th><th>特徴</th></tr>
-<tr><td>EC2起動タイプ</td><td>ユーザーがEC2を用意し、その上でコンテナを実行</td><td>柔軟だがサーバー管理が必要</td></tr>
-<tr><td>Fargate起動タイプ(現在の主流)</td><td>コンテナを指定するだけ</td><td>サーバー管理不要(ほぼサーバーレス)</td></tr>
+<tr><td>EC2起動タイプ</td><td>ユーザーがEC2(コンテナインスタンス)を用意し、その上でコンテナを実行</td><td>GPUや特殊なインスタンスを使える。OSのパッチ当てや台数の管理が必要</td></tr>
+<tr><td>Fargate起動タイプ(現在の主流)</td><td>コンテナを指定するだけ</td><td>サーバー管理不要(ほぼサーバーレス)。タスクごとに分離される</td></tr>
 </table></div>
+<p>EC2起動タイプでは、EC2にECSコンテナエージェントが入ったAMI(ECS最適化AMI)を使い、インスタンスにはECSへ登録するためのIAMロール(インスタンスロール)を付けます。</p>
 
-<h3 id="c2-3">キャパシティプロバイダー<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-3">タスクロールとタスク実行ロール<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>ECSのタスクには、目的の違う2つのIAMロールを設定します。取り違えやすいので、試験でもよく問われます。</p>
+<div class="table-wrap"><table>
+<tr><th>ロール</th><th>使う人</th><th>必要な権限の例</th></tr>
+<tr><td><strong class="em">タスク実行ロール</strong></td><td>ECS(コンテナを起動する側)</td><td>ECRからイメージを取得する、CloudWatch Logsにログを書く、Secrets Manager・Parameter Storeからシークレットを読んでコンテナに渡す</td></tr>
+<tr><td><strong class="em">タスクロール</strong></td><td>コンテナの中のアプリ</td><td>アプリがS3にファイルを置く、DynamoDBを読み書きする、など</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図2 2つのロールの違い。タスク実行ロールはECSがタスクを起動するために、タスクロールはコンテナの中のアプリがAWSのサービスを呼ぶために使う。"><defs><marker id="dgservices-ecs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ecs">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">ECS</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">タスクを起動</text>
+</g>
+<g data-node="ex">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">タスク実行ロール</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">起動のための権限</text>
+</g>
+<g data-node="app">
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="147" text-anchor="middle" class="dg-tb">タスクロール</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">アプリの権限</text>
+</g>
+<g data-node="ecr">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">ECR・Logs</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">Secrets Manager</text>
+</g>
+<g data-node="s3">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">S3・DynamoDB</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">アプリが使う</text>
+</g>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#dgservices-ecs-2)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgservices-ecs-2)"/>
+<text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">イメージの取得など</text>
+<path d="M422.0,151.5 L510.0,151.5" class="dg-line" marker-end="url(#dgservices-ecs-2)"/>
+<text x="466" y="156" text-anchor="middle" class="dg-s dg-halo">アプリが呼び出す</text>
+</svg>
+</div>
+<figcaption>図2 2つのロールの違い。タスク実行ロールはECSがタスクを起動するために、タスクロールはコンテナの中のアプリがAWSのサービスを呼ぶために使う。</figcaption>
+</figure>
+<p>アプリにアクセスキーを持たせる必要はありません。パスワードなどは、タスク定義の <code>secrets</code> でSecrets ManagerやParameter Storeを参照すると、起動時に環境変数として渡されます。</p>
+
+<h3 id="c2-4">ネットワークモード<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>モード</th><th>内容</th></tr>
+<tr><td><strong>awsvpc</strong></td><td>タスクごとにENI(プライベートIPアドレス)が付き、<strong>タスクごとにセキュリティグループ</strong>を設定できる。Fargateではこのモードだけを使う</td></tr>
+<tr><td>bridge</td><td>EC2起動タイプで、ホストの中の仮想ネットワークを使う。ホストのポートを動的に割り当て(動的ポートマッピング)、ALBが自動で振り分け先のポートを登録する</td></tr>
+<tr><td>host</td><td>EC2のネットワークをそのまま使う。同じポートのタスクを1台に2つ置けない</td></tr>
+</table></div>
+<p>プライベートサブネットのタスクがECRからイメージを取得するには、NATゲートウェイか、ECR(<code>ecr.api</code>・<code>ecr.dkr</code>)とS3のVPCエンドポイントが必要です。どちらもないと、タスクが起動できません。</p>
+
+<h3 id="c2-5">キャパシティプロバイダー<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>ECSタスクを<strong>どの計算リソース上でどれだけ実行するか</strong>を管理します。</p>
 <ul>
 <li>計算リソース:<code>FARGATE</code>(通常)、<code>FARGATE_SPOT</code>(余剰リソースを安価に利用)、ASG Capacity Provider(ECSがEC2 Auto Scalingを管理)</li>
@@ -115,7 +189,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 480 194" style="max-width:480px;min-width:480px" role="img" aria-label="図2 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。"><defs><marker id="dgservices-ecs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 480 194" style="max-width:480px;min-width:480px" role="img" aria-label="図3 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。"><defs><marker id="dgservices-ecs-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="svc">
 <rect x="34" y="78" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="100" text-anchor="middle" class="dg-tb">ECSサービス</text>
@@ -131,14 +205,88 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="381" y="140" text-anchor="middle" class="dg-t">FARGATE_SPOT</text>
 <text x="381" y="158" text-anchor="middle" class="dg-s">Weight=3</text>
 </g>
-<path d="M184.0,93.0 L306.0,75.0" class="dg-line" marker-end="url(#dgservices-ecs-2)"/>
+<path d="M184.0,93.0 L306.0,75.0" class="dg-line" marker-end="url(#dgservices-ecs-3)"/>
 <text x="245" y="88" text-anchor="middle" class="dg-s dg-halo">4タスク</text>
-<path d="M184.0,115.0 L306.0,133.0" class="dg-line" marker-end="url(#dgservices-ecs-2)"/>
+<path d="M184.0,115.0 L306.0,133.0" class="dg-line" marker-end="url(#dgservices-ecs-3)"/>
 <text x="245" y="128" text-anchor="middle" class="dg-s dg-halo">6タスク</text>
 </svg>
 </div>
-<figcaption>図2 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。</figcaption>
+<figcaption>図3 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。</figcaption>
 </figure>
+<p>ASG Capacity Providerでは、<strong>マネージドスケーリング</strong>を有効にすると、タスクを置く場所が足りなくなったときに、ECSがEC2の台数を自動で増やします。</p>
+
+<h3 id="c2-6">サービスのAuto Scaling<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>サービスのタスク数は、Application Auto Scalingで増減します。ターゲット追跡で、サービスの平均CPU使用率・平均メモリ使用率、ALBのターゲットあたりのリクエスト数(<code>ALBRequestCountPerTarget</code>)を目標値に保つのが基本です。SQSのキューの長さなど、独自のメトリクスでも増減できます。</p>
+
+<h3 id="c2-7">デプロイ<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>動き</th></tr>
+<tr><td><strong>ローリング更新</strong>(既定)</td><td>新しいタスクを起動してから古いタスクを止める。<code>minimumHealthyPercent</code>(更新中に最低限動かしておく割合)と <code>maximumPercent</code>(一時的に増やせる上限)で、入れ替えの速さを決める</td></tr>
+<tr><td><strong>Blue/Green</strong></td><td>新しいバージョンのタスクを並べて起動し、ALBの通信を切り替える。一度に切り替えるほか、少しずつ移す線形・カナリアも選べる。問題があればすぐ元に戻せる。ECSのサービス自体で実行でき、以前はCodeDeployと組み合わせていた</td></tr>
+</table></div>
+<ul>
+<li><strong class="em">デプロイサーキットブレーカー</strong>:新しいタスクが起動に失敗し続ける(ヘルスチェックに通らない、すぐ止まる)と、デプロイを失敗とみなし、<strong>ロールバック</strong>を有効にしておけば前のバージョンに自動で戻す。</li>
+<li><strong>CloudWatchアラームによるロールバック</strong>:タスクは起動したが、エラー率などのアラームが鳴った場合にも、自動で前のバージョンに戻せる。</li>
+<li>ALBのヘルスチェックに通る前にタスクが入れ替えられる場合は、サービスの<strong>ヘルスチェックの猶予期間</strong>を延ばす。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 879 202" style="max-width:879px;min-width:704px" role="img" aria-label="図4 デプロイサーキットブレーカー。新しいタスクの起動の失敗が続くと、デプロイを止めて前のバージョンに自動で戻す。"><defs><marker id="dgservices-ecs-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="up">
+<rect x="34" y="83" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="104" text-anchor="middle" class="dg-t">サービスを更新</text>
+<text x="106" y="122" text-anchor="middle" class="dg-s">新しいタスク定義</text>
+</g>
+<g data-node="new">
+<rect x="265" y="83" width="145" height="52" rx="8" class="dg-box"/>
+<text x="338" y="104" text-anchor="middle" class="dg-t">新しいタスク</text>
+<text x="338" y="122" text-anchor="middle" class="dg-s">起動・ヘルスチェック</text>
+</g>
+<g data-node="ok">
+<rect x="496" y="40" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="568" y="62" text-anchor="middle" class="dg-t">成功</text>
+<text x="568" y="80" text-anchor="middle" class="dg-s">古いタスクを停止</text>
+</g>
+<g data-node="ng">
+<rect x="496" y="126" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="568" y="147" text-anchor="middle" class="dg-t">失敗が続く</text>
+<text x="568" y="165" text-anchor="middle" class="dg-s">サーキットブレーカー</text>
+</g>
+<g data-node="rb">
+<rect x="710" y="126" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="783" y="147" text-anchor="middle" class="dg-tb">ロールバック</text>
+<text x="783" y="165" text-anchor="middle" class="dg-s">前のバージョンへ</text>
+</g>
+<path d="M179.0,109.0 L265.0,109.0" class="dg-line" marker-end="url(#dgservices-ecs-4)"/>
+<path d="M410.0,95.7 L496.0,79.8" class="dg-line" marker-end="url(#dgservices-ecs-4)"/>
+<text x="453" y="92" text-anchor="middle" class="dg-s dg-halo">正常</text>
+<path d="M410.0,122.3 L496.0,138.2" class="dg-line" marker-end="url(#dgservices-ecs-4)"/>
+<text x="453" y="134" text-anchor="middle" class="dg-s dg-halo">異常</text>
+<path d="M641.0,151.5 L710.5,151.5" class="dg-line" marker-end="url(#dgservices-ecs-4)"/>
+</svg>
+</div>
+<figcaption>図4 デプロイサーキットブレーカー。新しいタスクの起動の失敗が続くと、デプロイを止めて前のバージョンに自動で戻す。</figcaption>
+</figure>
+
+<h3 id="c2-8">ログと監視<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ログ</strong>:タスク定義のログドライバーに <code>awslogs</code> を指定すると、コンテナの標準出力がCloudWatch Logsに送られる。S3やOpenSearch Serviceなどに送りたい場合はFireLens(Fluent Bit)を使う。</li>
+<li><strong>サービスのメトリクス</strong>:サービスのCPU使用率・メモリ使用率は、標準でCloudWatchに送られる。</li>
+<li><strong class="em">CloudWatch Container Insights</strong>:クラスター・サービス・タスク・コンテナ単位のCPU・メモリ・ネットワーク・ストレージ、実行中のタスク数などを集め、ダッシュボードで表示する。クラスターごと、またはアカウントの既定で有効にする(オブザーバビリティを強化したモードでは、コンテナ単位まで詳しく見られる)。</li>
+<li><strong>イベント</strong>:タスクの状態の変化(停止など)やサービスのデプロイの状態は、EventBridgeのイベントになる。タスクが止まったら通知する、などに使う。</li>
+</ul>
+
+<h3 id="c2-9">タスクが止まる・起動しないときの調べ方<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>止まったタスクの「<strong>停止理由</strong>」(コンソールのタスクの詳細、または <code>DescribeTasks</code> の <code>stoppedReason</code>)を見ると、原因の見当がつきます。</p>
+<div class="table-wrap"><table>
+<tr><th>停止理由の例</th><th>よくある原因と対処</th></tr>
+<tr><td><code>CannotPullContainerError</code></td><td>イメージを取得できない。NATゲートウェイやVPCエンドポイントがない、タスク実行ロールにECRの権限がない、イメージのタグが間違っている</td></tr>
+<tr><td><code>ResourceInitializationError</code></td><td>シークレットやログの準備に失敗した。タスク実行ロールにSecrets Manager・Parameter Store・KMSの権限がない、エンドポイントに届かない</td></tr>
+<tr><td><code>OutOfMemoryError</code></td><td>コンテナがタスク定義のメモリの上限を超えた。メモリを増やすか、アプリの使い方を見直す</td></tr>
+<tr><td>ELBのヘルスチェックに失敗</td><td>ヘルスチェックのパスやポートが違う、セキュリティグループでALBからの通信を許可していない、猶予期間が短い</td></tr>
+<tr><td><code>Essential container in task exited</code></td><td>必須のコンテナが終了した。CloudWatch Logsでアプリのエラーを確認する</td></tr>
+</table></div>
+<p>動いているコンテナの中に入って調べたいときは、<strong>ECS Exec</strong>を使います(Systems Manager Session Managerのしくみを使うため、タスクロールに権限が必要)。</p>
 </section>
 
 <section class="chapter">
@@ -147,13 +295,15 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>Webアプリ・APIをコンテナで常時稼働させる(サービス+ALB)</li>
 <li>FARGATE_SPOTを組み合わせたコスト重視のバッチ処理</li>
 <li>Lambdaの15分制限を超える長時間処理</li>
+<li>新しいバージョンを止めずにリリースし、失敗したら自動で戻す</li>
+<li>関連する運用シナリオ:<a href="../usecases/ecs-safe-deploy.html">ECSのサービスを止めずに更新し、失敗したら自動で戻す</a>、<a href="../usecases/container-monitoring.html">コンテナ(ECS・EKS)の性能を監視する</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>ECS自体の利用料はかかりません。EC2起動タイプではEC2インスタンスの料金、Fargate起動タイプではタスクに割り当てたvCPU・メモリと実行時間に応じた料金がかかります。</p>
-<p>FARGATE_SPOTを使うと余剰リソースを安価に利用できます(中断される可能性あり)。</p>
+<p>FARGATE_SPOTを使うと余剰リソースを安価に利用できます(中断される可能性あり)。Container Insightsを有効にすると、集めたメトリクスとログの分のCloudWatchの料金がかかります。</p>
 </section>
 
 <section class="chapter">
@@ -162,19 +312,35 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="ecr.html">Amazon ECR</a>:コンテナイメージの保存先</li>
 <li><a href="eks.html">Amazon EKS</a>:Kubernetesベースのオーケストレーション</li>
 <li><a href="elb.html">Elastic Load Balancing</a>:サービスとALBの連携</li>
-<li><a href="ec2.html">Amazon EC2</a>:EC2起動タイプの実行基盤</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:EC2起動タイプの実行基盤</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ログ、Container Insights、ロールバックに使うアラーム</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>/<a href="systems-manager.html">AWS Systems Manager</a>:シークレットの受け渡し、ECS Exec</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:タスクの状態の変化の通知、スケジュール実行</li>
+<li><a href="codedeploy.html">AWS CodeDeploy</a>/<a href="codepipeline.html">AWS CodePipeline</a>:デプロイの自動化</li>
 <li><a href="copilot.html">AWS Copilot</a>:ECSアプリの構築・デプロイを簡単にするCLI</li>
+<li>関連する用語:<a href="../terms/deploy-strategies.html">デプロイ戦略</a>、<a href="../terms/circuit-breaker.html">サーキットブレーカー</a>、<a href="../terms/iam-roles-credentials.html">IAMロールと認証情報</a>、<a href="../terms/managed-serverless.html">マネージドとサーバーレス</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point">
+<h4>設定</h4>
 <ul>
 <li>コンテナの環境変数・CPU/メモリ・イメージは<strong>タスク定義</strong>で指定する。</li>
 <li>タスク数の維持・ALB連携・ローリング更新は<strong>サービス</strong>の役割。</li>
 <li>サーバー管理をしたくない → <strong>Fargate</strong>。</li>
 <li>Fargateと安価なFARGATE_SPOTの配分 → キャパシティプロバイダーの<strong>Base/Weight</strong>。</li>
+<li>アプリがS3などを使う権限 → <strong>タスクロール</strong>。イメージの取得・ログ・シークレットの取得 → <strong>タスク実行ロール</strong>。</li>
+<li>タスクごとにセキュリティグループを分けたい → <strong>awsvpc</strong>モード。</li>
+</ul>
+<h4>デプロイと監視</h4>
+<ul>
+<li>新しいタスクの起動失敗で自動で戻したい → <strong>デプロイサーキットブレーカー</strong>(ロールバックを有効に)。</li>
+<li>エラー率の上昇で自動で戻したい → デプロイに<strong>CloudWatchアラーム</strong>を設定する。</li>
+<li>コンテナ・タスク単位のCPU・メモリを見たい → <strong>Container Insights</strong>。</li>
+<li>コンテナのログを集めたい → <code>awslogs</code> ログドライバーでCloudWatch Logsへ。</li>
+<li>プライベートサブネットで <code>CannotPullContainerError</code> → NATゲートウェイかECR・S3のVPCエンドポイント、タスク実行ロールの権限を確認する。</li>
 </ul>
 </div>
 </section>
@@ -183,8 +349,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>ECSは「クラスター/タスク定義/タスク/サービス」で構成される。</li>
-<li>起動タイプはEC2とFargate。主流はFargate。</li>
-<li>キャパシティプロバイダーでリソースの配分を制御する。</li>
+<li>起動タイプはEC2とFargate。主流はFargate。キャパシティプロバイダーでリソースの配分を制御する。</li>
+<li>権限はタスク実行ロール(起動)とタスクロール(アプリ)に分ける。</li>
+<li>デプロイはサーキットブレーカーとアラームで自動で戻し、監視はContainer InsightsとCloudWatch Logsで行う。</li>
 </ul>
 </section>
 <section class="chapter backlinks">
@@ -198,49 +365,61 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 5件・リンク元 13件)</summary>
+<summary>つながり図を開く(リンク先 18件・リンク元 6件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 426" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon ECSとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,45 C265.0,45 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/codedeploy.html"><title>サービス:AWS CodeDeploy</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS CodeDeploy</text></a>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS CodePipeline</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/compute-optimizer.html"><title>サービス:AWS Compute Optimizer</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Compute Optimizer</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS Elastic Beanstalk</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/xray.html"><title>サービス:AWS X-Ray</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS X-Ray</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/efs.html"><title>サービス:Amazon EFS</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">Amazon EFS</text></a>
-<path class="gr-line" d="M230,225 C265.0,225 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/savings-plans.html"><title>サービス:Savings Plans</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">Savings Plans</text></a>
-<path class="gr-line" d="M230,255 C265.0,255 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">IAMロールと一時的な認証情報</text></a>
-<path class="gr-line" d="M230,285 C265.0,285 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/circuit-breaker.html"><title>用語:サーキットブレーカー</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="290" class="gr-t">サーキットブレーカー</text></a>
-<path class="gr-line" d="M230,315 C265.0,315 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/managed-serverless.html"><title>用語:マネージドサービスとサーバーレス</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="320" class="gr-t">マネージドサービスとサーバーレス</text></a>
-<path class="gr-line" d="M230,345 C265.0,345 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/secrets-config-comparison.html"><title>用語:機密情報・設定値の保存先の選び方</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="350" class="gr-t">機密情報・設定値の保存先の選び方</text></a>
-<path class="gr-line" d="M230,375 C265.0,375 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/ecs-safe-deploy.html"><title>運用シナリオ:ECSのサービスを止めずに更新し、失敗したら自動で戻す</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="380" class="gr-t">ECSのサービスを止めずに更新し…</text></a>
-<path class="gr-line" d="M230,405 C265.0,405 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/container-monitoring.html"><title>運用シナリオ:コンテナ(ECS・EKS)の性能を監視する</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="410" class="gr-t">コンテナ(ECS・EKS)の性能を監…</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/copilot.html"><title>サービス:AWS Copilot</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS Copilot</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
-<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon EC2</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/ecr.html"><title>サービス:Amazon ECR</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon ECR</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/eks.html"><title>サービス:Amazon EKS</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon EKS</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Elastic Load Balancing (E…</text></a>
-<rect x="300" y="205" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="230" text-anchor="middle" class="gr-tb">Amazon ECS</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(13)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+<svg viewBox="0 0 784 576" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon ECSとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../services/compute-optimizer.html"><title>サービス:AWS Compute Optimizer</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">AWS Compute Optimizer</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">AWS Elastic Beanstalk</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../services/xray.html"><title>サービス:AWS X-Ray</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="290" class="gr-t">AWS X-Ray</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../services/efs.html"><title>サービス:Amazon EFS</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="320" class="gr-t">Amazon EFS</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../services/savings-plans.html"><title>サービス:Savings Plans</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="350" class="gr-t">Savings Plans</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../terms/secrets-config-comparison.html"><title>用語:機密情報・設定値の保存先の選び方</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="380" class="gr-t">機密情報・設定値の保存先の選び方</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/codedeploy.html"><title>サービス:AWS CodeDeploy</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CodeDeploy</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CodePipeline</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/copilot.html"><title>サービス:AWS Copilot</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Copilot</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/secrets-manager.html"><title>サービス:AWS Secrets Manager</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Secrets Manager</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ecr.html"><title>サービス:Amazon ECR</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Amazon ECR</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/eks.html"><title>サービス:Amazon EKS</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="320" class="gr-t">Amazon EKS</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,345 550,345" marker-end="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="350" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="380" class="gr-t">Elastic Load Balancing (E…</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="410" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,435 550,435" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/circuit-breaker.html"><title>用語:サーキットブレーカー</title><rect x="550" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="440" class="gr-t">サーキットブレーカー</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,465 550,465" marker-end="url(#gr-arrow)"/>
+<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="550" y="454" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="470" class="gr-t">デプロイ戦略</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,495 550,495" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/managed-serverless.html"><title>用語:マネージドサービスとサーバーレス</title><rect x="550" y="484" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="500" class="gr-t">マネージドサービスとサーバーレス</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,525 550,525" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../usecases/ecs-safe-deploy.html"><title>運用シナリオ:ECSのサービスを止めずに更新し、失敗したら自動で戻す</title><rect x="550" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="560" y="530" class="gr-t">ECSのサービスを止めずに更新し…</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,555 550,555" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../usecases/container-monitoring.html"><title>運用シナリオ:コンテナ(ECS・EKS)の性能を監視する</title><rect x="550" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="560" y="560" class="gr-t">コンテナ(ECS・EKS)の性能を監…</text></a>
+<rect x="300" y="280" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="305" text-anchor="middle" class="gr-tb">Amazon ECS</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(6)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(18)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
