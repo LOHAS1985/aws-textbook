@@ -224,11 +224,19 @@ def load_pages(col, warnings, updated):
         if col.get("no_lead") and meta.get("lead"):
             warnings.append(f"{where}: {col['label']}には lead を書きません(使うサービスが分かってしまうため)")
             meta.pop("lead")
+        page_date = ""
+        if col["key"] == "news":
+            # ニュースの日付はファイル名から作り、タイトル(見出しだけ)とは分けて表示する
+            y, m, d = slug.split("-")
+            page_date = f"{int(y)}年{int(m)}月{int(d)}日"
+            if "のAWSニュース" in meta.get("title", ""):
+                warnings.append(f"{where}: ニュースの title には日付を書きません(主な発表だけを書く)")
         pages.append({
             "slug": slug,
             "title": meta.get("title", slug),
             "category": meta.get("category", "その他"),
             "lead": meta.get("lead", ""),
+            "date": page_date,
             "raw": text,  # 検査用(行番号がファイルと一致するよう、メタ情報も含める)
             "body": render_figures(body, where, warnings),
             "updated": updated.get(f"src/{col['key']}/{path.name}", int(time.time())),
@@ -424,7 +432,8 @@ def pager(prev, nxt):
         if p is None:
             return f'<span class="{cls} empty"></span>'
         return (f'<a class="{cls}" href="{p["slug"]}.html">'
-                f'<span class="label">{label}</span>{html.escape(p["title"])}</a>')
+                f'<span class="label">{label}{" " + p["date"] if p["date"] else ""}</span>'
+                f'{html.escape(p["title"])}</a>')
     return ('<nav class="pager">\n'
             f'  {link(prev, "prev", "← 前へ")}\n'
             '  <a class="toc" href="index.html">目次へ戻る</a>\n'
@@ -439,12 +448,15 @@ def render_page(col, pages, i):
     cat_no = [c for c, _ in grouped(col, pages)].index(p["category"]) + 1
     body, items = add_heading_ids(stack_tables(p["body"]))
     icon = service_icon(p["slug"], "../", 56) if col["key"] == "services" else ""
-    return (head(f"{p['title']} | {SITE_TITLE}", "../", p["lead"])
+    title = f"{p['title']} | {p['date']}のAWSニュース" if p["date"] else p["title"]
+    return (head(f"{title} | {SITE_TITLE}", "../", p["lead"])
             + header("../", col["key"])
             + f'<main>\n<div class="page-head hero"{cat_style(col, p["category"])}>\n'
             + (f'  <div class="hero-icon">{icon}</div>\n' if icon else "")
             + '  <div class="hero-text">\n'
             + f'  <a class="category" href="index.html#cat{cat_no}">{html.escape(p["category"])}</a>\n'
+            + (f'  <p class="news-date"><time datetime="{p["slug"]}">{p["date"]}</time>のAWSニュース</p>\n'
+               if p["date"] else "")
             + f'  <h1>{html.escape(p["title"])}</h1>\n'
             + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
             + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
@@ -562,7 +574,8 @@ def render_collection_index(col, pages, loaded):
                 parts.append(f'  <li data-keys="{html.escape(keys)}"><a href="{p["slug"]}.html" '
                              f'title="{tip}">{inner}</a></li>\n')
             else:
-                inner = (f'<span class="name">{html.escape(p["title"])}</span>'
+                inner = ((f'<time class="date" datetime="{p["slug"]}">{p["date"]}</time>' if p["date"] else "")
+                         + f'<span class="name">{html.escape(p["title"])}</span>'
                          f'<span class="desc">{p["lead"]}</span>')
                 parts.append(f'  <li data-keys="{html.escape(keys)}"><a href="{p["slug"]}.html">{inner}</a></li>\n')
         parts.append("</ul>\n</details>\n</section>\n" if compact else "</ul>\n</section>\n")
@@ -601,7 +614,7 @@ def norm(s):
 def search_keys(p, category, extra=""):
     """一覧の絞り込み・全ページ検索の対象。表示しない lead・カテゴリ・本文からリンクしているサービス名も含める
     (運用シナリオは lead がないので、使うサービスの名前で探せるようにする)。"""
-    return norm(" ".join([p["title"], p["slug"], category, plain(p["lead"]), " ".join(p.get("uses", [])), extra]))
+    return norm(" ".join([p["title"], p["slug"], p.get("date", ""), category, plain(p["lead"]), " ".join(p.get("uses", [])), extra]))
 
 
 # 検索で同じものとして扱う言い換え(略称・英語名・日本語の言い方)。
