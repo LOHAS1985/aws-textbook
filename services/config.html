@@ -40,9 +40,24 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS Config</h1>
   <p class="lead">リソースの設定状態を記録・評価し、違反を検出して修復</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(15項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">設定レコーダー</a></li><li><a href="#c2-2">Configルール</a></li><li><a href="#c2-3">コンプライアンス監視と修復</a></li><li><a href="#c2-4">自動修復の例</a></li><li><a href="#c2-5">コンフォーマンスパック</a></li><li><a href="#c2-6">複数アカウント・リージョンの集約(アグリゲーター)</a></li><li><a href="#c2-7">評価されないときの確認</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Config</strong>は、AWSリソースの<strong>設定状態を記録・評価</strong>し、<strong>コンプライアンス違反を検出して修復</strong>するサービスです。</p>
@@ -64,6 +79,13 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <li>設定変更の時刻</li>
   </ul></li>
 </ul>
+<p>記録した1件1件を<strong>設定項目</strong>(Configuration Item)といい、リソースごとに並べた<strong>設定タイムライン</strong>で「いつ・どう変わったか」と、その変更をしたCloudTrailのイベントを確認できます。</p>
+<ul>
+<li><strong>記録の範囲</strong>:すべての種類のリソースを記録するか、種類を選ぶかを決める。記録していない種類のリソースは、Configルールでも評価されない。</li>
+<li><strong>記録の頻度</strong>:変更のたびに記録する(継続的な記録)か、1日に1回まとめて記録する(日次の記録)かを選べる。変更の多いリソースを日次にすると料金を下げられる。</li>
+<li><strong>グローバルなリソース</strong>(IAMのユーザー・ロール・ポリシーなど)は、どのリージョンで記録しても同じ内容になるため、<strong>1つのリージョンだけで記録</strong>して重複を避ける。</li>
+<li>Configは<strong>リージョンごと</strong>に有効にする。使っていないリージョンで不正にリソースが作られても気付けるように、すべてのリージョンで有効にしておく。</li>
+</ul>
 
 <h3 id="c2-2">Configルール<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>リソースの設定が要件に適合しているかを評価します。</p>
@@ -72,6 +94,13 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>例:EBSボリュームが暗号化されているか/S3バケットのパブリックアクセスが禁止されているか</li>
 <li>評価結果:<code>COMPLIANT</code>(準拠)、<code>NON_COMPLIANT</code>(非準拠)、<code>NOT_APPLICABLE</code>(評価対象外)、<code>INSUFFICIENT_DATA</code>(情報不足)</li>
 </ul>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>選択肢</th></tr>
+<tr><td>評価のきっかけ(トリガー)</td><td><strong>設定変更</strong>:対象のリソースが変わったときに評価する。<strong>定期的</strong>:1・3・6・12・24時間ごとに評価する(例:アクセスキーが90日以上ローテーションされていないか)</td></tr>
+<tr><td>評価のモード</td><td><strong>検出</strong>:作られたリソースを評価する(通常)。<strong>プロアクティブ</strong>:CloudFormationでリソースを作る前に、設定を評価する</td></tr>
+<tr><td>カスタムルールの書き方</td><td><strong>Lambda</strong>で評価のコードを書く、または<strong>Guard</strong>(CloudFormation Guardの記法)でルールを宣言的に書く</td></tr>
+</table></div>
+<p>AWSマネージドルールの例:<code>encrypted-volumes</code>(EBSの暗号化)、<code>s3-bucket-public-read-prohibited</code>(S3の公開読み取りの禁止)、<code>restricted-ssh</code>(SSHを0.0.0.0/0に開けていない)、<code>required-tags</code>(必須のタグが付いている)、<code>cloudtrail-enabled</code>(CloudTrailが有効)。</p>
 
 <h3 id="c2-3">コンプライアンス監視と修復<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
@@ -130,6 +159,61 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>Systems Manager AutomationまたはLambdaが設定を修正</li>
 <li>Configが再評価し、<code>COMPLIANT</code> になったことを確認</li>
 </ol>
+<ul>
+<li>修復アクションは、<strong>手動</strong>(コンソールで選んで実行)か<strong>自動</strong>(非準拠になったらすぐ実行)を選べる。自動の場合は、失敗したときの再試行の回数も決める。</li>
+<li>修復には、AWSが用意したAutomationのランブック(例:<code>AWS-DisableS3BucketPublicReadWrite</code>、<code>AWSConfigRemediation-</code> で始まるもの)を使える。</li>
+<li>ランブックが操作するための<strong>IAMロール</strong>(<code>AutomationAssumeRole</code>)を、パラメータで渡す。権限が足りないと修復が失敗する。</li>
+</ul>
+
+<h3 id="c2-5">コンフォーマンスパック<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>コンフォーマンスパック</strong>は、複数のConfigルールと修復アクションを、1つのYAMLのテンプレートにまとめたものです。「CISのベンチマーク」「PCI DSS」などの基準に合わせたサンプルのテンプレートが用意されていて、そのまま展開できます。Organizationsと組み合わせると、組織内のすべてのアカウントに同じパックを展開できます。</p>
+
+<h3 id="c2-6">複数アカウント・リージョンの集約(アグリゲーター)<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>アグリゲーター</strong>は、複数のアカウント・リージョンのConfigのデータを、1つのアカウントに集めて表示する仕組みです。組織全体の準拠状況やリソースの一覧を、1か所で確認できます。アグリゲーターで集めたデータは<strong>読み取り専用</strong>で、ルールの設定はそれぞれのアカウントで行います(組織全体のルールは、管理アカウントか委任管理者から一括で展開できます)。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 202" style="max-width:718px;min-width:574px" role="img" aria-label="図2 アグリゲーター。複数のアカウント・リージョンのConfigのデータを1つのアカウントに集め、準拠状況を一覧にしたり、高度なクエリでリソースを検索したりする。"><defs><marker id="dgservices-config-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="a1">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">アカウントA</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">東京・大阪</text>
+</g>
+<g data-node="a2">
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="147" text-anchor="middle" class="dg-t">アカウントB</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">東京・バージニア</text>
+</g>
+<g data-node="agg">
+<rect x="289" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="104" text-anchor="middle" class="dg-tb">アグリゲーター</text>
+<text x="364" y="122" text-anchor="middle" class="dg-s">集約用アカウント</text>
+</g>
+<g data-node="view">
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">準拠状況の一覧</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">組織全体</text>
+</g>
+<g data-node="q">
+<rect x="544" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="147" text-anchor="middle" class="dg-t">高度なクエリ</text>
+<text x="619" y="165" text-anchor="middle" class="dg-s">SQLで検索</text>
+</g>
+<path d="M184.0,79.0 L289.0,96.5" class="dg-line" marker-end="url(#dgservices-config-2)"/>
+<path d="M184.0,139.0 L289.0,121.5" class="dg-line" marker-end="url(#dgservices-config-2)"/>
+<path d="M439.0,96.5 L544.0,79.0" class="dg-line" marker-end="url(#dgservices-config-2)"/>
+<path d="M439.0,121.5 L544.0,139.0" class="dg-line" marker-end="url(#dgservices-config-2)"/>
+</svg>
+</div>
+<figcaption>図2 アグリゲーター。複数のアカウント・リージョンのConfigのデータを1つのアカウントに集め、準拠状況を一覧にしたり、高度なクエリでリソースを検索したりする。</figcaption>
+</figure>
+<p><strong>高度なクエリ</strong>を使うと、SQLに似た書き方で、記録したリソースの現在の設定を検索できます(例:「暗号化されていないEBSボリュームの一覧」「インスタンスタイプごとのEC2の台数」)。アグリゲーターに対して実行すると、組織全体を検索できます。</p>
+
+<h3 id="c2-7">評価されないときの確認<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>設定レコーダーが<strong>停止</strong>していないか、そのリージョンで有効になっているか。</li>
+<li>評価したいリソースの種類を<strong>記録の範囲</strong>に含めているか。</li>
+<li>カスタムルールのLambdaに、Configへ結果を返す権限(<code>config:PutEvaluations</code>)があるか。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -154,19 +238,34 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="security-hub.html">AWS Security Hub</a>:結果の集約</li>
 <li><a href="eventbridge.html">Amazon EventBridge</a>/<a href="sns.html">Amazon SNS</a>:通知</li>
 <li><a href="lambda.html">AWS Lambda</a>:カスタムルール</li>
+<li><a href="organizations.html">AWS Organizations</a>:組織全体へのルール・コンフォーマンスパックの展開、アグリゲーター</li>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:プロアクティブ評価、Guardの記法</li>
+<li><a href="backup.html">AWS Backup</a>:Audit ManagerがConfigの記録を使う</li>
 <li>関連する用語:<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a>、<a href="../terms/compliance-artifact.html">コンプライアンスとAWS Artifact</a>、<a href="../terms/tags.html">タグ</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
+<div class="point">
+<h4>記録と評価</h4>
+<ul>
 <li>「設定が要件に準拠しているか」「設定の変更履歴」→ <strong>Config</strong>。</li>
-<li>非準拠の自動修復 → <strong>修復アクション+SSM Automation</strong>。</li>
-<li>複数ルールをまとめて展開 → <strong>Conformance Packs</strong>。</li>
-<li>AWSに用意されていないチェック → <strong>カスタムルール(Lambda)</strong>。</li>
+<li>AWSに用意されていないチェック → <strong>カスタムルール(Lambda または Guard)</strong>。</li>
+<li>リソースが変わったときに評価 → <strong>設定変更</strong>トリガー。日数の経過などを確かめる → <strong>定期的</strong>トリガー。</li>
+<li>作る前に設定を確かめたい → <strong>プロアクティブ</strong>評価。</li>
+<li>IAMなどのグローバルなリソースは<strong>1つのリージョンだけで記録</strong>する。料金を下げたい → <strong>日次の記録</strong>。</li>
+<li>ルールが評価されない → 設定レコーダーの停止や、<strong>記録の範囲</strong>を確認する。</li>
+</ul>
+<h4>修復と組織での管理</h4>
+<ul>
+<li>非準拠の自動修復 → <strong>修復アクション+SSM Automation</strong>。失敗したら <code>AutomationAssumeRole</code> の権限を確認する。</li>
+<li>複数ルールをまとめて展開・CISなどの基準に合わせる → <strong>コンフォーマンスパック</strong>。</li>
+<li>複数アカウント・リージョンの準拠状況を1か所で見る → <strong class="em">アグリゲーター</strong>。</li>
+<li>リソースの現在の設定をSQLで検索したい → <strong>高度なクエリ</strong>。</li>
 <li>CloudWatch・CloudTrail・Config・X-Rayの使い分け → <a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
@@ -174,6 +273,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ul>
 <li>Configは設定レコーダーで記録し、Configルールで評価する。</li>
 <li>非準拠はSSM AutomationやLambdaで自動修復できる。</li>
+<li>コンフォーマンスパックでルールをまとめて展開し、アグリゲーターで組織全体の状況を1か所で見る。</li>
 </ul>
 </section>
 <section class="chapter backlinks">
@@ -189,55 +289,57 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 10件・リンク元 11件)</summary>
+<summary>つながり図を開く(リンク先 13件・リンク元 9件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 366" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Configとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,45 C265.0,45 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Backup</text></a>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Control Tower</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Organizations</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 426" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Configとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Control Tower</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
 <a href="../terms/tls-termination.html"><title>用語:TLS終端と証明書の配置</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">TLS終端と証明書の配置</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
 <a href="../terms/security-detection-comparison.html"><title>用語:セキュリティ検出のサービスの選び方</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">セキュリティ検出のサービスの選…</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
 <a href="../terms/nacl-security-group.html"><title>用語:ネットワークACLとセキュリティグループ</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">ネットワークACLとセキュリティ…</text></a>
-<path class="gr-line" d="M230,225 C265.0,225 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
 <a href="../terms/encryption.html"><title>用語:保存時の暗号化と転送時の暗号化</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">保存時の暗号化と転送時の暗号化</text></a>
-<path class="gr-line" d="M230,255 C265.0,255 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
 <a href="../usecases/config-auto-remediation.html"><title>運用シナリオ:公開されたS3バケットを検出して自動で修復する</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">公開されたS3バケットを検出し…</text></a>
-<path class="gr-line" d="M230,285 C265.0,285 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
 <a href="../usecases/cloudformation-drift.html"><title>運用シナリオ:手作業による設定変更(ドリフト)を見つけて戻す</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">手作業による設定変更(ドリフト…</text></a>
-<path class="gr-line" d="M230,315 C265.0,315 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
 <a href="../usecases/org-guardrails.html"><title>運用シナリオ:組織全体にセキュリティのガードレールを設ける</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="320" class="gr-t">組織全体にセキュリティのガード…</text></a>
-<path class="gr-line" d="M230,345 C265.0,345 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
 <a href="../usecases/multi-account-stacksets.html"><title>運用シナリオ:複数アカウント・リージョンに共通設定を展開する</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="350" class="gr-t">複数アカウント・リージョンに共…</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,60 550,60" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="49" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="64" class="gr-t">AWS CloudTrail</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,90 550,90" marker-end="url(#gr-arrow)"/>
-<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="79" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="94" class="gr-t">AWS Lambda</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,120 550,120" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="550" y="109" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="124" class="gr-t">AWS Security Hub</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,150 550,150" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="139" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="154" class="gr-t">AWS Systems Manager</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,180 550,180" marker-end="url(#gr-arrow)"/>
-<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="169" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="184" class="gr-t">Amazon EventBridge</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,210 550,210" marker-end="url(#gr-arrow)"/>
-<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="199" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="214" class="gr-t">Amazon SNS</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,240 550,240" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="550" y="229" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="244" class="gr-t">イベント駆動の自動修復</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,270 550,270" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/compliance-artifact.html"><title>用語:コンプライアンスとAWS Artifact</title><rect x="550" y="259" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="274" class="gr-t">コンプライアンスとAWS Artifa…</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,300 550,300" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="289" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="304" class="gr-t">タグ</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,330 550,330" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/monitoring-logging-comparison.html"><title>用語:監視・記録のサービスの選び方</title><rect x="550" y="319" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="334" class="gr-t">監視・記録のサービスの選び方</text></a>
-<rect x="300" y="175" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="200" text-anchor="middle" class="gr-tb">AWS Config</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(11)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(10)</text>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Backup</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CloudFormation</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">AWS Security Hub</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Amazon SNS</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">イベント駆動の自動修復</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/compliance-artifact.html"><title>用語:コンプライアンスとAWS Artifact</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">コンプライアンスとAWS Artifa…</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="380" class="gr-t">タグ</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/monitoring-logging-comparison.html"><title>用語:監視・記録のサービスの選び方</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="410" class="gr-t">監視・記録のサービスの選び方</text></a>
+<rect x="300" y="205" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="230" text-anchor="middle" class="gr-tb">AWS Config</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(9)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(13)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
