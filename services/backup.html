@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AWS Backup | AWS教科書</title>
-<meta name="description" content="AWSサービスのバックアップを一元管理">
+<meta name="description" content="AWSサービスのバックアップを一元管理し、別リージョン・別アカウントへのコピーや復元テストも自動化する">
 <script>
 // 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
 try {
@@ -39,32 +39,48 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat3">ストレージ</a>
   <h1>AWS Backup</h1>
-  <p class="lead">AWSサービスのバックアップを一元管理</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="lead">AWSサービスのバックアップを一元管理し、別リージョン・別アカウントへのコピーや復元テストも自動化する</p>
+  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(16項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">対象サービス</a></li><li><a href="#c2-2">構成要素</a></li><li><a href="#c2-3">バックアッププランのルール</a></li><li><a href="#c2-4">別リージョン・別アカウントへのコピー</a></li><li><a href="#c2-5">ボールトロック</a></li><li><a href="#c2-6">復元と復元テスト</a></li><li><a href="#c2-7">監視と監査</a></li><li><a href="#c2-8">複数アカウントでの管理</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>AWS Backup</strong>は、さまざまなAWSサービスの<strong>バックアップを一元管理</strong>するサービスです。サービスごとに別々に設定していたバックアップを、1つのプランでまとめて管理できます。</p>
+<p><strong>AWS Backup</strong>は、さまざまなAWSサービスの<strong>バックアップを一元管理</strong>するサービスです。サービスごとに別々に設定していたバックアップ(EBSのスナップショット、RDSの自動バックアップなど)を、1つのプランでまとめて管理できます。</p>
+<p>スケジュールと保持期間の管理だけでなく、別リージョン・別アカウントへのコピー、削除できないバックアップ(ボールトロック)、復元テスト、ルールを守れているかの監査まで、バックアップの運用に必要なことをまとめて扱えます。</p>
 </section>
 
 <section class="chapter">
 <h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <h3 id="c2-1">対象サービス<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
-<li>EC2</li>
-<li>EBS/EFS/FSx/S3</li>
-<li>RDS/Aurora/DynamoDB</li>
-<li>DocumentDB/Neptune</li>
-<li>Storage Gateway</li>
+<li>コンピューティング:EC2(AMIとして保存)</li>
+<li>ストレージ:EBS、EFS、FSx、S3、Storage Gateway(ボリュームゲートウェイ)</li>
+<li>データベース:RDS、Aurora、DynamoDB、DocumentDB、Neptune、Redshift</li>
+<li>そのほか:CloudFormationのスタック、オンプレミスのVMware仮想マシンなど</li>
 </ul>
+<p>どのリソースの種類を保護するかは、<strong>リージョンごとに設定(サービスのオプトイン)</strong>します。プランで指定したのにバックアップされない場合は、この設定を確認します。</p>
+
 <h3 id="c2-2">構成要素<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
-<li><strong>バックアッププラン</strong>:スケジュール、バックアップウィンドウ、保持期間、ライフサイクル、コピー先を定義する。</li>
+<li><strong>バックアッププラン</strong>:いつ・どれだけ残すかを決める。1つのプランに複数のルール(毎日・毎月など)を入れられる。</li>
 <li><strong>リソースの割り当て</strong>:対象リソースを<strong>タグ</strong>または<strong>ARN</strong>で指定する。</li>
-<li><strong>バックアップボールト</strong>:バックアップの保管場所。</li>
+<li><strong>バックアップボールト</strong>:バックアップ(復旧ポイント)の保管場所。ボールトごとにKMSキーで暗号化し、アクセスポリシーを設定できる。</li>
 </ul>
-<p>コピー先に別リージョンや別アカウントのボールトを指定することで、災害対策(DR)にも使えます。バックアップボールトロックを使うと、バックアップの削除を防ぐ(WORM)設定ができます。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 758 244" style="max-width:758px;min-width:606px" role="img" aria-label="図1 AWS Backupの構成。プラン(いつ・どれだけ残すか)と割り当て(どのリソースか)を決めると、バックアップがボールトに保存される。"><defs><marker id="dgservices-backup-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -103,20 +119,108 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 AWS Backupの構成。プラン(いつ・どれだけ残すか)と割り当て(どのリソースか)を決めると、バックアップがボールトに保存される。</figcaption>
 </figure>
+
+<h3 id="c2-3">バックアッププランのルール<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>内容</th></tr>
+<tr><td>頻度</td><td>1時間ごと・毎日・毎週・毎月、またはcron式で指定する</td></tr>
+<tr><td>バックアップウィンドウ</td><td>何時から開始し、何時間以内に完了させるか。業務の少ない時間帯にする</td></tr>
+<tr><td>保持期間</td><td>何日(何か月・何年)残すか。過ぎると自動で削除される</td></tr>
+<tr><td>ライフサイクル</td><td>一定の日数が過ぎたら、安いコールドストレージに移す(対応するリソースのみ。コールドストレージには最低90日保存する)</td></tr>
+<tr><td>コピー先</td><td>別リージョン・別アカウントのボールトにも自動でコピーする</td></tr>
+<tr><td>継続的なバックアップ</td><td>RDS・Aurora・S3などで、最大35日間の任意の時点に戻せる(ポイントインタイムリカバリ)</td></tr>
+</table></div>
+<p>タグで割り当てておくと、あとから作ったリソースにも同じタグを付けるだけでバックアップ対象になります。「本番環境のリソースにはタグ <code>Backup=daily</code> を必ず付ける」と決めておけば、バックアップの漏れを防げます。</p>
+
+<h3 id="c2-4">別リージョン・別アカウントへのコピー<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>同じアカウント・同じリージョンにだけバックアップを置くと、リージョン障害や、アカウントの乗っ取り・誤操作でバックアップごと失うおそれがあります。コピー先を分けると、次のことに備えられます。</p>
+<ul>
+<li><strong>別リージョン</strong>へのコピー:リージョン全体の障害(DR戦略の「バックアップと復元」)。</li>
+<li><strong>別アカウント</strong>へのコピー:本番アカウントの認証情報が漏れても、バックアップ専用のアカウントのコピーは消されない。Organizationsの組織内で、コピーを許可する設定が必要。</li>
+<li>暗号化したバックアップを別アカウントへコピーするときは、コピー先から使える<strong>カスタマーマネージドキー</strong>で暗号化しておく。RDSのように元のサービスのAWSマネージドキー(<code>aws/rds</code>)で暗号化したバックアップは、別アカウントへコピーできない。</li>
+</ul>
+
+<h3 id="c2-5">ボールトロック<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong class="em">AWS Backup Vault Lock</strong>は、ボールト内のバックアップを<strong>削除・保持期間の短縮ができないようにする</strong>(WORM:一度書いたら変更できない)機能です。ランサムウェアや悪意のある管理者からバックアップを守り、規制で求められる保存期間を確実に守れます。</p>
+<div class="table-wrap"><table>
+<tr><th>モード</th><th>動き</th></tr>
+<tr><td>ガバナンスモード</td><td>十分な権限を持つユーザーなら、ロックの解除や変更ができる。設定のテストや、社内向けの保護に使う</td></tr>
+<tr><td><strong>コンプライアンスモード</strong></td><td>猶予期間(最低72時間)が過ぎると、<strong>ルートユーザーやAWSでも解除できない</strong>。保持期間が過ぎるまでバックアップを削除できない</td></tr>
+</table></div>
+<p>さらに、論理的にエアギャップされたボールト(logically air-gapped vault)を使うと、ロックされたバックアップをAWS Resource Access Manager(RAM)で別アカウントへ共有し、そのアカウントから直接復元できます。</p>
+
+<h3 id="c2-6">復元と復元テスト<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>復元は、多くの場合<strong>新しいリソースとして作られる</strong>(EBSなら新しいボリューム、RDSなら新しいDBインスタンス)。元のリソースは上書きされないので、アプリの接続先を切り替える必要がある。</li>
+<li><strong>復元テスト(restore testing)</strong>:決めたスケジュールで復旧ポイントを自動で復元し、復元できるか・かかった時間を記録して、終わったら復元したリソースを削除する。EventBridgeとLambdaで、復元したデータの中身を確認する処理も追加できる。</li>
+<li>復元テストの結果は、RTOを見積もる根拠や、監査の証跡になる。</li>
+</ul>
+
+<h3 id="c2-7">監視と監査<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ジョブの監視</strong>:バックアップ・コピー・復元のジョブの結果はEventBridgeのイベントとCloudWatchのメトリクス(失敗したジョブの数など)になる。ボールトの通知でSNSに送ることもできる。失敗したら通知する仕組みを作っておく。</li>
+<li><strong>AWS Backup Audit Manager</strong>:「すべてのリソースがバックアッププランで保護されているか」「保持期間・頻度が基準を満たすか」「別リージョンへコピーしているか」などのコントロールを評価し、レポートを作る。AWS Configの記録を使うため、Configを有効にしておく。</li>
+<li><strong>リーガルホールド</strong>:訴訟や調査のために、特定のバックアップを保持期間が過ぎても削除されないようにする。</li>
+</ul>
+
+<h3 id="c2-8">複数アカウントでの管理<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<p>Organizationsの<strong>バックアップポリシー</strong>を使うと、管理アカウント(または委任管理者)から、組織内のすべてのアカウントに同じバックアッププランを配布できます。各アカウントの管理者がプランを消したり変えたりすることはできません。組織全体のジョブの状況も、1か所で確認できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 905 202" style="max-width:905px;min-width:724px" role="img" aria-label="図2 組織でのバックアップの例。バックアップポリシーで全アカウントに同じプランを配り、バックアップ専用アカウントのロックしたボールトと、別リージョンにコピーする。"><defs><marker id="dgservices-backup-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="org">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="104" text-anchor="middle" class="dg-tb">管理アカウント</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">バックアップポリシー</text>
+</g>
+<g data-node="a1">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">本番アカウントA</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">プランを自動適用</text>
+</g>
+<g data-node="a2">
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="147" text-anchor="middle" class="dg-t">本番アカウントB</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">プランを自動適用</text>
+</g>
+<g data-node="bk">
+<rect x="510" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="104" text-anchor="middle" class="dg-t">バックアップ用</text>
+<text x="585" y="122" text-anchor="middle" class="dg-s">ボールトロック</text>
+</g>
+<g data-node="dr">
+<rect x="731" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="806" y="104" text-anchor="middle" class="dg-t">別リージョン</text>
+<text x="806" y="122" text-anchor="middle" class="dg-s">DR用のコピー</text>
+</g>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#dgservices-backup-2)"/>
+<path d="M184.0,122.4 L272.0,138.1" class="dg-line" marker-end="url(#dgservices-backup-2)"/>
+<path d="M422.0,79.9 L510.0,95.6" class="dg-line" marker-end="url(#dgservices-backup-2)"/>
+<text x="466" y="92" text-anchor="middle" class="dg-s dg-halo">コピー</text>
+<path d="M422.0,138.1 L510.0,122.4" class="dg-line" marker-end="url(#dgservices-backup-2)"/>
+<text x="466" y="134" text-anchor="middle" class="dg-s dg-halo">コピー</text>
+<path d="M660.0,109.0 L731.0,109.0" class="dg-line" marker-end="url(#dgservices-backup-2)"/>
+<text x="696" y="113" text-anchor="middle" class="dg-s dg-halo">コピー</text>
+</svg>
+</div>
+<figcaption>図2 組織でのバックアップの例。バックアップポリシーで全アカウントに同じプランを配り、バックアップ専用アカウントのロックしたボールトと、別リージョンにコピーする。</figcaption>
+</figure>
 </section>
 
 <section class="chapter">
 <h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li>複数サービスのバックアップを1つのポリシーで統一したい</li>
+<li>EC2・RDS・EFS・DynamoDBなど、複数サービスのバックアップを1つのプランで統一したい</li>
 <li>タグ(例:<code>Backup=daily</code>)を付けたリソースを自動でバックアップ対象にしたい</li>
 <li>別リージョンにバックアップをコピーして災害対策をしたい</li>
+<li>ランサムウェアに備えて、誰にも削除できないバックアップを別アカウントに残したい</li>
+<li>「バックアップから実際に戻せるか」を定期的に確かめ、監査に報告したい</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>保存しているバックアップの容量、復元したデータ量、リージョン間のコピーのデータ転送量に応じて課金されます。ライフサイクルでコールドストレージに移すとコストを下げられます。</p>
+<p>保存しているバックアップの容量(ウォームストレージ・コールドストレージで単価が違う)、復元したデータ量(一部のリソース)、リージョン間のコピーのデータ転送量に応じて課金されます。復元テストやAudit Managerの評価にも料金がかかります。ライフサイクルでコールドストレージに移すとコストを下げられますが、コールドストレージは最低90日分の料金がかかるため、短期間で消すバックアップには向きません。</p>
 </section>
 
 <section class="chapter">
@@ -124,25 +228,49 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ul>
 <li><a href="ec2.html">Amazon EC2</a>/<a href="ebs.html">Amazon EBS</a>/<a href="efs.html">Amazon EFS</a>/<a href="fsx.html">Amazon FSx</a>/<a href="s3.html">Amazon S3</a></li>
 <li><a href="rds.html">Amazon RDS</a>/<a href="aurora.html">Amazon Aurora</a>/<a href="dynamodb.html">Amazon DynamoDB</a></li>
-<li><a href="organizations.html">AWS Organizations</a>:複数アカウントへのバックアップポリシー適用</li>
+<li><a href="organizations.html">AWS Organizations</a>:複数アカウントへのバックアップポリシー適用、別アカウントへのコピー</li>
+<li><a href="kms.html">AWS KMS</a>:ボールトの暗号化、別アカウントへのコピーに使うキー</li>
+<li><a href="config.html">AWS Config</a>:Audit Managerの評価に使う記録</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>/<a href="sns.html">Amazon SNS</a>:ジョブの失敗の通知</li>
+<li><a href="ram.html">AWS RAM</a>:論理的にエアギャップされたボールトの共有</li>
 <li><a href="storage-gateway.html">AWS Storage Gateway</a>:ボリュームゲートウェイのバックアップ</li>
-<li>関連する用語:<a href="../terms/tags.html">タグ</a></li>
+<li>関連する用語:<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/tags.html">タグ</a>、<a href="../terms/cron-rate-expressions.html">cron式とrate式</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
+<div class="point">
+<h4>設定と管理</h4>
+<ul>
 <li>「複数サービスのバックアップを一元管理」→ <strong>AWS Backup</strong>。</li>
 <li>対象リソースは<strong>タグ</strong>で指定すると、新しいリソースも自動で対象になる。</li>
-<li>保持期間・スケジュール・コピー先は<strong>バックアッププラン</strong>で定義する。</li>
-</ul></div>
+<li>保持期間・スケジュール・コピー先・コールドストレージへの移行は<strong>バックアッププラン</strong>で定義する。</li>
+<li>プランに入れたのにバックアップされない → リージョンの<strong>サービスのオプトイン</strong>、タグの付け忘れ、IAMロールの権限を確認する。</li>
+<li>組織内の全アカウントに同じバックアップを強制したい → Organizationsの<strong>バックアップポリシー</strong>。</li>
+</ul>
+<h4>保護とDR</h4>
+<ul>
+<li>リージョン障害に備える → プランのコピー先に<strong>別リージョンのボールト</strong>を指定する。</li>
+<li>本番アカウントが侵害されてもバックアップを残したい → <strong>別アカウント</strong>へのコピー。暗号化は<strong>カスタマーマネージドキー</strong>にする。</li>
+<li>誰にも削除できないバックアップ(ランサムウェア対策・規制対応)→ <strong class="em">ボールトロックのコンプライアンスモード</strong>。</li>
+<li>最大35日間の任意の時点に戻したい → <strong>継続的なバックアップ</strong>(ポイントインタイムリカバリ)。</li>
+</ul>
+<h4>確認と監査</h4>
+<ul>
+<li>バックアップから戻せるかを定期的に確かめたい → <strong>復元テスト</strong>。</li>
+<li>バックアップの方針を守れているか証明したい → <strong>Backup Audit Manager</strong>(Configが必要)。</li>
+<li>バックアップの失敗に気付きたい → EventBridgeのルールやボールトの通知で<strong>SNS</strong>に送る。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
 <h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>AWS Backupは「プラン(いつ・どれだけ)」「割り当て(何を)」「ボールト(どこに)」で構成される。</li>
+<li>別リージョン・別アカウントへのコピーとボールトロックで、災害や侵害・誤削除からバックアップを守る。</li>
+<li>復元テストとAudit Managerで、「戻せること」「方針を守れていること」を確かめる。</li>
 </ul>
 </section>
 <section class="chapter backlinks">
@@ -158,49 +286,59 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 11件・リンク元 7件)</summary>
+<summary>つながり図を開く(リンク先 18件・リンク元 5件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 366" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Backupとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../services/datasync.html"><title>サービス:AWS DataSync</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS DataSync</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">DR戦略</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../terms/cron-rate-expressions.html"><title>用語:cron式とrate式</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">cron式とrate式</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/dynamodb-scaling-recovery.html"><title>運用シナリオ:DynamoDBを負荷に合わせてスケールし、誤操作から復旧する</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="200" class="gr-t">DynamoDBを負荷に合わせてスケ…</text></a>
-<path class="gr-line" d="M230,225 C265.0,225 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/s3-data-protection.html"><title>運用シナリオ:S3のデータを誤削除やリージョン障害から守る</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="230" class="gr-t">S3のデータを誤削除やリージョ…</text></a>
-<path class="gr-line" d="M230,255 C265.0,255 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/backup-cross-region.html"><title>運用シナリオ:バックアップを一元管理して別リージョンに保管する</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">バックアップを一元管理して別リ…</text></a>
-<path class="gr-line" d="M230,285 C265.0,285 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/rds-point-in-time-restore.html"><title>運用シナリオ:誤操作したRDSのデータを特定の時点に戻す</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">誤操作したRDSのデータを特定の…</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Organizations</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/storage-gateway.html"><title>サービス:AWS Storage Gateway</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Storage Gateway</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon Aurora</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
-<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon DynamoDB</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/ebs.html"><title>サービス:Amazon EBS</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EBS</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
-<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon EC2</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/efs.html"><title>サービス:Amazon EFS</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon EFS</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/fsx.html"><title>サービス:Amazon FSx</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon FSx</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Amazon RDS</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
-<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="320" class="gr-t">Amazon S3</text></a>
-<path class="gr-line" d="M480,195 C515.0,195 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">タグ</text></a>
-<rect x="300" y="175" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="200" text-anchor="middle" class="gr-tb">AWS Backup</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(7)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(11)</text>
+<svg viewBox="0 0 784 576" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Backupとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,240 C265.0,240 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../services/datasync.html"><title>サービス:AWS DataSync</title><rect x="0" y="229" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="244" class="gr-t">AWS DataSync</text></a>
+<path class="gr-line" d="M230,270 C265.0,270 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/dynamodb-scaling-recovery.html"><title>運用シナリオ:DynamoDBを負荷に合わせてスケールし、誤操作から復旧する</title><rect x="0" y="259" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="274" class="gr-t">DynamoDBを負荷に合わせてスケ…</text></a>
+<path class="gr-line" d="M230,300 C265.0,300 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/s3-data-protection.html"><title>運用シナリオ:S3のデータを誤削除やリージョン障害から守る</title><rect x="0" y="289" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="304" class="gr-t">S3のデータを誤削除やリージョ…</text></a>
+<path class="gr-line" d="M230,330 C265.0,330 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/backup-cross-region.html"><title>運用シナリオ:バックアップを一元管理して別リージョンに保管する</title><rect x="0" y="319" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="334" class="gr-t">バックアップを一元管理して別リ…</text></a>
+<path class="gr-line" d="M230,360 C265.0,360 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/rds-point-in-time-restore.html"><title>運用シナリオ:誤操作したRDSのデータを特定の時点に戻す</title><rect x="0" y="349" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="364" class="gr-t">誤操作したRDSのデータを特定の…</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Config</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/kms.html"><title>サービス:AWS KMS</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS KMS</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/ram.html"><title>サービス:AWS Resource Access Manager</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Resource Access Manag…</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/storage-gateway.html"><title>サービス:AWS Storage Gateway</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS Storage Gateway</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon Aurora</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon DynamoDB</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ebs.html"><title>サービス:Amazon EBS</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon EBS</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
+<a href="../services/efs.html"><title>サービス:Amazon EFS</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="320" class="gr-t">Amazon EFS</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,345 550,345" marker-end="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="350" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/fsx.html"><title>サービス:Amazon FSx</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="380" class="gr-t">Amazon FSx</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="410" class="gr-t">Amazon RDS</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,435 550,435" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="424" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="440" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,465 550,465" marker-end="url(#gr-arrow)"/>
+<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="454" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="470" class="gr-t">Amazon SNS</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,495 550,495" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="550" y="484" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="500" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,525 550,525" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/cron-rate-expressions.html"><title>用語:cron式とrate式</title><rect x="550" y="514" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="530" class="gr-t">cron式とrate式</text></a>
+<path class="gr-line" d="M480,300 C515.0,300 515.0,555 550,555" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="544" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="560" class="gr-t">タグ</text></a>
+<rect x="300" y="280" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="305" text-anchor="middle" class="gr-tb">AWS Backup</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(5)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(18)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
