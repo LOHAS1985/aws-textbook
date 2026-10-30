@@ -195,3 +195,9 @@ AWSアカウントを使わずに、要件を満たす構成を組み立てる�
 - [x] 残りの45件の運用シナリオに演習を追加する(各グループ10件、計50件)
 - [x] ③自由構成(部品を図に置いて矢印でつなぎ、正解の構成と比べて判定する)。正解は build.py が2章の図から自動で作る
 - [x] ヘッダーに構成演習とニュースを追加(スマホは2段で、ナビは横スクロール)
+
+# 残タスク(SOA-C03に向けた加筆)
+
+試験でよく問われるのに薄かったページを加筆する。
+- [x] 優先度 高:DR戦略(dr-strategies)、AWS Backup、Route 53、Organizations、ECS
+- [x] 優先度 中:CloudTrail、KMS、ElastiCache、Config、Trusted Advisor、Compute Optimizer、CDK

@@ -14,19 +14,26 @@
 <li><strong>分析期間</strong>:デフォルトは<strong>14日間</strong>(最大93日間)。</li>
 </ul>
 <h3>分析対象のリソース</h3>
-<ul>
-<li>EC2インスタンス</li>
-<li>Auto Scalingグループ</li>
-<li>EBSボリューム</li>
-<li>Lambda関数</li>
-<li>ECS on Fargateサービス</li>
-<li>RDS</li>
-</ul>
+<div class="table-wrap"><table>
+<tr><th>リソース</th><th>推奨の内容</th></tr>
+<tr><td>EC2インスタンス</td><td>インスタンスタイプ・サイズ(Gravitonへの移行を含む)</td></tr>
+<tr><td>Auto Scalingグループ</td><td>グループのインスタンスタイプ</td></tr>
+<tr><td>EBSボリューム</td><td>ボリュームタイプ・サイズ・IOPS・スループット(例:gp2からgp3へ)</td></tr>
+<tr><td>Lambda関数</td><td>メモリのサイズ</td></tr>
+<tr><td>ECS on Fargateサービス</td><td>タスクのCPU・メモリ</td></tr>
+<tr><td>RDS・Aurora</td><td>DBインスタンスのクラスとストレージ</td></tr>
+<tr><td>商用ソフトウェアのライセンス</td><td>EC2で動かすSQL Serverのエディションなど</td></tr>
+</table></div>
+<p>EC2の推奨を出すには、一定の期間(少なくとも30時間分)のメトリクスが必要です。作ったばかりのリソースには推奨が出ません。</p>
+
 <h3>推奨事項</h3>
 <ul>
 <li><strong>サイズが過大(Over-provisioned)</strong>:コスト削減のためにダウンサイジングを推奨</li>
 <li><strong>サイズが過少(Under-provisioned)</strong>:パフォーマンス改善のためにアップサイジングを推奨</li>
+<li><strong>最適化済み(Optimized)</strong>:今の設定が適切</li>
+<li><strong>アイドル</strong>:ほとんど使われていないリソース(EC2・EBS・RDS・NATゲートウェイなど)。停止や削除を検討する</li>
 </ul>
+<p>推奨には、いくつかの候補(オプション)と、それぞれの<strong>月額の削減見込み</strong>と<strong>パフォーマンスのリスク</strong>(変えたときに性能が足りなくなる可能性)が示されます。</p>
 <p>EC2のメモリ使用率を分析に含めたい場合は、CloudWatchエージェントでメモリのメトリクスを送信しておく必要があります。</p>
 <figure class="figure" data-diagram>
 grid 170 85
@@ -39,6 +46,23 @@ edge co over
 edge co under
 <figcaption>図1 Compute Optimizerの仕組み。CloudWatchの過去のメトリクス(デフォルト14日、最大93日)を機械学習で分析し、過大なリソースにはダウンサイジング、過少なリソースにはアップサイジングを推奨する。</figcaption>
 </figure>
+
+<h3>推奨の調整(推奨設定)</h3>
+<ul>
+<li><strong>拡張インフラストラクチャメトリクス</strong>:分析期間を93日に延ばす(有料)。月末だけ負荷が高いなど、周期の長い負荷があるときに使う。</li>
+<li><strong>使用率の余裕(ヘッドルーム)としきい値</strong>:CPUやメモリにどれだけ余裕を残して推奨するかを調整する。</li>
+<li><strong>CPUアーキテクチャ</strong>:Graviton(Arm)のインスタンスを候補に含めるかを選ぶ。</li>
+<li><strong>外部のメトリクス</strong>:Datadogなどの監視ツールで集めたメモリのメトリクスも、分析に使える。</li>
+</ul>
+
+<h3>組織での利用と、ほかのツールとの関係</h3>
+<ul>
+<li>Organizationsの管理アカウントか委任管理者で有効にすると、<strong>組織内のすべてのアカウント</strong>の推奨をまとめて見られる。</li>
+<li>推奨はCSV・JSONでS3にエクスポートできる。</li>
+<li><strong>Cost Optimization Hub</strong>は、Compute Optimizerのサイズの推奨や、Savings Plans・リザーブドインスタンスの購入の推奨などを集め、組織全体で削減額の大きい順に並べる。</li>
+<li>Trusted Advisorのコスト最適化のチェックにも、Compute Optimizerの推奨が使われる。</li>
+</ul>
+<p>Compute Optimizerは推奨を出すだけで、リソースを自動では変更しません。EC2のインスタンスタイプを変えるには、インスタンスを停止してから変更します(Auto Scalingグループなら起動テンプレートを更新して入れ替える)。</p>
 </section>
 
 <section class="chapter">
@@ -62,6 +86,9 @@ edge co under
 <li><a href="ec2.html">Amazon EC2</a>/<a href="ebs.html">Amazon EBS</a>/<a href="lambda.html">AWS Lambda</a>/<a href="ecs.html">Amazon ECS</a>/<a href="rds.html">Amazon RDS</a>:分析対象</li>
 <li><a href="trusted-advisor.html">AWS Trusted Advisor</a>:幅広い観点のチェック</li>
 <li><a href="organizations.html">AWS Organizations</a>:組織全体での有効化</li>
+<li><a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:推奨したインスタンスタイプへの入れ替え</li>
+<li><a href="cost-explorer.html">AWS Cost Explorer</a>/<a href="savings-plans.html">Savings Plans</a>:コストの分析と割引の購入</li>
+<li>関連する用語:<a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>、<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a></li>
 </ul>
 </section>
 
@@ -70,7 +97,11 @@ edge co under
 <div class="point"><ul>
 <li>「機械学習で」「最適なインスタンスタイプ・サイズを推奨」→ <strong>Compute Optimizer</strong>。</li>
 <li>デフォルトでは<strong>無効</strong>。使う前に有効化(オプトイン)が必要。</li>
-<li>分析期間はデフォルト<strong>14日</strong>、最大<strong>93日</strong>。</li>
+<li>分析期間はデフォルト<strong>14日</strong>、最大<strong>93日</strong>(拡張インフラストラクチャメトリクス)。</li>
+<li>EC2のメモリを考えた推奨が欲しい → <strong>CloudWatchエージェント</strong>でメモリのメトリクスを送る。</li>
+<li>Lambdaの最適なメモリサイズ → Compute Optimizer。ECS on Fargateのタスクのサイズ、EBSのgp2からgp3への変更も推奨される。</li>
+<li>組織全体の推奨をまとめて見る → 管理アカウントか<strong>委任管理者</strong>で有効にする。削減額の大きい順にまとめる → <strong>Cost Optimization Hub</strong>。</li>
+<li>推奨は自動では適用されない。変更は自分で行う。</li>
 <li>Cost Explorer・Budgets・CUR・Compute Optimizerの使い分け → <a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>
 </ul></div>
 </section>
@@ -78,6 +109,8 @@ edge co under
 <section class="chapter">
 <h2>7. まとめ</h2>
 <ul>
-<li>Compute OptimizerはCloudWatchの履歴から、過大・過少なリソースを見つけて推奨する。</li>
+<li>Compute OptimizerはCloudWatchの履歴から、過大・過少・アイドルなリソースを見つけて推奨する。</li>
+<li>対象はEC2・Auto Scalingグループ・EBS・Lambda・ECS on Fargate・RDSなど。メモリの分析にはCloudWatchエージェントが必要。</li>
+<li>推奨設定で分析期間や余裕を調整し、組織全体で使うときはCost Optimization Hubとも組み合わせる。</li>
 </ul>
 </section>

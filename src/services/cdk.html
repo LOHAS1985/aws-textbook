@@ -11,12 +11,51 @@
 <h3>サポート言語</h3>
 <p>TypeScript、JavaScript、Python、Java、C#、Go</p>
 
+<h3>アプリ・スタック・Construct</h3>
+<ul>
+<li><strong>アプリ</strong>:CDKのプロジェクト全体。1つのアプリに複数のスタックを入れられる。</li>
+<li><strong>スタック</strong>:CloudFormationのスタック1つに対応する単位。どのアカウント・リージョンに作るか(環境)を指定する。</li>
+<li><strong>Construct</strong>:スタックの中に置く部品。</li>
+</ul>
+
 <h3>Construct</h3>
-<p><strong class="em">AWSリソースや構成をオブジェクト化したもの</strong>です。Constructを組み合わせてインフラを定義します。</p>
+<p><strong class="em">AWSリソースや構成をオブジェクト化したもの</strong>です。Constructを組み合わせてインフラを定義します。抽象度の違う3つのレベルがあります。</p>
+<div class="table-wrap"><table>
+<tr><th>レベル</th><th>内容</th><th>例</th></tr>
+<tr><td>L1</td><td>CloudFormationのリソースと1対1で対応する。名前は <code>Cfn</code> で始まり、すべてのプロパティを自分で書く</td><td><code>CfnBucket</code></td></tr>
+<tr><td><strong>L2</strong></td><td>よく使う設定が既定値として入り、便利なメソッドが付いている。ふつうはこれを使う</td><td><code>s3.Bucket</code>(<code>bucket.grantRead(fn)</code> で必要なIAMポリシーを自動で作る)</td></tr>
+<tr><td>L3(パターン)</td><td>複数のリソースを組み合わせた構成をまとめて作る</td><td><code>ApplicationLoadBalancedFargateService</code>(ALB+ECSのFargateサービス)</td></tr>
+</table></div>
+<p>次は、L2のConstructでS3バケットとLambda関数を作り、関数にバケットの読み取りを許可する例(TypeScript)です。IAMポリシーを書かなくても、<code>grantRead</code> が最小限の権限を作ります。</p>
+<pre class="code"><code>const bucket = new s3.Bucket(this, 'Reports', {
+  encryption: s3.BucketEncryption.S3_MANAGED,
+  versioned: true,
+});
+const fn = new lambda.Function(this, 'Reader', {
+  runtime: lambda.Runtime.NODEJS_22_X,
+  handler: 'index.handler',
+  code: lambda.Code.fromAsset('lambda'),
+});
+bucket.grantRead(fn);</code></pre>
 
 <h3 class="em">Aspects</h3>
-<p>CDKで作成された<strong>Construct群を検査・変更</strong>し、CDK全体へ共通ルールを適用する機能です。ルール違反やセキュリティのチェックに使います。</p>
-<p>主なCDKコマンド:<code>cdk init</code>(プロジェクト作成)、<code>cdk synth</code>(CloudFormationテンプレートを生成)、<code>cdk diff</code>(差分確認)、<code>cdk deploy</code>(デプロイ)、<code>cdk bootstrap</code>(デプロイに必要なS3バケットなどの準備)</p>
+<p>CDKで作成された<strong>Construct群を検査・変更</strong>し、CDK全体へ共通ルールを適用する機能です。ルール違反やセキュリティのチェックに使います。例えば「すべてのS3バケットが暗号化されているか」を確かめたり、すべてのリソースに共通のタグを付けたりできます。セキュリティのルールをまとめたcdk-nagも、Aspectsのしくみを使っています。</p>
+
+<h3>コマンドと開発の流れ</h3>
+<div class="table-wrap"><table>
+<tr><th>コマンド</th><th>内容</th></tr>
+<tr><td><code>cdk init</code></td><td>プロジェクトを作る</td></tr>
+<tr><td><strong><code>cdk bootstrap</code></strong></td><td>デプロイの準備をする。アカウント・リージョンごとに1回、<code>CDKToolkit</code> スタック(アセット用のS3バケット・ECRリポジトリ・デプロイ用のIAMロール)を作る</td></tr>
+<tr><td><code>cdk synth</code></td><td>CloudFormationテンプレートを生成する</td></tr>
+<tr><td><strong><code>cdk diff</code></strong></td><td>今のスタックとの差分を表示する。デプロイ前に、リソースの置き換えや削除が起きないかを確かめる</td></tr>
+<tr><td><code>cdk deploy</code></td><td>デプロイする(内部ではCloudFormationのスタックを作成・更新する)</td></tr>
+<tr><td><code>cdk destroy</code></td><td>スタックを削除する</td></tr>
+</table></div>
+<ul>
+<li>Lambdaのコードやコンテナイメージなどの<strong>アセット</strong>は、bootstrapで作ったS3バケット・ECRリポジトリにアップロードされてからデプロイされる。そのため、bootstrapをしていない環境ではデプロイが失敗する。</li>
+<li>別のアカウント(パイプラインのアカウントなど)からデプロイさせるときは、<code>cdk bootstrap --trust</code> でそのアカウントを信頼する。</li>
+<li>デプロイが失敗したときの原因は、CloudFormationのスタックのイベントで確認する。失敗した変更は、CloudFormationが自動でロールバックする。</li>
+</ul>
 <figure class="figure" data-diagram>
 grid 150 85
 node code 0 0.5 blue "CDKアプリ" "TypeScriptなど"
@@ -30,6 +69,17 @@ edge tpl stack "cdk deploy"
 edge asp code dash
 <figcaption>図1 CDKの流れ。プログラミング言語で書いたコードを cdk synth でCloudFormationテンプレートに変換し、cdk deploy でスタックとして作成する。Aspectsでアプリ内の全Constructに共通ルールを適用できる。</figcaption>
 </figure>
+
+<h3>運用で気を付けること</h3>
+<ul>
+<li><strong>論理IDが変わるとリソースが置き換わる</strong>:Constructの名前(ID)を変えたり、別のConstructの下に移したりすると、CloudFormationの論理IDが変わり、リソースが削除されて作り直される。データベースなどでは、<code>cdk diff</code> で置き換えにならないかを必ず確かめる。</li>
+<li><strong>削除ポリシー</strong>:S3バケットやDynamoDBテーブルなどデータを持つリソースは、既定でスタックを消しても<strong>残る</strong>(RETAIN)。消してよい開発環境では <code>removalPolicy: DESTROY</code> を指定する(S3は中身を消す設定も必要)。</li>
+<li><strong>コンソールでの手動変更</strong>は、CDKのコードとずれる(ドリフト)。変更はコードで行う。</li>
+<li><strong>テスト</strong>:assertionsモジュールで、生成されるテンプレートに期待するリソースや設定があるかを、単体テストで確かめられる。</li>
+</ul>
+
+<h3>CI/CD(CDK Pipelines)</h3>
+<p><strong>CDK Pipelines</strong>は、CodePipelineを使ったデプロイのパイプラインをCDKのコードで作る仕組みです。パイプライン自体もコードから更新される(セルフミューテーション)ため、ステージやアカウントを追加するときも、コードを変えてpushするだけで済みます。開発 → 検証 → 本番のように、複数のアカウント・リージョンへ順にデプロイし、本番の前に手動の承認を入れることもできます。</p>
 </section>
 
 <section class="chapter">
@@ -51,7 +101,10 @@ edge asp code dash
 <ul>
 <li><a href="cloudformation.html">AWS CloudFormation</a>:CDKの変換先・デプロイ先</li>
 <li><a href="sam.html">AWS SAM</a>:サーバーレス向けのIaC</li>
-<li><a href="codepipeline.html">AWS CodePipeline</a>:CDKアプリのCI/CD</li>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:CDKアプリのCI/CD(CDK Pipelines)</li>
+<li><a href="s3.html">Amazon S3</a>/<a href="ecr.html">Amazon ECR</a>:bootstrapで作るアセットの置き場所</li>
+<li><a href="iam.html">AWS IAM</a>:grantメソッドで作られるポリシー、デプロイ用のロール</li>
+<li>関連する用語:<a href="../terms/json-yaml.html">JSONとYAMLの読み方</a>、<a href="../terms/terraform-git.html">TerraformとGit</a></li>
 </ul>
 </section>
 
@@ -61,6 +114,12 @@ edge asp code dash
 <li>CDKは<strong>CloudFormationテンプレートに変換</strong>されてデプロイされる。</li>
 <li>全Constructに共通ルール・チェックを適用 → <strong>Aspects</strong>。</li>
 <li>プログラミング言語でIaC → CDK、YAML/JSON → CloudFormation。</li>
+<li>初めてデプロイする環境で失敗する(アセットのバケットがない)→ <strong class="em"><code>cdk bootstrap</code></strong>。</li>
+<li>デプロイ前に変更内容・置き換えを確かめる → <strong><code>cdk diff</code></strong>。</li>
+<li>Constructの名前を変えたらリソースが作り直された → <strong>論理IDが変わった</strong>ため。</li>
+<li>スタックを消してもS3バケットが残る → データを持つリソースの既定の<strong>削除ポリシーはRETAIN</strong>。</li>
+<li>権限の付与 → L2の <code>grant</code> メソッドで、最小限のIAMポリシーを自動で作る。</li>
+<li>CDKで書いたインフラを複数のアカウントへ順にデプロイ → <strong>CDK Pipelines</strong>。</li>
 </ul></div>
 </section>
 
@@ -68,6 +127,7 @@ edge asp code dash
 <h2>7. まとめ</h2>
 <ul>
 <li>CDKはプログラミング言語でインフラを書くツール。中身はCloudFormation。</li>
-<li>リソースはConstruct、共通チェックはAspects。</li>
+<li>リソースはConstruct(ふつうはL2)、共通チェックはAspects。</li>
+<li>bootstrap → synth → diff → deploy の流れ。論理IDの変化による置き換えと、削除ポリシーに注意する。</li>
 </ul>
 </section>
