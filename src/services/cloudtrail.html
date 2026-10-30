@@ -40,7 +40,9 @@ edge ct cwl
 <tr><td>管理イベント</td><td>リソースを管理・設定する操作</td><td>EC2・VPCの作成、IAMポリシーの変更</td><td>デフォルトで記録</td></tr>
 <tr><td>データイベント</td><td>リソースそのものに対する操作</td><td>S3オブジェクトの取得・削除</td><td><strong>有効化が必要</strong></td></tr>
 <tr><td>Insightsイベント</td><td>普段と異なる異常なAPI操作</td><td>API呼び出し・エラー率の急増</td><td>有効化・追加料金が必要。EventBridge経由で通知・自動対応も可能</td></tr>
+<tr><td>ネットワークアクティビティイベント</td><td>VPCエンドポイントを通ったAPI呼び出し</td><td>組織外のアカウントのS3へ、VPCエンドポイント経由でアクセスしようとした</td><td>有効化が必要。データの持ち出しの調査に使う</td></tr>
 </table></div>
+<p>データイベントは件数が多く、料金が大きくなりがちです。<strong>高度なイベントセレクター</strong>を使うと、「特定のバケットだけ」「書き込み(削除など)だけ」のように、記録するイベントを絞り込めます。</p>
 
 <h3>リージョン・グローバルの証跡</h3>
 <ul>
@@ -54,6 +56,50 @@ edge ct cwl
 <li>検知結果をSNS通知やLambdaによるアクションにつなげられる。</li>
 <li>CloudWatch Logs Insightsでクエリ分析もできる。</li>
 <li>設定の流れ:証跡でCloudWatch Logsへの配信を有効化 → ロググループを指定 → CloudTrailからCloudWatch Logsへ送信するための<strong>IAMロール</strong>を付与</li>
+<li>例:メトリクスフィルターで「ルートユーザーのログイン」「セキュリティグループの変更」「コンソールへのログイン失敗」を数え、CloudWatchアラームからSNSで通知する。</li>
+</ul>
+
+<h3>組織の証跡</h3>
+<p>Organizationsの管理アカウント(または委任管理者)で<strong>組織の証跡</strong>を作ると、組織内のすべてのアカウントのイベントを、1つの証跡でまとめて記録できます。あとから組織に入ったアカウントも自動で対象になります。メンバーアカウントからは証跡を見られますが、<strong>変更・削除はできません</strong>。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node mgmt 0 0.5 accent "管理アカウント" "組織の証跡を作成"
+node a1 1.4 0 box "メンバーアカウント" "変更・削除できない"
+node a2 1.4 1 box "メンバーアカウント" "変更・削除できない"
+node log 2.8 0.5 ok "ログアーカイブ用" "S3バケット"
+node cwl 4.1 0.5 box "Athena" "SQLで分析"
+edge mgmt a1 dash
+edge mgmt a2 dash
+edge a1 log "ログ"
+edge a2 log "ログ"
+edge log cwl dash
+<figcaption>図2 組織の証跡。全アカウントのイベントを、ログアーカイブ用アカウントのS3バケットに集める。S3のログはAthenaでSQLを使って分析できる。</figcaption>
+</figure>
+
+<h3>ログの保護</h3>
+<p>証跡のログは、不正の証拠になるため、消されたり書き換えられたりしないように守ります。</p>
+<ul>
+<li><strong>ログファイルの整合性検証</strong>:有効にすると、1時間ごとに<strong>ダイジェストファイル</strong>(ログファイルのハッシュ値に電子署名を付けたもの)が作られる。<code>aws cloudtrail validate-logs</code> で、ログが変更・削除されていないかを確かめられる。</li>
+<li><strong>保存先を分ける</strong>:ログ専用のアカウントのS3バケットに保存し、バケットポリシーでCloudTrail以外からの書き込みと削除を制限する。S3オブジェクトロックで削除を防ぐこともできる。</li>
+<li><strong>暗号化</strong>:ログは標準でSSE-S3で暗号化される。SSE-KMS(カスタマーマネージドキー)にすると、ログを読める人をキーの権限でも絞れる。</li>
+<li><strong>止めさせない</strong>:SCPで <code>cloudtrail:StopLogging</code>・<code>cloudtrail:DeleteTrail</code> を拒否する。証跡の停止はEventBridgeで検知して通知できる。</li>
+</ul>
+
+<h3>ログの分析とCloudTrail Lake</h3>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>内容</th></tr>
+<tr><td>イベント履歴</td><td>コンソールで過去90日分の管理イベントを、ユーザー名・イベント名・リソースで絞り込んで見る</td></tr>
+<tr><td>Athena</td><td>S3に保存した証跡のログに、SQLで問い合わせる。長期間のログの分析に向く</td></tr>
+<tr><td>CloudWatch Logs Insights</td><td>CloudWatch Logsに送ったログに、クエリで問い合わせる</td></tr>
+<tr><td><strong>CloudTrail Lake</strong></td><td>イベントを<strong>イベントデータストア</strong>に集め、SQLで問い合わせる。S3やAthenaを準備しなくてよく、長期間(最長10年)保存できる。AWS以外のソースのイベントも取り込める</td></tr>
+</table></div>
+
+<h3>ログが届かないときの確認</h3>
+<ul>
+<li>証跡の記録が<strong>停止</strong>されていないか(<code>StopLogging</code> がイベント履歴に残っていないか)。</li>
+<li>S3の<strong>バケットポリシー</strong>で、CloudTrailからの書き込みを許可しているか。</li>
+<li>SSE-KMSで暗号化している場合、<strong>キーポリシー</strong>でCloudTrailにキーの利用を許可しているか。</li>
+<li>見たいのがデータイベントなら、証跡でデータイベントを有効にしているか。</li>
 </ul>
 </section>
 
@@ -78,21 +124,35 @@ edge ct cwl
 <li><a href="cloudwatch.html">Amazon CloudWatch</a>:ログの監視・アラーム</li>
 <li><a href="eventbridge.html">Amazon EventBridge</a>:API操作をトリガーにした自動処理</li>
 <li><a href="config.html">AWS Config</a>:「何がどう変わったか」の記録(CloudTrailは「誰がやったか」)</li>
-<li><a href="organizations.html">AWS Organizations</a>:組織全体の証跡</li>
+<li><a href="organizations.html">AWS Organizations</a>:組織全体の証跡、証跡の停止を禁止するSCP</li>
+<li><a href="athena.html">Amazon Athena</a>:S3に保存したログのSQLでの分析</li>
+<li><a href="kms.html">AWS KMS</a>:ログの暗号化</li>
+<li><a href="control-tower.html">AWS Control Tower</a>:ログアーカイブアカウントへのログの集約</li>
 <li>関連する用語:<a href="../terms/root-user.html">ルートユーザーとアカウントの保護</a>、<a href="../terms/compliance-artifact.html">コンプライアンスとAWS Artifact</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<div class="point">
+<h4>記録の設定</h4>
+<ul>
 <li>「誰が」「いつ」「どのAPIを」→ <strong>CloudTrail</strong>。「設定がどう変わったか・準拠しているか」→ <strong>Config</strong>。</li>
-<li>S3のオブジェクト操作を記録 → <strong>データイベントを有効化</strong>。</li>
+<li>S3のオブジェクト操作を記録 → <strong>データイベントを有効化</strong>。料金を抑えるには<strong>高度なイベントセレクター</strong>で絞り込む。</li>
 <li>90日より前の履歴が必要 → <strong>証跡を作成</strong>してS3に保存。</li>
-<li>ログの改ざんを検知 → <strong>ログファイルの整合性検証</strong>。</li>
-<li>リアルタイムに近い通知 → <strong>CloudWatch Logsと統合</strong>。</li>
+<li>全アカウント・全リージョンをまとめて記録し、メンバーに消させない → <strong class="em">組織の証跡</strong>。</li>
+<li>普段と違うAPIの呼び出しの急増に気付きたい → <strong>Insightsイベント</strong>。</li>
+</ul>
+<h4>保護と分析</h4>
+<ul>
+<li>ログの改ざん・削除を検知 → <strong>ログファイルの整合性検証</strong>(ダイジェストファイル)。</li>
+<li>証跡を止めさせない → <strong>SCP</strong>で <code>StopLogging</code>・<code>DeleteTrail</code> を拒否する。</li>
+<li>リアルタイムに近い通知 → <strong>CloudWatch Logsと統合</strong>し、メトリクスフィルターとアラームで通知。</li>
+<li>S3に保存したログをSQLで調べる → <strong>Athena</strong>。S3を用意せずSQLで長期保存・分析 → <strong>CloudTrail Lake</strong>。</li>
+<li>ログが届かない → 記録の停止、バケットポリシー、KMSのキーポリシーを確認する。</li>
 <li>CloudWatch・CloudTrail・Config・X-Rayの使い分け → <a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
@@ -100,6 +160,7 @@ edge ct cwl
 <ul>
 <li>CloudTrailはAPI操作の監査ログ。90日分は自動で見られる。</li>
 <li>イベントは管理・データ・Insightsの3種類。データイベントは有効化が必要。</li>
-<li>長期保存はS3、リアルタイム監視はCloudWatch Logs。</li>
+<li>長期保存はS3、リアルタイム監視はCloudWatch Logs、SQLでの分析はAthenaかCloudTrail Lake。</li>
+<li>組織の証跡で全アカウントをまとめ、整合性検証・保存先の分離・SCPでログを守る。</li>
 </ul>
 </section>

@@ -40,9 +40,24 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat4">データベース</a>
   <h1>Amazon ElastiCache</h1>
   <p class="lead">アプリのデータをインメモリでキャッシュするサービス</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(17項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">キャッシュする対象</a></li><li><a href="#c2-2">エンジンの種類</a></li><li><a href="#c2-3">キャッシュ戦略</a></li><li><a href="#c2-4">サーバーレスとノードベース</a></li><li><a href="#c2-5">レプリケーションとマルチAZ(Valkey・Redis OSS)</a></li><li><a href="#c2-6">スケーリング</a></li><li><a href="#c2-7">メモリが足りないとき(エビクション)</a></li><li><a href="#c2-8">監視するメトリクス</a></li><li><a href="#c2-9">セキュリティとバックアップ</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon ElastiCache</strong>は、アプリケーションで利用するデータを<strong>インメモリでキャッシュ</strong>するサービスです。よく使うデータをメモリに置くことで、DBの負荷を下げ、応答を高速化します。</p>
@@ -106,6 +121,97 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 レイジーローディング(アプリ主導)の流れ。①キャッシュを読み、②なければDBから読み、③キャッシュに書き込む。リードスルーでは②③をキャッシュ側が行う。</figcaption>
 </figure>
+<p>レイジーローディングでは、DBを更新してもキャッシュに古いデータが残ります。キーに<strong>TTL(有効期限)</strong>を付けて、一定時間が過ぎたら自動で消えるようにし、ライトスルーと組み合わせるのが基本です。</p>
+
+<h3 id="c2-4">サーバーレスとノードベース<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>ElastiCache Serverless</th><th>ノードベースのクラスター</th></tr>
+<tr><td>容量の決め方</td><td>不要。負荷に合わせて自動で増減する</td><td>ノードのタイプと数を自分で決める</td></tr>
+<tr><td>可用性</td><td>複数のAZに自動で複製される</td><td>レプリカとマルチAZを自分で設定する</td></tr>
+<tr><td>料金</td><td>保存したデータ量と、処理の量(ECPU)</td><td>ノードのタイプと稼働時間</td></tr>
+<tr><td>向いている場面</td><td>負荷が読めない、運用の手間を減らしたい</td><td>負荷が安定している、細かく調整したい</td></tr>
+</table></div>
+
+<h3 id="c2-5">レプリケーションとマルチAZ(Valkey・Redis OSS)<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>ノードベースのクラスターは、1つの<strong>プライマリノード</strong>(読み書き)と、最大5つの<strong>レプリカノード</strong>(読み取り)をまとめた<strong>シャード</strong>でできています。</p>
+<ul>
+<li><strong>マルチAZと自動フェイルオーバー</strong>を有効にすると、プライマリに障害が起きたとき、別のAZのレプリカが自動で新しいプライマリに昇格する。</li>
+<li>アプリは、ノードのアドレスではなく<strong>プライマリエンドポイント</strong>(書き込み)と<strong>リーダーエンドポイント</strong>(読み取り)に接続する。フェイルオーバー後も、エンドポイントは新しいプライマリを指す。</li>
+<li><strong>クラスターモード</strong>を有効にすると、データを複数のシャードに分けて置けるため、メモリと書き込みの性能を横に広げられる。無効の場合はシャードが1つで、読み取りだけをレプリカで増やせる。</li>
+<li>フェイルオーバーの動作は、<code>TestFailover</code> で実際に試せる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 667 202" style="max-width:667px;min-width:534px" role="img" aria-label="図2 レプリケーションとマルチAZ。プライマリに障害が起きると別のAZのレプリカが昇格し、プライマリエンドポイントが新しいプライマリを指す。アプリは接続先を変えなくてよい。"><defs><marker id="dgservices-elasticache-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="89" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="113" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="pe">
+<rect x="255" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="330" y="62" text-anchor="middle" class="dg-t">プライマリ</text>
+<text x="330" y="80" text-anchor="middle" class="dg-s">エンドポイント</text>
+</g>
+<g data-node="re">
+<rect x="255" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="330" y="147" text-anchor="middle" class="dg-t">リーダー</text>
+<text x="330" y="165" text-anchor="middle" class="dg-s">エンドポイント</text>
+</g>
+<g data-node="p">
+<rect x="493" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="568" y="62" text-anchor="middle" class="dg-tb">プライマリノード</text>
+<text x="568" y="80" text-anchor="middle" class="dg-s">AZ-a・読み書き</text>
+</g>
+<g data-node="r">
+<rect x="493" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="568" y="147" text-anchor="middle" class="dg-t">レプリカノード</text>
+<text x="568" y="165" text-anchor="middle" class="dg-s">AZ-c・読み取り</text>
+</g>
+<path d="M184.0,94.6 L255.0,80.9" class="dg-line" marker-end="url(#dgservices-elasticache-2)"/>
+<text x="220" y="92" text-anchor="middle" class="dg-s dg-halo">書き込み</text>
+<path d="M184.0,123.4 L255.0,137.1" class="dg-line" marker-end="url(#dgservices-elasticache-2)"/>
+<text x="220" y="134" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
+<path d="M405.0,66.5 L493.0,66.5" class="dg-line" marker-end="url(#dgservices-elasticache-2)"/>
+<path d="M405.0,151.5 L493.0,151.5" class="dg-line" marker-end="url(#dgservices-elasticache-2)"/>
+<path d="M568.0,92.5 L568.0,125.5" class="dg-line" marker-end="url(#dgservices-elasticache-2)"/>
+<text x="568" y="113" text-anchor="middle" class="dg-s dg-halo">複製</text>
+</svg>
+</div>
+<figcaption>図2 レプリケーションとマルチAZ。プライマリに障害が起きると別のAZのレプリカが昇格し、プライマリエンドポイントが新しいプライマリを指す。アプリは接続先を変えなくてよい。</figcaption>
+</figure>
+<p><strong>グローバルデータストア</strong>を使うと、別のリージョンに読み取り専用のクラスターを置き、データを1秒未満の遅れで複製できます。リージョン障害時は、別リージョンのクラスターを昇格させて書き込みを続けられます。</p>
+
+<h3 id="c2-6">スケーリング<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>縦のスケーリング</strong>:ノードのタイプを大きくする(オンラインで変更できる)。</li>
+<li><strong>読み取りのスケーリング</strong>:レプリカを増やし、リーダーエンドポイントから読む。</li>
+<li><strong>横のスケーリング</strong>:クラスターモードでシャードを増やす(サービスを止めずにデータを移せる)。</li>
+<li>クラスターモードでは、シャードとレプリカの数を、メトリクスに応じてAuto Scalingで増減できる。</li>
+</ul>
+
+<h3 id="c2-7">メモリが足りないとき(エビクション)<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>メモリがいっぱいになると、エンジンは設定された方針(パラメータグループの <code>maxmemory-policy</code>)に従って、古いキーやあまり使われないキーを消します。これを<strong>エビクション</strong>といいます。エビクションが増えるとキャッシュヒット率が下がり、DBへのアクセスが増えるため、ノードを大きくするかシャードを増やします。</p>
+
+<h3 id="c2-8">監視するメトリクス<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>メトリクス</th><th>見るポイント</th></tr>
+<tr><td><code>EngineCPUUtilization</code></td><td>Valkey・Redis OSSのコマンドを処理するスレッドのCPU使用率。コマンドは1本のスレッドで処理されるため、ノード全体の <code>CPUUtilization</code> より、こちらを見る</td></tr>
+<tr><td><code>DatabaseMemoryUsagePercentage</code></td><td>使えるメモリのうち、使っている割合</td></tr>
+<tr><td><code>Evictions</code></td><td>メモリ不足で消されたキーの数。増えていたら容量を増やす</td></tr>
+<tr><td><code>CacheHits</code>・<code>CacheMisses</code></td><td>キャッシュヒット率。低いとキャッシュの効果が出ていない(TTLが短すぎる、容量が足りない)</td></tr>
+<tr><td><code>CurrConnections</code>・<code>NewConnections</code></td><td>接続数。アプリが接続を使い回していないと急に増える</td></tr>
+<tr><td><code>ReplicationLag</code></td><td>レプリカの遅れ。大きいとレプリカから古いデータを読む</td></tr>
+<tr><td><code>SwapUsage</code></td><td>スワップの使用量。増えると性能が落ちる(Memcachedで特に注意)</td></tr>
+</table></div>
+
+<h3 id="c2-9">セキュリティとバックアップ<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>VPCの中に置き、<strong>セキュリティグループ</strong>でアプリからの接続だけを許可する。</li>
+<li>通信の暗号化(TLS)と保存時の暗号化(KMS)を有効にできる。</li>
+<li>Valkey・Redis OSSでは、AUTHトークンやユーザーごとのアクセス制御(RBAC)、IAM認証で接続を制限できる。</li>
+<li>Valkey・Redis OSSの<strong>自動バックアップ</strong>は最大35日間保持でき、手動のスナップショットはS3にエクスポートできる。復元すると新しいクラスターが作られる。</li>
+<li>メンテナンスウィンドウ(パッチ適用などを行う時間帯)は、利用の少ない時間に設定する。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -128,18 +234,33 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="rds.html">Amazon RDS</a>/<a href="aurora.html">Amazon Aurora</a>/<a href="dynamodb.html">Amazon DynamoDB</a>:キャッシュ対象のDB</li>
 <li><a href="memorydb.html">Amazon MemoryDB</a>:Redis互換の永続的なインメモリDB</li>
 <li><a href="dynamodb.html">DynamoDB DAX</a>:DynamoDB専用のキャッシュ</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:メトリクスの監視とアラーム</li>
+<li><a href="vpc.html">Amazon VPC</a>:キャッシュを置くネットワークとセキュリティグループ</li>
+<li>関連する用語:<a href="../terms/caching-comparison.html">キャッシュの選び方</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>、<a href="../terms/performance-metrics.html">性能のメトリクス</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
+<div class="point">
+<h4>設計</h4>
+<ul>
 <li>レプリケーション・フェイルオーバー・バックアップ・高機能なデータ構造 → <strong>Valkey/Redis OSS</strong>、シンプル・マルチスレッド → <strong>Memcached</strong>。</li>
-<li>必要なデータだけをキャッシュ(アプリ主導)→ <strong>レイジーローディング</strong>。ただし初回はキャッシュミスで遅く、古いデータが残る可能性がある。</li>
-<li>キャッシュとDBの整合性重視 → <strong>ライトスルー</strong>。</li>
-<li>書き込み性能重視 → <strong>ライトビハインド</strong>(DBへの反映は遅延)。</li>
+<li>必要なデータだけをキャッシュ(アプリ主導)→ <strong>レイジーローディング</strong>。ただし初回はキャッシュミスで遅く、古いデータが残る可能性がある → <strong>TTL</strong>を付ける。</li>
+<li>キャッシュとDBの整合性重視 → <strong>ライトスルー</strong>。書き込み性能重視 → <strong>ライトビハインド</strong>(DBへの反映は遅延)。</li>
+<li>容量の見積もりをしたくない・負荷が読めない → <strong>ElastiCache Serverless</strong>。</li>
+<li>AZ障害でも止めたくない → レプリカを別のAZに置き、<strong>マルチAZと自動フェイルオーバー</strong>を有効にする。アプリは<strong>エンドポイント</strong>に接続する。</li>
+<li>リージョン障害に備える → <strong>グローバルデータストア</strong>。</li>
 <li>CloudFront・API Gateway・ElastiCache・DAXのキャッシュの使い分け → <a href="../terms/caching-comparison.html">キャッシュの選び方</a>。</li>
-</ul></div>
+</ul>
+<h4>運用と監視</h4>
+<ul>
+<li>Valkey・Redis OSSのCPUは <code>CPUUtilization</code> ではなく <strong class="em"><code>EngineCPUUtilization</code></strong> を見る。</li>
+<li><code>Evictions</code> が増えた・ヒット率が下がった → メモリ不足。<strong>ノードを大きく</strong>するか<strong>シャードを増やす</strong>。</li>
+<li>読み取りの負荷が高い → <strong>レプリカを追加</strong>し、リーダーエンドポイントから読む。</li>
+<li>アプリから接続できない → <strong>セキュリティグループ</strong>(ポート6379・11211)と、TLSの設定がアプリ側と合っているかを確認する。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
@@ -147,7 +268,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ul>
 <li>ElastiCacheはインメモリキャッシュ。DB負荷の軽減と高速化に使う。</li>
 <li>エンジンはValkey・Redis OSS・Memcached。</li>
-<li>キャッシュ戦略は読み込み2種・書き込み2種の特徴を押さえる。</li>
+<li>キャッシュ戦略は読み込み2種・書き込み2種の特徴を押さえる。古いデータにはTTLで備える。</li>
+<li>可用性はレプリカとマルチAZ、容量はノードのサイズ・シャード、監視は <code>EngineCPUUtilization</code>・<code>Evictions</code>・ヒット率。</li>
 </ul>
 </section>
 <section class="chapter backlinks">
@@ -161,31 +283,37 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 5件・リンク元 4件)</summary>
+<summary>つながり図を開く(リンク先 9件・リンク元 3件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon ElastiCacheとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,60 C265.0,60 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
-<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="0" y="49" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="64" class="gr-t">Elastic Load Balancing (E…</text></a>
-<path class="gr-line" d="M230,90 C265.0,90 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
-<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="0" y="79" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="94" class="gr-t">高可用性とスケーリング</text></a>
-<path class="gr-line" d="M230,120 C265.0,120 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/rds-performance.html"><title>運用シナリオ:RDSの遅いクエリと接続数の問題を解消する</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="124" class="gr-t">RDSの遅いクエリと接続数の問題…</text></a>
-<path class="gr-line" d="M230,150 C265.0,150 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/cache-read-offload.html"><title>運用シナリオ:キャッシュでDBの読み取り負荷を下げる</title><rect x="0" y="139" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="154" class="gr-t">キャッシュでDBの読み取り負荷…</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 306" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon ElastiCacheとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Elastic Load Balancing (E…</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/rds-performance.html"><title>運用シナリオ:RDSの遅いクエリと接続数の問題を解消する</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="170" class="gr-t">RDSの遅いクエリと接続数の問題…</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cache-read-offload.html"><title>運用シナリオ:キャッシュでDBの読み取り負荷を下げる</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="200" class="gr-t">キャッシュでDBの読み取り負荷…</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">Amazon Aurora</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon DynamoDB</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/memorydb.html"><title>サービス:Amazon MemoryDB</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon MemoryDB</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon RDS</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/caching-comparison.html"><title>用語:キャッシュの選び方</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">キャッシュの選び方</text></a>
-<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">Amazon ElastiCache</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(4)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon DynamoDB</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/memorydb.html"><title>サービス:Amazon MemoryDB</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon MemoryDB</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon RDS</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/performance-metrics.html"><title>用語:IOPS・スループット・レイテンシー</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">IOPS・スループット・レイテン…</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/caching-comparison.html"><title>用語:キャッシュの選び方</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">キャッシュの選び方</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">高可用性とスケーリング</text></a>
+<rect x="300" y="145" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="170" text-anchor="middle" class="gr-tb">Amazon ElastiCache</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(3)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(9)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>

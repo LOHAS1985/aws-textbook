@@ -50,6 +50,72 @@ edge app cache both
 edge app db
 <figcaption>図1 レイジーローディング(アプリ主導)の流れ。①キャッシュを読み、②なければDBから読み、③キャッシュに書き込む。リードスルーでは②③をキャッシュ側が行う。</figcaption>
 </figure>
+<p>レイジーローディングでは、DBを更新してもキャッシュに古いデータが残ります。キーに<strong>TTL(有効期限)</strong>を付けて、一定時間が過ぎたら自動で消えるようにし、ライトスルーと組み合わせるのが基本です。</p>
+
+<h3>サーバーレスとノードベース</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>ElastiCache Serverless</th><th>ノードベースのクラスター</th></tr>
+<tr><td>容量の決め方</td><td>不要。負荷に合わせて自動で増減する</td><td>ノードのタイプと数を自分で決める</td></tr>
+<tr><td>可用性</td><td>複数のAZに自動で複製される</td><td>レプリカとマルチAZを自分で設定する</td></tr>
+<tr><td>料金</td><td>保存したデータ量と、処理の量(ECPU)</td><td>ノードのタイプと稼働時間</td></tr>
+<tr><td>向いている場面</td><td>負荷が読めない、運用の手間を減らしたい</td><td>負荷が安定している、細かく調整したい</td></tr>
+</table></div>
+
+<h3>レプリケーションとマルチAZ(Valkey・Redis OSS)</h3>
+<p>ノードベースのクラスターは、1つの<strong>プライマリノード</strong>(読み書き)と、最大5つの<strong>レプリカノード</strong>(読み取り)をまとめた<strong>シャード</strong>でできています。</p>
+<ul>
+<li><strong>マルチAZと自動フェイルオーバー</strong>を有効にすると、プライマリに障害が起きたとき、別のAZのレプリカが自動で新しいプライマリに昇格する。</li>
+<li>アプリは、ノードのアドレスではなく<strong>プライマリエンドポイント</strong>(書き込み)と<strong>リーダーエンドポイント</strong>(読み取り)に接続する。フェイルオーバー後も、エンドポイントは新しいプライマリを指す。</li>
+<li><strong>クラスターモード</strong>を有効にすると、データを複数のシャードに分けて置けるため、メモリと書き込みの性能を横に広げられる。無効の場合はシャードが1つで、読み取りだけをレプリカで増やせる。</li>
+<li>フェイルオーバーの動作は、<code>TestFailover</code> で実際に試せる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 0.5 blue "アプリ"
+node pe 1.3 0 box "プライマリ" "エンドポイント"
+node re 1.3 1 box "リーダー" "エンドポイント"
+node p 2.7 0 accent "プライマリノード" "AZ-a・読み書き"
+node r 2.7 1 ok "レプリカノード" "AZ-c・読み取り"
+edge app pe "書き込み"
+edge app re "読み取り"
+edge pe p
+edge re r
+edge p r "複製"
+<figcaption>図2 レプリケーションとマルチAZ。プライマリに障害が起きると別のAZのレプリカが昇格し、プライマリエンドポイントが新しいプライマリを指す。アプリは接続先を変えなくてよい。</figcaption>
+</figure>
+<p><strong>グローバルデータストア</strong>を使うと、別のリージョンに読み取り専用のクラスターを置き、データを1秒未満の遅れで複製できます。リージョン障害時は、別リージョンのクラスターを昇格させて書き込みを続けられます。</p>
+
+<h3>スケーリング</h3>
+<ul>
+<li><strong>縦のスケーリング</strong>:ノードのタイプを大きくする(オンラインで変更できる)。</li>
+<li><strong>読み取りのスケーリング</strong>:レプリカを増やし、リーダーエンドポイントから読む。</li>
+<li><strong>横のスケーリング</strong>:クラスターモードでシャードを増やす(サービスを止めずにデータを移せる)。</li>
+<li>クラスターモードでは、シャードとレプリカの数を、メトリクスに応じてAuto Scalingで増減できる。</li>
+</ul>
+
+<h3>メモリが足りないとき(エビクション)</h3>
+<p>メモリがいっぱいになると、エンジンは設定された方針(パラメータグループの <code>maxmemory-policy</code>)に従って、古いキーやあまり使われないキーを消します。これを<strong>エビクション</strong>といいます。エビクションが増えるとキャッシュヒット率が下がり、DBへのアクセスが増えるため、ノードを大きくするかシャードを増やします。</p>
+
+<h3>監視するメトリクス</h3>
+<div class="table-wrap"><table>
+<tr><th>メトリクス</th><th>見るポイント</th></tr>
+<tr><td><code>EngineCPUUtilization</code></td><td>Valkey・Redis OSSのコマンドを処理するスレッドのCPU使用率。コマンドは1本のスレッドで処理されるため、ノード全体の <code>CPUUtilization</code> より、こちらを見る</td></tr>
+<tr><td><code>DatabaseMemoryUsagePercentage</code></td><td>使えるメモリのうち、使っている割合</td></tr>
+<tr><td><code>Evictions</code></td><td>メモリ不足で消されたキーの数。増えていたら容量を増やす</td></tr>
+<tr><td><code>CacheHits</code>・<code>CacheMisses</code></td><td>キャッシュヒット率。低いとキャッシュの効果が出ていない(TTLが短すぎる、容量が足りない)</td></tr>
+<tr><td><code>CurrConnections</code>・<code>NewConnections</code></td><td>接続数。アプリが接続を使い回していないと急に増える</td></tr>
+<tr><td><code>ReplicationLag</code></td><td>レプリカの遅れ。大きいとレプリカから古いデータを読む</td></tr>
+<tr><td><code>SwapUsage</code></td><td>スワップの使用量。増えると性能が落ちる(Memcachedで特に注意)</td></tr>
+</table></div>
+
+<h3>セキュリティとバックアップ</h3>
+<ul>
+<li>VPCの中に置き、<strong>セキュリティグループ</strong>でアプリからの接続だけを許可する。</li>
+<li>通信の暗号化(TLS)と保存時の暗号化(KMS)を有効にできる。</li>
+<li>Valkey・Redis OSSでは、AUTHトークンやユーザーごとのアクセス制御(RBAC)、IAM認証で接続を制限できる。</li>
+<li>Valkey・Redis OSSの<strong>自動バックアップ</strong>は最大35日間保持でき、手動のスナップショットはS3にエクスポートできる。復元すると新しいクラスターが作られる。</li>
+<li>メンテナンスウィンドウ(パッチ適用などを行う時間帯)は、利用の少ない時間に設定する。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -72,18 +138,33 @@ edge app db
 <li><a href="rds.html">Amazon RDS</a>/<a href="aurora.html">Amazon Aurora</a>/<a href="dynamodb.html">Amazon DynamoDB</a>:キャッシュ対象のDB</li>
 <li><a href="memorydb.html">Amazon MemoryDB</a>:Redis互換の永続的なインメモリDB</li>
 <li><a href="dynamodb.html">DynamoDB DAX</a>:DynamoDB専用のキャッシュ</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:メトリクスの監視とアラーム</li>
+<li><a href="vpc.html">Amazon VPC</a>:キャッシュを置くネットワークとセキュリティグループ</li>
+<li>関連する用語:<a href="../terms/caching-comparison.html">キャッシュの選び方</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>、<a href="../terms/performance-metrics.html">性能のメトリクス</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<div class="point">
+<h4>設計</h4>
+<ul>
 <li>レプリケーション・フェイルオーバー・バックアップ・高機能なデータ構造 → <strong>Valkey/Redis OSS</strong>、シンプル・マルチスレッド → <strong>Memcached</strong>。</li>
-<li>必要なデータだけをキャッシュ(アプリ主導)→ <strong>レイジーローディング</strong>。ただし初回はキャッシュミスで遅く、古いデータが残る可能性がある。</li>
-<li>キャッシュとDBの整合性重視 → <strong>ライトスルー</strong>。</li>
-<li>書き込み性能重視 → <strong>ライトビハインド</strong>(DBへの反映は遅延)。</li>
+<li>必要なデータだけをキャッシュ(アプリ主導)→ <strong>レイジーローディング</strong>。ただし初回はキャッシュミスで遅く、古いデータが残る可能性がある → <strong>TTL</strong>を付ける。</li>
+<li>キャッシュとDBの整合性重視 → <strong>ライトスルー</strong>。書き込み性能重視 → <strong>ライトビハインド</strong>(DBへの反映は遅延)。</li>
+<li>容量の見積もりをしたくない・負荷が読めない → <strong>ElastiCache Serverless</strong>。</li>
+<li>AZ障害でも止めたくない → レプリカを別のAZに置き、<strong>マルチAZと自動フェイルオーバー</strong>を有効にする。アプリは<strong>エンドポイント</strong>に接続する。</li>
+<li>リージョン障害に備える → <strong>グローバルデータストア</strong>。</li>
 <li>CloudFront・API Gateway・ElastiCache・DAXのキャッシュの使い分け → <a href="../terms/caching-comparison.html">キャッシュの選び方</a>。</li>
-</ul></div>
+</ul>
+<h4>運用と監視</h4>
+<ul>
+<li>Valkey・Redis OSSのCPUは <code>CPUUtilization</code> ではなく <strong class="em"><code>EngineCPUUtilization</code></strong> を見る。</li>
+<li><code>Evictions</code> が増えた・ヒット率が下がった → メモリ不足。<strong>ノードを大きく</strong>するか<strong>シャードを増やす</strong>。</li>
+<li>読み取りの負荷が高い → <strong>レプリカを追加</strong>し、リーダーエンドポイントから読む。</li>
+<li>アプリから接続できない → <strong>セキュリティグループ</strong>(ポート6379・11211)と、TLSの設定がアプリ側と合っているかを確認する。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
@@ -91,6 +172,7 @@ edge app db
 <ul>
 <li>ElastiCacheはインメモリキャッシュ。DB負荷の軽減と高速化に使う。</li>
 <li>エンジンはValkey・Redis OSS・Memcached。</li>
-<li>キャッシュ戦略は読み込み2種・書き込み2種の特徴を押さえる。</li>
+<li>キャッシュ戦略は読み込み2種・書き込み2種の特徴を押さえる。古いデータにはTTLで備える。</li>
+<li>可用性はレプリカとマルチAZ、容量はノードのサイズ・シャード、監視は <code>EngineCPUUtilization</code>・<code>Evictions</code>・ヒット率。</li>
 </ul>
 </section>
