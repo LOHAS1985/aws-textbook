@@ -1,0 +1,75 @@
+<!-- title: 2026年10月31日のAWSニュース:WAFのSDK自動組み込み・CloudFrontの新ヘッダー・RDS for Oracleの自動アップグレード任意化 -->
+<!-- category: 2026年10月 -->
+<!-- lead: AWS WAFのボット対策などに必要な「SDKのscriptタグ」を、CloudFrontが自動でHTMLに追加してくれるようになり、アプリの修正なしで保護を有効にできます。 -->
+<section class="chapter">
+<h2>1. 今日のまとめ</h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">WAF:CloudFront向けSDKの自動組み込み</a></td><td>ボット対策などに必要なscriptタグを、CloudFrontが自動で追加する</td><td><a href="../services/waf.html">WAF</a>、<a href="../services/cloudfront.html">CloudFront</a></td></tr>
+<tr><td><a href="#n2">CloudFront:ISPとTLSの詳細をオリジンへ転送</a></td><td>閲覧者のISP名と、ポスト量子暗号を使ったかが分かるヘッダーを選んで転送できる</td><td><a href="../services/cloudfront.html">CloudFront</a></td></tr>
+<tr><td><a href="#n3">RDS for Oracle:自動マイナーバージョンアップグレードを任意に</a></td><td>JVMなど4つのオプション使用中でも、自動アップグレードをオフにできる</td><td><a href="../services/rds.html">RDS</a>、<a href="../services/organizations.html">Organizations</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 注目の発表</h2>
+<h3 id="n1">WAF:CloudFront向けSDKの自動組み込み</h3>
+<p>AWS WAFのマネージドルールのうち、Bot Control(ボット対策。ターゲット型の検査レベル)、ATP(アカウント乗っ取り防止)、ACFP(アカウント作成の不正防止)は、利用者のブラウザ側の情報も判断材料にします。その情報を集めるのが「WAF JavaScript SDK」で、これまでは守りたい全ページに自分でscriptタグを追加する必要がありました。今回、CloudFrontが配信するHTMLにこのタグを自動で追加する設定が使えるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "各ページに自分で" "タグを追加・維持"
+node after 1.6 0 ok "これから" "CloudFrontが" "タグを自動で追加"
+edge before after "自動組み込み"
+<figcaption>図1 SDKのscriptタグの追加方法の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アプリのコードやビルド、デプロイを変えずに済みます。WAFでルールを有効にしたのにタグの入れ忘れで効果が出ない、という設定ミスも防げます。対象は、CloudFrontで使うウェブACLのうち、上の3つのルールグループを1つ以上含むものです。コンソールで新しくウェブACLを作る場合は初期状態でオンですが、プログラム(CLI・CloudFormationなど)で作る場合はオフで、既存のウェブACLも変わりません。追加料金はありません。</dd>
+<dt>試験・実務への影響</dt><dd>ボット対策やアカウント乗っ取り対策は、WAFのマネージドルールで行うのが基本です。CloudFrontにWAFを付けて配信する構成も定番なので、役割分担(CloudFrontが配信、WAFが検査)とあわせて押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/waf.html">WAF</a>、<a href="../services/cloudfront.html">CloudFront</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-waf-automatic-sdk-integration-amazon-cloudfront/">AWS WAF announces automatic SDK integration for Amazon CloudFront distributions</a>(2026-10-30)</dd>
+</dl>
+
+<h3 id="n2">CloudFront:ISPとTLSの詳細をオリジンへ転送</h3>
+<p>CloudFrontは、閲覧者の情報をヘッダーとしてオリジン(配信元のサーバー)に渡せます。今回、2つのヘッダーが加わりました。CloudFront-Viewer-ISPは、閲覧者が使っているインターネット接続事業者(ISP)の名前です。CloudFront-Viewer-TLS-Detailsは、その接続で使った暗号の方式(鍵交換・署名方式など)で、「ポスト量子暗号」(将来の量子コンピューターでも破られにくいとされる暗号)を使った接続かどうかが分かります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node viewer 0 0 blue "閲覧者" "ISP・TLS接続"
+node cf 1.5 0 accent "CloudFront" "オリジンリクエスト" "ポリシー"
+node origin 3 0 box "オリジン" "ヘッダーを受け取る"
+node log 4.5 0 ok "分析" "ISP別・暗号方式別"
+edge viewer cf
+edge cf origin "新ヘッダーを転送"
+edge origin log
+<figcaption>図2 新しいヘッダーをオリジンで活用する流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>ISPごとに通信量や遅さを比べたり、特定のISPからの不審なアクセスを切り分けたりできます。TLS詳細では、ポスト量子暗号で接続している閲覧者の割合や、まだ対応していないクライアントを調べられます。どちらも任意のヘッダーで、使うには、オリジンリクエストポリシーに追加してディストリビューションに関連付けます。</dd>
+<dt>試験・実務への影響</dt><dd>オリジンに渡す内容は、オリジンリクエストポリシーで決めます。ヘッダーを増やしてもキャッシュのキーには含まれないので、キャッシュの効率は変わりません(キャッシュポリシーとの違いに注意)。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudfront.html">CloudFront</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/cloudfront-viewer-isp-post-quantum-visbility/">Amazon CloudFront now provides viewer ISP and post-quantum TLS details</a>(2026-10-30)</dd>
+</dl>
+
+<h3 id="n3">RDS for Oracle:自動マイナーバージョンアップグレードを任意に</h3>
+<p>RDSには、DBエンジンの小さな更新(マイナーバージョン)を、メンテナンスウィンドウに自動で適用する設定があります。RDS for Oracleでは、JVM・Spatial・Locator・OLAPのオプションを使う場合、この自動アップグレードを必ずオンにする必要がありました。今回、新規・既存のDBインスタンスのどちらでもオフにできるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "オプション使用中は" "自動が必須"
+node after 1.6 0 ok "これから" "オン・オフを" "自分で選べる"
+edge before after "任意に変更"
+<figcaption>図3 オプション使用中の自動アップグレードの扱い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アプリとの相性確認を済ませてから、好きな時期にアップグレードできます。オフにする場合は、Oracleのセキュリティ修正を受け取れるよう、新しいマイナーバージョンを定期的に自分で適用することが勧められています。オンのまま環境ごとの更新の順番を決めたいときは、AWS Organizationsのアップグレードロールアウトポリシーを使えます。</dd>
+<dt>試験・実務への影響</dt><dd>「更新を自動で行う」と「適用時期を自分で管理する」のどちらを選ぶかは、運用の定番の論点です。本番環境は検証後に適用し、開発環境から順に更新する、といった考え方を押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/rds.html">RDS</a>、<a href="../services/organizations.html">Organizations</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/oracle-jvm-spatial-locator-olap-options-amvu-optional/">Amazon RDS for Oracle no longer requires automatic minor version upgrades for JVM, Spatial, Locator, and OLAP options</a>(2026-10-30)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2>3. その他の発表</h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aurora-postgresql-post-quantum-tls-key-exchange/">Aurora:ポスト量子のTLS鍵交換に対応</a>:PostgreSQL互換のバージョン18以上で、ssl_groupsパラメータから暗号グループを選べます。<a href="../services/aurora.html">Aurora</a></li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/managed-grafana-upgrade-version-13-2/">Managed Grafana:バージョン13.2へのインプレースアップグレード</a>:ダッシュボードをGitで管理する機能などが使え、数クリックで更新できます。<a href="../services/managed-grafana.html">Managed Grafana</a></li>
+</ul>
+</section>
