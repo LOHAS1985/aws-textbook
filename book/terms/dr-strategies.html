@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DR戦略 | AWS教科書</title>
-<meta name="description" content="災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ">
+<meta name="description" content="災害に備えた4つの復旧方式と、RTO・RPO・コストのトレードオフ">
 <script>
 // 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
 try {
@@ -38,16 +38,61 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat5">設計・運用</a>
   <h1>DR戦略</h1>
-  <p class="lead">災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ</p>
-  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
+  <p class="lead">災害に備えた4つの復旧方式と、RTO・RPO・コストのトレードオフ</p>
+  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">RTOとRPO</a></li><li><a href="#c1-2">4つのDR戦略</a></li><li><a href="#c1-3">バックアップと復元</a></li><li><a href="#c1-4">パイロットライト</a></li><li><a href="#c1-5">ウォームスタンバイ</a></li><li><a href="#c1-6">マルチサイト(アクティブ/アクティブ)</a></li><li><a href="#c1-7">高可用性とDRの違い</a></li><li><a href="#c1-8">戦略の選び方とDR訓練</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+<li><a href="#c4">この用語が出てくるページ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>DR(Disaster Recovery:災害復旧)戦略</strong>は、リージョン障害などの災害に備えて、別の場所(DRサイト)をどの程度準備しておくかの方式です。準備を厚くするほど早く復旧できますが、コストが上がります。</p>
+<p><strong>DR(Disaster Recovery:災害復旧)戦略</strong>は、リージョン全体の障害や、誤操作・ランサムウェアによるデータ破損などの災害に備えて、別の場所(DRサイト)をどの程度準備しておくかの方式です。準備を厚くするほど早く復旧できますが、コストが上がります。</p>
+
+<h3 id="c1-1">RTOとRPO<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>どの戦略を選ぶかは、業務が許容できる2つの値で決まります。</p>
+<ul>
+<li><strong class="em">RTO(目標復旧時間)</strong>:障害が起きてから、サービスを再開するまでに許容できる時間。「何時間止まってよいか」。</li>
+<li><strong class="em">RPO(目標復旧時点)</strong>:どの時点までのデータを取り戻せればよいか。「何時間分のデータを失ってよいか」。バックアップやレプリケーションの間隔で決まる。</li>
+</ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 698 186" style="max-width:698px;min-width:558px" role="img" aria-label="図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。"><defs><marker id="dgterms-dr-strategies-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 718 114" style="max-width:718px;min-width:574px" role="img" aria-label="図1 RPOとRTO。RPOは障害の前の「失ってもよいデータの量」、RTOは障害の後の「止まってもよい時間」。どちらも小さくするほど、常に動かしておくリソースが増えてコストが上がる。"><defs><marker id="dgterms-dr-strategies-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="bk">
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">最後のバックアップ</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">ここまで戻せる</text>
+</g>
+<g data-node="dis">
+<rect x="289" y="44" width="150" height="40" rx="8" class="dg-ng"/>
+<text x="364" y="68" text-anchor="middle" class="dg-t">障害の発生</text>
+</g>
+<g data-node="rec">
+<rect x="544" y="44" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="619" y="68" text-anchor="middle" class="dg-t">サービス再開</text>
+</g>
+<path d="M184.0,64.0 L289.0,64.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-1)"/>
+<text x="236" y="68" text-anchor="middle" class="dg-s dg-halo">RPO(失うデータ)</text>
+<path d="M439.0,64.0 L544.0,64.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-1)"/>
+<text x="492" y="68" text-anchor="middle" class="dg-s dg-halo">RTO(止まる時間)</text>
+</svg>
+</div>
+<figcaption>図1 RPOとRTO。RPOは障害の前の「失ってもよいデータの量」、RTOは障害の後の「止まってもよい時間」。どちらも小さくするほど、常に動かしておくリソースが増えてコストが上がる。</figcaption>
+</figure>
+<p>RPOとRTOは別々に決まります。例えば、1時間ごとにバックアップしていればRPOは最大1時間ですが、そのバックアップから環境を作り直すのに4時間かかれば、RTOは4時間です。</p>
+
+<h3 id="c1-2">4つのDR戦略<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 186" style="max-width:698px;min-width:558px" role="img" aria-label="図2 DR戦略の比較(下段はRTOの目安とコスト)。右に行くほど復旧が速く(RTO・RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。"><defs><marker id="dgterms-dr-strategies-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="b">
 <rect x="34" y="43" width="145" height="52" rx="8" class="dg-box"/>
 <text x="106" y="64" text-anchor="middle" class="dg-t">バックアップと復元</text>
@@ -73,41 +118,125 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="106" y="150" text-anchor="middle" class="dg-s">コスト: 最小</text>
 </g>
 <g data-node="t2">
-<text x="272" y="132" text-anchor="middle" class="dg-t">数十分〜数時間</text>
+<text x="272" y="132" text-anchor="middle" class="dg-t">数十分</text>
 <text x="272" y="150" text-anchor="middle" class="dg-s">コスト: 低</text>
 </g>
 <g data-node="t3">
-<text x="436" y="132" text-anchor="middle" class="dg-t">数分〜数十分</text>
+<text x="436" y="132" text-anchor="middle" class="dg-t">数分</text>
 <text x="436" y="150" text-anchor="middle" class="dg-s">コスト: 中</text>
 </g>
 <g data-node="t4">
 <text x="602" y="132" text-anchor="middle" class="dg-t">ほぼゼロ</text>
 <text x="602" y="150" text-anchor="middle" class="dg-s">コスト: 最大</text>
 </g>
-<path d="M179.0,69.0 L199.0,69.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-1)"/>
-<path d="M344.0,69.0 L364.0,69.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-1)"/>
-<path d="M509.0,69.0 L529.0,69.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-1)"/>
+<path d="M179.0,69.0 L199.0,69.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-2)"/>
+<path d="M344.0,69.0 L364.0,69.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-2)"/>
+<path d="M509.0,69.0 L529.0,69.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-2)"/>
 </svg>
 </div>
-<figcaption>図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。</figcaption>
+<figcaption>図2 DR戦略の比較(下段はRTOの目安とコスト)。右に行くほど復旧が速く(RTO・RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。</figcaption>
 </figure>
 <div class="table-wrap"><table class="stack">
-<tr><th>名称</th><th>DR側の状態</th><th>RTO/RPO</th><th>コスト</th></tr>
-<tr><td data-label="名称">バックアップと復元</td><td data-label="DR側の状態">バックアップのみ保管</td><td data-label="RTO/RPO">数時間</td><td data-label="コスト">最小</td></tr>
-<tr><td data-label="名称">パイロットライト</td><td data-label="DR側の状態">データ層のみ稼働、アプリは停止</td><td data-label="RTO/RPO">数十分〜数時間</td><td data-label="コスト">低</td></tr>
-<tr><td data-label="名称">ウォームスタンバイ</td><td data-label="DR側の状態">縮小版の全構成が常時稼働</td><td data-label="RTO/RPO">数分〜数十分</td><td data-label="コスト">中</td></tr>
-<tr><td data-label="名称">マルチサイト(アクティブ/アクティブ)</td><td data-label="DR側の状態">本番と同規模で常時稼働</td><td data-label="RTO/RPO">ほぼゼロ</td><td data-label="コスト">最大</td></tr>
+<tr><th>名称</th><th>DR側の状態</th><th>RTOの目安</th><th>RPOの目安</th><th>コスト</th></tr>
+<tr><td data-label="名称">バックアップと復元</td><td data-label="DR側の状態">バックアップだけを保管。障害時に環境を作り直す</td><td data-label="RTOの目安">数時間</td><td data-label="RPOの目安">バックアップの間隔(数時間)</td><td data-label="コスト">最小</td></tr>
+<tr><td data-label="名称">パイロットライト</td><td data-label="DR側の状態">データはレプリケーションで常に同期。アプリのサーバーは停止か未作成</td><td data-label="RTOの目安">数十分</td><td data-label="RPOの目安">数秒〜数分</td><td data-label="コスト">低</td></tr>
+<tr><td data-label="名称">ウォームスタンバイ</td><td data-label="DR側の状態">縮小版の全構成が常時稼働し、少量のリクエストなら処理できる</td><td data-label="RTOの目安">数分</td><td data-label="RPOの目安">数秒〜数分</td><td data-label="コスト">中</td></tr>
+<tr><td data-label="名称">マルチサイト(アクティブ/アクティブ)</td><td data-label="DR側の状態">本番と同規模で常時稼働し、両方のリージョンでリクエストを処理する</td><td data-label="RTOの目安">ほぼゼロ</td><td data-label="RPOの目安">ほぼゼロ</td><td data-label="コスト">最大</td></tr>
 </table></div>
+
+<h3 id="c1-3">バックアップと復元<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>データのバックアップを別リージョンにコピーしておき、障害が起きたら、バックアップとインフラのコード(CloudFormationなど)から環境を作り直す方式です。最も安い一方で、作り直す時間がRTOになります。</p>
 <ul>
-<li><strong>RTO(目標復旧時間)</strong>:障害発生からサービスを再開するまでに許容できる時間。</li>
-<li><strong>RPO(目標復旧時点)</strong>:どの時点までのデータを復旧できればよいか(許容できるデータ損失の量)。</li>
-<li>AWSでは、バックアップと復元にAWS Backupのクロスリージョンコピー、パイロットライトやウォームスタンバイにAuroraグローバルデータベースやRoute 53のフェイルオーバールーティング、などを組み合わせる。</li>
+<li>AWS Backupのクロスリージョンコピー、S3のクロスリージョンレプリケーション、EBSスナップショットやAMIのリージョン間コピーを使う。</li>
+<li>作り直しを手作業にするとRTOが延びるため、<strong>CloudFormationなどで環境をコード化</strong>しておく。</li>
+<li>ランサムウェアや誤削除への備えとしては、どの戦略を選んでも必要になる(レプリケーションは誤った変更もそのまま複製するため)。</li>
+</ul>
+
+<h3 id="c1-4">パイロットライト<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>「種火」の意味で、データベースなどの<strong>データ層だけを常に同期</strong>しておき、アプリのサーバーは止めておく方式です。障害時にアプリのサーバーを起動・増設してから切り替えます。</p>
+<ul>
+<li>データはAuroraグローバルデータベース、DynamoDBグローバルテーブル、RDSのクロスリージョンリードレプリカなどで同期する。</li>
+<li>アプリ層は、Auto Scalingグループを台数0で用意しておく、AMIだけを用意しておく、などで待機させる。</li>
+<li>切り替えるまでリクエストを処理できない点が、ウォームスタンバイとの違い。</li>
+</ul>
+
+<h3 id="c1-5">ウォームスタンバイ<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>本番と同じ構成を、<strong>小さい規模で常に動かしておく</strong>方式です。障害時はDR側をスケールアウトし、DNSなどでトラフィックを切り替えます。常に動いているため、切り替え前から動作を確認できます。</p>
+<ul>
+<li>DR側のAuto Scalingグループは最小台数を小さくしておき、切り替え時に希望台数を増やす。</li>
+<li>Route 53のフェイルオーバールーティングやARC(Application Recovery Controller)で切り替える。</li>
+</ul>
+
+<h3 id="c1-6">マルチサイト(アクティブ/アクティブ)<a class="anchor" href="#c1-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>複数のリージョンで、本番と同じ規模の環境を動かし、どちらでもリクエストを処理する方式です。片方が止まっても、もう片方がそのまま処理を続けます。</p>
+<ul>
+<li>Route 53のレイテンシーや加重ルーティング、Global Acceleratorで両方のリージョンに振り分ける。</li>
+<li>どちらのリージョンでも書き込める必要があるため、DynamoDBグローバルテーブルのような<strong>マルチリージョンで書き込めるデータストア</strong>が向いている。</li>
+<li>片方のリージョンを読み取り専用で待機させる方式は、アクティブ/パッシブ(ホットスタンバイ)と呼ばれる。</li>
+</ul>
+
+<h3 id="c1-7">高可用性とDRの違い<a class="anchor" href="#c1-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>マルチAZ構成(RDSのマルチAZ、複数AZにまたがるAuto Scalingグループなど)は、<strong>1つのAZの障害</strong>に自動で備える高可用性の仕組みです。DR戦略は、<strong>リージョン全体の障害やデータの破損</strong>に備えるもので、目的が違います。試験では「リージョン障害に備える」と書かれていればDR戦略、「AZ障害に備える」と書かれていればマルチAZを選びます。</p>
+
+<h3 id="c1-8">戦略の選び方とDR訓練<a class="anchor" href="#c1-8" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 871 228" style="max-width:871px;min-width:697px" role="img" aria-label="図3 DR戦略の選び方。要件を満たす中で、最もコストが低い戦略を選ぶ。試験では「最もコスト効率よく」と書かれていることが多い。"><defs><marker id="dgterms-dr-strategies-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="q1">
+<rect x="34" y="84" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="108" text-anchor="middle" class="dg-t">RTO・RPOの要件</text>
+</g>
+<g data-node="q2">
+<rect x="255" y="44" width="150" height="40" rx="8" class="dg-box"/>
+<text x="330" y="68" text-anchor="middle" class="dg-t">数時間でよい</text>
+</g>
+<g data-node="q3">
+<rect x="255" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="330" y="148" text-anchor="middle" class="dg-t">数分以内が必要</text>
+</g>
+<g data-node="a1">
+<rect x="476" y="44" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="551" y="68" text-anchor="middle" class="dg-t">バックアップと復元</text>
+</g>
+<g data-node="q4">
+<rect x="476" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="551" y="148" text-anchor="middle" class="dg-t">無停止が必要?</text>
+</g>
+<g data-node="a2">
+<rect x="697" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="772" y="99" text-anchor="middle" class="dg-t">パイロットライト</text>
+<text x="772" y="117" text-anchor="middle" class="dg-t">ウォームスタンバイ</text>
+</g>
+<g data-node="a3">
+<rect x="697" y="164" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="772" y="188" text-anchor="middle" class="dg-tb">マルチサイト</text>
+</g>
+<path d="M184.0,90.4 L255.0,77.6" class="dg-line" marker-end="url(#dgterms-dr-strategies-3)"/>
+<path d="M184.0,117.6 L255.0,130.4" class="dg-line" marker-end="url(#dgterms-dr-strategies-3)"/>
+<path d="M405.0,64.0 L476.0,64.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-3)"/>
+<path d="M405.0,144.0 L476.0,144.0" class="dg-line" marker-end="url(#dgterms-dr-strategies-3)"/>
+<path d="M626.0,130.4 L697.0,117.6" class="dg-line" marker-end="url(#dgterms-dr-strategies-3)"/>
+<text x="662" y="128" text-anchor="middle" class="dg-s dg-halo">いいえ</text>
+<path d="M626.0,157.6 L697.0,170.4" class="dg-line" marker-end="url(#dgterms-dr-strategies-3)"/>
+<text x="662" y="168" text-anchor="middle" class="dg-s dg-halo">はい</text>
+</svg>
+</div>
+<figcaption>図3 DR戦略の選び方。要件を満たす中で、最もコストが低い戦略を選ぶ。試験では「最もコスト効率よく」と書かれていることが多い。</figcaption>
+</figure>
+<ul>
+<li>要件(RTO・RPO)を満たす戦略のうち、<strong>最もコストが低いもの</strong>を選ぶ。</li>
+<li>切り替え手順は、実際に試さないと動くか分からない。AWS Fault Injection Service(FIS)で障害を起こす訓練や、AWS Backupの復元テストで、定期的に確かめる。</li>
+<li>サーバーをブロック単位で別リージョンへ複製し続けるAWS Elastic Disaster Recovery(DRS)を使うと、オンプレミスやEC2のサーバーを、少ない待機コストで短いRTO・RPOで復旧できる。</li>
+<li>関連する運用シナリオ:<a href="../usecases/backup-cross-region.html">バックアップを一元管理して別リージョンに保管する</a>、<a href="../usecases/multi-region-failover.html">リージョン障害に備えて別リージョンへ切り替える</a>、<a href="../usecases/rds-point-in-time-restore.html">誤操作したRDSのデータを特定の時点に戻す</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:AZ障害への備え(マルチAZ)</li>
+<li><a href="region-az.html">リージョンとAZ</a>:障害の範囲を分ける単位</li>
+<li><a href="sla-availability.html">SLAと可用性</a>:可用性の目標値</li>
 <li><a href="deploy-strategies.html">デプロイ戦略</a>:Blue/Greenなど、新旧環境の切り替え方式</li>
 <li><a href="circuit-breaker.html">サーキットブレーカー</a>:障害を広げないための設計パターン</li>
 </ul>
@@ -116,15 +245,21 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter">
 <h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li><a href="../services/backup.html">AWS Backup</a>:別リージョンへのバックアップコピー</li>
+<li><a href="../services/backup.html">AWS Backup</a>:別リージョン・別アカウントへのバックアップコピー、復元テスト</li>
 <li><a href="../services/aurora.html">Amazon Aurora</a>:グローバルデータベース</li>
-<li><a href="../services/route53.html">Amazon Route 53</a>:フェイルオーバールーティング、ARC</li>
+<li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:グローバルテーブル</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:クロスリージョンリードレプリカ、自動バックアップのリージョン間レプリケーション</li>
 <li><a href="../services/s3.html">Amazon S3</a>:クロスリージョンレプリケーション</li>
+<li><a href="../services/route53.html">Amazon Route 53</a>:フェイルオーバールーティング</li>
+<li><a href="../services/application-recovery-controller.html">Amazon Application Recovery Controller</a>:リージョンの切り替えの管理</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:DRサイトの環境をコードから作る</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:DR側のサーバーの増設</li>
 </ul>
 </section>
 <section class="chapter backlinks">
 <h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
 <ul class="backlink-list">
+<li><a href="../services/backup.html"><span class="title">AWS Backup</span><span class="kind">サービス</span><span class="desc">AWSサービスのバックアップを一元管理し、別リージョン・別アカウントへのコピーや復元テストも自動化する</span></a></li>
 <li><a href="../services/application-recovery-controller.html"><span class="title">Amazon Application Recovery Controller (ARC)</span><span class="kind">サービス</span><span class="desc">AZやリージョンの障害時に、通信を正常な場所へすばやく切り替えて復旧する</span></a></li>
 <li><a href="../usecases/az-failure-isolation.html"><span class="title">1つのAZの障害からアプリを切り離す</span><span class="kind">運用シナリオ</span></a></li>
 <li><a href="../usecases/dynamodb-scaling-recovery.html"><span class="title">DynamoDBを負荷に合わせてスケールし、誤操作から復旧する</span><span class="kind">運用シナリオ</span></a></li>
@@ -139,51 +274,59 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 6件・リンク元 13件)</summary>
+<summary>つながり図を開く(リンク先 17件・リンク元 6件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 426" style="max-width:784px;min-width:600px" role="img" aria-label="DR戦略とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,45 C265.0,45 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/application-recovery-controller.html"><title>サービス:Amazon Application Recovery Controller (ARC)</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">Amazon Application Recove…</text></a>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="80" class="gr-t">AWS Well-Architected フレ…</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/sla-availability.html"><title>用語:SLAと可用性</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">SLAと可用性</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/service-quotas.html"><title>用語:サービスクォータ</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">サービスクォータ</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/region-az.html"><title>用語:リージョンとアベイラビリティーゾーン</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">リージョンとアベイラビリティー…</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">高可用性とスケーリング</text></a>
-<path class="gr-line" d="M230,225 C265.0,225 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/az-failure-isolation.html"><title>運用シナリオ:1つのAZの障害からアプリを切り離す</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="230" class="gr-t">1つのAZの障害からアプリを切り…</text></a>
-<path class="gr-line" d="M230,255 C265.0,255 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/dynamodb-scaling-recovery.html"><title>運用シナリオ:DynamoDBを負荷に合わせてスケールし、誤操作から復旧する</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">DynamoDBを負荷に合わせてスケ…</text></a>
-<path class="gr-line" d="M230,285 C265.0,285 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/s3-data-protection.html"><title>運用シナリオ:S3のデータを誤削除やリージョン障害から守る</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">S3のデータを誤削除やリージョ…</text></a>
-<path class="gr-line" d="M230,315 C265.0,315 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/backup-cross-region.html"><title>運用シナリオ:バックアップを一元管理して別リージョンに保管する</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="320" class="gr-t">バックアップを一元管理して別リ…</text></a>
-<path class="gr-line" d="M230,345 C265.0,345 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/multi-region-failover.html"><title>運用シナリオ:リージョン障害に備えて別リージョンへ切り替える</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="350" class="gr-t">リージョン障害に備えて別リージ…</text></a>
-<path class="gr-line" d="M230,375 C265.0,375 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/route53-traffic-routing.html"><title>運用シナリオ:利用者の場所や割合でアクセスを振り分ける</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="380" class="gr-t">利用者の場所や割合でアクセスを…</text></a>
-<path class="gr-line" d="M230,405 C265.0,405 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/rds-point-in-time-restore.html"><title>運用シナリオ:誤操作したRDSのデータを特定の時点に戻す</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="410" class="gr-t">誤操作したRDSのデータを特定の…</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,150 550,150" marker-end="url(#gr-arrow)"/>
-<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="139" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="154" class="gr-t">AWS Backup</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,180 550,180" marker-end="url(#gr-arrow)"/>
-<a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="550" y="169" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="184" class="gr-t">Amazon Aurora</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,210 550,210" marker-end="url(#gr-arrow)"/>
-<a href="../services/route53.html"><title>サービス:Amazon Route 53</title><rect x="550" y="199" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="214" class="gr-t">Amazon Route 53</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,240 550,240" marker-end="url(#gr-arrow)"/>
-<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="229" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="244" class="gr-t">Amazon S3</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,270 550,270" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/circuit-breaker.html"><title>用語:サーキットブレーカー</title><rect x="550" y="259" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="274" class="gr-t">サーキットブレーカー</text></a>
-<path class="gr-line" d="M480,225 C515.0,225 515.0,300 550,300" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="550" y="289" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="304" class="gr-t">デプロイ戦略</text></a>
-<rect x="300" y="205" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="230" text-anchor="middle" class="gr-tb">DR戦略</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(13)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+<svg viewBox="0 0 784 546" style="max-width:784px;min-width:600px" role="img" aria-label="DR戦略とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,210 C265.0,210 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="0" y="199" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="214" class="gr-t">AWS Well-Architected フレ…</text></a>
+<path class="gr-line" d="M230,240 C265.0,240 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/service-quotas.html"><title>用語:サービスクォータ</title><rect x="0" y="229" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="244" class="gr-t">サービスクォータ</text></a>
+<path class="gr-line" d="M230,270 C265.0,270 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/az-failure-isolation.html"><title>運用シナリオ:1つのAZの障害からアプリを切り離す</title><rect x="0" y="259" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="274" class="gr-t">1つのAZの障害からアプリを切り…</text></a>
+<path class="gr-line" d="M230,300 C265.0,300 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/dynamodb-scaling-recovery.html"><title>運用シナリオ:DynamoDBを負荷に合わせてスケールし、誤操作から復旧する</title><rect x="0" y="289" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="304" class="gr-t">DynamoDBを負荷に合わせてスケ…</text></a>
+<path class="gr-line" d="M230,330 C265.0,330 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/s3-data-protection.html"><title>運用シナリオ:S3のデータを誤削除やリージョン障害から守る</title><rect x="0" y="319" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="334" class="gr-t">S3のデータを誤削除やリージョ…</text></a>
+<path class="gr-line" d="M230,360 C265.0,360 265.0,285 300,285" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/route53-traffic-routing.html"><title>運用シナリオ:利用者の場所や割合でアクセスを振り分ける</title><rect x="0" y="349" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="364" class="gr-t">利用者の場所や割合でアクセスを…</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Backup</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CloudFormation</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/application-recovery-controller.html"><title>サービス:Amazon Application Recovery Controller (ARC)</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon Application Recove…</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon Aurora</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon DynamoDB</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon RDS</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/route53.html"><title>サービス:Amazon Route 53</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon Route 53</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/sla-availability.html"><title>用語:SLAと可用性</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">SLAと可用性</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/circuit-breaker.html"><title>用語:サーキットブレーカー</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">サーキットブレーカー</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="380" class="gr-t">デプロイ戦略</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/region-az.html"><title>用語:リージョンとアベイラビリティーゾーン</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="410" class="gr-t">リージョンとアベイラビリティー…</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,435 550,435" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="550" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="440" class="gr-t">高可用性とスケーリング</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,465 550,465" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../usecases/backup-cross-region.html"><title>運用シナリオ:バックアップを一元管理して別リージョンに保管する</title><rect x="550" y="454" width="230" height="22" rx="11" class="gr-usecases"/><text x="560" y="470" class="gr-t">バックアップを一元管理して別リ…</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,495 550,495" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../usecases/multi-region-failover.html"><title>運用シナリオ:リージョン障害に備えて別リージョンへ切り替える</title><rect x="550" y="484" width="230" height="22" rx="11" class="gr-usecases"/><text x="560" y="500" class="gr-t">リージョン障害に備えて別リージ…</text></a>
+<path class="gr-line" d="M480,285 C515.0,285 515.0,525 550,525" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../usecases/rds-point-in-time-restore.html"><title>運用シナリオ:誤操作したRDSのデータを特定の時点に戻す</title><rect x="550" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="560" y="530" class="gr-t">誤操作したRDSのデータを特定の…</text></a>
+<rect x="300" y="265" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="290" text-anchor="middle" class="gr-tb">DR戦略</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(6)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(17)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>

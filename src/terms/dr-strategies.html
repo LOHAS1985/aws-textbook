@@ -1,9 +1,28 @@
 <!-- title: DR戦略 -->
 <!-- category: 設計・運用 -->
-<!-- lead: 災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ -->
+<!-- lead: 災害に備えた4つの復旧方式と、RTO・RPO・コストのトレードオフ -->
 <section class="chapter">
 <h2>1. 詳しい説明</h2>
-<p><strong>DR(Disaster Recovery:災害復旧)戦略</strong>は、リージョン障害などの災害に備えて、別の場所(DRサイト)をどの程度準備しておくかの方式です。準備を厚くするほど早く復旧できますが、コストが上がります。</p>
+<p><strong>DR(Disaster Recovery:災害復旧)戦略</strong>は、リージョン全体の障害や、誤操作・ランサムウェアによるデータ破損などの災害に備えて、別の場所(DRサイト)をどの程度準備しておくかの方式です。準備を厚くするほど早く復旧できますが、コストが上がります。</p>
+
+<h3>RTOとRPO</h3>
+<p>どの戦略を選ぶかは、業務が許容できる2つの値で決まります。</p>
+<ul>
+<li><strong class="em">RTO(目標復旧時間)</strong>:障害が起きてから、サービスを再開するまでに許容できる時間。「何時間止まってよいか」。</li>
+<li><strong class="em">RPO(目標復旧時点)</strong>:どの時点までのデータを取り戻せればよいか。「何時間分のデータを失ってよいか」。バックアップやレプリケーションの間隔で決まる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 80
+node bk 0 0 ok "最後のバックアップ" "ここまで戻せる"
+node dis 1.5 0 ng "障害の発生"
+node rec 3 0 ok "サービス再開"
+edge bk dis "RPO(失うデータ)"
+edge dis rec "RTO(止まる時間)"
+<figcaption>図1 RPOとRTO。RPOは障害の前の「失ってもよいデータの量」、RTOは障害の後の「止まってもよい時間」。どちらも小さくするほど、常に動かしておくリソースが増えてコストが上がる。</figcaption>
+</figure>
+<p>RPOとRTOは別々に決まります。例えば、1時間ごとにバックアップしていればRPOは最大1時間ですが、そのバックアップから環境を作り直すのに4時間かかれば、RTOは4時間です。</p>
+
+<h3>4つのDR戦略</h3>
 <figure class="figure" data-diagram>
 grid 165 90
 node b 0 0 box "バックアップと復元" "バックアップのみ"
@@ -14,28 +33,85 @@ edge b p
 edge p w
 edge w m
 node t1 0 0.75 plain "数時間" "コスト: 最小"
-node t2 1 0.75 plain "数十分〜数時間" "コスト: 低"
-node t3 2 0.75 plain "数分〜数十分" "コスト: 中"
+node t2 1 0.75 plain "数十分" "コスト: 低"
+node t3 2 0.75 plain "数分" "コスト: 中"
 node t4 3 0.75 plain "ほぼゼロ" "コスト: 最大"
-<figcaption>図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。</figcaption>
+<figcaption>図2 DR戦略の比較(下段はRTOの目安とコスト)。右に行くほど復旧が速く(RTO・RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。</figcaption>
 </figure>
 <div class="table-wrap"><table>
-<tr><th>名称</th><th>DR側の状態</th><th>RTO/RPO</th><th>コスト</th></tr>
-<tr><td>バックアップと復元</td><td>バックアップのみ保管</td><td>数時間</td><td>最小</td></tr>
-<tr><td>パイロットライト</td><td>データ層のみ稼働、アプリは停止</td><td>数十分〜数時間</td><td>低</td></tr>
-<tr><td>ウォームスタンバイ</td><td>縮小版の全構成が常時稼働</td><td>数分〜数十分</td><td>中</td></tr>
-<tr><td>マルチサイト(アクティブ/アクティブ)</td><td>本番と同規模で常時稼働</td><td>ほぼゼロ</td><td>最大</td></tr>
+<tr><th>名称</th><th>DR側の状態</th><th>RTOの目安</th><th>RPOの目安</th><th>コスト</th></tr>
+<tr><td>バックアップと復元</td><td>バックアップだけを保管。障害時に環境を作り直す</td><td>数時間</td><td>バックアップの間隔(数時間)</td><td>最小</td></tr>
+<tr><td>パイロットライト</td><td>データはレプリケーションで常に同期。アプリのサーバーは停止か未作成</td><td>数十分</td><td>数秒〜数分</td><td>低</td></tr>
+<tr><td>ウォームスタンバイ</td><td>縮小版の全構成が常時稼働し、少量のリクエストなら処理できる</td><td>数分</td><td>数秒〜数分</td><td>中</td></tr>
+<tr><td>マルチサイト(アクティブ/アクティブ)</td><td>本番と同規模で常時稼働し、両方のリージョンでリクエストを処理する</td><td>ほぼゼロ</td><td>ほぼゼロ</td><td>最大</td></tr>
 </table></div>
+
+<h3>バックアップと復元</h3>
+<p>データのバックアップを別リージョンにコピーしておき、障害が起きたら、バックアップとインフラのコード(CloudFormationなど)から環境を作り直す方式です。最も安い一方で、作り直す時間がRTOになります。</p>
 <ul>
-<li><strong>RTO(目標復旧時間)</strong>:障害発生からサービスを再開するまでに許容できる時間。</li>
-<li><strong>RPO(目標復旧時点)</strong>:どの時点までのデータを復旧できればよいか(許容できるデータ損失の量)。</li>
-<li>AWSでは、バックアップと復元にAWS Backupのクロスリージョンコピー、パイロットライトやウォームスタンバイにAuroraグローバルデータベースやRoute 53のフェイルオーバールーティング、などを組み合わせる。</li>
+<li>AWS Backupのクロスリージョンコピー、S3のクロスリージョンレプリケーション、EBSスナップショットやAMIのリージョン間コピーを使う。</li>
+<li>作り直しを手作業にするとRTOが延びるため、<strong>CloudFormationなどで環境をコード化</strong>しておく。</li>
+<li>ランサムウェアや誤削除への備えとしては、どの戦略を選んでも必要になる(レプリケーションは誤った変更もそのまま複製するため)。</li>
+</ul>
+
+<h3>パイロットライト</h3>
+<p>「種火」の意味で、データベースなどの<strong>データ層だけを常に同期</strong>しておき、アプリのサーバーは止めておく方式です。障害時にアプリのサーバーを起動・増設してから切り替えます。</p>
+<ul>
+<li>データはAuroraグローバルデータベース、DynamoDBグローバルテーブル、RDSのクロスリージョンリードレプリカなどで同期する。</li>
+<li>アプリ層は、Auto Scalingグループを台数0で用意しておく、AMIだけを用意しておく、などで待機させる。</li>
+<li>切り替えるまでリクエストを処理できない点が、ウォームスタンバイとの違い。</li>
+</ul>
+
+<h3>ウォームスタンバイ</h3>
+<p>本番と同じ構成を、<strong>小さい規模で常に動かしておく</strong>方式です。障害時はDR側をスケールアウトし、DNSなどでトラフィックを切り替えます。常に動いているため、切り替え前から動作を確認できます。</p>
+<ul>
+<li>DR側のAuto Scalingグループは最小台数を小さくしておき、切り替え時に希望台数を増やす。</li>
+<li>Route 53のフェイルオーバールーティングやARC(Application Recovery Controller)で切り替える。</li>
+</ul>
+
+<h3>マルチサイト(アクティブ/アクティブ)</h3>
+<p>複数のリージョンで、本番と同じ規模の環境を動かし、どちらでもリクエストを処理する方式です。片方が止まっても、もう片方がそのまま処理を続けます。</p>
+<ul>
+<li>Route 53のレイテンシーや加重ルーティング、Global Acceleratorで両方のリージョンに振り分ける。</li>
+<li>どちらのリージョンでも書き込める必要があるため、DynamoDBグローバルテーブルのような<strong>マルチリージョンで書き込めるデータストア</strong>が向いている。</li>
+<li>片方のリージョンを読み取り専用で待機させる方式は、アクティブ/パッシブ(ホットスタンバイ)と呼ばれる。</li>
+</ul>
+
+<h3>高可用性とDRの違い</h3>
+<p>マルチAZ構成(RDSのマルチAZ、複数AZにまたがるAuto Scalingグループなど)は、<strong>1つのAZの障害</strong>に自動で備える高可用性の仕組みです。DR戦略は、<strong>リージョン全体の障害やデータの破損</strong>に備えるもので、目的が違います。試験では「リージョン障害に備える」と書かれていればDR戦略、「AZ障害に備える」と書かれていればマルチAZを選びます。</p>
+
+<h3>戦略の選び方とDR訓練</h3>
+<figure class="figure" data-diagram>
+grid 170 80
+node q1 0 0.5 blue "RTO・RPOの要件"
+node q2 1.3 0 box "数時間でよい"
+node q3 1.3 1 box "数分以内が必要"
+node a1 2.6 0 ok "バックアップと復元"
+node q4 2.6 1 box "無停止が必要?"
+node a2 3.9 0.5 ok "パイロットライト\nウォームスタンバイ"
+node a3 3.9 1.5 accent "マルチサイト"
+edge q1 q2
+edge q1 q3
+edge q2 a1
+edge q3 q4
+edge q4 a2 "いいえ"
+edge q4 a3 "はい"
+<figcaption>図3 DR戦略の選び方。要件を満たす中で、最もコストが低い戦略を選ぶ。試験では「最もコスト効率よく」と書かれていることが多い。</figcaption>
+</figure>
+<ul>
+<li>要件(RTO・RPO)を満たす戦略のうち、<strong>最もコストが低いもの</strong>を選ぶ。</li>
+<li>切り替え手順は、実際に試さないと動くか分からない。AWS Fault Injection Service(FIS)で障害を起こす訓練や、AWS Backupの復元テストで、定期的に確かめる。</li>
+<li>サーバーをブロック単位で別リージョンへ複製し続けるAWS Elastic Disaster Recovery(DRS)を使うと、オンプレミスやEC2のサーバーを、少ない待機コストで短いRTO・RPOで復旧できる。</li>
+<li>関連する運用シナリオ:<a href="../usecases/backup-cross-region.html">バックアップを一元管理して別リージョンに保管する</a>、<a href="../usecases/multi-region-failover.html">リージョン障害に備えて別リージョンへ切り替える</a>、<a href="../usecases/rds-point-in-time-restore.html">誤操作したRDSのデータを特定の時点に戻す</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>2. 関連する用語</h2>
 <ul>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:AZ障害への備え(マルチAZ)</li>
+<li><a href="region-az.html">リージョンとAZ</a>:障害の範囲を分ける単位</li>
+<li><a href="sla-availability.html">SLAと可用性</a>:可用性の目標値</li>
 <li><a href="deploy-strategies.html">デプロイ戦略</a>:Blue/Greenなど、新旧環境の切り替え方式</li>
 <li><a href="circuit-breaker.html">サーキットブレーカー</a>:障害を広げないための設計パターン</li>
 </ul>
@@ -44,9 +120,14 @@ node t4 3 0.75 plain "ほぼゼロ" "コスト: 最大"
 <section class="chapter">
 <h2>3. 関連サービス</h2>
 <ul>
-<li><a href="../services/backup.html">AWS Backup</a>:別リージョンへのバックアップコピー</li>
+<li><a href="../services/backup.html">AWS Backup</a>:別リージョン・別アカウントへのバックアップコピー、復元テスト</li>
 <li><a href="../services/aurora.html">Amazon Aurora</a>:グローバルデータベース</li>
-<li><a href="../services/route53.html">Amazon Route 53</a>:フェイルオーバールーティング、ARC</li>
+<li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:グローバルテーブル</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:クロスリージョンリードレプリカ、自動バックアップのリージョン間レプリケーション</li>
 <li><a href="../services/s3.html">Amazon S3</a>:クロスリージョンレプリケーション</li>
+<li><a href="../services/route53.html">Amazon Route 53</a>:フェイルオーバールーティング</li>
+<li><a href="../services/application-recovery-controller.html">Amazon Application Recovery Controller</a>:リージョンの切り替えの管理</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:DRサイトの環境をコードから作る</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:DR側のサーバーの増設</li>
 </ul>
 </section>

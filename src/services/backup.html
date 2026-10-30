@@ -1,28 +1,29 @@
 <!-- title: AWS Backup -->
 <!-- category: ストレージ -->
-<!-- lead: AWSサービスのバックアップを一元管理 -->
+<!-- lead: AWSサービスのバックアップを一元管理し、別リージョン・別アカウントへのコピーや復元テストも自動化する -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
-<p><strong>AWS Backup</strong>は、さまざまなAWSサービスの<strong>バックアップを一元管理</strong>するサービスです。サービスごとに別々に設定していたバックアップを、1つのプランでまとめて管理できます。</p>
+<p><strong>AWS Backup</strong>は、さまざまなAWSサービスの<strong>バックアップを一元管理</strong>するサービスです。サービスごとに別々に設定していたバックアップ(EBSのスナップショット、RDSの自動バックアップなど)を、1つのプランでまとめて管理できます。</p>
+<p>スケジュールと保持期間の管理だけでなく、別リージョン・別アカウントへのコピー、削除できないバックアップ(ボールトロック)、復元テスト、ルールを守れているかの監査まで、バックアップの運用に必要なことをまとめて扱えます。</p>
 </section>
 
 <section class="chapter">
 <h2>2. 主な機能・特徴</h2>
 <h3>対象サービス</h3>
 <ul>
-<li>EC2</li>
-<li>EBS/EFS/FSx/S3</li>
-<li>RDS/Aurora/DynamoDB</li>
-<li>DocumentDB/Neptune</li>
-<li>Storage Gateway</li>
+<li>コンピューティング:EC2(AMIとして保存)</li>
+<li>ストレージ:EBS、EFS、FSx、S3、Storage Gateway(ボリュームゲートウェイ)</li>
+<li>データベース:RDS、Aurora、DynamoDB、DocumentDB、Neptune、Redshift</li>
+<li>そのほか:CloudFormationのスタック、オンプレミスのVMware仮想マシンなど</li>
 </ul>
+<p>どのリソースの種類を保護するかは、<strong>リージョンごとに設定(サービスのオプトイン)</strong>します。プランで指定したのにバックアップされない場合は、この設定を確認します。</p>
+
 <h3>構成要素</h3>
 <ul>
-<li><strong>バックアッププラン</strong>:スケジュール、バックアップウィンドウ、保持期間、ライフサイクル、コピー先を定義する。</li>
+<li><strong>バックアッププラン</strong>:いつ・どれだけ残すかを決める。1つのプランに複数のルール(毎日・毎月など)を入れられる。</li>
 <li><strong>リソースの割り当て</strong>:対象リソースを<strong>タグ</strong>または<strong>ARN</strong>で指定する。</li>
-<li><strong>バックアップボールト</strong>:バックアップの保管場所。</li>
+<li><strong>バックアップボールト</strong>:バックアップ(復旧ポイント)の保管場所。ボールトごとにKMSキーで暗号化し、アクセスポリシーを設定できる。</li>
 </ul>
-<p>コピー先に別リージョンや別アカウントのボールトを指定することで、災害対策(DR)にも使えます。バックアップボールトロックを使うと、バックアップの削除を防ぐ(WORM)設定ができます。</p>
 <figure class="figure" data-diagram>
 grid 180 85
 node plan 0 0 blue "バックアッププラン" "スケジュール・保持期間"
@@ -36,20 +37,82 @@ edge res vault "バックアップ"
 edge vault vault2 "コピー"
 <figcaption>図1 AWS Backupの構成。プラン(いつ・どれだけ残すか)と割り当て(どのリソースか)を決めると、バックアップがボールトに保存される。</figcaption>
 </figure>
+
+<h3>バックアッププランのルール</h3>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>内容</th></tr>
+<tr><td>頻度</td><td>1時間ごと・毎日・毎週・毎月、またはcron式で指定する</td></tr>
+<tr><td>バックアップウィンドウ</td><td>何時から開始し、何時間以内に完了させるか。業務の少ない時間帯にする</td></tr>
+<tr><td>保持期間</td><td>何日(何か月・何年)残すか。過ぎると自動で削除される</td></tr>
+<tr><td>ライフサイクル</td><td>一定の日数が過ぎたら、安いコールドストレージに移す(対応するリソースのみ。コールドストレージには最低90日保存する)</td></tr>
+<tr><td>コピー先</td><td>別リージョン・別アカウントのボールトにも自動でコピーする</td></tr>
+<tr><td>継続的なバックアップ</td><td>RDS・Aurora・S3などで、最大35日間の任意の時点に戻せる(ポイントインタイムリカバリ)</td></tr>
+</table></div>
+<p>タグで割り当てておくと、あとから作ったリソースにも同じタグを付けるだけでバックアップ対象になります。「本番環境のリソースにはタグ <code>Backup=daily</code> を必ず付ける」と決めておけば、バックアップの漏れを防げます。</p>
+
+<h3>別リージョン・別アカウントへのコピー</h3>
+<p>同じアカウント・同じリージョンにだけバックアップを置くと、リージョン障害や、アカウントの乗っ取り・誤操作でバックアップごと失うおそれがあります。コピー先を分けると、次のことに備えられます。</p>
+<ul>
+<li><strong>別リージョン</strong>へのコピー:リージョン全体の障害(DR戦略の「バックアップと復元」)。</li>
+<li><strong>別アカウント</strong>へのコピー:本番アカウントの認証情報が漏れても、バックアップ専用のアカウントのコピーは消されない。Organizationsの組織内で、コピーを許可する設定が必要。</li>
+<li>暗号化したバックアップを別アカウントへコピーするときは、コピー先から使える<strong>カスタマーマネージドキー</strong>で暗号化しておく。RDSのように元のサービスのAWSマネージドキー(<code>aws/rds</code>)で暗号化したバックアップは、別アカウントへコピーできない。</li>
+</ul>
+
+<h3>ボールトロック</h3>
+<p><strong class="em">AWS Backup Vault Lock</strong>は、ボールト内のバックアップを<strong>削除・保持期間の短縮ができないようにする</strong>(WORM:一度書いたら変更できない)機能です。ランサムウェアや悪意のある管理者からバックアップを守り、規制で求められる保存期間を確実に守れます。</p>
+<div class="table-wrap"><table>
+<tr><th>モード</th><th>動き</th></tr>
+<tr><td>ガバナンスモード</td><td>十分な権限を持つユーザーなら、ロックの解除や変更ができる。設定のテストや、社内向けの保護に使う</td></tr>
+<tr><td><strong>コンプライアンスモード</strong></td><td>猶予期間(最低72時間)が過ぎると、<strong>ルートユーザーやAWSでも解除できない</strong>。保持期間が過ぎるまでバックアップを削除できない</td></tr>
+</table></div>
+<p>さらに、論理的にエアギャップされたボールト(logically air-gapped vault)を使うと、ロックされたバックアップをAWS Resource Access Manager(RAM)で別アカウントへ共有し、そのアカウントから直接復元できます。</p>
+
+<h3>復元と復元テスト</h3>
+<ul>
+<li>復元は、多くの場合<strong>新しいリソースとして作られる</strong>(EBSなら新しいボリューム、RDSなら新しいDBインスタンス)。元のリソースは上書きされないので、アプリの接続先を切り替える必要がある。</li>
+<li><strong>復元テスト(restore testing)</strong>:決めたスケジュールで復旧ポイントを自動で復元し、復元できるか・かかった時間を記録して、終わったら復元したリソースを削除する。EventBridgeとLambdaで、復元したデータの中身を確認する処理も追加できる。</li>
+<li>復元テストの結果は、RTOを見積もる根拠や、監査の証跡になる。</li>
+</ul>
+
+<h3>監視と監査</h3>
+<ul>
+<li><strong>ジョブの監視</strong>:バックアップ・コピー・復元のジョブの結果はEventBridgeのイベントとCloudWatchのメトリクス(失敗したジョブの数など)になる。ボールトの通知でSNSに送ることもできる。失敗したら通知する仕組みを作っておく。</li>
+<li><strong>AWS Backup Audit Manager</strong>:「すべてのリソースがバックアッププランで保護されているか」「保持期間・頻度が基準を満たすか」「別リージョンへコピーしているか」などのコントロールを評価し、レポートを作る。AWS Configの記録を使うため、Configを有効にしておく。</li>
+<li><strong>リーガルホールド</strong>:訴訟や調査のために、特定のバックアップを保持期間が過ぎても削除されないようにする。</li>
+</ul>
+
+<h3>複数アカウントでの管理</h3>
+<p>Organizationsの<strong>バックアップポリシー</strong>を使うと、管理アカウント(または委任管理者)から、組織内のすべてのアカウントに同じバックアッププランを配布できます。各アカウントの管理者がプランを消したり変えたりすることはできません。組織全体のジョブの状況も、1か所で確認できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node org 0 0.5 accent "管理アカウント" "バックアップポリシー"
+node a1 1.4 0 box "本番アカウントA" "プランを自動適用"
+node a2 1.4 1 box "本番アカウントB" "プランを自動適用"
+node bk 2.8 0.5 ok "バックアップ用" "ボールトロック"
+node dr 4.1 0.5 ok "別リージョン" "DR用のコピー"
+edge org a1
+edge org a2
+edge a1 bk "コピー"
+edge a2 bk "コピー"
+edge bk dr "コピー"
+<figcaption>図2 組織でのバックアップの例。バックアップポリシーで全アカウントに同じプランを配り、バックアップ専用アカウントのロックしたボールトと、別リージョンにコピーする。</figcaption>
+</figure>
 </section>
 
 <section class="chapter">
 <h2>3. ユースケース</h2>
 <ul>
-<li>複数サービスのバックアップを1つのポリシーで統一したい</li>
+<li>EC2・RDS・EFS・DynamoDBなど、複数サービスのバックアップを1つのプランで統一したい</li>
 <li>タグ(例:<code>Backup=daily</code>)を付けたリソースを自動でバックアップ対象にしたい</li>
 <li>別リージョンにバックアップをコピーして災害対策をしたい</li>
+<li>ランサムウェアに備えて、誰にも削除できないバックアップを別アカウントに残したい</li>
+<li>「バックアップから実際に戻せるか」を定期的に確かめ、監査に報告したい</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>保存しているバックアップの容量、復元したデータ量、リージョン間のコピーのデータ転送量に応じて課金されます。ライフサイクルでコールドストレージに移すとコストを下げられます。</p>
+<p>保存しているバックアップの容量(ウォームストレージ・コールドストレージで単価が違う)、復元したデータ量(一部のリソース)、リージョン間のコピーのデータ転送量に応じて課金されます。復元テストやAudit Managerの評価にも料金がかかります。ライフサイクルでコールドストレージに移すとコストを下げられますが、コールドストレージは最低90日分の料金がかかるため、短期間で消すバックアップには向きません。</p>
 </section>
 
 <section class="chapter">
@@ -57,24 +120,48 @@ edge vault vault2 "コピー"
 <ul>
 <li><a href="ec2.html">Amazon EC2</a>/<a href="ebs.html">Amazon EBS</a>/<a href="efs.html">Amazon EFS</a>/<a href="fsx.html">Amazon FSx</a>/<a href="s3.html">Amazon S3</a></li>
 <li><a href="rds.html">Amazon RDS</a>/<a href="aurora.html">Amazon Aurora</a>/<a href="dynamodb.html">Amazon DynamoDB</a></li>
-<li><a href="organizations.html">AWS Organizations</a>:複数アカウントへのバックアップポリシー適用</li>
+<li><a href="organizations.html">AWS Organizations</a>:複数アカウントへのバックアップポリシー適用、別アカウントへのコピー</li>
+<li><a href="kms.html">AWS KMS</a>:ボールトの暗号化、別アカウントへのコピーに使うキー</li>
+<li><a href="config.html">AWS Config</a>:Audit Managerの評価に使う記録</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>/<a href="sns.html">Amazon SNS</a>:ジョブの失敗の通知</li>
+<li><a href="ram.html">AWS RAM</a>:論理的にエアギャップされたボールトの共有</li>
 <li><a href="storage-gateway.html">AWS Storage Gateway</a>:ボリュームゲートウェイのバックアップ</li>
-<li>関連する用語:<a href="../terms/tags.html">タグ</a></li>
+<li>関連する用語:<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/tags.html">タグ</a>、<a href="../terms/cron-rate-expressions.html">cron式とrate式</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<div class="point">
+<h4>設定と管理</h4>
+<ul>
 <li>「複数サービスのバックアップを一元管理」→ <strong>AWS Backup</strong>。</li>
 <li>対象リソースは<strong>タグ</strong>で指定すると、新しいリソースも自動で対象になる。</li>
-<li>保持期間・スケジュール・コピー先は<strong>バックアッププラン</strong>で定義する。</li>
-</ul></div>
+<li>保持期間・スケジュール・コピー先・コールドストレージへの移行は<strong>バックアッププラン</strong>で定義する。</li>
+<li>プランに入れたのにバックアップされない → リージョンの<strong>サービスのオプトイン</strong>、タグの付け忘れ、IAMロールの権限を確認する。</li>
+<li>組織内の全アカウントに同じバックアップを強制したい → Organizationsの<strong>バックアップポリシー</strong>。</li>
+</ul>
+<h4>保護とDR</h4>
+<ul>
+<li>リージョン障害に備える → プランのコピー先に<strong>別リージョンのボールト</strong>を指定する。</li>
+<li>本番アカウントが侵害されてもバックアップを残したい → <strong>別アカウント</strong>へのコピー。暗号化は<strong>カスタマーマネージドキー</strong>にする。</li>
+<li>誰にも削除できないバックアップ(ランサムウェア対策・規制対応)→ <strong class="em">ボールトロックのコンプライアンスモード</strong>。</li>
+<li>最大35日間の任意の時点に戻したい → <strong>継続的なバックアップ</strong>(ポイントインタイムリカバリ)。</li>
+</ul>
+<h4>確認と監査</h4>
+<ul>
+<li>バックアップから戻せるかを定期的に確かめたい → <strong>復元テスト</strong>。</li>
+<li>バックアップの方針を守れているか証明したい → <strong>Backup Audit Manager</strong>(Configが必要)。</li>
+<li>バックアップの失敗に気付きたい → EventBridgeのルールやボールトの通知で<strong>SNS</strong>に送る。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
 <h2>7. まとめ</h2>
 <ul>
 <li>AWS Backupは「プラン(いつ・どれだけ)」「割り当て(何を)」「ボールト(どこに)」で構成される。</li>
+<li>別リージョン・別アカウントへのコピーとボールトロックで、災害や侵害・誤削除からバックアップを守る。</li>
+<li>復元テストとAudit Managerで、「戻せること」「方針を守れていること」を確かめる。</li>
 </ul>
 </section>
