@@ -1643,7 +1643,8 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </div>
 <section class="chapter">
 <h2 id="ecs-c1">1. サービス概要<a class="anchor" href="#ecs-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>Amazon ECS(Elastic Container Service)</strong>は、AWS上でコンテナを実行・管理するための<strong>コンテナオーケストレーションサービス</strong>です。</p>
+<p><strong>Amazon ECS(Elastic Container Service)</strong>は、AWS上でコンテナを実行・管理するための<strong>コンテナオーケストレーションサービス</strong>です。どのサーバーでコンテナを動かすか、何個動かすか、壊れたら入れ替えるか、新しいバージョンにどう切り替えるかを、ECSが代わりに管理します。</p>
+<p>Kubernetesの知識がなくても使え、IAM・ALB・CloudWatchなどのAWSのサービスと最初から連携できるのが特徴です。Kubernetesを使いたい場合は<a href="#p-eks">Amazon EKS</a>を選びます。</p>
 </section>
 
 <section class="chapter">
@@ -1652,11 +1653,12 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <ul>
 <li><strong>クラスター</strong>:実行環境のまとまり。複数のアプリや環境をまとめるときに使う。</li>
 <li><strong class="em">タスク定義</strong>:コンテナを実行するときの設計書(Dockerfileはビルド時の設計書)。
-  <ul><li>使用するイメージ(Docker Image)</li><li>CPU/メモリ</li><li>ポート(Port Mapping)</li><li><strong>環境変数(Environment Variables)</strong></li></ul></li>
+  <ul><li>使用するイメージ(Docker Image)</li><li>CPU/メモリ</li><li>ポート(Port Mapping)</li><li><strong>環境変数(Environment Variables)</strong>とシークレット</li><li>IAMロール、ログの送り先、ヘルスチェック</li></ul></li>
 <li><strong>タスク</strong>:タスク定義から起動された実体(コンテナ)。</li>
 <li><strong>サービス</strong>:タスクを常に指定数維持する仕組み。
   <ul><li>起動数の維持(Desired Count)</li><li>自動増減(Auto Scaling)</li><li>ALB連携(Load Balancer)</li><li>無停止更新(Rolling Update)</li><li>異常タスクの交換(Health Check)</li></ul></li>
 </ul>
+<p>Webアプリのように動き続ける処理はサービスで、バッチのように終わる処理はタスクを単独で(EventBridgeのスケジュールなどから)実行します。</p>
 
 <figure class="figure">
 <div class="fig-scroll">
@@ -1698,14 +1700,71 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </div>
 <figcaption>図1 ECSの構成要素。サービスがタスク定義をもとにタスクを起動し、指定した数を維持する。ALBと連携してタスクにトラフィックを振り分ける。</figcaption>
 </figure>
+
 <h3 id="ecs-c2-2">起動タイプ<a class="anchor" href="#ecs-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>起動タイプ</th><th>内容</th><th>特徴</th></tr>
-<tr><td>EC2起動タイプ</td><td>ユーザーがEC2を用意し、その上でコンテナを実行</td><td>柔軟だがサーバー管理が必要</td></tr>
-<tr><td>Fargate起動タイプ(現在の主流)</td><td>コンテナを指定するだけ</td><td>サーバー管理不要(ほぼサーバーレス)</td></tr>
+<tr><td>EC2起動タイプ</td><td>ユーザーがEC2(コンテナインスタンス)を用意し、その上でコンテナを実行</td><td>GPUや特殊なインスタンスを使える。OSのパッチ当てや台数の管理が必要</td></tr>
+<tr><td>Fargate起動タイプ(現在の主流)</td><td>コンテナを指定するだけ</td><td>サーバー管理不要(ほぼサーバーレス)。タスクごとに分離される</td></tr>
 </table></div>
+<p>EC2起動タイプでは、EC2にECSコンテナエージェントが入ったAMI(ECS最適化AMI)を使い、インスタンスにはECSへ登録するためのIAMロール(インスタンスロール)を付けます。</p>
 
-<h3 id="ecs-c2-3">キャパシティプロバイダー<a class="anchor" href="#ecs-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="ecs-c2-3">タスクロールとタスク実行ロール<a class="anchor" href="#ecs-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>ECSのタスクには、目的の違う2つのIAMロールを設定します。取り違えやすいので、試験でもよく問われます。</p>
+<div class="table-wrap"><table>
+<tr><th>ロール</th><th>使う人</th><th>必要な権限の例</th></tr>
+<tr><td><strong class="em">タスク実行ロール</strong></td><td>ECS(コンテナを起動する側)</td><td>ECRからイメージを取得する、CloudWatch Logsにログを書く、Secrets Manager・Parameter Storeからシークレットを読んでコンテナに渡す</td></tr>
+<tr><td><strong class="em">タスクロール</strong></td><td>コンテナの中のアプリ</td><td>アプリがS3にファイルを置く、DynamoDBを読み書きする、など</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図2 2つのロールの違い。タスク実行ロールはECSがタスクを起動するために、タスクロールはコンテナの中のアプリがAWSのサービスを呼ぶために使う。"><defs><marker id="ecs-dgservices-ecs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ecs">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">ECS</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">タスクを起動</text>
+</g>
+<g data-node="ex">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">タスク実行ロール</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">起動のための権限</text>
+</g>
+<g data-node="app">
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="147" text-anchor="middle" class="dg-tb">タスクロール</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">アプリの権限</text>
+</g>
+<g data-node="ecr">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">ECR・Logs</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">Secrets Manager</text>
+</g>
+<g data-node="s3">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">S3・DynamoDB</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">アプリが使う</text>
+</g>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#ecs-dgservices-ecs-2)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#ecs-dgservices-ecs-2)"/>
+<text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">イメージの取得など</text>
+<path d="M422.0,151.5 L510.0,151.5" class="dg-line" marker-end="url(#ecs-dgservices-ecs-2)"/>
+<text x="466" y="156" text-anchor="middle" class="dg-s dg-halo">アプリが呼び出す</text>
+</svg>
+</div>
+<figcaption>図2 2つのロールの違い。タスク実行ロールはECSがタスクを起動するために、タスクロールはコンテナの中のアプリがAWSのサービスを呼ぶために使う。</figcaption>
+</figure>
+<p>アプリにアクセスキーを持たせる必要はありません。パスワードなどは、タスク定義の <code>secrets</code> でSecrets ManagerやParameter Storeを参照すると、起動時に環境変数として渡されます。</p>
+
+<h3 id="ecs-c2-4">ネットワークモード<a class="anchor" href="#ecs-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>モード</th><th>内容</th></tr>
+<tr><td><strong>awsvpc</strong></td><td>タスクごとにENI(プライベートIPアドレス)が付き、<strong>タスクごとにセキュリティグループ</strong>を設定できる。Fargateではこのモードだけを使う</td></tr>
+<tr><td>bridge</td><td>EC2起動タイプで、ホストの中の仮想ネットワークを使う。ホストのポートを動的に割り当て(動的ポートマッピング)、ALBが自動で振り分け先のポートを登録する</td></tr>
+<tr><td>host</td><td>EC2のネットワークをそのまま使う。同じポートのタスクを1台に2つ置けない</td></tr>
+</table></div>
+<p>プライベートサブネットのタスクがECRからイメージを取得するには、NATゲートウェイか、ECR(<code>ecr.api</code>・<code>ecr.dkr</code>)とS3のVPCエンドポイントが必要です。どちらもないと、タスクが起動できません。</p>
+
+<h3 id="ecs-c2-5">キャパシティプロバイダー<a class="anchor" href="#ecs-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>ECSタスクを<strong>どの計算リソース上でどれだけ実行するか</strong>を管理します。</p>
 <ul>
 <li>計算リソース:<code>FARGATE</code>(通常)、<code>FARGATE_SPOT</code>(余剰リソースを安価に利用)、ASG Capacity Provider(ECSがEC2 Auto Scalingを管理)</li>
@@ -1713,7 +1772,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 480 194" style="max-width:480px;min-width:480px" role="img" aria-label="図2 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。"><defs><marker id="ecs-dgservices-ecs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 480 194" style="max-width:480px;min-width:480px" role="img" aria-label="図3 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。"><defs><marker id="ecs-dgservices-ecs-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="svc">
 <rect x="34" y="78" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="100" text-anchor="middle" class="dg-tb">ECSサービス</text>
@@ -1729,14 +1788,88 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <text x="381" y="140" text-anchor="middle" class="dg-t">FARGATE_SPOT</text>
 <text x="381" y="158" text-anchor="middle" class="dg-s">Weight=3</text>
 </g>
-<path d="M184.0,93.0 L306.0,75.0" class="dg-line" marker-end="url(#ecs-dgservices-ecs-2)"/>
+<path d="M184.0,93.0 L306.0,75.0" class="dg-line" marker-end="url(#ecs-dgservices-ecs-3)"/>
 <text x="245" y="88" text-anchor="middle" class="dg-s dg-halo">4タスク</text>
-<path d="M184.0,115.0 L306.0,133.0" class="dg-line" marker-end="url(#ecs-dgservices-ecs-2)"/>
+<path d="M184.0,115.0 L306.0,133.0" class="dg-line" marker-end="url(#ecs-dgservices-ecs-3)"/>
 <text x="245" y="128" text-anchor="middle" class="dg-s dg-halo">6タスク</text>
 </svg>
 </div>
-<figcaption>図2 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。</figcaption>
+<figcaption>図3 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。</figcaption>
 </figure>
+<p>ASG Capacity Providerでは、<strong>マネージドスケーリング</strong>を有効にすると、タスクを置く場所が足りなくなったときに、ECSがEC2の台数を自動で増やします。</p>
+
+<h3 id="ecs-c2-6">サービスのAuto Scaling<a class="anchor" href="#ecs-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>サービスのタスク数は、Application Auto Scalingで増減します。ターゲット追跡で、サービスの平均CPU使用率・平均メモリ使用率、ALBのターゲットあたりのリクエスト数(<code>ALBRequestCountPerTarget</code>)を目標値に保つのが基本です。SQSのキューの長さなど、独自のメトリクスでも増減できます。</p>
+
+<h3 id="ecs-c2-7">デプロイ<a class="anchor" href="#ecs-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>動き</th></tr>
+<tr><td><strong>ローリング更新</strong>(既定)</td><td>新しいタスクを起動してから古いタスクを止める。<code>minimumHealthyPercent</code>(更新中に最低限動かしておく割合)と <code>maximumPercent</code>(一時的に増やせる上限)で、入れ替えの速さを決める</td></tr>
+<tr><td><strong>Blue/Green</strong></td><td>新しいバージョンのタスクを並べて起動し、ALBの通信を切り替える。一度に切り替えるほか、少しずつ移す線形・カナリアも選べる。問題があればすぐ元に戻せる。ECSのサービス自体で実行でき、以前はCodeDeployと組み合わせていた</td></tr>
+</table></div>
+<ul>
+<li><strong class="em">デプロイサーキットブレーカー</strong>:新しいタスクが起動に失敗し続ける(ヘルスチェックに通らない、すぐ止まる)と、デプロイを失敗とみなし、<strong>ロールバック</strong>を有効にしておけば前のバージョンに自動で戻す。</li>
+<li><strong>CloudWatchアラームによるロールバック</strong>:タスクは起動したが、エラー率などのアラームが鳴った場合にも、自動で前のバージョンに戻せる。</li>
+<li>ALBのヘルスチェックに通る前にタスクが入れ替えられる場合は、サービスの<strong>ヘルスチェックの猶予期間</strong>を延ばす。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 879 202" style="max-width:879px;min-width:704px" role="img" aria-label="図4 デプロイサーキットブレーカー。新しいタスクの起動の失敗が続くと、デプロイを止めて前のバージョンに自動で戻す。"><defs><marker id="ecs-dgservices-ecs-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="up">
+<rect x="34" y="83" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="104" text-anchor="middle" class="dg-t">サービスを更新</text>
+<text x="106" y="122" text-anchor="middle" class="dg-s">新しいタスク定義</text>
+</g>
+<g data-node="new">
+<rect x="265" y="83" width="145" height="52" rx="8" class="dg-box"/>
+<text x="338" y="104" text-anchor="middle" class="dg-t">新しいタスク</text>
+<text x="338" y="122" text-anchor="middle" class="dg-s">起動・ヘルスチェック</text>
+</g>
+<g data-node="ok">
+<rect x="496" y="40" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="568" y="62" text-anchor="middle" class="dg-t">成功</text>
+<text x="568" y="80" text-anchor="middle" class="dg-s">古いタスクを停止</text>
+</g>
+<g data-node="ng">
+<rect x="496" y="126" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="568" y="147" text-anchor="middle" class="dg-t">失敗が続く</text>
+<text x="568" y="165" text-anchor="middle" class="dg-s">サーキットブレーカー</text>
+</g>
+<g data-node="rb">
+<rect x="710" y="126" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="783" y="147" text-anchor="middle" class="dg-tb">ロールバック</text>
+<text x="783" y="165" text-anchor="middle" class="dg-s">前のバージョンへ</text>
+</g>
+<path d="M179.0,109.0 L265.0,109.0" class="dg-line" marker-end="url(#ecs-dgservices-ecs-4)"/>
+<path d="M410.0,95.7 L496.0,79.8" class="dg-line" marker-end="url(#ecs-dgservices-ecs-4)"/>
+<text x="453" y="92" text-anchor="middle" class="dg-s dg-halo">正常</text>
+<path d="M410.0,122.3 L496.0,138.2" class="dg-line" marker-end="url(#ecs-dgservices-ecs-4)"/>
+<text x="453" y="134" text-anchor="middle" class="dg-s dg-halo">異常</text>
+<path d="M641.0,151.5 L710.5,151.5" class="dg-line" marker-end="url(#ecs-dgservices-ecs-4)"/>
+</svg>
+</div>
+<figcaption>図4 デプロイサーキットブレーカー。新しいタスクの起動の失敗が続くと、デプロイを止めて前のバージョンに自動で戻す。</figcaption>
+</figure>
+
+<h3 id="ecs-c2-8">ログと監視<a class="anchor" href="#ecs-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ログ</strong>:タスク定義のログドライバーに <code>awslogs</code> を指定すると、コンテナの標準出力がCloudWatch Logsに送られる。S3やOpenSearch Serviceなどに送りたい場合はFireLens(Fluent Bit)を使う。</li>
+<li><strong>サービスのメトリクス</strong>:サービスのCPU使用率・メモリ使用率は、標準でCloudWatchに送られる。</li>
+<li><strong class="em">CloudWatch Container Insights</strong>:クラスター・サービス・タスク・コンテナ単位のCPU・メモリ・ネットワーク・ストレージ、実行中のタスク数などを集め、ダッシュボードで表示する。クラスターごと、またはアカウントの既定で有効にする(オブザーバビリティを強化したモードでは、コンテナ単位まで詳しく見られる)。</li>
+<li><strong>イベント</strong>:タスクの状態の変化(停止など)やサービスのデプロイの状態は、EventBridgeのイベントになる。タスクが止まったら通知する、などに使う。</li>
+</ul>
+
+<h3 id="ecs-c2-9">タスクが止まる・起動しないときの調べ方<a class="anchor" href="#ecs-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>止まったタスクの「<strong>停止理由</strong>」(コンソールのタスクの詳細、または <code>DescribeTasks</code> の <code>stoppedReason</code>)を見ると、原因の見当がつきます。</p>
+<div class="table-wrap"><table>
+<tr><th>停止理由の例</th><th>よくある原因と対処</th></tr>
+<tr><td><code>CannotPullContainerError</code></td><td>イメージを取得できない。NATゲートウェイやVPCエンドポイントがない、タスク実行ロールにECRの権限がない、イメージのタグが間違っている</td></tr>
+<tr><td><code>ResourceInitializationError</code></td><td>シークレットやログの準備に失敗した。タスク実行ロールにSecrets Manager・Parameter Store・KMSの権限がない、エンドポイントに届かない</td></tr>
+<tr><td><code>OutOfMemoryError</code></td><td>コンテナがタスク定義のメモリの上限を超えた。メモリを増やすか、アプリの使い方を見直す</td></tr>
+<tr><td>ELBのヘルスチェックに失敗</td><td>ヘルスチェックのパスやポートが違う、セキュリティグループでALBからの通信を許可していない、猶予期間が短い</td></tr>
+<tr><td><code>Essential container in task exited</code></td><td>必須のコンテナが終了した。CloudWatch Logsでアプリのエラーを確認する</td></tr>
+</table></div>
+<p>動いているコンテナの中に入って調べたいときは、<strong>ECS Exec</strong>を使います(Systems Manager Session Managerのしくみを使うため、タスクロールに権限が必要)。</p>
 </section>
 
 <section class="chapter">
@@ -1745,13 +1878,15 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li>Webアプリ・APIをコンテナで常時稼働させる(サービス+ALB)</li>
 <li>FARGATE_SPOTを組み合わせたコスト重視のバッチ処理</li>
 <li>Lambdaの15分制限を超える長時間処理</li>
+<li>新しいバージョンを止めずにリリースし、失敗したら自動で戻す</li>
+<li>関連する運用シナリオ:<a href="../usecases/ecs-safe-deploy.html">ECSのサービスを止めずに更新し、失敗したら自動で戻す</a>、<a href="../usecases/container-monitoring.html">コンテナ(ECS・EKS)の性能を監視する</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="ecs-c4">4. 料金の考え方<a class="anchor" href="#ecs-c4" aria-label="この見出しへのリンク">#</a></h2>
 <p>ECS自体の利用料はかかりません。EC2起動タイプではEC2インスタンスの料金、Fargate起動タイプではタスクに割り当てたvCPU・メモリと実行時間に応じた料金がかかります。</p>
-<p>FARGATE_SPOTを使うと余剰リソースを安価に利用できます(中断される可能性あり)。</p>
+<p>FARGATE_SPOTを使うと余剰リソースを安価に利用できます(中断される可能性あり)。Container Insightsを有効にすると、集めたメトリクスとログの分のCloudWatchの料金がかかります。</p>
 </section>
 
 <section class="chapter">
@@ -1760,19 +1895,35 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li><a href="#p-ecr">Amazon ECR</a>:コンテナイメージの保存先</li>
 <li><a href="#p-eks">Amazon EKS</a>:Kubernetesベースのオーケストレーション</li>
 <li><a href="#p-elb">Elastic Load Balancing</a>:サービスとALBの連携</li>
-<li><a href="#p-ec2">Amazon EC2</a>:EC2起動タイプの実行基盤</li>
+<li><a href="#p-ec2">Amazon EC2</a>/<a href="#p-auto-scaling">Amazon EC2 Auto Scaling</a>:EC2起動タイプの実行基盤</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:ログ、Container Insights、ロールバックに使うアラーム</li>
+<li><a href="#p-secrets-manager">AWS Secrets Manager</a>/<a href="#p-systems-manager">AWS Systems Manager</a>:シークレットの受け渡し、ECS Exec</li>
+<li><a href="#p-eventbridge">Amazon EventBridge</a>:タスクの状態の変化の通知、スケジュール実行</li>
+<li><a href="#p-codedeploy">AWS CodeDeploy</a>/<a href="#p-codepipeline">AWS CodePipeline</a>:デプロイの自動化</li>
 <li><a href="#p-copilot">AWS Copilot</a>:ECSアプリの構築・デプロイを簡単にするCLI</li>
+<li>関連する用語:<a href="../terms/deploy-strategies.html">デプロイ戦略</a>、<a href="../terms/circuit-breaker.html">サーキットブレーカー</a>、<a href="../terms/iam-roles-credentials.html">IAMロールと認証情報</a>、<a href="../terms/managed-serverless.html">マネージドとサーバーレス</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="ecs-c6">6. 試験・実務でのポイント<a class="anchor" href="#ecs-c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point">
+<h4>設定</h4>
 <ul>
 <li>コンテナの環境変数・CPU/メモリ・イメージは<strong>タスク定義</strong>で指定する。</li>
 <li>タスク数の維持・ALB連携・ローリング更新は<strong>サービス</strong>の役割。</li>
 <li>サーバー管理をしたくない → <strong>Fargate</strong>。</li>
 <li>Fargateと安価なFARGATE_SPOTの配分 → キャパシティプロバイダーの<strong>Base/Weight</strong>。</li>
+<li>アプリがS3などを使う権限 → <strong>タスクロール</strong>。イメージの取得・ログ・シークレットの取得 → <strong>タスク実行ロール</strong>。</li>
+<li>タスクごとにセキュリティグループを分けたい → <strong>awsvpc</strong>モード。</li>
+</ul>
+<h4>デプロイと監視</h4>
+<ul>
+<li>新しいタスクの起動失敗で自動で戻したい → <strong>デプロイサーキットブレーカー</strong>(ロールバックを有効に)。</li>
+<li>エラー率の上昇で自動で戻したい → デプロイに<strong>CloudWatchアラーム</strong>を設定する。</li>
+<li>コンテナ・タスク単位のCPU・メモリを見たい → <strong>Container Insights</strong>。</li>
+<li>コンテナのログを集めたい → <code>awslogs</code> ログドライバーでCloudWatch Logsへ。</li>
+<li>プライベートサブネットで <code>CannotPullContainerError</code> → NATゲートウェイかECR・S3のVPCエンドポイント、タスク実行ロールの権限を確認する。</li>
 </ul>
 </div>
 </section>
@@ -1781,8 +1932,9 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <h2 id="ecs-c7">7. まとめ<a class="anchor" href="#ecs-c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>ECSは「クラスター/タスク定義/タスク/サービス」で構成される。</li>
-<li>起動タイプはEC2とFargate。主流はFargate。</li>
-<li>キャパシティプロバイダーでリソースの配分を制御する。</li>
+<li>起動タイプはEC2とFargate。主流はFargate。キャパシティプロバイダーでリソースの配分を制御する。</li>
+<li>権限はタスク実行ロール(起動)とタスクロール(アプリ)に分ける。</li>
+<li>デプロイはサーキットブレーカーとアラームで自動で戻し、監視はContainer InsightsとCloudWatch Logsで行う。</li>
 </ul>
 </section>
 </article>
@@ -5860,27 +6012,29 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <div class="hero-text">
 <span class="category">ネットワークとコンテンツ配信</span>
 <h1>Amazon Route 53</h1>
-<p class="lead">マネージドDNSサービス</p>
+<p class="lead">マネージドDNSサービス。ヘルスチェックと組み合わせたルーティングや、VPCとオンプレミスの名前解決もできる</p>
 </div>
 </div>
 <section class="chapter">
 <h2 id="route53-c1">1. サービス概要<a class="anchor" href="#route53-c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>Amazon Route 53</strong>は、マネージド<strong>DNSサービス</strong>です。ドメイン名とIPアドレスを結びつける名前解決のほか、ドメイン登録やヘルスチェックもできます。</p>
+<p>大きく分けて、次の3つの役割があります。</p>
+<div class="table-wrap"><table>
+<tr><th>役割</th><th>内容</th></tr>
+<tr><td>ドメイン登録</td><td><code>example.com</code> などのドメインを購入・更新する</td></tr>
+<tr><td>DNSの権威サーバー(ホストゾーン)</td><td>ドメインのレコードを管理し、問い合わせに答える。ルーティングポリシーとヘルスチェックで、返す値を変えられる</td></tr>
+<tr><td>VPCの名前解決(Route 53 Resolver)</td><td>VPC内のリソースからの問い合わせに答える。オンプレミスのDNSとの間で問い合わせを転送できる</td></tr>
+</table></div>
+<p>DNSの仕組みは用語「<a href="../terms/dns.html">DNS</a>」、レコードの種類は「<a href="../terms/dns-record-types.html">DNSレコードタイプ</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
 <h2 id="route53-c2">2. 主な機能・特徴<a class="anchor" href="#route53-c2" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><strong>DNS解決</strong>(仕組みは用語「<a href="../terms/dns.html">DNS</a>」、レコードの種類は「<a href="../terms/dns-record-types.html">DNSレコードタイプ</a>」を参照)</li>
-<li><strong>ドメイン登録</strong></li>
-<li><strong>ヘルスチェック/可用性モニタリング</strong></li>
-</ul>
-
 <h3 id="route53-c2-1">ホストゾーン<a class="anchor" href="#route53-c2-1" aria-label="この見出しへのリンク">#</a></h3>
-<p>DNSレコードを管理するコンテナです。</p>
+<p>1つのドメインのDNSレコードをまとめて管理する入れ物です。</p>
 <ul>
 <li><strong>パブリックホストゾーン</strong>:インターネット上での名前解決</li>
-<li><strong>プライベートホストゾーン</strong>:指定したVPC内でのみ有効な名前解決</li>
+<li><strong>プライベートホストゾーン</strong>:関連付けたVPC内でのみ有効な名前解決</li>
 </ul>
 
 <figure class="figure">
@@ -5914,19 +6068,43 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図1 ホストゾーンの種類。パブリックホストゾーンはインターネット上で、プライベートホストゾーンは関連付けたVPC内でのみ名前解決できる。</figcaption>
 </figure>
-<h3 id="route53-c2-2">ルーティングポリシー<a class="anchor" href="#route53-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>パブリックホストゾーンを作ると、4つのネームサーバー(NSレコード)が割り当てられる。ドメインを別の登録事業者で買った場合は、その事業者側でネームサーバーをこの4つに変更する(委任)。</li>
+<li>プライベートホストゾーンを使うには、VPCの<strong><code>enableDnsHostnames</code> と <code>enableDnsSupport</code> を有効</strong>にする。別アカウントのVPCに関連付けるときは、ホストゾーン側で関連付けを許可してから、VPC側で関連付ける(CLI・API で行う)。</li>
+<li>同じ名前のパブリックとプライベートのホストゾーンがあると、関連付けたVPC内ではプライベートが優先される(スプリットビューDNS)。</li>
+</ul>
+
+<h3 id="route53-c2-2">エイリアスレコード<a class="anchor" href="#route53-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong class="em">エイリアスレコード</strong>は、Route 53独自のレコードで、ELB・CloudFront・S3の静的ウェブサイトホスティング・API Gateway・別のRoute 53レコードなどのAWSリソースを直接指せます。</p>
+<div class="table-wrap"><table>
+<tr><th>比べる点</th><th>エイリアスレコード</th><th>CNAMEレコード</th></tr>
+<tr><td>ゾーンの頂点(<code>example.com</code> そのもの)</td><td><strong>作れる</strong></td><td>作れない(<code>www.example.com</code> などのサブドメインだけ)</td></tr>
+<tr><td>向き先</td><td>AWSのリソース</td><td>任意のドメイン名</td></tr>
+<tr><td>クエリの料金</td><td>AWSリソースを指す場合は無料</td><td>有料</td></tr>
+<tr><td>IPアドレスの変化</td><td>ELBなどのIPアドレスが変わっても自動で追従する</td><td>名前を返すだけ</td></tr>
+</table></div>
+<p>エイリアスレコードで「<strong>ターゲットのヘルスを評価</strong>」を有効にすると、別にヘルスチェックを作らなくても、ELBの背後に正常なターゲットがない場合に、そのレコードを異常として扱えます。</p>
+
+<h3 id="route53-c2-3">TTL<a class="anchor" href="#route53-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>TTL(Time To Live)は、問い合わせた側のリゾルバーが回答をキャッシュする秒数です。TTLが長いとクエリ料金とレイテンシーは減りますが、レコードを変えてもしばらく古い値が使われます。移行や切り替えの予定があるときは、事前にTTLを短く(例:60秒)しておきます。エイリアスレコードのTTLは、向き先のリソースのTTLが使われます。</p>
+
+<h3 id="route53-c2-4">ルーティングポリシー<a class="anchor" href="#route53-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>概要</th><th>主な用途</th></tr>
-<tr><td>シンプル</td><td>複数の値を返せる基本的なルーティング</td><td>単純な名前解決</td></tr>
+<tr><td>シンプル</td><td>1つのレコードに複数の値を書けるが、ヘルスチェックは使えない</td><td>単純な名前解決</td></tr>
 <tr><td>加重(Weighted)</td><td>重みを指定してトラフィックを分散</td><td>A/Bテスト、段階的なリリース、負荷分散</td></tr>
 <tr><td>レイテンシー</td><td>最もレイテンシーが低いリージョンのリソースへルーティング</td><td>グローバルなWebサービスの高速化</td></tr>
 <tr><td>フェイルオーバー</td><td>プライマリが利用できない場合にセカンダリへ切り替え</td><td>可用性向上、DR構成</td></tr>
-<tr><td>位置情報(Geolocation)</td><td>ユーザーの地理的位置に基づいてルーティング</td><td>国・地域ごとのコンテンツ配信</td></tr>
-<tr><td>地理的近接性(Geoproximity)</td><td>ユーザーとリソースの地理的位置に基づく。バイアスで調整可能</td><td>地理的なトラフィック配分</td></tr>
+<tr><td>位置情報(Geolocation)</td><td>ユーザーの地理的位置(大陸・国など)に基づいてルーティング</td><td>国・地域ごとのコンテンツ配信、配信の制限</td></tr>
+<tr><td>地理的近接性(Geoproximity)</td><td>ユーザーとリソースの地理的位置に基づく。バイアスで範囲を広げたり狭めたりできる</td><td>地理的なトラフィック配分</td></tr>
 <tr><td>IPベース</td><td>クライアントのIPアドレスとCIDRの対応付けに基づく</td><td>特定ネットワーク・IP範囲からのトラフィック制御</td></tr>
-<tr><td>複数値回答</td><td>複数の正常なリソースの値を返し、クライアント側で選ぶ</td><td>シンプルな可用性向上</td></tr>
-<tr><td>トラフィックフロー</td><td>複数のポリシーを組み合わせた複雑な制御</td><td>複雑なグローバルルーティング</td></tr>
+<tr><td>複数値回答</td><td>正常なリソースの値を最大8つ返し、クライアント側で選ぶ</td><td>ヘルスチェック付きの簡単な分散</td></tr>
+<tr><td>トラフィックフロー</td><td>複数のポリシーを組み合わせた複雑な制御を、図で編集する</td><td>複雑なグローバルルーティング</td></tr>
 </table></div>
+<ul>
+<li>位置情報ルーティングでは、どの場所にも当てはまらない利用者のために<strong>デフォルトのレコード</strong>を作っておく。作らないと、その利用者には回答が返らない。</li>
+<li>ヘルスチェックと組み合わせると、加重・レイテンシー・位置情報などでも、異常なリソースは回答から外れる。</li>
+</ul>
 
 <figure class="figure">
 <div class="fig-scroll">
@@ -5971,61 +6149,196 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図2 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。</figcaption>
 </figure>
-<h3 id="route53-c2-3">Application Recovery Controller(ARC)<a class="anchor" href="#route53-c2-3" aria-label="この見出しへのリンク">#</a></h3>
-<p>アプリケーションの可用性と復旧を安全・確実に行うための機能です。</p>
+
+<h3 id="route53-c2-5">ヘルスチェック<a class="anchor" href="#route53-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>ヘルスチェックは、リソースが正常かを定期的に確かめ、ルーティングから異常なリソースを外すために使います。種類は3つです。</p>
 <div class="table-wrap"><table>
-<tr><th>項目</th><th>概要</th></tr>
-<tr><td>ルーティングコントロール</td><td>ルーティングをスイッチで切り替える</td></tr>
-<tr><td>セーフティルール</td><td>ルールを決めて誤操作を防ぐ</td></tr>
-<tr><td>ゾーンシフト</td><td>単一AZ障害に対し、そのAZへのトラフィックを数分で止める</td></tr>
-<tr><td>準備状況チェック</td><td>切り替え先が動く状態かを確認する</td></tr>
-<tr><td>リージョンスイッチ</td><td><span>複数リージョン間のフェイルオーバーを計画に沿って実行する</span></td></tr>
+<tr><th>種類</th><th>確認する方法</th><th>向いている場面</th></tr>
+<tr><td>エンドポイントの監視</td><td>世界中のヘルスチェッカーから、IPアドレスかドメイン名にHTTP・HTTPS・TCPで接続する。応答の本文に特定の文字列があるかも確認できる</td><td>インターネットから届くWebサーバー・ELB</td></tr>
+<tr><td>計算済みヘルスチェック</td><td>ほかの複数のヘルスチェックの結果をまとめる(例:3つのうち2つ以上が正常なら正常)</td><td>複数の部品からなるサービス全体の判定</td></tr>
+<tr><td><strong>CloudWatchアラームの監視</strong></td><td>CloudWatchアラームの状態をそのまま使う</td><td><strong>プライベートサブネットのリソース</strong>、エラー率などのメトリクスでの判定</td></tr>
 </table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 738 202" style="max-width:738px;min-width:590px" role="img" aria-label="図3 プライベートなリソースのヘルスチェック。ヘルスチェッカーはインターネット上にあるためVPC内のプライベートなリソースには届かない。CloudWatchアラームを作り、その状態をヘルスチェックに使う。"><defs><marker id="route53-dgservices-route53-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="hc">
+<rect x="34" y="40" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="62" text-anchor="middle" class="dg-t">ヘルスチェッカー</text>
+<text x="112" y="80" text-anchor="middle" class="dg-s">インターネット上</text>
+</g>
+<g data-node="pub">
+<rect x="296" y="40" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="374" y="62" text-anchor="middle" class="dg-t">公開しているELB</text>
+<text x="374" y="80" text-anchor="middle" class="dg-s">直接確認できる</text>
+</g>
+<g data-node="prv">
+<rect x="296" y="126" width="155" height="52" rx="8" class="dg-ng"/>
+<text x="374" y="147" text-anchor="middle" class="dg-t">プライベートのEC2</text>
+<text x="374" y="165" text-anchor="middle" class="dg-s">直接は届かない</text>
+</g>
+<g data-node="cw">
+<rect x="559" y="126" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="636" y="147" text-anchor="middle" class="dg-tb">CloudWatchアラーム</text>
+<text x="636" y="165" text-anchor="middle" class="dg-s">メトリクスで判定</text>
+</g>
+<g data-node="r53">
+<rect x="559" y="40" width="155" height="52" rx="8" class="dg-box"/>
+<text x="636" y="62" text-anchor="middle" class="dg-t">ヘルスチェック</text>
+<text x="636" y="80" text-anchor="middle" class="dg-s">Route 53</text>
+</g>
+<path d="M189.0,66.5 L296.5,66.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
+<text x="243" y="70" text-anchor="middle" class="dg-s dg-halo">接続して確認</text>
+<path d="M189.0,91.6 L296.5,126.4" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-3)"/>
+<path d="M451.5,151.5 L559.0,151.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
+<text x="505" y="156" text-anchor="middle" class="dg-s dg-halo">メトリクス</text>
+<path d="M636.5,125.5 L636.5,92.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
+<text x="636" y="113" text-anchor="middle" class="dg-s dg-halo">アラームの状態</text>
+</svg>
+</div>
+<figcaption>図3 プライベートなリソースのヘルスチェック。ヘルスチェッカーはインターネット上にあるためVPC内のプライベートなリソースには届かない。CloudWatchアラームを作り、その状態をヘルスチェックに使う。</figcaption>
+</figure>
+<ul>
+<li>エンドポイントを監視するときは、ヘルスチェッカーのIPアドレス範囲からの通信を、セキュリティグループやネットワークACLで<strong>許可</strong>しておく。許可していないと、正常なのに異常と判定される。</li>
+<li>確認の間隔(標準30秒・高速10秒)と、何回続けて失敗したら異常とするか(しきい値)を設定する。</li>
+<li>ヘルスチェックの状態はCloudWatchのメトリクスになる(<strong>米国東部(バージニア北部)リージョン</strong>に出る)。アラームを作って、異常になったらSNSで通知できる。</li>
+</ul>
+
+<h3 id="route53-c2-6">Route 53 Resolver(VPCとオンプレミスの名前解決)<a class="anchor" href="#route53-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>VPCには、VPCのCIDRの先頭に2を足したアドレス(例:<code>10.0.0.2</code>)でRoute 53 Resolverが用意されていて、EC2などからの問い合わせに答えます(Amazon Provided DNS)。オンプレミスとつなぐときは、<strong>Resolverエンドポイント</strong>を使って問い合わせを転送します。</p>
+<div class="table-wrap"><table>
+<tr><th>しくみ</th><th>問い合わせの向き</th><th>例</th></tr>
+<tr><td><strong>インバウンドエンドポイント</strong></td><td>オンプレミス → VPC</td><td>社内のDNSサーバーから、プライベートホストゾーンの名前(<code>db.aws.example.internal</code>)を引く</td></tr>
+<tr><td><strong>アウトバウンドエンドポイント</strong>と転送ルール</td><td>VPC → オンプレミス</td><td>EC2から、社内のドメイン(<code>corp.example.local</code>)をオンプレミスのDNSサーバーに問い合わせる</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 949 212" style="max-width:949px;min-width:759px" role="img" aria-label="図4 Resolverエンドポイントによるハイブリッドの名前解決。オンプレミスからAWSの名前はインバウンド、AWSから社内の名前はアウトバウンドと転送ルールで解決する。通信はDirect ConnectかSite-to-Site VPNを通る。"><defs><marker id="route53-dgservices-route53-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="279" y="12" width="646" height="175" rx="10" class="dg-group"/>
+<text x="289" y="28" class="dg-s">VPC</text>
+<g data-node="onp">
+<rect x="34" y="89" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="113" text-anchor="middle" class="dg-t">オンプレミスのDNS</text>
+</g>
+<g data-node="in">
+<rect x="289" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="62" text-anchor="middle" class="dg-tb">インバウンド</text>
+<text x="364" y="80" text-anchor="middle" class="dg-s">エンドポイント</text>
+</g>
+<g data-node="out">
+<rect x="289" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="147" text-anchor="middle" class="dg-tb">アウトバウンド</text>
+<text x="364" y="165" text-anchor="middle" class="dg-s">転送ルール</text>
+</g>
+<g data-node="res">
+<rect x="544" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="104" text-anchor="middle" class="dg-t">Resolver</text>
+<text x="619" y="122" text-anchor="middle" class="dg-s">VPCの.2アドレス</text>
+</g>
+<g data-node="ec2">
+<rect x="765" y="89" width="150" height="40" rx="8" class="dg-box"/>
+<text x="840" y="113" text-anchor="middle" class="dg-t">EC2</text>
+</g>
+<path d="M184.0,96.5 L289.0,79.0" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<text x="236" y="92" text-anchor="middle" class="dg-s dg-halo">AWSの名前を問い合わせ</text>
+<path d="M439.0,79.0 L544.0,96.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M765.0,109.0 L694.0,109.0" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<text x="730" y="113" text-anchor="middle" class="dg-s dg-halo">問い合わせ</text>
+<path d="M544.0,121.5 L439.0,139.0" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M289.0,139.0 L184.0,121.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<text x="236" y="134" text-anchor="middle" class="dg-s dg-halo">社内の名前を転送</text>
+</svg>
+</div>
+<figcaption>図4 Resolverエンドポイントによるハイブリッドの名前解決。オンプレミスからAWSの名前はインバウンド、AWSから社内の名前はアウトバウンドと転送ルールで解決する。通信はDirect ConnectかSite-to-Site VPNを通る。</figcaption>
+</figure>
+<ul>
+<li>転送ルールはAWS RAMで別アカウントのVPCと共有でき、複数アカウントのVPCから同じルールを使える。</li>
+<li>VPCから外部への問い合わせを、ドメインのリストで遮断・許可したいときは<a href="#p-dns-firewall">Route 53 Resolver DNS Firewall</a>を使う。</li>
+</ul>
+
+<h3 id="route53-c2-7">DNSSEC<a class="anchor" href="#route53-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>DNSSEC署名</strong>を有効にすると、パブリックホストゾーンの回答に電子署名が付き、途中で回答をすり替える攻撃(DNSスプーフィング)を防げます。署名用のキー(KSK)には、<strong>米国東部(バージニア北部)リージョンのKMSのカスタマーマネージドキー</strong>(非対称キー)を使います。有効にしたあと、親のゾーン(ドメインの登録事業者)にDSレコードを登録します。VPCからの問い合わせで署名を検証するには、ResolverのDNSSEC検証を有効にします。</p>
+
+<h3 id="route53-c2-8">ログ<a class="anchor" href="#route53-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>パブリックDNSクエリのログ</strong>:パブリックホストゾーンへの問い合わせをCloudWatch Logsに送る(ロググループは米国東部(バージニア北部)リージョンに作る)。</li>
+<li><strong>Resolverのクエリログ</strong>:VPC内のリソースが行った問い合わせを、CloudWatch Logs・S3・Data Firehoseに送る。マルウェアが不審なドメインに問い合わせていないかの調査に使える。</li>
+<li>レコードの変更などのAPI操作はCloudTrailに記録される。</li>
+</ul>
+
+<h3 id="route53-c2-9">ドメイン登録<a class="anchor" href="#route53-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>Route 53でドメインを登録すると、ホストゾーンが自動で作られます。<strong>自動更新</strong>を有効にしておかないと、期限切れでドメインが使えなくなります。勝手に移管されないよう、移管ロックもかけられます。</p>
+
+<h3 id="route53-c2-10">Application Recovery Controller(ARC)<a class="anchor" href="#route53-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<p>リージョンやAZの切り替えを、安全・確実に行うためのサービスです。以前はRoute 53の機能でしたが、現在は独立したサービスです。ゾーンシフト(1つのAZからトラフィックを外す)、ルーティングコントロール、リージョンスイッチなどの機能があります。詳しくは<a href="#p-application-recovery-controller">Amazon Application Recovery Controller</a>を参照してください。</p>
 </section>
 
 <section class="chapter">
 <h2 id="route53-c3">3. ユースケース<a class="anchor" href="#route53-c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li>独自ドメインでWebサイトを公開</li>
-<li>フェイルオーバーで障害時に待機系サイトへ切り替え</li>
+<li>独自ドメインでWebサイトを公開し、<code>example.com</code> をエイリアスレコードでCloudFrontやALBに向ける</li>
+<li>フェイルオーバーで障害時に待機系サイト(S3の静的ページなど)へ切り替え</li>
 <li>新バージョンへ10%だけトラフィックを流す(加重)</li>
 <li>VPC内の社内システムの名前解決(プライベートホストゾーン)</li>
+<li>オンプレミスとVPCの間で、お互いの名前を解決する(Resolverエンドポイント)</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="route53-c4">4. 料金の考え方<a class="anchor" href="#route53-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>ホストゾーンごとの月額料金、DNSクエリ数、ヘルスチェック数、ドメイン登録料で課金されます。AWSリソース(ELB・CloudFrontなど)を指すエイリアスレコードへのクエリは無料です。</p>
+<p>ホストゾーンごとの月額料金、DNSクエリ数、ヘルスチェック数(AWS以外のエンドポイントや、HTTPS・文字列照合・高速間隔などのオプションは割高)、ドメイン登録料で課金されます。AWSリソース(ELB・CloudFrontなど)を指すエイリアスレコードへのクエリは無料です。Resolverエンドポイントは、エンドポイントのネットワークインターフェイスの数と時間、処理したクエリ数で課金されます。</p>
 </section>
 
 <section class="chapter">
 <h2 id="route53-c5">5. 関連サービス<a class="anchor" href="#route53-c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li><a href="#p-elb">Elastic Load Balancing</a>/<a href="#p-cloudfront">Amazon CloudFront</a>:エイリアスレコードの向き先</li>
-<li><a href="#p-vpc">Amazon VPC</a>:プライベートホストゾーンの関連付け先</li>
-<li><a href="#p-global-accelerator">AWS Global Accelerator</a>:DNSに依存しないグローバルなトラフィック制御</li>
-<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:ヘルスチェックのアラーム</li>
+<li><a href="#p-elb">Elastic Load Balancing</a>/<a href="#p-cloudfront">Amazon CloudFront</a>/<a href="#p-s3">Amazon S3</a>:エイリアスレコードの向き先</li>
+<li><a href="#p-vpc">Amazon VPC</a>:プライベートホストゾーンの関連付け先、Resolverの置き場所</li>
+<li><a href="#p-global-accelerator">AWS Global Accelerator</a>:DNSのキャッシュに左右されないグローバルなトラフィック制御</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:ヘルスチェックのアラーム、クエリログ</li>
+<li><a href="#p-kms">AWS KMS</a>:DNSSEC署名のキー</li>
+<li><a href="#p-ram">AWS RAM</a>:Resolverの転送ルールの共有</li>
+<li><a href="#p-direct-connect">AWS Direct Connect</a>/<a href="#p-site-to-site-vpn">AWS Site-to-Site VPN</a>:Resolverエンドポイントとオンプレミスの通信経路</li>
 <li><a href="#p-dns-firewall">Route 53 Resolver DNS Firewall</a>:VPCからのDNS問い合わせのフィルタリング</li>
 <li><a href="#p-application-recovery-controller">Amazon Application Recovery Controller</a>:確実なリージョンのフェイルオーバー</li>
+<li>関連する用語:<a href="../terms/dns.html">DNS</a>、<a href="../terms/dns-record-types.html">DNSレコードタイプ</a>、<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/hybrid-connectivity.html">ハイブリッド接続</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="route53-c6">6. 試験・実務でのポイント<a class="anchor" href="#route53-c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
+<div class="point">
+<h4>レコードとルーティング</h4>
+<ul>
 <li>A/Bテスト・段階リリース → <strong>加重</strong>。DR → <strong>フェイルオーバー</strong>。速いリージョンへ → <strong>レイテンシー</strong>。</li>
-<li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。</li>
-<li>VPC内だけで使う名前 → <strong>プライベートホストゾーン</strong>。</li>
+<li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。当てはまらない利用者用に<strong>デフォルトのレコード</strong>も作る。</li>
+<li><code>example.com</code>(ゾーンの頂点)をELBやCloudFrontに向けたい → <strong class="em">エイリアスレコード</strong>(CNAMEは頂点に作れない)。</li>
+<li>レコードを変えたのに古い値が返る → <strong>TTL</strong>の間はキャッシュされる。切り替えの前にTTLを短くしておく。</li>
+<li>ホストゾーンを作り直したら名前解決できなくなった → 新しいネームサーバーを、ドメインの登録事業者側の<strong>NSの設定</strong>に反映する。</li>
+</ul>
+<h4>ヘルスチェック</h4>
+<ul>
+<li>プライベートサブネットのリソースを監視したい → <strong>CloudWatchアラーム</strong>を監視するヘルスチェック。</li>
+<li>正常なのにヘルスチェックが失敗する → ヘルスチェッカーのIPアドレス範囲を<strong>セキュリティグループで許可</strong>しているか確認する。</li>
+<li>ELBの背後が全滅したら切り替えたい → エイリアスレコードの<strong>ターゲットのヘルスを評価</strong>。</li>
+<li>複数の部品の状態をまとめて判定したい → <strong>計算済みヘルスチェック</strong>。</li>
+</ul>
+<h4>VPC・ハイブリッド・セキュリティ</h4>
+<ul>
+<li>VPC内だけで使う名前 → <strong>プライベートホストゾーン</strong>。解決できないときはVPCのDNS属性(<code>enableDnsHostnames</code>・<code>enableDnsSupport</code>)を確認する。</li>
+<li>オンプレミスからAWSの名前を引く → <strong>インバウンドエンドポイント</strong>。AWSから社内の名前を引く → <strong>アウトバウンドエンドポイントと転送ルール</strong>。</li>
+<li>DNSの回答のすり替えを防ぐ → <strong>DNSSEC署名</strong>(KMSキーは米国東部(バージニア北部))。</li>
+<li>VPC内のどのリソースがどの名前を引いたか調べたい → <strong>Resolverのクエリログ</strong>。</li>
 <li>AZ障害時にすばやくトラフィックを外す → ARCの<strong>ゾーンシフト</strong>。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
 <h2 id="route53-c7">7. まとめ<a class="anchor" href="#route53-c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li>Route 53はDNS・ドメイン登録・ヘルスチェックを提供する。</li>
-<li>ホストゾーンはパブリックとプライベートの2種類。</li>
-<li>ルーティングポリシーを目的に応じて選び分ける。</li>
+<li>Route 53はドメイン登録・DNS(ホストゾーン)・VPCの名前解決(Resolver)を提供する。</li>
+<li>AWSリソースにはエイリアスレコードで向け、ルーティングポリシーとヘルスチェックで返す値を変える。</li>
+<li>プライベートなリソースはCloudWatchアラームでヘルスチェックし、オンプレミスとはResolverエンドポイントで名前解決をつなぐ。</li>
 </ul>
 </section>
 </article>
@@ -7830,19 +8143,21 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <div class="hero-text">
 <span class="category">セキュリティ、アイデンティティ、コンプライアンス</span>
 <h1>AWS Organizations</h1>
-<p class="lead">複数のAWSアカウントをまとめて管理するサービス</p>
+<p class="lead">複数のAWSアカウントをまとめて管理し、組織全体にポリシーで統制をかけるサービス</p>
 </div>
 </div>
 <section class="chapter">
 <h2 id="organizations-c1">1. サービス概要<a class="anchor" href="#organizations-c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Organizations</strong>は、<strong>複数のAWSアカウントをまとめて管理</strong>するサービスです。アカウントをグループに分け、組織全体に共通のルールを適用できます。</p>
+<p>本番・開発・ログ保管などの用途ごとにアカウントを分けると、障害や権限の影響範囲を小さくでき、費用も分けて把握できます。Organizationsは、そうしたマルチアカウント環境の土台です。Control TowerやIdentity Centerも、Organizationsの上で動きます。</p>
+<p>組織には「すべての機能」と「一括請求の機能だけ」の2つのモードがあります。SCPなどのポリシーや、ほかのAWSサービスとの連携を使うには<strong>すべての機能</strong>を有効にします。</p>
 </section>
 
 <section class="chapter">
 <h2 id="organizations-c2">2. 主な機能・特徴<a class="anchor" href="#organizations-c2" aria-label="この見出しへのリンク">#</a></h2>
 <h3 id="organizations-c2-1">用語<a class="anchor" href="#organizations-c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
-<li><strong>ルート</strong>:組織の階層の最上位。ルートにSCPを適用すると、組織内のすべてのアカウントが対象になる。</li>
+<li><strong>ルート</strong>:組織の階層の最上位。ルートにポリシーを適用すると、組織内のすべてのアカウントが対象になる。</li>
 <li><strong>管理アカウント</strong>:組織を作成したアカウント。メンバーアカウントの招待・作成や一括請求を行う。</li>
 <li><strong>メンバーアカウント</strong>:組織に所属する管理アカウント以外のアカウント。</li>
 <li><strong>OU(組織単位)</strong>:アカウントのグループ。OUの中にOUを入れて階層にできる。</li>
@@ -7899,7 +8214,20 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図1 Organizationsの構造。組織の最上位は「ルート」で、その下にOUやアカウントを置く。管理アカウントは組織を作成・管理するアカウントで、組織内のアカウントの1つ。OUにSCPを適用すると、配下の全アカウントに権限の上限がかかる。</figcaption>
 </figure>
-<h3 id="organizations-c2-2">SCPの利用イメージ<a class="anchor" href="#organizations-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+
+<h3 id="organizations-c2-2">ポリシーの種類<a class="anchor" href="#organizations-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Organizationsのポリシーは、権限を制限する「認可ポリシー」と、設定をそろえる「管理ポリシー」に分かれます。どれも、ルート・OU・アカウントに適用します。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>分類</th><th>内容</th></tr>
+<tr><td><strong>SCP</strong>(サービスコントロールポリシー)</td><td>認可</td><td>アカウント内の<strong>IAMユーザー・ロール(プリンシパル)</strong>が使える権限の上限</td></tr>
+<tr><td><strong>RCP</strong>(リソースコントロールポリシー)</td><td>認可</td><td>アカウント内の<strong>リソース</strong>(S3バケット・KMSキー・SQSキューなど)に対して、許される権限の上限。組織外からのアクセスを一律に禁止する、などに使う</td></tr>
+<tr><td>タグポリシー</td><td>管理</td><td>タグのキーと値の書き方をそろえる(例:<code>CostCenter</code> の大文字・小文字、使ってよい値)</td></tr>
+<tr><td>バックアップポリシー</td><td>管理</td><td>AWS Backupのバックアッププランを全アカウントに配る</td></tr>
+<tr><td>宣言型ポリシー</td><td>管理</td><td>EC2・VPCなどの設定の基準を強制する(例:IMDSv2を必須にする、AMIやスナップショットの公開を禁止する)。新しいAPIが増えても効き続ける</td></tr>
+<tr><td>AIサービスのオプトアウトポリシー</td><td>管理</td><td>AWSのAIサービスが、組織のデータをサービスの改善に使わないようにする</td></tr>
+</table></div>
+
+<h3 id="organizations-c2-3">SCPの利用イメージ<a class="anchor" href="#organizations-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>Organizationsの管理アカウント側の管理者が設定します。</p>
 <ul>
 <li>組織全体の権限の管理 → <strong>SCP</strong></li>
@@ -7918,7 +8246,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
      ├── Production
      ├── Development
      └── Test</code></pre>
-<p>SCPは権限を「与える」ものではなく、<strong>上限(ガードレール)</strong>を決めるものです。実際の操作には、SCPで禁止されていないことに加えて、IAMでの許可が必要です。また、SCPは管理アカウントには適用されません。</p>
+<p>SCPは権限を「与える」ものではなく、<strong>上限(ガードレール)</strong>を決めるものです。実際の操作には、SCPで禁止されていないことに加えて、IAMでの許可が必要です。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 463 194" style="max-width:463px;min-width:463px" role="img" aria-label="図2 実際に使える権限は、SCPとIAMの両方で許可された範囲だけ。IAMで許可しても、SCPで拒否されていれば実行できない。"><defs><marker id="organizations-dgservices-organizations-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -7943,6 +8271,118 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図2 実際に使える権限は、SCPとIAMの両方で許可された範囲だけ。IAMで許可しても、SCPで拒否されていれば実行できない。</figcaption>
 </figure>
+
+<h3 id="organizations-c2-4">SCPの書き方と継承<a class="anchor" href="#organizations-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>次のSCPは、東京・大阪以外のリージョンでの操作を拒否する例です。IAMやCloudFrontなどのグローバルサービスは、米国東部(バージニア北部)リージョンのAPIを使うため、<code>NotAction</code> で対象から外しています。</p>
+<pre class="code"><code>{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "DenyOtherRegions",
+    "Effect": "Deny",
+    "NotAction": ["iam:*", "organizations:*", "sts:*", "cloudfront:*", "support:*"],
+    "Resource": "*",
+    "Condition": {
+      "StringNotEquals": {
+        "aws:RequestedRegion": ["ap-northeast-1", "ap-northeast-3"]
+      }
+    }
+  }]
+}</code></pre>
+<ul>
+<li>組織を作ると、すべての操作を許可するSCP(<code>FullAWSAccess</code>)が、ルート・OU・アカウントに付いている。これを残したまま、禁止したいことだけを<strong>Deny</strong>で書く(拒否リスト方式)のが一般的。</li>
+<li><code>FullAWSAccess</code> を外し、使ってよいサービスだけをAllowで書く方式(許可リスト方式)もある。この場合、ルートからアカウントまでの<strong>すべての階層で許可</strong>されていないと使えない。</li>
+<li>Denyは、どの階層に書いても配下のすべてのアカウントに効く。下の階層のSCPで打ち消すことはできない。</li>
+<li>例外にしたいロール(管理者用のロールなど)は、Conditionで <code>aws:PrincipalArn</code> を使って除外する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 922 154" style="max-width:922px;min-width:738px" role="img" aria-label="図3 SCPの継承。上の階層のSCPは下の階層にも効く。アカウントで使える権限は、ルートからアカウントまでのSCPとIAMのすべてで許された範囲になる。"><defs><marker id="organizations-dgservices-organizations-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="r">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">ルート</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">FullAWSAccess</text>
+</g>
+<g data-node="ou">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="100" text-anchor="middle" class="dg-t">OU: 本番</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">リージョン制限(Deny)</text>
+</g>
+<g data-node="acc">
+<rect x="510" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="100" text-anchor="middle" class="dg-tb">本番アカウント</text>
+<text x="585" y="118" text-anchor="middle" class="dg-s">両方が効く</text>
+</g>
+<g data-node="res">
+<rect x="748" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="823" y="100" text-anchor="middle" class="dg-t">使える権限</text>
+<text x="823" y="118" text-anchor="middle" class="dg-s">IAMの許可 ∩ SCP</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#organizations-dgservices-organizations-3)"/>
+<text x="228" y="108" text-anchor="middle" class="dg-s dg-halo">継承</text>
+<path d="M422.0,104.0 L510.0,104.0" class="dg-line" marker-end="url(#organizations-dgservices-organizations-3)"/>
+<text x="466" y="108" text-anchor="middle" class="dg-s dg-halo">継承</text>
+<path d="M660.0,104.0 L748.0,104.0" class="dg-line" marker-end="url(#organizations-dgservices-organizations-3)"/>
+</svg>
+</div>
+<figcaption>図3 SCPの継承。上の階層のSCPは下の階層にも効く。アカウントで使える権限は、ルートからアカウントまでのSCPとIAMのすべてで許された範囲になる。</figcaption>
+</figure>
+
+<h3 id="organizations-c2-5">SCPが効かないもの<a class="anchor" href="#organizations-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>管理アカウント</strong>には、SCPは適用されない。そのため、管理アカウントでは普段の作業やワークロードを動かさない。</li>
+<li><strong>サービスリンクロール</strong>(AWSのサービスが代わりに操作するためのロール)には効かない。</li>
+<li>メンバーアカウントの<strong>ルートユーザーには効く</strong>。ルートユーザーでもSCPで拒否された操作はできない。</li>
+</ul>
+
+<h3 id="organizations-c2-6">RCPとデータ境界<a class="anchor" href="#organizations-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>SCPは「自分のアカウントの人が何をできるか」を制限しますが、バケットポリシーで外部のアカウントに公開してしまうと、外部の人のアクセスは止められません。RCPは<strong>リソースの側</strong>に上限をかけるため、「組織のプリンシパル以外は、このバケットにアクセスできない」を、各アカウントのリソースポリシーに関係なく強制できます。条件キー <code>aws:PrincipalOrgID</code> で組織のIDを指定するのが基本です。</p>
+
+<h3 id="organizations-c2-7">委任管理者と信頼されたアクセス<a class="anchor" href="#organizations-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>信頼されたアクセス</strong>:GuardDuty・Security Hub・Config・CloudTrail・Backup・IAM Identity Center・CloudFormation StackSetsなどのサービスに、組織全体での操作を許可する設定。</li>
+<li><strong class="em">委任管理者</strong>:そのサービスの組織全体の管理を、管理アカウントではなく特定のメンバーアカウント(例:セキュリティ用のアカウント)に任せる。管理アカウントに入る人を減らせる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 202" style="max-width:718px;min-width:574px" role="img" aria-label="図4 委任管理者。管理アカウントからセキュリティ用のアカウントに管理を任せ、そこから全アカウントのGuardDutyなどを有効にして結果を集める。"><defs><marker id="organizations-dgservices-organizations-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="mgmt">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">管理アカウント</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">委任管理者を登録</text>
+</g>
+<g data-node="sec">
+<rect x="289" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="104" text-anchor="middle" class="dg-tb">セキュリティ用</text>
+<text x="364" y="122" text-anchor="middle" class="dg-s">GuardDuty等の管理者</text>
+</g>
+<g data-node="a1">
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">メンバーアカウント</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">検出結果を集約</text>
+</g>
+<g data-node="a2">
+<rect x="544" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="147" text-anchor="middle" class="dg-t">メンバーアカウント</text>
+<text x="619" y="165" text-anchor="middle" class="dg-s">検出結果を集約</text>
+</g>
+<path d="M184.0,109.0 L289.0,109.0" class="dg-line" marker-end="url(#organizations-dgservices-organizations-4)"/>
+<text x="236" y="113" text-anchor="middle" class="dg-s dg-halo">委任</text>
+<path d="M439.0,96.5 L544.0,79.0" class="dg-line" marker-end="url(#organizations-dgservices-organizations-4)"/>
+<text x="492" y="92" text-anchor="middle" class="dg-s dg-halo">一括で有効化</text>
+<path d="M439.0,121.5 L544.0,139.0" class="dg-line" marker-end="url(#organizations-dgservices-organizations-4)"/>
+<text x="492" y="134" text-anchor="middle" class="dg-s dg-halo">一括で有効化</text>
+</svg>
+</div>
+<figcaption>図4 委任管理者。管理アカウントからセキュリティ用のアカウントに管理を任せ、そこから全アカウントのGuardDutyなどを有効にして結果を集める。</figcaption>
+</figure>
+
+<h3 id="organizations-c2-8">アカウントの作成・招待と管理<a class="anchor" href="#organizations-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>組織から新しく<strong>作成</strong>したアカウントには、管理アカウントから引き受けられる管理者ロール <code>OrganizationAccountAccessRole</code> が自動で作られる。</li>
+<li>既存のアカウントを<strong>招待</strong>した場合、このロールは作られない。管理アカウントから操作したいときは、招待したアカウント側で同じ名前のロールを作る。</li>
+<li>メンバーアカウントのルートユーザーの認証情報をなくし、ルートユーザーでしかできない操作(バケットポリシーのロックの解除など)を管理アカウントから行う、<strong>ルートアクセスの一元管理</strong>もできる。</li>
+<li>組織から外れるアカウントには、単独で使うための支払い情報などが必要になる。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -7951,13 +8391,15 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>本番・開発・テストのアカウントを分けて管理</li>
 <li>全アカウントで使用できるリージョンを制限</li>
 <li>CloudTrailの停止など、セキュリティ設定の変更を全アカウントで禁止</li>
+<li>組織外のアカウントから、組織のS3バケットやKMSキーにアクセスさせない(RCP)</li>
+<li>セキュリティ用のアカウントを委任管理者にして、GuardDutyやSecurity Hubを全アカウントで有効にする</li>
 <li><a href="#p-identity-center">IAM Identity Center</a>で、複数アカウントへのログインを一元化</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="organizations-c4">4. 料金の考え方<a class="anchor" href="#organizations-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>Organizations自体は無料です。複数アカウントの請求をまとめる一括請求(コンソリデーティッドビリング)により、ボリュームディスカウントやリザーブドインスタンスの共有の恩恵も受けられます。</p>
+<p>Organizations自体は無料です。複数アカウントの請求をまとめる<strong>一括請求</strong>(コンソリデーティッドビリング)により、使用量を合算したボリュームディスカウントや、リザーブドインスタンス・Savings Plansの割引の共有の恩恵も受けられます。割引の共有は、アカウントごとにオフにすることもできます。</p>
 </section>
 
 <section class="chapter">
@@ -7965,30 +8407,46 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <ul>
 <li><a href="#p-iam">AWS IAM</a>:個々の権限管理</li>
 <li><a href="#p-identity-center">AWS IAM Identity Center</a>:組織内の複数アカウントへのシングルサインオン(パーミッションセット)</li>
-<li><a href="#p-cloudtrail">AWS CloudTrail</a>:組織全体の証跡</li>
-<li><a href="#p-config">AWS Config</a>:組織全体のルール評価</li>
-<li><a href="#p-ram">AWS Resource Access Manager</a>:組織内でのリソース共有</li>
-<li><a href="#p-security-hub">AWS Security Hub</a>:組織全体のセキュリティ状況の集約</li>
-<li><a href="#p-backup">AWS Backup</a>:組織全体のバックアップポリシー</li>
 <li><a href="#p-control-tower">AWS Control Tower</a>:ベストプラクティスに沿ったマルチアカウント環境の構築</li>
-<li>関連する用語:<a href="../terms/tags.html">タグ</a>、<a href="../terms/root-user.html">ルートユーザーとアカウントの保護</a></li>
+<li><a href="#p-cloudtrail">AWS CloudTrail</a>:組織全体の証跡</li>
+<li><a href="#p-config">AWS Config</a>:組織全体のルール評価、アグリゲーター</li>
+<li><a href="#p-cloudformation">AWS CloudFormation</a>:StackSetsで全アカウントに同じリソースを配る</li>
+<li><a href="#p-ram">AWS Resource Access Manager</a>:組織内でのリソース共有</li>
+<li><a href="#p-security-hub">AWS Security Hub</a>/<a href="#p-guardduty">Amazon GuardDuty</a>:委任管理者による組織全体のセキュリティ管理</li>
+<li><a href="#p-backup">AWS Backup</a>:組織全体のバックアップポリシー</li>
+<li><a href="#p-savings-plans">Savings Plans</a>:一括請求での割引の共有</li>
+<li>関連する用語:<a href="../terms/iam-policy-evaluation.html">IAMポリシーの評価</a>、<a href="../terms/tags.html">タグ</a>、<a href="../terms/root-user.html">ルートユーザーとアカウントの保護</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="organizations-c6">6. 試験・実務でのポイント<a class="anchor" href="#organizations-c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
-<li>IAMで許可しても<strong>SCPで拒否されたら拒否</strong>。</li>
-<li>全アカウントで特定の操作・リージョンを禁止 → <strong>SCP</strong>をOUやルートに適用。</li>
-<li>アカウントのグループ化 → <strong>OU</strong>。</li>
-</ul></div>
+<div class="point">
+<h4>SCPとRCP</h4>
+<ul>
+<li>IAMで許可しても<strong>SCPで拒否されたら拒否</strong>。SCPは権限を与えない(上限を決めるだけ)。</li>
+<li>全アカウントで特定の操作・リージョンを禁止 → <strong>SCP</strong>をOUやルートに適用。リージョン制限は <code>aws:RequestedRegion</code>。</li>
+<li>SCPは<strong>管理アカウントとサービスリンクロールには効かない</strong>。メンバーアカウントのルートユーザーには効く。</li>
+<li>許可リスト方式で「許可したのに使えない」→ ルートからアカウントまでの<strong>途中の階層</strong>で許可されているか確認する。</li>
+<li>組織外からのリソースへのアクセスを一律に禁止したい → <strong class="em">RCP</strong>(<code>aws:PrincipalOrgID</code>)。</li>
+</ul>
+<h4>管理ポリシーと組織の運用</h4>
+<ul>
+<li>タグの書き方をそろえたい → <strong>タグポリシー</strong>。全アカウントで同じバックアップを取りたい → <strong>バックアップポリシー</strong>。</li>
+<li>全アカウントのEC2でIMDSv2を必須にしたい・AMIの公開を禁止したい → <strong>宣言型ポリシー</strong>。</li>
+<li>管理アカウントを使わずに、組織全体のGuardDutyなどを管理したい → <strong>委任管理者</strong>。</li>
+<li>招待したアカウントを管理アカウントから操作できない → <code>OrganizationAccountAccessRole</code> を手動で作る。</li>
+<li>アカウントのグループ化 → <strong>OU</strong>。SCPなどのポリシーを使うには組織の<strong>すべての機能</strong>を有効にする。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
 <h2 id="organizations-c7">7. まとめ<a class="anchor" href="#organizations-c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li>Organizationsは複数アカウントの管理サービス。</li>
-<li>OUでアカウントをまとめ、SCPで組織全体の権限の上限を決める。</li>
+<li>Organizationsは複数アカウントの管理サービス。OUでアカウントをまとめ、ポリシーで統制する。</li>
+<li>SCPはプリンシパル、RCPはリソースに対する権限の上限。管理アカウントにはSCPが効かない。</li>
+<li>タグ・バックアップ・宣言型などの管理ポリシーで設定をそろえ、委任管理者で管理アカウントの利用を減らす。</li>
 </ul>
 </section>
 </article>
