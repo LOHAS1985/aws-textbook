@@ -3,7 +3,8 @@
 <!-- lead: AWS上でコンテナを実行・管理するオーケストレーションサービス -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
-<p><strong>Amazon ECS(Elastic Container Service)</strong>は、AWS上でコンテナを実行・管理するための<strong>コンテナオーケストレーションサービス</strong>です。</p>
+<p><strong>Amazon ECS(Elastic Container Service)</strong>は、AWS上でコンテナを実行・管理するための<strong>コンテナオーケストレーションサービス</strong>です。どのサーバーでコンテナを動かすか、何個動かすか、壊れたら入れ替えるか、新しいバージョンにどう切り替えるかを、ECSが代わりに管理します。</p>
+<p>Kubernetesの知識がなくても使え、IAM・ALB・CloudWatchなどのAWSのサービスと最初から連携できるのが特徴です。Kubernetesを使いたい場合は<a href="eks.html">Amazon EKS</a>を選びます。</p>
 </section>
 
 <section class="chapter">
@@ -12,11 +13,12 @@
 <ul>
 <li><strong>クラスター</strong>:実行環境のまとまり。複数のアプリや環境をまとめるときに使う。</li>
 <li><strong class="em">タスク定義</strong>:コンテナを実行するときの設計書(Dockerfileはビルド時の設計書)。
-  <ul><li>使用するイメージ(Docker Image)</li><li>CPU/メモリ</li><li>ポート(Port Mapping)</li><li><strong>環境変数(Environment Variables)</strong></li></ul></li>
+  <ul><li>使用するイメージ(Docker Image)</li><li>CPU/メモリ</li><li>ポート(Port Mapping)</li><li><strong>環境変数(Environment Variables)</strong>とシークレット</li><li>IAMロール、ログの送り先、ヘルスチェック</li></ul></li>
 <li><strong>タスク</strong>:タスク定義から起動された実体(コンテナ)。</li>
 <li><strong>サービス</strong>:タスクを常に指定数維持する仕組み。
   <ul><li>起動数の維持(Desired Count)</li><li>自動増減(Auto Scaling)</li><li>ALB連携(Load Balancer)</li><li>無停止更新(Rolling Update)</li><li>異常タスクの交換(Health Check)</li></ul></li>
 </ul>
+<p>Webアプリのように動き続ける処理はサービスで、バッチのように終わる処理はタスクを単独で(EventBridgeのスケジュールなどから)実行します。</p>
 
 <figure class="figure" data-diagram>
 grid 170 80
@@ -33,12 +35,44 @@ edge alb t1
 edge alb t2
 <figcaption>図1 ECSの構成要素。サービスがタスク定義をもとにタスクを起動し、指定した数を維持する。ALBと連携してタスクにトラフィックを振り分ける。</figcaption>
 </figure>
+
 <h3>起動タイプ</h3>
 <div class="table-wrap"><table>
 <tr><th>起動タイプ</th><th>内容</th><th>特徴</th></tr>
-<tr><td>EC2起動タイプ</td><td>ユーザーがEC2を用意し、その上でコンテナを実行</td><td>柔軟だがサーバー管理が必要</td></tr>
-<tr><td>Fargate起動タイプ(現在の主流)</td><td>コンテナを指定するだけ</td><td>サーバー管理不要(ほぼサーバーレス)</td></tr>
+<tr><td>EC2起動タイプ</td><td>ユーザーがEC2(コンテナインスタンス)を用意し、その上でコンテナを実行</td><td>GPUや特殊なインスタンスを使える。OSのパッチ当てや台数の管理が必要</td></tr>
+<tr><td>Fargate起動タイプ(現在の主流)</td><td>コンテナを指定するだけ</td><td>サーバー管理不要(ほぼサーバーレス)。タスクごとに分離される</td></tr>
 </table></div>
+<p>EC2起動タイプでは、EC2にECSコンテナエージェントが入ったAMI(ECS最適化AMI)を使い、インスタンスにはECSへ登録するためのIAMロール(インスタンスロール)を付けます。</p>
+
+<h3>タスクロールとタスク実行ロール</h3>
+<p>ECSのタスクには、目的の違う2つのIAMロールを設定します。取り違えやすいので、試験でもよく問われます。</p>
+<div class="table-wrap"><table>
+<tr><th>ロール</th><th>使う人</th><th>必要な権限の例</th></tr>
+<tr><td><strong class="em">タスク実行ロール</strong></td><td>ECS(コンテナを起動する側)</td><td>ECRからイメージを取得する、CloudWatch Logsにログを書く、Secrets Manager・Parameter Storeからシークレットを読んでコンテナに渡す</td></tr>
+<tr><td><strong class="em">タスクロール</strong></td><td>コンテナの中のアプリ</td><td>アプリがS3にファイルを置く、DynamoDBを読み書きする、など</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 85
+node ecs 0 0.5 blue "ECS" "タスクを起動"
+node ex 1.4 0 accent "タスク実行ロール" "起動のための権限"
+node app 1.4 1 accent "タスクロール" "アプリの権限"
+node ecr 2.8 0 box "ECR・Logs" "Secrets Manager"
+node s3 2.8 1 box "S3・DynamoDB" "アプリが使う"
+edge ecs ex
+edge ex ecr "イメージの取得など"
+edge app s3 "アプリが呼び出す"
+<figcaption>図2 2つのロールの違い。タスク実行ロールはECSがタスクを起動するために、タスクロールはコンテナの中のアプリがAWSのサービスを呼ぶために使う。</figcaption>
+</figure>
+<p>アプリにアクセスキーを持たせる必要はありません。パスワードなどは、タスク定義の <code>secrets</code> でSecrets ManagerやParameter Storeを参照すると、起動時に環境変数として渡されます。</p>
+
+<h3>ネットワークモード</h3>
+<div class="table-wrap"><table>
+<tr><th>モード</th><th>内容</th></tr>
+<tr><td><strong>awsvpc</strong></td><td>タスクごとにENI(プライベートIPアドレス)が付き、<strong>タスクごとにセキュリティグループ</strong>を設定できる。Fargateではこのモードだけを使う</td></tr>
+<tr><td>bridge</td><td>EC2起動タイプで、ホストの中の仮想ネットワークを使う。ホストのポートを動的に割り当て(動的ポートマッピング)、ALBが自動で振り分け先のポートを登録する</td></tr>
+<tr><td>host</td><td>EC2のネットワークをそのまま使う。同じポートのタスクを1台に2つ置けない</td></tr>
+</table></div>
+<p>プライベートサブネットのタスクがECRからイメージを取得するには、NATゲートウェイか、ECR(<code>ecr.api</code>・<code>ecr.dkr</code>)とS3のVPCエンドポイントが必要です。どちらもないと、タスクが起動できません。</p>
 
 <h3>キャパシティプロバイダー</h3>
 <p>ECSタスクを<strong>どの計算リソース上でどれだけ実行するか</strong>を管理します。</p>
@@ -53,8 +87,57 @@ node fg 1.6 0 blue "FARGATE" "Base=2 / Weight=1"
 node spot 1.6 1 ok "FARGATE_SPOT" "Weight=3"
 edge svc fg "4タスク"
 edge svc spot "6タスク"
-<figcaption>図2 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。</figcaption>
+<figcaption>図3 キャパシティプロバイダーの配分例。10タスクのうち、まず Base=2 のFARGATEに2タスク、残り8タスクを Weight 1:3 で分けるため、FARGATE 4・FARGATE_SPOT 6 になる。</figcaption>
 </figure>
+<p>ASG Capacity Providerでは、<strong>マネージドスケーリング</strong>を有効にすると、タスクを置く場所が足りなくなったときに、ECSがEC2の台数を自動で増やします。</p>
+
+<h3>サービスのAuto Scaling</h3>
+<p>サービスのタスク数は、Application Auto Scalingで増減します。ターゲット追跡で、サービスの平均CPU使用率・平均メモリ使用率、ALBのターゲットあたりのリクエスト数(<code>ALBRequestCountPerTarget</code>)を目標値に保つのが基本です。SQSのキューの長さなど、独自のメトリクスでも増減できます。</p>
+
+<h3>デプロイ</h3>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>動き</th></tr>
+<tr><td><strong>ローリング更新</strong>(既定)</td><td>新しいタスクを起動してから古いタスクを止める。<code>minimumHealthyPercent</code>(更新中に最低限動かしておく割合)と <code>maximumPercent</code>(一時的に増やせる上限)で、入れ替えの速さを決める</td></tr>
+<tr><td><strong>Blue/Green</strong></td><td>新しいバージョンのタスクを並べて起動し、ALBの通信を切り替える。一度に切り替えるほか、少しずつ移す線形・カナリアも選べる。問題があればすぐ元に戻せる。ECSのサービス自体で実行でき、以前はCodeDeployと組み合わせていた</td></tr>
+</table></div>
+<ul>
+<li><strong class="em">デプロイサーキットブレーカー</strong>:新しいタスクが起動に失敗し続ける(ヘルスチェックに通らない、すぐ止まる)と、デプロイを失敗とみなし、<strong>ロールバック</strong>を有効にしておけば前のバージョンに自動で戻す。</li>
+<li><strong>CloudWatchアラームによるロールバック</strong>:タスクは起動したが、エラー率などのアラームが鳴った場合にも、自動で前のバージョンに戻せる。</li>
+<li>ALBのヘルスチェックに通る前にタスクが入れ替えられる場合は、サービスの<strong>ヘルスチェックの猶予期間</strong>を延ばす。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 165 85
+node up 0 0.5 blue "サービスを更新" "新しいタスク定義"
+node new 1.4 0.5 box "新しいタスク" "起動・ヘルスチェック"
+node ok 2.8 0 ok "成功" "古いタスクを停止"
+node ng 2.8 1 ng "失敗が続く" "サーキットブレーカー"
+node rb 4.1 1 accent "ロールバック" "前のバージョンへ"
+edge up new
+edge new ok "正常"
+edge new ng "異常"
+edge ng rb
+<figcaption>図4 デプロイサーキットブレーカー。新しいタスクの起動の失敗が続くと、デプロイを止めて前のバージョンに自動で戻す。</figcaption>
+</figure>
+
+<h3>ログと監視</h3>
+<ul>
+<li><strong>ログ</strong>:タスク定義のログドライバーに <code>awslogs</code> を指定すると、コンテナの標準出力がCloudWatch Logsに送られる。S3やOpenSearch Serviceなどに送りたい場合はFireLens(Fluent Bit)を使う。</li>
+<li><strong>サービスのメトリクス</strong>:サービスのCPU使用率・メモリ使用率は、標準でCloudWatchに送られる。</li>
+<li><strong class="em">CloudWatch Container Insights</strong>:クラスター・サービス・タスク・コンテナ単位のCPU・メモリ・ネットワーク・ストレージ、実行中のタスク数などを集め、ダッシュボードで表示する。クラスターごと、またはアカウントの既定で有効にする(オブザーバビリティを強化したモードでは、コンテナ単位まで詳しく見られる)。</li>
+<li><strong>イベント</strong>:タスクの状態の変化(停止など)やサービスのデプロイの状態は、EventBridgeのイベントになる。タスクが止まったら通知する、などに使う。</li>
+</ul>
+
+<h3>タスクが止まる・起動しないときの調べ方</h3>
+<p>止まったタスクの「<strong>停止理由</strong>」(コンソールのタスクの詳細、または <code>DescribeTasks</code> の <code>stoppedReason</code>)を見ると、原因の見当がつきます。</p>
+<div class="table-wrap"><table>
+<tr><th>停止理由の例</th><th>よくある原因と対処</th></tr>
+<tr><td><code>CannotPullContainerError</code></td><td>イメージを取得できない。NATゲートウェイやVPCエンドポイントがない、タスク実行ロールにECRの権限がない、イメージのタグが間違っている</td></tr>
+<tr><td><code>ResourceInitializationError</code></td><td>シークレットやログの準備に失敗した。タスク実行ロールにSecrets Manager・Parameter Store・KMSの権限がない、エンドポイントに届かない</td></tr>
+<tr><td><code>OutOfMemoryError</code></td><td>コンテナがタスク定義のメモリの上限を超えた。メモリを増やすか、アプリの使い方を見直す</td></tr>
+<tr><td>ELBのヘルスチェックに失敗</td><td>ヘルスチェックのパスやポートが違う、セキュリティグループでALBからの通信を許可していない、猶予期間が短い</td></tr>
+<tr><td><code>Essential container in task exited</code></td><td>必須のコンテナが終了した。CloudWatch Logsでアプリのエラーを確認する</td></tr>
+</table></div>
+<p>動いているコンテナの中に入って調べたいときは、<strong>ECS Exec</strong>を使います(Systems Manager Session Managerのしくみを使うため、タスクロールに権限が必要)。</p>
 </section>
 
 <section class="chapter">
@@ -63,13 +146,15 @@ edge svc spot "6タスク"
 <li>Webアプリ・APIをコンテナで常時稼働させる(サービス+ALB)</li>
 <li>FARGATE_SPOTを組み合わせたコスト重視のバッチ処理</li>
 <li>Lambdaの15分制限を超える長時間処理</li>
+<li>新しいバージョンを止めずにリリースし、失敗したら自動で戻す</li>
+<li>関連する運用シナリオ:<a href="../usecases/ecs-safe-deploy.html">ECSのサービスを止めずに更新し、失敗したら自動で戻す</a>、<a href="../usecases/container-monitoring.html">コンテナ(ECS・EKS)の性能を監視する</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
 <p>ECS自体の利用料はかかりません。EC2起動タイプではEC2インスタンスの料金、Fargate起動タイプではタスクに割り当てたvCPU・メモリと実行時間に応じた料金がかかります。</p>
-<p>FARGATE_SPOTを使うと余剰リソースを安価に利用できます(中断される可能性あり)。</p>
+<p>FARGATE_SPOTを使うと余剰リソースを安価に利用できます(中断される可能性あり)。Container Insightsを有効にすると、集めたメトリクスとログの分のCloudWatchの料金がかかります。</p>
 </section>
 
 <section class="chapter">
@@ -78,19 +163,35 @@ edge svc spot "6タスク"
 <li><a href="ecr.html">Amazon ECR</a>:コンテナイメージの保存先</li>
 <li><a href="eks.html">Amazon EKS</a>:Kubernetesベースのオーケストレーション</li>
 <li><a href="elb.html">Elastic Load Balancing</a>:サービスとALBの連携</li>
-<li><a href="ec2.html">Amazon EC2</a>:EC2起動タイプの実行基盤</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:EC2起動タイプの実行基盤</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ログ、Container Insights、ロールバックに使うアラーム</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>/<a href="systems-manager.html">AWS Systems Manager</a>:シークレットの受け渡し、ECS Exec</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:タスクの状態の変化の通知、スケジュール実行</li>
+<li><a href="codedeploy.html">AWS CodeDeploy</a>/<a href="codepipeline.html">AWS CodePipeline</a>:デプロイの自動化</li>
 <li><a href="copilot.html">AWS Copilot</a>:ECSアプリの構築・デプロイを簡単にするCLI</li>
+<li>関連する用語:<a href="../terms/deploy-strategies.html">デプロイ戦略</a>、<a href="../terms/circuit-breaker.html">サーキットブレーカー</a>、<a href="../terms/iam-roles-credentials.html">IAMロールと認証情報</a>、<a href="../terms/managed-serverless.html">マネージドとサーバーレス</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
 <div class="point">
+<h4>設定</h4>
 <ul>
 <li>コンテナの環境変数・CPU/メモリ・イメージは<strong>タスク定義</strong>で指定する。</li>
 <li>タスク数の維持・ALB連携・ローリング更新は<strong>サービス</strong>の役割。</li>
 <li>サーバー管理をしたくない → <strong>Fargate</strong>。</li>
 <li>Fargateと安価なFARGATE_SPOTの配分 → キャパシティプロバイダーの<strong>Base/Weight</strong>。</li>
+<li>アプリがS3などを使う権限 → <strong>タスクロール</strong>。イメージの取得・ログ・シークレットの取得 → <strong>タスク実行ロール</strong>。</li>
+<li>タスクごとにセキュリティグループを分けたい → <strong>awsvpc</strong>モード。</li>
+</ul>
+<h4>デプロイと監視</h4>
+<ul>
+<li>新しいタスクの起動失敗で自動で戻したい → <strong>デプロイサーキットブレーカー</strong>(ロールバックを有効に)。</li>
+<li>エラー率の上昇で自動で戻したい → デプロイに<strong>CloudWatchアラーム</strong>を設定する。</li>
+<li>コンテナ・タスク単位のCPU・メモリを見たい → <strong>Container Insights</strong>。</li>
+<li>コンテナのログを集めたい → <code>awslogs</code> ログドライバーでCloudWatch Logsへ。</li>
+<li>プライベートサブネットで <code>CannotPullContainerError</code> → NATゲートウェイかECR・S3のVPCエンドポイント、タスク実行ロールの権限を確認する。</li>
 </ul>
 </div>
 </section>
@@ -99,7 +200,8 @@ edge svc spot "6タスク"
 <h2>7. まとめ</h2>
 <ul>
 <li>ECSは「クラスター/タスク定義/タスク/サービス」で構成される。</li>
-<li>起動タイプはEC2とFargate。主流はFargate。</li>
-<li>キャパシティプロバイダーでリソースの配分を制御する。</li>
+<li>起動タイプはEC2とFargate。主流はFargate。キャパシティプロバイダーでリソースの配分を制御する。</li>
+<li>権限はタスク実行ロール(起動)とタスクロール(アプリ)に分ける。</li>
+<li>デプロイはサーキットブレーカーとアラームで自動で戻し、監視はContainer InsightsとCloudWatch Logsで行う。</li>
 </ul>
 </section>

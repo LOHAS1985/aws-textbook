@@ -1,24 +1,26 @@
 <!-- title: Amazon Route 53 -->
 <!-- category: ネットワークとコンテンツ配信 -->
-<!-- lead: マネージドDNSサービス -->
+<!-- lead: マネージドDNSサービス。ヘルスチェックと組み合わせたルーティングや、VPCとオンプレミスの名前解決もできる -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>Amazon Route 53</strong>は、マネージド<strong>DNSサービス</strong>です。ドメイン名とIPアドレスを結びつける名前解決のほか、ドメイン登録やヘルスチェックもできます。</p>
+<p>大きく分けて、次の3つの役割があります。</p>
+<div class="table-wrap"><table>
+<tr><th>役割</th><th>内容</th></tr>
+<tr><td>ドメイン登録</td><td><code>example.com</code> などのドメインを購入・更新する</td></tr>
+<tr><td>DNSの権威サーバー(ホストゾーン)</td><td>ドメインのレコードを管理し、問い合わせに答える。ルーティングポリシーとヘルスチェックで、返す値を変えられる</td></tr>
+<tr><td>VPCの名前解決(Route 53 Resolver)</td><td>VPC内のリソースからの問い合わせに答える。オンプレミスのDNSとの間で問い合わせを転送できる</td></tr>
+</table></div>
+<p>DNSの仕組みは用語「<a href="../terms/dns.html">DNS</a>」、レコードの種類は「<a href="../terms/dns-record-types.html">DNSレコードタイプ</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
 <h2>2. 主な機能・特徴</h2>
-<ul>
-<li><strong>DNS解決</strong>(仕組みは用語「<a href="../terms/dns.html">DNS</a>」、レコードの種類は「<a href="../terms/dns-record-types.html">DNSレコードタイプ</a>」を参照)</li>
-<li><strong>ドメイン登録</strong></li>
-<li><strong>ヘルスチェック/可用性モニタリング</strong></li>
-</ul>
-
 <h3>ホストゾーン</h3>
-<p>DNSレコードを管理するコンテナです。</p>
+<p>1つのドメインのDNSレコードをまとめて管理する入れ物です。</p>
 <ul>
 <li><strong>パブリックホストゾーン</strong>:インターネット上での名前解決</li>
-<li><strong>プライベートホストゾーン</strong>:指定したVPC内でのみ有効な名前解決</li>
+<li><strong>プライベートホストゾーン</strong>:関連付けたVPC内でのみ有効な名前解決</li>
 </ul>
 
 <figure class="figure" data-diagram>
@@ -32,19 +34,43 @@ edge q1 pub "名前解決"
 edge q2 prv "名前解決"
 <figcaption>図1 ホストゾーンの種類。パブリックホストゾーンはインターネット上で、プライベートホストゾーンは関連付けたVPC内でのみ名前解決できる。</figcaption>
 </figure>
+<ul>
+<li>パブリックホストゾーンを作ると、4つのネームサーバー(NSレコード)が割り当てられる。ドメインを別の登録事業者で買った場合は、その事業者側でネームサーバーをこの4つに変更する(委任)。</li>
+<li>プライベートホストゾーンを使うには、VPCの<strong><code>enableDnsHostnames</code> と <code>enableDnsSupport</code> を有効</strong>にする。別アカウントのVPCに関連付けるときは、ホストゾーン側で関連付けを許可してから、VPC側で関連付ける(CLI・API で行う)。</li>
+<li>同じ名前のパブリックとプライベートのホストゾーンがあると、関連付けたVPC内ではプライベートが優先される(スプリットビューDNS)。</li>
+</ul>
+
+<h3>エイリアスレコード</h3>
+<p><strong class="em">エイリアスレコード</strong>は、Route 53独自のレコードで、ELB・CloudFront・S3の静的ウェブサイトホスティング・API Gateway・別のRoute 53レコードなどのAWSリソースを直接指せます。</p>
+<div class="table-wrap"><table>
+<tr><th>比べる点</th><th>エイリアスレコード</th><th>CNAMEレコード</th></tr>
+<tr><td>ゾーンの頂点(<code>example.com</code> そのもの)</td><td><strong>作れる</strong></td><td>作れない(<code>www.example.com</code> などのサブドメインだけ)</td></tr>
+<tr><td>向き先</td><td>AWSのリソース</td><td>任意のドメイン名</td></tr>
+<tr><td>クエリの料金</td><td>AWSリソースを指す場合は無料</td><td>有料</td></tr>
+<tr><td>IPアドレスの変化</td><td>ELBなどのIPアドレスが変わっても自動で追従する</td><td>名前を返すだけ</td></tr>
+</table></div>
+<p>エイリアスレコードで「<strong>ターゲットのヘルスを評価</strong>」を有効にすると、別にヘルスチェックを作らなくても、ELBの背後に正常なターゲットがない場合に、そのレコードを異常として扱えます。</p>
+
+<h3>TTL</h3>
+<p>TTL(Time To Live)は、問い合わせた側のリゾルバーが回答をキャッシュする秒数です。TTLが長いとクエリ料金とレイテンシーは減りますが、レコードを変えてもしばらく古い値が使われます。移行や切り替えの予定があるときは、事前にTTLを短く(例:60秒)しておきます。エイリアスレコードのTTLは、向き先のリソースのTTLが使われます。</p>
+
 <h3>ルーティングポリシー</h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>概要</th><th>主な用途</th></tr>
-<tr><td>シンプル</td><td>複数の値を返せる基本的なルーティング</td><td>単純な名前解決</td></tr>
+<tr><td>シンプル</td><td>1つのレコードに複数の値を書けるが、ヘルスチェックは使えない</td><td>単純な名前解決</td></tr>
 <tr><td>加重(Weighted)</td><td>重みを指定してトラフィックを分散</td><td>A/Bテスト、段階的なリリース、負荷分散</td></tr>
 <tr><td>レイテンシー</td><td>最もレイテンシーが低いリージョンのリソースへルーティング</td><td>グローバルなWebサービスの高速化</td></tr>
 <tr><td>フェイルオーバー</td><td>プライマリが利用できない場合にセカンダリへ切り替え</td><td>可用性向上、DR構成</td></tr>
-<tr><td>位置情報(Geolocation)</td><td>ユーザーの地理的位置に基づいてルーティング</td><td>国・地域ごとのコンテンツ配信</td></tr>
-<tr><td>地理的近接性(Geoproximity)</td><td>ユーザーとリソースの地理的位置に基づく。バイアスで調整可能</td><td>地理的なトラフィック配分</td></tr>
+<tr><td>位置情報(Geolocation)</td><td>ユーザーの地理的位置(大陸・国など)に基づいてルーティング</td><td>国・地域ごとのコンテンツ配信、配信の制限</td></tr>
+<tr><td>地理的近接性(Geoproximity)</td><td>ユーザーとリソースの地理的位置に基づく。バイアスで範囲を広げたり狭めたりできる</td><td>地理的なトラフィック配分</td></tr>
 <tr><td>IPベース</td><td>クライアントのIPアドレスとCIDRの対応付けに基づく</td><td>特定ネットワーク・IP範囲からのトラフィック制御</td></tr>
-<tr><td>複数値回答</td><td>複数の正常なリソースの値を返し、クライアント側で選ぶ</td><td>シンプルな可用性向上</td></tr>
-<tr><td>トラフィックフロー</td><td>複数のポリシーを組み合わせた複雑な制御</td><td>複雑なグローバルルーティング</td></tr>
+<tr><td>複数値回答</td><td>正常なリソースの値を最大8つ返し、クライアント側で選ぶ</td><td>ヘルスチェック付きの簡単な分散</td></tr>
+<tr><td>トラフィックフロー</td><td>複数のポリシーを組み合わせた複雑な制御を、図で編集する</td><td>複雑なグローバルルーティング</td></tr>
 </table></div>
+<ul>
+<li>位置情報ルーティングでは、どの場所にも当てはまらない利用者のために<strong>デフォルトのレコード</strong>を作っておく。作らないと、その利用者には回答が返らない。</li>
+<li>ヘルスチェックと組み合わせると、加重・レイテンシー・位置情報などでも、異常なリソースは回答から外れる。</li>
+</ul>
 
 <figure class="figure" data-diagram>
 grid 170 75
@@ -60,60 +86,144 @@ edge f p "通常"
 edge f s dash "障害時"
 <figcaption>図2 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。</figcaption>
 </figure>
-<h3>Application Recovery Controller(ARC)</h3>
-<p>アプリケーションの可用性と復旧を安全・確実に行うための機能です。</p>
+
+<h3>ヘルスチェック</h3>
+<p>ヘルスチェックは、リソースが正常かを定期的に確かめ、ルーティングから異常なリソースを外すために使います。種類は3つです。</p>
 <div class="table-wrap"><table>
-<tr><th>項目</th><th>概要</th></tr>
-<tr><td>ルーティングコントロール</td><td>ルーティングをスイッチで切り替える</td></tr>
-<tr><td>セーフティルール</td><td>ルールを決めて誤操作を防ぐ</td></tr>
-<tr><td>ゾーンシフト</td><td>単一AZ障害に対し、そのAZへのトラフィックを数分で止める</td></tr>
-<tr><td>準備状況チェック</td><td>切り替え先が動く状態かを確認する</td></tr>
-<tr><td>リージョンスイッチ</td><td><span>複数リージョン間のフェイルオーバーを計画に沿って実行する</span></td></tr>
+<tr><th>種類</th><th>確認する方法</th><th>向いている場面</th></tr>
+<tr><td>エンドポイントの監視</td><td>世界中のヘルスチェッカーから、IPアドレスかドメイン名にHTTP・HTTPS・TCPで接続する。応答の本文に特定の文字列があるかも確認できる</td><td>インターネットから届くWebサーバー・ELB</td></tr>
+<tr><td>計算済みヘルスチェック</td><td>ほかの複数のヘルスチェックの結果をまとめる(例:3つのうち2つ以上が正常なら正常)</td><td>複数の部品からなるサービス全体の判定</td></tr>
+<tr><td><strong>CloudWatchアラームの監視</strong></td><td>CloudWatchアラームの状態をそのまま使う</td><td><strong>プライベートサブネットのリソース</strong>、エラー率などのメトリクスでの判定</td></tr>
 </table></div>
+<figure class="figure" data-diagram>
+grid 175 85
+node hc 0 0 blue "ヘルスチェッカー" "インターネット上"
+node pub 1.5 0 ok "公開しているELB" "直接確認できる"
+node prv 1.5 1 ng "プライベートのEC2" "直接は届かない"
+node cw 3 1 accent "CloudWatchアラーム" "メトリクスで判定"
+node r53 3 0 box "ヘルスチェック" "Route 53"
+edge hc pub "接続して確認"
+edge hc prv dash
+edge prv cw "メトリクス"
+edge cw r53 "アラームの状態"
+<figcaption>図3 プライベートなリソースのヘルスチェック。ヘルスチェッカーはインターネット上にあるためVPC内のプライベートなリソースには届かない。CloudWatchアラームを作り、その状態をヘルスチェックに使う。</figcaption>
+</figure>
+<ul>
+<li>エンドポイントを監視するときは、ヘルスチェッカーのIPアドレス範囲からの通信を、セキュリティグループやネットワークACLで<strong>許可</strong>しておく。許可していないと、正常なのに異常と判定される。</li>
+<li>確認の間隔(標準30秒・高速10秒)と、何回続けて失敗したら異常とするか(しきい値)を設定する。</li>
+<li>ヘルスチェックの状態はCloudWatchのメトリクスになる(<strong>米国東部(バージニア北部)リージョン</strong>に出る)。アラームを作って、異常になったらSNSで通知できる。</li>
+</ul>
+
+<h3>Route 53 Resolver(VPCとオンプレミスの名前解決)</h3>
+<p>VPCには、VPCのCIDRの先頭に2を足したアドレス(例:<code>10.0.0.2</code>)でRoute 53 Resolverが用意されていて、EC2などからの問い合わせに答えます(Amazon Provided DNS)。オンプレミスとつなぐときは、<strong>Resolverエンドポイント</strong>を使って問い合わせを転送します。</p>
+<div class="table-wrap"><table>
+<tr><th>しくみ</th><th>問い合わせの向き</th><th>例</th></tr>
+<tr><td><strong>インバウンドエンドポイント</strong></td><td>オンプレミス → VPC</td><td>社内のDNSサーバーから、プライベートホストゾーンの名前(<code>db.aws.example.internal</code>)を引く</td></tr>
+<tr><td><strong>アウトバウンドエンドポイント</strong>と転送ルール</td><td>VPC → オンプレミス</td><td>EC2から、社内のドメイン(<code>corp.example.local</code>)をオンプレミスのDNSサーバーに問い合わせる</td></tr>
+</table></div>
+<figure class="figure" data-diagram>
+grid 170 85
+node onp 0 0.5 blue "オンプレミスのDNS"
+node in 1.5 0 accent "インバウンド" "エンドポイント"
+node out 1.5 1 accent "アウトバウンド" "転送ルール"
+node res 3 0.5 box "Resolver" "VPCの.2アドレス"
+node ec2 4.3 0.5 box "EC2"
+edge onp in "AWSの名前を問い合わせ"
+edge in res
+edge ec2 res "問い合わせ"
+edge res out
+edge out onp "社内の名前を転送"
+group 1.5 0 4.3 1 "VPC" pad=10
+<figcaption>図4 Resolverエンドポイントによるハイブリッドの名前解決。オンプレミスからAWSの名前はインバウンド、AWSから社内の名前はアウトバウンドと転送ルールで解決する。通信はDirect ConnectかSite-to-Site VPNを通る。</figcaption>
+</figure>
+<ul>
+<li>転送ルールはAWS RAMで別アカウントのVPCと共有でき、複数アカウントのVPCから同じルールを使える。</li>
+<li>VPCから外部への問い合わせを、ドメインのリストで遮断・許可したいときは<a href="dns-firewall.html">Route 53 Resolver DNS Firewall</a>を使う。</li>
+</ul>
+
+<h3>DNSSEC</h3>
+<p><strong>DNSSEC署名</strong>を有効にすると、パブリックホストゾーンの回答に電子署名が付き、途中で回答をすり替える攻撃(DNSスプーフィング)を防げます。署名用のキー(KSK)には、<strong>米国東部(バージニア北部)リージョンのKMSのカスタマーマネージドキー</strong>(非対称キー)を使います。有効にしたあと、親のゾーン(ドメインの登録事業者)にDSレコードを登録します。VPCからの問い合わせで署名を検証するには、ResolverのDNSSEC検証を有効にします。</p>
+
+<h3>ログ</h3>
+<ul>
+<li><strong>パブリックDNSクエリのログ</strong>:パブリックホストゾーンへの問い合わせをCloudWatch Logsに送る(ロググループは米国東部(バージニア北部)リージョンに作る)。</li>
+<li><strong>Resolverのクエリログ</strong>:VPC内のリソースが行った問い合わせを、CloudWatch Logs・S3・Data Firehoseに送る。マルウェアが不審なドメインに問い合わせていないかの調査に使える。</li>
+<li>レコードの変更などのAPI操作はCloudTrailに記録される。</li>
+</ul>
+
+<h3>ドメイン登録</h3>
+<p>Route 53でドメインを登録すると、ホストゾーンが自動で作られます。<strong>自動更新</strong>を有効にしておかないと、期限切れでドメインが使えなくなります。勝手に移管されないよう、移管ロックもかけられます。</p>
+
+<h3>Application Recovery Controller(ARC)</h3>
+<p>リージョンやAZの切り替えを、安全・確実に行うためのサービスです。以前はRoute 53の機能でしたが、現在は独立したサービスです。ゾーンシフト(1つのAZからトラフィックを外す)、ルーティングコントロール、リージョンスイッチなどの機能があります。詳しくは<a href="application-recovery-controller.html">Amazon Application Recovery Controller</a>を参照してください。</p>
 </section>
 
 <section class="chapter">
 <h2>3. ユースケース</h2>
 <ul>
-<li>独自ドメインでWebサイトを公開</li>
-<li>フェイルオーバーで障害時に待機系サイトへ切り替え</li>
+<li>独自ドメインでWebサイトを公開し、<code>example.com</code> をエイリアスレコードでCloudFrontやALBに向ける</li>
+<li>フェイルオーバーで障害時に待機系サイト(S3の静的ページなど)へ切り替え</li>
 <li>新バージョンへ10%だけトラフィックを流す(加重)</li>
 <li>VPC内の社内システムの名前解決(プライベートホストゾーン)</li>
+<li>オンプレミスとVPCの間で、お互いの名前を解決する(Resolverエンドポイント)</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>ホストゾーンごとの月額料金、DNSクエリ数、ヘルスチェック数、ドメイン登録料で課金されます。AWSリソース(ELB・CloudFrontなど)を指すエイリアスレコードへのクエリは無料です。</p>
+<p>ホストゾーンごとの月額料金、DNSクエリ数、ヘルスチェック数(AWS以外のエンドポイントや、HTTPS・文字列照合・高速間隔などのオプションは割高)、ドメイン登録料で課金されます。AWSリソース(ELB・CloudFrontなど)を指すエイリアスレコードへのクエリは無料です。Resolverエンドポイントは、エンドポイントのネットワークインターフェイスの数と時間、処理したクエリ数で課金されます。</p>
 </section>
 
 <section class="chapter">
 <h2>5. 関連サービス</h2>
 <ul>
-<li><a href="elb.html">Elastic Load Balancing</a>/<a href="cloudfront.html">Amazon CloudFront</a>:エイリアスレコードの向き先</li>
-<li><a href="vpc.html">Amazon VPC</a>:プライベートホストゾーンの関連付け先</li>
-<li><a href="global-accelerator.html">AWS Global Accelerator</a>:DNSに依存しないグローバルなトラフィック制御</li>
-<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ヘルスチェックのアラーム</li>
+<li><a href="elb.html">Elastic Load Balancing</a>/<a href="cloudfront.html">Amazon CloudFront</a>/<a href="s3.html">Amazon S3</a>:エイリアスレコードの向き先</li>
+<li><a href="vpc.html">Amazon VPC</a>:プライベートホストゾーンの関連付け先、Resolverの置き場所</li>
+<li><a href="global-accelerator.html">AWS Global Accelerator</a>:DNSのキャッシュに左右されないグローバルなトラフィック制御</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ヘルスチェックのアラーム、クエリログ</li>
+<li><a href="kms.html">AWS KMS</a>:DNSSEC署名のキー</li>
+<li><a href="ram.html">AWS RAM</a>:Resolverの転送ルールの共有</li>
+<li><a href="direct-connect.html">AWS Direct Connect</a>/<a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>:Resolverエンドポイントとオンプレミスの通信経路</li>
 <li><a href="dns-firewall.html">Route 53 Resolver DNS Firewall</a>:VPCからのDNS問い合わせのフィルタリング</li>
 <li><a href="application-recovery-controller.html">Amazon Application Recovery Controller</a>:確実なリージョンのフェイルオーバー</li>
+<li>関連する用語:<a href="../terms/dns.html">DNS</a>、<a href="../terms/dns-record-types.html">DNSレコードタイプ</a>、<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/hybrid-connectivity.html">ハイブリッド接続</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
+<div class="point">
+<h4>レコードとルーティング</h4>
+<ul>
 <li>A/Bテスト・段階リリース → <strong>加重</strong>。DR → <strong>フェイルオーバー</strong>。速いリージョンへ → <strong>レイテンシー</strong>。</li>
-<li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。</li>
-<li>VPC内だけで使う名前 → <strong>プライベートホストゾーン</strong>。</li>
+<li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。当てはまらない利用者用に<strong>デフォルトのレコード</strong>も作る。</li>
+<li><code>example.com</code>(ゾーンの頂点)をELBやCloudFrontに向けたい → <strong class="em">エイリアスレコード</strong>(CNAMEは頂点に作れない)。</li>
+<li>レコードを変えたのに古い値が返る → <strong>TTL</strong>の間はキャッシュされる。切り替えの前にTTLを短くしておく。</li>
+<li>ホストゾーンを作り直したら名前解決できなくなった → 新しいネームサーバーを、ドメインの登録事業者側の<strong>NSの設定</strong>に反映する。</li>
+</ul>
+<h4>ヘルスチェック</h4>
+<ul>
+<li>プライベートサブネットのリソースを監視したい → <strong>CloudWatchアラーム</strong>を監視するヘルスチェック。</li>
+<li>正常なのにヘルスチェックが失敗する → ヘルスチェッカーのIPアドレス範囲を<strong>セキュリティグループで許可</strong>しているか確認する。</li>
+<li>ELBの背後が全滅したら切り替えたい → エイリアスレコードの<strong>ターゲットのヘルスを評価</strong>。</li>
+<li>複数の部品の状態をまとめて判定したい → <strong>計算済みヘルスチェック</strong>。</li>
+</ul>
+<h4>VPC・ハイブリッド・セキュリティ</h4>
+<ul>
+<li>VPC内だけで使う名前 → <strong>プライベートホストゾーン</strong>。解決できないときはVPCのDNS属性(<code>enableDnsHostnames</code>・<code>enableDnsSupport</code>)を確認する。</li>
+<li>オンプレミスからAWSの名前を引く → <strong>インバウンドエンドポイント</strong>。AWSから社内の名前を引く → <strong>アウトバウンドエンドポイントと転送ルール</strong>。</li>
+<li>DNSの回答のすり替えを防ぐ → <strong>DNSSEC署名</strong>(KMSキーは米国東部(バージニア北部))。</li>
+<li>VPC内のどのリソースがどの名前を引いたか調べたい → <strong>Resolverのクエリログ</strong>。</li>
 <li>AZ障害時にすばやくトラフィックを外す → ARCの<strong>ゾーンシフト</strong>。</li>
-</ul></div>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
 <h2>7. まとめ</h2>
 <ul>
-<li>Route 53はDNS・ドメイン登録・ヘルスチェックを提供する。</li>
-<li>ホストゾーンはパブリックとプライベートの2種類。</li>
-<li>ルーティングポリシーを目的に応じて選び分ける。</li>
+<li>Route 53はドメイン登録・DNS(ホストゾーン)・VPCの名前解決(Resolver)を提供する。</li>
+<li>AWSリソースにはエイリアスレコードで向け、ルーティングポリシーとヘルスチェックで返す値を変える。</li>
+<li>プライベートなリソースはCloudWatchアラームでヘルスチェックし、オンプレミスとはResolverエンドポイントで名前解決をつなぐ。</li>
 </ul>
 </section>

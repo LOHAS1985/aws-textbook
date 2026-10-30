@@ -1,16 +1,18 @@
 <!-- title: AWS Organizations -->
 <!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
-<!-- lead: 複数のAWSアカウントをまとめて管理するサービス -->
+<!-- lead: 複数のAWSアカウントをまとめて管理し、組織全体にポリシーで統制をかけるサービス -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>AWS Organizations</strong>は、<strong>複数のAWSアカウントをまとめて管理</strong>するサービスです。アカウントをグループに分け、組織全体に共通のルールを適用できます。</p>
+<p>本番・開発・ログ保管などの用途ごとにアカウントを分けると、障害や権限の影響範囲を小さくでき、費用も分けて把握できます。Organizationsは、そうしたマルチアカウント環境の土台です。Control TowerやIdentity Centerも、Organizationsの上で動きます。</p>
+<p>組織には「すべての機能」と「一括請求の機能だけ」の2つのモードがあります。SCPなどのポリシーや、ほかのAWSサービスとの連携を使うには<strong>すべての機能</strong>を有効にします。</p>
 </section>
 
 <section class="chapter">
 <h2>2. 主な機能・特徴</h2>
 <h3>用語</h3>
 <ul>
-<li><strong>ルート</strong>:組織の階層の最上位。ルートにSCPを適用すると、組織内のすべてのアカウントが対象になる。</li>
+<li><strong>ルート</strong>:組織の階層の最上位。ルートにポリシーを適用すると、組織内のすべてのアカウントが対象になる。</li>
 <li><strong>管理アカウント</strong>:組織を作成したアカウント。メンバーアカウントの招待・作成や一括請求を行う。</li>
 <li><strong>メンバーアカウント</strong>:組織に所属する管理アカウント以外のアカウント。</li>
 <li><strong>OU(組織単位)</strong>:アカウントのグループ。OUの中にOUを入れて階層にできる。</li>
@@ -37,6 +39,19 @@ edge ou2 a3
 edge ou2 a4
 <figcaption>図1 Organizationsの構造。組織の最上位は「ルート」で、その下にOUやアカウントを置く。管理アカウントは組織を作成・管理するアカウントで、組織内のアカウントの1つ。OUにSCPを適用すると、配下の全アカウントに権限の上限がかかる。</figcaption>
 </figure>
+
+<h3>ポリシーの種類</h3>
+<p>Organizationsのポリシーは、権限を制限する「認可ポリシー」と、設定をそろえる「管理ポリシー」に分かれます。どれも、ルート・OU・アカウントに適用します。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>分類</th><th>内容</th></tr>
+<tr><td><strong>SCP</strong>(サービスコントロールポリシー)</td><td>認可</td><td>アカウント内の<strong>IAMユーザー・ロール(プリンシパル)</strong>が使える権限の上限</td></tr>
+<tr><td><strong>RCP</strong>(リソースコントロールポリシー)</td><td>認可</td><td>アカウント内の<strong>リソース</strong>(S3バケット・KMSキー・SQSキューなど)に対して、許される権限の上限。組織外からのアクセスを一律に禁止する、などに使う</td></tr>
+<tr><td>タグポリシー</td><td>管理</td><td>タグのキーと値の書き方をそろえる(例:<code>CostCenter</code> の大文字・小文字、使ってよい値)</td></tr>
+<tr><td>バックアップポリシー</td><td>管理</td><td>AWS Backupのバックアッププランを全アカウントに配る</td></tr>
+<tr><td>宣言型ポリシー</td><td>管理</td><td>EC2・VPCなどの設定の基準を強制する(例:IMDSv2を必須にする、AMIやスナップショットの公開を禁止する)。新しいAPIが増えても効き続ける</td></tr>
+<tr><td>AIサービスのオプトアウトポリシー</td><td>管理</td><td>AWSのAIサービスが、組織のデータをサービスの改善に使わないようにする</td></tr>
+</table></div>
+
 <h3>SCPの利用イメージ</h3>
 <p>Organizationsの管理アカウント側の管理者が設定します。</p>
 <ul>
@@ -56,7 +71,7 @@ edge ou2 a4
      ├── Production
      ├── Development
      └── Test</code></pre>
-<p>SCPは権限を「与える」ものではなく、<strong>上限(ガードレール)</strong>を決めるものです。実際の操作には、SCPで禁止されていないことに加えて、IAMでの許可が必要です。また、SCPは管理アカウントには適用されません。</p>
+<p>SCPは権限を「与える」ものではなく、<strong>上限(ガードレール)</strong>を決めるものです。実際の操作には、SCPで禁止されていないことに加えて、IAMでの許可が必要です。</p>
 <figure class="figure" data-diagram>
 grid 170 80
 node scp 0 0 box "SCPで許可" "組織としての上限"
@@ -66,6 +81,75 @@ edge scp ok
 edge iam ok
 <figcaption>図2 実際に使える権限は、SCPとIAMの両方で許可された範囲だけ。IAMで許可しても、SCPで拒否されていれば実行できない。</figcaption>
 </figure>
+
+<h3>SCPの書き方と継承</h3>
+<p>次のSCPは、東京・大阪以外のリージョンでの操作を拒否する例です。IAMやCloudFrontなどのグローバルサービスは、米国東部(バージニア北部)リージョンのAPIを使うため、<code>NotAction</code> で対象から外しています。</p>
+<pre class="code"><code>{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "DenyOtherRegions",
+    "Effect": "Deny",
+    "NotAction": ["iam:*", "organizations:*", "sts:*", "cloudfront:*", "support:*"],
+    "Resource": "*",
+    "Condition": {
+      "StringNotEquals": {
+        "aws:RequestedRegion": ["ap-northeast-1", "ap-northeast-3"]
+      }
+    }
+  }]
+}</code></pre>
+<ul>
+<li>組織を作ると、すべての操作を許可するSCP(<code>FullAWSAccess</code>)が、ルート・OU・アカウントに付いている。これを残したまま、禁止したいことだけを<strong>Deny</strong>で書く(拒否リスト方式)のが一般的。</li>
+<li><code>FullAWSAccess</code> を外し、使ってよいサービスだけをAllowで書く方式(許可リスト方式)もある。この場合、ルートからアカウントまでの<strong>すべての階層で許可</strong>されていないと使えない。</li>
+<li>Denyは、どの階層に書いても配下のすべてのアカウントに効く。下の階層のSCPで打ち消すことはできない。</li>
+<li>例外にしたいロール(管理者用のロールなど)は、Conditionで <code>aws:PrincipalArn</code> を使って除外する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 80
+node r 0 0.5 box "ルート" "FullAWSAccess"
+node ou 1.4 0.5 box "OU: 本番" "リージョン制限(Deny)"
+node acc 2.8 0.5 accent "本番アカウント" "両方が効く"
+node res 4.2 0.5 ok "使える権限" "IAMの許可 ∩ SCP"
+edge r ou "継承"
+edge ou acc "継承"
+edge acc res
+<figcaption>図3 SCPの継承。上の階層のSCPは下の階層にも効く。アカウントで使える権限は、ルートからアカウントまでのSCPとIAMのすべてで許された範囲になる。</figcaption>
+</figure>
+
+<h3>SCPが効かないもの</h3>
+<ul>
+<li><strong>管理アカウント</strong>には、SCPは適用されない。そのため、管理アカウントでは普段の作業やワークロードを動かさない。</li>
+<li><strong>サービスリンクロール</strong>(AWSのサービスが代わりに操作するためのロール)には効かない。</li>
+<li>メンバーアカウントの<strong>ルートユーザーには効く</strong>。ルートユーザーでもSCPで拒否された操作はできない。</li>
+</ul>
+
+<h3>RCPとデータ境界</h3>
+<p>SCPは「自分のアカウントの人が何をできるか」を制限しますが、バケットポリシーで外部のアカウントに公開してしまうと、外部の人のアクセスは止められません。RCPは<strong>リソースの側</strong>に上限をかけるため、「組織のプリンシパル以外は、このバケットにアクセスできない」を、各アカウントのリソースポリシーに関係なく強制できます。条件キー <code>aws:PrincipalOrgID</code> で組織のIDを指定するのが基本です。</p>
+
+<h3>委任管理者と信頼されたアクセス</h3>
+<ul>
+<li><strong>信頼されたアクセス</strong>:GuardDuty・Security Hub・Config・CloudTrail・Backup・IAM Identity Center・CloudFormation StackSetsなどのサービスに、組織全体での操作を許可する設定。</li>
+<li><strong class="em">委任管理者</strong>:そのサービスの組織全体の管理を、管理アカウントではなく特定のメンバーアカウント(例:セキュリティ用のアカウント)に任せる。管理アカウントに入る人を減らせる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node mgmt 0 0.5 blue "管理アカウント" "委任管理者を登録"
+node sec 1.5 0.5 accent "セキュリティ用" "GuardDuty等の管理者"
+node a1 3 0 box "メンバーアカウント" "検出結果を集約"
+node a2 3 1 box "メンバーアカウント" "検出結果を集約"
+edge mgmt sec "委任"
+edge sec a1 "一括で有効化"
+edge sec a2 "一括で有効化"
+<figcaption>図4 委任管理者。管理アカウントからセキュリティ用のアカウントに管理を任せ、そこから全アカウントのGuardDutyなどを有効にして結果を集める。</figcaption>
+</figure>
+
+<h3>アカウントの作成・招待と管理</h3>
+<ul>
+<li>組織から新しく<strong>作成</strong>したアカウントには、管理アカウントから引き受けられる管理者ロール <code>OrganizationAccountAccessRole</code> が自動で作られる。</li>
+<li>既存のアカウントを<strong>招待</strong>した場合、このロールは作られない。管理アカウントから操作したいときは、招待したアカウント側で同じ名前のロールを作る。</li>
+<li>メンバーアカウントのルートユーザーの認証情報をなくし、ルートユーザーでしかできない操作(バケットポリシーのロックの解除など)を管理アカウントから行う、<strong>ルートアクセスの一元管理</strong>もできる。</li>
+<li>組織から外れるアカウントには、単独で使うための支払い情報などが必要になる。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -74,13 +158,15 @@ edge iam ok
 <li>本番・開発・テストのアカウントを分けて管理</li>
 <li>全アカウントで使用できるリージョンを制限</li>
 <li>CloudTrailの停止など、セキュリティ設定の変更を全アカウントで禁止</li>
+<li>組織外のアカウントから、組織のS3バケットやKMSキーにアクセスさせない(RCP)</li>
+<li>セキュリティ用のアカウントを委任管理者にして、GuardDutyやSecurity Hubを全アカウントで有効にする</li>
 <li><a href="identity-center.html">IAM Identity Center</a>で、複数アカウントへのログインを一元化</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>Organizations自体は無料です。複数アカウントの請求をまとめる一括請求(コンソリデーティッドビリング)により、ボリュームディスカウントやリザーブドインスタンスの共有の恩恵も受けられます。</p>
+<p>Organizations自体は無料です。複数アカウントの請求をまとめる<strong>一括請求</strong>(コンソリデーティッドビリング)により、使用量を合算したボリュームディスカウントや、リザーブドインスタンス・Savings Plansの割引の共有の恩恵も受けられます。割引の共有は、アカウントごとにオフにすることもできます。</p>
 </section>
 
 <section class="chapter">
@@ -88,29 +174,45 @@ edge iam ok
 <ul>
 <li><a href="iam.html">AWS IAM</a>:個々の権限管理</li>
 <li><a href="identity-center.html">AWS IAM Identity Center</a>:組織内の複数アカウントへのシングルサインオン(パーミッションセット)</li>
-<li><a href="cloudtrail.html">AWS CloudTrail</a>:組織全体の証跡</li>
-<li><a href="config.html">AWS Config</a>:組織全体のルール評価</li>
-<li><a href="ram.html">AWS Resource Access Manager</a>:組織内でのリソース共有</li>
-<li><a href="security-hub.html">AWS Security Hub</a>:組織全体のセキュリティ状況の集約</li>
-<li><a href="backup.html">AWS Backup</a>:組織全体のバックアップポリシー</li>
 <li><a href="control-tower.html">AWS Control Tower</a>:ベストプラクティスに沿ったマルチアカウント環境の構築</li>
-<li>関連する用語:<a href="../terms/tags.html">タグ</a>、<a href="../terms/root-user.html">ルートユーザーとアカウントの保護</a></li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:組織全体の証跡</li>
+<li><a href="config.html">AWS Config</a>:組織全体のルール評価、アグリゲーター</li>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:StackSetsで全アカウントに同じリソースを配る</li>
+<li><a href="ram.html">AWS Resource Access Manager</a>:組織内でのリソース共有</li>
+<li><a href="security-hub.html">AWS Security Hub</a>/<a href="guardduty.html">Amazon GuardDuty</a>:委任管理者による組織全体のセキュリティ管理</li>
+<li><a href="backup.html">AWS Backup</a>:組織全体のバックアップポリシー</li>
+<li><a href="savings-plans.html">Savings Plans</a>:一括請求での割引の共有</li>
+<li>関連する用語:<a href="../terms/iam-policy-evaluation.html">IAMポリシーの評価</a>、<a href="../terms/tags.html">タグ</a>、<a href="../terms/root-user.html">ルートユーザーとアカウントの保護</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point"><ul>
-<li>IAMで許可しても<strong>SCPで拒否されたら拒否</strong>。</li>
-<li>全アカウントで特定の操作・リージョンを禁止 → <strong>SCP</strong>をOUやルートに適用。</li>
-<li>アカウントのグループ化 → <strong>OU</strong>。</li>
-</ul></div>
+<div class="point">
+<h4>SCPとRCP</h4>
+<ul>
+<li>IAMで許可しても<strong>SCPで拒否されたら拒否</strong>。SCPは権限を与えない(上限を決めるだけ)。</li>
+<li>全アカウントで特定の操作・リージョンを禁止 → <strong>SCP</strong>をOUやルートに適用。リージョン制限は <code>aws:RequestedRegion</code>。</li>
+<li>SCPは<strong>管理アカウントとサービスリンクロールには効かない</strong>。メンバーアカウントのルートユーザーには効く。</li>
+<li>許可リスト方式で「許可したのに使えない」→ ルートからアカウントまでの<strong>途中の階層</strong>で許可されているか確認する。</li>
+<li>組織外からのリソースへのアクセスを一律に禁止したい → <strong class="em">RCP</strong>(<code>aws:PrincipalOrgID</code>)。</li>
+</ul>
+<h4>管理ポリシーと組織の運用</h4>
+<ul>
+<li>タグの書き方をそろえたい → <strong>タグポリシー</strong>。全アカウントで同じバックアップを取りたい → <strong>バックアップポリシー</strong>。</li>
+<li>全アカウントのEC2でIMDSv2を必須にしたい・AMIの公開を禁止したい → <strong>宣言型ポリシー</strong>。</li>
+<li>管理アカウントを使わずに、組織全体のGuardDutyなどを管理したい → <strong>委任管理者</strong>。</li>
+<li>招待したアカウントを管理アカウントから操作できない → <code>OrganizationAccountAccessRole</code> を手動で作る。</li>
+<li>アカウントのグループ化 → <strong>OU</strong>。SCPなどのポリシーを使うには組織の<strong>すべての機能</strong>を有効にする。</li>
+</ul>
+</div>
 </section>
 
 <section class="chapter">
 <h2>7. まとめ</h2>
 <ul>
-<li>Organizationsは複数アカウントの管理サービス。</li>
-<li>OUでアカウントをまとめ、SCPで組織全体の権限の上限を決める。</li>
+<li>Organizationsは複数アカウントの管理サービス。OUでアカウントをまとめ、ポリシーで統制する。</li>
+<li>SCPはプリンシパル、RCPはリソースに対する権限の上限。管理アカウントにはSCPが効かない。</li>
+<li>タグ・バックアップ・宣言型などの管理ポリシーで設定をそろえ、委任管理者で管理アカウントの利用を減らす。</li>
 </ul>
 </section>
