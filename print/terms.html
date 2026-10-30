@@ -4558,15 +4558,49 @@ Outputs:
 <div class="hero-text">
 <span class="category">設計・運用</span>
 <h1>DR戦略</h1>
-<p class="lead">災害に備えた4つの復旧方式と、復旧時間・コストのトレードオフ</p>
+<p class="lead">災害に備えた4つの復旧方式と、RTO・RPO・コストのトレードオフ</p>
 </div>
 </div>
 <section class="chapter">
 <h2 id="dr-strategies-c1">1. 詳しい説明<a class="anchor" href="#dr-strategies-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>DR(Disaster Recovery:災害復旧)戦略</strong>は、リージョン障害などの災害に備えて、別の場所(DRサイト)をどの程度準備しておくかの方式です。準備を厚くするほど早く復旧できますが、コストが上がります。</p>
+<p><strong>DR(Disaster Recovery:災害復旧)戦略</strong>は、リージョン全体の障害や、誤操作・ランサムウェアによるデータ破損などの災害に備えて、別の場所(DRサイト)をどの程度準備しておくかの方式です。準備を厚くするほど早く復旧できますが、コストが上がります。</p>
+
+<h3 id="dr-strategies-c1-1">RTOとRPO<a class="anchor" href="#dr-strategies-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>どの戦略を選ぶかは、業務が許容できる2つの値で決まります。</p>
+<ul>
+<li><strong class="em">RTO(目標復旧時間)</strong>:障害が起きてから、サービスを再開するまでに許容できる時間。「何時間止まってよいか」。</li>
+<li><strong class="em">RPO(目標復旧時点)</strong>:どの時点までのデータを取り戻せればよいか。「何時間分のデータを失ってよいか」。バックアップやレプリケーションの間隔で決まる。</li>
+</ul>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 698 186" style="max-width:698px;min-width:558px" role="img" aria-label="図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。"><defs><marker id="dr-strategies-dgterms-dr-strategies-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 718 114" style="max-width:718px;min-width:574px" role="img" aria-label="図1 RPOとRTO。RPOは障害の前の「失ってもよいデータの量」、RTOは障害の後の「止まってもよい時間」。どちらも小さくするほど、常に動かしておくリソースが増えてコストが上がる。"><defs><marker id="dr-strategies-dgterms-dr-strategies-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="bk">
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">最後のバックアップ</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">ここまで戻せる</text>
+</g>
+<g data-node="dis">
+<rect x="289" y="44" width="150" height="40" rx="8" class="dg-ng"/>
+<text x="364" y="68" text-anchor="middle" class="dg-t">障害の発生</text>
+</g>
+<g data-node="rec">
+<rect x="544" y="44" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="619" y="68" text-anchor="middle" class="dg-t">サービス再開</text>
+</g>
+<path d="M184.0,64.0 L289.0,64.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-1)"/>
+<text x="236" y="68" text-anchor="middle" class="dg-s dg-halo">RPO(失うデータ)</text>
+<path d="M439.0,64.0 L544.0,64.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-1)"/>
+<text x="492" y="68" text-anchor="middle" class="dg-s dg-halo">RTO(止まる時間)</text>
+</svg>
+</div>
+<figcaption>図1 RPOとRTO。RPOは障害の前の「失ってもよいデータの量」、RTOは障害の後の「止まってもよい時間」。どちらも小さくするほど、常に動かしておくリソースが増えてコストが上がる。</figcaption>
+</figure>
+<p>RPOとRTOは別々に決まります。例えば、1時間ごとにバックアップしていればRPOは最大1時間ですが、そのバックアップから環境を作り直すのに4時間かかれば、RTOは4時間です。</p>
+
+<h3 id="dr-strategies-c1-2">4つのDR戦略<a class="anchor" href="#dr-strategies-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 186" style="max-width:698px;min-width:558px" role="img" aria-label="図2 DR戦略の比較(下段はRTOの目安とコスト)。右に行くほど復旧が速く(RTO・RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。"><defs><marker id="dr-strategies-dgterms-dr-strategies-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="b">
 <rect x="34" y="43" width="145" height="52" rx="8" class="dg-box"/>
 <text x="106" y="64" text-anchor="middle" class="dg-t">バックアップと復元</text>
@@ -4592,41 +4626,125 @@ Outputs:
 <text x="106" y="150" text-anchor="middle" class="dg-s">コスト: 最小</text>
 </g>
 <g data-node="t2">
-<text x="272" y="132" text-anchor="middle" class="dg-t">数十分〜数時間</text>
+<text x="272" y="132" text-anchor="middle" class="dg-t">数十分</text>
 <text x="272" y="150" text-anchor="middle" class="dg-s">コスト: 低</text>
 </g>
 <g data-node="t3">
-<text x="436" y="132" text-anchor="middle" class="dg-t">数分〜数十分</text>
+<text x="436" y="132" text-anchor="middle" class="dg-t">数分</text>
 <text x="436" y="150" text-anchor="middle" class="dg-s">コスト: 中</text>
 </g>
 <g data-node="t4">
 <text x="602" y="132" text-anchor="middle" class="dg-t">ほぼゼロ</text>
 <text x="602" y="150" text-anchor="middle" class="dg-s">コスト: 最大</text>
 </g>
-<path d="M179.0,69.0 L199.0,69.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-1)"/>
-<path d="M344.0,69.0 L364.0,69.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-1)"/>
-<path d="M509.0,69.0 L529.0,69.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-1)"/>
+<path d="M179.0,69.0 L199.0,69.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-2)"/>
+<path d="M344.0,69.0 L364.0,69.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-2)"/>
+<path d="M509.0,69.0 L529.0,69.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-2)"/>
 </svg>
 </div>
-<figcaption>図1 DR戦略の比較(下段はRTO/RPOの目安とコスト)。右に行くほど復旧が速く(RTO/RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。</figcaption>
+<figcaption>図2 DR戦略の比較(下段はRTOの目安とコスト)。右に行くほど復旧が速く(RTO・RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。</figcaption>
 </figure>
 <div class="table-wrap"><table class="stack">
-<tr><th>名称</th><th>DR側の状態</th><th>RTO/RPO</th><th>コスト</th></tr>
-<tr><td data-label="名称">バックアップと復元</td><td data-label="DR側の状態">バックアップのみ保管</td><td data-label="RTO/RPO">数時間</td><td data-label="コスト">最小</td></tr>
-<tr><td data-label="名称">パイロットライト</td><td data-label="DR側の状態">データ層のみ稼働、アプリは停止</td><td data-label="RTO/RPO">数十分〜数時間</td><td data-label="コスト">低</td></tr>
-<tr><td data-label="名称">ウォームスタンバイ</td><td data-label="DR側の状態">縮小版の全構成が常時稼働</td><td data-label="RTO/RPO">数分〜数十分</td><td data-label="コスト">中</td></tr>
-<tr><td data-label="名称">マルチサイト(アクティブ/アクティブ)</td><td data-label="DR側の状態">本番と同規模で常時稼働</td><td data-label="RTO/RPO">ほぼゼロ</td><td data-label="コスト">最大</td></tr>
+<tr><th>名称</th><th>DR側の状態</th><th>RTOの目安</th><th>RPOの目安</th><th>コスト</th></tr>
+<tr><td data-label="名称">バックアップと復元</td><td data-label="DR側の状態">バックアップだけを保管。障害時に環境を作り直す</td><td data-label="RTOの目安">数時間</td><td data-label="RPOの目安">バックアップの間隔(数時間)</td><td data-label="コスト">最小</td></tr>
+<tr><td data-label="名称">パイロットライト</td><td data-label="DR側の状態">データはレプリケーションで常に同期。アプリのサーバーは停止か未作成</td><td data-label="RTOの目安">数十分</td><td data-label="RPOの目安">数秒〜数分</td><td data-label="コスト">低</td></tr>
+<tr><td data-label="名称">ウォームスタンバイ</td><td data-label="DR側の状態">縮小版の全構成が常時稼働し、少量のリクエストなら処理できる</td><td data-label="RTOの目安">数分</td><td data-label="RPOの目安">数秒〜数分</td><td data-label="コスト">中</td></tr>
+<tr><td data-label="名称">マルチサイト(アクティブ/アクティブ)</td><td data-label="DR側の状態">本番と同規模で常時稼働し、両方のリージョンでリクエストを処理する</td><td data-label="RTOの目安">ほぼゼロ</td><td data-label="RPOの目安">ほぼゼロ</td><td data-label="コスト">最大</td></tr>
 </table></div>
+
+<h3 id="dr-strategies-c1-3">バックアップと復元<a class="anchor" href="#dr-strategies-c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>データのバックアップを別リージョンにコピーしておき、障害が起きたら、バックアップとインフラのコード(CloudFormationなど)から環境を作り直す方式です。最も安い一方で、作り直す時間がRTOになります。</p>
 <ul>
-<li><strong>RTO(目標復旧時間)</strong>:障害発生からサービスを再開するまでに許容できる時間。</li>
-<li><strong>RPO(目標復旧時点)</strong>:どの時点までのデータを復旧できればよいか(許容できるデータ損失の量)。</li>
-<li>AWSでは、バックアップと復元にAWS Backupのクロスリージョンコピー、パイロットライトやウォームスタンバイにAuroraグローバルデータベースやRoute 53のフェイルオーバールーティング、などを組み合わせる。</li>
+<li>AWS Backupのクロスリージョンコピー、S3のクロスリージョンレプリケーション、EBSスナップショットやAMIのリージョン間コピーを使う。</li>
+<li>作り直しを手作業にするとRTOが延びるため、<strong>CloudFormationなどで環境をコード化</strong>しておく。</li>
+<li>ランサムウェアや誤削除への備えとしては、どの戦略を選んでも必要になる(レプリケーションは誤った変更もそのまま複製するため)。</li>
+</ul>
+
+<h3 id="dr-strategies-c1-4">パイロットライト<a class="anchor" href="#dr-strategies-c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>「種火」の意味で、データベースなどの<strong>データ層だけを常に同期</strong>しておき、アプリのサーバーは止めておく方式です。障害時にアプリのサーバーを起動・増設してから切り替えます。</p>
+<ul>
+<li>データはAuroraグローバルデータベース、DynamoDBグローバルテーブル、RDSのクロスリージョンリードレプリカなどで同期する。</li>
+<li>アプリ層は、Auto Scalingグループを台数0で用意しておく、AMIだけを用意しておく、などで待機させる。</li>
+<li>切り替えるまでリクエストを処理できない点が、ウォームスタンバイとの違い。</li>
+</ul>
+
+<h3 id="dr-strategies-c1-5">ウォームスタンバイ<a class="anchor" href="#dr-strategies-c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>本番と同じ構成を、<strong>小さい規模で常に動かしておく</strong>方式です。障害時はDR側をスケールアウトし、DNSなどでトラフィックを切り替えます。常に動いているため、切り替え前から動作を確認できます。</p>
+<ul>
+<li>DR側のAuto Scalingグループは最小台数を小さくしておき、切り替え時に希望台数を増やす。</li>
+<li>Route 53のフェイルオーバールーティングやARC(Application Recovery Controller)で切り替える。</li>
+</ul>
+
+<h3 id="dr-strategies-c1-6">マルチサイト(アクティブ/アクティブ)<a class="anchor" href="#dr-strategies-c1-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>複数のリージョンで、本番と同じ規模の環境を動かし、どちらでもリクエストを処理する方式です。片方が止まっても、もう片方がそのまま処理を続けます。</p>
+<ul>
+<li>Route 53のレイテンシーや加重ルーティング、Global Acceleratorで両方のリージョンに振り分ける。</li>
+<li>どちらのリージョンでも書き込める必要があるため、DynamoDBグローバルテーブルのような<strong>マルチリージョンで書き込めるデータストア</strong>が向いている。</li>
+<li>片方のリージョンを読み取り専用で待機させる方式は、アクティブ/パッシブ(ホットスタンバイ)と呼ばれる。</li>
+</ul>
+
+<h3 id="dr-strategies-c1-7">高可用性とDRの違い<a class="anchor" href="#dr-strategies-c1-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>マルチAZ構成(RDSのマルチAZ、複数AZにまたがるAuto Scalingグループなど)は、<strong>1つのAZの障害</strong>に自動で備える高可用性の仕組みです。DR戦略は、<strong>リージョン全体の障害やデータの破損</strong>に備えるもので、目的が違います。試験では「リージョン障害に備える」と書かれていればDR戦略、「AZ障害に備える」と書かれていればマルチAZを選びます。</p>
+
+<h3 id="dr-strategies-c1-8">戦略の選び方とDR訓練<a class="anchor" href="#dr-strategies-c1-8" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 871 228" style="max-width:871px;min-width:697px" role="img" aria-label="図3 DR戦略の選び方。要件を満たす中で、最もコストが低い戦略を選ぶ。試験では「最もコスト効率よく」と書かれていることが多い。"><defs><marker id="dr-strategies-dgterms-dr-strategies-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="q1">
+<rect x="34" y="84" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="108" text-anchor="middle" class="dg-t">RTO・RPOの要件</text>
+</g>
+<g data-node="q2">
+<rect x="255" y="44" width="150" height="40" rx="8" class="dg-box"/>
+<text x="330" y="68" text-anchor="middle" class="dg-t">数時間でよい</text>
+</g>
+<g data-node="q3">
+<rect x="255" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="330" y="148" text-anchor="middle" class="dg-t">数分以内が必要</text>
+</g>
+<g data-node="a1">
+<rect x="476" y="44" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="551" y="68" text-anchor="middle" class="dg-t">バックアップと復元</text>
+</g>
+<g data-node="q4">
+<rect x="476" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="551" y="148" text-anchor="middle" class="dg-t">無停止が必要?</text>
+</g>
+<g data-node="a2">
+<rect x="697" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="772" y="99" text-anchor="middle" class="dg-t">パイロットライト</text>
+<text x="772" y="117" text-anchor="middle" class="dg-t">ウォームスタンバイ</text>
+</g>
+<g data-node="a3">
+<rect x="697" y="164" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="772" y="188" text-anchor="middle" class="dg-tb">マルチサイト</text>
+</g>
+<path d="M184.0,90.4 L255.0,77.6" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-3)"/>
+<path d="M184.0,117.6 L255.0,130.4" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-3)"/>
+<path d="M405.0,64.0 L476.0,64.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-3)"/>
+<path d="M405.0,144.0 L476.0,144.0" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-3)"/>
+<path d="M626.0,130.4 L697.0,117.6" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-3)"/>
+<text x="662" y="128" text-anchor="middle" class="dg-s dg-halo">いいえ</text>
+<path d="M626.0,157.6 L697.0,170.4" class="dg-line" marker-end="url(#dr-strategies-dgterms-dr-strategies-3)"/>
+<text x="662" y="168" text-anchor="middle" class="dg-s dg-halo">はい</text>
+</svg>
+</div>
+<figcaption>図3 DR戦略の選び方。要件を満たす中で、最もコストが低い戦略を選ぶ。試験では「最もコスト効率よく」と書かれていることが多い。</figcaption>
+</figure>
+<ul>
+<li>要件(RTO・RPO)を満たす戦略のうち、<strong>最もコストが低いもの</strong>を選ぶ。</li>
+<li>切り替え手順は、実際に試さないと動くか分からない。AWS Fault Injection Service(FIS)で障害を起こす訓練や、AWS Backupの復元テストで、定期的に確かめる。</li>
+<li>サーバーをブロック単位で別リージョンへ複製し続けるAWS Elastic Disaster Recovery(DRS)を使うと、オンプレミスやEC2のサーバーを、少ない待機コストで短いRTO・RPOで復旧できる。</li>
+<li>関連する運用シナリオ:<a href="../usecases/backup-cross-region.html">バックアップを一元管理して別リージョンに保管する</a>、<a href="../usecases/multi-region-failover.html">リージョン障害に備えて別リージョンへ切り替える</a>、<a href="../usecases/rds-point-in-time-restore.html">誤操作したRDSのデータを特定の時点に戻す</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="dr-strategies-c2">2. 関連する用語<a class="anchor" href="#dr-strategies-c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
+<li><a href="#p-high-availability-scaling">高可用性とスケーリング</a>:AZ障害への備え(マルチAZ)</li>
+<li><a href="#p-region-az">リージョンとAZ</a>:障害の範囲を分ける単位</li>
+<li><a href="#p-sla-availability">SLAと可用性</a>:可用性の目標値</li>
 <li><a href="#p-deploy-strategies">デプロイ戦略</a>:Blue/Greenなど、新旧環境の切り替え方式</li>
 <li><a href="#p-circuit-breaker">サーキットブレーカー</a>:障害を広げないための設計パターン</li>
 </ul>
@@ -4635,10 +4753,15 @@ Outputs:
 <section class="chapter">
 <h2 id="dr-strategies-c3">3. 関連サービス<a class="anchor" href="#dr-strategies-c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li><a href="../services/backup.html">AWS Backup</a>:別リージョンへのバックアップコピー</li>
+<li><a href="../services/backup.html">AWS Backup</a>:別リージョン・別アカウントへのバックアップコピー、復元テスト</li>
 <li><a href="../services/aurora.html">Amazon Aurora</a>:グローバルデータベース</li>
-<li><a href="../services/route53.html">Amazon Route 53</a>:フェイルオーバールーティング、ARC</li>
+<li><a href="../services/dynamodb.html">Amazon DynamoDB</a>:グローバルテーブル</li>
+<li><a href="../services/rds.html">Amazon RDS</a>:クロスリージョンリードレプリカ、自動バックアップのリージョン間レプリケーション</li>
 <li><a href="../services/s3.html">Amazon S3</a>:クロスリージョンレプリケーション</li>
+<li><a href="../services/route53.html">Amazon Route 53</a>:フェイルオーバールーティング</li>
+<li><a href="../services/application-recovery-controller.html">Amazon Application Recovery Controller</a>:リージョンの切り替えの管理</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:DRサイトの環境をコードから作る</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:DR側のサーバーの増設</li>
 </ul>
 </section>
 </article>
