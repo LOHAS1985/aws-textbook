@@ -1,0 +1,67 @@
+<!-- title: VPCトラフィックミラーリング -->
+<!-- category: ネットワーク -->
+<!-- lead: EC2のネットワークインターフェイスを通るパケットをそのままコピーし、侵入検知や通信の解析を行うアプライアンスへ送る機能 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>VPCトラフィックミラーリング(Traffic Mirroring)</strong>は、<a href="../services/vpc.html">Amazon VPC</a>の機能の1つで、EC2のネットワークインターフェイス(ENI)を通る<strong>パケットをそのままコピー</strong>して、別の宛先に送ります。オンプレミスのネットワーク機器でいう「ポートミラーリング(SPAN)」をVPCで実現するもので、コピーを受け取った侵入検知システム(IDS)やパケット解析ツールが、通信の中身まで調べられます。</p>
+<p>元の通信には手を加えないため、アプリケーションや通信相手には影響しません。インスタンスにエージェントを入れる必要もありません。</p>
+
+<h3>フローログとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th><a href="vpc-flow-logs.html">VPCフローログ</a></th><th>トラフィックミラーリング</th></tr>
+<tr><td>得られるもの</td><td>通信の<strong>メタデータ</strong>(送信元・宛先・ポート・ACCEPT/REJECT)</td><td>パケットの<strong>中身(ペイロード)</strong>を含むコピー</td></tr>
+<tr><td>送り先</td><td>CloudWatch Logs・S3・Data Firehose</td><td>ENI・Network Load Balancer・Gateway Load Balancerエンドポイント</td></tr>
+<tr><td>主な用途</td><td>通信の可否の調査、監査、通信量の傾向</td><td>侵入検知(IDS)、不正な通信の中身の解析、アプリの通信トラブルの詳しい調査</td></tr>
+<tr><td>対象</td><td>VPC・サブネット・ENI</td><td>ENI(Nitroベースのインスタンス)</td></tr>
+</table></div>
+
+<h3>4つの構成要素</h3>
+<figure class="figure" data-diagram>
+grid 165 85
+node src 0 0.5 box "ミラーソース" "EC2のENI"
+node ses 1.5 0.5 accent "ミラーセッション" "VXLANで包む"
+node flt 1.5 1.6 box "ミラーフィルター" "何をコピーするか"
+node tgt 3 0.5 ok "ミラーターゲット" "ENI・NLB・GWLBE"
+node ids 4.4 0.5 blue "IDS・解析ツール"
+edge src ses "コピー"
+edge flt ses
+edge ses tgt "UDP 4789"
+edge tgt ids
+<figcaption>図1 トラフィックミラーリングの構成要素。ミラーソース(ENI)のパケットを、ミラーフィルターで絞り込んでコピーし、ミラーセッションがVXLANで包んでミラーターゲットへ送る。複数のソースを1つのNLBやGWLBに集めると、解析ツールを冗長化・拡張しやすい。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>ミラーソース</td><td>コピー元のENI。Nitroベースのインスタンスで使える(一部のインスタンスタイプは対象外)</td></tr>
+<tr><td>ミラーターゲット</td><td>コピーの送り先。<strong>ENI</strong>(解析用のEC2)、<strong>Network Load Balancer</strong>(UDPリスナー)、<strong>Gateway Load Balancerエンドポイント</strong>。VPCピアリングやTransit Gatewayでつながった別のVPC・別アカウントにも置ける</td></tr>
+<tr><td>ミラーフィルター</td><td>コピーする通信を、インバウンド/アウトバウンドごとのルール(プロトコル・ポート・CIDR、許可/拒否、ルール番号の小さい順に評価)で選ぶ</td></tr>
+<tr><td>ミラーセッション</td><td>ソース・ターゲット・フィルターを結びつける設定。セッション番号(1つのENIに複数のセッションがあるときの優先順位)、VXLANのID(VNI)、コピーするパケットの長さ(先頭だけにして量を減らす)を指定する</td></tr>
+</table></div>
+
+<h3>注意点</h3>
+<ul>
+<li>コピーは<strong>VXLAN(UDP 4789)</strong>で包んで送られる。ターゲットのセキュリティグループ・ネットワークACLで UDP 4789 を許可し、解析ツールもVXLANを解釈できる必要がある</li>
+<li>コピーした通信もソースのインスタンスの<strong>帯域幅を使う</strong>。混雑したときは元の通信が優先され、コピーの方が捨てられる。必要な通信だけをフィルターで選び、パケットの長さも絞る</li>
+<li>料金は、ミラーセッションを有効にしているENIごとの時間課金。別のAZ・VPCのターゲットへ送ると、データ転送料もかかる</li>
+<li>TLSで暗号化された通信は、コピーしても中身は暗号化されたまま。中身を見るには、復号できる位置(ロードバランサーで終端した後など)でコピーする</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="vpc-flow-logs.html">VPCフローログ</a>:メタデータだけを記録する、より手軽な通信の記録</li>
+<li><a href="eni-elastic-ip.html">ENIとElastic IP</a>:ミラーソース・ターゲットになるネットワークインターフェイス</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:ターゲットで UDP 4789 を許可する</li>
+<li><a href="tls-termination.html">TLSの終端</a>:暗号化された通信の中身を見られる位置</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:トラフィックミラーリングを設定する</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:ミラーソースになるNitroベースのインスタンス</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:NLB・GWLBをターゲットにして、複数の解析ツールへ分散する</li>
+<li><a href="../services/guardduty.html">Amazon GuardDuty</a>:パケットのコピーを使わずに、フローログやDNSログから脅威を検出する</li>
+</ul>
+</section>

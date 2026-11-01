@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ホストゾーン | AWS教科書</title>
+<meta name="description" content="Route 53で、1つのドメイン(例: example.com)とそのサブドメインのDNSレコードをまとめて管理する入れ物。パブリックとプライベートの2種類がある">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">ネットワーク</a>
+  <h1>ホストゾーン</h1>
+  <p class="lead">Route 53で、1つのドメイン(例: example.com)とそのサブドメインのDNSレコードをまとめて管理する入れ物。パブリックとプライベートの2種類がある</p>
+  <p class="updated">最終更新:<time datetime="2026-11-01">2026-11-01</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>ホストゾーン</strong>は、<a href="../services/route53.html">Amazon Route 53</a>で、あるドメイン(例: <code>example.com</code>)と、そのサブドメイン(<code>www.example.com</code> など)の<a href="dns-record-types.html">DNSレコード</a>をまとめて管理する入れ物です。<a href="dns.html">DNS</a>の用語でいう「ゾーン」にあたり、「この名前を聞かれたら、このIPアドレスを返す」という対応表を持ちます。</p>
+
+<h3 id="c1-1">パブリックとプライベート<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>パブリックホストゾーン</th><th>プライベートホストゾーン</th></tr>
+<tr><td>名前を引ける場所</td><td>インターネット上のどこからでも</td><td><strong>関連付けたVPCの中だけ</strong></td></tr>
+<tr><td>主な用途</td><td>公開するWebサイト・API</td><td>社内システム、DBなどのVPC内の名前(<code>db.internal.example.com</code> など)</td></tr>
+<tr><td>使う前に必要なこと</td><td>ドメインの登録先(レジストラ)で、ネームサーバーをRoute 53の4つのNSに向ける</td><td>VPCの <code>enableDnsHostnames</code>・<code>enableDnsSupport</code> を有効にし、ホストゾーンにVPCを関連付ける</td></tr>
+<tr><td>応答するもの</td><td>Route 53の権威DNSサーバー</td><td>VPCのRoute 53 Resolver(VPCのCIDRの先頭+2のアドレス)</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 237" style="max-width:698px;min-width:558px" role="img" aria-label="図1 2種類のホストゾーン。パブリックホストゾーンは、レジストラで委任されたRoute 53のネームサーバーが応答する。プライベートホストゾーンは、関連付けたVPCのResolverだけが参照するため、VPCの外からは見えない。"><defs><marker id="dgterms-hosted-zone-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="24" y="123" width="412" height="90" rx="10" class="dg-group"/>
+<text x="34" y="138" class="dg-s">関連付けたVPC</text>
+<g data-node="user">
+<rect x="34" y="46" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="70" text-anchor="middle" class="dg-t">外部の利用者</text>
+</g>
+<g data-node="reg">
+<rect x="282" y="40" width="145" height="52" rx="8" class="dg-box"/>
+<text x="354" y="62" text-anchor="middle" class="dg-t">レジストラ</text>
+<text x="354" y="80" text-anchor="middle" class="dg-s">NSをRoute 53へ</text>
+</g>
+<g data-node="pub">
+<rect x="529" y="40" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="602" y="62" text-anchor="middle" class="dg-tb">パブリック</text>
+<text x="602" y="80" text-anchor="middle" class="dg-s">ホストゾーン</text>
+</g>
+<g data-node="ec2">
+<rect x="34" y="157" width="145" height="40" rx="8" class="dg-box"/>
+<text x="106" y="181" text-anchor="middle" class="dg-t">VPC内のEC2</text>
+</g>
+<g data-node="rsv">
+<rect x="282" y="151" width="145" height="52" rx="8" class="dg-box"/>
+<text x="354" y="172" text-anchor="middle" class="dg-t">Route 53</text>
+<text x="354" y="190" text-anchor="middle" class="dg-s">Resolver</text>
+</g>
+<g data-node="prv">
+<rect x="529" y="151" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="172" text-anchor="middle" class="dg-t">プライベート</text>
+<text x="602" y="190" text-anchor="middle" class="dg-s">ホストゾーン</text>
+</g>
+<path d="M179.0,66.5 L281.5,66.5" class="dg-line" marker-end="url(#dgterms-hosted-zone-1)"/>
+<text x="230" y="70" text-anchor="middle" class="dg-s dg-halo">①委任先を確認</text>
+<path d="M426.5,66.5 L529.0,66.5" class="dg-line" marker-end="url(#dgterms-hosted-zone-1)"/>
+<text x="478" y="70" text-anchor="middle" class="dg-s dg-halo">②問い合わせ</text>
+<path d="M179.0,177.0 L281.5,177.0" class="dg-line" marker-end="url(#dgterms-hosted-zone-1)"/>
+<text x="230" y="181" text-anchor="middle" class="dg-s dg-halo">問い合わせ</text>
+<path d="M426.5,177.0 L529.0,177.0" class="dg-line" marker-end="url(#dgterms-hosted-zone-1)"/>
+<text x="478" y="181" text-anchor="middle" class="dg-s dg-halo">関連付けで参照</text>
+</svg>
+</div>
+<figcaption>図1 2種類のホストゾーン。パブリックホストゾーンは、レジストラで委任されたRoute 53のネームサーバーが応答する。プライベートホストゾーンは、関連付けたVPCのResolverだけが参照するため、VPCの外からは見えない。</figcaption>
+</figure>
+
+<h3 id="c1-2">ホストゾーンを作ると自動で作られるレコード<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>NSレコード</strong>:このゾーンを担当するRoute 53のネームサーバー4つ。パブリックホストゾーンでは、この4つをレジストラに登録して<strong>委任</strong>する(Route 53でドメインを登録した場合は自動で設定される)</li>
+<li><strong>SOAレコード</strong>:ゾーンの管理情報(担当のネームサーバー、ネガティブキャッシュの時間など)</li>
+</ul>
+<p>ホストゾーンを作り直すとネームサーバーが変わるため、レジストラ側の設定も直す必要があります。ホストゾーンを削除するには、NS・SOA以外のレコードを先に削除します。</p>
+
+<h3 id="c1-3">よく使う構成<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>構成</th><th>内容</th></tr>
+<tr><td>サブドメインの委任</td><td><code>dev.example.com</code> を別のホストゾーン(別アカウントでもよい)で管理する。親の <code>example.com</code> のホストゾーンに、子のホストゾーンのNSレコードを登録する</td></tr>
+<tr><td>スプリットビューDNS</td><td>同じ名前(<code>example.com</code>)のパブリックとプライベートのホストゾーンを作る。VPCの中からはプライベート、外からはパブリックの答えが返る</td></tr>
+<tr><td>複数のVPC・アカウントで共有</td><td>1つのプライベートホストゾーンを複数のVPCに関連付けられる。別アカウントのVPCは、ホストゾーン側で関連付けを許可(<code>create-vpc-association-authorization</code>)してから、VPC側で関連付ける(CLI・SDKで行う)</td></tr>
+<tr><td>オンプレミスから引く</td><td>プライベートホストゾーンはVPCの外から直接引けないため、Resolverの<strong>インバウンドエンドポイント</strong>を使う(「<a href="../services/route53.html">Amazon Route 53</a>」のResolverの節)</td></tr>
+</table></div>
+
+<h3 id="c1-4">注意点<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>スプリットビューでは、VPCの中からの問い合わせにはプライベートホストゾーンの答えだけが返る。プライベートに登録していない名前は、パブリックにあっても<strong>見つからない</strong>(NXDOMAIN)ので、VPCからも使う名前はプライベートにも登録する</li>
+<li>プライベートホストゾーンが名前解決できないときは、VPCとの関連付けと、VPCのDNS設定(<code>enableDnsHostnames</code>・<code>enableDnsSupport</code>)を確認する</li>
+<li>料金はホストゾーンごとの月額(作成から12時間以内に削除すれば課金されない)と、クエリ数で決まる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="dns.html">DNS</a>:ゾーン・権威DNSサーバー・リゾルバーの仕組み</li>
+<li><a href="dns-record-types.html">DNSレコードタイプ</a>:ホストゾーンに登録するレコード(A・CNAME・エイリアスなど)</li>
+<li><a href="hybrid-connectivity.html">ハイブリッド接続</a>:オンプレミスとVPCの間の名前解決</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/route53.html">Amazon Route 53</a>:ホストゾーンを作成・管理する。Resolverのエンドポイントでオンプレミスとつなぐ</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:プライベートホストゾーンの関連付け先</li>
+<li><a href="../services/ram.html">AWS RAM</a>:Resolverの転送ルールを別アカウントと共有する</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/route53.html"><span class="title">Amazon Route 53</span><span class="kind">サービス</span><span class="desc">マネージドDNSサービス。ヘルスチェックと組み合わせたルーティングや、VPCとオンプレミスの名前解決もできる</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="ホストゾーンとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/ram.html"><title>サービス:AWS Resource Access Manager</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Resource Access Manag…</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/route53.html"><title>サービス:Amazon Route 53</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon Route 53</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/dns.html"><title>用語:DNS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="140" class="gr-t">DNS</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/dns-record-types.html"><title>用語:DNSレコードタイプ</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">DNSレコードタイプ</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/hybrid-connectivity.html"><title>用語:オンプレミスとAWSをつなぐ方法の選び方</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">オンプレミスとAWSをつなぐ方法…</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">ホストゾーン</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="dns-record-types.html"><span class="label">← 前へ</span>DNSレコードタイプ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cidr.html"><span class="label">次へ →</span>CIDR</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

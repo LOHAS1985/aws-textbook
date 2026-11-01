@@ -1,0 +1,73 @@
+<!-- title: ホストゾーン -->
+<!-- category: ネットワーク -->
+<!-- lead: Route 53で、1つのドメイン(例: example.com)とそのサブドメインのDNSレコードをまとめて管理する入れ物。パブリックとプライベートの2種類がある -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>ホストゾーン</strong>は、<a href="../services/route53.html">Amazon Route 53</a>で、あるドメイン(例: <code>example.com</code>)と、そのサブドメイン(<code>www.example.com</code> など)の<a href="dns-record-types.html">DNSレコード</a>をまとめて管理する入れ物です。<a href="dns.html">DNS</a>の用語でいう「ゾーン」にあたり、「この名前を聞かれたら、このIPアドレスを返す」という対応表を持ちます。</p>
+
+<h3>パブリックとプライベート</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>パブリックホストゾーン</th><th>プライベートホストゾーン</th></tr>
+<tr><td>名前を引ける場所</td><td>インターネット上のどこからでも</td><td><strong>関連付けたVPCの中だけ</strong></td></tr>
+<tr><td>主な用途</td><td>公開するWebサイト・API</td><td>社内システム、DBなどのVPC内の名前(<code>db.internal.example.com</code> など)</td></tr>
+<tr><td>使う前に必要なこと</td><td>ドメインの登録先(レジストラ)で、ネームサーバーをRoute 53の4つのNSに向ける</td><td>VPCの <code>enableDnsHostnames</code>・<code>enableDnsSupport</code> を有効にし、ホストゾーンにVPCを関連付ける</td></tr>
+<tr><td>応答するもの</td><td>Route 53の権威DNSサーバー</td><td>VPCのRoute 53 Resolver(VPCのCIDRの先頭+2のアドレス)</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 165 85
+node user 0 0 blue "外部の利用者"
+node reg 1.5 0 box "レジストラ" "NSをRoute 53へ"
+node pub 3 0 accent "パブリック" "ホストゾーン"
+node ec2 0 1.3 box "VPC内のEC2"
+node rsv 1.5 1.3 box "Route 53" "Resolver"
+node prv 3 1.3 ok "プライベート" "ホストゾーン"
+group 0 1.3 1.5 1.3 "関連付けたVPC" pad=10
+edge user reg "①委任先を確認"
+edge reg pub "②問い合わせ"
+edge ec2 rsv "問い合わせ"
+edge rsv prv "関連付けで参照"
+<figcaption>図1 2種類のホストゾーン。パブリックホストゾーンは、レジストラで委任されたRoute 53のネームサーバーが応答する。プライベートホストゾーンは、関連付けたVPCのResolverだけが参照するため、VPCの外からは見えない。</figcaption>
+</figure>
+
+<h3>ホストゾーンを作ると自動で作られるレコード</h3>
+<ul>
+<li><strong>NSレコード</strong>:このゾーンを担当するRoute 53のネームサーバー4つ。パブリックホストゾーンでは、この4つをレジストラに登録して<strong>委任</strong>する(Route 53でドメインを登録した場合は自動で設定される)</li>
+<li><strong>SOAレコード</strong>:ゾーンの管理情報(担当のネームサーバー、ネガティブキャッシュの時間など)</li>
+</ul>
+<p>ホストゾーンを作り直すとネームサーバーが変わるため、レジストラ側の設定も直す必要があります。ホストゾーンを削除するには、NS・SOA以外のレコードを先に削除します。</p>
+
+<h3>よく使う構成</h3>
+<div class="table-wrap"><table>
+<tr><th>構成</th><th>内容</th></tr>
+<tr><td>サブドメインの委任</td><td><code>dev.example.com</code> を別のホストゾーン(別アカウントでもよい)で管理する。親の <code>example.com</code> のホストゾーンに、子のホストゾーンのNSレコードを登録する</td></tr>
+<tr><td>スプリットビューDNS</td><td>同じ名前(<code>example.com</code>)のパブリックとプライベートのホストゾーンを作る。VPCの中からはプライベート、外からはパブリックの答えが返る</td></tr>
+<tr><td>複数のVPC・アカウントで共有</td><td>1つのプライベートホストゾーンを複数のVPCに関連付けられる。別アカウントのVPCは、ホストゾーン側で関連付けを許可(<code>create-vpc-association-authorization</code>)してから、VPC側で関連付ける(CLI・SDKで行う)</td></tr>
+<tr><td>オンプレミスから引く</td><td>プライベートホストゾーンはVPCの外から直接引けないため、Resolverの<strong>インバウンドエンドポイント</strong>を使う(「<a href="../services/route53.html">Amazon Route 53</a>」のResolverの節)</td></tr>
+</table></div>
+
+<h3>注意点</h3>
+<ul>
+<li>スプリットビューでは、VPCの中からの問い合わせにはプライベートホストゾーンの答えだけが返る。プライベートに登録していない名前は、パブリックにあっても<strong>見つからない</strong>(NXDOMAIN)ので、VPCからも使う名前はプライベートにも登録する</li>
+<li>プライベートホストゾーンが名前解決できないときは、VPCとの関連付けと、VPCのDNS設定(<code>enableDnsHostnames</code>・<code>enableDnsSupport</code>)を確認する</li>
+<li>料金はホストゾーンごとの月額(作成から12時間以内に削除すれば課金されない)と、クエリ数で決まる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="dns.html">DNS</a>:ゾーン・権威DNSサーバー・リゾルバーの仕組み</li>
+<li><a href="dns-record-types.html">DNSレコードタイプ</a>:ホストゾーンに登録するレコード(A・CNAME・エイリアスなど)</li>
+<li><a href="hybrid-connectivity.html">ハイブリッド接続</a>:オンプレミスとVPCの間の名前解決</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/route53.html">Amazon Route 53</a>:ホストゾーンを作成・管理する。Resolverのエンドポイントでオンプレミスとつなぐ</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:プライベートホストゾーンの関連付け先</li>
+<li><a href="../services/ram.html">AWS RAM</a>:Resolverの転送ルールを別アカウントと共有する</li>
+</ul>
+</section>

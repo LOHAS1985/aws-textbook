@@ -1,0 +1,79 @@
+<!-- title: インスタンスプロファイル -->
+<!-- category: セキュリティ・認証 -->
+<!-- lead: EC2インスタンスにIAMロールを渡すための入れ物。インスタンス上のアプリは、アクセスキーを置かずにロールの権限でAWSを操作できる -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>インスタンスプロファイル</strong>は、<a href="../services/ec2.html">EC2</a>インスタンスに<a href="iam-roles-credentials.html">IAMロール</a>を渡すための<strong>入れ物(コンテナ)</strong>です。EC2にはIAMロールを直接付けることはできず、「インスタンス → インスタンスプロファイル → IAMロール」の形で付けます。インスタンス上のアプリやAWS CLIは、このロールの<strong>一時的な認証情報</strong>を自動で受け取るため、アクセスキーをインスタンスに保存する必要がありません。</p>
+
+<figure class="figure" data-diagram>
+grid 165 90
+node ec2 0 0.5 box "EC2インスタンス" "アプリ・CLI"
+node prof 1.5 0.5 accent "インスタンス" "プロファイル"
+node role 3 0.5 ok "IAMロール" "EC2が引き受ける"
+node imds 0 1.7 blue "IMDS" "169.254.169.254"
+node sts 1.5 1.7 box "STS"
+edge ec2 prof "付ける"
+edge prof role "1つだけ格納"
+edge sts imds "一時的な認証情報"
+edge imds ec2 "取得" dash
+<figcaption>図1 インスタンスプロファイルの仕組み。インスタンスに付けたプロファイルの中のロールについて、STSが発行した一時的な認証情報がインスタンスメタデータ(IMDS)に置かれる。アプリやCLIはIMDSから認証情報を取得し、期限が切れる前に自動で更新される。</figcaption>
+</figure>
+
+<h3>ロールとインスタンスプロファイルの関係</h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>入れられるロールの数</td><td>1つのインスタンスプロファイルに<strong>ロールは1つだけ</strong></td></tr>
+<tr><td>インスタンスに付けられる数</td><td>1つのインスタンスに<strong>インスタンスプロファイルは1つだけ</strong>。複数の権限が必要なら、1つのロールに複数のポリシーを付ける</td></tr>
+<tr><td>ロールの信頼ポリシー</td><td><code>"Service": "ec2.amazonaws.com"</code> を許可する(EC2がロールを引き受けられるようにする)</td></tr>
+<tr><td>付け替え</td><td>起動中のインスタンスでも、停止せずに付ける・外す・入れ替える(<code>replace-iam-instance-profile-association</code>)ことができる</td></tr>
+<tr><td>ロールの権限の変更</td><td>ロールのポリシーを変えると、付け替えなくても反映される(反映まで少し時間がかかることがある)</td></tr>
+</table></div>
+
+<h3>作り方:コンソールとCLI・IaCの違い</h3>
+<p>マネジメントコンソールでEC2用のロールを作ると、<strong>同じ名前のインスタンスプロファイルが自動で作られます</strong>。そのため普段は意識しませんが、AWS CLI・CloudFormation・Terraformでは、ロールとは別にインスタンスプロファイルを作り、ロールを入れる必要があります。</p>
+<pre class="code"><code>aws iam create-role --role-name AppRole --assume-role-policy-document file://ec2-trust.json
+aws iam create-instance-profile --instance-profile-name AppProfile
+aws iam add-role-to-instance-profile --instance-profile-name AppProfile --role-name AppRole
+aws ec2 associate-iam-instance-profile --instance-id i-0123456789abcdef0 \
+    --iam-instance-profile Name=AppProfile</code></pre>
+<p>CloudFormationでは <code>AWS::IAM::Role</code> とは別に <code>AWS::IAM::InstanceProfile</code> を定義し、EC2や起動テンプレートの <code>IamInstanceProfile</code> にはインスタンスプロファイルの名前(またはARN)を指定します。ここにロール名を書いてしまうのはよくある間違いです(コンソールで作った場合は名前が同じなので動いてしまい、気づきにくい)。</p>
+
+<h3>インスタンスにロールを付けるときの権限</h3>
+<p>インスタンスにインスタンスプロファイルを付ける人(またはAuto Scalingなどのサービス)には、EC2の操作権限に加えて、中のロールに対する <code><a href="iam-passrole.html">iam:PassRole</a></code> の権限が必要です。これがないと、強い権限のロールを付けたインスタンスを起動して、その権限を使うことができてしまうためです。</p>
+
+<h3>認証情報の取得とIMDSv2</h3>
+<p>インスタンス上では、ロールの認証情報が <code>http://169.254.169.254/latest/meta-data/iam/security-credentials/ロール名</code> から取得できます。AWS CLIやSDKは<a href="iam-roles-credentials.html">認証情報を探す順番</a>の最後にここを見に行くため、プログラムで設定する必要はありません。</p>
+<ul>
+<li>IMDSへのアクセスは、トークンを使う<strong>IMDSv2</strong>を必須にする(SSRFの脆弱性から認証情報を盗まれにくくする)</li>
+<li>環境変数や <code>~/.aws/credentials</code> にアクセスキーが残っていると、そちらが<strong>優先</strong>される</li>
+<li>インスタンス上で <code>aws sts get-caller-identity</code> を実行すると、どのロールで動いているか確認できる</li>
+</ul>
+
+<h3>よくあるトラブル</h3>
+<div class="table-wrap"><table>
+<tr><th>症状</th><th>確認すること</th></tr>
+<tr><td>CLIで「認証情報が見つからない」</td><td>インスタンスプロファイルが付いているか。IMDSが無効になっていないか、ホップ数の制限(コンテナから使うとき)</td></tr>
+<tr><td>AccessDenied になる</td><td>ロールのアクセス許可ポリシー。S3のバケットポリシーやKMSのキーポリシーなど、リソース側の拒否</td></tr>
+<tr><td>CloudFormationでの起動に失敗する</td><td><code>IamInstanceProfile</code> にロール名を指定していないか。実行する人に <code>iam:PassRole</code> があるか</td></tr>
+<tr><td>Systems Managerに表示されない</td><td>ロールに <code>AmazonSSMManagedInstanceCore</code> があるか(手順は「<a href="../services/systems-manager.html">AWS Systems Manager</a>」の「EC2で各機能を使えるようにする手順」)</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>:インスタンスプロファイルの中身になるロールと、認証情報を探す順番</li>
+<li><a href="iam-passrole.html">iam:PassRole</a>:インスタンスにロールを付けるときに必要な権限</li>
+<li><a href="iam-policy-evaluation.html">IAMポリシーの評価</a>:ロールの権限とリソース側のポリシーの組み合わせ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/ec2.html">Amazon EC2</a>:インスタンスプロファイルを付ける対象。IMDSで認証情報を受け取る</li>
+<li><a href="../services/iam.html">AWS IAM</a>:ロールとインスタンスプロファイルを作る</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:SSM Agentもインスタンスプロファイルの権限で動く</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:<code>AWS::IAM::InstanceProfile</code> でプロファイルを定義する</li>
+</ul>
+</section>

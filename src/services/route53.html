@@ -17,7 +17,11 @@
 <section class="chapter">
 <h2>2. 主な機能・特徴</h2>
 <h3>ホストゾーン</h3>
+<<<<<<< Updated upstream
 <p>1つのドメインのDNSレコードをまとめて管理する入れ物です。</p>
+=======
+<p>1つのドメインとそのサブドメインのDNSレコードをまとめて管理するコンテナです(委任・スプリットビューなどの詳細は用語「<a href="../terms/hosted-zone.html">ホストゾーン</a>」)。</p>
+>>>>>>> Stashed changes
 <ul>
 <li><strong>パブリックホストゾーン</strong>:インターネット上での名前解決</li>
 <li><strong>プライベートホストゾーン</strong>:関連付けたVPC内でのみ有効な名前解決</li>
@@ -34,6 +38,7 @@ edge q1 pub "名前解決"
 edge q2 prv "名前解決"
 <figcaption>図1 ホストゾーンの種類。パブリックホストゾーンはインターネット上で、プライベートホストゾーンは関連付けたVPC内でのみ名前解決できる。</figcaption>
 </figure>
+<<<<<<< Updated upstream
 <ul>
 <li>パブリックホストゾーンを作ると、4つのネームサーバー(NSレコード)が割り当てられる。ドメインを別の登録事業者で買った場合は、その事業者側でネームサーバーをこの4つに変更する(委任)。</li>
 <li>プライベートホストゾーンを使うには、VPCの<strong><code>enableDnsHostnames</code> と <code>enableDnsSupport</code> を有効</strong>にする。別アカウントのVPCに関連付けるときは、ホストゾーン側で関連付けを許可してから、VPC側で関連付ける(CLI・API で行う)。</li>
@@ -54,6 +59,45 @@ edge q2 prv "名前解決"
 <h3>TTL</h3>
 <p>TTL(Time To Live)は、問い合わせた側のリゾルバーが回答をキャッシュする秒数です。TTLが長いとクエリ料金とレイテンシーは減りますが、レコードを変えてもしばらく古い値が使われます。移行や切り替えの予定があるときは、事前にTTLを短く(例:60秒)しておきます。エイリアスレコードのTTLは、向き先のリソースのTTLが使われます。</p>
 
+=======
+
+<h3>Route 53 Resolver とインバウンド/アウトバウンドエンドポイント</h3>
+<p><strong>Route 53 Resolver</strong>は、すべてのVPCに最初から用意されているDNSリゾルバーです。VPCのCIDRの先頭+2のアドレス(<code>10.0.0.2</code> など)と <code>169.254.169.253</code> で応答し、VPC内のEC2の名前、プライベートホストゾーン、インターネットの名前を解決します。ただし、このResolverはVPCの中からしか使えず、そのままでは社内(オンプレミス)のDNSサーバーとも連携しません。両者をつなぐのが<strong>Resolverエンドポイント</strong>です。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th><strong class="em">インバウンドエンドポイント</strong></th><th><strong class="em">アウトバウンドエンドポイント</strong></th></tr>
+<tr><td>問い合わせの向き</td><td><strong>オンプレミス → VPC</strong></td><td><strong>VPC → オンプレミス</strong></td></tr>
+<tr><td>解決できるようになる名前</td><td>プライベートホストゾーン、VPC内のEC2の名前など</td><td>社内DNSのドメイン(<code>corp.example.com</code> など)</td></tr>
+<tr><td>設定すること</td><td>VPCのサブネットにエンドポイント(IPアドレス)を作り、オンプレミスのDNSサーバーに「aws.example.com はこのIPへ」と条件付きフォワーダーを設定する</td><td>エンドポイントを作り、<strong>転送ルール</strong>(ドメイン名と転送先のDNSサーバーのIP)を作ってVPCに関連付ける</td></tr>
+<tr><td>セキュリティグループ</td><td>オンプレミスのDNSサーバーからの UDP/TCP 53 のインバウンドを許可</td><td>オンプレミスのDNSサーバーへの UDP/TCP 53 のアウトバウンドを許可</td></tr>
+</table></div>
+
+<figure class="figure" data-diagram>
+grid 165 90
+node onp 0 0.5 blue "社内DNSサーバー" "corp.example.com"
+node dx 1.4 0.5 box "Direct Connect" "またはVPN"
+node in 2.8 0 accent "インバウンド" "エンドポイント"
+node out 2.8 1 accent "アウトバウンド" "エンドポイント"
+node rsv 4.2 0.5 ok "Route 53" "Resolver"
+node phz 4.2 1.6 box "プライベート" "ホストゾーン"
+node ec2 2.8 2.1 box "VPC内のEC2"
+group 2.8 0 4.2 2.1 "VPC" pad=12
+edge onp dx
+edge dx in "aws.example.com"
+edge in rsv
+edge rsv out "転送ルール"
+edge out dx "corp.example.com" dash
+edge rsv phz
+edge ec2 rsv "問い合わせ" hv
+<figcaption>図2 Resolverエンドポイントによるハイブリッドな名前解決。オンプレミスからVPCの名前を引くときはインバウンドエンドポイントへ転送する。VPCのEC2が社内の名前を引くときは、Resolverが転送ルールに従い、アウトバウンドエンドポイントからオンプレミスのDNSサーバーへ問い合わせる(点線)。</figcaption>
+</figure>
+<ul>
+<li>エンドポイントの実体はサブネットに置くENIで、<strong>2つ以上のAZ</strong>にIPアドレスを置いて冗長化する(最低2つ必要)。</li>
+<li>転送ルールは<a href="ram.html">AWS RAM</a>で別アカウントと共有でき、共有先のVPCに関連付ければ、アカウントごとにアウトバウンドエンドポイントを作らずに済む。</li>
+<li>エンドポイントのENIごとの時間料金と、処理したクエリ数で課金される。</li>
+<li>VPCからのDNS問い合わせの記録は <strong>Resolverのクエリログ</strong>、悪性ドメインの遮断は <a href="dns-firewall.html">DNS Firewall</a> を使う。</li>
+</ul>
+<p>構成を組み立てる演習は、運用シナリオ「<a href="../usecases/hybrid-dns-resolver.html">オンプレミスとVPCで互いの名前を解決する</a>」にあります。</p>
+>>>>>>> Stashed changes
 <h3>ルーティングポリシー</h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>概要</th><th>主な用途</th></tr>
@@ -84,7 +128,7 @@ node p 1.5 2.3 box "プライマリ" "ヘルスチェック"
 node s 1.5 3.3 ng "セカンダリ" "障害時に切り替え"
 edge f p "通常"
 edge f s dash "障害時"
-<figcaption>図2 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。</figcaption>
+<figcaption>図3 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。</figcaption>
 </figure>
 
 <h3>ヘルスチェック</h3>
@@ -165,7 +209,11 @@ group 1.5 0 4.3 1 "VPC" pad=10
 <li>フェイルオーバーで障害時に待機系サイト(S3の静的ページなど)へ切り替え</li>
 <li>新バージョンへ10%だけトラフィックを流す(加重)</li>
 <li>VPC内の社内システムの名前解決(プライベートホストゾーン)</li>
+<<<<<<< Updated upstream
 <li>オンプレミスとVPCの間で、お互いの名前を解決する(Resolverエンドポイント)</li>
+=======
+<li>オンプレミスとVPCで互いの名前を解決(Resolverエンドポイント)</li>
+>>>>>>> Stashed changes
 </ul>
 </section>
 
@@ -196,6 +244,7 @@ group 1.5 0 4.3 1 "VPC" pad=10
 <h4>レコードとルーティング</h4>
 <ul>
 <li>A/Bテスト・段階リリース → <strong>加重</strong>。DR → <strong>フェイルオーバー</strong>。速いリージョンへ → <strong>レイテンシー</strong>。</li>
+<<<<<<< Updated upstream
 <li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。当てはまらない利用者用に<strong>デフォルトのレコード</strong>も作る。</li>
 <li><code>example.com</code>(ゾーンの頂点)をELBやCloudFrontに向けたい → <strong class="em">エイリアスレコード</strong>(CNAMEは頂点に作れない)。</li>
 <li>レコードを変えたのに古い値が返る → <strong>TTL</strong>の間はキャッシュされる。切り替えの前にTTLを短くしておく。</li>
@@ -214,6 +263,12 @@ group 1.5 0 4.3 1 "VPC" pad=10
 <li>オンプレミスからAWSの名前を引く → <strong>インバウンドエンドポイント</strong>。AWSから社内の名前を引く → <strong>アウトバウンドエンドポイントと転送ルール</strong>。</li>
 <li>DNSの回答のすり替えを防ぐ → <strong>DNSSEC署名</strong>(KMSキーは米国東部(バージニア北部))。</li>
 <li>VPC内のどのリソースがどの名前を引いたか調べたい → <strong>Resolverのクエリログ</strong>。</li>
+=======
+<li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。</li>
+<li>VPC内だけで使う名前 → <strong>プライベートホストゾーン</strong>。解決できないときはVPCとの関連付けと、VPCのDNS設定(<code>enableDnsHostnames</code>・<code>enableDnsSupport</code>)を確認。</li>
+<li>オンプレミスからVPCの名前を引く → Resolverの<strong>インバウンドエンドポイント</strong>。VPCから社内DNSの名前を引く → <strong>アウトバウンドエンドポイント</strong>と転送ルール。</li>
+<li>転送ルールを複数のアカウントで使う → <strong>AWS RAM</strong>で共有してVPCに関連付ける。</li>
+>>>>>>> Stashed changes
 <li>AZ障害時にすばやくトラフィックを外す → ARCの<strong>ゾーンシフト</strong>。</li>
 </ul>
 </div>
@@ -222,8 +277,15 @@ group 1.5 0 4.3 1 "VPC" pad=10
 <section class="chapter">
 <h2>7. まとめ</h2>
 <ul>
+<<<<<<< Updated upstream
 <li>Route 53はドメイン登録・DNS(ホストゾーン)・VPCの名前解決(Resolver)を提供する。</li>
 <li>AWSリソースにはエイリアスレコードで向け、ルーティングポリシーとヘルスチェックで返す値を変える。</li>
 <li>プライベートなリソースはCloudWatchアラームでヘルスチェックし、オンプレミスとはResolverエンドポイントで名前解決をつなぐ。</li>
+=======
+<li>Route 53はDNS・ドメイン登録・ヘルスチェックを提供する。</li>
+<li>ホストゾーンはパブリックとプライベートの2種類。</li>
+<li>オンプレミスとの名前解決は、Resolverのインバウンド/アウトバウンドエンドポイントでつなぐ。</li>
+<li>ルーティングポリシーを目的に応じて選び分ける。</li>
+>>>>>>> Stashed changes
 </ul>
 </section>

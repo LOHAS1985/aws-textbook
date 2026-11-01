@@ -249,7 +249,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><strong>拡張ネットワーキング</strong>:仮想化によるネットワーク処理の負担を減らし(SR-IOVという技術で、インスタンスがネットワーク機器を直接使えるようにする)、<strong>高帯域・低レイテンシー・パケットの処理性能の向上</strong>を実現する機能。追加料金はなく、現在の多くのインスタンスタイプで使える。</li>
 <li><strong>ENA(Elastic Network Adapter)</strong>:拡張ネットワーキングを実現するためのネットワークインターフェイス(ドライバー)。最大100Gbps以上の帯域に対応する。AMIにENAのドライバーが入っている必要がある。</li>
 <li><strong>インスタンスストア</strong>:インスタンスが動いている物理ホストに直接接続されたディスクを使う一時的なブロックストレージ。<strong>データは永続化しない</strong>。</li>
-<li><strong class="em">インスタンスプロファイル</strong>:IAMロールを格納するコンテナ。EC2に直接IAMロールは付与できず、<code>EC2 → インスタンスプロファイル → IAMロール</code> の形になる。</li>
+<li><strong class="em"><a href="../terms/instance-profile.html">インスタンスプロファイル</a></strong>:IAMロールを格納するコンテナ。EC2に直接IAMロールは付与できず、<code>EC2 → インスタンスプロファイル → IAMロール</code> の形になる。</li>
 </ul>
 
 <h3 id="ec2-c2-2">EBSとインスタンスストアの違い<a class="anchor" href="#ec2-c2-2" aria-label="この見出しへのリンク">#</a></h3>
@@ -5255,6 +5255,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li><a href="#p-transit-gateway">AWS Transit Gateway</a>:多数のVPC・オンプレミスをハブ&スポークで接続</li>
 <li><a href="#p-site-to-site-vpn">AWS Site-to-Site VPN</a>/<a href="#p-direct-connect">AWS Direct Connect</a>:オンプレミスとの接続</li>
 <li><a href="../terms/vpc-flow-logs.html">VPCフローログ</a>:VPC内の通信の記録</li>
+<li><a href="../terms/vpc-traffic-mirroring.html">VPCトラフィックミラーリング</a>:パケットのコピーを侵入検知・解析ツールへ送る</li>
 <li><a href="#p-ipam">Amazon VPC IP Address Manager</a>:複数VPCのCIDRの管理</li>
 <li><a href="#p-network-firewall">AWS Network Firewall</a>/<a href="#p-dns-firewall">Route 53 Resolver DNS Firewall</a>:VPCの通信・DNSのフィルタリング</li>
 <li><a href="#p-client-vpn">AWS Client VPN</a>:利用者の端末からの接続</li>
@@ -6138,7 +6139,11 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <section class="chapter">
 <h2 id="route53-c2">2. 主な機能・特徴<a class="anchor" href="#route53-c2" aria-label="この見出しへのリンク">#</a></h2>
 <h3 id="route53-c2-1">ホストゾーン<a class="anchor" href="#route53-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<<<<<<< Updated upstream
 <p>1つのドメインのDNSレコードをまとめて管理する入れ物です。</p>
+=======
+<p>1つのドメインとそのサブドメインのDNSレコードをまとめて管理するコンテナです(委任・スプリットビューなどの詳細は用語「<a href="../terms/hosted-zone.html">ホストゾーン</a>」)。</p>
+>>>>>>> Stashed changes
 <ul>
 <li><strong>パブリックホストゾーン</strong>:インターネット上での名前解決</li>
 <li><strong>プライベートホストゾーン</strong>:関連付けたVPC内でのみ有効な名前解決</li>
@@ -6175,6 +6180,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図1 ホストゾーンの種類。パブリックホストゾーンはインターネット上で、プライベートホストゾーンは関連付けたVPC内でのみ名前解決できる。</figcaption>
 </figure>
+<<<<<<< Updated upstream
 <ul>
 <li>パブリックホストゾーンを作ると、4つのネームサーバー(NSレコード)が割り当てられる。ドメインを別の登録事業者で買った場合は、その事業者側でネームサーバーをこの4つに変更する(委任)。</li>
 <li>プライベートホストゾーンを使うには、VPCの<strong><code>enableDnsHostnames</code> と <code>enableDnsSupport</code> を有効</strong>にする。別アカウントのVPCに関連付けるときは、ホストゾーン側で関連付けを許可してから、VPC側で関連付ける(CLI・API で行う)。</li>
@@ -6195,7 +6201,81 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h3 id="route53-c2-3">TTL<a class="anchor" href="#route53-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>TTL(Time To Live)は、問い合わせた側のリゾルバーが回答をキャッシュする秒数です。TTLが長いとクエリ料金とレイテンシーは減りますが、レコードを変えてもしばらく古い値が使われます。移行や切り替えの予定があるときは、事前にTTLを短く(例:60秒)しておきます。エイリアスレコードのTTLは、向き先のリソースのTTLが使われます。</p>
 
-<h3 id="route53-c2-4">ルーティングポリシー<a class="anchor" href="#route53-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+=======
+
+<h3 id="route53-c2-4">Route 53 Resolver とインバウンド/アウトバウンドエンドポイント<a class="anchor" href="#route53-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>Route 53 Resolver</strong>は、すべてのVPCに最初から用意されているDNSリゾルバーです。VPCのCIDRの先頭+2のアドレス(<code>10.0.0.2</code> など)と <code>169.254.169.253</code> で応答し、VPC内のEC2の名前、プライベートホストゾーン、インターネットの名前を解決します。ただし、このResolverはVPCの中からしか使えず、そのままでは社内(オンプレミス)のDNSサーバーとも連携しません。両者をつなぐのが<strong>Resolverエンドポイント</strong>です。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th><strong class="em">インバウンドエンドポイント</strong></th><th><strong class="em">アウトバウンドエンドポイント</strong></th></tr>
+<tr><td>問い合わせの向き</td><td><strong>オンプレミス → VPC</strong></td><td><strong>VPC → オンプレミス</strong></td></tr>
+<tr><td>解決できるようになる名前</td><td>プライベートホストゾーン、VPC内のEC2の名前など</td><td>社内DNSのドメイン(<code>corp.example.com</code> など)</td></tr>
+<tr><td>設定すること</td><td>VPCのサブネットにエンドポイント(IPアドレス)を作り、オンプレミスのDNSサーバーに「aws.example.com はこのIPへ」と条件付きフォワーダーを設定する</td><td>エンドポイントを作り、<strong>転送ルール</strong>(ドメイン名と転送先のDNSサーバーのIP)を作ってVPCに関連付ける</td></tr>
+<tr><td>セキュリティグループ</td><td>オンプレミスのDNSサーバーからの UDP/TCP 53 のインバウンドを許可</td><td>オンプレミスのDNSサーバーへの UDP/TCP 53 のアウトバウンドを許可</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 908 320" style="max-width:908px;min-width:726px" role="img" aria-label="図2 Resolverエンドポイントによるハイブリッドな名前解決。オンプレミスからVPCの名前を引くときはインバウンドエンドポイントへ転送する。VPCのEC2が社内の名前を引くときは、Resolverが転送ルールに従い、アウトバウンドエンドポイントからオンプレミスのDNSサーバーへ問い合わせる(点線)。"><defs><marker id="route53-dgservices-route53-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="484" y="13" width="400" height="283" rx="10" class="dg-group"/>
+<text x="494" y="28" class="dg-s">VPC</text>
+<g data-node="onp">
+<rect x="34" y="88" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="110" text-anchor="middle" class="dg-t">社内DNSサーバー</text>
+<text x="106" y="128" text-anchor="middle" class="dg-s">corp.example.com</text>
+</g>
+<g data-node="dx">
+<rect x="265" y="88" width="145" height="52" rx="8" class="dg-box"/>
+<text x="338" y="110" text-anchor="middle" class="dg-t">Direct Connect</text>
+<text x="338" y="128" text-anchor="middle" class="dg-s">またはVPN</text>
+</g>
+<g data-node="in">
+<rect x="496" y="43" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="568" y="64" text-anchor="middle" class="dg-tb">インバウンド</text>
+<text x="568" y="82" text-anchor="middle" class="dg-s">エンドポイント</text>
+</g>
+<g data-node="out">
+<rect x="496" y="133" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="568" y="154" text-anchor="middle" class="dg-tb">アウトバウンド</text>
+<text x="568" y="172" text-anchor="middle" class="dg-s">エンドポイント</text>
+</g>
+<g data-node="rsv">
+<rect x="727" y="88" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="800" y="110" text-anchor="middle" class="dg-t">Route 53</text>
+<text x="800" y="128" text-anchor="middle" class="dg-s">Resolver</text>
+</g>
+<g data-node="phz">
+<rect x="727" y="187" width="145" height="52" rx="8" class="dg-box"/>
+<text x="800" y="208" text-anchor="middle" class="dg-t">プライベート</text>
+<text x="800" y="226" text-anchor="middle" class="dg-s">ホストゾーン</text>
+</g>
+<g data-node="ec2">
+<rect x="496" y="238" width="145" height="40" rx="8" class="dg-box"/>
+<text x="568" y="262" text-anchor="middle" class="dg-t">VPC内のEC2</text>
+</g>
+<path d="M179.0,114.0 L265.0,114.0" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
+<path d="M410.0,99.9 L496.0,83.1" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
+<text x="453" y="96" text-anchor="middle" class="dg-s dg-halo">aws.example.com</text>
+<path d="M641.0,83.1 L727.0,99.9" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
+<path d="M727.0,128.1 L641.0,144.9" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
+<text x="684" y="140" text-anchor="middle" class="dg-s dg-halo">転送ルール</text>
+<path d="M496.0,144.9 L410.0,128.1" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-2)"/>
+<text x="453" y="140" text-anchor="middle" class="dg-s dg-halo">corp.example.com</text>
+<path d="M799.5,140.0 L799.5,187.0" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
+<path d="M641.0,258.0 L799.5,258.0 L799.5,140.0" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
+<text x="720" y="262" text-anchor="middle" class="dg-s dg-halo">問い合わせ</text>
+</svg>
+</div>
+<figcaption>図2 Resolverエンドポイントによるハイブリッドな名前解決。オンプレミスからVPCの名前を引くときはインバウンドエンドポイントへ転送する。VPCのEC2が社内の名前を引くときは、Resolverが転送ルールに従い、アウトバウンドエンドポイントからオンプレミスのDNSサーバーへ問い合わせる(点線)。</figcaption>
+</figure>
+<ul>
+<li>エンドポイントの実体はサブネットに置くENIで、<strong>2つ以上のAZ</strong>にIPアドレスを置いて冗長化する(最低2つ必要)。</li>
+<li>転送ルールは<a href="#p-ram">AWS RAM</a>で別アカウントと共有でき、共有先のVPCに関連付ければ、アカウントごとにアウトバウンドエンドポイントを作らずに済む。</li>
+<li>エンドポイントのENIごとの時間料金と、処理したクエリ数で課金される。</li>
+<li>VPCからのDNS問い合わせの記録は <strong>Resolverのクエリログ</strong>、悪性ドメインの遮断は <a href="#p-dns-firewall">DNS Firewall</a> を使う。</li>
+</ul>
+<p>構成を組み立てる演習は、運用シナリオ「<a href="../usecases/hybrid-dns-resolver.html">オンプレミスとVPCで互いの名前を解決する</a>」にあります。</p>
+>>>>>>> Stashed changes
+<h3 id="route53-c2-5">ルーティングポリシー<a class="anchor" href="#route53-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>概要</th><th>主な用途</th></tr>
 <tr><td>シンプル</td><td>1つのレコードに複数の値を書けるが、ヘルスチェックは使えない</td><td>単純な名前解決</td></tr>
@@ -6215,7 +6295,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 463 359" style="max-width:463px;min-width:463px" role="img" aria-label="図2 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。"><defs><marker id="route53-dgservices-route53-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 463 359" style="max-width:463px;min-width:463px" role="img" aria-label="図3 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。"><defs><marker id="route53-dgservices-route53-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="w">
 <rect x="34" y="73" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="94" text-anchor="middle" class="dg-tb">Route 53</text>
@@ -6244,20 +6324,20 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="364" y="304" text-anchor="middle" class="dg-t">セカンダリ</text>
 <text x="364" y="322" text-anchor="middle" class="dg-s">障害時に切り替え</text>
 </g>
-<path d="M184.0,88.0 L289.0,72.5" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
+<path d="M184.0,88.0 L289.0,72.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
 <text x="236" y="84" text-anchor="middle" class="dg-s dg-halo">90%</text>
-<path d="M184.0,110.0 L289.0,125.5" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
+<path d="M184.0,110.0 L289.0,125.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
 <text x="236" y="122" text-anchor="middle" class="dg-s dg-halo">10%</text>
-<path d="M184.0,260.5 L289.0,245.0" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
+<path d="M184.0,260.5 L289.0,245.0" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
 <text x="236" y="257" text-anchor="middle" class="dg-s dg-halo">通常</text>
-<path d="M184.0,282.5 L289.0,298.0" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-2)"/>
+<path d="M184.0,282.5 L289.0,298.0" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-3)"/>
 <text x="236" y="294" text-anchor="middle" class="dg-s dg-halo">障害時</text>
 </svg>
 </div>
-<figcaption>図2 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。</figcaption>
+<figcaption>図3 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。</figcaption>
 </figure>
 
-<h3 id="route53-c2-5">ヘルスチェック<a class="anchor" href="#route53-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-6">ヘルスチェック<a class="anchor" href="#route53-c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p>ヘルスチェックは、リソースが正常かを定期的に確かめ、ルーティングから異常なリソースを外すために使います。種類は3つです。</p>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>確認する方法</th><th>向いている場面</th></tr>
@@ -6267,7 +6347,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 738 202" style="max-width:738px;min-width:590px" role="img" aria-label="図3 プライベートなリソースのヘルスチェック。ヘルスチェッカーはインターネット上にあるためVPC内のプライベートなリソースには届かない。CloudWatchアラームを作り、その状態をヘルスチェックに使う。"><defs><marker id="route53-dgservices-route53-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 738 202" style="max-width:738px;min-width:590px" role="img" aria-label="図3 プライベートなリソースのヘルスチェック。ヘルスチェッカーはインターネット上にあるためVPC内のプライベートなリソースには届かない。CloudWatchアラームを作り、その状態をヘルスチェックに使う。"><defs><marker id="route53-dgservices-route53-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="hc">
 <rect x="34" y="40" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="112" y="62" text-anchor="middle" class="dg-t">ヘルスチェッカー</text>
@@ -6293,12 +6373,12 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="636" y="62" text-anchor="middle" class="dg-t">ヘルスチェック</text>
 <text x="636" y="80" text-anchor="middle" class="dg-s">Route 53</text>
 </g>
-<path d="M189.0,66.5 L296.5,66.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
+<path d="M189.0,66.5 L296.5,66.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
 <text x="243" y="70" text-anchor="middle" class="dg-s dg-halo">接続して確認</text>
-<path d="M189.0,91.6 L296.5,126.4" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-3)"/>
-<path d="M451.5,151.5 L559.0,151.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
+<path d="M189.0,91.6 L296.5,126.4" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M451.5,151.5 L559.0,151.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
 <text x="505" y="156" text-anchor="middle" class="dg-s dg-halo">メトリクス</text>
-<path d="M636.5,125.5 L636.5,92.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
+<path d="M636.5,125.5 L636.5,92.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
 <text x="636" y="113" text-anchor="middle" class="dg-s dg-halo">アラームの状態</text>
 </svg>
 </div>
@@ -6310,7 +6390,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>ヘルスチェックの状態はCloudWatchのメトリクスになる(<strong>米国東部(バージニア北部)リージョン</strong>に出る)。アラームを作って、異常になったらSNSで通知できる。</li>
 </ul>
 
-<h3 id="route53-c2-6">Route 53 Resolver(VPCとオンプレミスの名前解決)<a class="anchor" href="#route53-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-7">Route 53 Resolver(VPCとオンプレミスの名前解決)<a class="anchor" href="#route53-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>VPCには、VPCのCIDRの先頭に2を足したアドレス(例:<code>10.0.0.2</code>)でRoute 53 Resolverが用意されていて、EC2などからの問い合わせに答えます(Amazon Provided DNS)。オンプレミスとつなぐときは、<strong>Resolverエンドポイント</strong>を使って問い合わせを転送します。</p>
 <div class="table-wrap"><table>
 <tr><th>しくみ</th><th>問い合わせの向き</th><th>例</th></tr>
@@ -6319,7 +6399,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 949 212" style="max-width:949px;min-width:759px" role="img" aria-label="図4 Resolverエンドポイントによるハイブリッドの名前解決。オンプレミスからAWSの名前はインバウンド、AWSから社内の名前はアウトバウンドと転送ルールで解決する。通信はDirect ConnectかSite-to-Site VPNを通る。"><defs><marker id="route53-dgservices-route53-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 949 212" style="max-width:949px;min-width:759px" role="img" aria-label="図4 Resolverエンドポイントによるハイブリッドの名前解決。オンプレミスからAWSの名前はインバウンド、AWSから社内の名前はアウトバウンドと転送ルールで解決する。通信はDirect ConnectかSite-to-Site VPNを通る。"><defs><marker id="route53-dgservices-route53-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="279" y="12" width="646" height="175" rx="10" class="dg-group"/>
 <text x="289" y="28" class="dg-s">VPC</text>
 <g data-node="onp">
@@ -6345,13 +6425,13 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <rect x="765" y="89" width="150" height="40" rx="8" class="dg-box"/>
 <text x="840" y="113" text-anchor="middle" class="dg-t">EC2</text>
 </g>
-<path d="M184.0,96.5 L289.0,79.0" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M184.0,96.5 L289.0,79.0" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
 <text x="236" y="92" text-anchor="middle" class="dg-s dg-halo">AWSの名前を問い合わせ</text>
-<path d="M439.0,79.0 L544.0,96.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
-<path d="M765.0,109.0 L694.0,109.0" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M439.0,79.0 L544.0,96.5" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
+<path d="M765.0,109.0 L694.0,109.0" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
 <text x="730" y="113" text-anchor="middle" class="dg-s dg-halo">問い合わせ</text>
-<path d="M544.0,121.5 L439.0,139.0" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
-<path d="M289.0,139.0 L184.0,121.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M544.0,121.5 L439.0,139.0" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
+<path d="M289.0,139.0 L184.0,121.5" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
 <text x="236" y="134" text-anchor="middle" class="dg-s dg-halo">社内の名前を転送</text>
 </svg>
 </div>
@@ -6362,20 +6442,20 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>VPCから外部への問い合わせを、ドメインのリストで遮断・許可したいときは<a href="#p-dns-firewall">Route 53 Resolver DNS Firewall</a>を使う。</li>
 </ul>
 
-<h3 id="route53-c2-7">DNSSEC<a class="anchor" href="#route53-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-8">DNSSEC<a class="anchor" href="#route53-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>DNSSEC署名</strong>を有効にすると、パブリックホストゾーンの回答に電子署名が付き、途中で回答をすり替える攻撃(DNSスプーフィング)を防げます。署名用のキー(KSK)には、<strong>米国東部(バージニア北部)リージョンのKMSのカスタマーマネージドキー</strong>(非対称キー)を使います。有効にしたあと、親のゾーン(ドメインの登録事業者)にDSレコードを登録します。VPCからの問い合わせで署名を検証するには、ResolverのDNSSEC検証を有効にします。</p>
 
-<h3 id="route53-c2-8">ログ<a class="anchor" href="#route53-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-9">ログ<a class="anchor" href="#route53-c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>パブリックDNSクエリのログ</strong>:パブリックホストゾーンへの問い合わせをCloudWatch Logsに送る(ロググループは米国東部(バージニア北部)リージョンに作る)。</li>
 <li><strong>Resolverのクエリログ</strong>:VPC内のリソースが行った問い合わせを、CloudWatch Logs・S3・Data Firehoseに送る。マルウェアが不審なドメインに問い合わせていないかの調査に使える。</li>
 <li>レコードの変更などのAPI操作はCloudTrailに記録される。</li>
 </ul>
 
-<h3 id="route53-c2-9">ドメイン登録<a class="anchor" href="#route53-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-10">ドメイン登録<a class="anchor" href="#route53-c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>Route 53でドメインを登録すると、ホストゾーンが自動で作られます。<strong>自動更新</strong>を有効にしておかないと、期限切れでドメインが使えなくなります。勝手に移管されないよう、移管ロックもかけられます。</p>
 
-<h3 id="route53-c2-10">Application Recovery Controller(ARC)<a class="anchor" href="#route53-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-11">Application Recovery Controller(ARC)<a class="anchor" href="#route53-c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p>リージョンやAZの切り替えを、安全・確実に行うためのサービスです。以前はRoute 53の機能でしたが、現在は独立したサービスです。ゾーンシフト(1つのAZからトラフィックを外す)、ルーティングコントロール、リージョンスイッチなどの機能があります。詳しくは<a href="#p-application-recovery-controller">Amazon Application Recovery Controller</a>を参照してください。</p>
 </section>
 
@@ -6386,7 +6466,11 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>フェイルオーバーで障害時に待機系サイト(S3の静的ページなど)へ切り替え</li>
 <li>新バージョンへ10%だけトラフィックを流す(加重)</li>
 <li>VPC内の社内システムの名前解決(プライベートホストゾーン)</li>
+<<<<<<< Updated upstream
 <li>オンプレミスとVPCの間で、お互いの名前を解決する(Resolverエンドポイント)</li>
+=======
+<li>オンプレミスとVPCで互いの名前を解決(Resolverエンドポイント)</li>
+>>>>>>> Stashed changes
 </ul>
 </section>
 
@@ -6417,6 +6501,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h4>レコードとルーティング</h4>
 <ul>
 <li>A/Bテスト・段階リリース → <strong>加重</strong>。DR → <strong>フェイルオーバー</strong>。速いリージョンへ → <strong>レイテンシー</strong>。</li>
+<<<<<<< Updated upstream
 <li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。当てはまらない利用者用に<strong>デフォルトのレコード</strong>も作る。</li>
 <li><code>example.com</code>(ゾーンの頂点)をELBやCloudFrontに向けたい → <strong class="em">エイリアスレコード</strong>(CNAMEは頂点に作れない)。</li>
 <li>レコードを変えたのに古い値が返る → <strong>TTL</strong>の間はキャッシュされる。切り替えの前にTTLを短くしておく。</li>
@@ -6435,6 +6520,12 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>オンプレミスからAWSの名前を引く → <strong>インバウンドエンドポイント</strong>。AWSから社内の名前を引く → <strong>アウトバウンドエンドポイントと転送ルール</strong>。</li>
 <li>DNSの回答のすり替えを防ぐ → <strong>DNSSEC署名</strong>(KMSキーは米国東部(バージニア北部))。</li>
 <li>VPC内のどのリソースがどの名前を引いたか調べたい → <strong>Resolverのクエリログ</strong>。</li>
+=======
+<li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。</li>
+<li>VPC内だけで使う名前 → <strong>プライベートホストゾーン</strong>。解決できないときはVPCとの関連付けと、VPCのDNS設定(<code>enableDnsHostnames</code>・<code>enableDnsSupport</code>)を確認。</li>
+<li>オンプレミスからVPCの名前を引く → Resolverの<strong>インバウンドエンドポイント</strong>。VPCから社内DNSの名前を引く → <strong>アウトバウンドエンドポイント</strong>と転送ルール。</li>
+<li>転送ルールを複数のアカウントで使う → <strong>AWS RAM</strong>で共有してVPCに関連付ける。</li>
+>>>>>>> Stashed changes
 <li>AZ障害時にすばやくトラフィックを外す → ARCの<strong>ゾーンシフト</strong>。</li>
 </ul>
 </div>
@@ -6443,9 +6534,16 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <section class="chapter">
 <h2 id="route53-c7">7. まとめ<a class="anchor" href="#route53-c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
+<<<<<<< Updated upstream
 <li>Route 53はドメイン登録・DNS(ホストゾーン)・VPCの名前解決(Resolver)を提供する。</li>
 <li>AWSリソースにはエイリアスレコードで向け、ルーティングポリシーとヘルスチェックで返す値を変える。</li>
 <li>プライベートなリソースはCloudWatchアラームでヘルスチェックし、オンプレミスとはResolverエンドポイントで名前解決をつなぐ。</li>
+=======
+<li>Route 53はDNS・ドメイン登録・ヘルスチェックを提供する。</li>
+<li>ホストゾーンはパブリックとプライベートの2種類。</li>
+<li>オンプレミスとの名前解決は、Resolverのインバウンド/アウトバウンドエンドポイントでつなぐ。</li>
+<li>ルーティングポリシーを目的に応じて選び分ける。</li>
+>>>>>>> Stashed changes
 </ul>
 </section>
 </article>
@@ -11536,9 +11634,73 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>インスタンスのIAMロールに <code>AmazonSSMManagedInstanceCore</code> などの<strong>権限</strong>がある(またはアカウント全体の設定「デフォルトのホスト管理設定」を有効にする)</li>
 <li>Systems Managerのエンドポイントへの<strong>アウトバウンド通信</strong>ができる(NATゲートウェイ、または <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のVPCエンドポイント)</li>
 </ul>
+<h3 id="systems-manager-c2-2">EC2で各機能を使えるようにする手順<a class="anchor" href="#systems-manager-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Session Manager・Run Command・Patch Managerなど、EC2で使う機能はどれも、インスタンスが<strong>管理対象ノード</strong>になっていることが前提です。次の順番で準備します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 946 227" style="max-width:946px;min-width:756px" role="img" aria-label="図2 EC2を管理対象ノードにする手順。①権限を持つロールをインスタンスプロファイルで付け、②SSM Agentを動かし、③Systems Managerまでの通信経路を用意すると、④管理対象ノードとして表示され、⑤各機能が使えるようになる。"><defs><marker id="systems-manager-dgservices-systems-manager-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="role">
+<rect x="34" y="43" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="106" y="64" text-anchor="middle" class="dg-t">①IAMロール</text>
+<text x="106" y="82" text-anchor="middle" class="dg-s">SSM用の管理ポリシー</text>
+</g>
+<g data-node="prof">
+<rect x="282" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="354" y="64" text-anchor="middle" class="dg-t">インスタンス</text>
+<text x="354" y="82" text-anchor="middle" class="dg-s">プロファイル</text>
+</g>
+<g data-node="ec2">
+<rect x="529" y="43" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="602" y="64" text-anchor="middle" class="dg-tb">EC2</text>
+<text x="602" y="82" text-anchor="middle" class="dg-s">②SSM Agent</text>
+</g>
+<g data-node="ep">
+<rect x="529" y="151" width="145" height="52" rx="8" class="dg-box"/>
+<text x="602" y="172" text-anchor="middle" class="dg-t">③NATゲートウェイ</text>
+<text x="602" y="190" text-anchor="middle" class="dg-s">またはエンドポイント</text>
+</g>
+<g data-node="ssm">
+<rect x="776" y="151" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="849" y="172" text-anchor="middle" class="dg-t">Systems Manager</text>
+<text x="849" y="190" text-anchor="middle" class="dg-s">④管理対象ノードに表示</text>
+</g>
+<g data-node="admin">
+<rect x="776" y="43" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="849" y="64" text-anchor="middle" class="dg-t">管理者</text>
+<text x="849" y="82" text-anchor="middle" class="dg-s">⑤各機能を使う</text>
+</g>
+<path d="M179.0,69.0 L281.5,69.0" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-2)"/>
+<path d="M426.5,69.0 L529.0,69.0" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-2)"/>
+<path d="M601.5,95.0 L601.5,151.0" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-2)"/>
+<text x="602" y="127" text-anchor="middle" class="dg-s dg-halo">HTTPS 443</text>
+<path d="M674.0,177.0 L776.5,177.0" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-2)"/>
+<path d="M849.0,95.0 L849.0,151.0" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-2)"/>
+</svg>
+</div>
+<figcaption>図2 EC2を管理対象ノードにする手順。①権限を持つロールをインスタンスプロファイルで付け、②SSM Agentを動かし、③Systems Managerまでの通信経路を用意すると、④管理対象ノードとして表示され、⑤各機能が使えるようになる。</figcaption>
+</figure>
+<ol>
+<li><strong>IAMロールを付ける</strong>:EC2用のロールにAWS管理ポリシー <code>AmazonSSMManagedInstanceCore</code> を付け、<a href="../terms/instance-profile.html">インスタンスプロファイル</a>としてインスタンスに付ける。起動中のインスタンスにも、停止せずに付けられる。インスタンスごとにロールを付けたくないときは、アカウント・リージョン単位の「<strong>デフォルトのホスト管理設定</strong>」を有効にすると、ロールのないインスタンスも管理対象になる(IMDSv2と、新しめのSSM Agentが必要)。</li>
+<li><strong>SSM Agentを確認する</strong>:Amazon Linux・Windows Server・Ubuntuなどの主要なAMIには最初から入っている。入っていないAMIでは、ユーザーデータなどでインストールする。Linuxでは <code>sudo systemctl status amazon-ssm-agent</code> で起動しているか確認できる。</li>
+<li><strong>通信経路を用意する</strong>:インスタンスから Systems Manager のエンドポイントへ HTTPS(443)のアウトバウンド通信ができるようにする。パブリックサブネットならインターネットゲートウェイ経由、プライベートサブネットならNATゲートウェイか、<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> の<a href="../terms/vpc-endpoint.html">インターフェイスエンドポイント</a>を作る。エンドポイントを使うときは、VPCのDNS設定とエンドポイントの「プライベートDNS名」を有効にし、エンドポイントのセキュリティグループでインスタンスからの443を許可する。</li>
+<li><strong>管理対象ノードとして表示されるか確認する</strong>:Fleet Managerのノードの一覧、または <code>aws ssm describe-instance-information</code> で、状態(Ping status)が <code>Online</code> になっていれば準備完了。表示されるまで数分かかることがある。ロールを後から付けたのに表示されないときは、SSM Agentを再起動する。</li>
+<li><strong>使う機能ごとの設定をする</strong>:下の表のとおり、機能によって追加の権限・経路・設定が必要になる。</li>
+</ol>
+<p>1〜3の設定は、<strong>Quick Setup</strong>を使うと、組織やアカウントの複数のインスタンスにまとめて行えます。</p>
+<div class="table-wrap"><table>
+<tr><th>使う機能</th><th>管理対象ノードにしたあとに必要なこと</th></tr>
+<tr><td><a href="#systems-manager-f-session">Session Manager</a></td><td>操作する人に <code>ssm:StartSession</code> の権限。ローカルのPCのCLIから使うときは Session Manager plugin を入れる。操作ログをS3・CloudWatch Logsに残すときは、インスタンスのロールに書き込み権限を足し、経路(S3のゲートウェイエンドポイント、<code>logs</code> のエンドポイント)を用意する</td></tr>
+<tr><td><a href="#systems-manager-f-run">Run Command</a></td><td>実行するSSMドキュメント(<code>AWS-RunShellScript</code> など)と、対象(インスタンスID・タグ・リソースグループ)を選ぶ。出力をS3に残すときはロールに書き込み権限</td></tr>
+<tr><td><a href="#systems-manager-f-patch">Patch Manager</a></td><td>パッチベースラインを決め、パッチポリシーまたはMaintenance Windowsで定期的に <code>AWS-RunPatchBaseline</code> を実行する。プライベートサブネットでは、パッチの取得元(OSのリポジトリ)とS3への経路も必要</td></tr>
+<tr><td><a href="#systems-manager-f-state">State Manager</a>・<a href="#systems-manager-f-inventory">Inventory</a></td><td>関連付け(どのドキュメントを、どの対象に、どの間隔で実行するか)を作る</td></tr>
+<tr><td><a href="#systems-manager-f-param">Parameter Store</a></td><td>アプリが読むパラメータへの <code>ssm:GetParameter</code> の権限をロールに足す。SecureStringをカスタマー管理キーで暗号化したときは <code>kms:Decrypt</code> も必要</td></tr>
+<tr><td>CloudWatchエージェント</td><td>Run Command(<code>AWS-ConfigureAWSPackage</code>)で導入し、設定をParameter Storeに置いて配る。ロールに <code>CloudWatchAgentServerPolicy</code> を足す</td></tr>
+</table></div>
+<p>管理対象ノードにならないときは、ロール・SSM Agent・通信経路の3つを順に確認します。インスタンスにログインできる場合は、SSM Agentのログ(Linuxでは <code>/var/log/amazon/ssm/amazon-ssm-agent.log</code>)や、<code>ssm-cli get-diagnostics</code> の結果で、どこで失敗しているかが分かります。</p>
+
 <p><strong>SSMドキュメント</strong>は、Systems Managerが実行する処理を定義したJSON/YAMLのファイルです。AWSが用意したもの(<code>AWS-</code> で始まる)をそのまま使うことも、自作することもできます。Run Command用の「コマンドドキュメント」、Automation用の「ランブック」などの種類があります。</p>
 
-<h3 id="systems-manager-c2-2">ノード管理の機能<a class="anchor" href="#systems-manager-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="systems-manager-c2-3">ノード管理の機能<a class="anchor" href="#systems-manager-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="systems-manager-f-session">
 <h4>Session Manager</h4>
@@ -11550,7 +11712,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </dl>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 638 206" style="max-width:638px;min-width:520px" role="img" aria-label="図2 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。"><defs><marker id="systems-manager-dgservices-systems-manager-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 638 206" style="max-width:638px;min-width:520px" role="img" aria-label="図3 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。"><defs><marker id="systems-manager-dgservices-systems-manager-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="admin">
 <rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
 <text x="104" y="62" text-anchor="middle" class="dg-t">管理者</text>
@@ -11571,13 +11733,13 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="344" y="151" text-anchor="middle" class="dg-t">操作ログ</text>
 <text x="344" y="169" text-anchor="middle" class="dg-s">S3・CloudWatch Logs</text>
 </g>
-<path d="M174.0,66.5 L250.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-2)"/>
-<path d="M474.0,66.5 L390.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-2)"/>
+<path d="M174.0,66.5 L250.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-3)"/>
+<path d="M474.0,66.5 L390.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-3)"/>
 <text x="432" y="70" text-anchor="middle" class="dg-s dg-halo">HTTPS(外向き)</text>
-<path d="M327.0,92.5 L337.0,129.8" class="dg-line dg-dash" marker-end="url(#systems-manager-dgservices-systems-manager-2)"/>
+<path d="M327.0,92.5 L337.0,129.8" class="dg-line dg-dash" marker-end="url(#systems-manager-dgservices-systems-manager-3)"/>
 </svg>
 </div>
-<figcaption>図2 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。</figcaption>
+<figcaption>図3 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。</figcaption>
 </figure>
 </div>
 
@@ -11612,7 +11774,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </dl>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図3 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。"><defs><marker id="systems-manager-dgservices-systems-manager-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図4 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。"><defs><marker id="systems-manager-dgservices-systems-manager-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="bl">
 <rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
 <text x="347" y="60" text-anchor="middle" class="dg-t">パッチベースライン</text>
@@ -11638,14 +11800,14 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <rect x="510" y="124" width="150" height="40" rx="8" class="dg-ok"/>
 <text x="585" y="148" text-anchor="middle" class="dg-t">対象のEC2</text>
 </g>
-<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-3)"/>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-4)"/>
 <text x="228" y="148" text-anchor="middle" class="dg-s dg-halo">起動</text>
-<path d="M347.0,90.0 L347.0,118.0" class="dg-line dg-dash" marker-end="url(#systems-manager-dgservices-systems-manager-3)"/>
-<path d="M347.0,198.0 L347.0,170.0" class="dg-line dg-dash" marker-end="url(#systems-manager-dgservices-systems-manager-3)"/>
-<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-3)"/>
+<path d="M347.0,90.0 L347.0,118.0" class="dg-line dg-dash" marker-end="url(#systems-manager-dgservices-systems-manager-4)"/>
+<path d="M347.0,198.0 L347.0,170.0" class="dg-line dg-dash" marker-end="url(#systems-manager-dgservices-systems-manager-4)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-4)"/>
 </svg>
 </div>
-<figcaption>図3 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。</figcaption>
+<figcaption>図4 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。</figcaption>
 </figure>
 </div>
 
@@ -11695,7 +11857,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </dl>
 </div>
 
-<h3 id="systems-manager-c2-3">変更管理の機能<a class="anchor" href="#systems-manager-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="systems-manager-c2-4">変更管理の機能<a class="anchor" href="#systems-manager-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="systems-manager-f-automation">
 <h4>Automation</h4>
@@ -11708,7 +11870,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </dl>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 706 202" style="max-width:706px;min-width:565px" role="img" aria-label="図4 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。"><defs><marker id="systems-manager-dgservices-systems-manager-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 706 202" style="max-width:706px;min-width:565px" role="img" aria-label="図5 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。"><defs><marker id="systems-manager-dgservices-systems-manager-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="cfg">
 <rect x="34" y="40" width="145" height="52" rx="8" class="dg-box"/>
 <text x="106" y="62" text-anchor="middle" class="dg-t">Config</text>
@@ -11734,14 +11896,14 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="597" y="147" text-anchor="middle" class="dg-t">AWSリソースを操作</text>
 <text x="597" y="165" text-anchor="middle" class="dg-s">停止・修正・AMI作成</text>
 </g>
-<path d="M179.0,79.4 L273.2,96.1" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-4)"/>
+<path d="M179.0,79.4 L273.2,96.1" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-5)"/>
 <text x="226" y="92" text-anchor="middle" class="dg-s dg-halo">修復</text>
-<path d="M179.0,138.6 L273.2,121.9" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-4)"/>
-<path d="M418.2,96.1 L512.5,79.4" class="dg-line dg-dash" marker-end="url(#systems-manager-dgservices-systems-manager-4)"/>
-<path d="M418.2,121.2 L512.5,137.2" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-4)"/>
+<path d="M179.0,138.6 L273.2,121.9" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-5)"/>
+<path d="M418.2,96.1 L512.5,79.4" class="dg-line dg-dash" marker-end="url(#systems-manager-dgservices-systems-manager-5)"/>
+<path d="M418.2,121.2 L512.5,137.2" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-5)"/>
 </svg>
 </div>
-<figcaption>図4 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。</figcaption>
+<figcaption>図5 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。</figcaption>
 </figure>
 </div>
 
@@ -11773,7 +11935,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </dl>
 </div>
 
-<h3 id="systems-manager-c2-4">アプリケーション管理の機能<a class="anchor" href="#systems-manager-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="systems-manager-c2-5">アプリケーション管理の機能<a class="anchor" href="#systems-manager-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="systems-manager-f-param">
 <h4>Parameter Store</h4>
@@ -11801,7 +11963,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </dl>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 788 202" style="max-width:788px;min-width:630px" role="img" aria-label="図5 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。"><defs><marker id="systems-manager-dgservices-systems-manager-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 788 202" style="max-width:788px;min-width:630px" role="img" aria-label="図6 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。"><defs><marker id="systems-manager-dgservices-systems-manager-6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="v">
 <rect x="34" y="40" width="130" height="52" rx="8" class="dg-blue"/>
 <text x="99" y="62" text-anchor="middle" class="dg-t">新しい設定</text>
@@ -11832,18 +11994,18 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="549" y="147" text-anchor="middle" class="dg-t">ロールバック</text>
 <text x="549" y="165" text-anchor="middle" class="dg-s">異常なら</text>
 </g>
-<path d="M164.0,66.5 L184.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-5)"/>
-<path d="M314.0,66.5 L334.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-5)"/>
-<path d="M464.0,66.5 L484.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-5)"/>
-<path d="M614.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-5)"/>
-<path d="M549.0,92.5 L549.0,125.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-5)"/>
+<path d="M164.0,66.5 L184.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-6)"/>
+<path d="M314.0,66.5 L334.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-6)"/>
+<path d="M464.0,66.5 L484.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-6)"/>
+<path d="M614.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-6)"/>
+<path d="M549.0,92.5 L549.0,125.5" class="dg-line" marker-end="url(#systems-manager-dgservices-systems-manager-6)"/>
 </svg>
 </div>
-<figcaption>図5 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。</figcaption>
+<figcaption>図6 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。</figcaption>
 </figure>
 </div>
 
-<h3 id="systems-manager-c2-5">運用管理の機能<a class="anchor" href="#systems-manager-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="systems-manager-c2-6">運用管理の機能<a class="anchor" href="#systems-manager-c2-6" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="systems-manager-f-opscenter">
 <h4>OpsCenter</h4>

@@ -41,6 +41,42 @@ edge onp ssm "HTTPS"
 <li>インスタンスのIAMロールに <code>AmazonSSMManagedInstanceCore</code> などの<strong>権限</strong>がある(またはアカウント全体の設定「デフォルトのホスト管理設定」を有効にする)</li>
 <li>Systems Managerのエンドポイントへの<strong>アウトバウンド通信</strong>ができる(NATゲートウェイ、または <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のVPCエンドポイント)</li>
 </ul>
+<h3>EC2で各機能を使えるようにする手順</h3>
+<p>Session Manager・Run Command・Patch Managerなど、EC2で使う機能はどれも、インスタンスが<strong>管理対象ノード</strong>になっていることが前提です。次の順番で準備します。</p>
+<figure class="figure" data-diagram>
+grid 165 90
+node role 0 0 ok "①IAMロール" "SSM用の管理ポリシー"
+node prof 1.5 0 box "インスタンス" "プロファイル"
+node ec2 3 0 accent "EC2" "②SSM Agent"
+node ep 3 1.2 box "③NATゲートウェイ" "またはエンドポイント"
+node ssm 4.5 1.2 ok "Systems Manager" "④管理対象ノードに表示"
+node admin 4.5 0 blue "管理者" "⑤各機能を使う"
+edge role prof
+edge prof ec2
+edge ec2 ep "HTTPS 443"
+edge ep ssm
+edge admin ssm
+<figcaption>図2 EC2を管理対象ノードにする手順。①権限を持つロールをインスタンスプロファイルで付け、②SSM Agentを動かし、③Systems Managerまでの通信経路を用意すると、④管理対象ノードとして表示され、⑤各機能が使えるようになる。</figcaption>
+</figure>
+<ol>
+<li><strong>IAMロールを付ける</strong>:EC2用のロールにAWS管理ポリシー <code>AmazonSSMManagedInstanceCore</code> を付け、<a href="../terms/instance-profile.html">インスタンスプロファイル</a>としてインスタンスに付ける。起動中のインスタンスにも、停止せずに付けられる。インスタンスごとにロールを付けたくないときは、アカウント・リージョン単位の「<strong>デフォルトのホスト管理設定</strong>」を有効にすると、ロールのないインスタンスも管理対象になる(IMDSv2と、新しめのSSM Agentが必要)。</li>
+<li><strong>SSM Agentを確認する</strong>:Amazon Linux・Windows Server・Ubuntuなどの主要なAMIには最初から入っている。入っていないAMIでは、ユーザーデータなどでインストールする。Linuxでは <code>sudo systemctl status amazon-ssm-agent</code> で起動しているか確認できる。</li>
+<li><strong>通信経路を用意する</strong>:インスタンスから Systems Manager のエンドポイントへ HTTPS(443)のアウトバウンド通信ができるようにする。パブリックサブネットならインターネットゲートウェイ経由、プライベートサブネットならNATゲートウェイか、<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> の<a href="../terms/vpc-endpoint.html">インターフェイスエンドポイント</a>を作る。エンドポイントを使うときは、VPCのDNS設定とエンドポイントの「プライベートDNS名」を有効にし、エンドポイントのセキュリティグループでインスタンスからの443を許可する。</li>
+<li><strong>管理対象ノードとして表示されるか確認する</strong>:Fleet Managerのノードの一覧、または <code>aws ssm describe-instance-information</code> で、状態(Ping status)が <code>Online</code> になっていれば準備完了。表示されるまで数分かかることがある。ロールを後から付けたのに表示されないときは、SSM Agentを再起動する。</li>
+<li><strong>使う機能ごとの設定をする</strong>:下の表のとおり、機能によって追加の権限・経路・設定が必要になる。</li>
+</ol>
+<p>1〜3の設定は、<strong>Quick Setup</strong>を使うと、組織やアカウントの複数のインスタンスにまとめて行えます。</p>
+<div class="table-wrap"><table>
+<tr><th>使う機能</th><th>管理対象ノードにしたあとに必要なこと</th></tr>
+<tr><td><a href="#f-session">Session Manager</a></td><td>操作する人に <code>ssm:StartSession</code> の権限。ローカルのPCのCLIから使うときは Session Manager plugin を入れる。操作ログをS3・CloudWatch Logsに残すときは、インスタンスのロールに書き込み権限を足し、経路(S3のゲートウェイエンドポイント、<code>logs</code> のエンドポイント)を用意する</td></tr>
+<tr><td><a href="#f-run">Run Command</a></td><td>実行するSSMドキュメント(<code>AWS-RunShellScript</code> など)と、対象(インスタンスID・タグ・リソースグループ)を選ぶ。出力をS3に残すときはロールに書き込み権限</td></tr>
+<tr><td><a href="#f-patch">Patch Manager</a></td><td>パッチベースラインを決め、パッチポリシーまたはMaintenance Windowsで定期的に <code>AWS-RunPatchBaseline</code> を実行する。プライベートサブネットでは、パッチの取得元(OSのリポジトリ)とS3への経路も必要</td></tr>
+<tr><td><a href="#f-state">State Manager</a>・<a href="#f-inventory">Inventory</a></td><td>関連付け(どのドキュメントを、どの対象に、どの間隔で実行するか)を作る</td></tr>
+<tr><td><a href="#f-param">Parameter Store</a></td><td>アプリが読むパラメータへの <code>ssm:GetParameter</code> の権限をロールに足す。SecureStringをカスタマー管理キーで暗号化したときは <code>kms:Decrypt</code> も必要</td></tr>
+<tr><td>CloudWatchエージェント</td><td>Run Command(<code>AWS-ConfigureAWSPackage</code>)で導入し、設定をParameter Storeに置いて配る。ロールに <code>CloudWatchAgentServerPolicy</code> を足す</td></tr>
+</table></div>
+<p>管理対象ノードにならないときは、ロール・SSM Agent・通信経路の3つを順に確認します。インスタンスにログインできる場合は、SSM Agentのログ(Linuxでは <code>/var/log/amazon/ssm/amazon-ssm-agent.log</code>)や、<code>ssm-cli get-diagnostics</code> の結果で、どこで失敗しているかが分かります。</p>
+
 <p><strong>SSMドキュメント</strong>は、Systems Managerが実行する処理を定義したJSON/YAMLのファイルです。AWSが用意したもの(<code>AWS-</code> で始まる)をそのまま使うことも、自作することもできます。Run Command用の「コマンドドキュメント」、Automation用の「ランブック」などの種類があります。</p>
 
 <h3>ノード管理の機能</h3>
@@ -62,7 +98,7 @@ node log 1.35 1.05 box "操作ログ" "S3・CloudWatch Logs" w=1.3
 edge admin sm
 edge ec2 sm "HTTPS(外向き)"
 edge sm log dash
-<figcaption>図2 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。</figcaption>
+<figcaption>図3 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。</figcaption>
 </figure>
 </div>
 
@@ -106,7 +142,7 @@ edge mw rc "起動"
 edge bl rc dash
 edge pg rc dash
 edge rc ec2
-<figcaption>図3 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。</figcaption>
+<figcaption>図4 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。</figcaption>
 </figure>
 </div>
 
@@ -178,7 +214,7 @@ edge cfg au "修復"
 edge eb au
 edge au ap dash
 edge au res
-<figcaption>図4 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。</figcaption>
+<figcaption>図5 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。</figcaption>
 </figure>
 </div>
 
@@ -249,7 +285,7 @@ edge val dep
 edge dep mon
 edge mon ok
 edge mon ng
-<figcaption>図5 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。</figcaption>
+<figcaption>図6 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。</figcaption>
 </figure>
 </div>
 
