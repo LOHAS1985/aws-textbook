@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPCトラフィックミラーリング | AWS教科書</title>
+<meta name="description" content="EC2のネットワークインターフェイスを通るパケットをそのままコピーし、侵入検知や通信の解析を行うアプライアンスへ送る機能">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">ネットワーク</a>
+  <h1>VPCトラフィックミラーリング</h1>
+  <p class="lead">EC2のネットワークインターフェイスを通るパケットをそのままコピーし、侵入検知や通信の解析を行うアプライアンスへ送る機能</p>
+  <p class="updated">最終更新:<time datetime="2026-11-01">2026-11-01</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>VPCトラフィックミラーリング(Traffic Mirroring)</strong>は、<a href="../services/vpc.html">Amazon VPC</a>の機能の1つで、EC2のネットワークインターフェイス(ENI)を通る<strong>パケットをそのままコピー</strong>して、別の宛先に送ります。オンプレミスのネットワーク機器でいう「ポートミラーリング(SPAN)」をVPCで実現するもので、コピーを受け取った侵入検知システム(IDS)やパケット解析ツールが、通信の中身まで調べられます。</p>
+<p>元の通信には手を加えないため、アプリケーションや通信相手には影響しません。インスタンスにエージェントを入れる必要もありません。</p>
+
+<h3 id="c1-1">フローログとの違い<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th><a href="vpc-flow-logs.html">VPCフローログ</a></th><th>トラフィックミラーリング</th></tr>
+<tr><td>得られるもの</td><td>通信の<strong>メタデータ</strong>(送信元・宛先・ポート・ACCEPT/REJECT)</td><td>パケットの<strong>中身(ペイロード)</strong>を含むコピー</td></tr>
+<tr><td>送り先</td><td>CloudWatch Logs・S3・Data Firehose</td><td>ENI・Network Load Balancer・Gateway Load Balancerエンドポイント</td></tr>
+<tr><td>主な用途</td><td>通信の可否の調査、監査、通信量の傾向</td><td>侵入検知(IDS)、不正な通信の中身の解析、アプリの通信トラブルの詳しい調査</td></tr>
+<tr><td>対象</td><td>VPC・サブネット・ENI</td><td>ENI(Nitroベースのインスタンス)</td></tr>
+</table></div>
+
+<h3 id="c1-2">4つの構成要素<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 929 252" style="max-width:929px;min-width:743px" role="img" aria-label="図1 トラフィックミラーリングの構成要素。ミラーソース(ENI)のパケットを、ミラーフィルターで絞り込んでコピーし、ミラーセッションがVXLANで包んでミラーターゲットへ送る。複数のソースを1つのNLBやGWLBに集めると、解析ツールを冗長化・拡張しやすい。"><defs><marker id="dgterms-vpc-traffic-mirroring-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="83" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="104" text-anchor="middle" class="dg-t">ミラーソース</text>
+<text x="106" y="122" text-anchor="middle" class="dg-s">EC2のENI</text>
+</g>
+<g data-node="ses">
+<rect x="282" y="83" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="104" text-anchor="middle" class="dg-tb">ミラーセッション</text>
+<text x="354" y="122" text-anchor="middle" class="dg-s">VXLANで包む</text>
+</g>
+<g data-node="flt">
+<rect x="282" y="176" width="145" height="52" rx="8" class="dg-box"/>
+<text x="354" y="198" text-anchor="middle" class="dg-t">ミラーフィルター</text>
+<text x="354" y="216" text-anchor="middle" class="dg-s">何をコピーするか</text>
+</g>
+<g data-node="tgt">
+<rect x="529" y="83" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="104" text-anchor="middle" class="dg-t">ミラーターゲット</text>
+<text x="602" y="122" text-anchor="middle" class="dg-s">ENI・NLB・GWLBE</text>
+</g>
+<g data-node="ids">
+<rect x="760" y="89" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="833" y="113" text-anchor="middle" class="dg-t">IDS・解析ツール</text>
+</g>
+<path d="M179.0,109.0 L281.5,109.0" class="dg-line" marker-end="url(#dgterms-vpc-traffic-mirroring-1)"/>
+<text x="230" y="113" text-anchor="middle" class="dg-s dg-halo">コピー</text>
+<path d="M354.0,176.5 L354.0,135.0" class="dg-line" marker-end="url(#dgterms-vpc-traffic-mirroring-1)"/>
+<path d="M426.5,109.0 L529.0,109.0" class="dg-line" marker-end="url(#dgterms-vpc-traffic-mirroring-1)"/>
+<text x="478" y="113" text-anchor="middle" class="dg-s dg-halo">UDP 4789</text>
+<path d="M674.0,109.0 L760.0,109.0" class="dg-line" marker-end="url(#dgterms-vpc-traffic-mirroring-1)"/>
+</svg>
+</div>
+<figcaption>図1 トラフィックミラーリングの構成要素。ミラーソース(ENI)のパケットを、ミラーフィルターで絞り込んでコピーし、ミラーセッションがVXLANで包んでミラーターゲットへ送る。複数のソースを1つのNLBやGWLBに集めると、解析ツールを冗長化・拡張しやすい。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>ミラーソース</td><td>コピー元のENI。Nitroベースのインスタンスで使える(一部のインスタンスタイプは対象外)</td></tr>
+<tr><td>ミラーターゲット</td><td>コピーの送り先。<strong>ENI</strong>(解析用のEC2)、<strong>Network Load Balancer</strong>(UDPリスナー)、<strong>Gateway Load Balancerエンドポイント</strong>。VPCピアリングやTransit Gatewayでつながった別のVPC・別アカウントにも置ける</td></tr>
+<tr><td>ミラーフィルター</td><td>コピーする通信を、インバウンド/アウトバウンドごとのルール(プロトコル・ポート・CIDR、許可/拒否、ルール番号の小さい順に評価)で選ぶ</td></tr>
+<tr><td>ミラーセッション</td><td>ソース・ターゲット・フィルターを結びつける設定。セッション番号(1つのENIに複数のセッションがあるときの優先順位)、VXLANのID(VNI)、コピーするパケットの長さ(先頭だけにして量を減らす)を指定する</td></tr>
+</table></div>
+
+<h3 id="c1-3">注意点<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>コピーは<strong>VXLAN(UDP 4789)</strong>で包んで送られる。ターゲットのセキュリティグループ・ネットワークACLで UDP 4789 を許可し、解析ツールもVXLANを解釈できる必要がある</li>
+<li>コピーした通信もソースのインスタンスの<strong>帯域幅を使う</strong>。混雑したときは元の通信が優先され、コピーの方が捨てられる。必要な通信だけをフィルターで選び、パケットの長さも絞る</li>
+<li>料金は、ミラーセッションを有効にしているENIごとの時間課金。別のAZ・VPCのターゲットへ送ると、データ転送料もかかる</li>
+<li>TLSで暗号化された通信は、コピーしても中身は暗号化されたまま。中身を見るには、復号できる位置(ロードバランサーで終端した後など)でコピーする</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="vpc-flow-logs.html">VPCフローログ</a>:メタデータだけを記録する、より手軽な通信の記録</li>
+<li><a href="eni-elastic-ip.html">ENIとElastic IP</a>:ミラーソース・ターゲットになるネットワークインターフェイス</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:ターゲットで UDP 4789 を許可する</li>
+<li><a href="tls-termination.html">TLSの終端</a>:暗号化された通信の中身を見られる位置</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:トラフィックミラーリングを設定する</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:ミラーソースになるNitroベースのインスタンス</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:NLB・GWLBをターゲットにして、複数の解析ツールへ分散する</li>
+<li><a href="../services/guardduty.html">Amazon GuardDuty</a>:パケットのコピーを使わずに、フローログやDNSログから脅威を検出する</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/vpc.html"><span class="title">Amazon VPC</span><span class="kind">サービス</span><span class="desc">AWS上に論理的に分離された仮想ネットワークを作るサービス</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 8件・リンク元 0件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="VPCトラフィックミラーリングとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon GuardDuty</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Elastic Load Balancing (E…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/eni-elastic-ip.html"><title>用語:ENIとElastic IP</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">ENIとElastic IP</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/tls-termination.html"><title>用語:TLS終端と証明書の配置</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">TLS終端と証明書の配置</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/vpc-flow-logs.html"><title>用語:VPCフローログ</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">VPCフローログ</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../terms/nacl-security-group.html"><title>用語:ネットワークACLとセキュリティグループ</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">ネットワークACLとセキュリティ…</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">VPCトラフィックミラ…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="vpc-flow-logs.html"><span class="label">← 前へ</span>VPCフローログ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="eni-elastic-ip.html"><span class="label">次へ →</span>ENIとElastic IP</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

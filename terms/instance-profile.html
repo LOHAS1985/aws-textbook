@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>インスタンスプロファイル | AWS教科書</title>
+<meta name="description" content="EC2インスタンスにIAMロールを渡すための入れ物。インスタンス上のアプリは、アクセスキーを置かずにロールの権限でAWSを操作できる">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">セキュリティ・認証</a>
+  <h1>インスタンスプロファイル</h1>
+  <p class="lead">EC2インスタンスにIAMロールを渡すための入れ物。インスタンス上のアプリは、アクセスキーを置かずにロールの権限でAWSを操作できる</p>
+  <p class="updated">最終更新:<time datetime="2026-11-01">2026-11-01</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(9項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">ロールとインスタンスプロファイルの関係</a></li><li><a href="#c1-2">作り方:コンソールとCLI・IaCの違い</a></li><li><a href="#c1-3">インスタンスにロールを付けるときの権限</a></li><li><a href="#c1-4">認証情報の取得とIMDSv2</a></li><li><a href="#c1-5">よくあるトラブル</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+<li><a href="#c4">この用語が出てくるページ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>インスタンスプロファイル</strong>は、<a href="../services/ec2.html">EC2</a>インスタンスに<a href="iam-roles-credentials.html">IAMロール</a>を渡すための<strong>入れ物(コンテナ)</strong>です。EC2にはIAMロールを直接付けることはできず、「インスタンス → インスタンスプロファイル → IAMロール」の形で付けます。インスタンス上のアプリやAWS CLIは、このロールの<strong>一時的な認証情報</strong>を自動で受け取るため、アクセスキーをインスタンスに保存する必要がありません。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 272" style="max-width:698px;min-width:558px" role="img" aria-label="図1 インスタンスプロファイルの仕組み。インスタンスに付けたプロファイルの中のロールについて、STSが発行した一時的な認証情報がインスタンスメタデータ(IMDS)に置かれる。アプリやCLIはIMDSから認証情報を取得し、期限が切れる前に自動で更新される。"><defs><marker id="dgterms-instance-profile-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ec2">
+<rect x="34" y="88" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="110" text-anchor="middle" class="dg-t">EC2インスタンス</text>
+<text x="106" y="128" text-anchor="middle" class="dg-s">アプリ・CLI</text>
+</g>
+<g data-node="prof">
+<rect x="282" y="88" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="110" text-anchor="middle" class="dg-tb">インスタンス</text>
+<text x="354" y="128" text-anchor="middle" class="dg-s">プロファイル</text>
+</g>
+<g data-node="role">
+<rect x="529" y="88" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="110" text-anchor="middle" class="dg-t">IAMロール</text>
+<text x="602" y="128" text-anchor="middle" class="dg-s">EC2が引き受ける</text>
+</g>
+<g data-node="imds">
+<rect x="34" y="196" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="218" text-anchor="middle" class="dg-t">IMDS</text>
+<text x="106" y="236" text-anchor="middle" class="dg-s">169.254.169.254</text>
+</g>
+<g data-node="sts">
+<rect x="282" y="202" width="145" height="40" rx="8" class="dg-box"/>
+<text x="354" y="226" text-anchor="middle" class="dg-t">STS</text>
+</g>
+<path d="M179.0,114.0 L281.5,114.0" class="dg-line" marker-end="url(#dgterms-instance-profile-1)"/>
+<text x="230" y="118" text-anchor="middle" class="dg-s dg-halo">付ける</text>
+<path d="M426.5,114.0 L529.0,114.0" class="dg-line" marker-end="url(#dgterms-instance-profile-1)"/>
+<text x="478" y="118" text-anchor="middle" class="dg-s dg-halo">1つだけ格納</text>
+<path d="M281.5,222.0 L179.0,222.0" class="dg-line" marker-end="url(#dgterms-instance-profile-1)"/>
+<text x="230" y="226" text-anchor="middle" class="dg-s dg-halo">一時的な認証情報</text>
+<path d="M106.5,196.0 L106.5,140.0" class="dg-line dg-dash" marker-end="url(#dgterms-instance-profile-1)"/>
+<text x="106" y="172" text-anchor="middle" class="dg-s dg-halo">取得</text>
+</svg>
+</div>
+<figcaption>図1 インスタンスプロファイルの仕組み。インスタンスに付けたプロファイルの中のロールについて、STSが発行した一時的な認証情報がインスタンスメタデータ(IMDS)に置かれる。アプリやCLIはIMDSから認証情報を取得し、期限が切れる前に自動で更新される。</figcaption>
+</figure>
+
+<h3 id="c1-1">ロールとインスタンスプロファイルの関係<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>入れられるロールの数</td><td>1つのインスタンスプロファイルに<strong>ロールは1つだけ</strong></td></tr>
+<tr><td>インスタンスに付けられる数</td><td>1つのインスタンスに<strong>インスタンスプロファイルは1つだけ</strong>。複数の権限が必要なら、1つのロールに複数のポリシーを付ける</td></tr>
+<tr><td>ロールの信頼ポリシー</td><td><code>"Service": "ec2.amazonaws.com"</code> を許可する(EC2がロールを引き受けられるようにする)</td></tr>
+<tr><td>付け替え</td><td>起動中のインスタンスでも、停止せずに付ける・外す・入れ替える(<code>replace-iam-instance-profile-association</code>)ことができる</td></tr>
+<tr><td>ロールの権限の変更</td><td>ロールのポリシーを変えると、付け替えなくても反映される(反映まで少し時間がかかることがある)</td></tr>
+</table></div>
+
+<h3 id="c1-2">作り方:コンソールとCLI・IaCの違い<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>マネジメントコンソールでEC2用のロールを作ると、<strong>同じ名前のインスタンスプロファイルが自動で作られます</strong>。そのため普段は意識しませんが、AWS CLI・CloudFormation・Terraformでは、ロールとは別にインスタンスプロファイルを作り、ロールを入れる必要があります。</p>
+<pre class="code"><code>aws iam create-role --role-name AppRole --assume-role-policy-document file://ec2-trust.json
+aws iam create-instance-profile --instance-profile-name AppProfile
+aws iam add-role-to-instance-profile --instance-profile-name AppProfile --role-name AppRole
+aws ec2 associate-iam-instance-profile --instance-id i-0123456789abcdef0 \
+    --iam-instance-profile Name=AppProfile</code></pre>
+<p>CloudFormationでは <code>AWS::IAM::Role</code> とは別に <code>AWS::IAM::InstanceProfile</code> を定義し、EC2や起動テンプレートの <code>IamInstanceProfile</code> にはインスタンスプロファイルの名前(またはARN)を指定します。ここにロール名を書いてしまうのはよくある間違いです(コンソールで作った場合は名前が同じなので動いてしまい、気づきにくい)。</p>
+
+<h3 id="c1-3">インスタンスにロールを付けるときの権限<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>インスタンスにインスタンスプロファイルを付ける人(またはAuto Scalingなどのサービス)には、EC2の操作権限に加えて、中のロールに対する <code><a href="iam-passrole.html">iam:PassRole</a></code> の権限が必要です。これがないと、強い権限のロールを付けたインスタンスを起動して、その権限を使うことができてしまうためです。</p>
+
+<h3 id="c1-4">認証情報の取得とIMDSv2<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>インスタンス上では、ロールの認証情報が <code>http://169.254.169.254/latest/meta-data/iam/security-credentials/ロール名</code> から取得できます。AWS CLIやSDKは<a href="iam-roles-credentials.html">認証情報を探す順番</a>の最後にここを見に行くため、プログラムで設定する必要はありません。</p>
+<ul>
+<li>IMDSへのアクセスは、トークンを使う<strong>IMDSv2</strong>を必須にする(SSRFの脆弱性から認証情報を盗まれにくくする)</li>
+<li>環境変数や <code>~/.aws/credentials</code> にアクセスキーが残っていると、そちらが<strong>優先</strong>される</li>
+<li>インスタンス上で <code>aws sts get-caller-identity</code> を実行すると、どのロールで動いているか確認できる</li>
+</ul>
+
+<h3 id="c1-5">よくあるトラブル<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>症状</th><th>確認すること</th></tr>
+<tr><td>CLIで「認証情報が見つからない」</td><td>インスタンスプロファイルが付いているか。IMDSが無効になっていないか、ホップ数の制限(コンテナから使うとき)</td></tr>
+<tr><td>AccessDenied になる</td><td>ロールのアクセス許可ポリシー。S3のバケットポリシーやKMSのキーポリシーなど、リソース側の拒否</td></tr>
+<tr><td>CloudFormationでの起動に失敗する</td><td><code>IamInstanceProfile</code> にロール名を指定していないか。実行する人に <code>iam:PassRole</code> があるか</td></tr>
+<tr><td>Systems Managerに表示されない</td><td>ロールに <code>AmazonSSMManagedInstanceCore</code> があるか(手順は「<a href="../services/systems-manager.html">AWS Systems Manager</a>」の「EC2で各機能を使えるようにする手順」)</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>:インスタンスプロファイルの中身になるロールと、認証情報を探す順番</li>
+<li><a href="iam-passrole.html">iam:PassRole</a>:インスタンスにロールを付けるときに必要な権限</li>
+<li><a href="iam-policy-evaluation.html">IAMポリシーの評価</a>:ロールの権限とリソース側のポリシーの組み合わせ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/ec2.html">Amazon EC2</a>:インスタンスプロファイルを付ける対象。IMDSで認証情報を受け取る</li>
+<li><a href="../services/iam.html">AWS IAM</a>:ロールとインスタンスプロファイルを作る</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:SSM Agentもインスタンスプロファイルの権限で動く</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:<code>AWS::IAM::InstanceProfile</code> でプロファイルを定義する</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/ec2.html"><span class="title">Amazon EC2</span><span class="kind">サービス</span><span class="desc">AWS上で仮想サーバーを動かすサービス(Elastic Compute Cloud)</span></a></li>
+<li><a href="../services/systems-manager.html"><span class="title">AWS Systems Manager</span><span class="kind">サービス</span><span class="desc">EC2・オンプレミスを含むシステム運用を一元管理・自動化する機能の集合体</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 7件・リンク元 0件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 246" style="max-width:784px;min-width:600px" role="img" aria-label="インスタンスプロファイルとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudFormation</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-policy-evaluation.html"><title>用語:IAMポリシーと評価ロジック</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">IAMポリシーと評価ロジック</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-passrole.html"><title>用語:iam:PassRoleとサービスにリンクされたロール</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">iam:PassRoleとサービスにリ…</text></a>
+<rect x="300" y="115" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="140" text-anchor="middle" class="gr-tb">インスタンスプロファ…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="iam-roles-credentials.html"><span class="label">← 前へ</span>IAMロールと一時的な認証情報</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="iam-passrole.html"><span class="label">次へ →</span>iam:PassRoleとサービスにリンクされたロール</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

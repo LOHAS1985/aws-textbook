@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <div class="page-head booklet-cover">
 <p class="booklet-site">AWS教科書</p>
 <h1>用語</h1>
-<p class="lead">AWSを学ぶうえで押さえておきたい用語の解説(全54ページ)</p>
+<p class="lead">AWSを学ぶうえで押さえておきたい用語の解説(全57ページ)</p>
 <p class="booklet-help">このページは、印刷やPDFでの保存のために全ページを1つにまとめたものです。ブラウザーの印刷(Ctrl+P、スマホは共有メニューの「プリント」)から、紙に印刷するかPDFとして保存してください。ページの順番は目次と同じです。</p>
 <p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button> <a href="../terms/index.html">目次へ戻る</a></p>
 </div>
@@ -65,10 +65,12 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ol>
 <li><a href="#p-dns">DNS</a></li>
 <li><a href="#p-dns-record-types">DNSレコードタイプ</a></li>
+<li><a href="#p-hosted-zone">ホストゾーン</a></li>
 <li><a href="#p-cidr">CIDR</a></li>
 <li><a href="#p-route-table">ルートテーブル</a></li>
 <li><a href="#p-nacl-security-group">ネットワークACLとセキュリティグループ</a></li>
 <li><a href="#p-vpc-flow-logs">VPCフローログ</a></li>
+<li><a href="#p-vpc-traffic-mirroring">VPCトラフィックミラーリング</a></li>
 <li><a href="#p-eni-elastic-ip">ENIとElastic IP</a></li>
 <li><a href="#p-vpc-endpoint">VPCエンドポイント</a></li>
 <li><a href="#p-vpc-peering">VPCピアリング</a></li>
@@ -81,6 +83,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ol>
 <li><a href="#p-iam-policy-evaluation">IAMポリシーと評価ロジック</a></li>
 <li><a href="#p-iam-roles-credentials">IAMロールと一時的な認証情報</a></li>
+<li><a href="#p-instance-profile">インスタンスプロファイル</a></li>
 <li><a href="#p-iam-passrole">iam:PassRoleとサービスにリンクされたロール</a></li>
 <li><a href="#p-encryption">保存時の暗号化と転送時の暗号化</a></li>
 <li><a href="#p-tls-termination">TLS終端と証明書の配置</a></li>
@@ -1717,7 +1720,7 @@ Outputs:
 <p>問い合わせのたびにルートから権威DNSまでたどると負荷が大きいため、DNSでは結果を一定期間キャッシュします。レコードには<strong>TTL(Time To Live)</strong>が設定されており、キャッシュを保持する期間を指定します。例えばTTLが <code>3600</code> 秒なら、リゾルバーは原則として1時間ほど結果をキャッシュし、その間は権威DNSに問い合わせずに回答します。</p>
 
 <h3 id="dns-c1-6">AWSでのDNS<a class="anchor" href="#dns-c1-6" aria-label="この見出しへのリンク">#</a></h3>
-<p>AWSでは主に<strong>Amazon Route 53</strong>を使います。ドメインのレコードを管理する<strong>ホストゾーン</strong>を作成し、A・AAAA・CNAME・MX・TXTなどを登録します。単純な名前解決だけでなく、<strong>ルーティングポリシー・ヘルスチェック・エイリアスレコード</strong>と組み合わせて、AWSリソースへのトラフィック制御にも使えます。</p>
+<p>AWSでは主に<strong>Amazon Route 53</strong>を使います。ドメインのレコードを管理する<strong><a href="#p-hosted-zone">ホストゾーン</a></strong>を作成し、A・AAAA・CNAME・MX・TXTなどを登録します。単純な名前解決だけでなく、<strong>ルーティングポリシー・ヘルスチェック・エイリアスレコード</strong>と組み合わせて、AWSリソースへのトラフィック制御にも使えます。</p>
 </section>
 
 <section class="chapter">
@@ -1823,6 +1826,115 @@ Outputs:
 <ul>
 <li><a href="../services/route53.html">Amazon Route 53</a>:ホストゾーンにレコードを登録する</li>
 <li><a href="../services/acm.html">AWS Certificate Manager</a>:CAAレコードやDNS検証と関係する</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-hosted-zone">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">ネットワーク</span>
+<h1>ホストゾーン</h1>
+<p class="lead">Route 53で、1つのドメイン(例: example.com)とそのサブドメインのDNSレコードをまとめて管理する入れ物。パブリックとプライベートの2種類がある</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="hosted-zone-c1">1. 詳しい説明<a class="anchor" href="#hosted-zone-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>ホストゾーン</strong>は、<a href="../services/route53.html">Amazon Route 53</a>で、あるドメイン(例: <code>example.com</code>)と、そのサブドメイン(<code>www.example.com</code> など)の<a href="#p-dns-record-types">DNSレコード</a>をまとめて管理する入れ物です。<a href="#p-dns">DNS</a>の用語でいう「ゾーン」にあたり、「この名前を聞かれたら、このIPアドレスを返す」という対応表を持ちます。</p>
+
+<h3 id="hosted-zone-c1-1">パブリックとプライベート<a class="anchor" href="#hosted-zone-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>パブリックホストゾーン</th><th>プライベートホストゾーン</th></tr>
+<tr><td>名前を引ける場所</td><td>インターネット上のどこからでも</td><td><strong>関連付けたVPCの中だけ</strong></td></tr>
+<tr><td>主な用途</td><td>公開するWebサイト・API</td><td>社内システム、DBなどのVPC内の名前(<code>db.internal.example.com</code> など)</td></tr>
+<tr><td>使う前に必要なこと</td><td>ドメインの登録先(レジストラ)で、ネームサーバーをRoute 53の4つのNSに向ける</td><td>VPCの <code>enableDnsHostnames</code>・<code>enableDnsSupport</code> を有効にし、ホストゾーンにVPCを関連付ける</td></tr>
+<tr><td>応答するもの</td><td>Route 53の権威DNSサーバー</td><td>VPCのRoute 53 Resolver(VPCのCIDRの先頭+2のアドレス)</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 237" style="max-width:698px;min-width:558px" role="img" aria-label="図1 2種類のホストゾーン。パブリックホストゾーンは、レジストラで委任されたRoute 53のネームサーバーが応答する。プライベートホストゾーンは、関連付けたVPCのResolverだけが参照するため、VPCの外からは見えない。"><defs><marker id="hosted-zone-dgterms-hosted-zone-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="24" y="123" width="412" height="90" rx="10" class="dg-group"/>
+<text x="34" y="138" class="dg-s">関連付けたVPC</text>
+<g data-node="user">
+<rect x="34" y="46" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="70" text-anchor="middle" class="dg-t">外部の利用者</text>
+</g>
+<g data-node="reg">
+<rect x="282" y="40" width="145" height="52" rx="8" class="dg-box"/>
+<text x="354" y="62" text-anchor="middle" class="dg-t">レジストラ</text>
+<text x="354" y="80" text-anchor="middle" class="dg-s">NSをRoute 53へ</text>
+</g>
+<g data-node="pub">
+<rect x="529" y="40" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="602" y="62" text-anchor="middle" class="dg-tb">パブリック</text>
+<text x="602" y="80" text-anchor="middle" class="dg-s">ホストゾーン</text>
+</g>
+<g data-node="ec2">
+<rect x="34" y="157" width="145" height="40" rx="8" class="dg-box"/>
+<text x="106" y="181" text-anchor="middle" class="dg-t">VPC内のEC2</text>
+</g>
+<g data-node="rsv">
+<rect x="282" y="151" width="145" height="52" rx="8" class="dg-box"/>
+<text x="354" y="172" text-anchor="middle" class="dg-t">Route 53</text>
+<text x="354" y="190" text-anchor="middle" class="dg-s">Resolver</text>
+</g>
+<g data-node="prv">
+<rect x="529" y="151" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="172" text-anchor="middle" class="dg-t">プライベート</text>
+<text x="602" y="190" text-anchor="middle" class="dg-s">ホストゾーン</text>
+</g>
+<path d="M179.0,66.5 L281.5,66.5" class="dg-line" marker-end="url(#hosted-zone-dgterms-hosted-zone-1)"/>
+<text x="230" y="70" text-anchor="middle" class="dg-s dg-halo">①委任先を確認</text>
+<path d="M426.5,66.5 L529.0,66.5" class="dg-line" marker-end="url(#hosted-zone-dgterms-hosted-zone-1)"/>
+<text x="478" y="70" text-anchor="middle" class="dg-s dg-halo">②問い合わせ</text>
+<path d="M179.0,177.0 L281.5,177.0" class="dg-line" marker-end="url(#hosted-zone-dgterms-hosted-zone-1)"/>
+<text x="230" y="181" text-anchor="middle" class="dg-s dg-halo">問い合わせ</text>
+<path d="M426.5,177.0 L529.0,177.0" class="dg-line" marker-end="url(#hosted-zone-dgterms-hosted-zone-1)"/>
+<text x="478" y="181" text-anchor="middle" class="dg-s dg-halo">関連付けで参照</text>
+</svg>
+</div>
+<figcaption>図1 2種類のホストゾーン。パブリックホストゾーンは、レジストラで委任されたRoute 53のネームサーバーが応答する。プライベートホストゾーンは、関連付けたVPCのResolverだけが参照するため、VPCの外からは見えない。</figcaption>
+</figure>
+
+<h3 id="hosted-zone-c1-2">ホストゾーンを作ると自動で作られるレコード<a class="anchor" href="#hosted-zone-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>NSレコード</strong>:このゾーンを担当するRoute 53のネームサーバー4つ。パブリックホストゾーンでは、この4つをレジストラに登録して<strong>委任</strong>する(Route 53でドメインを登録した場合は自動で設定される)</li>
+<li><strong>SOAレコード</strong>:ゾーンの管理情報(担当のネームサーバー、ネガティブキャッシュの時間など)</li>
+</ul>
+<p>ホストゾーンを作り直すとネームサーバーが変わるため、レジストラ側の設定も直す必要があります。ホストゾーンを削除するには、NS・SOA以外のレコードを先に削除します。</p>
+
+<h3 id="hosted-zone-c1-3">よく使う構成<a class="anchor" href="#hosted-zone-c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>構成</th><th>内容</th></tr>
+<tr><td>サブドメインの委任</td><td><code>dev.example.com</code> を別のホストゾーン(別アカウントでもよい)で管理する。親の <code>example.com</code> のホストゾーンに、子のホストゾーンのNSレコードを登録する</td></tr>
+<tr><td>スプリットビューDNS</td><td>同じ名前(<code>example.com</code>)のパブリックとプライベートのホストゾーンを作る。VPCの中からはプライベート、外からはパブリックの答えが返る</td></tr>
+<tr><td>複数のVPC・アカウントで共有</td><td>1つのプライベートホストゾーンを複数のVPCに関連付けられる。別アカウントのVPCは、ホストゾーン側で関連付けを許可(<code>create-vpc-association-authorization</code>)してから、VPC側で関連付ける(CLI・SDKで行う)</td></tr>
+<tr><td>オンプレミスから引く</td><td>プライベートホストゾーンはVPCの外から直接引けないため、Resolverの<strong>インバウンドエンドポイント</strong>を使う(「<a href="../services/route53.html">Amazon Route 53</a>」のResolverの節)</td></tr>
+</table></div>
+
+<h3 id="hosted-zone-c1-4">注意点<a class="anchor" href="#hosted-zone-c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>スプリットビューでは、VPCの中からの問い合わせにはプライベートホストゾーンの答えだけが返る。プライベートに登録していない名前は、パブリックにあっても<strong>見つからない</strong>(NXDOMAIN)ので、VPCからも使う名前はプライベートにも登録する</li>
+<li>プライベートホストゾーンが名前解決できないときは、VPCとの関連付けと、VPCのDNS設定(<code>enableDnsHostnames</code>・<code>enableDnsSupport</code>)を確認する</li>
+<li>料金はホストゾーンごとの月額(作成から12時間以内に削除すれば課金されない)と、クエリ数で決まる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="hosted-zone-c2">2. 関連する用語<a class="anchor" href="#hosted-zone-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-dns">DNS</a>:ゾーン・権威DNSサーバー・リゾルバーの仕組み</li>
+<li><a href="#p-dns-record-types">DNSレコードタイプ</a>:ホストゾーンに登録するレコード(A・CNAME・エイリアスなど)</li>
+<li><a href="#p-hybrid-connectivity">ハイブリッド接続</a>:オンプレミスとVPCの間の名前解決</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="hosted-zone-c3">3. 関連サービス<a class="anchor" href="#hosted-zone-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/route53.html">Amazon Route 53</a>:ホストゾーンを作成・管理する。Resolverのエンドポイントでオンプレミスとつなぐ</li>
+<li><a href="../services/vpc.html">Amazon VPC</a>:プライベートホストゾーンの関連付け先</li>
+<li><a href="../services/ram.html">AWS RAM</a>:Resolverの転送ルールを別アカウントと共有する</li>
 </ul>
 </section>
 </article>
@@ -2262,7 +2374,7 @@ Outputs:
 <section class="chapter">
 <h2 id="vpc-flow-logs-c1">1. 詳しい説明<a class="anchor" href="#vpc-flow-logs-c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>VPCフローログ(VPC Flow Logs)</strong>は、<a href="../services/vpc.html">Amazon VPC</a>の機能の1つで、<strong>ネットワークインターフェイス(ENI)を通るIP通信の情報を記録</strong>します。「どこから・どこへ・どのポートで・どれだけ通信し、それが許可(ACCEPT)されたか拒否(REJECT)されたか」が分かるため、通信トラブルの調査やセキュリティの監査に使います。</p>
-<p>記録されるのは通信の<strong>メタデータ(ヘッダーの情報)だけ</strong>で、通信の中身(パケットの内容)は記録されません。中身まで必要な場合はトラフィックミラーリングを使います。</p>
+<p>記録されるのは通信の<strong>メタデータ(ヘッダーの情報)だけ</strong>で、通信の中身(パケットの内容)は記録されません。中身まで必要な場合は<a href="#p-vpc-traffic-mirroring">VPCトラフィックミラーリング</a>を使います。</p>
 
 <h3 id="vpc-flow-logs-c1-1">記録する範囲と送信先<a class="anchor" href="#vpc-flow-logs-c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>フローログは次の単位で作成できます。上の単位で作ると、その中のすべてのENIが対象になります。</p>
@@ -2391,6 +2503,7 @@ Outputs:
 <ul>
 <li><a href="#p-nacl-security-group">ネットワークACLとセキュリティグループ</a>:ACCEPT/REJECTを判断する仕組み</li>
 <li><a href="#p-route-table">ルートテーブル</a>:通信の転送先。フローログに記録がない場合は経路を確認する</li>
+<li><a href="#p-vpc-traffic-mirroring">VPCトラフィックミラーリング</a>:パケットの中身までコピーして解析する</li>
 <li><a href="#p-inbound-traffic">インバウンド通信</a>/<a href="#p-outbound-traffic">アウトバウンド通信</a>:記録される通信の向き</li>
 </ul>
 </section>
@@ -2402,6 +2515,103 @@ Outputs:
 <li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:Logs Insightsでの検索、メトリクスフィルターでのアラーム</li>
 <li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/athena.html">Amazon Athena</a>:長期保存とSQLでの分析</li>
 <li><a href="../services/transit-gateway.html">AWS Transit Gateway</a>:Transit Gatewayのフローログ</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-vpc-traffic-mirroring">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">ネットワーク</span>
+<h1>VPCトラフィックミラーリング</h1>
+<p class="lead">EC2のネットワークインターフェイスを通るパケットをそのままコピーし、侵入検知や通信の解析を行うアプライアンスへ送る機能</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="vpc-traffic-mirroring-c1">1. 詳しい説明<a class="anchor" href="#vpc-traffic-mirroring-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>VPCトラフィックミラーリング(Traffic Mirroring)</strong>は、<a href="../services/vpc.html">Amazon VPC</a>の機能の1つで、EC2のネットワークインターフェイス(ENI)を通る<strong>パケットをそのままコピー</strong>して、別の宛先に送ります。オンプレミスのネットワーク機器でいう「ポートミラーリング(SPAN)」をVPCで実現するもので、コピーを受け取った侵入検知システム(IDS)やパケット解析ツールが、通信の中身まで調べられます。</p>
+<p>元の通信には手を加えないため、アプリケーションや通信相手には影響しません。インスタンスにエージェントを入れる必要もありません。</p>
+
+<h3 id="vpc-traffic-mirroring-c1-1">フローログとの違い<a class="anchor" href="#vpc-traffic-mirroring-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th><a href="#p-vpc-flow-logs">VPCフローログ</a></th><th>トラフィックミラーリング</th></tr>
+<tr><td>得られるもの</td><td>通信の<strong>メタデータ</strong>(送信元・宛先・ポート・ACCEPT/REJECT)</td><td>パケットの<strong>中身(ペイロード)</strong>を含むコピー</td></tr>
+<tr><td>送り先</td><td>CloudWatch Logs・S3・Data Firehose</td><td>ENI・Network Load Balancer・Gateway Load Balancerエンドポイント</td></tr>
+<tr><td>主な用途</td><td>通信の可否の調査、監査、通信量の傾向</td><td>侵入検知(IDS)、不正な通信の中身の解析、アプリの通信トラブルの詳しい調査</td></tr>
+<tr><td>対象</td><td>VPC・サブネット・ENI</td><td>ENI(Nitroベースのインスタンス)</td></tr>
+</table></div>
+
+<h3 id="vpc-traffic-mirroring-c1-2">4つの構成要素<a class="anchor" href="#vpc-traffic-mirroring-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 929 252" style="max-width:929px;min-width:743px" role="img" aria-label="図1 トラフィックミラーリングの構成要素。ミラーソース(ENI)のパケットを、ミラーフィルターで絞り込んでコピーし、ミラーセッションがVXLANで包んでミラーターゲットへ送る。複数のソースを1つのNLBやGWLBに集めると、解析ツールを冗長化・拡張しやすい。"><defs><marker id="vpc-traffic-mirroring-dgterms-vpc-traffic-mirroring-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="83" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="104" text-anchor="middle" class="dg-t">ミラーソース</text>
+<text x="106" y="122" text-anchor="middle" class="dg-s">EC2のENI</text>
+</g>
+<g data-node="ses">
+<rect x="282" y="83" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="104" text-anchor="middle" class="dg-tb">ミラーセッション</text>
+<text x="354" y="122" text-anchor="middle" class="dg-s">VXLANで包む</text>
+</g>
+<g data-node="flt">
+<rect x="282" y="176" width="145" height="52" rx="8" class="dg-box"/>
+<text x="354" y="198" text-anchor="middle" class="dg-t">ミラーフィルター</text>
+<text x="354" y="216" text-anchor="middle" class="dg-s">何をコピーするか</text>
+</g>
+<g data-node="tgt">
+<rect x="529" y="83" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="104" text-anchor="middle" class="dg-t">ミラーターゲット</text>
+<text x="602" y="122" text-anchor="middle" class="dg-s">ENI・NLB・GWLBE</text>
+</g>
+<g data-node="ids">
+<rect x="760" y="89" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="833" y="113" text-anchor="middle" class="dg-t">IDS・解析ツール</text>
+</g>
+<path d="M179.0,109.0 L281.5,109.0" class="dg-line" marker-end="url(#vpc-traffic-mirroring-dgterms-vpc-traffic-mirroring-1)"/>
+<text x="230" y="113" text-anchor="middle" class="dg-s dg-halo">コピー</text>
+<path d="M354.0,176.5 L354.0,135.0" class="dg-line" marker-end="url(#vpc-traffic-mirroring-dgterms-vpc-traffic-mirroring-1)"/>
+<path d="M426.5,109.0 L529.0,109.0" class="dg-line" marker-end="url(#vpc-traffic-mirroring-dgterms-vpc-traffic-mirroring-1)"/>
+<text x="478" y="113" text-anchor="middle" class="dg-s dg-halo">UDP 4789</text>
+<path d="M674.0,109.0 L760.0,109.0" class="dg-line" marker-end="url(#vpc-traffic-mirroring-dgterms-vpc-traffic-mirroring-1)"/>
+</svg>
+</div>
+<figcaption>図1 トラフィックミラーリングの構成要素。ミラーソース(ENI)のパケットを、ミラーフィルターで絞り込んでコピーし、ミラーセッションがVXLANで包んでミラーターゲットへ送る。複数のソースを1つのNLBやGWLBに集めると、解析ツールを冗長化・拡張しやすい。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>ミラーソース</td><td>コピー元のENI。Nitroベースのインスタンスで使える(一部のインスタンスタイプは対象外)</td></tr>
+<tr><td>ミラーターゲット</td><td>コピーの送り先。<strong>ENI</strong>(解析用のEC2)、<strong>Network Load Balancer</strong>(UDPリスナー)、<strong>Gateway Load Balancerエンドポイント</strong>。VPCピアリングやTransit Gatewayでつながった別のVPC・別アカウントにも置ける</td></tr>
+<tr><td>ミラーフィルター</td><td>コピーする通信を、インバウンド/アウトバウンドごとのルール(プロトコル・ポート・CIDR、許可/拒否、ルール番号の小さい順に評価)で選ぶ</td></tr>
+<tr><td>ミラーセッション</td><td>ソース・ターゲット・フィルターを結びつける設定。セッション番号(1つのENIに複数のセッションがあるときの優先順位)、VXLANのID(VNI)、コピーするパケットの長さ(先頭だけにして量を減らす)を指定する</td></tr>
+</table></div>
+
+<h3 id="vpc-traffic-mirroring-c1-3">注意点<a class="anchor" href="#vpc-traffic-mirroring-c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>コピーは<strong>VXLAN(UDP 4789)</strong>で包んで送られる。ターゲットのセキュリティグループ・ネットワークACLで UDP 4789 を許可し、解析ツールもVXLANを解釈できる必要がある</li>
+<li>コピーした通信もソースのインスタンスの<strong>帯域幅を使う</strong>。混雑したときは元の通信が優先され、コピーの方が捨てられる。必要な通信だけをフィルターで選び、パケットの長さも絞る</li>
+<li>料金は、ミラーセッションを有効にしているENIごとの時間課金。別のAZ・VPCのターゲットへ送ると、データ転送料もかかる</li>
+<li>TLSで暗号化された通信は、コピーしても中身は暗号化されたまま。中身を見るには、復号できる位置(ロードバランサーで終端した後など)でコピーする</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="vpc-traffic-mirroring-c2">2. 関連する用語<a class="anchor" href="#vpc-traffic-mirroring-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-vpc-flow-logs">VPCフローログ</a>:メタデータだけを記録する、より手軽な通信の記録</li>
+<li><a href="#p-eni-elastic-ip">ENIとElastic IP</a>:ミラーソース・ターゲットになるネットワークインターフェイス</li>
+<li><a href="#p-nacl-security-group">ネットワークACLとセキュリティグループ</a>:ターゲットで UDP 4789 を許可する</li>
+<li><a href="#p-tls-termination">TLSの終端</a>:暗号化された通信の中身を見られる位置</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="vpc-traffic-mirroring-c3">3. 関連サービス<a class="anchor" href="#vpc-traffic-mirroring-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:トラフィックミラーリングを設定する</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:ミラーソースになるNitroベースのインスタンス</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:NLB・GWLBをターゲットにして、複数の解析ツールへ分散する</li>
+<li><a href="../services/guardduty.html">Amazon GuardDuty</a>:パケットのコピーを使わずに、フローログやDNSログから脅威を検出する</li>
 </ul>
 </section>
 </article>
@@ -3314,7 +3524,7 @@ Outputs:
 <h3 id="iam-roles-credentials-c1-3">使い方のパターン<a class="anchor" href="#iam-roles-credentials-c1-3" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>使う場面</th><th>仕組み</th><th>ポイント</th></tr>
-<tr><td>EC2上のアプリ</td><td><strong>インスタンスプロファイル</strong>(ロールの入れ物)をインスタンスに付ける。認証情報はインスタンスメタデータ(IMDS)から取得され、自動で更新される</td><td>アクセスキーをインスタンスに置かない。ロールは起動中でも付け替えられる</td></tr>
+<tr><td>EC2上のアプリ</td><td><strong><a href="#p-instance-profile">インスタンスプロファイル</a></strong>(ロールの入れ物)をインスタンスに付ける。認証情報はインスタンスメタデータ(IMDS)から取得され、自動で更新される</td><td>アクセスキーをインスタンスに置かない。ロールは起動中でも付け替えられる</td></tr>
 <tr><td>Lambda関数</td><td><strong>実行ロール</strong>を関数に設定する</td><td>CloudWatch Logsへの書き込み権限も必要</td></tr>
 <tr><td>ECSのタスク</td><td><strong>タスクロール</strong>(アプリが使う)と<strong>タスク実行ロール</strong>(イメージの取得・ログの送信にECSが使う)</td><td>2つを混同しない</td></tr>
 <tr><td>別アカウントの操作</td><td>相手のアカウントのロールの信頼ポリシーで自アカウントを許可し、自分側には <code>sts:AssumeRole</code> の権限を与える</td><td>外部の会社に引き受けさせるときは<strong>外部ID</strong>を条件にする</td></tr>
@@ -3392,6 +3602,117 @@ Outputs:
 <li><a href="../services/ec2.html">Amazon EC2</a>:インスタンスプロファイルとIMDS</li>
 <li><a href="../services/lambda.html">AWS Lambda</a>:実行ロール</li>
 <li><a href="../services/ecs.html">Amazon ECS</a>:タスクロールとタスク実行ロール</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-instance-profile">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">セキュリティ・認証</span>
+<h1>インスタンスプロファイル</h1>
+<p class="lead">EC2インスタンスにIAMロールを渡すための入れ物。インスタンス上のアプリは、アクセスキーを置かずにロールの権限でAWSを操作できる</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="instance-profile-c1">1. 詳しい説明<a class="anchor" href="#instance-profile-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>インスタンスプロファイル</strong>は、<a href="../services/ec2.html">EC2</a>インスタンスに<a href="#p-iam-roles-credentials">IAMロール</a>を渡すための<strong>入れ物(コンテナ)</strong>です。EC2にはIAMロールを直接付けることはできず、「インスタンス → インスタンスプロファイル → IAMロール」の形で付けます。インスタンス上のアプリやAWS CLIは、このロールの<strong>一時的な認証情報</strong>を自動で受け取るため、アクセスキーをインスタンスに保存する必要がありません。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 272" style="max-width:698px;min-width:558px" role="img" aria-label="図1 インスタンスプロファイルの仕組み。インスタンスに付けたプロファイルの中のロールについて、STSが発行した一時的な認証情報がインスタンスメタデータ(IMDS)に置かれる。アプリやCLIはIMDSから認証情報を取得し、期限が切れる前に自動で更新される。"><defs><marker id="instance-profile-dgterms-instance-profile-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ec2">
+<rect x="34" y="88" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="110" text-anchor="middle" class="dg-t">EC2インスタンス</text>
+<text x="106" y="128" text-anchor="middle" class="dg-s">アプリ・CLI</text>
+</g>
+<g data-node="prof">
+<rect x="282" y="88" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="110" text-anchor="middle" class="dg-tb">インスタンス</text>
+<text x="354" y="128" text-anchor="middle" class="dg-s">プロファイル</text>
+</g>
+<g data-node="role">
+<rect x="529" y="88" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="110" text-anchor="middle" class="dg-t">IAMロール</text>
+<text x="602" y="128" text-anchor="middle" class="dg-s">EC2が引き受ける</text>
+</g>
+<g data-node="imds">
+<rect x="34" y="196" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="218" text-anchor="middle" class="dg-t">IMDS</text>
+<text x="106" y="236" text-anchor="middle" class="dg-s">169.254.169.254</text>
+</g>
+<g data-node="sts">
+<rect x="282" y="202" width="145" height="40" rx="8" class="dg-box"/>
+<text x="354" y="226" text-anchor="middle" class="dg-t">STS</text>
+</g>
+<path d="M179.0,114.0 L281.5,114.0" class="dg-line" marker-end="url(#instance-profile-dgterms-instance-profile-1)"/>
+<text x="230" y="118" text-anchor="middle" class="dg-s dg-halo">付ける</text>
+<path d="M426.5,114.0 L529.0,114.0" class="dg-line" marker-end="url(#instance-profile-dgterms-instance-profile-1)"/>
+<text x="478" y="118" text-anchor="middle" class="dg-s dg-halo">1つだけ格納</text>
+<path d="M281.5,222.0 L179.0,222.0" class="dg-line" marker-end="url(#instance-profile-dgterms-instance-profile-1)"/>
+<text x="230" y="226" text-anchor="middle" class="dg-s dg-halo">一時的な認証情報</text>
+<path d="M106.5,196.0 L106.5,140.0" class="dg-line dg-dash" marker-end="url(#instance-profile-dgterms-instance-profile-1)"/>
+<text x="106" y="172" text-anchor="middle" class="dg-s dg-halo">取得</text>
+</svg>
+</div>
+<figcaption>図1 インスタンスプロファイルの仕組み。インスタンスに付けたプロファイルの中のロールについて、STSが発行した一時的な認証情報がインスタンスメタデータ(IMDS)に置かれる。アプリやCLIはIMDSから認証情報を取得し、期限が切れる前に自動で更新される。</figcaption>
+</figure>
+
+<h3 id="instance-profile-c1-1">ロールとインスタンスプロファイルの関係<a class="anchor" href="#instance-profile-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>入れられるロールの数</td><td>1つのインスタンスプロファイルに<strong>ロールは1つだけ</strong></td></tr>
+<tr><td>インスタンスに付けられる数</td><td>1つのインスタンスに<strong>インスタンスプロファイルは1つだけ</strong>。複数の権限が必要なら、1つのロールに複数のポリシーを付ける</td></tr>
+<tr><td>ロールの信頼ポリシー</td><td><code>"Service": "ec2.amazonaws.com"</code> を許可する(EC2がロールを引き受けられるようにする)</td></tr>
+<tr><td>付け替え</td><td>起動中のインスタンスでも、停止せずに付ける・外す・入れ替える(<code>replace-iam-instance-profile-association</code>)ことができる</td></tr>
+<tr><td>ロールの権限の変更</td><td>ロールのポリシーを変えると、付け替えなくても反映される(反映まで少し時間がかかることがある)</td></tr>
+</table></div>
+
+<h3 id="instance-profile-c1-2">作り方:コンソールとCLI・IaCの違い<a class="anchor" href="#instance-profile-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>マネジメントコンソールでEC2用のロールを作ると、<strong>同じ名前のインスタンスプロファイルが自動で作られます</strong>。そのため普段は意識しませんが、AWS CLI・CloudFormation・Terraformでは、ロールとは別にインスタンスプロファイルを作り、ロールを入れる必要があります。</p>
+<pre class="code"><code>aws iam create-role --role-name AppRole --assume-role-policy-document file://ec2-trust.json
+aws iam create-instance-profile --instance-profile-name AppProfile
+aws iam add-role-to-instance-profile --instance-profile-name AppProfile --role-name AppRole
+aws ec2 associate-iam-instance-profile --instance-id i-0123456789abcdef0 \
+    --iam-instance-profile Name=AppProfile</code></pre>
+<p>CloudFormationでは <code>AWS::IAM::Role</code> とは別に <code>AWS::IAM::InstanceProfile</code> を定義し、EC2や起動テンプレートの <code>IamInstanceProfile</code> にはインスタンスプロファイルの名前(またはARN)を指定します。ここにロール名を書いてしまうのはよくある間違いです(コンソールで作った場合は名前が同じなので動いてしまい、気づきにくい)。</p>
+
+<h3 id="instance-profile-c1-3">インスタンスにロールを付けるときの権限<a class="anchor" href="#instance-profile-c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>インスタンスにインスタンスプロファイルを付ける人(またはAuto Scalingなどのサービス)には、EC2の操作権限に加えて、中のロールに対する <code><a href="#p-iam-passrole">iam:PassRole</a></code> の権限が必要です。これがないと、強い権限のロールを付けたインスタンスを起動して、その権限を使うことができてしまうためです。</p>
+
+<h3 id="instance-profile-c1-4">認証情報の取得とIMDSv2<a class="anchor" href="#instance-profile-c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>インスタンス上では、ロールの認証情報が <code>http://169.254.169.254/latest/meta-data/iam/security-credentials/ロール名</code> から取得できます。AWS CLIやSDKは<a href="#p-iam-roles-credentials">認証情報を探す順番</a>の最後にここを見に行くため、プログラムで設定する必要はありません。</p>
+<ul>
+<li>IMDSへのアクセスは、トークンを使う<strong>IMDSv2</strong>を必須にする(SSRFの脆弱性から認証情報を盗まれにくくする)</li>
+<li>環境変数や <code>~/.aws/credentials</code> にアクセスキーが残っていると、そちらが<strong>優先</strong>される</li>
+<li>インスタンス上で <code>aws sts get-caller-identity</code> を実行すると、どのロールで動いているか確認できる</li>
+</ul>
+
+<h3 id="instance-profile-c1-5">よくあるトラブル<a class="anchor" href="#instance-profile-c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>症状</th><th>確認すること</th></tr>
+<tr><td>CLIで「認証情報が見つからない」</td><td>インスタンスプロファイルが付いているか。IMDSが無効になっていないか、ホップ数の制限(コンテナから使うとき)</td></tr>
+<tr><td>AccessDenied になる</td><td>ロールのアクセス許可ポリシー。S3のバケットポリシーやKMSのキーポリシーなど、リソース側の拒否</td></tr>
+<tr><td>CloudFormationでの起動に失敗する</td><td><code>IamInstanceProfile</code> にロール名を指定していないか。実行する人に <code>iam:PassRole</code> があるか</td></tr>
+<tr><td>Systems Managerに表示されない</td><td>ロールに <code>AmazonSSMManagedInstanceCore</code> があるか(手順は「<a href="../services/systems-manager.html">AWS Systems Manager</a>」の「EC2で各機能を使えるようにする手順」)</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="instance-profile-c2">2. 関連する用語<a class="anchor" href="#instance-profile-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-iam-roles-credentials">IAMロールと一時的な認証情報</a>:インスタンスプロファイルの中身になるロールと、認証情報を探す順番</li>
+<li><a href="#p-iam-passrole">iam:PassRole</a>:インスタンスにロールを付けるときに必要な権限</li>
+<li><a href="#p-iam-policy-evaluation">IAMポリシーの評価</a>:ロールの権限とリソース側のポリシーの組み合わせ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="instance-profile-c3">3. 関連サービス<a class="anchor" href="#instance-profile-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/ec2.html">Amazon EC2</a>:インスタンスプロファイルを付ける対象。IMDSで認証情報を受け取る</li>
+<li><a href="../services/iam.html">AWS IAM</a>:ロールとインスタンスプロファイルを作る</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:SSM Agentもインスタンスプロファイルの権限で動く</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:<code>AWS::IAM::InstanceProfile</code> でプロファイルを定義する</li>
 </ul>
 </section>
 </article>
