@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <div class="page-head booklet-cover">
 <p class="booklet-site">AWS教科書</p>
 <h1>サービス</h1>
-<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全92ページ)</p>
+<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全93ページ)</p>
 <p class="booklet-help">このページは、印刷やPDFでの保存のために全ページを1つにまとめたものです。ブラウザーの印刷(Ctrl+P、スマホは共有メニューの「プリント」)から、紙に印刷するかPDFとして保存してください。ページの順番は目次と同じです。</p>
 <p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button> <a href="../services/index.html">目次へ戻る</a></p>
 </div>
@@ -111,6 +111,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-shield">AWS Shield</a></li>
 <li><a href="#p-network-firewall">AWS Network Firewall</a></li>
 <li><a href="#p-security-agent">AWS Security Agent</a></li>
+<li><a href="#p-artifact">AWS Artifact</a></li>
 </ol>
 <h3>マネジメントとガバナンス</h3>
 <ol>
@@ -7230,7 +7231,49 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <p>軽くて大量に呼ばれる処理はCloudFront Functions、ネットワークアクセスや長い処理が必要ならLambda@Edgeを選びます。Lambda@Edgeの関数は<strong>us-east-1</strong>で作成し、CloudFrontが各地に複製します。</p>
 
 <h3 id="cloudfront-c2-9">オリジンシールド<a class="anchor" href="#cloudfront-c2-9" aria-label="この見出しへのリンク">#</a></h3>
-<p>複数のエッジロケーションからオリジンへのリクエストをまとめ、<strong>オリジンへのリクエスト数を減らす</strong>機能です。リージョナルエッジキャッシュを1つにまとめるイメージです。</p>
+<p><strong>オリジンシールド(Origin Shield)</strong>は、リージョナルエッジキャッシュとオリジンの間にもう1層のキャッシュを置き、<strong>オリジンへのリクエスト数を減らす</strong>機能です。利用者が世界各地にいると、リクエストは複数のリージョナルエッジキャッシュを通り、それぞれが同じコンテンツをオリジンへ取りに行きます。オリジンシールドを有効にすると、すべてのリクエストがオリジンシールドを経由するため、同じオブジェクトへの取得を最小1回にまとめられ、キャッシュヒット率も上がります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 202" style="max-width:718px;min-width:574px" role="img" aria-label="図4 オリジンシールド。各地のキャッシュで見つからなかったリクエストをオリジンシールドが1つにまとめ、キャッシュにもなければオリジンへ1回だけ取りに行く。"><defs><marker id="cloudfront-dgservices-cloudfront-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ed1">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">日本のキャッシュ</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">エッジ・リージョナル</text>
+</g>
+<g data-node="ed2">
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="147" text-anchor="middle" class="dg-t">欧州のキャッシュ</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">エッジ・リージョナル</text>
+</g>
+<g data-node="os">
+<rect x="289" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="104" text-anchor="middle" class="dg-tb">オリジンシールド</text>
+<text x="364" y="122" text-anchor="middle" class="dg-s">1か所にまとめる</text>
+</g>
+<g data-node="org">
+<rect x="544" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="104" text-anchor="middle" class="dg-t">オリジン</text>
+<text x="619" y="122" text-anchor="middle" class="dg-s">リクエスト数を削減</text>
+</g>
+<path d="M184.0,79.0 L289.0,96.5" class="dg-line" marker-end="url(#cloudfront-dgservices-cloudfront-4)"/>
+<text x="236" y="92" text-anchor="middle" class="dg-s dg-halo">ミス時</text>
+<path d="M184.0,139.0 L289.0,121.5" class="dg-line" marker-end="url(#cloudfront-dgservices-cloudfront-4)"/>
+<text x="236" y="134" text-anchor="middle" class="dg-s dg-halo">ミス時</text>
+<path d="M439.0,109.0 L544.0,109.0" class="dg-line" marker-end="url(#cloudfront-dgservices-cloudfront-4)"/>
+<text x="492" y="113" text-anchor="middle" class="dg-s dg-halo">ミス時のみ</text>
+</svg>
+</div>
+<figcaption>図4 オリジンシールド。各地のキャッシュで見つからなかったリクエストをオリジンシールドが1つにまとめ、キャッシュにもなければオリジンへ1回だけ取りに行く。</figcaption>
+</figure>
+<ul>
+<li>オリジンシールドは<strong>オリジンごとの設定</strong>。オリジンの設定で「有効にする」を選び、オリジンシールドを置くリージョンを指定する。コンソール・CloudFormation・APIで設定できる。</li>
+<li>リージョンは、<strong>オリジンとのレイテンシーが最も小さいリージョン</strong>を選ぶ。オリジンがAWSのリージョンにあり、そのリージョンがオリジンシールドに対応していれば、同じリージョンを選ぶ。オンプレミスなどAWS外のオリジンにも使える。</li>
+<li>向いている用途:世界各地に利用者がいる配信、ライブ配信やオンザフライの画像処理などオリジン側の処理負荷が大きい場合、帯域や処理能力に制限があるオンプレミスのオリジン、複数のCDNを併用している場合。</li>
+<li>向いていない用途:オリジンへそのまま中継する動的コンテンツ、キャッシュしにくいコンテンツ、あまりアクセスされないコンテンツ。</li>
+<li>追加料金がかかる。オリジンシールドを通るリクエスト数(10,000リクエスト単位)で課金される。</li>
+<li>オリジンシールドは複数のアベイラビリティーゾーンで構成され、障害時は自動でセカンダリの場所に切り替わる。オリジングループとも併用できる。</li>
+<li>オリジンシールドでのキャッシュヒットは、CloudFrontのログの <code>x-edge-detailed-result-type</code> に <code>OriginShieldHit</code> と記録される。</li>
+</ul>
 
 <h3 class="em" id="cloudfront-c2-10">Origin Access Control(OAC)<a class="anchor" href="#cloudfront-c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>S3オリジンへアクセスする仕組みで、<strong>CloudFront経由でのみS3にアクセスできる</strong>ようにします(S3への直接アクセスを防ぐ)。</p>
@@ -7252,7 +7295,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="cloudfront-dgservices-cloudfront-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図5 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="cloudfront-dgservices-cloudfront-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="u">
 <rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="70" text-anchor="middle" class="dg-t">ユーザー</text>
@@ -7272,14 +7315,14 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="347" y="147" text-anchor="middle" class="dg-t">S3へ直接アクセス</text>
 <text x="347" y="165" text-anchor="middle" class="dg-s">拒否される</text>
 </g>
-<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#cloudfront-dgservices-cloudfront-4)"/>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#cloudfront-dgservices-cloudfront-5)"/>
 <text x="228" y="70" text-anchor="middle" class="dg-s dg-halo">Viewer側</text>
-<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#cloudfront-dgservices-cloudfront-4)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#cloudfront-dgservices-cloudfront-5)"/>
 <text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">Origin側</text>
-<path d="M419.8,125.5 L512.2,92.5" class="dg-line dg-dash" marker-end="url(#cloudfront-dgservices-cloudfront-4)"/>
+<path d="M419.8,125.5 L512.2,92.5" class="dg-line dg-dash" marker-end="url(#cloudfront-dgservices-cloudfront-5)"/>
 </svg>
 </div>
-<figcaption>図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
+<figcaption>図5 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
 </figure>
 <h3 id="cloudfront-c2-14">独自ドメインで配信する(代替ドメイン名と証明書)<a class="anchor" href="#cloudfront-c2-14" aria-label="この見出しへのリンク">#</a></h3>
 <p>CloudFrontのディストリビューションには <code>d111111abcdef8.cloudfront.net</code> のようなドメイン名が付きます。<code>www.example.com</code> などの独自ドメインで配信するには、次の手順で設定します。</p>
@@ -7334,7 +7377,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </ul>
 <h4>キャッシュ</h4>
 <ul>
-<li>オリジンの負荷を減らしたい → <strong>オリジンシールド</strong>、TTLを長くする。</li>
+<li>オリジンの負荷を減らしたい → <strong>オリジンシールド</strong>(世界各地の利用者からのリクエストをまとめる。オリジンに最も近いリージョンに置く。追加料金あり)、TTLを長くする。</li>
 <li>POST/PUTなどはキャッシュされない(キャッシュはGET/HEAD/OPTIONSのみ)。</li>
 <li>パスごとにオリジンやキャッシュの設定を変える → <strong>ビヘイビア</strong>(どれにも一致しなければ既定の <code>*</code>)。</li>
 <li>キャッシュヒット率が低い → キャッシュポリシーで<strong>キャッシュキー</strong>に含めるヘッダー・Cookie・クエリ文字列を減らす。オリジンに渡すだけなら<strong>オリジンリクエストポリシー</strong>。</li>
@@ -10646,6 +10689,118 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <ul>
 <li>Security Agentは、開発の各段階でセキュリティのレビューと侵入テストを行うAIエージェント。</li>
 <li>見つけた問題について、再現手順と修正コードまで示す。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-artifact">
+<div class="page-head hero" style="--cat:#DD344C">
+<div class="hero-text">
+<span class="category">セキュリティ、アイデンティティ、コンプライアンス</span>
+<h1>AWS Artifact</h1>
+<p class="lead">AWSの監査レポート・認証書類の入手と、AWSとの契約の確認・締結ができるポータル</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="artifact-c1">1. サービス概要<a class="anchor" href="#artifact-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Artifact</strong>は、AWSのセキュリティ・コンプライアンスに関する書類を、必要なときにダウンロードできるサービスです。ISO・PCI DSS・SOCなどの第三者による監査レポートや認証書類を入手でき、AWSとの契約(BAAなど)の確認・締結もできます。</p>
+<p>監査人や規制当局に「AWSの基盤は、この基準を満たしている」と示す証拠として使います。<strong>AWS側の証明</strong>のためのサービスで、利用者自身の設定の準拠状況を確認するサービスではありません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 AWS Artifactの使い方。Reportsでは監査レポートや認証書類をダウンロードして監査人に提出し、Agreementsでは契約を確認して締結する。"><defs><marker id="artifact-dgservices-artifact-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">利用者・監査担当</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">コンソールで操作</text>
+</g>
+<g data-node="rep">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">Reports</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">監査レポート・認証</text>
+</g>
+<g data-node="agr">
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="147" text-anchor="middle" class="dg-tb">Agreements</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">契約の確認・締結</text>
+</g>
+<g data-node="aud">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">監査人・規制当局</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">AWS側の証明として提出</text>
+</g>
+<g data-node="acc">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">契約の締結</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">BAAなど</text>
+</g>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#artifact-dgservices-artifact-1)"/>
+<path d="M184.0,122.4 L272.0,138.1" class="dg-line" marker-end="url(#artifact-dgservices-artifact-1)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#artifact-dgservices-artifact-1)"/>
+<path d="M422.0,151.5 L510.0,151.5" class="dg-line" marker-end="url(#artifact-dgservices-artifact-1)"/>
+</svg>
+</div>
+<figcaption>図1 AWS Artifactの使い方。Reportsでは監査レポートや認証書類をダウンロードして監査人に提出し、Agreementsでは契約を確認して締結する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="artifact-c2">2. 主な機能・特徴<a class="anchor" href="#artifact-c2" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>できること</th><th>例</th></tr>
+<tr><td><strong>Artifact Reports</strong></td><td>AWSが受けた監査のレポートや認証書類をダウンロードする</td><td>SOC 1・SOC 2・SOC 3レポート、ISO 27001などの認証、PCI DSSの準拠証明</td></tr>
+<tr><td><strong>Artifact Agreements</strong></td><td>AWSとの契約を確認・承諾・終了する。Organizationsの組織全体に対しても結べる</td><td>BAA(米国の医療情報の取り扱いに関する事業提携契約)、NDA</td></tr>
+</table></div>
+<ul>
+<li>書類は、コンソールからいつでも<strong>オンデマンドで</strong>ダウンロードできる。機密性の高いレポートは、ダウンロード前にNDA(秘密保持契約)への同意を求められることがある。</li>
+<li>Organizationsを使っていれば、管理アカウントが組織の契約を結ぶことで、既存・今後のメンバーアカウントすべてが対象になる。</li>
+<li>AWS Marketplaceで製品を販売する独立系ソフトウェアベンダー(ISV)のセキュリティ・コンプライアンス関連の書類も入手できる。</li>
+<li>ダウンロードや契約には、IAMでArtifactの権限が必要。日常の操作にはルートユーザーを使わず、IAMユーザーやロールに必要な権限だけを与える。</li>
+<li>書類は参考資料にもなり、自社のクラウド構成や内部統制が十分かを評価するときの指針に使える。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="artifact-c3">3. ユースケース<a class="anchor" href="#artifact-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>監査人から「データセンターの物理的なセキュリティや、基盤の認証状況の証拠」を求められたとき、SOCレポートやISO認証を提出する</li>
+<li>クレジットカード情報を扱うシステムで、AWS側のPCI DSS準拠の証明を提出する</li>
+<li>医療情報を扱う前に、BAAを結んで法的な要件を満たす</li>
+<li>AWSの基盤が満たす基準を調べ、自社の設計や内部統制を評価する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="artifact-c4">4. 料金の考え方<a class="anchor" href="#artifact-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS Artifactのドキュメントと契約は、<strong>無料</strong>で利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="artifact-c5">5. 関連サービス<a class="anchor" href="#artifact-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-config">AWS Config</a>:利用者側のリソース設定を記録し、ルールで評価する</li>
+<li><a href="#p-security-hub">AWS Security Hub</a>:セキュリティ基準に照らして利用者側の設定をチェックする</li>
+<li><a href="#p-cloudtrail">AWS CloudTrail</a>:操作の記録</li>
+<li><a href="#p-organizations">AWS Organizations</a>:組織全体の契約</li>
+<li><a href="#p-iam">AWS IAM</a>:Artifactを使う権限の制御</li>
+<li>関連する用語:<a href="../terms/compliance-artifact.html">コンプライアンスとAWS Artifact</a>、<a href="../terms/shared-responsibility.html">責任共有モデル</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="artifact-c6">6. 試験・実務でのポイント<a class="anchor" href="#artifact-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>監査人にAWSの<strong>SOCレポート・PCI DSS・ISOの準拠証明</strong>を提出したい → <strong class="em">AWS Artifact</strong>。</li>
+<li>AWSとの<strong>BAAなどの契約</strong>を結ぶ → AWS Artifact(Agreements)。</li>
+<li>利用者自身のリソースが基準を満たしているかの継続的な確認 → AWS ConfigやSecurity Hub。<strong>Artifactは「AWS側」の証明</strong>で、利用者側の設定は確認しない。</li>
+<li>書類のダウンロードと契約は<strong>無料</strong>。</li>
+<li>組織全体の契約は、Organizationsの管理アカウントで結ぶ。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="artifact-c7">7. まとめ<a class="anchor" href="#artifact-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS Artifactは、AWSの監査レポート・認証書類の入手と、AWSとの契約の締結ができる無料のサービス。</li>
+<li>AWS側の準拠を示すのはArtifact、利用者側の準拠を確認するのはConfigやSecurity Hub。</li>
 </ul>
 </section>
 </article>

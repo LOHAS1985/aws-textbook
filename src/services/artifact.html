@@ -1,0 +1,83 @@
+<!-- title: AWS Artifact -->
+<!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
+<!-- lead: AWSの監査レポート・認証書類の入手と、AWSとの契約の確認・締結ができるポータル -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Artifact</strong>は、AWSのセキュリティ・コンプライアンスに関する書類を、必要なときにダウンロードできるサービスです。ISO・PCI DSS・SOCなどの第三者による監査レポートや認証書類を入手でき、AWSとの契約(BAAなど)の確認・締結もできます。</p>
+<p>監査人や規制当局に「AWSの基盤は、この基準を満たしている」と示す証拠として使います。<strong>AWS側の証明</strong>のためのサービスで、利用者自身の設定の準拠状況を確認するサービスではありません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node user 0 0.5 blue "利用者・監査担当" "コンソールで操作"
+node rep 1.4 0 accent "Reports" "監査レポート・認証"
+node agr 1.4 1 accent "Agreements" "契約の確認・締結"
+node aud 2.8 0 ok "監査人・規制当局" "AWS側の証明として提出"
+node acc 2.8 1 ok "契約の締結" "BAAなど"
+edge user rep
+edge user agr
+edge rep aud
+edge agr acc
+<figcaption>図1 AWS Artifactの使い方。Reportsでは監査レポートや認証書類をダウンロードして監査人に提出し、Agreementsでは契約を確認して締結する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>できること</th><th>例</th></tr>
+<tr><td><strong>Artifact Reports</strong></td><td>AWSが受けた監査のレポートや認証書類をダウンロードする</td><td>SOC 1・SOC 2・SOC 3レポート、ISO 27001などの認証、PCI DSSの準拠証明</td></tr>
+<tr><td><strong>Artifact Agreements</strong></td><td>AWSとの契約を確認・承諾・終了する。Organizationsの組織全体に対しても結べる</td><td>BAA(米国の医療情報の取り扱いに関する事業提携契約)、NDA</td></tr>
+</table></div>
+<ul>
+<li>書類は、コンソールからいつでも<strong>オンデマンドで</strong>ダウンロードできる。機密性の高いレポートは、ダウンロード前にNDA(秘密保持契約)への同意を求められることがある。</li>
+<li>Organizationsを使っていれば、管理アカウントが組織の契約を結ぶことで、既存・今後のメンバーアカウントすべてが対象になる。</li>
+<li>AWS Marketplaceで製品を販売する独立系ソフトウェアベンダー(ISV)のセキュリティ・コンプライアンス関連の書類も入手できる。</li>
+<li>ダウンロードや契約には、IAMでArtifactの権限が必要。日常の操作にはルートユーザーを使わず、IAMユーザーやロールに必要な権限だけを与える。</li>
+<li>書類は参考資料にもなり、自社のクラウド構成や内部統制が十分かを評価するときの指針に使える。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>監査人から「データセンターの物理的なセキュリティや、基盤の認証状況の証拠」を求められたとき、SOCレポートやISO認証を提出する</li>
+<li>クレジットカード情報を扱うシステムで、AWS側のPCI DSS準拠の証明を提出する</li>
+<li>医療情報を扱う前に、BAAを結んで法的な要件を満たす</li>
+<li>AWSの基盤が満たす基準を調べ、自社の設計や内部統制を評価する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>AWS Artifactのドキュメントと契約は、<strong>無料</strong>で利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="config.html">AWS Config</a>:利用者側のリソース設定を記録し、ルールで評価する</li>
+<li><a href="security-hub.html">AWS Security Hub</a>:セキュリティ基準に照らして利用者側の設定をチェックする</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:操作の記録</li>
+<li><a href="organizations.html">AWS Organizations</a>:組織全体の契約</li>
+<li><a href="iam.html">AWS IAM</a>:Artifactを使う権限の制御</li>
+<li>関連する用語:<a href="../terms/compliance-artifact.html">コンプライアンスとAWS Artifact</a>、<a href="../terms/shared-responsibility.html">責任共有モデル</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>監査人にAWSの<strong>SOCレポート・PCI DSS・ISOの準拠証明</strong>を提出したい → <strong class="em">AWS Artifact</strong>。</li>
+<li>AWSとの<strong>BAAなどの契約</strong>を結ぶ → AWS Artifact(Agreements)。</li>
+<li>利用者自身のリソースが基準を満たしているかの継続的な確認 → AWS ConfigやSecurity Hub。<strong>Artifactは「AWS側」の証明</strong>で、利用者側の設定は確認しない。</li>
+<li>書類のダウンロードと契約は<strong>無料</strong>。</li>
+<li>組織全体の契約は、Organizationsの管理アカウントで結ぶ。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS Artifactは、AWSの監査レポート・認証書類の入手と、AWSとの契約の締結ができる無料のサービス。</li>
+<li>AWS側の準拠を示すのはArtifact、利用者側の準拠を確認するのはConfigやSecurity Hub。</li>
+</ul>
+</section>

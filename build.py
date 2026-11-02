@@ -83,7 +83,7 @@ COLLECTIONS = [
             "elb", "cloudfront", "global-accelerator", "api-gateway",
             "iam", "identity-center", "sts", "organizations", "directory-service", "cognito", "kms",
             "secrets-manager", "acm", "private-ca", "guardduty", "inspector", "macie", "security-hub",
-            "waf", "shield", "network-firewall", "security-agent",
+            "waf", "shield", "network-firewall", "security-agent", "artifact",
             "cloudwatch", "cloudtrail", "config", "systems-manager", "cloudformation", "cdk",
             "control-tower", "trusted-advisor", "health-dashboard", "compute-optimizer", "service-catalog", "ram",
             "managed-grafana", "managed-prometheus", "devops-agent",
