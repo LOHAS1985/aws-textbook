@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
   <h1>Amazon CloudFront</h1>
   <p class="lead">コンテンツを世界中へ高速配信するCDN</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-02">2026-11-02</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
@@ -246,7 +246,49 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p>軽くて大量に呼ばれる処理はCloudFront Functions、ネットワークアクセスや長い処理が必要ならLambda@Edgeを選びます。Lambda@Edgeの関数は<strong>us-east-1</strong>で作成し、CloudFrontが各地に複製します。</p>
 
 <h3 id="c2-9">オリジンシールド<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
-<p>複数のエッジロケーションからオリジンへのリクエストをまとめ、<strong>オリジンへのリクエスト数を減らす</strong>機能です。リージョナルエッジキャッシュを1つにまとめるイメージです。</p>
+<p><strong>オリジンシールド(Origin Shield)</strong>は、リージョナルエッジキャッシュとオリジンの間にもう1層のキャッシュを置き、<strong>オリジンへのリクエスト数を減らす</strong>機能です。利用者が世界各地にいると、リクエストは複数のリージョナルエッジキャッシュを通り、それぞれが同じコンテンツをオリジンへ取りに行きます。オリジンシールドを有効にすると、すべてのリクエストがオリジンシールドを経由するため、同じオブジェクトへの取得を最小1回にまとめられ、キャッシュヒット率も上がります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 202" style="max-width:718px;min-width:574px" role="img" aria-label="図4 オリジンシールド。各地のキャッシュで見つからなかったリクエストをオリジンシールドが1つにまとめ、キャッシュにもなければオリジンへ1回だけ取りに行く。"><defs><marker id="dgservices-cloudfront-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ed1">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">日本のキャッシュ</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">エッジ・リージョナル</text>
+</g>
+<g data-node="ed2">
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="147" text-anchor="middle" class="dg-t">欧州のキャッシュ</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">エッジ・リージョナル</text>
+</g>
+<g data-node="os">
+<rect x="289" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="104" text-anchor="middle" class="dg-tb">オリジンシールド</text>
+<text x="364" y="122" text-anchor="middle" class="dg-s">1か所にまとめる</text>
+</g>
+<g data-node="org">
+<rect x="544" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="104" text-anchor="middle" class="dg-t">オリジン</text>
+<text x="619" y="122" text-anchor="middle" class="dg-s">リクエスト数を削減</text>
+</g>
+<path d="M184.0,79.0 L289.0,96.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
+<text x="236" y="92" text-anchor="middle" class="dg-s dg-halo">ミス時</text>
+<path d="M184.0,139.0 L289.0,121.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
+<text x="236" y="134" text-anchor="middle" class="dg-s dg-halo">ミス時</text>
+<path d="M439.0,109.0 L544.0,109.0" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
+<text x="492" y="113" text-anchor="middle" class="dg-s dg-halo">ミス時のみ</text>
+</svg>
+</div>
+<figcaption>図4 オリジンシールド。各地のキャッシュで見つからなかったリクエストをオリジンシールドが1つにまとめ、キャッシュにもなければオリジンへ1回だけ取りに行く。</figcaption>
+</figure>
+<ul>
+<li>オリジンシールドは<strong>オリジンごとの設定</strong>。オリジンの設定で「有効にする」を選び、オリジンシールドを置くリージョンを指定する。コンソール・CloudFormation・APIで設定できる。</li>
+<li>リージョンは、<strong>オリジンとのレイテンシーが最も小さいリージョン</strong>を選ぶ。オリジンがAWSのリージョンにあり、そのリージョンがオリジンシールドに対応していれば、同じリージョンを選ぶ。オンプレミスなどAWS外のオリジンにも使える。</li>
+<li>向いている用途:世界各地に利用者がいる配信、ライブ配信やオンザフライの画像処理などオリジン側の処理負荷が大きい場合、帯域や処理能力に制限があるオンプレミスのオリジン、複数のCDNを併用している場合。</li>
+<li>向いていない用途:オリジンへそのまま中継する動的コンテンツ、キャッシュしにくいコンテンツ、あまりアクセスされないコンテンツ。</li>
+<li>追加料金がかかる。オリジンシールドを通るリクエスト数(10,000リクエスト単位)で課金される。</li>
+<li>オリジンシールドは複数のアベイラビリティーゾーンで構成され、障害時は自動でセカンダリの場所に切り替わる。オリジングループとも併用できる。</li>
+<li>オリジンシールドでのキャッシュヒットは、CloudFrontのログの <code>x-edge-detailed-result-type</code> に <code>OriginShieldHit</code> と記録される。</li>
+</ul>
 
 <h3 class="em" id="c2-10">Origin Access Control(OAC)<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>S3オリジンへアクセスする仕組みで、<strong>CloudFront経由でのみS3にアクセスできる</strong>ようにします(S3への直接アクセスを防ぐ)。</p>
@@ -268,7 +310,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="dgservices-cloudfront-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図5 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="dgservices-cloudfront-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="u">
 <rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="70" text-anchor="middle" class="dg-t">ユーザー</text>
@@ -288,14 +330,14 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <text x="347" y="147" text-anchor="middle" class="dg-t">S3へ直接アクセス</text>
 <text x="347" y="165" text-anchor="middle" class="dg-s">拒否される</text>
 </g>
-<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-5)"/>
 <text x="228" y="70" text-anchor="middle" class="dg-s dg-halo">Viewer側</text>
-<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-5)"/>
 <text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">Origin側</text>
-<path d="M419.8,125.5 L512.2,92.5" class="dg-line dg-dash" marker-end="url(#dgservices-cloudfront-4)"/>
+<path d="M419.8,125.5 L512.2,92.5" class="dg-line dg-dash" marker-end="url(#dgservices-cloudfront-5)"/>
 </svg>
 </div>
-<figcaption>図4 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
+<figcaption>図5 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
 </figure>
 <h3 id="c2-14">独自ドメインで配信する(代替ドメイン名と証明書)<a class="anchor" href="#c2-14" aria-label="この見出しへのリンク">#</a></h3>
 <p>CloudFrontのディストリビューションには <code>d111111abcdef8.cloudfront.net</code> のようなドメイン名が付きます。<code>www.example.com</code> などの独自ドメインで配信するには、次の手順で設定します。</p>
@@ -350,7 +392,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <h4>キャッシュ</h4>
 <ul>
-<li>オリジンの負荷を減らしたい → <strong>オリジンシールド</strong>、TTLを長くする。</li>
+<li>オリジンの負荷を減らしたい → <strong>オリジンシールド</strong>(世界各地の利用者からのリクエストをまとめる。オリジンに最も近いリージョンに置く。追加料金あり)、TTLを長くする。</li>
 <li>POST/PUTなどはキャッシュされない(キャッシュはGET/HEAD/OPTIONSのみ)。</li>
 <li>パスごとにオリジンやキャッシュの設定を変える → <strong>ビヘイビア</strong>(どれにも一致しなければ既定の <code>*</code>)。</li>
 <li>キャッシュヒット率が低い → キャッシュポリシーで<strong>キャッシュキー</strong>に含めるヘッダー・Cookie・クエリ文字列を減らす。オリジンに渡すだけなら<strong>オリジンリクエストポリシー</strong>。</li>
