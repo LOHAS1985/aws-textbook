@@ -11048,9 +11048,17 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>エージェントを起動し、メトリクスがCloudWatchに送信される</li>
 </ol>
 
-<h3 id="cloudwatch-c2-10">その他の機能<a class="anchor" href="#cloudwatch-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-10">CloudWatch Synthetics<a class="anchor" href="#cloudwatch-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>CloudWatch Synthetics</strong>は、利用者の操作を模擬してWebサイトやAPIを定期的に確認する<strong>外形監視</strong>の機能です。監視用スクリプトを<strong>Canary</strong>と呼び、Lambda関数として実行します。実際のアクセスがない時間帯でも、利用者の経路が正常に動くか確認できます。</p>
 <ul>
-<li><strong>CloudWatch Synthetics</strong>:ユーザー視点で定期監視。実際のユーザーのようにアクセス・API呼び出し・ログイン・ボタン操作などを自動実行する。監視用スクリプトを<strong>Canary</strong>(中身はLambda関数)と呼ぶ。</li>
+<li>Canaryはスケジュールに従ってURLやAPIにアクセスし、ログインや画面操作などの一連の処理を検証する。</li>
+<li>実行結果はCloudWatchメトリクス(<code>SuccessPercent</code>、<code>Duration</code>など)として確認でき、失敗率や応答時間にアラームを設定できる。</li>
+<li>スクリーンショット・HTTPアーカイブ(HAR)・ログなどの実行結果はS3に保存される。</li>
+<li>インターネットに公開されていないエンドポイントは、CanaryをVPC内で実行するように設定する。</li>
+</ul>
+
+<h3 id="cloudwatch-c2-11">その他の機能<a class="anchor" href="#cloudwatch-c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
 <li><strong>Application Signals</strong>:アプリの性能と可用性を自動で計測・可視化。サービス単位・APIパス単位でメトリクスを確認できる。CloudWatchエージェントとADOT(AWS Distro for OpenTelemetry)が必要。</li>
 <li><strong class="em">Lambda Insights</strong>:Lambdaの詳細なパフォーマンス監視。有効化には<strong>拡張レイヤーの追加</strong>(収集用エージェントが入っている)と、IAMポリシー <code>CloudWatchLambdaInsightsExecutionRolePolicy</code> の付与が必要。</li>
 <li><strong class="em">Embedded Metric Format(EMF)</strong>:ログにメトリクス情報を埋め込み、CloudWatch Logsからメトリクスを生成する。アプリにEMF形式のログ出力を実装する。</li>
@@ -11063,13 +11071,13 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>CPU使用率が高くなったらAuto Scalingでスケールアウト</li>
 <li>EC2のメモリ使用率をエージェントで収集して監視</li>
 <li>アプリのログに"ERROR"が出たらメール通知</li>
-<li>Webサイトの外形監視(Synthetics)</li>
+<li>Canaryでログインなどの操作を定期実行し、利用者のアクセスがない時間帯もWebサイトやAPIの可用性・応答時間を確認</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="cloudwatch-c4">4. 料金の考え方<a class="anchor" href="#cloudwatch-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>基本メトリクス(5分間隔)は無料です。詳細モニタリング、カスタムメトリクス、アラーム、ダッシュボード、ログの取り込み量・保存量、Logs Insightsのスキャン量などに応じて課金されます。古いログはS3へ移すとコストを下げられます。</p>
+<p>基本メトリクス(5分間隔)は無料です。詳細モニタリング、カスタムメトリクス、アラーム、ダッシュボード、ログの取り込み量・保存量、Logs Insightsのスキャン量などに応じて課金されます。SyntheticsはCanaryの実行回数などに応じて課金され、実行に伴うLambdaやS3の利用料も発生します。実行間隔を短くすると監視頻度と費用が増えるため、必要な検知速度に合わせて設定します。古いログはS3へ移すとコストを下げられます。</p>
 </section>
 
 <section class="chapter">
@@ -11097,6 +11105,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>Redis系のCPUは <code>EngineCPUUtilization</code>、Kinesis・ストリームの遅れは <code>IteratorAge</code>。</li>
 <li>請求(<code>EstimatedCharges</code>)・CloudFront・Route 53ヘルスチェックのメトリクスは <strong>us-east-1</strong>。</li>
 <li>Lambdaの詳細監視 → <strong>Lambda Insights</strong>(拡張レイヤー+IAMポリシー)。</li>
+<li>ユーザー操作を模擬した外形監視 → <strong>CloudWatch Synthetics</strong>のCanary。成功率・応答時間をメトリクスとして監視し、非公開エンドポイントはVPC内で実行する。</li>
 <li>CloudWatch・CloudTrail・Config・X-Rayの使い分け → <a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>。</li>
 </ul>
 <h4>ログ</h4>
@@ -11114,6 +11123,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>CloudWatchはメトリクス・アラーム・ダッシュボード・ログの統合監視サービス。</li>
 <li>標準にない値はエージェントやPutMetricData、EMFで送る。</li>
 <li>ログはメトリクスフィルターでアラームに、サブスクリプションフィルターで連携に。</li>
+<li>SyntheticsのCanaryは利用者の操作を定期実行し、WebサイトやAPIを外形監視する。</li>
 </ul>
 </section>
 </article>
