@@ -1,6 +1,7 @@
 <!-- title: Amazon RDS -->
 <!-- category: データベース -->
 <!-- lead: リレーショナルデータベースの構築・運用を任せられるマネージドDB -->
+<!-- verified: 2026-11-03 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>Amazon RDS(Relational Database Service)</strong>は、リレーショナルデータベース(SQL)の構築・運用を提供するマネージドサービスです。パッチ適用やバックアップなどの面倒な運用作業をAWSに任せられます。</p>
@@ -55,6 +56,15 @@ edge l3 proxy
 edge proxy db
 <figcaption>図2 RDS Proxy。大量のクライアントからの接続を少数のDB接続にまとめて使い回し、DBの最大接続数を超えないようにする。</figcaption>
 </figure>
+
+<h3>RDS Proxyとフェイルオーバー</h3>
+<ul>
+<li>Multi-AZのフェイルオーバーが起きると、Proxyは新しいプライマリへの接続を振り分け直す。アプリはProxyのエンドポイントに接続したままでよい。</li>
+<li>Proxyは<strong>DNSのキャッシュを使わず</strong>に切り替え先へ接続するため、DNS名の切り替えを待たずに済む。Multi-AZ DBインスタンスでは、フェイルオーバー時間を最大66%短くできる。</li>
+<li>フェイルオーバーに備えて、Proxyは一部の接続を監視用に確保している。</li>
+<li>フェイルオーバー中に実行していたトランザクションは失敗する。Proxyが自動で再実行するわけではないので、アプリ側で再試行の処理を用意する。</li>
+<li>Proxyは書き込み側(プライマリ)にだけ関連付けられる。リードレプリカには関連付けられない。</li>
+</ul>
 
 <h3>DBサブネットグループ</h3>
 <p><strong>DBサブネットグループ</strong>は、RDSのDBインスタンスを配置してよい<strong>VPC内のサブネットの組</strong>です。DBインスタンスを作るときに指定し、RDSはこの中のサブネットにインスタンスを置きます。</p>
@@ -213,7 +223,7 @@ edge green sw
 <ul>
 <li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
 <li>Multi-AZのフェイルオーバーでは<strong>エンドポイント名は変わらず</strong>、DNSがスタンバイに切り替わる。アプリは再接続できるようにする。</li>
-<li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。</li>
+<li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。フェイルオーバーを速くしたい場合も、DNSのキャッシュを使わないProxyが向く(進行中のトランザクションは失敗するので再試行を実装する)。</li>
 <li>遅いSQLや待機イベントの特定 → <strong>Performance Insights</strong>。OSのプロセス単位のメトリクス → <strong>拡張モニタリング</strong>。</li>
 </ul>
 <h4>バックアップ・暗号化</h4>

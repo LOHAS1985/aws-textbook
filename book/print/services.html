@@ -2859,9 +2859,15 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <tr><td>移行(Transition)</td><td>別のストレージクラスへ移す</td><td>作成30日後にStandard-IA、90日後にGlacier Flexible Retrieval</td></tr>
 <tr><td>有効期限(Expiration)</td><td>オブジェクトを削除する(バージョニング有効時は削除マーカーを置く)</td><td>作成365日後に削除</td></tr>
 <tr><td>非現行バージョンの移行・削除</td><td>古いバージョンを移す・削除する</td><td>非現行になって30日後に削除</td></tr>
-<tr><td>不完全なマルチパートアップロードの中止</td><td>途中で止まったアップロードのパーツを削除する</td><td>開始7日後に中止</td></tr>
+<tr><td>不完全なマルチパートアップロードの削除</td><td>完了しないまま指定日数を過ぎたアップロードを中止し、そのパーツを削除する(完了したものは対象外)</td><td>開始7日後に中止</td></tr>
 <tr><td>期限切れの削除マーカーの削除</td><td>古いバージョンがすべて消えて残った削除マーカーを消す</td><td>—</td></tr>
 </table></div>
+<ul>
+<li>有効期限(Expiration)では、不完全なマルチパートアップロードは消えない。「不完全なマルチパートアップロードの削除」のアクションを設定する必要がある。</li>
+<li>ルールは、作成済みのオブジェクトにも新しく作るオブジェクトにも適用される。</li>
+<li>既定では128KB未満のオブジェクトは移行されない(サイズの条件を指定して変えられる)。</li>
+<li>1つのバケットに設定できるルールは最大1,000個。</li>
+</ul>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 820 114" style="max-width:820px;min-width:656px" role="img" aria-label="図8 ライフサイクルルールの例。アクセスが減るにつれて安いストレージクラスへ移し、保存期間が過ぎたら削除する。"><defs><marker id="s3-dgservices-s3-8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -2926,7 +2932,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li>パーツは5MB〜5GB(最後のパーツは5MB未満でもよい)、最大10,000パーツ</li>
 <li>並列に送るので速く、失敗したパーツだけ送り直せる</li>
 <li>AWS CLIの <code>aws s3 cp</code> などは、大きいファイルで自動的にマルチパートアップロードを使う</li>
-<li>完了も中止もされていないアップロードのパーツは<strong>一覧に見えないまま保存料金がかかる</strong>ため、ライフサイクルルールで「不完全なマルチパートアップロードの中止」を設定する</li>
+<li>完了も中止もされていないアップロードのパーツは<strong>一覧に見えないまま保存料金がかかる</strong>ため、ライフサイクルルールで「不完全なマルチパートアップロードの削除」を設定する</li>
 </ul>
 <p>遠隔地からのアップロードを速くしたい場合は、Transfer Accelerationと組み合わせます。</p>
 
@@ -3005,7 +3011,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <ul>
 <li>S3にフォルダは実在しない。キーの先頭部分(<strong>プレフィックス</strong>)で範囲を指定する。</li>
 <li>Deep Archiveの取り出しはStandardで12時間、Bulkで48時間。</li>
-<li>古いデータを自動で安いクラスへ・自動削除 → <strong>ライフサイクルルール</strong>。不完全なマルチパートアップロードの中止もここで設定。</li>
+<li>古いデータを自動で安いクラスへ・自動削除 → <strong>ライフサイクルルール</strong>。不完全なマルチパートアップロードの削除もここで設定(有効期限では消えない)。</li>
 <li>遠隔地からのアップロード高速化 → <strong>Transfer Acceleration</strong>。取り出し時の加工 → <strong>Object Lambda</strong>。</li>
 <li>5GBを超えるファイルのアップロード → <strong>マルチパートアップロード</strong>が必須(100MB以上で推奨)。</li>
 </ul>
@@ -4310,7 +4316,16 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <figcaption>図2 RDS Proxy。大量のクライアントからの接続を少数のDB接続にまとめて使い回し、DBの最大接続数を超えないようにする。</figcaption>
 </figure>
 
-<h3 id="rds-c2-3">DBサブネットグループ<a class="anchor" href="#rds-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="rds-c2-3">RDS Proxyとフェイルオーバー<a class="anchor" href="#rds-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>Multi-AZのフェイルオーバーが起きると、Proxyは新しいプライマリへの接続を振り分け直す。アプリはProxyのエンドポイントに接続したままでよい。</li>
+<li>Proxyは<strong>DNSのキャッシュを使わず</strong>に切り替え先へ接続するため、DNS名の切り替えを待たずに済む。Multi-AZ DBインスタンスでは、フェイルオーバー時間を最大66%短くできる。</li>
+<li>フェイルオーバーに備えて、Proxyは一部の接続を監視用に確保している。</li>
+<li>フェイルオーバー中に実行していたトランザクションは失敗する。Proxyが自動で再実行するわけではないので、アプリ側で再試行の処理を用意する。</li>
+<li>Proxyは書き込み側(プライマリ)にだけ関連付けられる。リードレプリカには関連付けられない。</li>
+</ul>
+
+<h3 id="rds-c2-4">DBサブネットグループ<a class="anchor" href="#rds-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>DBサブネットグループ</strong>は、RDSのDBインスタンスを配置してよい<strong>VPC内のサブネットの組</strong>です。DBインスタンスを作るときに指定し、RDSはこの中のサブネットにインスタンスを置きます。</p>
 <ul>
 <li><strong>2つ以上のAZのサブネット</strong>を含める必要がある(Multi-AZのスタンバイや、障害時の配置先に使われる)</li>
@@ -4318,7 +4333,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>DBへのアクセスはセキュリティグループで、アプリサーバーのセキュリティグループからのDBポート(MySQLなら3306)だけを許可する</li>
 </ul>
 
-<h3 id="rds-c2-4">パラメータグループとオプショングループ<a class="anchor" href="#rds-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="rds-c2-5">パラメータグループとオプショングループ<a class="anchor" href="#rds-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>設定するもの</th><th>例</th></tr>
 <tr><td>パラメータグループ</td><td><strong>DBエンジンの設定値</strong>(設定ファイルの内容に当たるもの)</td><td><code>max_connections</code>、文字コード、タイムゾーン、スロークエリログの出力、<code>rds.force_ssl</code>(SSL接続の強制)</td></tr>
@@ -4331,7 +4346,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>オプショングループはMySQL・MariaDB・Oracle・SQL Serverで使う(PostgreSQLは拡張機能をパラメータで有効にする)</li>
 </ul>
 
-<h3 id="rds-c2-5">メンテナンスウィンドウ<a class="anchor" href="#rds-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="rds-c2-6">メンテナンスウィンドウ<a class="anchor" href="#rds-c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>メンテナンスウィンドウ</strong>は、OSやDBエンジンのパッチ適用など、RDSが行うメンテナンスの時間帯です。<strong>週1回・30分以上</strong>の枠を指定します(指定しないとリージョンごとの時間帯から自動で割り当てられる)。</p>
 <ul>
 <li>「マイナーバージョンの自動アップグレード」を有効にすると、新しいマイナーバージョンがメンテナンスウィンドウで適用される</li>
@@ -4340,7 +4355,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>予定されているメンテナンスは、コンソールやAWS Health Dashboardで確認できる</li>
 </ul>
 
-<h3 id="rds-c2-6">暗号化<a class="anchor" href="#rds-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="rds-c2-7">暗号化<a class="anchor" href="#rds-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>RDSの保存時の暗号化は<strong>KMSキー</strong>で行い、ストレージだけでなく<strong>自動バックアップ・スナップショット・リードレプリカ・ログ</strong>もすべて暗号化されます。</p>
 <ul>
 <li>暗号化は<strong>DBインスタンスの作成時にしか有効にできない</strong>。作成後に有効・無効を切り替えることはできない</li>
@@ -4382,7 +4397,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <figcaption>図3 暗号化されていないDBを暗号化する手順。①スナップショットを取り、②暗号化を指定してスナップショットをコピーし、③暗号化されたスナップショットから新しいDBを復元する。最後にアプリの接続先を切り替える。</figcaption>
 </figure>
 
-<h3 id="rds-c2-7">ストレージの自動スケーリング<a class="anchor" href="#rds-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="rds-c2-8">ストレージの自動スケーリング<a class="anchor" href="#rds-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>ストレージの自動スケーリング</strong>を有効にすると、空き容量が少なくなったときに<strong>ストレージが自動で拡張</strong>されます。拡張の上限(最大ストレージしきい値)を指定しておきます。</p>
 <ul>
 <li>拡張される条件:空き容量が割り当て容量の<strong>10%未満</strong>の状態が<strong>5分以上</strong>続き、前回のストレージ変更から6時間以上経っている</li>
@@ -4391,7 +4406,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </ul>
 <p>容量不足でDBが止まるのを防げるため、データ量の増え方が読みにくい場合に有効です。CloudWatchメトリクス <code>FreeStorageSpace</code> にアラームを設定して監視も併用します。</p>
 
-<h3 id="rds-c2-8">Multi-AZのDNS切り替え<a class="anchor" href="#rds-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="rds-c2-9">Multi-AZのDNS切り替え<a class="anchor" href="#rds-c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p>Multi-AZでは、アプリは<strong>DBのエンドポイント(DNS名)</strong>に接続します。プライマリに障害が起きると、RDSは自動で<strong>スタンバイを新しいプライマリに昇格</strong>し、<strong>エンドポイントのDNSレコードをスタンバイに向け直します</strong>。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -4431,7 +4446,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>読み取り可能なスタンバイを2つ持つ「Multi-AZ DBクラスター」構成もあり、フェイルオーバーがより速い</li>
 </ul>
 
-<h3 id="rds-c2-9">Performance Insightsと拡張モニタリング<a class="anchor" href="#rds-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="rds-c2-10">Performance Insightsと拡張モニタリング<a class="anchor" href="#rds-c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>機能</th><th>見られるもの</th><th>使う場面</th></tr>
 <tr><td>CloudWatchの標準メトリクス</td><td>CPU使用率、空きメモリ、空きストレージ、接続数、IOPS、レイテンシーなど(1分間隔)</td><td>基本の監視・アラーム</td></tr>
@@ -4440,7 +4455,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </table></div>
 <p>CloudWatchの標準メトリクスはハイパーバイザー側から取るため、OS内部の詳細は見えません。OSの中を見るなら拡張モニタリング、DBの中(SQL)を見るならPerformance Insights、と使い分けます。これらはCloudWatch Database Insightsとしてもまとめて表示できます。</p>
 
-<h3 id="rds-c2-10">Blue/Green Deployments<a class="anchor" href="#rds-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="rds-c2-11">Blue/Green Deployments<a class="anchor" href="#rds-c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>RDS Blue/Green Deployments</strong>は、本番のDB(ブルー)をコピーした<strong>ステージング環境(グリーン)</strong>を作り、ブルーの変更をレプリケーションで同期させながらグリーン側で変更・テストし、準備ができたら<strong>短時間で切り替える</strong>機能です。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -4479,7 +4494,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>MySQL・MariaDB・PostgreSQL(とAurora)で使える</li>
 </ul>
 
-<h3 id="rds-c2-11">停止は最大7日<a class="anchor" href="#rds-c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="rds-c2-12">停止は最大7日<a class="anchor" href="#rds-c2-12" aria-label="この見出しへのリンク">#</a></h3>
 <p>開発用のDBなど、使わない時間はDBインスタンスを<strong>停止</strong>してインスタンスの料金を節約できます。ただし、停止できるのは<strong>最大7日間</strong>で、<strong>7日を過ぎると自動で起動</strong>します(メンテナンスを適用できなくなるのを防ぐため)。</p>
 <ul>
 <li>停止中もストレージとスナップショットの料金はかかる</li>
@@ -4528,7 +4543,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <ul>
 <li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
 <li>Multi-AZのフェイルオーバーでは<strong>エンドポイント名は変わらず</strong>、DNSがスタンバイに切り替わる。アプリは再接続できるようにする。</li>
-<li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。</li>
+<li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。フェイルオーバーを速くしたい場合も、DNSのキャッシュを使わないProxyが向く(進行中のトランザクションは失敗するので再試行を実装する)。</li>
 <li>遅いSQLや待機イベントの特定 → <strong>Performance Insights</strong>。OSのプロセス単位のメトリクス → <strong>拡張モニタリング</strong>。</li>
 </ul>
 <h4>バックアップ・暗号化</h4>
