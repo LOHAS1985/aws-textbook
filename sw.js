@@ -1,6 +1,6 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "40c980a97524";
+var CACHE = PREFIX + "aa23d6a9d40d";
 var FILES = {
 "css/style.css": "6338492ba513",
 "exercises/access-denied-troubleshooting.html": "3f68c538ac99",
@@ -152,7 +152,7 @@ var FILES = {
 "icons/services/vpc.svg": "7b842e6a64b2",
 "icons/services/waf.svg": "e67f918f21cf",
 "icons/services/xray.svg": "49c3a0c3f4e8",
-"index.html": "202380bd59ea",
+"index.html": "729d18165ae4",
 "js/glossary.js": "764fdc0ca798",
 "js/sim.js": "3ae9e28cc7a7",
 "js/site.js": "3f6897e97e85",
@@ -180,7 +180,7 @@ var FILES = {
 "services/bedrock.html": "096a85f985ab",
 "services/cdk.html": "6c319a9c77a2",
 "services/client-vpn.html": "e8ace558acc4",
-"services/cloudformation.html": "45b06ea04282",
+"services/cloudformation.html": "cb138bd4cb51",
 "services/cloudfront.html": "d367407250af",
 "services/cloudshell.html": "ddcdf10acb55",
 "services/cloudtrail.html": "b5999040f46a",
@@ -202,7 +202,7 @@ var FILES = {
 "services/devops-agent.html": "6ab94f88e96a",
 "services/direct-connect.html": "b67bcb36669e",
 "services/directory-service.html": "464d8db7ae2f",
-"services/dns-firewall.html": "dcc696dd593a",
+"services/dns-firewall.html": "3d18c315411a",
 "services/dynamodb.html": "5695cde75061",
 "services/ebs.html": "d7f34c074331",
 "services/ec2.html": "f9ff46883fba",
@@ -246,7 +246,7 @@ var FILES = {
 "services/secrets-manager.html": "827ca9135e8d",
 "services/security-agent.html": "78177bd5f396",
 "services/security-hub.html": "59a243e09d5a",
-"services/service-catalog.html": "f76815afaecc",
+"services/service-catalog.html": "f9c88e27fece",
 "services/ses.html": "d0e60538d2e8",
 "services/shield.html": "b5efacec5d30",
 "services/site-to-site-vpn.html": "15de6c9f39a9",

@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS Service Catalog</h1>
   <p class="lead">承認済みの構成を「製品」としてカタログから起動させる</p>
-  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -98,6 +98,54 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Service Catalogの構成。管理者がCloudFormationテンプレートを製品として登録し、ポートフォリオにまとめて利用者に公開する。利用者はカタログから承認済みの構成だけを起動できる。</figcaption>
 </figure>
+<h3 id="c2-1">製品とバージョン<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>製品は<strong>バージョン</strong>を持つ。管理者が新しいバージョンを追加すると、利用者は起動済みの製品(プロビジョニング済み製品)を新しいバージョンへ<strong>更新</strong>できる。古いバージョンは無効化して使わせないようにできる。</li>
+<li>製品の実体は、CloudFormationテンプレートのほか、Terraformなどの構成も扱える。</li>
+<li>利用者が製品を起動すると、裏側で<strong>CloudFormationスタック</strong>が作られ、その製品のリソースが作成される。</li>
+</ul>
+
+<h3 id="c2-2">制約の種類<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>制約</th><th>できること</th></tr>
+<tr><td><strong>起動制約</strong></td><td>製品の起動時に使う<strong>IAMロール</strong>を指定する。利用者本人に作成権限がなくても起動できる</td></tr>
+<tr><td><strong>テンプレート制約</strong></td><td>起動時に選べるパラメータの値を制限する(例:インスタンスタイプを <code>t3.micro</code> と <code>t3.small</code> だけにする)</td></tr>
+<tr><td>通知制約</td><td>製品のスタックのイベントを、指定したSNSトピックへ通知する</td></tr>
+<tr><td>StackSet制約</td><td>製品を、複数のアカウント・リージョンへStackSetとして展開する範囲を指定する</td></tr>
+<tr><td>リソース更新制約</td><td>起動後のリソースに対するタグの更新を許可するかを決める</td></tr>
+</table></div>
+<p><strong>TagOption</strong>を使うと、製品の起動時に付けるタグのキーと選べる値を、管理者が決められます。コスト配分タグの統一に役立ちます。</p>
+<p>起動制約で指定するロールには、製品が作るリソースの作成権限が必要です。また、利用者側にはService Catalogの利用権限(<code>servicecatalog:*</code>相当の起動操作)が必要で、リソースの作成権限は不要になります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 194" style="max-width:684px;min-width:547px" role="img" aria-label="図2 起動制約。利用者はService Catalogを使うだけで、リソースの作成は起動制約のIAMロールの権限で行われる。"><defs><marker id="dgservices-service-catalog-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">利用者</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">製品を起動</text>
+</g>
+<g data-node="sc">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">Service Catalog</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">制約を確認</text>
+</g>
+<g data-node="role">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">起動ロール</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">この権限で作成</text>
+</g>
+<g data-node="cfn">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">CloudFormation</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">スタックを作成</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgservices-service-catalog-2)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgservices-service-catalog-2)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line dg-dash" marker-end="url(#dgservices-service-catalog-2)"/>
+</svg>
+</div>
+<figcaption>図2 起動制約。利用者はService Catalogを使うだけで、リソースの作成は起動制約のIAMロールの権限で行われる。</figcaption>
+</figure>
 </section>
 
 <section class="chapter">
@@ -129,6 +177,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>「承認済みの構成だけをセルフサービスで起動させたい」→ <strong>Service Catalog</strong>。</li>
 <li>共有されたポートフォリオの製品・制約は変更できない。別の起動制約を使いたいときは、製品を<strong>ローカルポートフォリオ</strong>に追加して設定する。</li>
 <li>利用者に広い権限を与えずに起動させる → <strong>起動制約</strong>。</li>
+<li>起動時に選べる値(インスタンスタイプなど)を絞りたい → <strong>テンプレート制約</strong>。タグの統一 → TagOption。</li>
+<li>ポートフォリオの共有は、Organizationsを使うと組織全体へ共有できる。</li>
 </ul></div>
 </section>
 

@@ -40,15 +40,15 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS CloudFormation</h1>
   <p class="lead">AWSリソースをテンプレート(コード)で定義し、自動構築・管理</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
 <details>
-<summary>このページの内容(18項目)</summary>
+<summary>このページの内容(19項目)</summary>
 <ol>
 <li><a href="#c1">1. サービス概要</a></li>
-<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">主な機能</a></li><li><a href="#c2-3">AWS CLIのコマンドとオプション</a></li><li><a href="#c2-4">テンプレートの例(S3バケットの作成)</a></li><li><a href="#c2-5">組み込み関数</a></li><li><a href="#c2-6">Export/ImportValue(スタック間の参照)</a></li><li><a href="#c2-7">ロールバックとスタックの状態</a></li><li><a href="#c2-8">cfn-init・cfn-signal・CreationPolicy</a></li><li><a href="#c2-9">UpdatePolicy(Auto Scalingグループの更新)</a></li><li><a href="#c2-10">終了保護</a></li></ul></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">主な機能</a></li><li><a href="#c2-3">AWS CLIのコマンドとオプション</a></li><li><a href="#c2-4">テンプレートの例(S3バケットの作成)</a></li><li><a href="#c2-5">組み込み関数</a></li><li><a href="#c2-6">Export/ImportValue(スタック間の参照)</a></li><li><a href="#c2-7">ロールバックとスタックの状態</a></li><li><a href="#c2-8">cfn-init・cfn-signal・CreationPolicy</a></li><li><a href="#c2-9">DependsOn属性とWaitCondition</a></li><li><a href="#c2-10">UpdatePolicy(Auto Scalingグループの更新)</a></li><li><a href="#c2-11">終了保護</a></li></ul></li>
 <li><a href="#c3">3. ユースケース</a></li>
 <li><a href="#c4">4. 料金の考え方</a></li>
 <li><a href="#c5">5. 関連サービス</a></li>
@@ -400,7 +400,41 @@ Resources:
 </figure>
 <p>タイムアウトまでに成功のシグナルが届かない(または失敗のシグナルが届く)と、そのリソースは作成失敗となり、スタックはロールバックします。「スタックがタイムアウトで失敗する」場合は、インスタンスからCloudFormationのエンドポイントへ通信できるか(NATゲートウェイなど)、cfn-signalが実行されているか(<code>/var/log/cfn-init.log</code>)を確認します。</p>
 
-<h3 id="c2-9">UpdatePolicy(Auto Scalingグループの更新)<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-9">DependsOn属性とWaitCondition<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>CloudFormationは、<code>Ref</code> や <code>Fn::GetAtt</code> で参照しているリソースの順番を自動で判断し、依存先を先に作ります。参照がないリソース同士は<strong>並行して作成</strong>されます。参照がなくても順番を守らせたいときに使うのが <strong>DependsOn属性</strong>です。</p>
+<div class="table-wrap"><table>
+<tr><th>仕組み</th><th>役割</th><th>使う場面</th></tr>
+<tr><td>暗黙の依存関係</td><td><code>Ref</code>・<code>GetAtt</code>・<code>Sub</code> で参照すると、自動で依存先が先に作成される</td><td>通常はこれで足りる</td></tr>
+<tr><td><strong>DependsOn</strong></td><td>指定したリソースの<strong>作成が完了してから</strong>、このリソースを作る(削除は逆順)。1つまたは複数のリソースの論理IDを指定する</td><td>参照はないが順番が必要なとき</td></tr>
+<tr><td><strong>WaitCondition</strong>(<code>AWS::CloudFormation::WaitCondition</code>)</td><td>外部からの成功シグナルを、指定した数・時間内に受け取るまで待つ。<code>WaitConditionHandle</code> の署名付きURLにシグナルを送る</td><td>テンプレートの外の処理(手動の作業や別システムの設定)の完了を待つとき</td></tr>
+<tr><td>CreationPolicy</td><td>リソース自身に付け、EC2やAuto Scalingグループのシグナルを待つ</td><td>EC2・Auto Scalingグループの初期設定を待つ(推奨)</td></tr>
+</table></div>
+<pre class="code"><code>Resources:
+  Gateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: { VpcId: !Ref Vpc, InternetGatewayId: !Ref Igw }
+  WebServer:
+    Type: AWS::EC2::Instance
+    DependsOn: Gateway        # IGWのアタッチ完了後に作成
+    Properties: { ... }
+
+  WaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+  WaitForSetup:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: WebServer      # 作成後に待ち始める
+    Properties:
+      Handle: !Ref WaitHandle
+      Timeout: '600'
+      Count: 1</code></pre>
+<ul>
+<li>典型例は、<strong>インターネットゲートウェイのアタッチ(VPCGatewayAttachment)が終わってから、パブリックIPを使うEC2やElastic IP、NATゲートウェイを作る</strong>ケース。参照関係がないため、DependsOnが必要になる。</li>
+<li>DependsOnに<strong>循環した指定</strong>(AがBに、BがAに依存)があると、テンプレートはエラーになる。</li>
+<li>WaitConditionは、タイムアウトまでに必要な数の成功シグナルが届かないと<strong>作成失敗→ロールバック</strong>。WaitConditionの<strong>DependsOn</strong>には、待ち始めるタイミングになるリソースを指定する。</li>
+<li>WaitConditionは「外部の処理を待つ」ためのもので、EC2やAuto Scalingグループの設定待ちにはCreationPolicyを使う。</li>
+</ul>
+
+<h3 id="c2-10">UpdatePolicy(Auto Scalingグループの更新)<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>Auto Scalingグループの起動テンプレート(AMIなど)を変えてスタックを更新しても、既定では<strong>既存のインスタンスは置き換わりません</strong>(新しく起動するものから適用される)。<strong>UpdatePolicy</strong>を付けると、スタックの更新時にインスタンスをどう入れ替えるかを指定できます。</p>
 <div class="table-wrap"><table>
 <tr><th>ポリシー</th><th>動作</th></tr>
@@ -410,7 +444,7 @@ Resources:
 </table></div>
 <p>ローリング更新はリソースを節約できますが、途中で失敗すると新旧が混在した状態から戻すことになります。確実に戻せることを重視するなら置き換え更新を選びます。</p>
 
-<h3 id="c2-10">終了保護<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-11">終了保護<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p>スタックの<strong>終了保護</strong>を有効にすると、<strong>スタックの削除操作が拒否</strong>されます。本番環境のスタックを誤って削除するのを防ぎます。ネストスタックでは、親(ルート)スタックの設定が適用されます。</p>
 <div class="table-wrap"><table>
 <tr><th>仕組み</th><th>防ぐもの</th><th>単位</th></tr>
