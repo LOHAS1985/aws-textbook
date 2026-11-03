@@ -831,7 +831,25 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <h3 id="auto-scaling-c2-2">起動テンプレート<a class="anchor" href="#auto-scaling-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>起動するインスタンスの設定(AMI、インスタンスタイプ、キーペア、セキュリティグループ、IAMロール、ユーザーデータなど)をまとめたものです。バージョン管理ができ、オンデマンドとスポットを混ぜる設定(混合インスタンスポリシー)にも使えます。古い仕組みの「起動設定(Launch Configuration)」は非推奨のため、<strong>起動テンプレートを使います</strong>。</p>
 
-<h3 id="auto-scaling-c2-3">スケーリングの方法<a class="anchor" href="#auto-scaling-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="auto-scaling-c2-3">混合インスタンスポリシーと割り当て戦略<a class="anchor" href="#auto-scaling-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>1つのグループで<strong>オンデマンドとスポット</strong>、複数のインスタンスタイプを混ぜて使う設定です。コストを下げつつ、スポットの中断(容量不足による回収)に強くできます。「どのインスタンスタイプ・どの購入オプションで起動するか」を決めるルールが<strong>割り当て戦略</strong>です。</p>
+<ul>
+<li><strong>オンデマンドの基本容量</strong>:最低限、必ずオンデマンドで確保する台数。</li>
+<li><strong>基本容量を超えた分のオンデマンドの割合</strong>:それ以降の台数のうち、オンデマンドにする%(残りはスポット)。</li>
+<li><strong>インスタンスタイプの候補</strong>:複数指定する。属性(vCPU・メモリなど)で条件を指定して候補を自動選択する方法もある。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>対象</th><th>割り当て戦略</th><th>動き</th></tr>
+<tr><td rowspan="2">オンデマンド</td><td><code>prioritized</code>(既定)</td><td>候補に付けた優先順位の順に使う。使えなければ次の候補</td></tr>
+<tr><td><code>lowest-price</code></td><td>最も安いタイプから使う</td></tr>
+<tr><td rowspan="4">スポット</td><td><strong class="em"><code>price-capacity-optimized</code></strong></td><td>中断されにくく、かつ価格が安いプールを選ぶ。<strong>推奨</strong></td></tr>
+<tr><td><code>capacity-optimized</code></td><td>空き容量が最も多い(中断されにくい)プールを選ぶ</td></tr>
+<tr><td><code>capacity-optimized-prioritized</code></td><td>優先順位を尊重しつつ、容量の面でも最適化する</td></tr>
+<tr><td><code>lowest-price</code></td><td>最も安いプールを選ぶ(指定した数のプールに分散)。中断されやすい</td></tr>
+</table></div>
+<p>「プール」は、インスタンスタイプとAZの組み合わせのことです。候補のタイプとAZを多くするほどプールが増え、スポットの確保と中断への耐性が高まります。<strong>キャパシティの再調整</strong>を有効にすると、スポットの中断リスクが高まったインスタンスを、中断される前に新しいインスタンスへ入れ替えます。</p>
+
+<h3 id="auto-scaling-c2-4">スケーリングの方法<a class="anchor" href="#auto-scaling-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>方法</th><th>動き</th><th>向いている場面</th></tr>
 <tr><td><strong>ターゲット追跡</strong></td><td>「平均CPU使用率50%」のような目標値を保つように自動で増減する</td><td>まず検討する基本の方法</td></tr>
@@ -871,14 +889,14 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <figcaption>図2 ターゲット追跡スケーリング。目標値(例:平均CPU使用率50%)を設定するだけで、必要なCloudWatchアラームが自動で作られ、目標値に近づくように台数が調整される。</figcaption>
 </figure>
 
-<h3 id="auto-scaling-c2-4">ヘルスチェックと自己修復<a class="anchor" href="#auto-scaling-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="auto-scaling-c2-5">ヘルスチェックと自己修復<a class="anchor" href="#auto-scaling-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>EC2ヘルスチェック</strong>(既定):EC2のステータスチェックで異常なら入れ替える。</li>
 <li><strong>ELBヘルスチェック</strong>:ロードバランサーのヘルスチェックに失敗した場合も入れ替える。アプリの異常も検知できるため、ELBと組み合わせるときは有効にする。</li>
 <li><strong>ヘルスチェックの猶予期間</strong>:起動直後はアプリの準備が終わっていないため、一定時間ヘルスチェックの結果を無視する。短すぎると「起動してすぐ終了される」を繰り返す。</li>
 </ul>
 
-<h3 id="auto-scaling-c2-5">ライフサイクルフック<a class="anchor" href="#auto-scaling-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="auto-scaling-c2-6">ライフサイクルフック<a class="anchor" href="#auto-scaling-c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p>インスタンスの起動時・終了時に<strong>一時停止(Pending:Wait/Terminating:Wait)</strong>させて、独自の処理を入れる仕組みです。例えば、起動時にソフトウェアの設定を終えてからサービスに入れる、終了前にログをS3へ退避する、といった使い方をします。待機時間を過ぎるか、完了の通知を送ると次へ進みます。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -914,7 +932,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <figcaption>図3 ライフサイクルフック。起動時(Pending:Wait)と終了時(Terminating:Wait)に一時停止させ、EventBridgeやLambda、Systems Managerなどで独自の処理を実行できる。</figcaption>
 </figure>
 
-<h3 id="auto-scaling-c2-6">そのほかの機能<a class="anchor" href="#auto-scaling-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="auto-scaling-c2-7">そのほかの機能<a class="anchor" href="#auto-scaling-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>インスタンスの更新(Instance Refresh)</strong>:起動テンプレートを新しくしたとき、インスタンスを少しずつ入れ替える(ローリング更新)。</li>
 <li><strong>終了ポリシー</strong>:スケールインのとき、どのインスタンスから終了するかを決める。既定では、まずAZ間の台数のバランスを保ち、その中で古い起動テンプレートのインスタンスから終了する。</li>
@@ -924,7 +942,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li><strong>ウォームプール</strong>:初期化済みのインスタンスを停止状態で待機させ、スケールアウトを速くする。</li>
 </ul>
 
-<h3 id="auto-scaling-c2-7">関連する「Auto Scaling」<a class="anchor" href="#auto-scaling-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="auto-scaling-c2-8">関連する「Auto Scaling」<a class="anchor" href="#auto-scaling-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>Application Auto Scaling</strong>:EC2以外(ECSのタスク数、DynamoDBの読み書き容量、Auroraのレプリカ数、Lambdaのプロビジョニング済み同時実行数など)をスケーリングする仕組み。</li>
 <li><strong>AWS Auto Scaling(スケーリングプラン)</strong>:複数のリソースのスケーリングをまとめて設定する仕組み。</li>
@@ -2851,7 +2869,8 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <h3 id="s3-c2-15">その他の機能<a class="anchor" href="#s3-c2-15" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>S3 Select</strong>:オブジェクト(CSV・JSON)からSQLで必要なデータだけを抽出する機能。<strong>2024年に新規の利用受付を終了</strong>しており、これから使う場合は<a href="#p-athena">Amazon Athena</a>などでS3のデータをSQLで分析する。</li>
-<li><strong>S3 Batch Operations</strong>:大量のオブジェクトに対して一括で操作を実行。</li>
+<li><strong class="em">S3 インベントリ</strong>:バケット内のオブジェクトの一覧と属性(サイズ、最終更新日時、ストレージクラス、暗号化の状態、バージョンID、レプリケーションの状態など)を、<strong>日次または週次でレポートファイルとして出力</strong>する。出力先は別のバケットで、形式はCSV・Apache ORC・Parquet。Athenaで検索・集計したり、Batch Operationsの対象一覧(マニフェスト)に使ったりできる。大量のオブジェクトを <code>ListObjects</code> で数えるより、低コストで効率が良い。</li>
+<li><strong>S3 Batch Operations</strong>:大量のオブジェクトに対して一括で操作を実行。対象の一覧には、S3インベントリのレポートやCSVを指定できる。</li>
 <li><strong>S3 Transfer Acceleration</strong>:クライアントに近いCloudFrontのエッジロケーションでデータを受け取り、AWSのバックボーン経由でバケットに転送して高速化する。バケット単位で有効化。</li>
 <li><strong class="em">S3 Object Lambda</strong>:データの取り出し時にデータを加工する(画像の動的リサイズ、機密データのマスキングなど)。</li>
 </ul>
@@ -4770,6 +4789,16 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <h3 id="elasticache-c2-7">メモリが足りないとき(エビクション)<a class="anchor" href="#elasticache-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>メモリがいっぱいになると、エンジンは設定された方針(パラメータグループの <code>maxmemory-policy</code>)に従って、古いキーやあまり使われないキーを消します。これを<strong>エビクション</strong>といいます。エビクションが増えるとキャッシュヒット率が下がり、DBへのアクセスが増えるため、ノードを大きくするかシャードを増やします。</p>
+
+<p><strong>エビクション(eviction)は「追い出し」</strong>の意味で、メモリがいっぱいのときに、新しいデータを入れる場所を作るため、保存済みのキーを削除することです。TTLの期限が来て消える「<strong>期限切れ(expire)</strong>」とは違い、メモリ不足が原因で、まだ有効なデータが消える点が重要です。どのキーを消すかは <code>maxmemory-policy</code> で決まります。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>動き</th></tr>
+<tr><td><code>volatile-lru</code>(既定)</td><td>TTLが設定されたキーのうち、最近使われていないものから消す</td></tr>
+<tr><td><code>allkeys-lru</code></td><td>TTLの有無に関係なく、最近使われていないキーから消す。純粋なキャッシュ向き</td></tr>
+<tr><td><code>volatile-ttl</code></td><td>TTLが残り少ないキーから消す</td></tr>
+<tr><td><code>noeviction</code></td><td>消さずに、書き込みをエラーにする。消えては困るデータを扱うとき</td></tr>
+</table></div>
+<p>LRU(Least Recently Used)は「最近使われていないもの」、LFU(Least Frequently Used)は「使用回数が少ないもの」を消す方式です。TTLを付けていないキーばかりだと <code>volatile-*</code> では消す対象がなく、書き込みエラーになることがあります。</p>
 
 <h3 id="elasticache-c2-8">監視するメトリクス<a class="anchor" href="#elasticache-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
@@ -10073,6 +10102,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h3 id="security-hub-c2-2">セキュリティチェック<a class="anchor" href="#security-hub-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>代表的なセキュリティ基準:AWS基礎セキュリティのベストプラクティス、CIS AWS Foundations Benchmark、PCI DSS</li>
+<li><strong>CIS AWS Foundations Benchmark</strong>:米国の非営利団体CIS(Center for Internet Security)が公開する、AWSアカウントを安全に設定するための<strong>ベストプラクティス集</strong>。IAM(ルートユーザーのMFA・アクセスキーの管理・パスワードポリシー)、ログ記録(CloudTrail・Configの有効化)、監視(不正なAPI呼び出しやルートユーザーの使用のアラーム)、ネットワーク(SSH・RDPの全開放を避ける、デフォルトのセキュリティグループで通信を許可しない)などを、具体的なチェック項目にしている。Security Hubでは<strong>複数のバージョンから選んで有効化</strong>でき、各項目の合否が検出結果として出る。</li>
 <li>チェック内容の例:S3バケットが公開されていないか、CloudTrailが有効か、IAMユーザーにMFAが設定されているか</li>
 <li>検出結果のコンプライアンスステータス:<code>PASSED</code>(合格)、<code>FAILED</code>(不合格)、<code>WARNING</code>(判定できない。対象リソースタイプのConfigの記録が無効な場合など)、<code>NOT_AVAILABLE</code>(チェックを実行できなかった)</li>
 <li>チェックはAWS Configのルールを使って行うため、<strong>AWS Configの記録を有効にしておく</strong>必要がある。なお、<code>COMPLIANT</code>/<code>NON_COMPLIANT</code> はConfigルール側の評価結果の値で、Security Hubの値とは異なる。</li>
@@ -10881,6 +10911,18 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li><strong>ダッシュボード</strong>:クロスアカウント/クロスリージョンのメトリクスもまとめて表示できる。</li>
 </ul>
 
+<h3 id="cloudwatch-c2-2">ダッシュボードの共有と定義の再利用<a class="anchor" href="#cloudwatch-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>ダッシュボードの中身(どのウィジェットで、どのメトリクスをどう表示するか)は、<strong>JSON形式の「ダッシュボードの本文(DashboardBody)」</strong>で定義されています。この定義を取り出して配ることで、同じ表示項目を別の環境でも再現できます。</p>
+<div class="table-wrap"><table>
+<tr><th>目的</th><th>方法</th></tr>
+<tr><td>定義を確認・コピーする</td><td>コンソールの「アクション → 表示/編集のソース」でJSONを表示してコピー、またはCLIの <code>aws cloudwatch get-dashboard</code></td></tr>
+<tr><td>別のアカウント・リージョンへ複製する</td><td>JSONを貼り付けて作成、またはCLIの <code>put-dashboard</code>(<code>PutDashboard</code> API)</td></tr>
+<tr><td>チームで共通の定義をコードで管理する</td><td>CloudFormationの <code>AWS::CloudWatch::Dashboard</code>(<code>DashboardBody</code>)やテンプレートに書き、複数環境へ展開</td></tr>
+<tr><td>見る人に共有する(AWSのアカウントを持たない人を含む)</td><td>コンソールの「共有」で、<strong>特定のメールアドレス</strong>(Cognitoで認証)・<strong>公開リンク</strong>・<strong>シングルサインオン(SSO)プロバイダー</strong>のいずれかを選ぶ</td></tr>
+<tr><td>別アカウントのメトリクスを1つのダッシュボードで見る</td><td>CloudWatchのクロスアカウント機能で、モニタリングアカウントにソースアカウントを連携する</td></tr>
+</table></div>
+<p>ダッシュボードの共有は、閲覧だけを許可します。公開リンクは、リンクを知っていれば誰でも見られるため、機密性のある数値を含む場合は使わないでください。</p>
+
 <h3 id="cloudwatch-metrics">メトリクスの基本<a class="anchor" href="#cloudwatch-metrics" aria-label="この見出しへのリンク">#</a></h3>
 <p>メトリクスは「どのサービスの(名前空間)」「何の値を(メトリクス名)」「どのリソースについて(ディメンション)」の3つで特定します。アラームやグラフでは、それを「どの統計で・何秒ごとに集計するか」を指定して使います。</p>
 <figure class="figure">
@@ -10930,7 +10972,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td>保持期間</td><td>データが残る期間</td><td>1分未満は3時間、1分は15日、5分は63日、1時間は455日(<strong>最大15か月</strong>)。古いデータほど粗い粒度にまとめられる。メトリクスは手動で削除できない</td></tr>
 </table></div>
 
-<h3 id="cloudwatch-c2-3">統計の選び方<a class="anchor" href="#cloudwatch-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-4">統計の選び方<a class="anchor" href="#cloudwatch-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>同じメトリクスでも、統計を間違えると意味のない値になります。<strong>「回数は合計、使用率は平均、残量は最小、遅延はパーセンタイル」</strong>と覚えます。</p>
 <div class="table-wrap"><table>
 <tr><th>統計</th><th>向いているメトリクス</th><th>例</th></tr>
@@ -10941,7 +10983,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td><strong>p99 など</strong></td><td>応答時間(平均だと一部の遅いリクエストが埋もれる)</td><td><code>TargetResponseTime</code>、<code>Latency</code></td></tr>
 </table></div>
 
-<h3 id="cloudwatch-c2-4">標準では取れないメトリクス<a class="anchor" href="#cloudwatch-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-5">標準では取れないメトリクス<a class="anchor" href="#cloudwatch-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2の標準メトリクスは、ハイパーバイザー(仮想化の層)の外から見える値だけです。<strong class="em">OSの中の値はCloudWatchエージェントでカスタムメトリクスとして送る</strong>必要があります。</p>
 <div class="table-wrap"><table>
 <tr><th>取りたい値</th><th>メトリクス(Linux)</th><th>メトリクス(Windows)</th></tr>
@@ -11116,7 +11158,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td>月の請求額が一定額を超えたら通知したい</td><td><code>EstimatedCharges</code></td><td>us-east-1で請求アラーム(またはAWS Budgets)</td></tr>
 </table></div>
 
-<h3 id="cloudwatch-c2-6">メトリクスを活用する機能<a class="anchor" href="#cloudwatch-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-7">メトリクスを活用する機能<a class="anchor" href="#cloudwatch-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>機能</th><th>できること</th></tr>
 <tr><td><strong>メトリクス計算(Metric Math)</strong></td><td>複数のメトリクスから新しい値を計算してグラフ・アラームに使う(例:エラー率 = Errors ÷ Invocations × 100)</td></tr>
@@ -11127,7 +11169,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td><strong>メトリクスストリーム</strong></td><td>メトリクスをFirehose経由でS3やサードパーティの監視ツールへほぼリアルタイムに送る</td></tr>
 </table></div>
 
-<h3 id="cloudwatch-c2-7">CloudWatch Logs<a class="anchor" href="#cloudwatch-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-8">CloudWatch Logs<a class="anchor" href="#cloudwatch-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p>ログの収集・保存・検索・分析を行います。</p>
 <ul>
 <li>用語:<strong>ロググループ</strong>(アプリ・サービス単位)、<strong>ログストリーム</strong>(インスタンスや実行単位)、<strong>ログイベント</strong>(実際のログ1行)</li>
@@ -11186,7 +11228,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図3 CloudWatch Logsの活用。メトリクスフィルターはログから数値を作り、アラームで通知する。サブスクリプションフィルターはログをLambdaやFirehoseなどへリアルタイムに転送する。</figcaption>
 </figure>
-<h3 id="cloudwatch-c2-8">メトリクスフィルターの流れ(ERROR通知)<a class="anchor" href="#cloudwatch-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-9">メトリクスフィルターの流れ(ERROR通知)<a class="anchor" href="#cloudwatch-c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li>ログに"ERROR"が出力される</li>
 <li>メトリクスフィルターが検知してカウント</li>
@@ -11194,7 +11236,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>開発者へメール通知</li>
 </ol>
 
-<h3 id="cloudwatch-c2-9">CloudWatchエージェント<a class="anchor" href="#cloudwatch-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-10">CloudWatchエージェント<a class="anchor" href="#cloudwatch-c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2やオンプレミスのサーバーから、詳細なメトリクスやログをCloudWatchへ送信します。</p>
 <ol>
 <li>CloudWatchエージェントをインストール</li>
@@ -11203,7 +11245,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>エージェントを起動し、メトリクスがCloudWatchに送信される</li>
 </ol>
 
-<h3 id="cloudwatch-c2-10">CloudWatch Synthetics<a class="anchor" href="#cloudwatch-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-11">CloudWatch Synthetics<a class="anchor" href="#cloudwatch-c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>CloudWatch Synthetics</strong>は、利用者の操作を模擬してWebサイトやAPIを定期的に確認する<strong>外形監視</strong>の機能です。監視用スクリプトを<strong>Canary</strong>と呼び、Lambda関数として実行します。実際のアクセスがない時間帯でも、利用者の経路が正常に動くか確認できます。</p>
 <ul>
 <li>Canaryはスケジュールに従ってURLやAPIにアクセスし、ログインや画面操作などの一連の処理を検証する。</li>
@@ -11212,7 +11254,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>インターネットに公開されていないエンドポイントは、CanaryをVPC内で実行するように設定する。</li>
 </ul>
 
-<h3 id="cloudwatch-c2-11">その他の機能<a class="anchor" href="#cloudwatch-c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-12">その他の機能<a class="anchor" href="#cloudwatch-c2-12" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>Application Signals</strong>:アプリの性能と可用性を自動で計測・可視化。サービス単位・APIパス単位でメトリクスを確認できる。CloudWatchエージェントとADOT(AWS Distro for OpenTelemetry)が必要。</li>
 <li><strong class="em">Lambda Insights</strong>:Lambdaの詳細なパフォーマンス監視。有効化には<strong>拡張レイヤーの追加</strong>(収集用エージェントが入っている)と、IAMポリシー <code>CloudWatchLambdaInsightsExecutionRolePolicy</code> の付与が必要。</li>
