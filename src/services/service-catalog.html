@@ -29,6 +29,35 @@ edge pf user
 edge pf other
 <figcaption>図1 Service Catalogの構成。管理者がCloudFormationテンプレートを製品として登録し、ポートフォリオにまとめて利用者に公開する。利用者はカタログから承認済みの構成だけを起動できる。</figcaption>
 </figure>
+<h3>製品とバージョン</h3>
+<ul>
+<li>製品は<strong>バージョン</strong>を持つ。管理者が新しいバージョンを追加すると、利用者は起動済みの製品(プロビジョニング済み製品)を新しいバージョンへ<strong>更新</strong>できる。古いバージョンは無効化して使わせないようにできる。</li>
+<li>製品の実体は、CloudFormationテンプレートのほか、Terraformなどの構成も扱える。</li>
+<li>利用者が製品を起動すると、裏側で<strong>CloudFormationスタック</strong>が作られ、その製品のリソースが作成される。</li>
+</ul>
+
+<h3>制約の種類</h3>
+<div class="table-wrap"><table>
+<tr><th>制約</th><th>できること</th></tr>
+<tr><td><strong>起動制約</strong></td><td>製品の起動時に使う<strong>IAMロール</strong>を指定する。利用者本人に作成権限がなくても起動できる</td></tr>
+<tr><td><strong>テンプレート制約</strong></td><td>起動時に選べるパラメータの値を制限する(例:インスタンスタイプを <code>t3.micro</code> と <code>t3.small</code> だけにする)</td></tr>
+<tr><td>通知制約</td><td>製品のスタックのイベントを、指定したSNSトピックへ通知する</td></tr>
+<tr><td>StackSet制約</td><td>製品を、複数のアカウント・リージョンへStackSetとして展開する範囲を指定する</td></tr>
+<tr><td>リソース更新制約</td><td>起動後のリソースに対するタグの更新を許可するかを決める</td></tr>
+</table></div>
+<p><strong>TagOption</strong>を使うと、製品の起動時に付けるタグのキーと選べる値を、管理者が決められます。コスト配分タグの統一に役立ちます。</p>
+<p>起動制約で指定するロールには、製品が作るリソースの作成権限が必要です。また、利用者側にはService Catalogの利用権限(<code>servicecatalog:*</code>相当の起動操作)が必要で、リソースの作成権限は不要になります。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node u 0 0.5 blue "利用者" "製品を起動"
+node sc 1.4 0.5 accent "Service Catalog" "制約を確認"
+node role 2.8 0 ok "起動ロール" "この権限で作成"
+node cfn 2.8 1 box "CloudFormation" "スタックを作成"
+edge u sc
+edge sc role
+edge sc cfn dash
+<figcaption>図2 起動制約。利用者はService Catalogを使うだけで、リソースの作成は起動制約のIAMロールの権限で行われる。</figcaption>
+</figure>
 </section>
 
 <section class="chapter">
@@ -60,6 +89,8 @@ edge pf other
 <li>「承認済みの構成だけをセルフサービスで起動させたい」→ <strong>Service Catalog</strong>。</li>
 <li>共有されたポートフォリオの製品・制約は変更できない。別の起動制約を使いたいときは、製品を<strong>ローカルポートフォリオ</strong>に追加して設定する。</li>
 <li>利用者に広い権限を与えずに起動させる → <strong>起動制約</strong>。</li>
+<li>起動時に選べる値(インスタンスタイプなど)を絞りたい → <strong>テンプレート制約</strong>。タグの統一 → TagOption。</li>
+<li>ポートフォリオの共有は、Organizationsを使うと組織全体へ共有できる。</li>
 </ul></div>
 </section>
 
