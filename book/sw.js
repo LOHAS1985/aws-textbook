@@ -1,6 +1,6 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "aa23d6a9d40d";
+var CACHE = PREFIX + "c37a8d023f88";
 var FILES = {
 "css/style.css": "6338492ba513",
 "exercises/access-denied-troubleshooting.html": "3f68c538ac99",
@@ -152,7 +152,7 @@ var FILES = {
 "icons/services/vpc.svg": "7b842e6a64b2",
 "icons/services/waf.svg": "e67f918f21cf",
 "icons/services/xray.svg": "49c3a0c3f4e8",
-"index.html": "729d18165ae4",
+"index.html": "9d3e2e29c8a0",
 "js/glossary.js": "764fdc0ca798",
 "js/sim.js": "3ae9e28cc7a7",
 "js/site.js": "3f6897e97e85",
@@ -238,7 +238,7 @@ var FILES = {
 "services/private-ca.html": "f6a809438e02",
 "services/ram.html": "e53cd2b91d09",
 "services/rds.html": "1bc06171efc5",
-"services/route53.html": "9f0170b993cc",
+"services/route53.html": "b3f512ce4cbd",
 "services/s3.html": "0562fe73ffa7",
 "services/sam.html": "d82eee11a1db",
 "services/savings-plans.html": "2c6db01b28f1",
@@ -275,7 +275,7 @@ var FILES = {
 "terms/dns-record-types.html": "afc0162c3e7c",
 "terms/dns.html": "03f84102575d",
 "terms/dr-strategies.html": "abed1fba5353",
-"terms/encryption.html": "fbbdb77cb4b0",
+"terms/encryption.html": "86862ca587fe",
 "terms/eni-elastic-ip.html": "e5de0d7d9185",
 "terms/event-driven-remediation.html": "2a7b136aee90",
 "terms/high-availability-scaling.html": "510e49aef667",
@@ -295,7 +295,7 @@ var FILES = {
 "terms/nacl-security-group.html": "8f2c67e4b126",
 "terms/oidc.html": "bae2447061d3",
 "terms/outbound-traffic.html": "0c56fc3c53ba",
-"terms/performance-metrics.html": "7a0a051a0501",
+"terms/performance-metrics.html": "f39cd3e66c95",
 "terms/port-numbers.html": "709de19e699d",
 "terms/pricing-basics.html": "feeb50f88511",
 "terms/region-az.html": "c9f30a898aaf",
@@ -307,7 +307,7 @@ var FILES = {
 "terms/shared-responsibility.html": "19f67acdabaf",
 "terms/sla-availability.html": "4899f725d2d0",
 "terms/spf.html": "dceeaf8a3cd1",
-"terms/storage-types.html": "82b147d435d6",
+"terms/storage-types.html": "ce906798c639",
 "terms/support-plans.html": "e03606b2bdb0",
 "terms/tags.html": "7062ba315ced",
 "terms/terraform-git.html": "5d700a3e6af8",

@@ -6169,11 +6169,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <section class="chapter">
 <h2 id="route53-c2">2. 主な機能・特徴<a class="anchor" href="#route53-c2" aria-label="この見出しへのリンク">#</a></h2>
 <h3 id="route53-c2-1">ホストゾーン<a class="anchor" href="#route53-c2-1" aria-label="この見出しへのリンク">#</a></h3>
-<<<<<<< Updated upstream
-<p>1つのドメインのDNSレコードをまとめて管理する入れ物です。</p>
-=======
-<p>1つのドメインとそのサブドメインのDNSレコードをまとめて管理するコンテナです(委任・スプリットビューなどの詳細は用語「<a href="../terms/hosted-zone.html">ホストゾーン</a>」)。</p>
->>>>>>> Stashed changes
+<p>1つのドメインとそのサブドメインのDNSレコードをまとめて管理する入れ物です(委任・スプリットビューなどの詳細は用語「<a href="../terms/hosted-zone.html">ホストゾーン</a>」)。</p>
 <ul>
 <li><strong>パブリックホストゾーン</strong>:インターネット上での名前解決</li>
 <li><strong>プライベートホストゾーン</strong>:関連付けたVPC内でのみ有効な名前解決</li>
@@ -6210,7 +6206,6 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図1 ホストゾーンの種類。パブリックホストゾーンはインターネット上で、プライベートホストゾーンは関連付けたVPC内でのみ名前解決できる。</figcaption>
 </figure>
-<<<<<<< Updated upstream
 <ul>
 <li>パブリックホストゾーンを作ると、4つのネームサーバー(NSレコード)が割り当てられる。ドメインを別の登録事業者で買った場合は、その事業者側でネームサーバーをこの4つに変更する(委任)。</li>
 <li>プライベートホストゾーンを使うには、VPCの<strong><code>enableDnsHostnames</code> と <code>enableDnsSupport</code> を有効</strong>にする。別アカウントのVPCに関連付けるときは、ホストゾーン側で関連付けを許可してから、VPC側で関連付ける(CLI・API で行う)。</li>
@@ -6231,81 +6226,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h3 id="route53-c2-3">TTL<a class="anchor" href="#route53-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>TTL(Time To Live)は、問い合わせた側のリゾルバーが回答をキャッシュする秒数です。TTLが長いとクエリ料金とレイテンシーは減りますが、レコードを変えてもしばらく古い値が使われます。移行や切り替えの予定があるときは、事前にTTLを短く(例:60秒)しておきます。エイリアスレコードのTTLは、向き先のリソースのTTLが使われます。</p>
 
-=======
-
-<h3 id="route53-c2-4">Route 53 Resolver とインバウンド/アウトバウンドエンドポイント<a class="anchor" href="#route53-c2-4" aria-label="この見出しへのリンク">#</a></h3>
-<p><strong>Route 53 Resolver</strong>は、すべてのVPCに最初から用意されているDNSリゾルバーです。VPCのCIDRの先頭+2のアドレス(<code>10.0.0.2</code> など)と <code>169.254.169.253</code> で応答し、VPC内のEC2の名前、プライベートホストゾーン、インターネットの名前を解決します。ただし、このResolverはVPCの中からしか使えず、そのままでは社内(オンプレミス)のDNSサーバーとも連携しません。両者をつなぐのが<strong>Resolverエンドポイント</strong>です。</p>
-<div class="table-wrap"><table>
-<tr><th>項目</th><th><strong class="em">インバウンドエンドポイント</strong></th><th><strong class="em">アウトバウンドエンドポイント</strong></th></tr>
-<tr><td>問い合わせの向き</td><td><strong>オンプレミス → VPC</strong></td><td><strong>VPC → オンプレミス</strong></td></tr>
-<tr><td>解決できるようになる名前</td><td>プライベートホストゾーン、VPC内のEC2の名前など</td><td>社内DNSのドメイン(<code>corp.example.com</code> など)</td></tr>
-<tr><td>設定すること</td><td>VPCのサブネットにエンドポイント(IPアドレス)を作り、オンプレミスのDNSサーバーに「aws.example.com はこのIPへ」と条件付きフォワーダーを設定する</td><td>エンドポイントを作り、<strong>転送ルール</strong>(ドメイン名と転送先のDNSサーバーのIP)を作ってVPCに関連付ける</td></tr>
-<tr><td>セキュリティグループ</td><td>オンプレミスのDNSサーバーからの UDP/TCP 53 のインバウンドを許可</td><td>オンプレミスのDNSサーバーへの UDP/TCP 53 のアウトバウンドを許可</td></tr>
-</table></div>
-
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 908 320" style="max-width:908px;min-width:726px" role="img" aria-label="図2 Resolverエンドポイントによるハイブリッドな名前解決。オンプレミスからVPCの名前を引くときはインバウンドエンドポイントへ転送する。VPCのEC2が社内の名前を引くときは、Resolverが転送ルールに従い、アウトバウンドエンドポイントからオンプレミスのDNSサーバーへ問い合わせる(点線)。"><defs><marker id="route53-dgservices-route53-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<rect x="484" y="13" width="400" height="283" rx="10" class="dg-group"/>
-<text x="494" y="28" class="dg-s">VPC</text>
-<g data-node="onp">
-<rect x="34" y="88" width="145" height="52" rx="8" class="dg-blue"/>
-<text x="106" y="110" text-anchor="middle" class="dg-t">社内DNSサーバー</text>
-<text x="106" y="128" text-anchor="middle" class="dg-s">corp.example.com</text>
-</g>
-<g data-node="dx">
-<rect x="265" y="88" width="145" height="52" rx="8" class="dg-box"/>
-<text x="338" y="110" text-anchor="middle" class="dg-t">Direct Connect</text>
-<text x="338" y="128" text-anchor="middle" class="dg-s">またはVPN</text>
-</g>
-<g data-node="in">
-<rect x="496" y="43" width="145" height="52" rx="8" class="dg-accent"/>
-<text x="568" y="64" text-anchor="middle" class="dg-tb">インバウンド</text>
-<text x="568" y="82" text-anchor="middle" class="dg-s">エンドポイント</text>
-</g>
-<g data-node="out">
-<rect x="496" y="133" width="145" height="52" rx="8" class="dg-accent"/>
-<text x="568" y="154" text-anchor="middle" class="dg-tb">アウトバウンド</text>
-<text x="568" y="172" text-anchor="middle" class="dg-s">エンドポイント</text>
-</g>
-<g data-node="rsv">
-<rect x="727" y="88" width="145" height="52" rx="8" class="dg-ok"/>
-<text x="800" y="110" text-anchor="middle" class="dg-t">Route 53</text>
-<text x="800" y="128" text-anchor="middle" class="dg-s">Resolver</text>
-</g>
-<g data-node="phz">
-<rect x="727" y="187" width="145" height="52" rx="8" class="dg-box"/>
-<text x="800" y="208" text-anchor="middle" class="dg-t">プライベート</text>
-<text x="800" y="226" text-anchor="middle" class="dg-s">ホストゾーン</text>
-</g>
-<g data-node="ec2">
-<rect x="496" y="238" width="145" height="40" rx="8" class="dg-box"/>
-<text x="568" y="262" text-anchor="middle" class="dg-t">VPC内のEC2</text>
-</g>
-<path d="M179.0,114.0 L265.0,114.0" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
-<path d="M410.0,99.9 L496.0,83.1" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
-<text x="453" y="96" text-anchor="middle" class="dg-s dg-halo">aws.example.com</text>
-<path d="M641.0,83.1 L727.0,99.9" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
-<path d="M727.0,128.1 L641.0,144.9" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
-<text x="684" y="140" text-anchor="middle" class="dg-s dg-halo">転送ルール</text>
-<path d="M496.0,144.9 L410.0,128.1" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-2)"/>
-<text x="453" y="140" text-anchor="middle" class="dg-s dg-halo">corp.example.com</text>
-<path d="M799.5,140.0 L799.5,187.0" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
-<path d="M641.0,258.0 L799.5,258.0 L799.5,140.0" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
-<text x="720" y="262" text-anchor="middle" class="dg-s dg-halo">問い合わせ</text>
-</svg>
-</div>
-<figcaption>図2 Resolverエンドポイントによるハイブリッドな名前解決。オンプレミスからVPCの名前を引くときはインバウンドエンドポイントへ転送する。VPCのEC2が社内の名前を引くときは、Resolverが転送ルールに従い、アウトバウンドエンドポイントからオンプレミスのDNSサーバーへ問い合わせる(点線)。</figcaption>
-</figure>
-<ul>
-<li>エンドポイントの実体はサブネットに置くENIで、<strong>2つ以上のAZ</strong>にIPアドレスを置いて冗長化する(最低2つ必要)。</li>
-<li>転送ルールは<a href="#p-ram">AWS RAM</a>で別アカウントと共有でき、共有先のVPCに関連付ければ、アカウントごとにアウトバウンドエンドポイントを作らずに済む。</li>
-<li>エンドポイントのENIごとの時間料金と、処理したクエリ数で課金される。</li>
-<li>VPCからのDNS問い合わせの記録は <strong>Resolverのクエリログ</strong>、悪性ドメインの遮断は <a href="#p-dns-firewall">DNS Firewall</a> を使う。</li>
-</ul>
-<p>構成を組み立てる演習は、運用シナリオ「<a href="../usecases/hybrid-dns-resolver.html">オンプレミスとVPCで互いの名前を解決する</a>」にあります。</p>
->>>>>>> Stashed changes
-<h3 id="route53-c2-5">ルーティングポリシー<a class="anchor" href="#route53-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-4">ルーティングポリシー<a class="anchor" href="#route53-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>概要</th><th>主な用途</th></tr>
 <tr><td>シンプル</td><td>1つのレコードに複数の値を書けるが、ヘルスチェックは使えない</td><td>単純な名前解決</td></tr>
@@ -6325,7 +6246,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 463 359" style="max-width:463px;min-width:463px" role="img" aria-label="図3 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。"><defs><marker id="route53-dgservices-route53-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 463 359" style="max-width:463px;min-width:463px" role="img" aria-label="図2 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。"><defs><marker id="route53-dgservices-route53-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="w">
 <rect x="34" y="73" width="150" height="52" rx="8" class="dg-accent"/>
 <text x="109" y="94" text-anchor="middle" class="dg-tb">Route 53</text>
@@ -6354,20 +6275,20 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="364" y="304" text-anchor="middle" class="dg-t">セカンダリ</text>
 <text x="364" y="322" text-anchor="middle" class="dg-s">障害時に切り替え</text>
 </g>
-<path d="M184.0,88.0 L289.0,72.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
+<path d="M184.0,88.0 L289.0,72.5" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
 <text x="236" y="84" text-anchor="middle" class="dg-s dg-halo">90%</text>
-<path d="M184.0,110.0 L289.0,125.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
+<path d="M184.0,110.0 L289.0,125.5" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
 <text x="236" y="122" text-anchor="middle" class="dg-s dg-halo">10%</text>
-<path d="M184.0,260.5 L289.0,245.0" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
+<path d="M184.0,260.5 L289.0,245.0" class="dg-line" marker-end="url(#route53-dgservices-route53-2)"/>
 <text x="236" y="257" text-anchor="middle" class="dg-s dg-halo">通常</text>
-<path d="M184.0,282.5 L289.0,298.0" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-3)"/>
+<path d="M184.0,282.5 L289.0,298.0" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-2)"/>
 <text x="236" y="294" text-anchor="middle" class="dg-s dg-halo">障害時</text>
 </svg>
 </div>
-<figcaption>図3 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。</figcaption>
+<figcaption>図2 ルーティングポリシーの例。上: 加重ルーティングで新バージョンに10%だけ流す。下: フェイルオーバーで、プライマリのヘルスチェックが失敗したらセカンダリに切り替える。</figcaption>
 </figure>
 
-<h3 id="route53-c2-6">ヘルスチェック<a class="anchor" href="#route53-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-5">ヘルスチェック<a class="anchor" href="#route53-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>ヘルスチェックは、リソースが正常かを定期的に確かめ、ルーティングから異常なリソースを外すために使います。種類は3つです。</p>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>確認する方法</th><th>向いている場面</th></tr>
@@ -6377,7 +6298,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 738 202" style="max-width:738px;min-width:590px" role="img" aria-label="図3 プライベートなリソースのヘルスチェック。ヘルスチェッカーはインターネット上にあるためVPC内のプライベートなリソースには届かない。CloudWatchアラームを作り、その状態をヘルスチェックに使う。"><defs><marker id="route53-dgservices-route53-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 738 202" style="max-width:738px;min-width:590px" role="img" aria-label="図3 プライベートなリソースのヘルスチェック。ヘルスチェッカーはインターネット上にあるためVPC内のプライベートなリソースには届かない。CloudWatchアラームを作り、その状態をヘルスチェックに使う。"><defs><marker id="route53-dgservices-route53-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="hc">
 <rect x="34" y="40" width="155" height="52" rx="8" class="dg-blue"/>
 <text x="112" y="62" text-anchor="middle" class="dg-t">ヘルスチェッカー</text>
@@ -6403,12 +6324,12 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="636" y="62" text-anchor="middle" class="dg-t">ヘルスチェック</text>
 <text x="636" y="80" text-anchor="middle" class="dg-s">Route 53</text>
 </g>
-<path d="M189.0,66.5 L296.5,66.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M189.0,66.5 L296.5,66.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
 <text x="243" y="70" text-anchor="middle" class="dg-s dg-halo">接続して確認</text>
-<path d="M189.0,91.6 L296.5,126.4" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-4)"/>
-<path d="M451.5,151.5 L559.0,151.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M189.0,91.6 L296.5,126.4" class="dg-line dg-dash" marker-end="url(#route53-dgservices-route53-3)"/>
+<path d="M451.5,151.5 L559.0,151.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
 <text x="505" y="156" text-anchor="middle" class="dg-s dg-halo">メトリクス</text>
-<path d="M636.5,125.5 L636.5,92.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M636.5,125.5 L636.5,92.5" class="dg-line" marker-end="url(#route53-dgservices-route53-3)"/>
 <text x="636" y="113" text-anchor="middle" class="dg-s dg-halo">アラームの状態</text>
 </svg>
 </div>
@@ -6420,7 +6341,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>ヘルスチェックの状態はCloudWatchのメトリクスになる(<strong>米国東部(バージニア北部)リージョン</strong>に出る)。アラームを作って、異常になったらSNSで通知できる。</li>
 </ul>
 
-<h3 id="route53-c2-7">Route 53 Resolver(VPCとオンプレミスの名前解決)<a class="anchor" href="#route53-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-6">Route 53 Resolver(VPCとオンプレミスの名前解決)<a class="anchor" href="#route53-c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <p>VPCには、VPCのCIDRの先頭に2を足したアドレス(例:<code>10.0.0.2</code>)でRoute 53 Resolverが用意されていて、EC2などからの問い合わせに答えます(Amazon Provided DNS)。オンプレミスとつなぐときは、<strong>Resolverエンドポイント</strong>を使って問い合わせを転送します。</p>
 <div class="table-wrap"><table>
 <tr><th>しくみ</th><th>問い合わせの向き</th><th>例</th></tr>
@@ -6429,7 +6350,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 949 212" style="max-width:949px;min-width:759px" role="img" aria-label="図4 Resolverエンドポイントによるハイブリッドの名前解決。オンプレミスからAWSの名前はインバウンド、AWSから社内の名前はアウトバウンドと転送ルールで解決する。通信はDirect ConnectかSite-to-Site VPNを通る。"><defs><marker id="route53-dgservices-route53-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 949 212" style="max-width:949px;min-width:759px" role="img" aria-label="図4 Resolverエンドポイントによるハイブリッドの名前解決。オンプレミスからAWSの名前はインバウンド、AWSから社内の名前はアウトバウンドと転送ルールで解決する。通信はDirect ConnectかSite-to-Site VPNを通る。"><defs><marker id="route53-dgservices-route53-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <rect x="279" y="12" width="646" height="175" rx="10" class="dg-group"/>
 <text x="289" y="28" class="dg-s">VPC</text>
 <g data-node="onp">
@@ -6455,13 +6376,13 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <rect x="765" y="89" width="150" height="40" rx="8" class="dg-box"/>
 <text x="840" y="113" text-anchor="middle" class="dg-t">EC2</text>
 </g>
-<path d="M184.0,96.5 L289.0,79.0" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
+<path d="M184.0,96.5 L289.0,79.0" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
 <text x="236" y="92" text-anchor="middle" class="dg-s dg-halo">AWSの名前を問い合わせ</text>
-<path d="M439.0,79.0 L544.0,96.5" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
-<path d="M765.0,109.0 L694.0,109.0" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
+<path d="M439.0,79.0 L544.0,96.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M765.0,109.0 L694.0,109.0" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
 <text x="730" y="113" text-anchor="middle" class="dg-s dg-halo">問い合わせ</text>
-<path d="M544.0,121.5 L439.0,139.0" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
-<path d="M289.0,139.0 L184.0,121.5" class="dg-line" marker-end="url(#route53-dgservices-route53-5)"/>
+<path d="M544.0,121.5 L439.0,139.0" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
+<path d="M289.0,139.0 L184.0,121.5" class="dg-line" marker-end="url(#route53-dgservices-route53-4)"/>
 <text x="236" y="134" text-anchor="middle" class="dg-s dg-halo">社内の名前を転送</text>
 </svg>
 </div>
@@ -6470,22 +6391,23 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <ul>
 <li>転送ルールはAWS RAMで別アカウントのVPCと共有でき、複数アカウントのVPCから同じルールを使える。</li>
 <li>VPCから外部への問い合わせを、ドメインのリストで遮断・許可したいときは<a href="#p-dns-firewall">Route 53 Resolver DNS Firewall</a>を使う。</li>
+<li>構成を組み立てる演習は、運用シナリオ「<a href="../usecases/hybrid-dns-resolver.html">オンプレミスとVPCで互いの名前を解決する</a>」にある。</li>
 </ul>
 
-<h3 id="route53-c2-8">DNSSEC<a class="anchor" href="#route53-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-7">DNSSEC<a class="anchor" href="#route53-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>DNSSEC署名</strong>を有効にすると、パブリックホストゾーンの回答に電子署名が付き、途中で回答をすり替える攻撃(DNSスプーフィング)を防げます。署名用のキー(KSK)には、<strong>米国東部(バージニア北部)リージョンのKMSのカスタマーマネージドキー</strong>(非対称キー)を使います。有効にしたあと、親のゾーン(ドメインの登録事業者)にDSレコードを登録します。VPCからの問い合わせで署名を検証するには、ResolverのDNSSEC検証を有効にします。</p>
 
-<h3 id="route53-c2-9">ログ<a class="anchor" href="#route53-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-8">ログ<a class="anchor" href="#route53-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>パブリックDNSクエリのログ</strong>:パブリックホストゾーンへの問い合わせをCloudWatch Logsに送る(ロググループは米国東部(バージニア北部)リージョンに作る)。</li>
 <li><strong>Resolverのクエリログ</strong>:VPC内のリソースが行った問い合わせを、CloudWatch Logs・S3・Data Firehoseに送る。マルウェアが不審なドメインに問い合わせていないかの調査に使える。</li>
 <li>レコードの変更などのAPI操作はCloudTrailに記録される。</li>
 </ul>
 
-<h3 id="route53-c2-10">ドメイン登録<a class="anchor" href="#route53-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-9">ドメイン登録<a class="anchor" href="#route53-c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p>Route 53でドメインを登録すると、ホストゾーンが自動で作られます。<strong>自動更新</strong>を有効にしておかないと、期限切れでドメインが使えなくなります。勝手に移管されないよう、移管ロックもかけられます。</p>
 
-<h3 id="route53-c2-11">Application Recovery Controller(ARC)<a class="anchor" href="#route53-c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="route53-c2-10">Application Recovery Controller(ARC)<a class="anchor" href="#route53-c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>リージョンやAZの切り替えを、安全・確実に行うためのサービスです。以前はRoute 53の機能でしたが、現在は独立したサービスです。ゾーンシフト(1つのAZからトラフィックを外す)、ルーティングコントロール、リージョンスイッチなどの機能があります。詳しくは<a href="#p-application-recovery-controller">Amazon Application Recovery Controller</a>を参照してください。</p>
 </section>
 
@@ -6496,11 +6418,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>フェイルオーバーで障害時に待機系サイト(S3の静的ページなど)へ切り替え</li>
 <li>新バージョンへ10%だけトラフィックを流す(加重)</li>
 <li>VPC内の社内システムの名前解決(プライベートホストゾーン)</li>
-<<<<<<< Updated upstream
 <li>オンプレミスとVPCの間で、お互いの名前を解決する(Resolverエンドポイント)</li>
-=======
-<li>オンプレミスとVPCで互いの名前を解決(Resolverエンドポイント)</li>
->>>>>>> Stashed changes
 </ul>
 </section>
 
@@ -6531,7 +6449,6 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h4>レコードとルーティング</h4>
 <ul>
 <li>A/Bテスト・段階リリース → <strong>加重</strong>。DR → <strong>フェイルオーバー</strong>。速いリージョンへ → <strong>レイテンシー</strong>。</li>
-<<<<<<< Updated upstream
 <li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。当てはまらない利用者用に<strong>デフォルトのレコード</strong>も作る。</li>
 <li><code>example.com</code>(ゾーンの頂点)をELBやCloudFrontに向けたい → <strong class="em">エイリアスレコード</strong>(CNAMEは頂点に作れない)。</li>
 <li>レコードを変えたのに古い値が返る → <strong>TTL</strong>の間はキャッシュされる。切り替えの前にTTLを短くしておく。</li>
@@ -6550,12 +6467,6 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>オンプレミスからAWSの名前を引く → <strong>インバウンドエンドポイント</strong>。AWSから社内の名前を引く → <strong>アウトバウンドエンドポイントと転送ルール</strong>。</li>
 <li>DNSの回答のすり替えを防ぐ → <strong>DNSSEC署名</strong>(KMSキーは米国東部(バージニア北部))。</li>
 <li>VPC内のどのリソースがどの名前を引いたか調べたい → <strong>Resolverのクエリログ</strong>。</li>
-=======
-<li>国ごとにコンテンツを分ける(法規制など)→ <strong>位置情報</strong>。</li>
-<li>VPC内だけで使う名前 → <strong>プライベートホストゾーン</strong>。解決できないときはVPCとの関連付けと、VPCのDNS設定(<code>enableDnsHostnames</code>・<code>enableDnsSupport</code>)を確認。</li>
-<li>オンプレミスからVPCの名前を引く → Resolverの<strong>インバウンドエンドポイント</strong>。VPCから社内DNSの名前を引く → <strong>アウトバウンドエンドポイント</strong>と転送ルール。</li>
-<li>転送ルールを複数のアカウントで使う → <strong>AWS RAM</strong>で共有してVPCに関連付ける。</li>
->>>>>>> Stashed changes
 <li>AZ障害時にすばやくトラフィックを外す → ARCの<strong>ゾーンシフト</strong>。</li>
 </ul>
 </div>
@@ -6564,16 +6475,9 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <section class="chapter">
 <h2 id="route53-c7">7. まとめ<a class="anchor" href="#route53-c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<<<<<<< Updated upstream
 <li>Route 53はドメイン登録・DNS(ホストゾーン)・VPCの名前解決(Resolver)を提供する。</li>
 <li>AWSリソースにはエイリアスレコードで向け、ルーティングポリシーとヘルスチェックで返す値を変える。</li>
 <li>プライベートなリソースはCloudWatchアラームでヘルスチェックし、オンプレミスとはResolverエンドポイントで名前解決をつなぐ。</li>
-=======
-<li>Route 53はDNS・ドメイン登録・ヘルスチェックを提供する。</li>
-<li>ホストゾーンはパブリックとプライベートの2種類。</li>
-<li>オンプレミスとの名前解決は、Resolverのインバウンド/アウトバウンドエンドポイントでつなぐ。</li>
-<li>ルーティングポリシーを目的に応じて選び分ける。</li>
->>>>>>> Stashed changes
 </ul>
 </section>
 </article>
