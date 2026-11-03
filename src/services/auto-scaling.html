@@ -40,6 +40,24 @@ edge c elb dash
 <h3>起動テンプレート</h3>
 <p>起動するインスタンスの設定(AMI、インスタンスタイプ、キーペア、セキュリティグループ、IAMロール、ユーザーデータなど)をまとめたものです。バージョン管理ができ、オンデマンドとスポットを混ぜる設定(混合インスタンスポリシー)にも使えます。古い仕組みの「起動設定(Launch Configuration)」は非推奨のため、<strong>起動テンプレートを使います</strong>。</p>
 
+<h3>混合インスタンスポリシーと割り当て戦略</h3>
+<p>1つのグループで<strong>オンデマンドとスポット</strong>、複数のインスタンスタイプを混ぜて使う設定です。コストを下げつつ、スポットの中断(容量不足による回収)に強くできます。「どのインスタンスタイプ・どの購入オプションで起動するか」を決めるルールが<strong>割り当て戦略</strong>です。</p>
+<ul>
+<li><strong>オンデマンドの基本容量</strong>:最低限、必ずオンデマンドで確保する台数。</li>
+<li><strong>基本容量を超えた分のオンデマンドの割合</strong>:それ以降の台数のうち、オンデマンドにする%(残りはスポット)。</li>
+<li><strong>インスタンスタイプの候補</strong>:複数指定する。属性(vCPU・メモリなど)で条件を指定して候補を自動選択する方法もある。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>対象</th><th>割り当て戦略</th><th>動き</th></tr>
+<tr><td rowspan="2">オンデマンド</td><td><code>prioritized</code>(既定)</td><td>候補に付けた優先順位の順に使う。使えなければ次の候補</td></tr>
+<tr><td><code>lowest-price</code></td><td>最も安いタイプから使う</td></tr>
+<tr><td rowspan="4">スポット</td><td><strong class="em"><code>price-capacity-optimized</code></strong></td><td>中断されにくく、かつ価格が安いプールを選ぶ。<strong>推奨</strong></td></tr>
+<tr><td><code>capacity-optimized</code></td><td>空き容量が最も多い(中断されにくい)プールを選ぶ</td></tr>
+<tr><td><code>capacity-optimized-prioritized</code></td><td>優先順位を尊重しつつ、容量の面でも最適化する</td></tr>
+<tr><td><code>lowest-price</code></td><td>最も安いプールを選ぶ(指定した数のプールに分散)。中断されやすい</td></tr>
+</table></div>
+<p>「プール」は、インスタンスタイプとAZの組み合わせのことです。候補のタイプとAZを多くするほどプールが増え、スポットの確保と中断への耐性が高まります。<strong>キャパシティの再調整</strong>を有効にすると、スポットの中断リスクが高まったインスタンスを、中断される前に新しいインスタンスへ入れ替えます。</p>
+
 <h3>スケーリングの方法</h3>
 <div class="table-wrap"><table>
 <tr><th>方法</th><th>動き</th><th>向いている場面</th></tr>

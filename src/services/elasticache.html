@@ -96,6 +96,16 @@ edge p r "複製"
 <h3>メモリが足りないとき(エビクション)</h3>
 <p>メモリがいっぱいになると、エンジンは設定された方針(パラメータグループの <code>maxmemory-policy</code>)に従って、古いキーやあまり使われないキーを消します。これを<strong>エビクション</strong>といいます。エビクションが増えるとキャッシュヒット率が下がり、DBへのアクセスが増えるため、ノードを大きくするかシャードを増やします。</p>
 
+<p><strong>エビクション(eviction)は「追い出し」</strong>の意味で、メモリがいっぱいのときに、新しいデータを入れる場所を作るため、保存済みのキーを削除することです。TTLの期限が来て消える「<strong>期限切れ(expire)</strong>」とは違い、メモリ不足が原因で、まだ有効なデータが消える点が重要です。どのキーを消すかは <code>maxmemory-policy</code> で決まります。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>動き</th></tr>
+<tr><td><code>volatile-lru</code>(既定)</td><td>TTLが設定されたキーのうち、最近使われていないものから消す</td></tr>
+<tr><td><code>allkeys-lru</code></td><td>TTLの有無に関係なく、最近使われていないキーから消す。純粋なキャッシュ向き</td></tr>
+<tr><td><code>volatile-ttl</code></td><td>TTLが残り少ないキーから消す</td></tr>
+<tr><td><code>noeviction</code></td><td>消さずに、書き込みをエラーにする。消えては困るデータを扱うとき</td></tr>
+</table></div>
+<p>LRU(Least Recently Used)は「最近使われていないもの」、LFU(Least Frequently Used)は「使用回数が少ないもの」を消す方式です。TTLを付けていないキーばかりだと <code>volatile-*</code> では消す対象がなく、書き込みエラーになることがあります。</p>
+
 <h3>監視するメトリクス</h3>
 <div class="table-wrap"><table>
 <tr><th>メトリクス</th><th>見るポイント</th></tr>

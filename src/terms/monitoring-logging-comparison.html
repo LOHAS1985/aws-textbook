@@ -30,6 +30,24 @@ edge q7 s7
 <figcaption>図1 知りたいことと、使うサービスの対応。</figcaption>
 </figure>
 
+<h3>ログの種類と取得するサービス・機能</h3>
+<p>「ログ」と呼ばれるものには、<strong>記録する対象によって種類</strong>があります。種類ごとに、取得を有効にする場所と、保存先が違います。</p>
+<div class="table-wrap"><table>
+<tr><th>ログの種類</th><th>取得するサービス・機能</th><th>記録するもの</th><th>主な保存先</th></tr>
+<tr><td>操作ログ(管理)</td><td>CloudTrail</td><td>AWSのAPI呼び出し・コンソール操作</td><td>イベント履歴・S3・CloudWatch Logs</td></tr>
+<tr><td>設定の変更履歴</td><td>AWS Config</td><td>リソースの設定の変化</td><td>S3・Config</td></tr>
+<tr><td>OS・アプリのログ</td><td>CloudWatchエージェント</td><td>EC2・オンプレミスのログファイル、Windowsイベントログ</td><td>CloudWatch Logs</td></tr>
+<tr><td>実行ログ(マネージド)</td><td>Lambda・ECS(awslogsドライバー)・API Gatewayなど</td><td>関数の出力、コンテナの標準出力、API呼び出し</td><td>CloudWatch Logs</td></tr>
+<tr><td>データベースのログ</td><td>RDS・Auroraのログのエクスポート</td><td>エラー・スロークエリ・監査のログ</td><td>CloudWatch Logs</td></tr>
+<tr><td>ネットワークのログ</td><td>VPCフローログ</td><td>ENIを通るIP通信の記録</td><td>CloudWatch Logs・S3・Data Firehose</td></tr>
+<tr><td>名前解決のログ</td><td>Route 53 Resolverのクエリログ</td><td>VPC内のDNS問い合わせ</td><td>CloudWatch Logs・S3・Data Firehose</td></tr>
+<tr><td>アクセスログ(HTTP)</td><td>ELB・CloudFrontのアクセスログ</td><td>リクエストごとの送信元・パス・応答コード・処理時間</td><td>S3(CloudFrontは標準ログのほかCloudWatch Logsなども選べる)</td></tr>
+<tr><td>アクセスログ(S3)</td><td>S3のサーバーアクセスログ、CloudTrailのデータイベント</td><td>バケットへのリクエスト、オブジェクトの操作</td><td>S3(データイベントはCloudTrailの保存先)</td></tr>
+<tr><td>Webの防御のログ</td><td>AWS WAFのログ</td><td>検査したリクエストと、許可・ブロックの判定</td><td>CloudWatch Logs・S3・Data Firehose</td></tr>
+<tr><td>ファイアウォールのログ</td><td>Network Firewall</td><td>通信ログ(Flow)とアラートログ</td><td>CloudWatch Logs・S3・Data Firehose</td></tr>
+</table></div>
+<p>操作を記録する<strong>CloudTrailは「誰が何をしたか」</strong>、通信を記録する<strong>フローログは「どこからどこへ届いたか」</strong>、リクエストを記録する<strong>アクセスログは「何を要求されたか」</strong>を表します。ほとんどのログは出力先にCloudWatch LogsかS3を選べます。リアルタイムの検索やメトリクスフィルターにはCloudWatch Logs、長期保存やAthenaでの分析にはS3が向きます。</p>
+
 <h3>比較表</h3>
 <div class="table-wrap"><table>
 <tr><th>サービス</th><th>記録するもの</th><th>分かること</th><th>保存の期間</th></tr>
