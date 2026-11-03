@@ -40,9 +40,24 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat1">コンピューティング</a>
   <h1>AWS Elastic Beanstalk</h1>
   <p class="lead">コードを渡すだけでアプリを簡単にデプロイ・運用できるPaaS</p>
-  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">内容の確認:2026年11月3日</p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">利用フロー</a></li><li><a href="#c2-2">環境の種類とモード</a></li><li><a href="#c2-3">デプロイ方式</a></li><li><a href="#c2-4">ヘルスチェックと自動更新</a></li><li><a href="#c2-5">制限(クォータ)</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Elastic Beanstalk</strong>は、バックエンドアプリケーションを簡単にデプロイ・運用するための<strong>PaaS</strong>です。開発者はアプリのコードを渡すだけで、AWSが実行環境を自動で構築してくれます。</p>
@@ -84,16 +99,85 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <h3 id="c2-1">利用フロー<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
-<li>アプリケーションを作成</li>
-<li>デプロイ設定を定義</li>
-<li>アプリケーションバージョンを作成</li>
-<li>Environment(アプリを実行するAWS環境全体)へデプロイ
+<li>アプリケーションを作成する(アプリをまとめる入れ物)</li>
+<li>アプリケーションバージョンを作成する(コードをまとめたソースバンドルをS3に置き、バージョンとして登録する)</li>
+<li>Environment(アプリを実行するAWS環境全体)を作成する(プラットフォームと環境の種類を選ぶ)</li>
+<li>Environmentへバージョンをデプロイする
   <ul><li>Beanstalkが内部でAWSリソースを操作する</li><li>EC2内にコードを配置する</li></ul></li>
-<li>ヘルスチェック</li>
+<li>ヘルスチェックで状態を確認する</li>
 </ol>
 <p>デメリットは、ECS/EKSに比べて<strong>柔軟性が低い</strong>ことです。</p>
 <p>Beanstalkが自動で作るリソースには、EC2インスタンス、Auto Scalingグループ、ロードバランサーなどが含まれます。裏側ではCloudFormationが使われています。</p>
-<p>代表的なデプロイ方式として、All at once(一斉)、Rolling、Rolling with additional batch、Immutable、Blue/Green(環境URLのスワップ)があります。</p>
+
+<h3 id="c2-2">環境の種類とモード<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Environmentを作るときは、<strong>環境のティア</strong>を選びます。ティアには、HTTPのリクエストを受けるウェブサーバー環境と、キューからタスクを取り出して処理するワーカー環境があります。</p>
+<ul>
+<li><strong>ウェブサーバー環境</strong>:HTTPのリクエストを受けるアプリを動かす。ロードバランサーを付けた負荷分散の構成と、インスタンス1台だけのシングルインスタンス構成を選べる(シングルインスタンスは主に開発用)</li>
+<li><strong>ワーカー環境</strong>:Amazon SQSのキューからメッセージを読み取るデーモンを、EC2上で動かす。時間のかかる処理を画面の応答から切り離せる。処理に失敗したメッセージはデッドレターキューへ移せ、定期的に実行するタスクも設定できる</li>
+</ul>
+<p>Beanstalkには、実行基盤の違いによる2つのモードもあります。<strong>Beanstalk Standard</strong>はEC2上でアプリを直接動かし、Beanstalk ClusterはEKS上でコンテナとして動かします。</p>
+
+<h3 id="c2-3">デプロイ方式<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>新しいバージョンをEnvironmentへ反映する方法は、デプロイポリシーで選びます。停止時間・追加で必要な容量・完了までの時間のどれを優先するかで使い分けます。</p>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>仕組み</th><th>特徴</th></tr>
+<tr><td>All at once(一斉)</td><td>全インスタンスに同時に反映する</td><td>最も速いが、反映中は短い時間サービスが止まる</td></tr>
+<tr><td>Rolling</td><td>インスタンスをバッチ(まとまり)ごとに順に更新する</td><td>停止は避けられるが、更新中は処理能力が下がる</td></tr>
+<tr><td>Rolling with additional batch</td><td>追加のバッチを先に起動してから、順に更新する</td><td>処理能力を保てるが、完了までの時間が長くなる</td></tr>
+<tr><td>Immutable</td><td>新しいAuto Scalingグループに新バージョンのインスタンスを作り、正常と判定されてから旧インスタンスを終了する</td><td>新しいインスタンスが失敗しても旧バージョンへ戻しやすい。時間は長くなる</td></tr>
+<tr><td>Traffic splitting(カナリア)</td><td>一部のトラフィックだけを新バージョンに送って確認し、残りは旧バージョンが受ける</td><td>本番の一部で検証してから全体へ広げられる</td></tr>
+</table></div>
+<p>Immutable と Traffic splitting は、現在 Beanstalk Standard だけで使えます。</p>
+<p><strong class="em">Blue/Green</strong>は、デプロイポリシーではなく、<strong>別のEnvironmentに新バージョンを作り、2つの環境のCNAMEを入れ替える</strong>方法です。既存の環境は残るため、問題があれば入れ替えを戻せます。デプロイポリシーによる更新は同じ環境を書き換えるため、短い時間利用できなくなることがあります。プラットフォームの互換性がないバージョンへの更新では、Blue/Greenが必要です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 227" style="max-width:718px;min-width:574px" role="img" aria-label="図2 Blue/Green(CNAMEの入れ替え)。新バージョンを別の環境(Green)に作って確認し、環境のURLが指す先をBlueからGreenへ入れ替える。戻すときは、もう一度入れ替える。"><defs><marker id="dgservices-elastic-beanstalk-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="94" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="118" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="cname">
+<rect x="289" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="110" text-anchor="middle" class="dg-tb">環境のURL</text>
+<text x="364" y="128" text-anchor="middle" class="dg-s">CNAME</text>
+</g>
+<g data-node="blue">
+<rect x="544" y="43" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="64" text-anchor="middle" class="dg-t">Blue環境</text>
+<text x="619" y="82" text-anchor="middle" class="dg-s">現行バージョン</text>
+</g>
+<g data-node="green">
+<rect x="544" y="151" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="172" text-anchor="middle" class="dg-t">Green環境</text>
+<text x="619" y="190" text-anchor="middle" class="dg-s">新バージョン</text>
+</g>
+<path d="M184.0,114.0 L289.0,114.0" class="dg-line" marker-end="url(#dgservices-elastic-beanstalk-2)"/>
+<path d="M439.0,100.8 L544.0,82.2" class="dg-line" marker-end="url(#dgservices-elastic-beanstalk-2)"/>
+<text x="492" y="96" text-anchor="middle" class="dg-s dg-halo">現在</text>
+<path d="M439.0,132.5 L544.0,158.5" class="dg-line dg-dash" marker-end="url(#dgservices-elastic-beanstalk-2)"/>
+<text x="492" y="150" text-anchor="middle" class="dg-s dg-halo">入れ替え後</text>
+</svg>
+</div>
+<figcaption>図2 Blue/Green(CNAMEの入れ替え)。新バージョンを別の環境(Green)に作って確認し、環境のURLが指す先をBlueからGreenへ入れ替える。戻すときは、もう一度入れ替える。</figcaption>
+</figure>
+
+<h3 id="c2-4">ヘルスチェックと自動更新<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>拡張ヘルスレポート</strong>:EC2インスタンス・ロードバランサー・Auto Scalingグループの状態を集めて、Environmentの健全性を判定する。マネージドプラットフォーム更新の前提にもなる</li>
+<li><strong>マネージドプラットフォーム更新</strong>:プラットフォームのマイナー・パッチ更新を、設定した週1回のメンテナンスウィンドウの中で自動で適用する。必要に応じて、ウィンドウ内でインスタンスをすべて入れ替えることもできる</li>
+</ul>
+
+<h3 id="c2-5">制限(クォータ)<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>次の上限はリージョンごとに決められていて、引き上げを申請できます。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>既定の上限</th></tr>
+<tr><td>アプリケーションバージョン</td><td>1,000(アカウント内の全アプリケーションの合計)</td></tr>
+<tr><td>Environment</td><td>200(アカウント内の全アプリケーションの合計)</td></tr>
+<tr><td>アプリケーション</td><td>75</td></tr>
+<tr><td>構成テンプレート</td><td>2,000</td></tr>
+<tr><td>カスタムプラットフォームバージョン</td><td>50</td></tr>
+</table></div>
+<p>1つのソースバンドルは500 MBまでです。アプリケーションバージョンが上限に近づくと新しいバージョンを作れなくなるため、<strong>ライフサイクルポリシー</strong>で古いバージョンを自動で削除できます(Beanstalk Standardの環境で使え、Environmentで使用中のバージョンは削除されない)。上限の考え方は用語ページ「<a href="../terms/service-quotas.html">サービスクォータ</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -114,20 +198,26 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ul>
 <li><a href="ec2.html">Amazon EC2</a>:アプリが配置される実行環境</li>
 <li><a href="elb.html">Elastic Load Balancing</a>:環境のトラフィック分散</li>
+<li><a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:環境のインスタンス数の増減</li>
 <li><a href="cloudformation.html">AWS CloudFormation</a>:裏側で環境を構築する仕組み</li>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:ビルドしたコードをBeanstalkへデプロイするアクション</li>
+<li><a href="sqs.html">Amazon SQS</a>:ワーカー環境が処理するキュー</li>
 <li><a href="ecs.html">Amazon ECS</a>/<a href="eks.html">Amazon EKS</a>:より柔軟なコンテナ実行の選択肢</li>
+<li>関連する用語:<a href="../terms/deploy-strategies.html">デプロイ戦略</a>、<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/instance-profile.html">インスタンスプロファイル</a>、<a href="../terms/service-quotas.html">サービスクォータ</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point">
-<ul>
-<li>「インフラ管理を最小限にしてアプリをデプロイしたい」→ Elastic Beanstalk。</li>
+<div class="point"><ul>
+<li>「インフラ管理を最小限にしてアプリをデプロイしたい」→ <strong>Elastic Beanstalk</strong>。</li>
 <li>細かな制御や柔軟性が必要なら ECS/EKS を選ぶ。</li>
 <li>デプロイの単位は「アプリケーションバージョン」を「Environment」へ。</li>
-</ul>
-</div>
+<li>停止を避けて更新したい → <strong>Rolling</strong>(処理能力も保つなら Rolling with additional batch)、または <strong>Immutable</strong>。All at once は短い時間の停止がある。</li>
+<li>本番の一部で新バージョンを試したい → <strong>Traffic splitting</strong>。環境のURLを切り替えて、問題があれば戻せるようにしたい → <strong>Blue/Green</strong>(CNAMEの入れ替え)。</li>
+<li>SQSのメッセージを非同期に処理したい → <strong>ワーカー環境</strong>。</li>
+<li>Beanstalk自体には料金がかからず、作られたEC2・ELBなどに料金がかかる。</li>
+</ul></div>
 </section>
 
 <section class="chapter">
@@ -140,29 +230,39 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 5件・リンク元 3件)</summary>
+<summary>つながり図を開く(リンク先 12件・リンク元 1件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Elastic Beanstalkとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
-<a href="../services/copilot.html"><title>サービス:AWS Copilot</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Copilot</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
-<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">デプロイ戦略</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
-<a href="../terms/managed-serverless.html"><title>用語:マネージドサービスとサーバーレス</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">マネージドサービスとサーバーレス</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 396" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Elastic Beanstalkとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,210 C265.0,210 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/copilot.html"><title>サービス:AWS Copilot</title><rect x="0" y="199" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="214" class="gr-t">AWS Copilot</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudFormation</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
-<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon EC2</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
-<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon ECS</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
-<a href="../services/eks.html"><title>サービス:Amazon EKS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon EKS</text></a>
-<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
-<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Elastic Load Balancing (E…</text></a>
-<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">AWS Elastic Beans…</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(3)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CodePipeline</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon ECS</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/eks.html"><title>サービス:Amazon EKS</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon EKS</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/sqs.html"><title>サービス:Amazon SQS</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon SQS</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Elastic Load Balancing (E…</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/instance-profile.html"><title>用語:インスタンスプロファイル</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">インスタンスプロファイル</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
+<a href="../terms/service-quotas.html"><title>用語:サービスクォータ</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">サービスクォータ</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">デプロイ戦略</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/managed-serverless.html"><title>用語:マネージドサービスとサーバーレス</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="380" class="gr-t">マネージドサービスとサーバーレス</text></a>
+<rect x="300" y="190" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="215" text-anchor="middle" class="gr-tb">AWS Elastic Beans…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(12)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>

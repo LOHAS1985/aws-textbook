@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Budgets | AWS教科書</title>
+<meta name="description" content="費用や使用量に予算を決め、超えそうなときに通知し、必要なら予算アクションで自動的に制限する">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#7AA116">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/budgets.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat8">クラウド財務管理</a>
+  <h1>AWS Budgets</h1>
+  <p class="lead">費用や使用量に予算を決め、超えそうなときに通知し、必要なら予算アクションで自動的に制限する</p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">内容の確認:2026年11月3日</p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">予算の種類</a></li><li><a href="#c2-2">通知</a></li><li><a href="#c2-3">予算アクション</a></li><li><a href="#c2-4">Budgets Reports(予算レポート)</a></li><li><a href="#c2-5">Cost Explorerとの違い</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Budgets</strong>は、AWSの費用や使用量に予算(目標の上限)を決めて、実績や予測が予算に近づいたとき・超えそうなときに通知するサービスです。通知だけでなく、超えたときは<strong>予算アクション</strong>で、IAMポリシーやSCPの適用、EC2・RDSインスタンスの停止を自動で行えます。</p>
+<p>予算を作って通知を受けるだけなら料金はかかりません。予算アクションを使う場合の料金は4章で説明します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 AWS Budgetsの流れ。請求データと予算を比べ、実績または予測がしきい値を超えると、通知を送るか、設定したアクションを実行する。"><defs><marker id="dgservices-budgets-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="bill">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">請求・使用量</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">1日数回更新</text>
+</g>
+<g data-node="bud">
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="147" text-anchor="middle" class="dg-t">予算</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">金額・使用量の上限</text>
+</g>
+<g data-node="calc">
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">実績・予測と比較</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">しきい値で判定</text>
+</g>
+<g data-node="notice">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">通知</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">メール・SNS</text>
+</g>
+<g data-node="act">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">予算アクション</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">自動・承認後に実行</text>
+</g>
+<path d="M184.0,79.9 L272.0,95.6" class="dg-line" marker-end="url(#dgservices-budgets-1)"/>
+<path d="M184.0,138.1 L272.0,122.4" class="dg-line" marker-end="url(#dgservices-budgets-1)"/>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#dgservices-budgets-1)"/>
+<path d="M422.0,122.4 L510.0,138.1" class="dg-line" marker-end="url(#dgservices-budgets-1)"/>
+</svg>
+</div>
+<figcaption>図1 AWS Budgetsの流れ。請求データと予算を比べ、実績または予測がしきい値を超えると、通知を送るか、設定したアクションを実行する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">予算の種類<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>監視する値</th><th>通知されるとき</th></tr>
+<tr><td>コスト予算</td><td>費用(金額)</td><td>実績または予測が予算の金額を超えたとき</td></tr>
+<tr><td>使用量予算</td><td>1つ以上のサービスの使用量(例: EC2の使用時間)</td><td>使用量が予算に近づいた・超えたとき</td></tr>
+<tr><td>RI使用率予算・RIカバレッジ予算</td><td>リザーブドインスタンス(RI)の使用率・カバレッジ</td><td>目標を下回ったとき</td></tr>
+<tr><td>Savings Plans使用率予算・カバレッジ予算</td><td>Savings Plansの使用率・カバレッジ</td><td>目標を下回ったとき</td></tr>
+</table></div>
+<ul>
+<li>期間は、毎月・四半期・毎年・毎日(使用率・カバレッジ予算)から選べる。開始日と終了日を決めるカスタム期間(年度や案件期間に合わせる)も作れる。カスタム期間は自動では更新されず、終了日は開始日から3年以内にする。</li>
+<li>コスト予算では、費用の計算方法(ブレンデッド、アンブレンデッド、償却など)を選べる。割引・返金・クレジット・税・サポート料金を含めるかも選べる。</li>
+</ul>
+
+<h3 id="c2-2">通知<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>通知の基準は、<strong>実績</strong>(課金が発生した後)と<strong>予測</strong>(発生する前)から選べる。予測の通知なら、予算を超えそうなことを先に知らせられる。</li>
+<li>送り先は、1つの通知あたりメールアドレス最大10件と、Amazon SNSトピック1つ。</li>
+<li>予測の通知を計算するには、約5週間分の利用データが必要。データがそろうまでは、予測のアラートは発動しない。</li>
+<li>課金から通知までには遅れがある。請求データの更新に合わせて計算されるため、通知を受けたあとも費用が増えることがある。</li>
+<li>実績の通知は、予算期間ごとに1回だけ送られる。予測の通知は、予測値が予算を上下した場合に期間内で何度か送られることがある。</li>
+</ul>
+
+<h3 id="c2-3">予算アクション<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>予算を超えた(または予測で超えそう)ときに、設定したアクションを<strong>自動で実行</strong>するか、承認したあとに実行するかを選べます。アクションの種類は次のとおりです。</p>
+<ul>
+<li>IAMポリシーの適用:ユーザー・グループ・ロールに、EC2の新規作成を拒否するポリシーなどを付ける。</li>
+<li>SCP(サービスコントロールポリシー)の適用:組織のメンバーアカウントに、管理アカウントからSCPを付ける。</li>
+<li>EC2・RDSインスタンスの停止:対象のインスタンスを指定して停止する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 922 202" style="max-width:922px;min-width:738px" role="img" aria-label="図2 予算アクションの流れ。予測が予算を超えそうになったら、自動か承認後にアクションを実行する。IAMポリシーやSCPで作成を止めたり、EC2・RDSを停止したりする。"><defs><marker id="dgservices-budgets-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="fc">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">予測が超えそう</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">例: 予算の90%</text>
+</g>
+<g data-node="run">
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="104" text-anchor="middle" class="dg-t">実行方法</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">自動・承認後</text>
+</g>
+<g data-node="iam">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="62" text-anchor="middle" class="dg-tb">IAMポリシー</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">新規作成を拒否</text>
+</g>
+<g data-node="scp">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="147" text-anchor="middle" class="dg-tb">SCP</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">組織の複数アカウント</text>
+</g>
+<g data-node="stop">
+<rect x="748" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="823" y="104" text-anchor="middle" class="dg-t">EC2・RDSを停止</text>
+<text x="823" y="122" text-anchor="middle" class="dg-s">対象を指定</text>
+</g>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgservices-budgets-2)"/>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#dgservices-budgets-2)"/>
+<path d="M422.0,122.4 L510.0,138.1" class="dg-line" marker-end="url(#dgservices-budgets-2)"/>
+<path d="M422.0,109.0 L748.0,109.0" class="dg-line" marker-end="url(#dgservices-budgets-2)"/>
+</svg>
+</div>
+<figcaption>図2 予算アクションの流れ。予測が予算を超えそうになったら、自動か承認後にアクションを実行する。IAMポリシーやSCPで作成を止めたり、EC2・RDSを停止したりする。</figcaption>
+</figure>
+
+<h3 id="c2-4">Budgets Reports(予算レポート)<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>複数の予算の状況を、日次・週次・月次のレポートとしてメールで受け取る機能です。予算の数が多いときに、どの予算が危ないかを一覧で確認できます。レポートは1通ごとに料金がかかります(4章)。</p>
+
+<h3 id="c2-5">Cost Explorerとの違い<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>AWS Budgets</th><th>Cost Explorer</th></tr>
+<tr><td>目的</td><td>決めた予算(目標)に対して、超えそうか・超えたかを監視する</td><td>過去の費用と使用量を分析し、将来の費用を予測する</td></tr>
+<tr><td>見る軸</td><td>予算の金額・使用量と、実績・予測の差</td><td>サービス、アカウント、タグなどで分けた費用の推移</td></tr>
+<tr><td>行動</td><td>通知と、予算アクション(自動での制限)</td><td>分析の結果を見て、人が判断して対応する</td></tr>
+<tr><td>RI・Savings Plans</td><td>使用率・カバレッジの予算で、目標を下回ったら通知</td><td>推奨事項、使用率、カバレッジを画面で確認</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>月の費用が予算の一定割合を超えそうになったら、担当者にメールとSNSで知らせる</li>
+<li>開発用のアカウントで、予算を超えたら新しいEC2インスタンスを作れないようにする</li>
+<li>Savings Plansの使用率が目標を下回ったら通知を受け、購入量を見直す</li>
+<li>年度末や案件期間に合わせたカスタム期間の予算で、期間全体の費用を管理する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>予算の作成・監視・通知は無料です。予算アクションは、アクションを設定した予算のうち<strong>最初の2つまで無料</strong>です。3つ目以降は1つにつき1日$0.10かかります。1つの予算にアクションをいくつ設定しても、無料の枠の数は変わりません。</p>
+<p>Budgets Reportsは、レポート1通ごとに$0.01かかります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="cost-explorer.html">AWS Cost Explorer</a>:費用の内訳と推移の分析。どこで費用が増えているかを調べる</li>
+<li><a href="cost-and-usage-reports.html">AWS Cost and Usage Reports</a>:詳細な請求データの出力</li>
+<li><a href="savings-plans.html">Savings Plans</a>:使用率・カバレッジの予算で、購入量が適切かを監視</li>
+<li><a href="organizations.html">AWS Organizations</a>:管理アカウントから、メンバーアカウントの予算やSCPを使う</li>
+<li><a href="iam.html">AWS IAM</a>:予算アクションで適用するポリシー。Budgetsがアクションを実行するためのロール</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="rds.html">Amazon RDS</a>:予算アクションで停止できるインスタンス</li>
+<li><a href="sns.html">Amazon SNS</a>:予算の通知の送り先になるトピック</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:請求額のアラーム。予算とは別に用意する監視の仕組み</li>
+<li>関連する用語:<a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>、<a href="../terms/pricing-basics.html">料金の基本</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>通知と予測</h4>
+<ul>
+<li>「費用が予算を超えそうなら、先に知らせたい」→ <strong class="em">予測の通知</strong>。実績の通知は、課金が発生したあとに送られる。</li>
+<li>予測の通知が出ない → 利用データが約5週間分そろっていない(使い始めたばかりのアカウントなど)。</li>
+<li>通知が遅れる → 請求データは1日1回以上更新され、予算の状況は最大で1日3回更新される。リアルタイムの監視ではない。</li>
+<li>通知の送り先は、メール最大10件と、SNSトピック1つ(1通知につき)。SNSを使うと、SMSなど別の方法でも受け取れる。</li>
+</ul>
+<h4>予算アクション</h4>
+<ul>
+<li>「超えたら新しいEC2を作れないようにしたい」→ 予算アクションで<strong>IAMポリシー</strong>またはSCPを適用する。</li>
+<li>「超えたらインスタンスを止めたい」→ EC2・RDSを対象に指定する。Auto Scalingグループの中のインスタンスは、停止しても再起動や新規の起動が行われるため、起動の権限を外す2つ目のアクションを組み合わせる。</li>
+<li>管理アカウントから、別のアカウントのEC2・RDSを停止の対象にはできない(SCPは別のアカウントに適用できる)。</li>
+</ul>
+<h4>使い分け・組織</h4>
+<ul>
+<li>費用の内訳や推移を見る → Cost Explorer。目標との差を知らせる・制限する → Budgets。詳しくは<a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>
+<li>RI・Savings Plansの使用率やカバレッジが下がったら知らせたい → 使用率予算・カバレッジ予算。</li>
+<li>管理アカウントは、メンバーアカウントの費用を追う予算を作れる。ただし、メンバーアカウントが同じ予算を見るには、管理アカウントへのアクセス権が必要。</li>
+</ul>
+<h4>SOA-C03での位置づけ</h4>
+<ul>
+<li>費用の監視(通知)と自動の制限(アクション)を組み合わせた運用の例として扱う。</li>
+<li>Cost Explorerとの違い(分析するか、目標を監視するか)を区別できることが基本。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS Budgetsは、費用や使用量の予算に対して、実績と予測を監視して通知する。</li>
+<li>予算アクションで、IAMポリシー・SCPの適用やEC2・RDSの停止を、自動または承認後に行える。</li>
+<li>分析はCost Explorer、目標との比較と制限はBudgetsと使い分ける。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 11件・リンク元 0件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 366" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Budgetsとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/cost-explorer.html"><title>サービス:AWS Cost Explorer</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Cost Explorer</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/cost-and-usage-reports.html"><title>サービス:AWS Cost and Usage Reports</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Cost and Usage Reports</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon RDS</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon SNS</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/savings-plans.html"><title>サービス:Savings Plans</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Savings Plans</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">コスト管理ツールの選び方</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,345 550,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">料金の基本</text></a>
+<rect x="300" y="175" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="200" text-anchor="middle" class="gr-tb">AWS Budgets</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(11)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="cost-explorer.html"><span class="label">← 前へ</span>AWS Cost Explorer</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cost-and-usage-reports.html"><span class="label">次へ →</span>AWS Cost and Usage Reports</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

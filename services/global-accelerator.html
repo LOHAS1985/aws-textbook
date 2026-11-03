@@ -40,9 +40,25 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
   <h1>AWS Global Accelerator</h1>
   <p class="lead">AWSのグローバルネットワークで通信経路を最適化</p>
-  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">内容の確認:2026年11月3日</p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(16項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">仕組み</a></li><li><a href="#c2-2">構成要素と2種類のアクセラレーター</a></li><li><a href="#c2-3">対応エンドポイント</a></li><li><a href="#c2-4">トラフィックダイヤルとエンドポイントの重み</a></li><li><a href="#c2-5">ヘルスチェック</a></li><li><a href="#c2-6">固定IPアドレス</a></li><li><a href="#c2-7">制限(クォータ)</a></li><li><a href="#c2-8">CloudFrontとの違い</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Global Accelerator</strong>は、AWSのグローバルネットワークを使って、<strong>ユーザーからアプリケーションまでの通信経路を最適化</strong>するサービスです。</p>
@@ -98,10 +114,75 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Global Acceleratorの仕組み。2つの固定Anycast IPで最寄りのエッジに入り、インターネットではなくAWSのバックボーンでエンドポイントへ届ける。ヘルスチェックで異常を検知すると、正常なエンドポイントへ自動で切り替える。</figcaption>
 </figure>
-<h3 id="c2-2">対応エンドポイント<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+
+<h3 id="c2-2">構成要素と2種類のアクセラレーター<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>アクセラレーターの中は、<strong>リスナー</strong>、<strong>エンドポイントグループ</strong>、<strong>エンドポイント</strong>の階層になっています。リスナーは受け付けるプロトコル(TCPまたはUDP)とポート範囲を指定します。エンドポイントグループはリージョンごとに作り、その中のエンドポイントは同じリージョンに置きます。</p>
+<ul>
+<li><strong>標準アクセラレーター</strong>:利用者を、場所と健全性に応じて最適なリージョンのエンドポイントへ振り分ける</li>
+<li><strong>カスタムルーティングアクセラレーター</strong>:1人の利用者を、多数の宛先の中の特定の宛先に割り当てる。宛先はVPCのサブネット内のプライベートIPアドレス</li>
+</ul>
+
+<h3 id="c2-3">対応エンドポイント<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul><li>ALB/NLB</li><li>EC2インスタンス</li><li>Elastic IPアドレス</li></ul>
 
-<h3 id="c2-3">CloudFrontとの違い<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-4">トラフィックダイヤルとエンドポイントの重み<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>標準アクセラレーターでは、エンドポイントグループごとに<strong>トラフィックダイヤル</strong>(0〜100%。既定は100%)で、そのリージョンへ向かう通信の割合を調整できます。メンテナンスの前にダイヤルを0%にすると、そのリージョンへの通信を止めて作業できます。</p>
+<ul>
+<li>ダイヤルの変更は<strong>新しい接続</strong>から反映される。既存の接続は切れない</li>
+<li>ヘルスチェックはダイヤルの影響を受けない</li>
+<li>エンドポイントごとの重み(weight)で、同じエンドポイントグループの中の配分を調整できる</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 514 209" style="max-width:514px;min-width:514px" role="img" aria-label="図2 トラフィックダイヤル。メンテナンス中のリージョンはダイヤルを0%にすると、そのリージョンへの新しい通信を止められる。既存の接続は切れない。"><defs><marker id="dgservices-global-accelerator-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="acc">
+<rect x="34" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="110" text-anchor="middle" class="dg-tb">アクセラレーター</text>
+<text x="109" y="128" text-anchor="middle" class="dg-s">静的IP 2つ</text>
+</g>
+<g data-node="tk">
+<rect x="340" y="43" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="415" y="64" text-anchor="middle" class="dg-t">東京リージョン</text>
+<text x="415" y="82" text-anchor="middle" class="dg-s">ダイヤル 0%</text>
+</g>
+<g data-node="os">
+<rect x="340" y="133" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="415" y="154" text-anchor="middle" class="dg-t">大阪リージョン</text>
+<text x="415" y="172" text-anchor="middle" class="dg-s">ダイヤル 100%</text>
+</g>
+<path d="M184.0,103.0 L340.0,80.0" class="dg-line dg-dash" marker-end="url(#dgservices-global-accelerator-2)"/>
+<text x="262" y="96" text-anchor="middle" class="dg-s dg-halo">流さない</text>
+<path d="M184.0,125.0 L340.0,148.0" class="dg-line" marker-end="url(#dgservices-global-accelerator-2)"/>
+<text x="262" y="140" text-anchor="middle" class="dg-s dg-halo">流す</text>
+</svg>
+</div>
+<figcaption>図2 トラフィックダイヤル。メンテナンス中のリージョンはダイヤルを0%にすると、そのリージョンへの新しい通信を止められる。既存の接続は切れない。</figcaption>
+</figure>
+
+<h3 id="c2-5">ヘルスチェック<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>エンドポイントグループごとにヘルスチェックを設定できます。EC2インスタンスとElastic IPアドレスは、Global Acceleratorのエンドポイントグループでヘルスチェックの設定を変えられ、ALBとNLBは Elastic Load Balancingのコンソールで設定します。正常なエンドポイントが1つもない場合は、リージョン内のすべてのエンドポイントへ振り分けます。</p>
+
+<h3 id="c2-6">固定IPアドレス<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>アクセラレーターには固定IPアドレスが割り当てられ、アクセラレーターが存在する間は保持されます。無効化(disable)すると通信は受け付けなくなりますが、IPアドレスは残ります。アクセラレーターを<strong>削除すると固定IPアドレスも失われ</strong>、そのIPでは通信を受けられなくなります。</p>
+<ul>
+<li>IPv4の固定IPアドレスは2つ。デュアルスタックの場合は、IPv6の2つを加えて計4つになる</li>
+<li>IPv4は、自分が持つIP範囲(BYOIP)をアクセラレーターに使うこともできる</li>
+<li>デュアルスタックで使うには、エンドポイントもデュアルスタックに対応している必要がある</li>
+</ul>
+
+<h3 id="c2-7">制限(クォータ)<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>主な上限は次のとおりです。引き上げを申請するには、Service Quotasのコンソール(us-east-1リージョン)を使います。上限の考え方は用語ページ「<a href="../terms/service-quotas.html">サービスクォータ</a>」を参照してください。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>上限</th></tr>
+<tr><td>標準アクセラレーター(1アカウントあたり)</td><td>20</td></tr>
+<tr><td>カスタムルーティングアクセラレーター(1アカウントあたり)</td><td>10</td></tr>
+<tr><td>リスナー(1アクセラレーターあたり)</td><td>10</td></tr>
+<tr><td>ポート範囲(1リスナーあたり)</td><td>10</td></tr>
+<tr><td>リスナー数 × エンドポイントグループ数</td><td>42以下</td></tr>
+</table></div>
+<p>リスナーを増やすほど、指定できるリージョンの数は減ります。</p>
+
+<h3 id="c2-8">CloudFrontとの違い<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>項目</th><th>Global Accelerator</th><th>CloudFront</th></tr>
 <tr><td>目的</td><td>通信経路の最適化</td><td>コンテンツのキャッシュ配信</td></tr>
@@ -129,6 +210,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="cloudfront.html">Amazon CloudFront</a>:HTTPのキャッシュ配信</li>
 <li><a href="elb.html">Elastic Load Balancing</a>/<a href="ec2.html">Amazon EC2</a>:エンドポイント</li>
 <li><a href="route53.html">Amazon Route 53</a>:DNSベースのルーティング</li>
+<li><a href="application-recovery-controller.html">Amazon Application Recovery Controller (ARC)</a>:ゾーンシフトで障害のあるAZから通信を逃がす(Global Acceleratorが対応)</li>
+<li>関連する用語:<a href="../terms/caching-comparison.html">キャッシュの選び方</a>、<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></li>
 </ul>
 </section>
 
@@ -138,6 +221,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>「<strong>静的IP</strong>」「<strong>TCP/UDP</strong>」「グローバルにレイテンシー改善」→ Global Accelerator。</li>
 <li>「キャッシュ」「HTTP」→ CloudFront。</li>
 <li>DNSのキャッシュに左右されずにフェイルオーバーしたい → Global Accelerator。</li>
+<li>取引先のファイアウォールで接続元を許可リストに登録したい → Global Acceleratorの<strong>固定IPアドレス</strong>。</li>
+<li>リージョンのメンテナンス中に通信を止めたい → <strong>トラフィックダイヤル</strong>を0%にする。</li>
+<li>アクセラレーターを止めたいが、IPは残しておきたい → <strong>無効化</strong>。削除すると固定IPは失われる。</li>
 </ul></div>
 </section>
 
@@ -159,33 +245,43 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 4件・リンク元 6件)</summary>
+<summary>つながり図を開く(リンク先 9件・リンク元 6件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Global Acceleratorとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,45 C265.0,45 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../services/shield.html"><title>サービス:AWS Shield</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Shield</text></a>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../services/site-to-site-vpn.html"><title>サービス:AWS Site-to-Site VPN</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Site-to-Site VPN</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../terms/eni-elastic-ip.html"><title>用語:ENIとElastic IP</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">ENIとElastic IP</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../terms/region-az.html"><title>用語:リージョンとアベイラビリティーゾーン</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">リージョンとアベイラビリティー…</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/multi-region-failover.html"><title>運用シナリオ:リージョン障害に備えて別リージョンへ切り替える</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="170" class="gr-t">リージョン障害に備えて別リージ…</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/route53-traffic-routing.html"><title>運用シナリオ:利用者の場所や割合でアクセスを振り分ける</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="200" class="gr-t">利用者の場所や割合でアクセスを…</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 306" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Global Acceleratorとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,90 C265.0,90 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/shield.html"><title>サービス:AWS Shield</title><rect x="0" y="79" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="94" class="gr-t">AWS Shield</text></a>
+<path class="gr-line" d="M230,120 C265.0,120 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/site-to-site-vpn.html"><title>サービス:AWS Site-to-Site VPN</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="124" class="gr-t">AWS Site-to-Site VPN</text></a>
+<path class="gr-line" d="M230,150 C265.0,150 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/eni-elastic-ip.html"><title>用語:ENIとElastic IP</title><rect x="0" y="139" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="154" class="gr-t">ENIとElastic IP</text></a>
+<path class="gr-line" d="M230,180 C265.0,180 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/region-az.html"><title>用語:リージョンとアベイラビリティーゾーン</title><rect x="0" y="169" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="184" class="gr-t">リージョンとアベイラビリティー…</text></a>
+<path class="gr-line" d="M230,210 C265.0,210 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/multi-region-failover.html"><title>運用シナリオ:リージョン障害に備えて別リージョンへ切り替える</title><rect x="0" y="199" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="214" class="gr-t">リージョン障害に備えて別リージ…</text></a>
+<path class="gr-line" d="M230,240 C265.0,240 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/route53-traffic-routing.html"><title>運用シナリオ:利用者の場所や割合でアクセスを振り分ける</title><rect x="0" y="229" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="244" class="gr-t">利用者の場所や割合でアクセスを…</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/application-recovery-controller.html"><title>サービス:Amazon Application Recovery Controller (ARC)</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">Amazon Application Recove…</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/cloudfront.html"><title>サービス:Amazon CloudFront</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon CloudFront</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon EC2</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/route53.html"><title>サービス:Amazon Route 53</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon Route 53</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Elastic Load Balancing (E…</text></a>
-<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">AWS Global Accele…</text>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/caching-comparison.html"><title>用語:キャッシュの選び方</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">キャッシュの選び方</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../terms/service-quotas.html"><title>用語:サービスクォータ</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">サービスクォータ</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">高可用性とスケーリング</text></a>
+<rect x="300" y="145" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="170" text-anchor="middle" class="gr-tb">AWS Global Accele…</text>
 <text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(6)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(4)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(9)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
