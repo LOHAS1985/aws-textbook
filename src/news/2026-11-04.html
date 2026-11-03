@@ -1,0 +1,70 @@
+<!-- title: InspectorがEC2のAMIを起動前にスキャン・Configが10種類の新リソースを記録 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Amazon Inspectorが、EC2のAMI(イメージ)を、インスタンスを起動しなくても脆弱性スキャンできるようになりました。 -->
+<section class="chapter">
+<h2>1. 今日のまとめ</h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">Inspector:EC2のAMIを起動前にスキャン</a></td><td>インスタンスを起動せず、エージェントも入れずに、AMIの脆弱性を継続的・単発で調べられる。結果はSecurity Hubにも届く</td><td><a href="../services/inspector.html">Inspector</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/image-builder.html">EC2 Image Builder</a></td></tr>
+<tr><td><a href="#n2">AWS Config:記録できるリソースが10種類増加</a></td><td>ElastiCacheのクラスターなどが、構成の記録・Configルール・アグリゲーターの対象になる</td><td><a href="../services/config.html">AWS Config</a>、<a href="../services/elasticache.html">ElastiCache</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 注目の発表</h2>
+<h3 id="n1">Inspector:EC2のAMIを起動前にスキャン</h3>
+<p>AMI(Amazon Machine Image)は、EC2インスタンスを起動するための「ひな形」となるイメージです。Amazon Inspectorは、ソフトウェアの脆弱性を自動で見つけるサービスです。これまでInspectorは、動いているEC2インスタンスなどを主な対象にしていたため、古いパッケージを含むAMIから多数のインスタンスを起動したあとでしか、問題に気づけないことがありました。今回、AMIそのものをスキャンできるようになり、インスタンスの起動やソフトウェアの追加インストールは不要になりました。AMI一覧を継続的に監視して新しく見つかった脆弱性を検出する方法と、EC2コンソールから特定のAMIだけを1回調べる方法があります。アカウント単位でも、組織全体(Organizations)でも有効にでき、検出結果はSecurity Hubにも届きます。</p>
+<p>スキャン結果は「Allowed AMIs」(アカウントで使ってよいAMIを条件で絞る設定)と組み合わせられます。セキュリティ基準を満たさないAMIを使えないようにする設定を、宣言型ポリシー(Declarative Policies。組織全体に設定を強制する仕組み)で全アカウントに適用できます。EC2 Image Builderでイメージを作っている場合は、パイプラインにスキャンを組み込み、基準を満たさないAMIの配布を止められます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "AMIから起動した後に" "脆弱性に気づく"
+node after 1.6 0 ok "これから" "起動前にAMIを" "Inspectorでスキャン"
+node block 3.2 0 accent "Allowed AMIs" "基準を満たさない" "AMIは使えない"
+edge before after "今回の発表"
+edge after block "スキャン結果を反映"
+<figcaption>図1 AMIの脆弱性を調べるタイミングの変化</figcaption>
+</figure>
+<figure class="figure" data-diagram>
+grid 170 85
+node build 0 0 blue "Image Builder" "AMIを作る"
+node scan 1.6 0 accent "Inspector" "AMIをスキャン"
+node ok 3.2 0 ok "基準を満たす" "AMIを配布・起動"
+node hub 1.6 1 box "Security Hub" "検出結果を集約"
+edge build scan
+edge scan ok
+edge scan hub dash
+<figcaption>図2 イメージ作成から配布までにスキャンを入れる流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>問題のあるAMIを、起動して広がる前に見つけて直せます。インスタンスにエージェントを入れる必要もなく、AMIの管理を一か所でそろえられます。</dd>
+<dt>試験・実務への影響</dt><dd>脆弱性の検出はInspector、設定の変更履歴の記録と評価はAWS Config、脅威の検出はGuardDuty、という役割の違いを押さえましょう。「AMIを安全な状態に保ち、承認されたものだけを使わせたい」という要件には、スキャンと許可するAMIの制限の組み合わせが答えになります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/inspector.html">Inspector</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/image-builder.html">EC2 Image Builder</a>、<a href="../services/security-hub.html">Security Hub</a>、<a href="../services/organizations.html">Organizations</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/ec2-amis-scanned-through-inspector/">EC2 Amazon Machine Images can now be scanned for vulnerabilities through Amazon Inspector</a>(2026-11-02)</dd>
+</dl>
+
+<h3 id="n2">AWS Config:記録できるリソースが10種類増加</h3>
+<p>AWS Configは、AWSリソースの設定を記録し、ルールで評価するサービスです。今回、記録の対象に10種類のリソースが加わりました。例えばElastiCacheのキャッシュクラスター(AWS::ElastiCache::CacheCluster)とレプリケーショングループ、QuickSightのエージェント、請求のビュー(BillingView)などです。「すべてのリソースタイプを記録する」設定にしていれば、追加の作業なしに自動で記録されます。新しいタイプはConfigルールやアグリゲーター(複数のアカウントやリージョンの結果を集める機能)でも使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "対象外のため" "変更履歴が残らない"
+node after 1.6 0 ok "これから" "10種類も記録され" "ルールで評価できる"
+node agg 3.2 0 accent "アグリゲーター" "複数アカウントの" "結果を集約"
+edge before after "今回の発表"
+edge after agg
+<figcaption>図3 Configの記録対象が増えた効果</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>キャッシュなど、これまで変更履歴を追えなかったリソースも、誰がいつ設定を変えたかを調べられます。ルールで「暗号化されているか」などを自動でチェックすることもできます。</dd>
+<dt>試験・実務への影響</dt><dd>「リソースの設定変更を記録して監査したい」「ルール違反を自動検出したい」という要件の答えはAWS Configです。「すべてのリソースタイプを記録」にしておくと、新しい種類も自動で対象になる点を押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/config.html">AWS Config</a>、<a href="../services/elasticache.html">ElastiCache</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-config-new-resource-types">AWS Config now supports 10 new resource types</a>(2026-11-03)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2>3. その他の発表</h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-aurora-mysql-314-available/">Aurora:MySQL 8.0.46互換のバージョン3.14が利用可能に</a>:Aurora MySQLの新しいマイナーバージョンが提供されました。</li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-aurora-mysql-8410-available/">Aurora:MySQL 8.4.10互換のバージョンが利用可能に</a>:MySQL 8.4系のAurora MySQLに、新しいバージョンが加わりました。</li>
+</ul>
+</section>
