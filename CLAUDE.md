@@ -36,8 +36,13 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 ## 公開(GitHub Pages)
 - リポジトリ: https://github.com/LOHAS1985/aws-textbook (public)
 - 公開URL: https://lohas1985.github.io/aws-textbook/ (gh-pages ブランチ = book/ の中身。push 後1〜2分で反映)
-- **修正を行ったら、確認を求めずに毎回すぐ `sh deploy.sh "修正内容"` を実行して GitHub に push する**(ページ以外の修正=CLAUDE.md・build.py・style.css なども同様)
-- コミットメッセージは「YYYY-MM-DD 修正内容」の形式。日付は deploy.sh が自動で付けるので、引数には修正内容だけを具体的に書く(例: `sh deploy.sh "CloudWatchにメトリクス一覧を追加"`)
+- **修正を行ったら、確認を求めずに毎回すぐ公開する**(ページ以外の修正=CLAUDE.md・build.py・style.css なども同様)。作業は worktree で行う:
+  1. `sh tools/wt-new.sh 名前` で `../aws-textbook-wt/名前` に作業フォルダ(同名のブランチ)を作る。以後の編集はその中で行う
+  2. src/ などを編集して確認する(その中で `python build.py` して表示を見てもよい)
+  3. `sh tools/wt-publish.sh 名前 "修正内容"` で main に取り込み、ビルドして GitHub に push し、作業フォルダとブランチを削除する
+- 作業ブランチには book/(生成物)を含めない。book/ は wt-publish が main でビルドし直す。そのため、並列の作業どうしでも book/ の衝突は起きない。同じファイル(build.py の order・links.json・TASKS.md など)を別々の作業で触ると、公開時に衝突するので、解消してから wt-publish を再実行する
+- 直接 main で行う小さな修正は、従来どおり `sh deploy.sh "修正内容"` でもよい(worktree の中からは使わない)
+- コミットメッセージは「YYYY-MM-DD 修正内容」の形式。日付は自動で付くので、引数には修正内容だけを具体的に書く(例: `sh tools/wt-publish.sh 名前 "CloudWatchにメトリクス一覧を追加"`)
 - Python がない環境では deploy.sh がビルドを省略して src/ だけを push する(警告が出る)。その場合は book/ が古いままなので、Python のある環境で再度 deploy.sh を実行するよう利用者に伝える
 - gh は "C:\Program Files\GitHub CLI\gh.exe"
 

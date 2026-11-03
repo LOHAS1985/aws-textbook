@@ -16,7 +16,7 @@ else
   echo "WARNING: Python が見つからないためビルドを省略します(book/ は更新されません)" >&2
 fi
 git add -A
-git diff --cached --quiet || git commit -m "$(date +%Y-%m-%d) ${1:-教科書を更新}"
+git diff --cached --quiet || git commit -m "$(date +%Y-%m-%d) ${1:-教科書を更新}" -m "Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>"
 # クラウドのセッションはブランチではなくコミットを直接チェックアウトしている(detached HEAD)ので、HEAD を push する
 git push origin HEAD:main
 git push origin "$(git subtree split --prefix book HEAD)":refs/heads/gh-pages --force
