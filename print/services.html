@@ -6649,7 +6649,15 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h3 id="dns-firewall-c2-4">フェイルオープン/フェイルクローズ<a class="anchor" href="#dns-firewall-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>DNS Firewallが応答できない状態になったとき、問い合わせを通すか(フェイルオープン=可用性重視)止めるか(フェイルクローズ=セキュリティ重視)をVPCごとに設定できます。既定はフェイルクローズです。</p>
 
-<h3 id="dns-firewall-c2-5">注意点<a class="anchor" href="#dns-firewall-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="dns-firewall-c2-5">DNS Firewall Advanced(高度な保護)<a class="anchor" href="#dns-firewall-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>ドメインのリストでは防げない、<strong>リストにまだ載っていない新しい不正ドメイン</strong>に対応する機能です。問い合わせのパターンを分析し、次のような脅威を検出してブロックできます。</p>
+<ul>
+<li><strong>DGA(ドメイン生成アルゴリズム)</strong>:マルウェアが指令サーバーを探すために、ランダムな名前のドメインを大量に作って問い合わせる手口。</li>
+<li><strong>DNSトンネリング</strong>:DNSの問い合わせにデータを埋め込み、外部へ持ち出す手口。</li>
+</ul>
+<p>ルールの種類は、ドメインリストを使う通常のルールと区別され、<strong>検出の信頼度のしきい値</strong>(低・中・高)と、ブロック・アラートなどのアクションを指定します。</p>
+
+<h3 id="dns-firewall-c2-6">注意点<a class="anchor" href="#dns-firewall-c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>対象はRoute 53 Resolverへの問い合わせだけ。インスタンスが外部のDNSサーバー(8.8.8.8など)を直接使うと防げない。この抜け道はセキュリティグループ・ネットワークACL・Network Firewallで塞ぐ。</li>
 <li>ドメイン名で判定するので、IPアドレスを直接指定した通信は防げない。</li>
@@ -12658,7 +12666,41 @@ Resources:
 </figure>
 <p>タイムアウトまでに成功のシグナルが届かない(または失敗のシグナルが届く)と、そのリソースは作成失敗となり、スタックはロールバックします。「スタックがタイムアウトで失敗する」場合は、インスタンスからCloudFormationのエンドポイントへ通信できるか(NATゲートウェイなど)、cfn-signalが実行されているか(<code>/var/log/cfn-init.log</code>)を確認します。</p>
 
-<h3 id="cloudformation-c2-9">UpdatePolicy(Auto Scalingグループの更新)<a class="anchor" href="#cloudformation-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudformation-c2-9">DependsOn属性とWaitCondition<a class="anchor" href="#cloudformation-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>CloudFormationは、<code>Ref</code> や <code>Fn::GetAtt</code> で参照しているリソースの順番を自動で判断し、依存先を先に作ります。参照がないリソース同士は<strong>並行して作成</strong>されます。参照がなくても順番を守らせたいときに使うのが <strong>DependsOn属性</strong>です。</p>
+<div class="table-wrap"><table>
+<tr><th>仕組み</th><th>役割</th><th>使う場面</th></tr>
+<tr><td>暗黙の依存関係</td><td><code>Ref</code>・<code>GetAtt</code>・<code>Sub</code> で参照すると、自動で依存先が先に作成される</td><td>通常はこれで足りる</td></tr>
+<tr><td><strong>DependsOn</strong></td><td>指定したリソースの<strong>作成が完了してから</strong>、このリソースを作る(削除は逆順)。1つまたは複数のリソースの論理IDを指定する</td><td>参照はないが順番が必要なとき</td></tr>
+<tr><td><strong>WaitCondition</strong>(<code>AWS::CloudFormation::WaitCondition</code>)</td><td>外部からの成功シグナルを、指定した数・時間内に受け取るまで待つ。<code>WaitConditionHandle</code> の署名付きURLにシグナルを送る</td><td>テンプレートの外の処理(手動の作業や別システムの設定)の完了を待つとき</td></tr>
+<tr><td>CreationPolicy</td><td>リソース自身に付け、EC2やAuto Scalingグループのシグナルを待つ</td><td>EC2・Auto Scalingグループの初期設定を待つ(推奨)</td></tr>
+</table></div>
+<pre class="code"><code>Resources:
+  Gateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: { VpcId: !Ref Vpc, InternetGatewayId: !Ref Igw }
+  WebServer:
+    Type: AWS::EC2::Instance
+    DependsOn: Gateway        # IGWのアタッチ完了後に作成
+    Properties: { ... }
+
+  WaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+  WaitForSetup:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: WebServer      # 作成後に待ち始める
+    Properties:
+      Handle: !Ref WaitHandle
+      Timeout: '600'
+      Count: 1</code></pre>
+<ul>
+<li>典型例は、<strong>インターネットゲートウェイのアタッチ(VPCGatewayAttachment)が終わってから、パブリックIPを使うEC2やElastic IP、NATゲートウェイを作る</strong>ケース。参照関係がないため、DependsOnが必要になる。</li>
+<li>DependsOnに<strong>循環した指定</strong>(AがBに、BがAに依存)があると、テンプレートはエラーになる。</li>
+<li>WaitConditionは、タイムアウトまでに必要な数の成功シグナルが届かないと<strong>作成失敗→ロールバック</strong>。WaitConditionの<strong>DependsOn</strong>には、待ち始めるタイミングになるリソースを指定する。</li>
+<li>WaitConditionは「外部の処理を待つ」ためのもので、EC2やAuto Scalingグループの設定待ちにはCreationPolicyを使う。</li>
+</ul>
+
+<h3 id="cloudformation-c2-10">UpdatePolicy(Auto Scalingグループの更新)<a class="anchor" href="#cloudformation-c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>Auto Scalingグループの起動テンプレート(AMIなど)を変えてスタックを更新しても、既定では<strong>既存のインスタンスは置き換わりません</strong>(新しく起動するものから適用される)。<strong>UpdatePolicy</strong>を付けると、スタックの更新時にインスタンスをどう入れ替えるかを指定できます。</p>
 <div class="table-wrap"><table>
 <tr><th>ポリシー</th><th>動作</th></tr>
@@ -12668,7 +12710,7 @@ Resources:
 </table></div>
 <p>ローリング更新はリソースを節約できますが、途中で失敗すると新旧が混在した状態から戻すことになります。確実に戻せることを重視するなら置き換え更新を選びます。</p>
 
-<h3 id="cloudformation-c2-10">終了保護<a class="anchor" href="#cloudformation-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudformation-c2-11">終了保護<a class="anchor" href="#cloudformation-c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p>スタックの<strong>終了保護</strong>を有効にすると、<strong>スタックの削除操作が拒否</strong>されます。本番環境のスタックを誤って削除するのを防ぎます。ネストスタックでは、親(ルート)スタックの設定が適用されます。</p>
 <div class="table-wrap"><table>
 <tr><th>仕組み</th><th>防ぐもの</th><th>単位</th></tr>
@@ -13588,6 +13630,54 @@ bucket.grantRead(fn);</code></pre>
 </div>
 <figcaption>図1 Service Catalogの構成。管理者がCloudFormationテンプレートを製品として登録し、ポートフォリオにまとめて利用者に公開する。利用者はカタログから承認済みの構成だけを起動できる。</figcaption>
 </figure>
+<h3 id="service-catalog-c2-1">製品とバージョン<a class="anchor" href="#service-catalog-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>製品は<strong>バージョン</strong>を持つ。管理者が新しいバージョンを追加すると、利用者は起動済みの製品(プロビジョニング済み製品)を新しいバージョンへ<strong>更新</strong>できる。古いバージョンは無効化して使わせないようにできる。</li>
+<li>製品の実体は、CloudFormationテンプレートのほか、Terraformなどの構成も扱える。</li>
+<li>利用者が製品を起動すると、裏側で<strong>CloudFormationスタック</strong>が作られ、その製品のリソースが作成される。</li>
+</ul>
+
+<h3 id="service-catalog-c2-2">制約の種類<a class="anchor" href="#service-catalog-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>制約</th><th>できること</th></tr>
+<tr><td><strong>起動制約</strong></td><td>製品の起動時に使う<strong>IAMロール</strong>を指定する。利用者本人に作成権限がなくても起動できる</td></tr>
+<tr><td><strong>テンプレート制約</strong></td><td>起動時に選べるパラメータの値を制限する(例:インスタンスタイプを <code>t3.micro</code> と <code>t3.small</code> だけにする)</td></tr>
+<tr><td>通知制約</td><td>製品のスタックのイベントを、指定したSNSトピックへ通知する</td></tr>
+<tr><td>StackSet制約</td><td>製品を、複数のアカウント・リージョンへStackSetとして展開する範囲を指定する</td></tr>
+<tr><td>リソース更新制約</td><td>起動後のリソースに対するタグの更新を許可するかを決める</td></tr>
+</table></div>
+<p><strong>TagOption</strong>を使うと、製品の起動時に付けるタグのキーと選べる値を、管理者が決められます。コスト配分タグの統一に役立ちます。</p>
+<p>起動制約で指定するロールには、製品が作るリソースの作成権限が必要です。また、利用者側にはService Catalogの利用権限(<code>servicecatalog:*</code>相当の起動操作)が必要で、リソースの作成権限は不要になります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 194" style="max-width:684px;min-width:547px" role="img" aria-label="図2 起動制約。利用者はService Catalogを使うだけで、リソースの作成は起動制約のIAMロールの権限で行われる。"><defs><marker id="service-catalog-dgservices-service-catalog-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">利用者</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">製品を起動</text>
+</g>
+<g data-node="sc">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">Service Catalog</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">制約を確認</text>
+</g>
+<g data-node="role">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">起動ロール</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">この権限で作成</text>
+</g>
+<g data-node="cfn">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">CloudFormation</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">スタックを作成</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#service-catalog-dgservices-service-catalog-2)"/>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#service-catalog-dgservices-service-catalog-2)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line dg-dash" marker-end="url(#service-catalog-dgservices-service-catalog-2)"/>
+</svg>
+</div>
+<figcaption>図2 起動制約。利用者はService Catalogを使うだけで、リソースの作成は起動制約のIAMロールの権限で行われる。</figcaption>
+</figure>
 </section>
 
 <section class="chapter">
@@ -13619,6 +13709,8 @@ bucket.grantRead(fn);</code></pre>
 <li>「承認済みの構成だけをセルフサービスで起動させたい」→ <strong>Service Catalog</strong>。</li>
 <li>共有されたポートフォリオの製品・制約は変更できない。別の起動制約を使いたいときは、製品を<strong>ローカルポートフォリオ</strong>に追加して設定する。</li>
 <li>利用者に広い権限を与えずに起動させる → <strong>起動制約</strong>。</li>
+<li>起動時に選べる値(インスタンスタイプなど)を絞りたい → <strong>テンプレート制約</strong>。タグの統一 → TagOption。</li>
+<li>ポートフォリオの共有は、Organizationsを使うと組織全体へ共有できる。</li>
 </ul></div>
 </section>
 
