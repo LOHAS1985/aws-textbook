@@ -40,15 +40,15 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>Amazon CloudWatch</h1>
   <p class="lead">システムの状態を記録・監視・通知する統合監視サービス</p>
-  <p class="updated">最終更新:<time datetime="2026-11-02">2026-11-02</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
 <details>
-<summary>このページの内容(19項目)</summary>
+<summary>このページの内容(20項目)</summary>
 <ol>
 <li><a href="#c1">1. サービス概要</a></li>
-<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">メトリクス・アラーム・ダッシュボード</a></li><li><a href="#metrics">メトリクスの基本</a></li><li><a href="#c2-3">統計の選び方</a></li><li><a href="#c2-4">標準では取れないメトリクス</a></li><li><a href="#metrics-list">サービス別メトリクス一覧</a></li><li><a href="#c2-6">メトリクスを活用する機能</a></li><li><a href="#c2-7">CloudWatch Logs</a></li><li><a href="#c2-8">メトリクスフィルターの流れ(ERROR通知)</a></li><li><a href="#c2-9">CloudWatchエージェント</a></li><li><a href="#c2-10">CloudWatch Synthetics</a></li><li><a href="#c2-11">その他の機能</a></li></ul></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">メトリクス・アラーム・ダッシュボード</a></li><li><a href="#c2-2">ダッシュボードの共有と定義の再利用</a></li><li><a href="#metrics">メトリクスの基本</a></li><li><a href="#c2-4">統計の選び方</a></li><li><a href="#c2-5">標準では取れないメトリクス</a></li><li><a href="#metrics-list">サービス別メトリクス一覧</a></li><li><a href="#c2-7">メトリクスを活用する機能</a></li><li><a href="#c2-8">CloudWatch Logs</a></li><li><a href="#c2-9">メトリクスフィルターの流れ(ERROR通知)</a></li><li><a href="#c2-10">CloudWatchエージェント</a></li><li><a href="#c2-11">CloudWatch Synthetics</a></li><li><a href="#c2-12">その他の機能</a></li></ul></li>
 <li><a href="#c3">3. ユースケース</a></li>
 <li><a href="#c4">4. 料金の考え方</a></li>
 <li><a href="#c5">5. 関連サービス</a></li>
@@ -127,6 +127,18 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><strong>ダッシュボード</strong>:クロスアカウント/クロスリージョンのメトリクスもまとめて表示できる。</li>
 </ul>
 
+<h3 id="c2-2">ダッシュボードの共有と定義の再利用<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>ダッシュボードの中身(どのウィジェットで、どのメトリクスをどう表示するか)は、<strong>JSON形式の「ダッシュボードの本文(DashboardBody)」</strong>で定義されています。この定義を取り出して配ることで、同じ表示項目を別の環境でも再現できます。</p>
+<div class="table-wrap"><table>
+<tr><th>目的</th><th>方法</th></tr>
+<tr><td>定義を確認・コピーする</td><td>コンソールの「アクション → 表示/編集のソース」でJSONを表示してコピー、またはCLIの <code>aws cloudwatch get-dashboard</code></td></tr>
+<tr><td>別のアカウント・リージョンへ複製する</td><td>JSONを貼り付けて作成、またはCLIの <code>put-dashboard</code>(<code>PutDashboard</code> API)</td></tr>
+<tr><td>チームで共通の定義をコードで管理する</td><td>CloudFormationの <code>AWS::CloudWatch::Dashboard</code>(<code>DashboardBody</code>)やテンプレートに書き、複数環境へ展開</td></tr>
+<tr><td>見る人に共有する(AWSのアカウントを持たない人を含む)</td><td>コンソールの「共有」で、<strong>特定のメールアドレス</strong>(Cognitoで認証)・<strong>公開リンク</strong>・<strong>シングルサインオン(SSO)プロバイダー</strong>のいずれかを選ぶ</td></tr>
+<tr><td>別アカウントのメトリクスを1つのダッシュボードで見る</td><td>CloudWatchのクロスアカウント機能で、モニタリングアカウントにソースアカウントを連携する</td></tr>
+</table></div>
+<p>ダッシュボードの共有は、閲覧だけを許可します。公開リンクは、リンクを知っていれば誰でも見られるため、機密性のある数値を含む場合は使わないでください。</p>
+
 <h3 id="metrics">メトリクスの基本<a class="anchor" href="#metrics" aria-label="この見出しへのリンク">#</a></h3>
 <p>メトリクスは「どのサービスの(名前空間)」「何の値を(メトリクス名)」「どのリソースについて(ディメンション)」の3つで特定します。アラームやグラフでは、それを「どの統計で・何秒ごとに集計するか」を指定して使います。</p>
 <figure class="figure">
@@ -176,7 +188,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td>保持期間</td><td>データが残る期間</td><td>1分未満は3時間、1分は15日、5分は63日、1時間は455日(<strong>最大15か月</strong>)。古いデータほど粗い粒度にまとめられる。メトリクスは手動で削除できない</td></tr>
 </table></div>
 
-<h3 id="c2-3">統計の選び方<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-4">統計の選び方<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>同じメトリクスでも、統計を間違えると意味のない値になります。<strong>「回数は合計、使用率は平均、残量は最小、遅延はパーセンタイル」</strong>と覚えます。</p>
 <div class="table-wrap"><table>
 <tr><th>統計</th><th>向いているメトリクス</th><th>例</th></tr>
@@ -187,7 +199,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td><strong>p99 など</strong></td><td>応答時間(平均だと一部の遅いリクエストが埋もれる)</td><td><code>TargetResponseTime</code>、<code>Latency</code></td></tr>
 </table></div>
 
-<h3 id="c2-4">標準では取れないメトリクス<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-5">標準では取れないメトリクス<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2の標準メトリクスは、ハイパーバイザー(仮想化の層)の外から見える値だけです。<strong class="em">OSの中の値はCloudWatchエージェントでカスタムメトリクスとして送る</strong>必要があります。</p>
 <div class="table-wrap"><table>
 <tr><th>取りたい値</th><th>メトリクス(Linux)</th><th>メトリクス(Windows)</th></tr>
@@ -362,7 +374,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td>月の請求額が一定額を超えたら通知したい</td><td><code>EstimatedCharges</code></td><td>us-east-1で請求アラーム(またはAWS Budgets)</td></tr>
 </table></div>
 
-<h3 id="c2-6">メトリクスを活用する機能<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-7">メトリクスを活用する機能<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>機能</th><th>できること</th></tr>
 <tr><td><strong>メトリクス計算(Metric Math)</strong></td><td>複数のメトリクスから新しい値を計算してグラフ・アラームに使う(例:エラー率 = Errors ÷ Invocations × 100)</td></tr>
@@ -373,7 +385,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td><strong>メトリクスストリーム</strong></td><td>メトリクスをFirehose経由でS3やサードパーティの監視ツールへほぼリアルタイムに送る</td></tr>
 </table></div>
 
-<h3 id="c2-7">CloudWatch Logs<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-8">CloudWatch Logs<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p>ログの収集・保存・検索・分析を行います。</p>
 <ul>
 <li>用語:<strong>ロググループ</strong>(アプリ・サービス単位)、<strong>ログストリーム</strong>(インスタンスや実行単位)、<strong>ログイベント</strong>(実際のログ1行)</li>
@@ -432,7 +444,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図3 CloudWatch Logsの活用。メトリクスフィルターはログから数値を作り、アラームで通知する。サブスクリプションフィルターはログをLambdaやFirehoseなどへリアルタイムに転送する。</figcaption>
 </figure>
-<h3 id="c2-8">メトリクスフィルターの流れ(ERROR通知)<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-9">メトリクスフィルターの流れ(ERROR通知)<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li>ログに"ERROR"が出力される</li>
 <li>メトリクスフィルターが検知してカウント</li>
@@ -440,7 +452,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>開発者へメール通知</li>
 </ol>
 
-<h3 id="c2-9">CloudWatchエージェント<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-10">CloudWatchエージェント<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2やオンプレミスのサーバーから、詳細なメトリクスやログをCloudWatchへ送信します。</p>
 <ol>
 <li>CloudWatchエージェントをインストール</li>
@@ -449,7 +461,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>エージェントを起動し、メトリクスがCloudWatchに送信される</li>
 </ol>
 
-<h3 id="c2-10">CloudWatch Synthetics<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-11">CloudWatch Synthetics<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>CloudWatch Synthetics</strong>は、利用者の操作を模擬してWebサイトやAPIを定期的に確認する<strong>外形監視</strong>の機能です。監視用スクリプトを<strong>Canary</strong>と呼び、Lambda関数として実行します。実際のアクセスがない時間帯でも、利用者の経路が正常に動くか確認できます。</p>
 <ul>
 <li>Canaryはスケジュールに従ってURLやAPIにアクセスし、ログインや画面操作などの一連の処理を検証する。</li>
@@ -458,7 +470,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>インターネットに公開されていないエンドポイントは、CanaryをVPC内で実行するように設定する。</li>
 </ul>
 
-<h3 id="c2-11">その他の機能<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-12">その他の機能<a class="anchor" href="#c2-12" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>Application Signals</strong>:アプリの性能と可用性を自動で計測・可視化。サービス単位・APIパス単位でメトリクスを確認できる。CloudWatchエージェントとADOT(AWS Distro for OpenTelemetry)が必要。</li>
 <li><strong class="em">Lambda Insights</strong>:Lambdaの詳細なパフォーマンス監視。有効化には<strong>拡張レイヤーの追加</strong>(収集用エージェントが入っている)と、IAMポリシー <code>CloudWatchLambdaInsightsExecutionRolePolicy</code> の付与が必要。</li>

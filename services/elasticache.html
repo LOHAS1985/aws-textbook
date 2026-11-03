@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat4">データベース</a>
   <h1>Amazon ElastiCache</h1>
   <p class="lead">アプリのデータをインメモリでキャッシュするサービス</p>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
@@ -191,6 +191,16 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <h3 id="c2-7">メモリが足りないとき(エビクション)<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>メモリがいっぱいになると、エンジンは設定された方針(パラメータグループの <code>maxmemory-policy</code>)に従って、古いキーやあまり使われないキーを消します。これを<strong>エビクション</strong>といいます。エビクションが増えるとキャッシュヒット率が下がり、DBへのアクセスが増えるため、ノードを大きくするかシャードを増やします。</p>
+
+<p><strong>エビクション(eviction)は「追い出し」</strong>の意味で、メモリがいっぱいのときに、新しいデータを入れる場所を作るため、保存済みのキーを削除することです。TTLの期限が来て消える「<strong>期限切れ(expire)</strong>」とは違い、メモリ不足が原因で、まだ有効なデータが消える点が重要です。どのキーを消すかは <code>maxmemory-policy</code> で決まります。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>動き</th></tr>
+<tr><td><code>volatile-lru</code>(既定)</td><td>TTLが設定されたキーのうち、最近使われていないものから消す</td></tr>
+<tr><td><code>allkeys-lru</code></td><td>TTLの有無に関係なく、最近使われていないキーから消す。純粋なキャッシュ向き</td></tr>
+<tr><td><code>volatile-ttl</code></td><td>TTLが残り少ないキーから消す</td></tr>
+<tr><td><code>noeviction</code></td><td>消さずに、書き込みをエラーにする。消えては困るデータを扱うとき</td></tr>
+</table></div>
+<p>LRU(Least Recently Used)は「最近使われていないもの」、LFU(Least Frequently Used)は「使用回数が少ないもの」を消す方式です。TTLを付けていないキーばかりだと <code>volatile-*</code> では消す対象がなく、書き込みエラーになることがあります。</p>
 
 <h3 id="c2-8">監視するメトリクス<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
