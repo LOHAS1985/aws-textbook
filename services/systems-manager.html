@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Systems Manager | AWS教科書</title>
+<meta name="description" content="EC2・オンプレミスを含むシステム運用を一元管理・自動化する機能の集合体">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#E7157B">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/systems-manager.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
+  <h1>AWS Systems Manager</h1>
+  <p class="lead">EC2・オンプレミスを含むシステム運用を一元管理・自動化する機能の集合体</p>
+  <p class="updated">最終更新:<time datetime="2026-11-01">2026-11-01</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(14項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">共通の仕組み:SSM AgentとSSMドキュメント</a></li><li><a href="#c2-2">EC2で各機能を使えるようにする手順</a></li><li><a href="#c2-3">ノード管理の機能</a></li><li><a href="#c2-4">変更管理の機能</a></li><li><a href="#c2-5">アプリケーション管理の機能</a></li><li><a href="#c2-6">運用管理の機能</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Systems Manager(SSM)</strong>は、EC2・オンプレミス・他クラウドのサーバーを含む<strong>システム運用を一元管理・自動化</strong>するためのサービスです。1つのサービスというより、<strong>「接続」「コマンド実行」「パッチ適用」「設定値の管理」「運用の自動化」などの機能の集合体</strong>です。</p>
+<p>機能は次の4つの分類に分かれています。このページでは、共通の仕組みを説明したあと、機能を1つずつ紹介します。</p>
+<div class="table-wrap"><table>
+<tr><th>分類</th><th>機能</th></tr>
+<tr><td>ノード管理</td><td><a href="#f-session">Session Manager</a>、<a href="#f-run">Run Command</a>、<a href="#f-state">State Manager</a>、<a href="#f-patch">Patch Manager</a>、<a href="#f-inventory">Inventory</a>、<a href="#f-compliance">Compliance</a>、<a href="#f-fleet">Fleet Manager</a>、<a href="#f-distributor">Distributor</a>、<a href="#f-hybrid">ハイブリッドアクティベーション</a></td></tr>
+<tr><td>変更管理</td><td><a href="#f-automation">Automation</a>、<a href="#f-mw">Maintenance Windows</a>、<a href="#f-change">Change Manager</a>、<a href="#f-calendar">Change Calendar</a></td></tr>
+<tr><td>アプリケーション管理</td><td><a href="#f-param">Parameter Store</a>、<a href="#f-appconfig">AppConfig</a></td></tr>
+<tr><td>運用管理</td><td><a href="#f-opscenter">OpsCenter</a>、<a href="#f-explorer">Explorer</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">共通の仕組み:SSM AgentとSSMドキュメント<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>SSM Agent</strong>は、サーバーにインストールしてSystems Managerとの橋渡しをするソフトウェアです。Amazon Linux・Windows Serverなどの多くのAMIには最初から入っています。Agentの方からSystems Managerへ接続しに行く(ポーリングする)ため、<strong>サーバー側のインバウンドポートを開ける必要がありません</strong>。</p>
+<ol>
+<li>SSM AgentがSystems ManagerのエンドポイントへHTTPS(443)で接続し、指示を待つ</li>
+<li>Systems Managerからタスク(コマンド・パッチ適用など)が届く</li>
+<li>Agentがサーバー上で実行し、結果をSystems Managerへ返す</li>
+</ol>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 696 214" style="max-width:696px;min-width:557px" role="img" aria-label="図1 Systems Managerの仕組み。各ノードのSSM AgentがSystems ManagerへHTTPSで接続し、届いたタスクを実行して結果を返す。インバウンドのポートを開ける必要はない。"><defs><marker id="dgservices-systems-manager-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="498" y="10" width="174" height="179" rx="10" class="dg-group"/>
+<text x="508" y="26" class="dg-s">管理対象ノード</text>
+<g data-node="admin">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">管理者</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">コンソール / CLI</text>
+</g>
+<g data-node="ssm">
+<rect x="272" y="89" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="347" y="113" text-anchor="middle" class="dg-tb">Systems Manager</text>
+</g>
+<g data-node="ec2">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">EC2</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">SSM Agent</text>
+</g>
+<g data-node="onp">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">SSM Agent</text>
+</g>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgservices-systems-manager-1)"/>
+<text x="228" y="113" text-anchor="middle" class="dg-s dg-halo">IAMで認証</text>
+<path d="M510.0,79.9 L422.0,95.6" class="dg-line" marker-end="url(#dgservices-systems-manager-1)"/>
+<text x="466" y="92" text-anchor="middle" class="dg-s dg-halo">HTTPS</text>
+<path d="M510.0,138.1 L422.0,122.4" class="dg-line" marker-end="url(#dgservices-systems-manager-1)"/>
+<text x="466" y="134" text-anchor="middle" class="dg-s dg-halo">HTTPS</text>
+</svg>
+</div>
+<figcaption>図1 Systems Managerの仕組み。各ノードのSSM AgentがSystems ManagerへHTTPSで接続し、届いたタスクを実行して結果を返す。インバウンドのポートを開ける必要はない。</figcaption>
+</figure>
+<p>Systems Managerで管理できるサーバーを<strong>管理対象ノード</strong>と呼びます。EC2を管理対象ノードにするには、次の3つがそろっている必要があります。</p>
+<ul>
+<li><strong>SSM Agent</strong>がインストールされ、起動している</li>
+<li>インスタンスのIAMロールに <code>AmazonSSMManagedInstanceCore</code> などの<strong>権限</strong>がある(またはアカウント全体の設定「デフォルトのホスト管理設定」を有効にする)</li>
+<li>Systems Managerのエンドポイントへの<strong>アウトバウンド通信</strong>ができる(NATゲートウェイ、または <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> のVPCエンドポイント)</li>
+</ul>
+<h3 id="c2-2">EC2で各機能を使えるようにする手順<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Session Manager・Run Command・Patch Managerなど、EC2で使う機能はどれも、インスタンスが<strong>管理対象ノード</strong>になっていることが前提です。次の順番で準備します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 946 227" style="max-width:946px;min-width:756px" role="img" aria-label="図2 EC2を管理対象ノードにする手順。①権限を持つロールをインスタンスプロファイルで付け、②SSM Agentを動かし、③Systems Managerまでの通信経路を用意すると、④管理対象ノードとして表示され、⑤各機能が使えるようになる。"><defs><marker id="dgservices-systems-manager-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="role">
+<rect x="34" y="43" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="106" y="64" text-anchor="middle" class="dg-t">①IAMロール</text>
+<text x="106" y="82" text-anchor="middle" class="dg-s">SSM用の管理ポリシー</text>
+</g>
+<g data-node="prof">
+<rect x="282" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="354" y="64" text-anchor="middle" class="dg-t">インスタンス</text>
+<text x="354" y="82" text-anchor="middle" class="dg-s">プロファイル</text>
+</g>
+<g data-node="ec2">
+<rect x="529" y="43" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="602" y="64" text-anchor="middle" class="dg-tb">EC2</text>
+<text x="602" y="82" text-anchor="middle" class="dg-s">②SSM Agent</text>
+</g>
+<g data-node="ep">
+<rect x="529" y="151" width="145" height="52" rx="8" class="dg-box"/>
+<text x="602" y="172" text-anchor="middle" class="dg-t">③NATゲートウェイ</text>
+<text x="602" y="190" text-anchor="middle" class="dg-s">またはエンドポイント</text>
+</g>
+<g data-node="ssm">
+<rect x="776" y="151" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="849" y="172" text-anchor="middle" class="dg-t">Systems Manager</text>
+<text x="849" y="190" text-anchor="middle" class="dg-s">④管理対象ノードに表示</text>
+</g>
+<g data-node="admin">
+<rect x="776" y="43" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="849" y="64" text-anchor="middle" class="dg-t">管理者</text>
+<text x="849" y="82" text-anchor="middle" class="dg-s">⑤各機能を使う</text>
+</g>
+<path d="M179.0,69.0 L281.5,69.0" class="dg-line" marker-end="url(#dgservices-systems-manager-2)"/>
+<path d="M426.5,69.0 L529.0,69.0" class="dg-line" marker-end="url(#dgservices-systems-manager-2)"/>
+<path d="M601.5,95.0 L601.5,151.0" class="dg-line" marker-end="url(#dgservices-systems-manager-2)"/>
+<text x="602" y="127" text-anchor="middle" class="dg-s dg-halo">HTTPS 443</text>
+<path d="M674.0,177.0 L776.5,177.0" class="dg-line" marker-end="url(#dgservices-systems-manager-2)"/>
+<path d="M849.0,95.0 L849.0,151.0" class="dg-line" marker-end="url(#dgservices-systems-manager-2)"/>
+</svg>
+</div>
+<figcaption>図2 EC2を管理対象ノードにする手順。①権限を持つロールをインスタンスプロファイルで付け、②SSM Agentを動かし、③Systems Managerまでの通信経路を用意すると、④管理対象ノードとして表示され、⑤各機能が使えるようになる。</figcaption>
+</figure>
+<ol>
+<li><strong>IAMロールを付ける</strong>:EC2用のロールにAWS管理ポリシー <code>AmazonSSMManagedInstanceCore</code> を付け、<a href="../terms/instance-profile.html">インスタンスプロファイル</a>としてインスタンスに付ける。起動中のインスタンスにも、停止せずに付けられる。インスタンスごとにロールを付けたくないときは、アカウント・リージョン単位の「<strong>デフォルトのホスト管理設定</strong>」を有効にすると、ロールのないインスタンスも管理対象になる(IMDSv2と、新しめのSSM Agentが必要)。</li>
+<li><strong>SSM Agentを確認する</strong>:Amazon Linux・Windows Server・Ubuntuなどの主要なAMIには最初から入っている。入っていないAMIでは、ユーザーデータなどでインストールする。Linuxでは <code>sudo systemctl status amazon-ssm-agent</code> で起動しているか確認できる。</li>
+<li><strong>通信経路を用意する</strong>:インスタンスから Systems Manager のエンドポイントへ HTTPS(443)のアウトバウンド通信ができるようにする。パブリックサブネットならインターネットゲートウェイ経由、プライベートサブネットならNATゲートウェイか、<code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> の<a href="../terms/vpc-endpoint.html">インターフェイスエンドポイント</a>を作る。エンドポイントを使うときは、VPCのDNS設定とエンドポイントの「プライベートDNS名」を有効にし、エンドポイントのセキュリティグループでインスタンスからの443を許可する。</li>
+<li><strong>管理対象ノードとして表示されるか確認する</strong>:Fleet Managerのノードの一覧、または <code>aws ssm describe-instance-information</code> で、状態(Ping status)が <code>Online</code> になっていれば準備完了。表示されるまで数分かかることがある。ロールを後から付けたのに表示されないときは、SSM Agentを再起動する。</li>
+<li><strong>使う機能ごとの設定をする</strong>:下の表のとおり、機能によって追加の権限・経路・設定が必要になる。</li>
+</ol>
+<p>1〜3の設定は、<strong>Quick Setup</strong>を使うと、組織やアカウントの複数のインスタンスにまとめて行えます。</p>
+<div class="table-wrap"><table>
+<tr><th>使う機能</th><th>管理対象ノードにしたあとに必要なこと</th></tr>
+<tr><td><a href="#f-session">Session Manager</a></td><td>操作する人に <code>ssm:StartSession</code> の権限。ローカルのPCのCLIから使うときは Session Manager plugin を入れる。操作ログをS3・CloudWatch Logsに残すときは、インスタンスのロールに書き込み権限を足し、経路(S3のゲートウェイエンドポイント、<code>logs</code> のエンドポイント)を用意する</td></tr>
+<tr><td><a href="#f-run">Run Command</a></td><td>実行するSSMドキュメント(<code>AWS-RunShellScript</code> など)と、対象(インスタンスID・タグ・リソースグループ)を選ぶ。出力をS3に残すときはロールに書き込み権限</td></tr>
+<tr><td><a href="#f-patch">Patch Manager</a></td><td>パッチベースラインを決め、パッチポリシーまたはMaintenance Windowsで定期的に <code>AWS-RunPatchBaseline</code> を実行する。プライベートサブネットでは、パッチの取得元(OSのリポジトリ)とS3への経路も必要</td></tr>
+<tr><td><a href="#f-state">State Manager</a>・<a href="#f-inventory">Inventory</a></td><td>関連付け(どのドキュメントを、どの対象に、どの間隔で実行するか)を作る</td></tr>
+<tr><td><a href="#f-param">Parameter Store</a></td><td>アプリが読むパラメータへの <code>ssm:GetParameter</code> の権限をロールに足す。SecureStringをカスタマー管理キーで暗号化したときは <code>kms:Decrypt</code> も必要</td></tr>
+<tr><td>CloudWatchエージェント</td><td>Run Command(<code>AWS-ConfigureAWSPackage</code>)で導入し、設定をParameter Storeに置いて配る。ロールに <code>CloudWatchAgentServerPolicy</code> を足す</td></tr>
+</table></div>
+<p>管理対象ノードにならないときは、ロール・SSM Agent・通信経路の3つを順に確認します。インスタンスにログインできる場合は、SSM Agentのログ(Linuxでは <code>/var/log/amazon/ssm/amazon-ssm-agent.log</code>)や、<code>ssm-cli get-diagnostics</code> の結果で、どこで失敗しているかが分かります。</p>
+
+<p><strong>SSMドキュメント</strong>は、Systems Managerが実行する処理を定義したJSON/YAMLのファイルです。AWSが用意したもの(<code>AWS-</code> で始まる)をそのまま使うことも、自作することもできます。Run Command用の「コマンドドキュメント」、Automation用の「ランブック」などの種類があります。</p>
+
+<h3 id="c2-3">ノード管理の機能<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+
+<div class="feature" id="f-session">
+<h4>Session Manager</h4>
+<p>ブラウザやCLIから、<strong>SSH・RDPのポートを開けずに</strong>サーバーへ接続してシェルを操作できる機能です。</p>
+<dl>
+<dt>できること</dt><dd>シェルでの操作、ポートフォワーディング(手元のPCからRDSなどへ接続)、SSHのトンネル</dd>
+<dt>特徴</dt><dd>踏み台サーバー・SSHキー・パブリックIPが不要。誰が接続できるかはIAMで制御し、操作ログをS3やCloudWatch Logsに保存できる。通信はKMSで暗号化できる</dd>
+<dt>使いどころ</dt><dd>プライベートサブネットのEC2に安全にログインしたい</dd>
+</dl>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 638 206" style="max-width:638px;min-width:520px" role="img" aria-label="図3 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。"><defs><marker id="dgservices-systems-manager-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="admin">
+<rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="62" text-anchor="middle" class="dg-t">管理者</text>
+<text x="104" y="80" text-anchor="middle" class="dg-s">ブラウザ / CLI</text>
+</g>
+<g data-node="sm">
+<rect x="250" y="40" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="320" y="62" text-anchor="middle" class="dg-tb">Session Manager</text>
+<text x="320" y="80" text-anchor="middle" class="dg-s">IAMで認可</text>
+</g>
+<g data-node="ec2">
+<rect x="474" y="40" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="544" y="62" text-anchor="middle" class="dg-t">EC2</text>
+<text x="544" y="80" text-anchor="middle" class="dg-s">プライベート</text>
+</g>
+<g data-node="log">
+<rect x="250" y="130" width="188" height="52" rx="8" class="dg-box"/>
+<text x="344" y="151" text-anchor="middle" class="dg-t">操作ログ</text>
+<text x="344" y="169" text-anchor="middle" class="dg-s">S3・CloudWatch Logs</text>
+</g>
+<path d="M174.0,66.5 L250.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-3)"/>
+<path d="M474.0,66.5 L390.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-3)"/>
+<text x="432" y="70" text-anchor="middle" class="dg-s dg-halo">HTTPS(外向き)</text>
+<path d="M327.0,92.5 L337.0,129.8" class="dg-line dg-dash" marker-end="url(#dgservices-systems-manager-3)"/>
+</svg>
+</div>
+<figcaption>図3 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。</figcaption>
+</figure>
+</div>
+
+<div class="feature" id="f-run">
+<h4>Run Command</h4>
+<p>多数のサーバーに、<strong>コマンドやスクリプトを一括で実行</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>シェルスクリプト(<code>AWS-RunShellScript</code>)やPowerShell(<code>AWS-RunPowerShellScript</code>)の実行、ソフトウェアのインストール、サービスの再起動など</dd>
+<dt>特徴</dt><dd>対象はインスタンスIDのほか<strong>タグ</strong>やリソースグループで指定できる。<strong>同時実行数</strong>と<strong>エラーのしきい値</strong>で、少しずつ安全に実行できる。実行結果はS3・CloudWatch Logsに出力でき、SNSで完了を通知できる</dd>
+<dt>使いどころ</dt><dd>その場で1回だけ、複数台に同じ作業をしたい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-state">
+<h4>State Manager</h4>
+<p>サーバーを<strong>決めた状態に保ち続ける</strong>機能です。</p>
+<dl>
+<dt>できること</dt><dd><strong>関連付け(Association)</strong>で「どのノードに、どのドキュメントを、どのスケジュールで適用するか」を定義する。例:「タグ Role=Web のEC2に、30分ごとにApacheが起動していることを確認し、止まっていれば起動する」</dd>
+<dt>特徴</dt><dd>新しく起動したノードにも自動で適用される。設定がずれても(ドリフト)、次の実行で元に戻る</dd>
+<dt>使いどころ</dt><dd>CloudWatchエージェントやウイルス対策ソフトを、全サーバーで常に動かしておきたい</dd>
+</dl>
+<p>Run Commandが「1回だけ実行」なのに対し、State Managerは「繰り返し実行して状態を保つ」点が違います。</p>
+</div>
+
+<div class="feature" id="f-patch">
+<h4>Patch Manager</h4>
+<p>OS(と一部のアプリ)の<strong>パッチ適用を自動化</strong>する機能です。</p>
+<dl>
+<dt>構成要素</dt><dd><strong>パッチベースライン</strong>(どのパッチを承認するか。例:重要度Criticalのパッチをリリース7日後に自動承認)、<strong>パッチグループ</strong>(タグで対象ノードを分類)</dd>
+<dt>実行方法</dt><dd><code>AWS-RunPatchBaseline</code> ドキュメントを、Maintenance Windowsやパッチポリシー(Quick Setup)で定期的に実行する。<strong>Scan</strong>(不足パッチの確認のみ)と<strong>Install</strong>(適用)を選べる</dd>
+<dt>使いどころ</dt><dd>多数のサーバーに、決まった時間帯に計画的にパッチを当てたい</dd>
+</dl>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図4 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。"><defs><marker id="dgservices-systems-manager-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="bl">
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">パッチベースライン</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">承認するパッチ</text>
+</g>
+<g data-node="mw">
+<rect x="34" y="110" width="150" height="68" rx="8" class="dg-blue"/>
+<text x="109" y="130" text-anchor="middle" class="dg-t">メンテナンス</text>
+<text x="109" y="148" text-anchor="middle" class="dg-t">ウィンドウ</text>
+<text x="109" y="166" text-anchor="middle" class="dg-s">日時を指定</text>
+</g>
+<g data-node="rc">
+<rect x="272" y="118" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">Run Command</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">パッチ適用を実行</text>
+</g>
+<g data-node="pg">
+<rect x="272" y="198" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="220" text-anchor="middle" class="dg-t">パッチグループ</text>
+<text x="347" y="238" text-anchor="middle" class="dg-s">タグで対象を分類</text>
+</g>
+<g data-node="ec2">
+<rect x="510" y="124" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="148" text-anchor="middle" class="dg-t">対象のEC2</text>
+</g>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgservices-systems-manager-4)"/>
+<text x="228" y="148" text-anchor="middle" class="dg-s dg-halo">起動</text>
+<path d="M347.0,90.0 L347.0,118.0" class="dg-line dg-dash" marker-end="url(#dgservices-systems-manager-4)"/>
+<path d="M347.0,198.0 L347.0,170.0" class="dg-line dg-dash" marker-end="url(#dgservices-systems-manager-4)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgservices-systems-manager-4)"/>
+</svg>
+</div>
+<figcaption>図4 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。</figcaption>
+</figure>
+</div>
+
+<div class="feature" id="f-inventory">
+<h4>Inventory</h4>
+<p>サーバーの<strong>ソフトウェアや設定の情報を収集</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>OSのバージョン、インストール済みのアプリ、ネットワーク設定、Windowsの更新プログラムなどを定期的に収集する</dd>
+<dt>特徴</dt><dd><strong>リソースデータの同期</strong>で、複数アカウント・リージョンの情報をS3に集め、Athenaで分析できる</dd>
+<dt>使いどころ</dt><dd>「特定のバージョンのソフトが入っているサーバーはどれか」を調べたい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-compliance">
+<h4>Compliance</h4>
+<p>管理対象ノードが<strong>ルールに準拠しているか</strong>を一覧で確認する機能です。</p>
+<dl>
+<dt>できること</dt><dd>Patch Managerのパッチ適用状況と、State Managerの関連付けの適用状況を、「準拠/非準拠」で表示する</dd>
+<dt>使いどころ</dt><dd>パッチを当てられていないサーバーを見つけたい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-fleet">
+<h4>Fleet Manager</h4>
+<p>サーバーを<strong>コンソール上のGUIで管理</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>ファイルの閲覧、CPU・メモリなどの状態の確認、ログの確認、OSのユーザー管理、Windowsのレジストリ操作。WindowsにはブラウザからRDPで接続できる</dd>
+<dt>使いどころ</dt><dd>ログインせずに、サーバーの状態をまとめて確認したい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-distributor">
+<h4>Distributor</h4>
+<p>ソフトウェアを<strong>パッケージにして配布</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>AWSが用意したパッケージ(CloudWatchエージェントなど)や自社のソフトを、Run Command(1回)やState Manager(継続)でインストール・更新する</dd>
+<dt>使いどころ</dt><dd>社内の監視エージェントを全サーバーに配りたい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-hybrid">
+<h4>ハイブリッドアクティベーション</h4>
+<p><strong>オンプレミスや他クラウドのサーバー</strong>を、管理対象ノードとして登録する仕組みです。</p>
+<dl>
+<dt>手順</dt><dd>Systems Managerでアクティベーション(コードとID)を作成し、サーバーにSSM Agentを入れて登録する。登録されたサーバーは <code>mi-</code> で始まるIDで管理される</dd>
+<dt>使いどころ</dt><dd>EC2とオンプレミスのサーバーを、同じ方法でパッチ適用・コマンド実行したい</dd>
+</dl>
+</div>
+
+<h3 id="c2-4">変更管理の機能<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+
+<div class="feature" id="f-automation">
+<h4>Automation</h4>
+<p><strong>ランブック</strong>(複数のステップからなる手順書)に従って、運用作業を自動で実行する機能です。サーバーの中だけでなく、<strong>AWSのAPIを呼び出してリソースを操作</strong>できる点がRun Commandと違います。</p>
+<dl>
+<dt>ランブックの例</dt><dd><code>AWS-RestartEC2Instance</code>(インスタンスの再起動)、<code>AWS-StopEC2Instance</code>(停止)、<code>AWS-CreateImage</code>(AMIの作成)、<code>AWS-UpdateLinuxAmi</code>(パッチ適用済みのAMIの作成)、<code>AWS-DisablePublicAccessForSecurityGroup</code>(SGの公開設定の削除)</dd>
+<dt>実行のきっかけ</dt><dd>手動、EventBridgeのルール、<a href="config.html">AWS Config</a>の修復アクション、Maintenance Windows、CloudWatchアラーム</dd>
+<dt>特徴</dt><dd>途中に<strong>承認のステップ</strong>を入れられる。複数のアカウント・リージョンで一度に実行できる。同時実行数とエラーのしきい値を設定できる</dd>
+<dt>使いどころ</dt><dd>障害の復旧手順や、設定違反の自動修復を、毎回同じ手順で確実に行いたい</dd>
+</dl>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 706 202" style="max-width:706px;min-width:565px" role="img" aria-label="図5 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。"><defs><marker id="dgservices-systems-manager-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="cfg">
+<rect x="34" y="40" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="62" text-anchor="middle" class="dg-t">Config</text>
+<text x="106" y="80" text-anchor="middle" class="dg-s">ルール違反を検出</text>
+</g>
+<g data-node="eb">
+<rect x="34" y="126" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="147" text-anchor="middle" class="dg-t">EventBridge</text>
+<text x="106" y="165" text-anchor="middle" class="dg-s">イベント・スケジュール</text>
+</g>
+<g data-node="au">
+<rect x="273" y="83" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="346" y="104" text-anchor="middle" class="dg-tb">Automation</text>
+<text x="346" y="122" text-anchor="middle" class="dg-s">ランブックを実行</text>
+</g>
+<g data-node="ap">
+<rect x="512" y="40" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">承認</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">必要なら人が確認</text>
+</g>
+<g data-node="res">
+<rect x="512" y="126" width="170" height="52" rx="8" class="dg-ok"/>
+<text x="597" y="147" text-anchor="middle" class="dg-t">AWSリソースを操作</text>
+<text x="597" y="165" text-anchor="middle" class="dg-s">停止・修正・AMI作成</text>
+</g>
+<path d="M179.0,79.4 L273.2,96.1" class="dg-line" marker-end="url(#dgservices-systems-manager-5)"/>
+<text x="226" y="92" text-anchor="middle" class="dg-s dg-halo">修復</text>
+<path d="M179.0,138.6 L273.2,121.9" class="dg-line" marker-end="url(#dgservices-systems-manager-5)"/>
+<path d="M418.2,96.1 L512.5,79.4" class="dg-line dg-dash" marker-end="url(#dgservices-systems-manager-5)"/>
+<path d="M418.2,121.2 L512.5,137.2" class="dg-line" marker-end="url(#dgservices-systems-manager-5)"/>
+</svg>
+</div>
+<figcaption>図5 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。</figcaption>
+</figure>
+</div>
+
+<div class="feature" id="f-mw">
+<h4>Maintenance Windows</h4>
+<p>運用作業を実行してよい<strong>時間帯(メンテナンスウィンドウ)</strong>を決め、その時間に作業を自動で実行する機能です。</p>
+<dl>
+<dt>設定内容</dt><dd>スケジュール(cron式など)、時間の長さ、新しいタスクを開始しない締め切り時間、対象(ターゲット)、実行するタスク</dd>
+<dt>実行できるタスク</dt><dd>Run Command、Automation、Lambda関数、Step Functionsのステートマシン</dd>
+<dt>使いどころ</dt><dd>パッチ適用やバックアップを、業務時間外に実行したい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-change">
+<h4>Change Manager</h4>
+<p>本番環境への変更の<strong>申請・承認・実行</strong>を管理する機能です。</p>
+<dl>
+<dt>できること</dt><dd>変更テンプレートで、必要な承認者と実行するランブックを決めておく。申請が承認されると、Automationで変更が実行される</dd>
+<dt>使いどころ</dt><dd>本番環境の変更に、承認のワークフローを必ず通したい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-calendar">
+<h4>Change Calendar</h4>
+<p>変更を<strong>してよい期間・してはいけない期間</strong>をカレンダーで定義する機能です。</p>
+<dl>
+<dt>できること</dt><dd>期間を「OPEN(変更可)」「CLOSED(変更禁止)」で管理する。AutomationやChange Managerは、CLOSEDの期間には実行を止められる</dd>
+<dt>使いどころ</dt><dd>年末のセール期間中は本番環境を変更しないようにしたい</dd>
+</dl>
+</div>
+
+<h3 id="c2-5">アプリケーション管理の機能<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+
+<div class="feature" id="f-param">
+<h4>Parameter Store</h4>
+<p>アプリの<strong>設定値や機密情報を保存</strong>するキーバリューストアです。</p>
+<dl>
+<dt>パラメータの種類</dt><dd><code>String</code>(通常の文字列)、<code>StringList</code>(カンマ区切り)、<code>SecureString</code>(<strong>KMSで暗号化</strong>した機密情報)</dd>
+<dt>階層と履歴</dt><dd><code>/prod/db/endpoint</code> のように階層で整理し、IAMでパスごとにアクセスを制御できる。値を変更するとバージョンが残る</dd>
+<dt>標準とアドバンスト</dt><dd>標準は無料(1つ4KBまで)。アドバンストは有料で、8KBまでの値と、有効期限などのポリシーを使える</dd>
+<dt>使いどころ</dt><dd>DBの接続先やAPIキーを、コードから切り離して管理したい。CloudFormationやECS・Lambdaからも参照できる</dd>
+</dl>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Parameter Store</th><th><a href="secrets-manager.html">Secrets Manager</a></th></tr>
+<tr><td>主な用途</td><td>設定値全般(機密情報も可)</td><td>機密情報</td></tr>
+<tr><td>自動ローテーション</td><td>なし</td><td><strong>あり</strong>(RDSのパスワードなど)</td></tr>
+<tr><td>料金</td><td>標準パラメータは無料</td><td>シークレットごとに月額料金</td></tr>
+</table></div>
+</div>
+
+<div class="feature" id="f-appconfig">
+<h4>AppConfig</h4>
+<p>アプリの設定(機能フラグなど)の変更を、<strong>段階的に安全に配布</strong>する機能です。設定ミスが全員に一斉に反映されて障害になるのを防ぎます。</p>
+<dl>
+<dt>流れ</dt><dd>新しい設定のバージョンを作成 → Validator(JSONスキーマやLambda)で検証 → 一部のクライアントから段階的に配布 → CloudWatchアラームで監視し、異常なら<strong>自動でロールバック</strong></dd>
+<dt>使いどころ</dt><dd>アプリを再デプロイせずに、設定や機能のON/OFFを安全に切り替えたい</dd>
+</dl>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 788 202" style="max-width:788px;min-width:630px" role="img" aria-label="図6 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。"><defs><marker id="dgservices-systems-manager-6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="v">
+<rect x="34" y="40" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="62" text-anchor="middle" class="dg-t">新しい設定</text>
+<text x="99" y="80" text-anchor="middle" class="dg-s">バージョン作成</text>
+</g>
+<g data-node="val">
+<rect x="184" y="40" width="130" height="52" rx="8" class="dg-box"/>
+<text x="249" y="62" text-anchor="middle" class="dg-t">Validator</text>
+<text x="249" y="80" text-anchor="middle" class="dg-s">型・必須キー</text>
+</g>
+<g data-node="dep">
+<rect x="334" y="40" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="62" text-anchor="middle" class="dg-tb">段階デプロイ</text>
+<text x="399" y="80" text-anchor="middle" class="dg-s">一部に配布</text>
+</g>
+<g data-node="mon">
+<rect x="484" y="40" width="130" height="52" rx="8" class="dg-box"/>
+<text x="549" y="62" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="549" y="80" text-anchor="middle" class="dg-s">アラームで監視</text>
+</g>
+<g data-node="ok">
+<rect x="634" y="40" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="699" y="62" text-anchor="middle" class="dg-t">全体へ</text>
+<text x="699" y="80" text-anchor="middle" class="dg-s">正常なら</text>
+</g>
+<g data-node="ng">
+<rect x="484" y="126" width="130" height="52" rx="8" class="dg-ng"/>
+<text x="549" y="147" text-anchor="middle" class="dg-t">ロールバック</text>
+<text x="549" y="165" text-anchor="middle" class="dg-s">異常なら</text>
+</g>
+<path d="M164.0,66.5 L184.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-6)"/>
+<path d="M314.0,66.5 L334.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-6)"/>
+<path d="M464.0,66.5 L484.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-6)"/>
+<path d="M614.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgservices-systems-manager-6)"/>
+<path d="M549.0,92.5 L549.0,125.5" class="dg-line" marker-end="url(#dgservices-systems-manager-6)"/>
+</svg>
+</div>
+<figcaption>図6 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。</figcaption>
+</figure>
+</div>
+
+<h3 id="c2-6">運用管理の機能<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+
+<div class="feature" id="f-opscenter">
+<h4>OpsCenter</h4>
+<p>運用上の問題を<strong>OpsItem</strong>として1か所に集め、調査・対応を管理する機能です。</p>
+<dl>
+<dt>できること</dt><dd>CloudWatchアラームやEventBridgeのイベントからOpsItemを自動で作成する。関連するリソースの情報やログをまとめて表示し、OpsItemから<strong>Automationのランブックを実行</strong>して対応できる</dd>
+<dt>使いどころ</dt><dd>アラートを一覧で管理し、決まった手順ですばやく対応したい</dd>
+</dl>
+</div>
+
+<div class="feature" id="f-explorer">
+<h4>Explorer</h4>
+<p>運用データを<strong>ダッシュボードで横断的に表示</strong>する機能です。</p>
+<dl>
+<dt>できること</dt><dd>OpsItemの件数、パッチの準拠状況、インスタンスの数などを、複数のアカウント・リージョンにまたがって表示する</dd>
+<dt>使いどころ</dt><dd>組織全体の運用状況をひと目で把握したい</dd>
+</dl>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>踏み台サーバーなしでプライベートサブネットのEC2にログインする(Session Manager)</li>
+<li>数百台のサーバーへ、毎週決まった時間にパッチを適用する(Patch Manager+Maintenance Windows)</li>
+<li>Configで検出した設定違反を自動で修復する(Automation)</li>
+<li>全サーバーでCloudWatchエージェントが動いている状態を保つ(State Manager+Distributor)</li>
+<li>アプリの設定値・パスワードを集中管理する(Parameter Store)</li>
+<li>機能フラグを段階的に有効にし、問題があれば自動で戻す(AppConfig)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Session Manager・Run Command・State Manager・Patch Manager・Inventory・Parameter Store(標準パラメータ)など、多くの機能は<strong>追加料金なし</strong>で使えます(EC2・S3・CloudWatch Logsなど、使ったほかのサービスの料金はかかります)。</p>
+<p>有料になるのは、Parameter Storeのアドバンストパラメータや高スループット設定、Automationのステップ実行、AppConfigの設定の取得、OpsCenterのOpsItem、オンプレミスのアドバンストインスタンス(Session Managerで接続する場合など)です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:管理対象ノード</li>
+<li><a href="iam.html">AWS IAM</a>:インスタンスのロール、Session Managerの接続権限</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>:自動ローテーションが必要な機密情報</li>
+<li><a href="kms.html">AWS KMS</a>:SecureStringやセッションの暗号化</li>
+<li><a href="config.html">AWS Config</a>/<a href="security-hub.html">AWS Security Hub</a>:Automationによる修復の起点</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:AutomationやOpsCenterのトリガー</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ログの保存先、AppConfigのロールバック条件</li>
+<li><a href="athena.html">Amazon Athena</a>:Inventoryのデータの分析</li>
+<li>関連する用語:<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a>、<a href="../terms/cron-rate-expressions.html">cron式とrate式</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(NATまたはVPCエンドポイント)</strong>を確認。</li>
+<li>ポート22を開けずに安全にログイン、操作ログも残したい → <strong>Session Manager</strong>。</li>
+<li>複数サーバーへ1回だけ一括でコマンド → <strong>Run Command</strong>。状態を保ち続ける → <strong>State Manager</strong>。</li>
+<li>定期的なパッチ適用 → <strong>Patch Manager+Maintenance Windows</strong>。適用状況の確認 → <strong>Compliance</strong>。</li>
+<li>AWSリソースの操作を含む復旧・修復の自動化 → <strong>Automationランブック</strong>(Configの修復アクションからも実行)。</li>
+<li>変更禁止期間を設けたい → <strong>Change Calendar</strong>。変更に承認を必須にしたい → <strong>Change Manager</strong>。</li>
+<li>設定値の保存 → <strong>Parameter Store</strong>。パスワードの自動ローテーション → <strong>Secrets Manager</strong>。</li>
+<li>設定変更の段階デプロイと自動ロールバック → <strong>AppConfig</strong>。</li>
+<li>オンプレミスのサーバーも管理したい → <strong>ハイブリッドアクティベーション</strong>。</li>
+<li>Secrets Manager・Parameter Store・AppConfig・KMSの使い分け → <a href="../terms/secrets-config-comparison.html">機密情報・設定値の保存先の選び方</a>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Systems Managerは運用管理機能の集合体。SSM Agentを通じてサーバーを管理する。</li>
+<li>ノード管理:接続はSession Manager、コマンドはRun Command、状態維持はState Manager、パッチはPatch Manager。</li>
+<li>変更管理:手順の自動化はAutomation、時間帯はMaintenance Windows、承認・禁止期間はChange Manager・Change Calendar。</li>
+<li>アプリ管理:設定値はParameter Store、設定の安全な配布はAppConfig。運用管理はOpsCenter・Explorer。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/ec2-memory-monitoring.html"><span class="title">EC2のメモリ・ディスク使用率を監視する</span></a></li>
+<li><a href="../usecases/ec2-auto-recovery.html"><span class="title">EC2の障害を検知して自動で復旧する</span></a></li>
+<li><a href="../usecases/health-event-response.html"><span class="title">AWSの予定メンテナンスや障害の通知に自動で対応する</span></a></li>
+<li><a href="../usecases/ssm-fleet-configuration.html"><span class="title">多数のEC2の設定やソフトウェアを一定に保つ</span></a></li>
+<li><a href="../usecases/patch-management.html"><span class="title">多数のEC2に定期的にパッチを適用する</span></a></li>
+<li><a href="../usecases/golden-ami-pipeline.html"><span class="title">パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</span></a></li>
+<li><a href="../usecases/scheduled-start-stop.html"><span class="title">開発環境を夜間・休日に自動で停止して費用を下げる</span></a></li>
+<li><a href="../usecases/config-auto-remediation.html"><span class="title">公開されたS3バケットを検出して自動で修復する</span></a></li>
+<li><a href="../usecases/vulnerability-management.html"><span class="title">脆弱性を継続的に検出し、パッチ適用まで自動化する</span></a></li>
+<li><a href="../usecases/guardduty-auto-response.html"><span class="title">乗っ取られたEC2を自動で隔離する</span></a></li>
+<li><a href="../usecases/private-subnet-endpoints.html"><span class="title">プライベートサブネットからNATなしでAWSのサービスを使う</span></a></li>
+<li><a href="../usecases/bastionless-access.html"><span class="title">踏み台サーバーなしでプライベートなEC2を操作する</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 14件・リンク元 27件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 846" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Systems Managerとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS CloudFormation</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudshell.html"><title>サービス:AWS CloudShell</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS CloudShell</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../services/codebuild.html"><title>サービス:AWS CodeBuild</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS CodeBuild</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../services/health-dashboard.html"><title>サービス:AWS Health Dashboard</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS Health Dashboard</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../services/resource-groups.html"><title>サービス:AWS Resource Groups と Tag Editor</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS Resource Groups と Ta…</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../services/image-builder.html"><title>サービス:Amazon EC2 Image Builder</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">Amazon EC2 Image Builder</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">Amazon ECS</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../services/inspector.html"><title>サービス:Amazon Inspector</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">Amazon Inspector</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="290" class="gr-t">AWS Well-Architected フレ…</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../terms/json-yaml.html"><title>用語:JSONとYAMLの読み方</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="320" class="gr-t">JSONとYAMLの読み方</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../terms/port-numbers.html"><title>用語:よく使うポート番号</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="350" class="gr-t">よく使うポート番号</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../terms/hybrid-connectivity.html"><title>用語:オンプレミスとAWSをつなぐ方法の選び方</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="380" class="gr-t">オンプレミスとAWSをつなぐ方法…</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../terms/tags.html"><title>用語:タグ</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="410" class="gr-t">タグ</text></a>
+<path class="gr-line" d="M230,435 C265.0,435 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="440" class="gr-t">デプロイ戦略</text></a>
+<path class="gr-line" d="M230,465 C265.0,465 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../terms/shared-responsibility.html"><title>用語:責任共有モデル</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="470" class="gr-t">責任共有モデル</text></a>
+<path class="gr-line" d="M230,495 C265.0,495 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/health-event-response.html"><title>運用シナリオ:AWSの予定メンテナンスや障害の通知に自動で対応する</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="500" class="gr-t">AWSの予定メンテナンスや障害の…</text></a>
+<path class="gr-line" d="M230,525 C265.0,525 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ec2-memory-monitoring.html"><title>運用シナリオ:EC2のメモリ・ディスク使用率を監視する</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="530" class="gr-t">EC2のメモリ・ディスク使用率を…</text></a>
+<path class="gr-line" d="M230,555 C265.0,555 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ec2-auto-recovery.html"><title>運用シナリオ:EC2の障害を検知して自動で復旧する</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="560" class="gr-t">EC2の障害を検知して自動で復旧…</text></a>
+<path class="gr-line" d="M230,585 C265.0,585 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/golden-ami-pipeline.html"><title>運用シナリオ:パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="590" class="gr-t">パッチ適用済みのAMIを定期的に…</text></a>
+<path class="gr-line" d="M230,615 C265.0,615 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/private-subnet-endpoints.html"><title>運用シナリオ:プライベートサブネットからNATなしでAWSのサービスを使う</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="620" class="gr-t">プライベートサブネットからNAT…</text></a>
+<path class="gr-line" d="M230,645 C265.0,645 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/guardduty-auto-response.html"><title>運用シナリオ:乗っ取られたEC2を自動で隔離する</title><rect x="0" y="634" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="650" class="gr-t">乗っ取られたEC2を自動で隔離する</text></a>
+<path class="gr-line" d="M230,675 C265.0,675 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/config-auto-remediation.html"><title>運用シナリオ:公開されたS3バケットを検出して自動で修復する</title><rect x="0" y="664" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="680" class="gr-t">公開されたS3バケットを検出し…</text></a>
+<path class="gr-line" d="M230,705 C265.0,705 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/patch-management.html"><title>運用シナリオ:多数のEC2に定期的にパッチを適用する</title><rect x="0" y="694" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="710" class="gr-t">多数のEC2に定期的にパッチを適…</text></a>
+<path class="gr-line" d="M230,735 C265.0,735 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ssm-fleet-configuration.html"><title>運用シナリオ:多数のEC2の設定やソフトウェアを一定に保つ</title><rect x="0" y="724" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="740" class="gr-t">多数のEC2の設定やソフトウェア…</text></a>
+<path class="gr-line" d="M230,765 C265.0,765 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/vulnerability-management.html"><title>運用シナリオ:脆弱性を継続的に検出し、パッチ適用まで自動化する</title><rect x="0" y="754" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="770" class="gr-t">脆弱性を継続的に検出し、パッチ…</text></a>
+<path class="gr-line" d="M230,795 C265.0,795 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/bastionless-access.html"><title>運用シナリオ:踏み台サーバーなしでプライベートなEC2を操作する</title><rect x="0" y="784" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="800" class="gr-t">踏み台サーバーなしでプライベー…</text></a>
+<path class="gr-line" d="M230,825 C265.0,825 265.0,435 300,435" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/scheduled-start-stop.html"><title>運用シナリオ:開発環境を夜間・休日に自動で停止して費用を下げる</title><rect x="0" y="814" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="830" class="gr-t">開発環境を夜間・休日に自動で停…</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,240 550,240" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="550" y="229" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="244" class="gr-t">AWS Config</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,270 550,270" marker-end="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="259" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="274" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,300 550,300" marker-end="url(#gr-arrow)"/>
+<a href="../services/kms.html"><title>サービス:AWS KMS</title><rect x="550" y="289" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="304" class="gr-t">AWS KMS</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,330 550,330" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/secrets-manager.html"><title>サービス:AWS Secrets Manager</title><rect x="550" y="319" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="334" class="gr-t">AWS Secrets Manager</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,360 550,360" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="550" y="349" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="364" class="gr-t">AWS Security Hub</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,390 550,390" marker-end="url(#gr-arrow)"/>
+<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="550" y="379" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="394" class="gr-t">Amazon Athena</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,420 550,420" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="409" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="424" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,450 550,450" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="439" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="454" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,480 550,480" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="469" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="484" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,510 550,510" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/vpc-endpoint.html"><title>用語:VPCエンドポイント</title><rect x="550" y="499" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="514" class="gr-t">VPCエンドポイント</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,540 550,540" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/cron-rate-expressions.html"><title>用語:cron式とrate式</title><rect x="550" y="529" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="544" class="gr-t">cron式とrate式</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,570 550,570" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="550" y="559" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="574" class="gr-t">イベント駆動の自動修復</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,600 550,600" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/instance-profile.html"><title>用語:インスタンスプロファイル</title><rect x="550" y="589" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="604" class="gr-t">インスタンスプロファイル</text></a>
+<path class="gr-line" d="M480,435 C515.0,435 515.0,630 550,630" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/secrets-config-comparison.html"><title>用語:機密情報・設定値の保存先の選び方</title><rect x="550" y="619" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="634" class="gr-t">機密情報・設定値の保存先の選び方</text></a>
+<rect x="300" y="415" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="440" text-anchor="middle" class="gr-tb">AWS Systems Manager</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(27)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(14)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="config.html"><span class="label">← 前へ</span>AWS Config</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cloudformation.html"><span class="label">次へ →</span>AWS CloudFormation</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

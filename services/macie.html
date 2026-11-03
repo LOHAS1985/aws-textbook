@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Macie | AWS教科書</title>
+<meta name="description" content="S3の機密データや個人情報(PII)を検出・分類">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#DD344C">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/macie.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">セキュリティ、アイデンティティ、コンプライアンス</a>
+  <h1>Amazon Macie</h1>
+  <p class="lead">S3の機密データや個人情報(PII)を検出・分類</p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">内容の確認:2026年11月3日</p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(13項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">GuardDutyとの違い</a></li><li><a href="#c2-2">自動検出とジョブ</a></li><li><a href="#c2-3">検出結果と連携</a></li><li><a href="#c2-4">設定の要点</a></li><li><a href="#c2-5">制限</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Macie</strong>は、<strong>S3に保存された機密データや個人情報(PII)を検出・分類</strong>するサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>概要</th><th>主な用途</th></tr>
+<tr><td>機密データ検出</td><td>S3オブジェクトを分析し、クレジットカード番号・個人情報・認証情報などを検出</td><td>S3内の機密情報の発見・分類</td></tr>
+<tr><td>データ検出結果</td><td>検出した機密データの種類や場所を確認</td><td>どのオブジェクトに機密情報が含まれるかを把握</td></tr>
+<tr><td>バケットのセキュリティ・アクセス分析</td><td>バケットの設定やアクセス状況を分析し、リスクを検出</td><td>意図しない公開や過剰なアクセス権限の確認</td></tr>
+<tr><td>自動検出</td><td>S3のデータを継続的に分析</td><td>定期的なデータセキュリティ監視</td></tr>
+<tr><td>カスタムデータ識別子</td><td>独自のパターン(正規表現など)を定義して検出</td><td>社内固有のIDや顧客番号の検出</td></tr>
+</table></div>
+
+<h3 id="c2-1">GuardDutyとの違い<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>主な対象</th><th>主な目的</th></tr>
+<tr><td>Amazon Macie</td><td>S3のデータ</td><td>機密データやS3のデータセキュリティリスクを検出</td></tr>
+<tr><td>Amazon GuardDuty</td><td>AWSアカウント・ワークロード</td><td>不正アクセスやマルウェアなどの脅威を検出</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 194" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Macieの流れ。S3のオブジェクトやバケット設定を分析して機密データや公開リスクを検出し、結果をSecurity HubやEventBridgeに連携できる。"><defs><marker id="dgservices-macie-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s3">
+<rect x="34" y="84" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="108" text-anchor="middle" class="dg-t">S3バケット</text>
+</g>
+<g data-node="macie">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">Macie</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">機密データを検出</text>
+</g>
+<g data-node="f1">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">検出結果</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">カード番号・PIIなど</text>
+</g>
+<g data-node="sh">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">Security Hub</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">EventBridgeで通知</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgservices-macie-1)"/>
+<text x="228" y="108" text-anchor="middle" class="dg-s dg-halo">分析</text>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgservices-macie-1)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgservices-macie-1)"/>
+</svg>
+</div>
+<figcaption>図1 Macieの流れ。S3のオブジェクトやバケット設定を分析して機密データや公開リスクを検出し、結果をSecurity HubやEventBridgeに連携できる。</figcaption>
+</figure>
+
+<h3 id="c2-2">自動検出とジョブ<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>自動検出</strong>は、MacieがS3バケットの一覧を継続的に確認し、サンプリングでオブジェクトを選んで分析する機能です。アカウント全体で、機密データがありそうな場所を広く把握するために使います。</p>
+<p>特定の対象を指定して詳しく調べるには<strong>ジョブ</strong>を作ります。ジョブは1回だけ実行することも、定期的に繰り返すこともできます。対象は、バケットの指定や、タグ・プレフィックス・最終更新日などの条件で絞り込めます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 854 227" style="max-width:854px;min-width:683px" role="img" aria-label="図2 自動検出とジョブの違い。自動検出は毎日サンプリングで全体を把握し、ジョブは指定した範囲のオブジェクトを分析する。どちらも、機密データの検出結果を残す。"><defs><marker id="dgservices-macie-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s3">
+<rect x="34" y="94" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="118" text-anchor="middle" class="dg-t">S3バケット群</text>
+</g>
+<g data-node="auto">
+<rect x="272" y="43" width="320" height="52" rx="8" class="dg-accent"/>
+<text x="432" y="64" text-anchor="middle" class="dg-tb">自動検出</text>
+<text x="432" y="82" text-anchor="middle" class="dg-s">毎日サンプリング</text>
+</g>
+<g data-node="job">
+<rect x="272" y="151" width="320" height="52" rx="8" class="dg-box"/>
+<text x="432" y="172" text-anchor="middle" class="dg-t">ジョブ</text>
+<text x="432" y="190" text-anchor="middle" class="dg-s">指定した範囲を分析</text>
+</g>
+<g data-node="res">
+<rect x="680" y="97" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="755" y="118" text-anchor="middle" class="dg-t">検出結果</text>
+<text x="755" y="136" text-anchor="middle" class="dg-s">機密データ・ポリシー</text>
+</g>
+<path d="M184.0,103.6 L272.0,91.3" class="dg-line" marker-end="url(#dgservices-macie-2)"/>
+<text x="228" y="101" text-anchor="middle" class="dg-s dg-halo">分析</text>
+<path d="M184.0,128.6 L298.7,151.0" class="dg-line" marker-end="url(#dgservices-macie-2)"/>
+<text x="241" y="144" text-anchor="middle" class="dg-s dg-halo">分析</text>
+<path d="M587.5,95.0 L680.0,110.5" class="dg-line" marker-end="url(#dgservices-macie-2)"/>
+<path d="M587.5,151.0 L680.0,135.5" class="dg-line" marker-end="url(#dgservices-macie-2)"/>
+</svg>
+</div>
+<figcaption>図2 自動検出とジョブの違い。自動検出は毎日サンプリングで全体を把握し、ジョブは指定した範囲のオブジェクトを分析する。どちらも、機密データの検出結果を残す。</figcaption>
+</figure>
+<p>検出する対象は、<strong>マネージドデータ識別子</strong>(AWSのシークレットアクセスキー、クレジットカード番号、パスポート番号など)で決まります。社員番号や顧客番号などの独自形式は、正規表現に、近くにあるキーワードや除外する語を組み合わせた<strong>カスタムデータ識別子</strong>で検出します。検出させたくない文字列は<strong>許可リスト</strong>に登録します。</p>
+
+<h3 id="c2-3">検出結果と連携<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Macieの検出結果には、<strong>機密データの検出結果</strong>(個々のS3オブジェクトに機密データが含まれていた)と、<strong>ポリシーの検出結果</strong>(バケットが公開されている、他のアカウントと共有されているなど、設定上のリスク)の2種類があります。</p>
+<p>検出結果は<strong>EventBridge</strong>にイベントとして送られ、AWS Security Hub CSPMにも連携できます。EventBridgeのルールと組み合わせて、通知や自動対応につなげられます。</p>
+<p>コンソールのダッシュボードでは、S3バケットのインベントリ(一覧)と、公開されているバケットや他のアカウントと共有されているバケットの数などの統計を確認できます。自動検出では、バケットごとに機密度スコアが付くため、どのバケットを優先して確認するかを決められます。</p>
+
+<h3 id="c2-4">設定の要点<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>複数アカウントの場合は、AWS Organizationsと連携して<strong>Macie管理者アカウント</strong>を指定する。管理者は、メンバーアカウントのバケットやポリシーの検出結果をまとめて確認できる。</li>
+<li>ログ保存用のバケットなど、分析が不要なバケットは自動検出の対象から除外できる。</li>
+<li>自動検出とジョブは、マネージドデータ識別子・カスタムデータ識別子・許可リストを組み合わせて分析内容を絞り込める。</li>
+</ul>
+
+<h3 id="c2-5">制限<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>分析の対象は、S3の<strong>汎用バケット</strong>にあるオブジェクト。ディレクトリバケットのオブジェクトは分析されない。</li>
+<li>S3 Glacier Deep ArchiveやS3 Express One Zoneのオブジェクトは分析されず、対象外として扱われる。</li>
+<li>DynamoDBやRDSのデータは、S3にエクスポートしてから分析する。</li>
+<li>検出結果は90日間保持される。それより長く残す場合は、EventBridgeで別の保存先に転送するか、検出結果をS3バケットに保存する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>S3に個人情報が保存されていないかの定期チェック</li>
+<li>公開されているバケットや過剰な権限の発見</li>
+<li>社員番号・顧客番号など独自形式のデータの検出</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>評価するS3バケットの数、自動検出で監視するS3オブジェクトの数、機密データ検出で<strong>検査したデータ量(GB)</strong>に応じて課金されます。ジョブで検査したデータ量も課金の対象ですが、ジョブは無料トライアルに含まれません。新しく有効にしたアカウントには30日間の無料トライアルがあり、自動検出は最大150GBまで検査されます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:検査の対象</li>
+<li><a href="security-hub.html">AWS Security Hub CSPM</a>:検出結果の集約</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:検出結果をトリガーに自動対応</li>
+<li><a href="organizations.html">AWS Organizations</a>:複数アカウントのMacieを一括管理</li>
+<li><a href="guardduty.html">Amazon GuardDuty</a>:脅威の検出</li>
+<li><a href="inspector.html">Amazon Inspector</a>:脆弱性の検出</li>
+<li>関連する用語:<a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>、<a href="../terms/shared-responsibility.html">責任共有モデル</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「S3」「個人情報(PII)」「機密データの検出」→ <strong>Macie</strong>。</li>
+<li>「不正アクセス」「マルウェア」「脅威検出」→ <strong>GuardDuty</strong>。</li>
+<li>独自形式のデータ → <strong>カスタムデータ識別子</strong>。</li>
+<li>公開されているバケットや過剰な共有の発見 → Macieの<strong>ポリシーの検出結果</strong>。</li>
+<li>複数アカウントのS3を一括で確認 → AWS Organizationsと連携した<strong>Macie管理者アカウント</strong>。</li>
+<li>検出結果を90日を超えて残したい → EventBridgeで転送するか、S3に保存する。</li>
+<li>GuardDuty・Inspector・Macie・Security Hub CSPMの使い分け → <a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>MacieはS3の機密データ検出サービス。GuardDutyは脅威検出サービス。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/s3-encryption-audit.html"><span class="title">機密データを保存するS3を暗号化・監査する</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 8件・リンク元 1件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon Macieとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,150 C265.0,150 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/s3-encryption-audit.html"><title>運用シナリオ:機密データを保存するS3を暗号化・監査する</title><rect x="0" y="139" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="154" class="gr-t">機密データを保存するS3を暗号…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Security Hub</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon GuardDuty</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/inspector.html"><title>サービス:Amazon Inspector</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon Inspector</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/security-detection-comparison.html"><title>用語:セキュリティ検出のサービスの選び方</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">セキュリティ検出のサービスの選…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../terms/shared-responsibility.html"><title>用語:責任共有モデル</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">責任共有モデル</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">Amazon Macie</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="inspector.html"><span class="label">← 前へ</span>Amazon Inspector</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="security-hub.html"><span class="label">次へ →</span>AWS Security Hub</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

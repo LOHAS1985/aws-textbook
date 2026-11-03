@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Athena | AWS教科書</title>
+<meta name="description" content="S3上のデータを標準SQLで直接分析するサーバーレスなクエリサービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/athena.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat13">分析</a>
+  <h1>Amazon Athena</h1>
+  <p class="lead">S3上のデータを標準SQLで直接分析するサーバーレスなクエリサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">内容の確認:2026年11月3日</p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Athena</strong>は、<strong>S3に保存されたデータを標準SQLで直接分析</strong>できる<strong>サーバーレス</strong>なクエリサービスです。データベースにデータを読み込む必要がなく、サーバーの管理も不要です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>CSV、JSON、Parquet、ORC、Avroなどの形式に対応。</li>
+<li>テーブル定義(スキーマ)は<strong>AWS Glue データカタログ</strong>で管理する。</li>
+<li>クエリ結果はS3に出力される。</li>
+</ul>
+
+<h3 id="c2-1">仕組み<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>Athenaは、Glueデータカタログに登録したテーブル定義(データの場所・形式・列)をもとに、S3のオブジェクトを読みながらSQLを実行します。サーバーの準備は不要で、クエリは並列に実行されて自動で拡張されます。料金は<strong>スキャンしたデータ量</strong>で決まるため、読むデータを減らすことが費用の削減につながります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 252" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。"><defs><marker id="dgservices-athena-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s3">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">S3</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">CSV・Parquetなど</text>
+</g>
+<g data-node="glue">
+<rect x="34" y="176" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="198" text-anchor="middle" class="dg-t">Glueデータカタログ</text>
+<text x="109" y="216" text-anchor="middle" class="dg-s">テーブル定義</text>
+</g>
+<g data-node="ath">
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">Athena</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">SQLを実行</text>
+</g>
+<g data-node="res">
+<rect x="510" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="104" text-anchor="middle" class="dg-t">クエリ結果</text>
+<text x="585" y="122" text-anchor="middle" class="dg-s">S3に出力</text>
+</g>
+<g data-node="user">
+<rect x="510" y="182" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="585" y="206" text-anchor="middle" class="dg-t">分析者・BI</text>
+</g>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgservices-athena-1)"/>
+<text x="228" y="113" text-anchor="middle" class="dg-s dg-halo">スキャン</text>
+<path d="M175.2,176.5 L280.8,135.0" class="dg-line dg-dash" marker-end="url(#dgservices-athena-1)"/>
+<path d="M422.0,109.0 L510.0,109.0" class="dg-line" marker-end="url(#dgservices-athena-1)"/>
+<path d="M534.1,182.5 L413.2,135.0" class="dg-line" marker-end="url(#dgservices-athena-1)"/>
+<text x="474" y="163" text-anchor="middle" class="dg-s dg-halo">SQL</text>
+</svg>
+</div>
+<figcaption>図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。</figcaption>
+</figure>
+<p>SQLのほかに、Apache SparkのPythonコードをノートブックからAthenaで実行できます。S3以外のデータも、フェデレーテッドクエリでLambda関数のコネクタを経由して分析できます。</p>
+
+<h3 id="c2-2">スキャン量を減らす<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>パーティション</strong>は、日付などの値ごとにS3のフォルダを分けておく仕組みです。<code>WHERE</code>句でパーティションのキーを指定すると、Athenaはその値のフォルダだけを読みます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 463 286" style="max-width:463px;min-width:463px" role="img" aria-label="図2 パーティションによるスキャン量の削減。WHEREでパーティションのキーを指定すると、該当するフォルダ(この例では dt=2026-10-01)だけを読み、ほかのフォルダは読まない。"><defs><marker id="dgservices-athena-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="q">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">クエリ</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">日付で絞り込む</text>
+</g>
+<g data-node="p1">
+<rect x="289" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="364" y="62" text-anchor="middle" class="dg-t">dt=2026-10-01</text>
+<text x="364" y="80" text-anchor="middle" class="dg-s">読む</text>
+</g>
+<g data-node="p2">
+<rect x="289" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="147" text-anchor="middle" class="dg-t">dt=2026-09-30</text>
+<text x="364" y="165" text-anchor="middle" class="dg-s">読まない</text>
+</g>
+<g data-node="p3">
+<rect x="289" y="210" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="232" text-anchor="middle" class="dg-t">dt=2026-10-02</text>
+<text x="364" y="250" text-anchor="middle" class="dg-s">読まない</text>
+</g>
+<path d="M184.0,96.5 L289.0,79.0" class="dg-line" marker-end="url(#dgservices-athena-2)"/>
+<text x="236" y="92" text-anchor="middle" class="dg-s dg-halo">スキャン</text>
+<path d="M184.0,121.5 L289.0,139.0" class="dg-line dg-dash" marker-end="url(#dgservices-athena-2)"/>
+<path d="M161.0,135.0 L312.0,210.5" class="dg-line dg-dash" marker-end="url(#dgservices-athena-2)"/>
+</svg>
+</div>
+<figcaption>図2 パーティションによるスキャン量の削減。WHEREでパーティションのキーを指定すると、該当するフォルダ(この例では dt=2026-10-01)だけを読み、ほかのフォルダは読まない。</figcaption>
+</figure>
+<p>データを<strong>列指向形式(Parquet・ORC)</strong>にすると、クエリに必要な列だけを読めます。<strong>圧縮</strong>(GZIP・SNAPPY・ZSTDなど)をかけると、S3上の容量と読み取る量も減ります。既存のCSVなどは、CTAS(<code>CREATE TABLE AS SELECT</code>)でParquetやORCに変換できます。公式ドキュメントでは、圧縮・パーティション・列指向形式の組み合わせで、クエリあたりのコストを最大90%減らせるとされています。</p>
+
+<h3 id="c2-3">設定の要点<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>テーブルの作成</strong>:<code>CREATE TABLE</code>で、データの場所(<code>LOCATION</code>・S3のプレフィックス)、形式、パーティションのキー(<code>PARTITIONED BY</code>)を指定する。</li>
+<li><strong>パーティションの追加</strong>:<code>dt=2026-10-01</code>のようなHive形式なら<code>MSCK REPAIR TABLE</code>で登録する。それ以外の形式は<code>ALTER TABLE ... ADD PARTITION</code>で追加する。</li>
+<li><strong>ワークグループ</strong>:チームや用途ごとに、クエリ結果の保存先、暗号化の設定、IAMによるアクセス制御を分けて管理する。暗号化はワークグループ単位で決まるため、暗号化が必要な結果と不要な結果は別のワークグループにする。</li>
+<li><strong>データ使用量の制御</strong>:クエリ単位とワークグループ単位で、スキャンするデータ量のしきい値を設定する。しきい値を超えたときの動作を決められ、CloudWatchアラームで通知もできる。</li>
+</ul>
+
+<h3 id="c2-4">制限<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>1回のクエリの文字列は256KBまで(変更できない)。長いクエリは分けて実行する。</li>
+<li>1回のスキャンで読めるパーティションは100万個まで。</li>
+<li>DMLクエリ(SELECT・CTAS・INSERT INTO)には、同時に実行できる数の上限(リージョンにより異なる)と実行時間の上限がある。実行時間は申請により最長240分まで延ばせる。</li>
+<li>キャンセルや失敗したクエリの途中までの結果が、S3に残ることがある。S3のライフサイクルルールで削除する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>S3に出力されたCloudTrail・ALB・VPCフローログのアドホックな分析</li>
+<li>データレイク(S3)に対する集計クエリ</li>
+<li>BIツール(QuickSightなど)のデータソース</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>クエリでスキャンしたデータ量</strong>に応じて課金されます。スキャン量は1MB単位で切り上げられ、1クエリあたり最低10MBで計算されます。CREATE・ALTER・DROPなどのDDLと、失敗したクエリは無料です。キャンセルしたクエリは、キャンセルまでにスキャンした分が課金されます。パーティション分割・列指向形式・圧縮でスキャン量を減らすと、コストを大きく下げられます。料金の考え方は用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:分析対象のデータの保存先</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:S3に出力したログの分析</li>
+<li><a href="data-firehose.html">Amazon Data Firehose</a>:ストリーミングデータをS3に配信し、Athenaで分析する</li>
+<li><a href="lambda.html">AWS Lambda</a>:フェデレーテッドクエリで、S3以外のデータに接続するコネクタの実行</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:全文検索・リアルタイム分析</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:スキャン量のアラーム</li>
+<li>関連する用語:<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/pricing-basics.html">料金の基本</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「S3のデータ」「SQL」「サーバーレス」「アドホック分析」→ <strong>Athena</strong>。</li>
+<li>コスト削減 → <strong>パーティション+Parquet/ORC+圧縮</strong>でスキャン量を減らす。</li>
+<li>特定の期間だけを分析したい → <code>WHERE</code>でパーティションのキーを指定する(読むのはその範囲だけ)。</li>
+<li>Hive形式でないパーティションを追加したい → <code>MSCK REPAIR TABLE</code>は使えず、<code>ALTER TABLE ... ADD PARTITION</code>で追加する。</li>
+<li>誤って大量のデータをスキャンして高額になるのを防ぎたい → クエリ単位・ワークグループ単位の<strong>データ使用量の制御</strong>とCloudWatchアラーム。</li>
+<li>テーブルの定義を一元管理したい → <strong>AWS Glue データカタログ</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AthenaはS3のデータをSQLで直接分析するサーバーレスサービス。料金はスキャン量で決まる。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/centralized-logging.html"><span class="title">複数アカウントのログを集約して分析する</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 8件・リンク元 6件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon Athenaとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/cost-and-usage-reports.html"><title>サービス:AWS Cost and Usage Reports</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Cost and Usage Reports</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/kinesis.html"><title>サービス:Amazon Kinesis</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon Kinesis</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Elastic Load Balancing (E…</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-flow-logs.html"><title>用語:VPCフローログ</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">VPCフローログ</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/centralized-logging.html"><title>運用シナリオ:複数アカウントのログを集約して分析する</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="230" class="gr-t">複数アカウントのログを集約して…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/data-firehose.html"><title>サービス:Amazon Data Firehose</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon Data Firehose</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/opensearch.html"><title>サービス:Amazon OpenSearch Service</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon OpenSearch Service</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/managed-serverless.html"><title>用語:マネージドサービスとサーバーレス</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">マネージドサービスとサーバーレス</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">料金の基本</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">Amazon Athena</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(6)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="database-encryption-sdk.html"><span class="label">← 前へ</span>AWS Database Encryption SDK</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="kinesis.html"><span class="label">次へ →</span>Amazon Kinesis</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

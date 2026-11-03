@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon CloudFront | AWS教科書</title>
+<meta name="description" content="コンテンツを世界中へ高速配信するCDN">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/cloudfront.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
+  <h1>Amazon CloudFront</h1>
+  <p class="lead">コンテンツを世界中へ高速配信するCDN</p>
+  <p class="updated">最終更新:<time datetime="2026-11-02">2026-11-02</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(22項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">仕組み</a></li><li><a href="#c2-2">ビヘイビア(パスごとのオリジン・設定)</a></li><li><a href="#c2-3">キャッシュキーとキャッシュポリシー</a></li><li><a href="#c2-4">無効化(Invalidation)</a></li><li><a href="#c2-5">署名付きURL/署名付きCookie</a></li><li><a href="#c2-6">地理的制限</a></li><li><a href="#c2-7">オリジンフェイルオーバー(オリジングループ)</a></li><li><a href="#c2-8">CloudFront FunctionsとLambda@Edge</a></li><li><a href="#c2-9">オリジンシールド</a></li><li><a href="#c2-10">Origin Access Control(OAC)</a></li><li><a href="#c2-11">フィールドレベル暗号化</a></li><li><a href="#c2-12">TTL(キャッシュ期限)</a></li><li><a href="#c2-13">HTTPS制御</a></li><li><a href="#c2-14">独自ドメインで配信する(代替ドメイン名と証明書)</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon CloudFront</strong>は、<strong>CDN(Content Delivery Network)</strong>サービスです。世界中のエッジサーバーにコンテンツをキャッシュし、ユーザーの近くから高速に配信します。</p>
+<ul>
+<li><strong>オリジン</strong>:コンテンツを取得する元のサーバー(S3、ALB、EC2など)</li>
+<li><strong>ディストリビューション</strong>:各種設定の集合</li>
+<li><strong class="em">キャッシュ対象はGET・HEAD・OPTIONSのみ</strong></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">仕組み<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>CloudFrontなし</strong>:日本のユーザーがアメリカのWebサーバーへ直接アクセスすると時間がかかる。</li>
+<li><strong>CloudFrontあり</strong>
+  <ul>
+  <li>初回:日本の<strong>エッジロケーション</strong>にキャッシュがないため、エッジがアメリカのオリジンへ取りに行き(時間は直接アクセスと同程度)、エッジにキャッシュを残す。</li>
+  <li>2回目以降:ユーザーは近くのエッジロケーションから応答を受け取るだけで済み、高速になる。</li>
+  </ul></li>
+</ul>
+<p>エッジロケーションとオリジンの間には、<strong>リージョナルエッジキャッシュ</strong>という、より大きなキャッシュの層があります。エッジロケーションにキャッシュがないときはまずリージョナルエッジキャッシュを探し、そこにもなければオリジンへ取りに行きます。エッジロケーションは利用者の近くに多数ある小さなキャッシュ、リージョナルエッジキャッシュはその背後にある少数の大きなキャッシュ、と区別します。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 798 116" style="max-width:798px;min-width:638px" role="img" aria-label="図1 CloudFrontの仕組み。初回はエッジからオリジンへ取りに行き、エッジにキャッシュを残す。2回目以降は近くのエッジが応答するため高速。オリジンシールドを使うと、オリジンへのリクエストをさらにまとめられる。"><defs><marker id="dgservices-cloudfront-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="40" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="62" text-anchor="middle" class="dg-t">ユーザー</text>
+<text x="104" y="80" text-anchor="middle" class="dg-s">日本</text>
+</g>
+<g data-node="edge">
+<rect x="234" y="40" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="304" y="62" text-anchor="middle" class="dg-tb">エッジロケーション</text>
+<text x="304" y="80" text-anchor="middle" class="dg-s">キャッシュ</text>
+</g>
+<g data-node="rec">
+<rect x="434" y="40" width="140" height="52" rx="8" class="dg-box"/>
+<text x="504" y="62" text-anchor="middle" class="dg-t">リージョナル</text>
+<text x="504" y="80" text-anchor="middle" class="dg-t">エッジキャッシュ</text>
+</g>
+<g data-node="origin">
+<rect x="634" y="40" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="704" y="62" text-anchor="middle" class="dg-t">オリジン</text>
+<text x="704" y="80" text-anchor="middle" class="dg-s">S3 / ALB(米国)</text>
+</g>
+<path d="M174.0,66.5 L234.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-1)" marker-start="url(#dgservices-cloudfront-1)"/>
+<path d="M374.0,66.5 L434.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-1)"/>
+<text x="404" y="70" text-anchor="middle" class="dg-s dg-halo">ミス時</text>
+<path d="M574.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-1)"/>
+<text x="604" y="70" text-anchor="middle" class="dg-s dg-halo">ミス時</text>
+</svg>
+</div>
+<figcaption>図1 CloudFrontの仕組み。初回はエッジからオリジンへ取りに行き、エッジにキャッシュを残す。2回目以降は近くのエッジが応答するため高速。オリジンシールドを使うと、オリジンへのリクエストをさらにまとめられる。</figcaption>
+</figure>
+<h3 id="c2-2">ビヘイビア(パスごとのオリジン・設定)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>ビヘイビア(キャッシュビヘイビア)</strong>は、リクエストのパスに応じて「<strong>どのオリジンに送るか</strong>」「<strong>どうキャッシュするか</strong>」を決める設定です。1つのディストリビューションに複数のビヘイビアを作り、パスパターンで振り分けます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 722 274" style="max-width:722px;min-width:578px" role="img" aria-label="図2 ビヘイビアによる振り分け。パスパターンごとにオリジンとキャッシュの設定を変え、どれにも一致しないリクエストは既定のビヘイビア(*)で処理する。"><defs><marker id="dgservices-cloudfront-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="124" width="160" height="40" rx="8" class="dg-blue"/>
+<text x="114" y="148" text-anchor="middle" class="dg-t">ユーザー</text>
+</g>
+<g data-node="cf">
+<rect x="268" y="118" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="348" y="140" text-anchor="middle" class="dg-tb">CloudFront</text>
+<text x="348" y="158" text-anchor="middle" class="dg-s">ビヘイビアで判定</text>
+</g>
+<g data-node="api">
+<rect x="538" y="38" width="160" height="52" rx="8" class="dg-box"/>
+<text x="618" y="60" text-anchor="middle" class="dg-t">/api/*</text>
+<text x="618" y="78" text-anchor="middle" class="dg-s">ALB・キャッシュなし</text>
+</g>
+<g data-node="img">
+<rect x="538" y="118" width="160" height="52" rx="8" class="dg-box"/>
+<text x="618" y="140" text-anchor="middle" class="dg-t">/images/*</text>
+<text x="618" y="158" text-anchor="middle" class="dg-s">S3・長くキャッシュ</text>
+</g>
+<g data-node="def">
+<rect x="538" y="198" width="160" height="52" rx="8" class="dg-box"/>
+<text x="618" y="220" text-anchor="middle" class="dg-t">既定(*)</text>
+<text x="618" y="238" text-anchor="middle" class="dg-s">S3</text>
+</g>
+<path d="M194.0,144.0 L268.0,144.0" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+<path d="M428.0,120.3 L538.0,87.7" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+<path d="M428.0,144.0 L538.0,144.0" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+<path d="M428.0,167.7 L538.0,200.3" class="dg-line" marker-end="url(#dgservices-cloudfront-2)"/>
+</svg>
+</div>
+<figcaption>図2 ビヘイビアによる振り分け。パスパターンごとにオリジンとキャッシュの設定を変え、どれにも一致しないリクエストは既定のビヘイビア(*)で処理する。</figcaption>
+</figure>
+<ul>
+<li>パスパターンの例:<code>/api/*</code>、<code>/images/*</code>、<code>*.jpg</code>。上から順(優先順位の順)に評価され、最初に一致したものが使われる。どれにも一致しなければ<strong>既定のビヘイビア(<code>*</code>)</strong></li>
+<li>ビヘイビアごとに設定するもの:オリジン(またはオリジングループ)、Viewer Protocol Policy、許可するHTTPメソッド、キャッシュポリシー・オリジンリクエストポリシー、関連付ける関数、署名付きURL/Cookieの要求</li>
+<li>静的ファイルはS3から長めのTTLで、APIはALBからキャッシュなしで、のように1つのドメインで静的・動的コンテンツをまとめて配信できる</li>
+</ul>
+
+<h3 id="c2-3">キャッシュキーとキャッシュポリシー<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>キャッシュキー</strong>は、エッジがキャッシュを見分けるための値です。同じキャッシュキーのリクエストには同じキャッシュを返します。既定ではドメイン名とURLのパスだけがキャッシュキーで、クエリ文字列・ヘッダー・Cookieは含まれません。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>決めるもの</th><th>例</th></tr>
+<tr><td><strong>キャッシュポリシー</strong></td><td>キャッシュキーに含めるクエリ文字列・ヘッダー・Cookieと、<strong>TTL</strong>(最小・既定・最大)</td><td><code>?lang=ja</code> の違いで別のキャッシュにする。マネージドポリシー「CachingOptimized」「CachingDisabled」</td></tr>
+<tr><td><strong>オリジンリクエストポリシー</strong></td><td>キャッシュキーには含めないが、<strong>オリジンには転送する</strong>値</td><td>ログ用のヘッダーや、オリジンで使うCookieをオリジンに渡す</td></tr>
+<tr><td>レスポンスヘッダーポリシー</td><td>ユーザーへの応答に付けるヘッダー</td><td>セキュリティヘッダー、CORSヘッダーの追加</td></tr>
+</table></div>
+<p>キャッシュキーに含める値が多いほどキャッシュが細かく分かれ、<strong>キャッシュヒット率が下がります</strong>。表示内容を変える値だけをキャッシュキーに含め、オリジンが必要なだけの値はオリジンリクエストポリシーで渡すのが基本です。キャッシュヒット率はCloudWatchのメトリクスやレポートで確認できます。</p>
+
+<h3 id="c2-4">無効化(Invalidation)<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>オリジンのファイルを更新しても、エッジのキャッシュはTTLが切れるまで古いままです。すぐに反映したい場合は<strong>無効化(Invalidation)</strong>で、指定したパスのキャッシュを全エッジから削除します。</p>
+<ul>
+<li>パスを指定する(例:<code>/index.html</code>、<code>/images/*</code>、全体なら <code>/*</code>)。ワイルドカードを含むパスも1パスと数える</li>
+<li>毎月<strong>最初の1,000パスまで無料</strong>、それ以降はパスごとに課金される</li>
+<li>反映には数分かかる</li>
+</ul>
+<p>頻繁に更新するファイルは、無効化に頼るより<strong>ファイル名にバージョンを付ける</strong>(<code>app.v2.js</code>、<code>style.3f9a.css</code> など)方が確実で安くなります。新しい名前のファイルは新しいキャッシュとして扱われるためです。</p>
+
+<h3 id="c2-5">署名付きURL/署名付きCookie<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>会員向けの動画や有料コンテンツなど、<strong>許可された人だけに配信</strong>したいときは、ビヘイビアで「署名付きリクエストを要求」し、<strong>署名付きURL</strong>か<strong>署名付きCookie</strong>でアクセスさせます。</p>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>向いている場面</th></tr>
+<tr><td>署名付きURL</td><td><strong>1つのファイル</strong>へのアクセス(ダウンロードリンクなど)。Cookieに対応していないクライアント</td></tr>
+<tr><td>署名付きCookie</td><td><strong>複数のファイル</strong>へのアクセス(動画配信の分割ファイル、会員エリア全体など)。URLを変えたくないとき</td></tr>
+</table></div>
+<ul>
+<li>CloudFrontに<strong>公開鍵</strong>を登録して<strong>信頼されたキーグループ</strong>を作り、アプリが対応する<strong>秘密鍵</strong>で署名する</li>
+<li>ポリシーで有効期限を指定する。カスタムポリシーなら開始日時・アクセス元のIP範囲・ワイルドカードでの対象パスも指定できる</li>
+<li>S3の署名付きURLとは別の仕組み。CloudFront経由で配信し、S3はOACで直接アクセスを防ぐ組み合わせにする</li>
+</ul>
+
+<h3 id="c2-6">地理的制限<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>地理的制限</strong>を設定すると、<strong>国単位</strong>でコンテンツへのアクセスを制限できます。許可する国の一覧(許可リスト)か、拒否する国の一覧(ブロックリスト)のどちらかを指定し、制限された国からのアクセスには <strong>403(Forbidden)</strong> を返します。配信権利が国ごとに決まっている動画などで使います。</p>
+<p>国より細かい条件(特定のIP範囲、国+パスの組み合わせなど)で制御したい場合は、AWS WAFのルール(地理的一致の条件)を使います。</p>
+
+<h3 id="c2-7">オリジンフェイルオーバー(オリジングループ)<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>オリジングループ</strong>にプライマリとセカンダリの2つのオリジンを登録すると、プライマリが失敗したときに<strong>自動でセカンダリに切り替えて</strong>取得し直します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 704 202" style="max-width:704px;min-width:563px" role="img" aria-label="図3 オリジンフェイルオーバー。プライマリが指定したステータスコードを返すか接続できない場合、同じリクエストをセカンダリに送り直す。"><defs><marker id="dgservices-cloudfront-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="89" width="160" height="40" rx="8" class="dg-blue"/>
+<text x="114" y="113" text-anchor="middle" class="dg-t">ユーザー</text>
+</g>
+<g data-node="cf">
+<rect x="268" y="83" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="348" y="104" text-anchor="middle" class="dg-tb">CloudFront</text>
+<text x="348" y="122" text-anchor="middle" class="dg-s">オリジングループ</text>
+</g>
+<g data-node="p">
+<rect x="520" y="40" width="160" height="52" rx="8" class="dg-ng"/>
+<text x="600" y="62" text-anchor="middle" class="dg-t">プライマリ</text>
+<text x="600" y="80" text-anchor="middle" class="dg-s">S3(東京)・5xx</text>
+</g>
+<g data-node="s">
+<rect x="520" y="126" width="160" height="52" rx="8" class="dg-ok"/>
+<text x="600" y="147" text-anchor="middle" class="dg-t">セカンダリ</text>
+<text x="600" y="165" text-anchor="middle" class="dg-s">S3(大阪)</text>
+</g>
+<path d="M194.0,109.0 L268.0,109.0" class="dg-line" marker-end="url(#dgservices-cloudfront-3)"/>
+<path d="M428.0,95.5 L520.0,80.0" class="dg-line" marker-end="url(#dgservices-cloudfront-3)"/>
+<text x="474" y="92" text-anchor="middle" class="dg-s dg-halo">①</text>
+<path d="M428.0,122.5 L520.0,138.0" class="dg-line" marker-end="url(#dgservices-cloudfront-3)"/>
+<text x="474" y="134" text-anchor="middle" class="dg-s dg-halo">② 再試行</text>
+</svg>
+</div>
+<figcaption>図3 オリジンフェイルオーバー。プライマリが指定したステータスコードを返すか接続できない場合、同じリクエストをセカンダリに送り直す。</figcaption>
+</figure>
+<ul>
+<li>切り替える条件:指定したHTTPステータスコード(500・502・503・504・403・404など)や、接続の失敗・タイムアウト</li>
+<li>対象はGET・HEAD・OPTIONSのリクエスト</li>
+<li>S3のクロスリージョンレプリケーションで別リージョンにコピーしたバケットをセカンダリにすると、リージョン障害にも備えられる</li>
+</ul>
+
+<h3 id="c2-8">CloudFront FunctionsとLambda@Edge<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<p>どちらもエッジでコードを動かし、リクエストやレスポンスを加工する機能です。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>CloudFront Functions</th><th>Lambda@Edge</th></tr>
+<tr><td>言語</td><td>JavaScript</td><td>Node.js・Python</td></tr>
+<tr><td>実行場所</td><td>エッジロケーション</td><td>リージョナルエッジキャッシュ</td></tr>
+<tr><td>実行できるタイミング</td><td><strong>ビューワーリクエスト・ビューワーレスポンスのみ</strong></td><td>ビューワーリクエスト・レスポンス+<strong>オリジンリクエスト・レスポンス</strong></td></tr>
+<tr><td>実行時間</td><td><strong>1ミリ秒未満</strong></td><td>ビューワー側5秒、オリジン側30秒まで</td></tr>
+<tr><td>ネットワーク・外部サービスへのアクセス</td><td>不可</td><td>可能</td></tr>
+<tr><td>料金</td><td>安い(Lambda@Edgeの約6分の1)</td><td>高め</td></tr>
+<tr><td>主な用途</td><td>ヘッダーの追加・変更、URLのリダイレクト・書き換え、キャッシュキーの正規化、トークンの簡単な検証</td><td>外部APIやDBを使う認証、画像の加工、リクエスト内容に応じたオリジンの切り替え</td></tr>
+</table></div>
+<p>軽くて大量に呼ばれる処理はCloudFront Functions、ネットワークアクセスや長い処理が必要ならLambda@Edgeを選びます。Lambda@Edgeの関数は<strong>us-east-1</strong>で作成し、CloudFrontが各地に複製します。</p>
+
+<h3 id="c2-9">オリジンシールド<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>オリジンシールド(Origin Shield)</strong>は、リージョナルエッジキャッシュとオリジンの間にもう1層のキャッシュを置き、<strong>オリジンへのリクエスト数を減らす</strong>機能です。利用者が世界各地にいると、リクエストは複数のリージョナルエッジキャッシュを通り、それぞれが同じコンテンツをオリジンへ取りに行きます。オリジンシールドを有効にすると、すべてのリクエストがオリジンシールドを経由するため、同じオブジェクトへの取得を最小1回にまとめられ、キャッシュヒット率も上がります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 202" style="max-width:718px;min-width:574px" role="img" aria-label="図4 オリジンシールド。各地のキャッシュで見つからなかったリクエストをオリジンシールドが1つにまとめ、キャッシュにもなければオリジンへ1回だけ取りに行く。"><defs><marker id="dgservices-cloudfront-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ed1">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">日本のキャッシュ</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">エッジ・リージョナル</text>
+</g>
+<g data-node="ed2">
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="147" text-anchor="middle" class="dg-t">欧州のキャッシュ</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">エッジ・リージョナル</text>
+</g>
+<g data-node="os">
+<rect x="289" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="104" text-anchor="middle" class="dg-tb">オリジンシールド</text>
+<text x="364" y="122" text-anchor="middle" class="dg-s">1か所にまとめる</text>
+</g>
+<g data-node="org">
+<rect x="544" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="104" text-anchor="middle" class="dg-t">オリジン</text>
+<text x="619" y="122" text-anchor="middle" class="dg-s">リクエスト数を削減</text>
+</g>
+<path d="M184.0,79.0 L289.0,96.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
+<text x="236" y="92" text-anchor="middle" class="dg-s dg-halo">ミス時</text>
+<path d="M184.0,139.0 L289.0,121.5" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
+<text x="236" y="134" text-anchor="middle" class="dg-s dg-halo">ミス時</text>
+<path d="M439.0,109.0 L544.0,109.0" class="dg-line" marker-end="url(#dgservices-cloudfront-4)"/>
+<text x="492" y="113" text-anchor="middle" class="dg-s dg-halo">ミス時のみ</text>
+</svg>
+</div>
+<figcaption>図4 オリジンシールド。各地のキャッシュで見つからなかったリクエストをオリジンシールドが1つにまとめ、キャッシュにもなければオリジンへ1回だけ取りに行く。</figcaption>
+</figure>
+<ul>
+<li>オリジンシールドは<strong>オリジンごとの設定</strong>。オリジンの設定で「有効にする」を選び、オリジンシールドを置くリージョンを指定する。コンソール・CloudFormation・APIで設定できる。</li>
+<li>リージョンは、<strong>オリジンとのレイテンシーが最も小さいリージョン</strong>を選ぶ。オリジンがAWSのリージョンにあり、そのリージョンがオリジンシールドに対応していれば、同じリージョンを選ぶ。オンプレミスなどAWS外のオリジンにも使える。</li>
+<li>向いている用途:世界各地に利用者がいる配信、ライブ配信やオンザフライの画像処理などオリジン側の処理負荷が大きい場合、帯域や処理能力に制限があるオンプレミスのオリジン、複数のCDNを併用している場合。</li>
+<li>向いていない用途:オリジンへそのまま中継する動的コンテンツ、キャッシュしにくいコンテンツ、あまりアクセスされないコンテンツ。</li>
+<li>追加料金がかかる。オリジンシールドを通るリクエスト数(10,000リクエスト単位)で課金される。</li>
+<li>オリジンシールドは複数のアベイラビリティーゾーンで構成され、障害時は自動でセカンダリの場所に切り替わる。オリジングループとも併用できる。</li>
+<li>オリジンシールドでのキャッシュヒットは、CloudFrontのログの <code>x-edge-detailed-result-type</code> に <code>OriginShieldHit</code> と記録される。</li>
+</ul>
+
+<h3 class="em" id="c2-10">Origin Access Control(OAC)<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<p>S3オリジンへアクセスする仕組みで、<strong>CloudFront経由でのみS3にアクセスできる</strong>ようにします(S3への直接アクセスを防ぐ)。</p>
+
+<h3 id="c2-11">フィールドレベル暗号化<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<p>HTTPリクエスト内の特定の項目(クレジットカード番号など)をCloudFrontで暗号化する機能です。</p>
+
+<h3 id="c2-12">TTL(キャッシュ期限)<a class="anchor" href="#c2-12" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>静的コンテンツ</strong>:誰がアクセスしても同じ内容なので、長時間キャッシュする。</li>
+<li><strong>動的コンテンツ</strong>:人や時刻によって内容が変わるので、短時間キャッシュする。</li>
+</ul>
+
+<h3 id="c2-13">HTTPS制御<a class="anchor" href="#c2-13" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong class="em">Viewer Protocol Policy</strong>:ユーザー ⇔ CloudFront 間</li>
+<li><strong class="em">Origin Protocol Policy</strong>:CloudFront ⇔ オリジン 間</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図5 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。"><defs><marker id="dgservices-cloudfront-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="70" text-anchor="middle" class="dg-t">ユーザー</text>
+</g>
+<g data-node="cf">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">CloudFront</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">OACで署名</text>
+</g>
+<g data-node="s3">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">S3バケット</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">OACのみ許可</text>
+</g>
+<g data-node="x">
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="347" y="147" text-anchor="middle" class="dg-t">S3へ直接アクセス</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">拒否される</text>
+</g>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-5)"/>
+<text x="228" y="70" text-anchor="middle" class="dg-s dg-halo">Viewer側</text>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgservices-cloudfront-5)"/>
+<text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">Origin側</text>
+<path d="M419.8,125.5 L512.2,92.5" class="dg-line dg-dash" marker-end="url(#dgservices-cloudfront-5)"/>
+</svg>
+</div>
+<figcaption>図5 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
+</figure>
+<h3 id="c2-14">独自ドメインで配信する(代替ドメイン名と証明書)<a class="anchor" href="#c2-14" aria-label="この見出しへのリンク">#</a></h3>
+<p>CloudFrontのディストリビューションには <code>d111111abcdef8.cloudfront.net</code> のようなドメイン名が付きます。<code>www.example.com</code> などの独自ドメインで配信するには、次の手順で設定します。</p>
+<ol>
+<li>ACMで独自ドメインの証明書を発行する。<strong>CloudFrontで使うACM証明書は us-east-1(バージニア北部)で発行する必要がある</strong>。</li>
+<li>ディストリビューションの<strong>代替ドメイン名(CNAME)</strong>に独自ドメインを登録し、その証明書を選択する。</li>
+<li>DNSで独自ドメインをディストリビューションに向ける。Route 53なら<strong>エイリアスレコード</strong>を使う(<code>example.com</code> のようなゾーンの頂点にも設定でき、クエリ料金も無料)。他のDNSではCNAMEレコードを使う(ゾーンの頂点には設定できない)。</li>
+</ol>
+<p>API Gatewayのエッジ最適化APIは内部でCloudFrontを使うため、カスタムドメインの証明書は同じくus-east-1で発行します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>S3の静的Webサイト・画像・動画の高速配信(OACでS3を非公開に)</li>
+<li>グローバルユーザー向けWebアプリの高速化</li>
+<li>エッジでのリクエスト加工(Lambda@Edge/CloudFront Functions)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>エッジからユーザーへのデータ転送量と、HTTP/HTTPSリクエスト数で課金されます。オリジン(AWS内)からCloudFrontへの転送は無料です。キャッシュヒット率を上げるとオリジンの負荷とコストを下げられます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:代表的なオリジン(OAC)</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:動的コンテンツのオリジン</li>
+<li><a href="lambda.html">AWS Lambda</a>:Lambda@Edge</li>
+<li><a href="acm.html">AWS Certificate Manager</a>:証明書(us-east-1)</li>
+<li><a href="global-accelerator.html">AWS Global Accelerator</a>:TCP/UDPの経路最適化(キャッシュなし)</li>
+<li><a href="api-gateway.html">Amazon API Gateway</a>:エッジ最適化APIで内部的にCloudFrontを利用</li>
+<li><a href="waf.html">AWS WAF</a>/<a href="shield.html">AWS Shield</a>:アプリケーション層の攻撃とDDoSへの対策</li>
+<li>関連する用語:<a href="../terms/http-status-codes.html">HTTPステータスコードと切り分け</a>、<a href="../terms/tls-termination.html">TLS終端と証明書の配置</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>セキュリティ・配信制御</h4>
+<ul>
+<li>S3へのアクセスをCloudFront経由に限定 → <strong>OAC</strong>。</li>
+<li>CloudFrontで使うACM証明書は<strong>us-east-1</strong>。</li>
+<li>ユーザー側のHTTPS強制 → <strong>Viewer Protocol Policy</strong>、オリジン側 → <strong>Origin Protocol Policy</strong>。</li>
+<li>機密項目だけを暗号化 → <strong>フィールドレベル暗号化</strong>。</li>
+<li>有料コンテンツの配信 → 1ファイルなら<strong>署名付きURL</strong>、複数ファイル・URLを変えたくないなら<strong>署名付きCookie</strong>。</li>
+<li>特定の国からのアクセスを拒否 → <strong>地理的制限</strong>(403を返す)。</li>
+<li>CloudFront・API Gateway・ElastiCache・DAXのキャッシュの使い分け → <a href="../terms/caching-comparison.html">キャッシュの選び方</a>。</li>
+</ul>
+<h4>キャッシュ</h4>
+<ul>
+<li>オリジンの負荷を減らしたい → <strong>オリジンシールド</strong>(世界各地の利用者からのリクエストをまとめる。オリジンに最も近いリージョンに置く。追加料金あり)、TTLを長くする。</li>
+<li>POST/PUTなどはキャッシュされない(キャッシュはGET/HEAD/OPTIONSのみ)。</li>
+<li>パスごとにオリジンやキャッシュの設定を変える → <strong>ビヘイビア</strong>(どれにも一致しなければ既定の <code>*</code>)。</li>
+<li>キャッシュヒット率が低い → キャッシュポリシーで<strong>キャッシュキー</strong>に含めるヘッダー・Cookie・クエリ文字列を減らす。オリジンに渡すだけなら<strong>オリジンリクエストポリシー</strong>。</li>
+<li>更新したファイルをすぐ反映 → <strong>無効化</strong>(月1,000パスまで無料)。頻繁な更新ならファイル名にバージョンを付ける。</li>
+</ul>
+<h4>可用性・エッジでの処理</h4>
+<ul>
+<li>オリジンの障害時に別のオリジンへ → <strong>オリジングループ</strong>によるオリジンフェイルオーバー。</li>
+<li>ヘッダー操作やリダイレクトなどの軽い処理 → <strong>CloudFront Functions</strong>。オリジン側のイベントや外部へのアクセスが必要 → <strong>Lambda@Edge</strong>。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>CloudFrontはエッジでキャッシュして配信を高速化するCDN。</li>
+<li>OAC・フィールドレベル暗号化・プロトコルポリシーでセキュリティを確保する。</li>
+<li>証明書はus-east-1、キャッシュ対象はGET/HEAD/OPTIONS。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/cache-read-offload.html"><span class="title">キャッシュでDBの読み取り負荷を下げる</span></a></li>
+<li><a href="../usecases/waf-web-protection.html"><span class="title">Webアプリを攻撃や大量アクセスから守る</span></a></li>
+<li><a href="../usecases/static-site-cloudfront.html"><span class="title">静的サイトを独自ドメイン・HTTPSで安全に配信する</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 11件・リンク元 9件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 366" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon CloudFrontとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/amplify.html"><title>サービス:AWS Amplify</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Amplify</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/route53.html"><title>サービス:Amazon Route 53</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">Amazon Route 53</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/dns.html"><title>用語:DNS</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">DNS</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/region-az.html"><title>用語:リージョンとアベイラビリティーゾーン</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">リージョンとアベイラビリティー…</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/encryption.html"><title>用語:保存時の暗号化と転送時の暗号化</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">保存時の暗号化と転送時の暗号化</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">料金の基本</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/waf-web-protection.html"><title>運用シナリオ:Webアプリを攻撃や大量アクセスから守る</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">Webアプリを攻撃や大量アクセス…</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cache-read-offload.html"><title>運用シナリオ:キャッシュでDBの読み取り負荷を下げる</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">キャッシュでDBの読み取り負荷…</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/static-site-cloudfront.html"><title>運用シナリオ:静的サイトを独自ドメイン・HTTPSで安全に配信する</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="320" class="gr-t">静的サイトを独自ドメイン・HTT…</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/acm.html"><title>サービス:AWS Certificate Manager</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Certificate Manager</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/global-accelerator.html"><title>サービス:AWS Global Accelerator</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Global Accelerator</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/shield.html"><title>サービス:AWS Shield</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Shield</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/waf.html"><title>サービス:AWS WAF</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS WAF</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/api-gateway.html"><title>サービス:Amazon API Gateway</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon API Gateway</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Elastic Load Balancing (E…</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/http-status-codes.html"><title>用語:HTTPステータスコードと切り分け</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">HTTPステータスコードと切り分け</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/tls-termination.html"><title>用語:TLS終端と証明書の配置</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">TLS終端と証明書の配置</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/caching-comparison.html"><title>用語:キャッシュの選び方</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">キャッシュの選び方</text></a>
+<rect x="300" y="175" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="200" text-anchor="middle" class="gr-tb">Amazon CloudFront</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(9)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(11)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="elb.html"><span class="label">← 前へ</span>Elastic Load Balancing (ELB)</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="global-accelerator.html"><span class="label">次へ →</span>AWS Global Accelerator</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

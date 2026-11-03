@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>デプロイ戦略 | AWS教科書</title>
+<meta name="description" content="新しいバージョンを本番に反映する方法(Rolling・Blue/Green・Canaryなど)">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">設計・運用</a>
+  <h1>デプロイ戦略</h1>
+  <p class="lead">新しいバージョンを本番に反映する方法(Rolling・Blue/Green・Canaryなど)</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(13項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">In-place</a></li><li><a href="#c1-2">Recreate</a></li><li><a href="#c1-3">Rolling</a></li><li><a href="#c1-4">Blue/Green</a></li><li><a href="#c1-5">Canary</a></li><li><a href="#c1-6">A/Bテスト</a></li><li><a href="#c1-7">Shadow/Mirroring</a></li><li><a href="#c1-8">Feature Flag</a></li><li><a href="#c1-9">比較</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+<li><a href="#c4">この用語が出てくるページ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>デプロイ戦略</strong>は、新しいバージョンのアプリケーションをどのように本番環境へ反映するかの方法です。ダウンタイムの有無、ロールバックのしやすさ、必要なリソース量が戦略ごとに異なります。以下の図では、v1が旧バージョン、v2が新バージョンです。</p>
+
+<h3 id="c1-1">In-place<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>現在の環境を停止・更新して、新バージョンを配置します。新旧は基本的に新のみで、更新が終わった時点で切り替わります。ダウンタイムが発生する場合があり、ロールバックはやや難しいです。主な用途は小規模システムや単純な更新です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 642 129" style="max-width:642px;min-width:520px" role="img" aria-label="図1 In-place。同じサーバーを止めて、その場で新バージョンに入れ替える。"><defs><marker id="dgterms-deploy-strategies-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="24" y="15" width="594" height="90" rx="10" class="dg-group"/>
+<text x="34" y="30" class="dg-s">同じサーバーをその場で更新</text>
+<g data-node="s1">
+<rect x="34" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="64" text-anchor="middle" class="dg-t">サーバー(v1)</text>
+<text x="106" y="82" text-anchor="middle" class="dg-s">稼働中</text>
+</g>
+<g data-node="s2">
+<rect x="248" y="43" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="321" y="64" text-anchor="middle" class="dg-t">停止して更新</text>
+<text x="321" y="82" text-anchor="middle" class="dg-s">ダウンタイムの可能性</text>
+</g>
+<g data-node="s3">
+<rect x="463" y="43" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="536" y="64" text-anchor="middle" class="dg-t">サーバー(v2)</text>
+<text x="536" y="82" text-anchor="middle" class="dg-s">同じサーバーで稼働</text>
+</g>
+<path d="M179.0,69.0 L248.5,69.0" class="dg-line" marker-end="url(#dgterms-deploy-strategies-1)"/>
+<path d="M393.5,69.0 L463.0,69.0" class="dg-line" marker-end="url(#dgterms-deploy-strategies-1)"/>
+</svg>
+</div>
+<figcaption>図1 In-place。同じサーバーを止めて、その場で新バージョンに入れ替える。</figcaption>
+</figure>
+
+<h3 id="c1-2">Recreate<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>旧環境を停止・削除してから、新環境を構築します。稼働するのは新のみで、新環境を構築した後に切り替わります。ダウンタイムが発生し、ロールバックは難しいです。主な用途は開発・検証環境です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 632 119" style="max-width:632px;min-width:520px" role="img" aria-label="図2 Recreate。旧環境をすべて削除してから新環境を作り直すため、その間サービスが止まる。"><defs><marker id="dgterms-deploy-strategies-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="o">
+<rect x="34" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="64" text-anchor="middle" class="dg-t">旧環境(v1)</text>
+<text x="106" y="82" text-anchor="middle" class="dg-s">稼働中</text>
+</g>
+<g data-node="d">
+<rect x="248" y="43" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="321" y="64" text-anchor="middle" class="dg-t">旧環境を削除</text>
+<text x="321" y="82" text-anchor="middle" class="dg-s">サービス停止</text>
+</g>
+<g data-node="n">
+<rect x="463" y="43" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="536" y="64" text-anchor="middle" class="dg-t">新環境(v2)</text>
+<text x="536" y="82" text-anchor="middle" class="dg-s">新しく構築</text>
+</g>
+<path d="M179.0,69.0 L248.5,69.0" class="dg-line" marker-end="url(#dgterms-deploy-strategies-2)"/>
+<text x="214" y="73" text-anchor="middle" class="dg-s dg-halo">停止</text>
+<path d="M393.5,69.0 L463.0,69.0" class="dg-line" marker-end="url(#dgterms-deploy-strategies-2)"/>
+<text x="428" y="73" text-anchor="middle" class="dg-s dg-halo">構築</text>
+</svg>
+</div>
+<figcaption>図2 Recreate。旧環境をすべて削除してから新環境を作り直すため、その間サービスが止まる。</figcaption>
+</figure>
+
+<h3 id="c1-3">Rolling<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>複数のインスタンスを少しずつ新バージョンへ更新します。更新中は一時的に新旧が両方動き、インスタンス単位で切り替わります。ダウンタイムは基本的になく、ロールバックは比較的容易です。主な用途は一般的なWebサービスです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 638 218" style="max-width:638px;min-width:520px" role="img" aria-label="図3 Rolling。インスタンスを数台ずつ順番に更新する。更新中も残りのインスタンスがリクエストを処理するため、サービスは止まらない。"><defs><marker id="dgterms-deploy-strategies-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="l0">
+<text x="84" y="58" text-anchor="middle" class="dg-t">開始</text>
+</g>
+<g data-node="a1">
+<rect x="154" y="34" width="100" height="40" rx="8" class="dg-box"/>
+<text x="204" y="58" text-anchor="middle" class="dg-t">v1</text>
+</g>
+<g data-node="a2">
+<rect x="274" y="34" width="100" height="40" rx="8" class="dg-box"/>
+<text x="324" y="58" text-anchor="middle" class="dg-t">v1</text>
+</g>
+<g data-node="a3">
+<rect x="394" y="34" width="100" height="40" rx="8" class="dg-box"/>
+<text x="444" y="58" text-anchor="middle" class="dg-t">v1</text>
+</g>
+<g data-node="a4">
+<rect x="514" y="34" width="100" height="40" rx="8" class="dg-box"/>
+<text x="564" y="58" text-anchor="middle" class="dg-t">v1</text>
+</g>
+<g data-node="l1">
+<text x="84" y="118" text-anchor="middle" class="dg-t">更新中</text>
+</g>
+<g data-node="b1">
+<rect x="154" y="94" width="100" height="40" rx="8" class="dg-ok"/>
+<text x="204" y="118" text-anchor="middle" class="dg-t">v2</text>
+</g>
+<g data-node="b2">
+<rect x="274" y="94" width="100" height="40" rx="8" class="dg-ok"/>
+<text x="324" y="118" text-anchor="middle" class="dg-t">v2</text>
+</g>
+<g data-node="b3">
+<rect x="394" y="94" width="100" height="40" rx="8" class="dg-box"/>
+<text x="444" y="118" text-anchor="middle" class="dg-t">v1</text>
+</g>
+<g data-node="b4">
+<rect x="514" y="94" width="100" height="40" rx="8" class="dg-box"/>
+<text x="564" y="118" text-anchor="middle" class="dg-t">v1</text>
+</g>
+<g data-node="l2">
+<text x="84" y="178" text-anchor="middle" class="dg-t">完了</text>
+</g>
+<g data-node="c1">
+<rect x="154" y="154" width="100" height="40" rx="8" class="dg-ok"/>
+<text x="204" y="178" text-anchor="middle" class="dg-t">v2</text>
+</g>
+<g data-node="c2">
+<rect x="274" y="154" width="100" height="40" rx="8" class="dg-ok"/>
+<text x="324" y="178" text-anchor="middle" class="dg-t">v2</text>
+</g>
+<g data-node="c3">
+<rect x="394" y="154" width="100" height="40" rx="8" class="dg-ok"/>
+<text x="444" y="178" text-anchor="middle" class="dg-t">v2</text>
+</g>
+<g data-node="c4">
+<rect x="514" y="154" width="100" height="40" rx="8" class="dg-ok"/>
+<text x="564" y="178" text-anchor="middle" class="dg-t">v2</text>
+</g>
+</svg>
+</div>
+<figcaption>図3 Rolling。インスタンスを数台ずつ順番に更新する。更新中も残りのインスタンスがリクエストを処理するため、サービスは止まらない。</figcaption>
+</figure>
+
+<h3 id="c1-4">Blue/Green<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>Blue(旧)とGreen(新)の2つの環境を用意し、トラフィックを一括で切り替えます。新旧が両方稼働しており、ダウンタイムはほぼありません。問題があればBlueに戻すだけなので、ロールバックは非常に容易です。主な用途は本番環境や重要なシステムです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 632 209" style="max-width:632px;min-width:520px" role="img" aria-label="図4 Blue/Green。新しい環境(Green)を本番と別に用意してから、入口の向き先を一括で切り替える。Blueを残しておけば、すぐに戻せる。"><defs><marker id="dgterms-deploy-strategies-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="94" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="118" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="lb">
+<rect x="248" y="88" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="110" text-anchor="middle" class="dg-t">ロードバランサー</text>
+<text x="321" y="128" text-anchor="middle" class="dg-s">またはDNS</text>
+</g>
+<g data-node="blue">
+<rect x="463" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="64" text-anchor="middle" class="dg-t">Blue環境(v1)</text>
+<text x="536" y="82" text-anchor="middle" class="dg-s">切り替え後は待機</text>
+</g>
+<g data-node="green">
+<rect x="463" y="133" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="536" y="154" text-anchor="middle" class="dg-t">Green環境(v2)</text>
+<text x="536" y="172" text-anchor="middle" class="dg-s">切り替え後に本番</text>
+</g>
+<path d="M179.0,114.0 L248.5,114.0" class="dg-line" marker-end="url(#dgterms-deploy-strategies-4)"/>
+<path d="M393.5,98.8 L463.0,84.2" class="dg-line dg-dash" marker-end="url(#dgterms-deploy-strategies-4)"/>
+<text x="428" y="96" text-anchor="middle" class="dg-s dg-halo">切替前</text>
+<path d="M393.5,129.2 L463.0,143.8" class="dg-line" marker-end="url(#dgterms-deploy-strategies-4)"/>
+<text x="428" y="140" text-anchor="middle" class="dg-s dg-halo">切替後</text>
+</svg>
+</div>
+<figcaption>図4 Blue/Green。新しい環境(Green)を本番と別に用意してから、入口の向き先を一括で切り替える。Blueを残しておけば、すぐに戻せる。</figcaption>
+</figure>
+
+<h3 id="c1-5">Canary<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>一部のユーザー・トラフィックだけを新バージョンへ移行し、少量から段階的に増やします。新旧が両方稼働し、ダウンタイムはなく、ロールバックも容易です。主な用途は、リスクを抑えた本番リリースです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 632 209" style="max-width:632px;min-width:520px" role="img" aria-label="図5 Canary。まず少量(例: 10%)だけv2に流して様子を見て、問題がなければ割合を段階的に増やす。"><defs><marker id="dgterms-deploy-strategies-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="94" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="118" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="lb">
+<rect x="248" y="88" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="110" text-anchor="middle" class="dg-t">振り分け</text>
+<text x="321" y="128" text-anchor="middle" class="dg-s">割合を設定</text>
+</g>
+<g data-node="v1">
+<rect x="463" y="49" width="145" height="40" rx="8" class="dg-box"/>
+<text x="536" y="73" text-anchor="middle" class="dg-t">v1</text>
+</g>
+<g data-node="v2">
+<rect x="463" y="133" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="536" y="154" text-anchor="middle" class="dg-t">v2(Canary)</text>
+<text x="536" y="172" text-anchor="middle" class="dg-s">問題なければ増やす</text>
+</g>
+<path d="M179.0,114.0 L248.5,114.0" class="dg-line" marker-end="url(#dgterms-deploy-strategies-5)"/>
+<path d="M393.5,98.8 L463.0,84.2" class="dg-line" marker-end="url(#dgterms-deploy-strategies-5)"/>
+<text x="428" y="96" text-anchor="middle" class="dg-s dg-halo">90%</text>
+<path d="M393.5,129.2 L463.0,143.8" class="dg-line" marker-end="url(#dgterms-deploy-strategies-5)"/>
+<text x="428" y="140" text-anchor="middle" class="dg-s dg-halo">10% → 100%</text>
+</svg>
+</div>
+<figcaption>図5 Canary。まず少量(例: 10%)だけv2に流して様子を見て、問題がなければ割合を段階的に増やす。</figcaption>
+</figure>
+
+<h3 id="c1-6">A/Bテスト<a class="anchor" href="#c1-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>異なるバージョンをユーザー群ごとに提供して比較します。新旧が両方稼働し、ユーザー属性などで振り分けます。ダウンタイムはなく、ロールバックも容易です。主な用途は、UI・機能・マーケティングの比較です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 203" style="max-width:846px;min-width:677px" role="img" aria-label="図6 A/Bテスト。ユーザーの属性などでグループを分け、それぞれに別のバージョンを見せて結果を比べる。Canaryが「安全なリリース」のためなのに対し、A/Bテストは「どちらが良いかの比較」が目的。"><defs><marker id="dgterms-deploy-strategies-6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ua">
+<rect x="34" y="49" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="73" text-anchor="middle" class="dg-t">ユーザー群A</text>
+</g>
+<g data-node="ub">
+<rect x="34" y="139" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="163" text-anchor="middle" class="dg-t">ユーザー群B</text>
+</g>
+<g data-node="lb">
+<rect x="248" y="88" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="110" text-anchor="middle" class="dg-t">振り分け</text>
+<text x="321" y="128" text-anchor="middle" class="dg-s">ユーザー属性で</text>
+</g>
+<g data-node="va">
+<rect x="463" y="49" width="145" height="40" rx="8" class="dg-box"/>
+<text x="536" y="73" text-anchor="middle" class="dg-t">バージョンA</text>
+</g>
+<g data-node="vb">
+<rect x="463" y="139" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="536" y="163" text-anchor="middle" class="dg-t">バージョンB</text>
+</g>
+<g data-node="m">
+<rect x="678" y="88" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="750" y="110" text-anchor="middle" class="dg-tb">効果を比較</text>
+<text x="750" y="128" text-anchor="middle" class="dg-s">どちらが良いか</text>
+</g>
+<path d="M179.0,84.2 L248.5,98.8" class="dg-line" marker-end="url(#dgterms-deploy-strategies-6)"/>
+<path d="M179.0,143.8 L248.5,129.2" class="dg-line" marker-end="url(#dgterms-deploy-strategies-6)"/>
+<path d="M393.5,98.8 L463.0,84.2" class="dg-line" marker-end="url(#dgterms-deploy-strategies-6)"/>
+<text x="428" y="96" text-anchor="middle" class="dg-s dg-halo">群A</text>
+<path d="M393.5,129.2 L463.0,143.8" class="dg-line" marker-end="url(#dgterms-deploy-strategies-6)"/>
+<text x="428" y="140" text-anchor="middle" class="dg-s dg-halo">群B</text>
+<path d="M608.0,84.2 L677.5,98.8" class="dg-line dg-dash" marker-end="url(#dgterms-deploy-strategies-6)"/>
+<path d="M608.0,143.8 L677.5,129.2" class="dg-line dg-dash" marker-end="url(#dgterms-deploy-strategies-6)"/>
+</svg>
+</div>
+<figcaption>図6 A/Bテスト。ユーザーの属性などでグループを分け、それぞれに別のバージョンを見せて結果を比べる。Canaryが「安全なリリース」のためなのに対し、A/Bテストは「どちらが良いかの比較」が目的。</figcaption>
+</figure>
+
+<h3 id="c1-7">Shadow/Mirroring<a class="anchor" href="#c1-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>本番トラフィックを新環境にも複製しますが、新環境の応答はユーザーには返しません。新旧が両方稼働し、ダウンタイムはなく、ロールバックも容易です。主な用途は、新バージョンの本番負荷での動作検証です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 632 209" style="max-width:632px;min-width:520px" role="img" aria-label="図7 Shadow/Mirroring。本番と同じリクエストを新環境にも送って動作や負荷を確かめるが、ユーザーには本番(v1)の応答だけを返すため、影響を与えない。"><defs><marker id="dgterms-deploy-strategies-7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="94" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="118" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="p">
+<rect x="248" y="88" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="110" text-anchor="middle" class="dg-t">プロキシ</text>
+<text x="321" y="128" text-anchor="middle" class="dg-s">リクエストを複製</text>
+</g>
+<g data-node="v1">
+<rect x="463" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="64" text-anchor="middle" class="dg-t">本番(v1)</text>
+<text x="536" y="82" text-anchor="middle" class="dg-s">応答を返す</text>
+</g>
+<g data-node="v2">
+<rect x="463" y="133" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="536" y="154" text-anchor="middle" class="dg-t">新環境(v2)</text>
+<text x="536" y="172" text-anchor="middle" class="dg-s">応答は捨てる</text>
+</g>
+<path d="M179.0,114.0 L248.5,114.0" class="dg-line" marker-end="url(#dgterms-deploy-strategies-7)" marker-start="url(#dgterms-deploy-strategies-7)"/>
+<path d="M393.5,98.8 L463.0,84.2" class="dg-line" marker-end="url(#dgterms-deploy-strategies-7)" marker-start="url(#dgterms-deploy-strategies-7)"/>
+<path d="M393.5,129.2 L463.0,143.8" class="dg-line dg-dash" marker-end="url(#dgterms-deploy-strategies-7)"/>
+<text x="428" y="140" text-anchor="middle" class="dg-s dg-halo">コピー</text>
+</svg>
+</div>
+<figcaption>図7 Shadow/Mirroring。本番と同じリクエストを新環境にも送って動作や負荷を確かめるが、ユーザーには本番(v1)の応答だけを返すため、影響を与えない。</figcaption>
+</figure>
+
+<h3 id="c1-8">Feature Flag<a class="anchor" href="#c1-8" aria-label="この見出しへのリンク">#</a></h3>
+<p>新機能を含むアプリをデプロイしておき、機能のON/OFFを設定で制御します。同じ環境の中で複数の機能が共存し、フラグを変えるだけで切り替わります。ダウンタイムはなく、ロールバックは非常に容易です。主な用途は、段階的な機能リリースです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 632 209" style="max-width:632px;min-width:520px" role="img" aria-label="図8 Feature Flag。新機能のコードは先にデプロイしておき、設定(フラグ)でONにする相手やタイミングを制御する。デプロイ(配置)とリリース(公開)を切り離せる。"><defs><marker id="dgterms-deploy-strategies-8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="flag">
+<rect x="34" y="88" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="110" text-anchor="middle" class="dg-t">フラグ設定</text>
+<text x="106" y="128" text-anchor="middle" class="dg-s">AppConfig など</text>
+</g>
+<g data-node="app">
+<rect x="248" y="88" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="321" y="110" text-anchor="middle" class="dg-tb">アプリ(v2)</text>
+<text x="321" y="128" text-anchor="middle" class="dg-s">新機能のコードを含む</text>
+</g>
+<g data-node="on">
+<rect x="463" y="43" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="536" y="64" text-anchor="middle" class="dg-t">新機能 ON</text>
+<text x="536" y="82" text-anchor="middle" class="dg-s">一部のユーザー</text>
+</g>
+<g data-node="off">
+<rect x="463" y="133" width="145" height="52" rx="8" class="dg-box"/>
+<text x="536" y="154" text-anchor="middle" class="dg-t">新機能 OFF</text>
+<text x="536" y="172" text-anchor="middle" class="dg-s">その他のユーザー</text>
+</g>
+<path d="M179.0,114.0 L248.5,114.0" class="dg-line" marker-end="url(#dgterms-deploy-strategies-8)"/>
+<text x="214" y="118" text-anchor="middle" class="dg-s dg-halo">参照</text>
+<path d="M393.5,98.8 L463.0,84.2" class="dg-line" marker-end="url(#dgterms-deploy-strategies-8)"/>
+<path d="M393.5,129.2 L463.0,143.8" class="dg-line" marker-end="url(#dgterms-deploy-strategies-8)"/>
+</svg>
+</div>
+<figcaption>図8 Feature Flag。新機能のコードは先にデプロイしておき、設定(フラグ)でONにする相手やタイミングを制御する。デプロイ(配置)とリリース(公開)を切り離せる。</figcaption>
+</figure>
+
+<h3 id="c1-9">比較<a class="anchor" href="#c1-9" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>戦略</th><th>概要</th><th>新旧の稼働</th><th>切り替え方</th><th>ダウンタイム</th><th>ロールバック</th><th>主な用途</th></tr>
+<tr><td data-label="戦略"><strong>In-place</strong></td><td data-label="概要">現在の環境を停止・更新して新バージョンを配置</td><td data-label="新旧の稼働">基本的に新のみ</td><td data-label="切り替え方">更新完了後</td><td data-label="ダウンタイム">発生する場合あり</td><td data-label="ロールバック">やや難しい</td><td data-label="主な用途">小規模システム、単純な更新</td></tr>
+<tr><td data-label="戦略"><strong>Recreate</strong></td><td data-label="概要">旧環境を停止・削除してから新環境を構築</td><td data-label="新旧の稼働">新のみ</td><td data-label="切り替え方">新環境の構築後</td><td data-label="ダウンタイム">発生</td><td data-label="ロールバック">難しい</td><td data-label="主な用途">開発・検証環境</td></tr>
+<tr><td data-label="戦略"><strong>Rolling</strong></td><td data-label="概要">複数インスタンスを少しずつ新バージョンへ更新</td><td data-label="新旧の稼働">一時的に両方</td><td data-label="切り替え方">インスタンス単位</td><td data-label="ダウンタイム">基本的になし</td><td data-label="ロールバック">比較的容易</td><td data-label="主な用途">一般的なWebサービス</td></tr>
+<tr><td data-label="戦略"><strong>Blue/Green</strong></td><td data-label="概要">Blue(旧)とGreen(新)の2環境を用意し、トラフィックを切り替える</td><td data-label="新旧の稼働">両方</td><td data-label="切り替え方">一括切り替え</td><td data-label="ダウンタイム">ほぼなし</td><td data-label="ロールバック">非常に容易</td><td data-label="主な用途">本番環境、重要システム</td></tr>
+<tr><td data-label="戦略"><strong>Canary</strong></td><td data-label="概要">一部のユーザー・トラフィックだけ新バージョンへ移行</td><td data-label="新旧の稼働">両方</td><td data-label="切り替え方">少量 → 段階的に増加</td><td data-label="ダウンタイム">なし</td><td data-label="ロールバック">容易</td><td data-label="主な用途">リスクを抑えた本番リリース</td></tr>
+<tr><td data-label="戦略"><strong>A/Bテスト</strong></td><td data-label="概要">異なるバージョンをユーザー群ごとに提供して比較</td><td data-label="新旧の稼働">両方</td><td data-label="切り替え方">ユーザー属性などで振り分け</td><td data-label="ダウンタイム">なし</td><td data-label="ロールバック">容易</td><td data-label="主な用途">UI・機能・マーケティングの比較</td></tr>
+<tr><td data-label="戦略"><strong>Shadow/Mirroring</strong></td><td data-label="概要">本番トラフィックを新環境にも複製するが、ユーザーへの応答には使わない</td><td data-label="新旧の稼働">両方</td><td data-label="切り替え方">実トラフィックを複製</td><td data-label="ダウンタイム">なし</td><td data-label="ロールバック">容易</td><td data-label="主な用途">新バージョンの本番負荷・動作検証</td></tr>
+<tr><td data-label="戦略"><strong>Feature Flag</strong></td><td data-label="概要">アプリはデプロイしておき、機能のON/OFFを設定で制御</td><td data-label="新旧の稼働">同一環境内で複数機能</td><td data-label="切り替え方">フラグの変更</td><td data-label="ダウンタイム">なし</td><td data-label="ロールバック">非常に容易</td><td data-label="主な用途">段階的な機能リリース</td></tr>
+</table></div>
+<p>AWSでは、CodeDeployがIn-place・Blue/Green・Canary・Linear(一定間隔で少しずつ)に、Elastic BeanstalkがRolling・Immutable・Blue/Greenに、Route 53の加重ルーティングがCanaryやA/Bテスト的な振り分けに、AppConfigがFeature Flag的な使い方に対応します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="circuit-breaker.html">サーキットブレーカー</a>:障害を広げないための設計パターン</li>
+<li><a href="dr-strategies.html">DR戦略</a>:災害時の復旧方式</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/codedeploy.html">AWS CodeDeploy</a>:In-place・Blue/Green・Canary・Linear</li>
+<li><a href="../services/elastic-beanstalk.html">AWS Elastic Beanstalk</a>:Rolling・Blue/Greenなど</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:エイリアスによるトラフィック分割</li>
+<li><a href="../services/route53.html">Amazon Route 53</a>:加重ルーティング</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:AppConfigによる設定の段階デプロイ</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/image-builder.html"><span class="title">Amazon EC2 Image Builder</span><span class="kind">サービス</span><span class="desc">パッチ適用済みのAMIやコンテナイメージの作成・テスト・配布を自動化</span></a></li>
+<li><a href="../services/elastic-beanstalk.html"><span class="title">AWS Elastic Beanstalk</span><span class="kind">サービス</span><span class="desc">コードを渡すだけでアプリを簡単にデプロイ・運用できるPaaS</span></a></li>
+<li><a href="../services/ecs.html"><span class="title">Amazon ECS</span><span class="kind">サービス</span><span class="desc">AWS上でコンテナを実行・管理するオーケストレーションサービス</span></a></li>
+<li><a href="../services/codepipeline.html"><span class="title">AWS CodePipeline</span><span class="kind">サービス</span><span class="desc">ソース取得からデプロイまでを自動化するCI/CDサービス</span></a></li>
+<li><a href="../services/codedeploy.html"><span class="title">AWS CodeDeploy</span><span class="kind">サービス</span><span class="desc">アプリを安全に各環境へ配布・更新するデプロイ自動化サービス</span></a></li>
+<li><a href="../services/sam.html"><span class="title">AWS SAM</span><span class="kind">サービス</span><span class="desc">サーバーレスアプリの開発・デプロイを支援するフレームワーク</span></a></li>
+<li><a href="../usecases/golden-ami-pipeline.html"><span class="title">パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</span><span class="kind">運用シナリオ</span></a></li>
+<li><a href="../usecases/ec2-blue-green-pipeline.html"><span class="title">EC2のアプリをCI/CDでBlue/Greenデプロイする</span><span class="kind">運用シナリオ</span></a></li>
+<li><a href="../usecases/ecs-safe-deploy.html"><span class="title">ECSのサービスを止めずに更新し、失敗したら自動で戻す</span><span class="kind">運用シナリオ</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 7件・リンク元 9件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 306" style="max-width:784px;min-width:600px" role="img" aria-label="デプロイ戦略とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS CodePipeline</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/sam.html"><title>サービス:AWS SAM</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS SAM</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/image-builder.html"><title>サービス:Amazon EC2 Image Builder</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">Amazon EC2 Image Builder</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon ECS</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">TerraformとGit</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">高可用性とスケーリング</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ec2-blue-green-pipeline.html"><title>運用シナリオ:EC2のアプリをCI/CDでBlue/Greenデプロイする</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="230" class="gr-t">EC2のアプリをCI/CDでBlue/Gr…</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ecs-safe-deploy.html"><title>運用シナリオ:ECSのサービスを止めずに更新し、失敗したら自動で戻す</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">ECSのサービスを止めずに更新し…</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/golden-ami-pipeline.html"><title>運用シナリオ:パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">パッチ適用済みのAMIを定期的に…</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/codedeploy.html"><title>サービス:AWS CodeDeploy</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CodeDeploy</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Elastic Beanstalk</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/route53.html"><title>サービス:Amazon Route 53</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon Route 53</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/circuit-breaker.html"><title>用語:サーキットブレーカー</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">サーキットブレーカー</text></a>
+<rect x="300" y="145" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="170" text-anchor="middle" class="gr-tb">デプロイ戦略</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(9)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="high-availability-scaling.html"><span class="label">← 前へ</span>高可用性とスケーリング</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="dr-strategies.html"><span class="label">次へ →</span>DR戦略</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

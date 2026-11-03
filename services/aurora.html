@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Aurora | AWS教科書</title>
+<meta name="description" content="MySQL/PostgreSQL互換の高性能リレーショナルデータベース">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#C925D1">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/aurora.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat4">データベース</a>
+  <h1>Amazon Aurora</h1>
+  <p class="lead">MySQL/PostgreSQL互換の高性能リレーショナルデータベース</p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(13項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">アーキテクチャの特徴</a></li><li><a href="#c2-2">エンドポイント</a></li><li><a href="#c2-3">可用性とフェイルオーバー</a></li><li><a href="#c2-4">主な機能</a></li><li><a href="#c2-5">バックアップと復元</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Aurora</strong>は、<strong>MySQL/PostgreSQL互換</strong>のリレーショナルデータベースです。RDSのDBエンジンの1つで、AWSが独自に設計したストレージにより高い性能と可用性を持ちます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">アーキテクチャの特徴<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>共有クラスターボリューム</strong>:データは<strong>3つのAZにまたがって6コピー</strong>保持される。</li>
+<li><strong>インスタンス構成</strong>:1つのプライマリ(書き込み)と<strong>最大15のレプリカ</strong>(読み取り)。全インスタンスがボリュームを共有するため、レプリカのラグは通常ミリ秒レベル。</li>
+<li><strong>自己修復</strong>:ストレージ側でディスク障害を自動検出して修復する。</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 548 218" style="max-width:548px;min-width:520px" role="img" aria-label="図1 Auroraのアーキテクチャ。すべてのインスタンスが1つのクラスターボリュームを共有する。データは3つのAZに6コピー保存され、レプリカは最大15台まで追加できる。"><defs><marker id="dgservices-aurora-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="w">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="62" text-anchor="middle" class="dg-tb">プライマリ</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">書き込み</text>
+</g>
+<g data-node="r1">
+<rect x="204" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="279" y="62" text-anchor="middle" class="dg-t">レプリカ</text>
+<text x="279" y="80" text-anchor="middle" class="dg-s">読み取り</text>
+</g>
+<g data-node="r2">
+<rect x="374" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="449" y="62" text-anchor="middle" class="dg-t">レプリカ</text>
+<text x="449" y="80" text-anchor="middle" class="dg-s">読み取り</text>
+</g>
+<g data-node="vol">
+<rect x="34" y="142" width="490" height="52" rx="8" class="dg-ok"/>
+<text x="279" y="164" text-anchor="middle" class="dg-t">共有クラスターボリューム</text>
+<text x="279" y="182" text-anchor="middle" class="dg-s">3つのAZに6コピー・自己修復</text>
+</g>
+<path d="M152.3,92.5 L235.7,142.5" class="dg-line" marker-end="url(#dgservices-aurora-1)" marker-start="url(#dgservices-aurora-1)"/>
+<path d="M279.0,92.5 L279.0,142.5" class="dg-line" marker-end="url(#dgservices-aurora-1)"/>
+<path d="M405.7,92.5 L322.3,142.5" class="dg-line" marker-end="url(#dgservices-aurora-1)"/>
+</svg>
+</div>
+<figcaption>図1 Auroraのアーキテクチャ。すべてのインスタンスが1つのクラスターボリュームを共有する。データは3つのAZに6コピー保存され、レプリカは最大15台まで追加できる。</figcaption>
+</figure>
+<h3 id="c2-2">エンドポイント<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>エンドポイント</th><th>向き先</th></tr>
+<tr><td>クラスターエンドポイント</td><td>常にプライマリ(書き込み用)</td></tr>
+<tr><td>リーダーエンドポイント</td><td>レプリカへ負荷分散(読み取り用)</td></tr>
+<tr><td>カスタムエンドポイント</td><td>任意のインスタンスの組み合わせ</td></tr>
+<tr><td>インスタンスエンドポイント</td><td>特定のインスタンス</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 256" style="max-width:718px;min-width:574px" role="img" aria-label="図2 エンドポイントの使い分け。書き込みはクラスターエンドポイント(常にプライマリ)、読み取りはリーダーエンドポイント(レプリカに負荷分散)を使う。"><defs><marker id="dgservices-aurora-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="116" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="ce">
+<rect x="289" y="36" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="57" text-anchor="middle" class="dg-t">クラスター</text>
+<text x="364" y="75" text-anchor="middle" class="dg-s">エンドポイント</text>
+</g>
+<g data-node="re">
+<rect x="289" y="148" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="170" text-anchor="middle" class="dg-t">リーダー</text>
+<text x="364" y="188" text-anchor="middle" class="dg-s">エンドポイント</text>
+</g>
+<g data-node="w">
+<rect x="544" y="42" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="619" y="66" text-anchor="middle" class="dg-tb">プライマリ</text>
+</g>
+<g data-node="r1">
+<rect x="544" y="116" width="150" height="40" rx="8" class="dg-box"/>
+<text x="619" y="140" text-anchor="middle" class="dg-t">レプリカ</text>
+</g>
+<g data-node="r2">
+<rect x="544" y="192" width="150" height="40" rx="8" class="dg-box"/>
+<text x="619" y="216" text-anchor="middle" class="dg-t">レプリカ</text>
+</g>
+<path d="M177.0,116.5 L289.0,83.6" class="dg-line" marker-end="url(#dgservices-aurora-2)"/>
+<text x="233" y="104" text-anchor="middle" class="dg-s dg-halo">書き込み</text>
+<path d="M184.0,147.5 L289.0,163.0" class="dg-line" marker-end="url(#dgservices-aurora-2)"/>
+<text x="236" y="159" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
+<path d="M439.0,61.5 L544.0,61.5" class="dg-line" marker-end="url(#dgservices-aurora-2)"/>
+<path d="M439.0,163.0 L544.0,147.5" class="dg-line" marker-end="url(#dgservices-aurora-2)"/>
+<path d="M439.0,185.0 L544.0,200.5" class="dg-line" marker-end="url(#dgservices-aurora-2)"/>
+</svg>
+</div>
+<figcaption>図2 エンドポイントの使い分け。書き込みはクラスターエンドポイント(常にプライマリ)、読み取りはリーダーエンドポイント(レプリカに負荷分散)を使う。</figcaption>
+</figure>
+<h3 id="c2-3">可用性とフェイルオーバー<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>プライマリに障害が起きると、<strong>レプリカが自動で昇格</strong>する。</li>
+<li>レプリカがない場合は新しいインスタンスを作成するため、復旧に時間がかかる。可用性を重視するなら<strong>別AZにレプリカを置く</strong>。高可用性の考え方は用語ページ「<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>」を参照してください。</li>
+<li>通常のRDS Multi-AZと違い、スタンバイ専用インスタンスはなく、<strong>レプリカが読み取りとフェイルオーバーを兼ねる</strong>。</li>
+</ul>
+
+<h3 id="c2-4">主な機能<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>概要</th></tr>
+<tr><td>レプリカのAuto Scaling</td><td>負荷に応じてレプリカ数を増減する</td></tr>
+<tr><td>Aurora Serverless v2</td><td>負荷に応じてACU(Auroraキャパシティーユニット)を細かく自動調整する。変動の大きいワークロード向け</td></tr>
+<tr><td>Auroraグローバルデータベース</td><td>複数リージョンにレプリケートする。通常は1秒未満の遅延で、DRやグローバルな読み取りに使う</td></tr>
+<tr><td>バックトラック</td><td><strong>Aurora MySQLのみ</strong>。スナップショットから復元せず、クラスターを過去の時点へ巻き戻せる</td></tr>
+<tr><td>クローン</td><td>コピーオンライトで短時間に複製する。本番データを使ったテスト環境の作成に便利</td></tr>
+<tr><td>RDS Proxy</td><td>接続をプールし、フェイルオーバー時間の短縮と接続数の抑制に有効。Lambdaからの接続にも向く</td></tr>
+<tr><td>Database Activity Streams</td><td>データベースアクティビティをほぼリアルタイムでストリーミングする(監査用)</td></tr>
+</table></div>
+
+<h3 id="c2-5">バックアップと復元<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>継続的バックアップ</strong>:自動バックアップはS3に保存され、保持期間は<strong>1〜35日</strong>。ポイントインタイムリカバリが使える。</li>
+<li>復元は<strong>常に新しいクラスターとして作成</strong>される(既存クラスターは上書きされない)。</li>
+<li>手動スナップショットは削除するまで残り、リージョン間でコピーできる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>高い可用性・性能が必要な業務システムのDB</li>
+<li>読み取りが多いWebサービス(最大15レプリカ+リーダーエンドポイント)</li>
+<li>負荷の変動が大きいアプリ(Serverless v2)</li>
+<li>複数リージョンでの災害対策・グローバル読み取り(グローバルデータベース)。災害対策の4つの方式は用語ページ「<a href="../terms/dr-strategies.html">DR戦略</a>」を参照してください。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>インスタンスの稼働時間(Serverless v2ではACUの使用量)、ストレージの使用量、I/Oリクエスト、バックアップ容量で課金されます。ストレージは使った分だけ自動で拡張されます。従量課金の仕組みは用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="rds.html">Amazon RDS</a>:Auroraを含むマネージドDBサービス</li>
+<li><a href="lambda.html">AWS Lambda</a>:RDS Proxy経由での接続</li>
+<li><a href="elasticache.html">Amazon ElastiCache</a>:前段のキャッシュ</li>
+<li><a href="backup.html">AWS Backup</a>:バックアップの一元管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>データは<strong>3AZに6コピー</strong>。レプリカは<strong>最大15</strong>。</li>
+<li>書き込み → <strong>クラスターエンドポイント</strong>、読み取り → <strong>リーダーエンドポイント</strong>。</li>
+<li>フェイルオーバーを速くしたい → <strong>別AZにレプリカ</strong>を置く。</li>
+<li>誤操作をすばやく戻したい(MySQL)→ <strong>バックトラック</strong>。</li>
+<li>本番データでテスト環境を素早く作る → <strong>クローン</strong>。</li>
+<li>リージョン障害対策 → <strong>グローバルデータベース</strong>。</li>
+<li>PITRやスナップショットからの復元は<strong>新しいクラスター</strong>になる(接続先の切り替えが必要)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AuroraはMySQL/PostgreSQL互換の高性能DB。共有ストレージで3AZ・6コピー。</li>
+<li>エンドポイントで書き込み・読み取りを使い分ける。</li>
+<li>Serverless v2、グローバルDB、バックトラック、クローンなど独自機能が豊富。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/rds-high-availability.html"><span class="title">データベースの高可用性と読み取り分散</span></a></li>
+<li><a href="../usecases/rds-point-in-time-restore.html"><span class="title">誤操作したRDSのデータを特定の時点に戻す</span></a></li>
+<li><a href="../usecases/multi-region-failover.html"><span class="title">リージョン障害に備えて別リージョンへ切り替える</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 7件・リンク元 7件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 246" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon Auroraとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/appsync.html"><title>サービス:AWS AppSync</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS AppSync</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/secrets-manager.html"><title>サービス:AWS Secrets Manager</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Secrets Manager</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/application-recovery-controller.html"><title>サービス:Amazon Application Recovery Controller (ARC)</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">Amazon Application Recove…</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../terms/caching-comparison.html"><title>用語:キャッシュの選び方</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">キャッシュの選び方</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/rds-high-availability.html"><title>運用シナリオ:データベースの高可用性と読み取り分散</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="170" class="gr-t">データベースの高可用性と読み取…</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/multi-region-failover.html"><title>運用シナリオ:リージョン障害に備えて別リージョンへ切り替える</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="200" class="gr-t">リージョン障害に備えて別リージ…</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/rds-point-in-time-restore.html"><title>運用シナリオ:誤操作したRDSのデータを特定の時点に戻す</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="230" class="gr-t">誤操作したRDSのデータを特定の…</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Backup</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/elasticache.html"><title>サービス:Amazon ElastiCache</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon ElastiCache</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon RDS</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">料金の基本</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">高可用性とスケーリング</text></a>
+<rect x="300" y="115" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="140" text-anchor="middle" class="gr-tb">Amazon Aurora</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(7)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="rds.html"><span class="label">← 前へ</span>Amazon RDS</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="dynamodb.html"><span class="label">次へ →</span>Amazon DynamoDB</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

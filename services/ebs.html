@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon EBS | AWS教科書</title>
+<meta name="description" content="EC2にアタッチして使うブロックストレージ">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#7AA116">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/ebs.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">ストレージ</a>
+  <h1>Amazon EBS</h1>
+  <p class="lead">EC2にアタッチして使うブロックストレージ</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(17項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">ボリュームの種類</a></li><li><a href="#c2-2">ボリュームタイプごとの性能値</a></li><li><a href="#c2-3">スナップショットは増分</a></li><li><a href="#c2-4">Data Lifecycle Manager(DLM)</a></li><li><a href="#c2-5">ごみ箱(Recycle Bin)</a></li><li><a href="#c2-6">既存の暗号化されていないボリュームを暗号化する手順</a></li><li><a href="#c2-7">Elastic Volumes</a></li><li><a href="#c2-8">CloudWatchメトリクス</a></li><li><a href="#c2-9">ストレージの最適化</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon EBS(Elastic Block Store)</strong>は、EC2にアタッチして使う<strong>ブロックストレージサービス</strong>です。PCの内蔵ディスクのように使え、EC2を停止してもデータは残ります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><strong>EC2を停止してもEBSのデータは残る</strong>(インスタンスストアとの違い)。</li>
+<li><strong>マルチアタッチ</strong>:同一AZの別のEC2インスタンスへもアタッチできる。</li>
+<li><strong>暗号化</strong>に対応。</li>
+<li><strong>スナップショット</strong>を取得できる(S3に保存される)。</li>
+<li><strong>バーストクレジット</strong>:ベースラインの性能に加え、一時的にそれを超える性能を発揮するための「クレジット」が付与される仕組み。</li>
+</ul>
+<p>EBSボリュームは<strong>特定のAZ</strong>に作成され、同じAZのインスタンスにしかアタッチできません。マルチアタッチはプロビジョンドIOPS SSD(io1/io2)でのみ利用できます。別のAZで使う場合はスナップショットから復元します。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 730 221" style="max-width:730px;min-width:584px" role="img" aria-label="図1 EBSはAZ単位のストレージで、同じAZのEC2にアタッチする。別のAZで使うときは、スナップショット(S3に保存)から新しいボリュームを復元する。"><defs><marker id="dgservices-ebs-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="22" y="13" width="174" height="184" rx="10" class="dg-group"/>
+<text x="32" y="28" class="dg-s">AZ-a</text>
+<rect x="532" y="13" width="174" height="184" rx="10" class="dg-group"/>
+<text x="542" y="28" class="dg-s">AZ-c</text>
+<g data-node="ec2">
+<rect x="34" y="49" width="150" height="40" rx="8" class="dg-box"/>
+<text x="109" y="73" text-anchor="middle" class="dg-t">EC2</text>
+</g>
+<g data-node="ebs">
+<rect x="34" y="139" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="109" y="163" text-anchor="middle" class="dg-tb">EBSボリューム</text>
+</g>
+<g data-node="snap">
+<rect x="289" y="133" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="364" y="154" text-anchor="middle" class="dg-t">スナップショット</text>
+<text x="364" y="172" text-anchor="middle" class="dg-s">S3に保存</text>
+</g>
+<g data-node="ec22">
+<rect x="544" y="49" width="150" height="40" rx="8" class="dg-box"/>
+<text x="619" y="73" text-anchor="middle" class="dg-t">EC2</text>
+</g>
+<g data-node="ebs2">
+<rect x="544" y="133" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="154" text-anchor="middle" class="dg-t">EBSボリューム</text>
+<text x="619" y="172" text-anchor="middle" class="dg-s">復元したもの</text>
+</g>
+<path d="M109.0,89.0 L109.0,139.0" class="dg-line" marker-end="url(#dgservices-ebs-1)" marker-start="url(#dgservices-ebs-1)"/>
+<path d="M184.0,159.0 L289.0,159.0" class="dg-line" marker-end="url(#dgservices-ebs-1)"/>
+<text x="236" y="163" text-anchor="middle" class="dg-s dg-halo">取得</text>
+<path d="M439.0,159.0 L544.0,159.0" class="dg-line" marker-end="url(#dgservices-ebs-1)"/>
+<text x="492" y="163" text-anchor="middle" class="dg-s dg-halo">復元</text>
+<path d="M619.0,89.0 L619.0,133.0" class="dg-line" marker-end="url(#dgservices-ebs-1)" marker-start="url(#dgservices-ebs-1)"/>
+</svg>
+</div>
+<figcaption>図1 EBSはAZ単位のストレージで、同じAZのEC2にアタッチする。別のAZで使うときは、スナップショット(S3に保存)から新しいボリュームを復元する。</figcaption>
+</figure>
+<h3 id="c2-1">ボリュームの種類<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>種類</th><th>媒体</th><th>特徴</th><th>主用途</th><th>ポイント</th></tr>
+<tr><td data-label="種類"><code>gp3</code></td><td data-label="媒体">SSD</td><td data-label="特徴">汎用SSD。IOPS/スループットを容量と独立して調整可能</td><td data-label="主用途">Web、アプリ</td><td data-label="ポイント">現在の標準推奨</td></tr>
+<tr><td data-label="種類"><code>gp2</code></td><td data-label="媒体">SSD</td><td data-label="特徴">旧世代の汎用SSD。IOPSがサイズに依存</td><td data-label="主用途">旧環境</td><td data-label="ポイント">gp3への移行が推奨</td></tr>
+<tr><td data-label="種類"><code>io2</code></td><td data-label="媒体">SSD</td><td data-label="特徴">超高耐久・高IOPS</td><td data-label="主用途">高性能DB</td><td data-label="ポイント">ミッションクリティカル</td></tr>
+<tr><td data-label="種類"><code>io1</code></td><td data-label="媒体">SSD</td><td data-label="特徴">高IOPS</td><td data-label="主用途">高性能DB</td><td data-label="ポイント">io2の旧世代</td></tr>
+<tr><td data-label="種類"><code>st1</code></td><td data-label="媒体">HDD</td><td data-label="特徴">高スループット</td><td data-label="主用途">ビッグデータ、ログ</td><td data-label="ポイント">順次読み書き向け</td></tr>
+<tr><td data-label="種類"><code>sc1</code></td><td data-label="媒体">HDD</td><td data-label="特徴">超低コスト</td><td data-label="主用途">アーカイブ</td><td data-label="ポイント">最低性能</td></tr>
+<tr><td data-label="種類"><code>standard</code></td><td data-label="媒体">HDD</td><td data-label="特徴">旧世代の磁気ディスク</td><td data-label="主用途">レガシー</td><td data-label="ポイント">ほぼ非推奨</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 779 126" style="max-width:779px;min-width:623px" role="img" aria-label="図2 ボリュームタイプの選び方。ランダムアクセスが多い用途はSSD、大きなファイルの順次読み書きはHDD。迷ったらgp3。(旧世代のgp2・io1・standardは省略)"><defs><marker id="dgservices-ebs-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="24" y="12" width="340" height="90" rx="10" class="dg-group"/>
+<text x="34" y="28" class="dg-s">SSD(IOPS重視)</text>
+<rect x="415" y="12" width="340" height="90" rx="10" class="dg-group"/>
+<text x="425" y="28" class="dg-s">HDD(順次読み書き)</text>
+<g data-node="gp3">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="62" text-anchor="middle" class="dg-tb">gp3</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">汎用・まずはこれ</text>
+</g>
+<g data-node="io2">
+<rect x="204" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="279" y="62" text-anchor="middle" class="dg-t">io2</text>
+<text x="279" y="80" text-anchor="middle" class="dg-s">高IOPS・高耐久</text>
+</g>
+<g data-node="st1">
+<rect x="425" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="500" y="62" text-anchor="middle" class="dg-t">st1</text>
+<text x="500" y="80" text-anchor="middle" class="dg-s">高スループット</text>
+</g>
+<g data-node="sc1">
+<rect x="595" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="670" y="62" text-anchor="middle" class="dg-t">sc1</text>
+<text x="670" y="80" text-anchor="middle" class="dg-s">最低コスト</text>
+</g>
+</svg>
+</div>
+<figcaption>図2 ボリュームタイプの選び方。ランダムアクセスが多い用途はSSD、大きなファイルの順次読み書きはHDD。迷ったらgp3。(旧世代のgp2・io1・standardは省略)</figcaption>
+</figure>
+
+<h3 id="c2-2">ボリュームタイプごとの性能値<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>種類</th><th>サイズ</th><th>IOPS</th><th>スループット</th><th>性能の決まり方</th></tr>
+<tr><td data-label="種類"><code>gp3</code></td><td data-label="サイズ">1GiB〜64TiB</td><td data-label="IOPS">ベースライン<strong>3,000</strong>、最大80,000</td><td data-label="スループット">ベースライン<strong>125MiB/s</strong>、最大2,000MiB/s</td><td data-label="性能の決まり方"><strong>サイズに関係なく</strong>ベースラインが付き、IOPS・スループットを追加料金で個別に上げられる(IOPSは1GiBあたり500まで)</td></tr>
+<tr><td data-label="種類"><code>gp2</code></td><td data-label="サイズ">1GiB〜16TiB</td><td data-label="IOPS"><strong>1GiBあたり3IOPS</strong>(最低100、最大16,000)。1TiB未満はバーストで3,000まで</td><td data-label="スループット">最大250MiB/s</td><td data-label="性能の決まり方">IOPSが<strong>サイズに比例</strong>。性能のために容量を増やす必要がある</td></tr>
+<tr><td data-label="種類"><code>io2</code>(Block Express)</td><td data-label="サイズ">4GiB〜64TiB</td><td data-label="IOPS">最大256,000(1GiBあたり1,000まで)</td><td data-label="スループット">最大4,000MiB/s</td><td data-label="性能の決まり方">IOPSを指定して確保する。耐久性99.999%</td></tr>
+<tr><td data-label="種類"><code>io1</code></td><td data-label="サイズ">4GiB〜16TiB</td><td data-label="IOPS">最大64,000(1GiBあたり50まで)</td><td data-label="スループット">最大1,000MiB/s</td><td data-label="性能の決まり方">IOPSを指定して確保する</td></tr>
+<tr><td data-label="種類"><code>st1</code></td><td data-label="サイズ">125GiB〜16TiB</td><td data-label="IOPS">—</td><td data-label="スループット">1TiBあたりベースライン40MiB/s・バースト250MiB/s、最大500MiB/s</td><td data-label="性能の決まり方">容量に比例。<strong>ブートボリュームにできない</strong></td></tr>
+<tr><td data-label="種類"><code>sc1</code></td><td data-label="サイズ">125GiB〜16TiB</td><td data-label="IOPS">—</td><td data-label="スループット">1TiBあたりベースライン12MiB/s・バースト80MiB/s、最大250MiB/s</td><td data-label="性能の決まり方">容量に比例。ブートボリュームにできない</td></tr>
+</table></div>
+<p>gp3の上限は2025年に、16,000IOPS・1,000MiB/s・16TiBから引き上げられました。gp2からgp3に変えると、同じ容量でも3,000IOPSが保証され、料金も安くなるのが一般的です。また、ボリュームの性能とは別に、<strong>インスタンスタイプごとのEBS帯域幅の上限</strong>があり、ボリュームの性能を上げてもインスタンス側で頭打ちになることがあります。</p>
+
+<h3 id="c2-3">スナップショットは増分<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>EBSスナップショットは<strong>増分バックアップ</strong>です。最初のスナップショットはボリュームで使われているブロック全体を保存し、2回目以降は<strong>前回から変更されたブロックだけ</strong>を保存します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 650 210" style="max-width:650px;min-width:520px" role="img" aria-label="図3 スナップショットは増分。2回目以降は変更されたブロックだけを保存し、未変更のブロックは前のスナップショットのものを参照する。どのスナップショットからでもボリューム全体を復元できる。"><defs><marker id="dgservices-ebs-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s1">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">スナップショット1</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">全ブロック 100GB</text>
+</g>
+<g data-node="s2">
+<rect x="255" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="330" y="62" text-anchor="middle" class="dg-t">スナップショット2</text>
+<text x="330" y="80" text-anchor="middle" class="dg-s">変更分 5GB</text>
+</g>
+<g data-node="s3">
+<rect x="476" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="551" y="62" text-anchor="middle" class="dg-t">スナップショット3</text>
+<text x="551" y="80" text-anchor="middle" class="dg-s">変更分 3GB</text>
+</g>
+<g data-node="r">
+<rect x="255" y="134" width="371" height="52" rx="8" class="dg-ok"/>
+<text x="440" y="156" text-anchor="middle" class="dg-t">どれからでも完全に復元</text>
+<text x="440" y="174" text-anchor="middle" class="dg-s">未変更のブロックは前のものを参照</text>
+</g>
+<path d="M184.0,66.5 L255.0,66.5" class="dg-line" marker-end="url(#dgservices-ebs-3)"/>
+<path d="M405.0,66.5 L476.0,66.5" class="dg-line" marker-end="url(#dgservices-ebs-3)"/>
+<path d="M520.3,92.5 L471.2,134.0" class="dg-line dg-dash" marker-end="url(#dgservices-ebs-3)"/>
+</svg>
+</div>
+<figcaption>図3 スナップショットは増分。2回目以降は変更されたブロックだけを保存し、未変更のブロックは前のスナップショットのものを参照する。どのスナップショットからでもボリューム全体を復元できる。</figcaption>
+</figure>
+<ul>
+<li>保存料金は実際に保存したブロック分だけなので、頻繁に取っても容量は増えにくい</li>
+<li><strong>古いスナップショットを削除しても、後のスナップショットから復元できる</strong>(他のスナップショットが参照しているブロックは残され、どこからも参照されないブロックだけが削除される)</li>
+<li>スナップショットは取得を開始した時点の内容になる。DBなど整合性が必要な場合は、書き込みを止めるかアプリ側で静止させてから取る</li>
+<li>別リージョンへの<strong>コピー</strong>(災害対策)や、別アカウントとの共有ができる(暗号化されている場合は、カスタマー管理のKMSキーで、そのキーの利用も相手に許可する)</li>
+<li>スナップショットから作ったボリュームは、ブロックが初めて読まれるときにS3から読み込まれるため、最初は遅い。すぐに全性能が必要なら<strong>高速スナップショット復元(FSR)</strong>を使う</li>
+<li>めったに使わない長期保存用には、料金が安い<strong>スナップショットのアーカイブ階層</strong>がある(復元に24〜72時間、最低90日)</li>
+</ul>
+
+<h3 id="c2-4">Data Lifecycle Manager(DLM)<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>Amazon Data Lifecycle Manager(DLM)</strong>は、EBSスナップショット(とEBSを使うAMI)の<strong>作成・保持・削除を自動化</strong>する機能です。</p>
+<ul>
+<li>対象は<strong>タグ</strong>で指定する(例:<code>Backup=daily</code> が付いたボリューム・インスタンス)</li>
+<li>スケジュール(12時間ごと、24時間ごと、cron式など)と、保持する数・期間を決める。古いものは自動で削除される</li>
+<li>別リージョンへのコピー、別アカウントとの共有、高速スナップショット復元の有効化もポリシーで自動化できる</li>
+<li>DLM自体は無料(スナップショットの保存料金だけがかかる)</li>
+</ul>
+<p>EBSだけを対象にするならDLM、RDS・DynamoDB・EFSなど<strong>複数のサービスのバックアップをまとめて管理</strong>したいなら<a href="backup.html">AWS Backup</a>を使います。</p>
+
+<h3 id="c2-5">ごみ箱(Recycle Bin)<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>ごみ箱(Recycle Bin)</strong>は、削除した<strong>EBSスナップショットとEBSを使うAMI</strong>を、すぐに消さずに一定期間残しておく機能です。誤って削除しても、保持期間内なら<strong>ごみ箱から復元</strong>できます。</p>
+<ul>
+<li><strong>保持ルール</strong>で対象(リージョン内のすべて、または特定のタグが付いたもの)と保持期間(1日〜1年)を決める</li>
+<li>ルールを<strong>ロック</strong>すると、ルールの変更・削除ができなくなり、悪意のある削除やランサムウェアへの対策になる</li>
+<li>ごみ箱にある間も、通常のスナップショットと同じ保存料金がかかる</li>
+</ul>
+
+<h3 id="c2-6">既存の暗号化されていないボリュームを暗号化する手順<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>EBSの暗号化は<strong>ボリュームの作成時</strong>に決まり、既存のボリュームの暗号化をそのまま有効にすることはできません。暗号化されていないボリュームは、次の手順で暗号化したボリュームに置き換えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 678 210" style="max-width:678px;min-width:542px" role="img" aria-label="図4 暗号化されていないボリュームを暗号化する手順。①スナップショットを取り、②暗号化を指定してコピーし、③そこから新しいボリュームを作成して、④インスタンスを停止して古いボリュームと付け替える。"><defs><marker id="dgservices-ebs-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="v">
+<rect x="34" y="40" width="140" height="52" rx="8" class="dg-ng"/>
+<text x="104" y="62" text-anchor="middle" class="dg-t">既存ボリューム</text>
+<text x="104" y="80" text-anchor="middle" class="dg-s">暗号化なし</text>
+</g>
+<g data-node="s">
+<rect x="194" y="40" width="140" height="52" rx="8" class="dg-box"/>
+<text x="264" y="62" text-anchor="middle" class="dg-t">スナップショット</text>
+<text x="264" y="80" text-anchor="middle" class="dg-s">暗号化なし</text>
+</g>
+<g data-node="c">
+<rect x="354" y="40" width="140" height="52" rx="8" class="dg-box"/>
+<text x="424" y="62" text-anchor="middle" class="dg-t">コピー</text>
+<text x="424" y="80" text-anchor="middle" class="dg-s">KMSキーで暗号化</text>
+</g>
+<g data-node="nv">
+<rect x="514" y="40" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="584" y="62" text-anchor="middle" class="dg-t">新しいボリューム</text>
+<text x="584" y="80" text-anchor="middle" class="dg-s">暗号化あり</text>
+</g>
+<g data-node="ec2">
+<rect x="514" y="134" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="584" y="156" text-anchor="middle" class="dg-tb">EC2</text>
+<text x="584" y="174" text-anchor="middle" class="dg-s">④ 付け替え</text>
+</g>
+<path d="M174.0,66.5 L194.0,66.5" class="dg-line" marker-end="url(#dgservices-ebs-4)"/>
+<text x="184" y="70" text-anchor="middle" class="dg-s dg-halo">①</text>
+<path d="M334.0,66.5 L354.0,66.5" class="dg-line" marker-end="url(#dgservices-ebs-4)"/>
+<text x="344" y="70" text-anchor="middle" class="dg-s dg-halo">②</text>
+<path d="M494.0,66.5 L514.0,66.5" class="dg-line" marker-end="url(#dgservices-ebs-4)"/>
+<text x="504" y="70" text-anchor="middle" class="dg-s dg-halo">③</text>
+<path d="M584.0,92.5 L584.0,134.0" class="dg-line" marker-end="url(#dgservices-ebs-4)"/>
+</svg>
+</div>
+<figcaption>図4 暗号化されていないボリュームを暗号化する手順。①スナップショットを取り、②暗号化を指定してコピーし、③そこから新しいボリュームを作成して、④インスタンスを停止して古いボリュームと付け替える。</figcaption>
+</figure>
+<ol>
+<li>ボリュームのスナップショットを取る</li>
+<li>スナップショットを、<strong>暗号化を有効にしてコピー</strong>する(KMSキーを指定)。スナップショットからボリュームを作るときに暗号化を指定してもよい</li>
+<li>暗号化されたスナップショットから、<strong>同じAZ</strong>に新しいボリュームを作る</li>
+<li>インスタンスを停止し、古いボリュームをデタッチして、新しいボリュームを<strong>同じデバイス名</strong>でアタッチしてから起動する(ルートボリュームは「ルートボリュームの置き換え」でも行える)</li>
+</ol>
+<p>今後作るボリュームを必ず暗号化するには、リージョンごとの設定「<strong>EBSのデフォルト暗号化</strong>」を有効にします。暗号化されたボリュームでは、保存データ・インスタンスとの間の通信・スナップショット・そこから作るボリュームがすべて暗号化され、性能への影響はほとんどありません。</p>
+
+<h3 id="c2-7">Elastic Volumes<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>Elastic Volumes</strong>は、アタッチしたまま(インスタンスを止めずに)<strong>サイズ・ボリュームタイプ・IOPS・スループットを変更</strong>できる機能です。gp2からgp3への変更も、この機能でオンラインで行えます。</p>
+<ul>
+<li>変更中の状態は「modifying → optimizing → completed」と進み、optimizingの間も使えるが性能が揺れることがある</li>
+<li>同じボリュームを再び変更するには、前回の変更から<strong>6時間以上</strong>空ける必要がある</li>
+<li><strong>サイズは増やせるが減らせない</strong>。小さくしたいときは新しいボリュームを作ってデータをコピーする</li>
+</ul>
+<p>サイズを増やしても、<strong>OSから見えるパーティションとファイルシステムは自動では広がりません</strong>。変更後に、OSの中で拡張します。</p>
+<pre class="code"><code># パーティションの拡張(例:/dev/nvme0n1 の1番目のパーティション)
+sudo growpart /dev/nvme0n1 1
+# ファイルシステムの拡張
+sudo xfs_growfs -d /     # XFSの場合
+sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
+<p>Windowsでは「ディスクの管理」でボリュームを拡張します。「容量を増やしたのにディスクの空きが増えない」ときは、この拡張を忘れていないかを確認します。</p>
+<h3 id="c2-8">CloudWatchメトリクス<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>観点</th><th>メトリクス</th></tr>
+<tr><td>IOPS(1秒あたりのI/O操作数)</td><td><code>VolumeReadOps</code>、<code>VolumeWriteOps</code></td></tr>
+<tr><td>スループット(1秒あたりの転送量、MiB/s)</td><td><code>VolumeReadBytes</code>、<code>VolumeWriteBytes</code></td></tr>
+<tr><td>レイテンシー(1回のI/Oが完了するまでの時間)</td><td><code>VolumeTotalReadTime</code>、<code>VolumeTotalWriteTime</code>(I/Oにかかった合計時間。<code>VolumeReadOps</code>/<code>VolumeWriteOps</code> で割ると1回あたりの平均レイテンシーになる)</td></tr>
+<tr><td>アイドル時間</td><td><code>VolumeIdleTime</code></td></tr>
+<tr><td>バーストクレジットの残量</td><td><code>BurstBalance</code></td></tr>
+<tr><td>キューの深さ(完了待ちのI/O数)</td><td><code>VolumeQueueLength</code></td></tr>
+</table></div>
+
+<h3 id="c2-9">ストレージの最適化<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>RAIDを構成できます。<strong>ストライピング(RAID 0)</strong>はデータを複数ボリュームに分散して並列処理し、性能を上げます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>OSディスク(Windows/Linux)</li>
+<li>データベースの保存領域(MySQL/PostgreSQL)</li>
+<li>アプリケーションのログ保存</li>
+<li>アップロードファイルなどの永続データ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>プロビジョニングした容量(GB/月)に対して課金され、gp3やio1/io2では追加のIOPS・スループットにも料金がかかります。EC2が停止中でもボリュームの料金は発生します。スナップショットは保存量に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:EBSをアタッチするインスタンス</li>
+<li><a href="s3.html">Amazon S3</a>:スナップショットの保存先</li>
+<li><a href="efs.html">Amazon EFS</a>:複数インスタンス・複数AZで共有できるファイルストレージ</li>
+<li><a href="backup.html">AWS Backup</a>:スナップショットの一元管理</li>
+<li><a href="kms.html">AWS KMS</a>:ボリューム・スナップショットの暗号化キー</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:メトリクスの監視</li>
+<li>関連する用語:<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>ボリュームタイプと性能</h4>
+<ul>
+<li>迷ったら<strong>gp3</strong>。高IOPSのDB → <strong>io2</strong>。大量の順次読み書き → <strong>st1</strong>。</li>
+<li>gp3はサイズに関係なく<strong>3,000IOPS・125MiB/s</strong>のベースライン。gp2は<strong>1GiBあたり3IOPS</strong>でサイズに比例する。st1・sc1はブートボリュームにできない。</li>
+<li>gp2で性能が落ちる → <code>BurstBalance</code>(バーストクレジット残量)を確認。</li>
+<li>I/Oが詰まっている → <code>VolumeQueueLength</code> を確認。</li>
+<li>性能を上げたい → RAID 0(ストライピング)。</li>
+</ul>
+<h4>スナップショット・バックアップ</h4>
+<ul>
+<li>EBSはAZに紐づく。別AZへはスナップショット経由。</li>
+<li>スナップショットは<strong>増分</strong>。古いスナップショットを削除しても、残ったスナップショットから完全に復元できる。</li>
+<li>タグで対象を決めてスナップショットを自動作成・削除 → <strong>Data Lifecycle Manager</strong>。複数サービスのバックアップ → AWS Backup。</li>
+<li>誤って削除したスナップショット・AMIを復元したい → <strong>ごみ箱(Recycle Bin)</strong>の保持ルール。</li>
+</ul>
+<h4>暗号化・変更</h4>
+<ul>
+<li>既存のボリュームを暗号化 → スナップショット → <strong>暗号化してコピー</strong> → 新しいボリュームを作って付け替える。今後のボリュームは<strong>デフォルト暗号化</strong>で強制。</li>
+<li>止めずにサイズ・タイプを変更 → <strong>Elastic Volumes</strong>。その後OSで<strong>パーティションとファイルシステムを拡張</strong>する。サイズは縮小できない。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>EBSはEC2用の永続ブロックストレージ。停止してもデータは残る。</li>
+<li>標準はgp3、高性能はio2、HDDはst1/sc1。</li>
+<li>性能のトラブルはCloudWatchメトリクスで切り分ける。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/ebs-performance.html"><span class="title">EC2・EBSの性能不足を見つけて改善する</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 7件・リンク元 9件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 306" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon EBSとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/compute-optimizer.html"><title>サービス:AWS Compute Optimizer</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Compute Optimizer</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/elastic-disaster-recovery.html"><title>サービス:AWS Elastic Disaster Recovery</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Elastic Disaster Reco…</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/storage-gateway.html"><title>サービス:AWS Storage Gateway</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Storage Gateway</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/eks.html"><title>サービス:Amazon EKS</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon EKS</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cron-rate-expressions.html"><title>用語:cron式とrate式</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">cron式とrate式</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/storage-types.html"><title>用語:ブロック・ファイル・オブジェクトストレージ</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">ブロック・ファイル・オブジェク…</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/region-az.html"><title>用語:リージョンとアベイラビリティーゾーン</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">リージョンとアベイラビリティー…</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/encryption.html"><title>用語:保存時の暗号化と転送時の暗号化</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">保存時の暗号化と転送時の暗号化</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ebs-performance.html"><title>運用シナリオ:EC2・EBSの性能不足を見つけて改善する</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">EC2・EBSの性能不足を見つけて…</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Backup</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/kms.html"><title>サービス:AWS KMS</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS KMS</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/efs.html"><title>サービス:Amazon EFS</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon EFS</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/performance-metrics.html"><title>用語:IOPS・スループット・レイテンシー</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">IOPS・スループット・レイテン…</text></a>
+<rect x="300" y="145" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="170" text-anchor="middle" class="gr-tb">Amazon EBS</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(9)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="s3.html"><span class="label">← 前へ</span>Amazon S3</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="efs.html"><span class="label">次へ →</span>Amazon EFS</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

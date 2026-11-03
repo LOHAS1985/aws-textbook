@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>料金の基本 | AWS教科書</title>
+<meta name="description" content="使った分だけ払う従量課金の考え方と、見落としやすいデータ転送料金・無料利用枠・割引の仕組み">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>料金の基本</h1>
+  <p class="lead">使った分だけ払う従量課金の考え方と、見落としやすいデータ転送料金・無料利用枠・割引の仕組み</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWSの料金は、基本的に<strong>使った分だけ払う従量課金</strong>です。初期費用や長期の契約はなく、止めたり削除したりすれば料金もかからなくなります。料金は主に次の要素の組み合わせで決まります。</p>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>単位</th><th>例</th></tr>
+<tr><td>コンピューティング</td><td>動かした時間(秒・時間)、リクエスト数</td><td>EC2(Linuxは秒単位、最低60秒)、Lambda(リクエスト数と実行時間)</td></tr>
+<tr><td>ストレージ</td><td>保存した量 × 期間(GB・月)</td><td>S3、EBS(<strong>アタッチしていなくても</strong>確保した容量に課金)、スナップショット</td></tr>
+<tr><td>リクエスト・処理量</td><td>回数・処理したデータ量</td><td>S3のPUT・GET、NATゲートウェイの処理量、CloudWatch Logsの取り込み量</td></tr>
+<tr><td><strong>データ転送</strong></td><td>送ったデータ量(GB)</td><td>インターネットへの送信、AZ間・リージョン間の通信</td></tr>
+<tr><td>時間単位の固定費</td><td>存在する時間</td><td>NATゲートウェイ、ロードバランサー、パブリックIPv4アドレス、インターフェイス型VPCエンドポイント</td></tr>
+</table></div>
+
+<h3 id="c1-1">データ転送料金<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>見落としやすく、想定外の請求の原因になりやすいのがデータ転送料金です。<strong>入ってくる通信は無料、出ていく通信は有料</strong>が基本です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 データ転送料金の基本。インターネットからの受信は無料、インターネットへの送信は有料。同じリージョンでもAZをまたぐ通信は両方向で課金され、リージョン間の通信も有料。同じAZ内のプライベートIPアドレスでの通信は無料。"><defs><marker id="dgterms-pricing-basics-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="net">
+<rect x="34" y="89" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="113" text-anchor="middle" class="dg-t">インターネット</text>
+</g>
+<g data-node="a">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">AZ-a</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">EC2</text>
+</g>
+<g data-node="b">
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="147" text-anchor="middle" class="dg-tb">AZ-c</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">EC2</text>
+</g>
+<g data-node="r">
+<rect x="510" y="89" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="113" text-anchor="middle" class="dg-t">別のリージョン</text>
+</g>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line dg-dash" marker-end="url(#dgterms-pricing-basics-1)"/>
+<text x="228" y="92" text-anchor="middle" class="dg-s dg-halo">受信は無料</text>
+<path d="M272.0,79.9 L184.0,95.6" class="dg-line" marker-end="url(#dgterms-pricing-basics-1)"/>
+<text x="228" y="92" text-anchor="middle" class="dg-s dg-halo">送信は有料</text>
+<path d="M347.0,92.5 L347.0,125.5" class="dg-line" marker-end="url(#dgterms-pricing-basics-1)" marker-start="url(#dgterms-pricing-basics-1)"/>
+<text x="347" y="113" text-anchor="middle" class="dg-s dg-halo">AZ間は有料</text>
+<path d="M422.0,79.9 L510.0,95.6" class="dg-line" marker-end="url(#dgterms-pricing-basics-1)"/>
+<text x="466" y="92" text-anchor="middle" class="dg-s dg-halo">有料</text>
+</svg>
+</div>
+<figcaption>図1 データ転送料金の基本。インターネットからの受信は無料、インターネットへの送信は有料。同じリージョンでもAZをまたぐ通信は両方向で課金され、リージョン間の通信も有料。同じAZ内のプライベートIPアドレスでの通信は無料。</figcaption>
+</figure>
+<ul>
+<li>インターネットへの送信は、毎月一定量(全サービス合計で100GB)まで無料</li>
+<li>同じリージョンのS3・DynamoDBとの通信は、ゲートウェイ型のVPCエンドポイントを使えば無料で、NATゲートウェイの処理料金もかからない</li>
+<li>CloudFrontからの配信は、EC2やS3から直接インターネットに送るより安くなることが多い。オリジン(AWS内)からCloudFrontへの転送は無料</li>
+<li>NATゲートウェイは、時間料金に加えて<strong>処理したデータ量</strong>でも課金される。他のAZのNATゲートウェイを通すと、AZ間の転送料金も加わる</li>
+</ul>
+
+<h3 id="c1-2">割引の仕組み<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>内容</th><th>向いている使い方</th></tr>
+<tr><td>オンデマンド</td><td>割引なし。いつでも開始・停止できる</td><td>短期間・予測できない使い方</td></tr>
+<tr><td><a href="../services/savings-plans.html">Savings Plans</a></td><td>1年か3年、1時間あたりの利用額を約束して割引</td><td>ずっと動かし続ける部分(EC2・Fargate・Lambda)</td></tr>
+<tr><td>リザーブドインスタンス</td><td>1年か3年、インスタンスの種類などを約束して割引</td><td>RDS・ElastiCache・OpenSearchなど、Savings Plansの対象外のサービス</td></tr>
+<tr><td>スポットインスタンス</td><td>余っている容量を大幅な割引で使う。2分前の通知で中断されることがある</td><td>中断されてもよい処理(バッチ・CI・ステートレスな処理)</td></tr>
+</table></div>
+
+<h3 id="c1-3">無料利用枠<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>新しく作ったアカウントには<strong>クレジット</strong>(最初に100ドル、主要なサービスを試すとさらに最大100ドル)が付きます。アカウントの作成時に次の2つのプランを選びます。</p>
+<ul>
+<li><strong>無料プラン</strong>:クレジットと無料の範囲だけで使え、料金は請求されない。作成から6か月か、クレジットを使い切ると終了する(続けるには有料プランに切り替える)。使えるサービスに制限がある</li>
+<li><strong>有料プラン</strong>:すべてのサービスを従量課金で使える。クレジットは料金に自動で充当される</li>
+</ul>
+<p>どちらのプランでも、30以上のサービスには毎月一定量まで<strong>ずっと無料</strong>の枠があります(Lambdaのリクエスト、DynamoDBの容量など)。</p>
+
+<h3 id="c1-4">費用を見て、管理する<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>AWS Pricing Calculator</strong>:作る前に費用を見積もる</li>
+<li><strong>AWS Budgets</strong>:予算を決めて、超えそう・超えたときに通知する(予算アクションで権限の制限やインスタンスの停止も可能)</li>
+<li><strong>Cost Explorer</strong>:費用の内訳と推移を見る。<a href="tags.html">コスト配分タグ</a>でプロジェクトごとに集計する</li>
+<li><strong>コスト異常検出</strong>:いつもと違う費用の増え方を見つけて通知する</li>
+</ul>
+<div class="point"><p>「使っていないのに請求が続く」原因の典型は、<strong>停止したEC2のEBSボリューム</strong>、アタッチしていないEBS・Elastic IP、古いスナップショット、使っていないNATゲートウェイやロードバランサーです。EC2は停止すればインスタンスの料金は止まりますが、EBSの料金はかかり続けます。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="cost-management-comparison.html">コスト管理ツールの選び方</a>:Budgets・Cost Explorer・CURなどの使い分け</li>
+<li><a href="tags.html">タグ</a>:コスト配分タグ</li>
+<li><a href="vpc-endpoint.html">VPCエンドポイント</a>:NATゲートウェイの料金を減らす</li>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:AZ間・リージョン間の通信</li>
+<li><a href="support-plans.html">サポートプラン</a>:サポートの料金</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cost-explorer.html">AWS Cost Explorer</a>:費用の分析</li>
+<li><a href="../services/cost-and-usage-reports.html">AWS Cost and Usage Reports</a>:詳細な請求データ</li>
+<li><a href="../services/savings-plans.html">Savings Plans</a>:利用額の約束による割引</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:購入オプション(オンデマンド・RI・スポット)</li>
+<li><a href="../services/cloudfront.html">Amazon CloudFront</a>:配信の転送料金を下げる</li>
+<li><a href="../services/compute-optimizer.html">AWS Compute Optimizer</a>:サイズの見直し</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/aurora.html"><span class="title">Amazon Aurora</span><span class="kind">サービス</span><span class="desc">MySQL/PostgreSQL互換の高性能リレーショナルデータベース</span></a></li>
+<li><a href="../services/cognito.html"><span class="title">Amazon Cognito</span><span class="kind">サービス</span><span class="desc">アプリにユーザー認証・認可の機能を提供するサービス</span></a></li>
+<li><a href="../services/private-ca.html"><span class="title">AWS Private CA</span><span class="kind">サービス</span><span class="desc">組織内で使うプライベート証明書を発行する認証局</span></a></li>
+<li><a href="../services/control-tower.html"><span class="title">AWS Control Tower</span><span class="kind">サービス</span><span class="desc">ベストプラクティスに沿ったマルチアカウント環境(ランディングゾーン)を作り、コントロールで統制する</span></a></li>
+<li><a href="../services/devops-agent.html"><span class="title">AWS DevOps Agent</span><span class="kind">サービス</span><span class="desc">障害の原因調査・対応策の提示・再発防止の提案を行う、運用のためのAIエージェント</span></a></li>
+<li><a href="../services/cost-explorer.html"><span class="title">AWS Cost Explorer</span><span class="kind">サービス</span><span class="desc">AWSの料金と使用量をグラフで分析し、将来の費用を予測する</span></a></li>
+<li><a href="../services/budgets.html"><span class="title">AWS Budgets</span><span class="kind">サービス</span><span class="desc">費用や使用量に予算を決め、超えそうなときに通知し、必要なら予算アクションで自動的に制限する</span></a></li>
+<li><a href="../services/cost-and-usage-reports.html"><span class="title">AWS Cost and Usage Reports</span><span class="kind">サービス</span><span class="desc">最も詳細な料金・使用量のデータを、S3にファイルとして定期的に出力する</span></a></li>
+<li><a href="../services/savings-plans.html"><span class="title">Savings Plans</span><span class="kind">サービス</span><span class="desc">1年または3年の利用額(1時間あたりの金額)を約束して、コンピューティングなどの料金を割り引く</span></a></li>
+<li><a href="../services/kiro.html"><span class="title">Kiro</span><span class="kind">サービス</span><span class="desc">仕様(スペック)から設計・実装までをAIエージェントと進める開発環境(IDE・CLI)</span></a></li>
+<li><a href="../services/athena.html"><span class="title">Amazon Athena</span><span class="kind">サービス</span><span class="desc">S3上のデータを標準SQLで直接分析するサーバーレスなクエリサービス</span></a></li>
+<li><a href="../services/opensearch.html"><span class="title">Amazon OpenSearch Service</span><span class="kind">サービス</span><span class="desc">全文検索・ログ分析のための検索・分析サービス</span></a></li>
+<li><a href="../usecases/scheduled-start-stop.html"><span class="title">開発環境を夜間・休日に自動で停止して費用を下げる</span><span class="kind">運用シナリオ</span></a></li>
+<li><a href="../usecases/private-subnet-endpoints.html"><span class="title">プライベートサブネットからNATなしでAWSのサービスを使う</span><span class="kind">運用シナリオ</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 11件・リンク元 12件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 396" style="max-width:784px;min-width:600px" role="img" aria-label="料金の基本とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/budgets.html"><title>サービス:AWS Budgets</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Budgets</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Control Tower</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/devops-agent.html"><title>サービス:AWS DevOps Agent</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS DevOps Agent</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/private-ca.html"><title>サービス:AWS Private CA</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS Private CA</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Amazon Athena</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">Amazon Aurora</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/cognito.html"><title>サービス:Amazon Cognito</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">Amazon Cognito</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/opensearch.html"><title>サービス:Amazon OpenSearch Service</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">Amazon OpenSearch Service</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/kiro.html"><title>サービス:Kiro</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="290" class="gr-t">Kiro</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="320" class="gr-t">AWS Well-Architected フレ…</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/private-subnet-endpoints.html"><title>運用シナリオ:プライベートサブネットからNATなしでAWSのサービスを使う</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="350" class="gr-t">プライベートサブネットからNAT…</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,210 300,210" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/scheduled-start-stop.html"><title>運用シナリオ:開発環境を夜間・休日に自動で停止して費用を下げる</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="380" class="gr-t">開発環境を夜間・休日に自動で停…</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,60 550,60" marker-end="url(#gr-arrow)"/>
+<a href="../services/compute-optimizer.html"><title>サービス:AWS Compute Optimizer</title><rect x="550" y="49" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="64" class="gr-t">AWS Compute Optimizer</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,90 550,90" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cost-explorer.html"><title>サービス:AWS Cost Explorer</title><rect x="550" y="79" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="94" class="gr-t">AWS Cost Explorer</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,120 550,120" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cost-and-usage-reports.html"><title>サービス:AWS Cost and Usage Reports</title><rect x="550" y="109" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="124" class="gr-t">AWS Cost and Usage Reports</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,150 550,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudfront.html"><title>サービス:Amazon CloudFront</title><rect x="550" y="139" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="154" class="gr-t">Amazon CloudFront</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,180 550,180" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="169" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="184" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,210 550,210" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/savings-plans.html"><title>サービス:Savings Plans</title><rect x="550" y="199" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="214" class="gr-t">Savings Plans</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,240 550,240" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-endpoint.html"><title>用語:VPCエンドポイント</title><rect x="550" y="229" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="244" class="gr-t">VPCエンドポイント</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,270 550,270" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="550" y="259" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="274" class="gr-t">コスト管理ツールの選び方</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,300 550,300" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/support-plans.html"><title>用語:サポートプラン</title><rect x="550" y="289" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="304" class="gr-t">サポートプラン</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,330 550,330" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="319" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="334" class="gr-t">タグ</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,360 550,360" marker-end="url(#gr-arrow)"/>
+<a href="../terms/region-az.html"><title>用語:リージョンとアベイラビリティーゾーン</title><rect x="550" y="349" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="364" class="gr-t">リージョンとアベイラビリティー…</text></a>
+<rect x="300" y="190" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="215" text-anchor="middle" class="gr-tb">料金の基本</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(12)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(11)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="tags.html"><span class="label">← 前へ</span>タグ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="support-plans.html"><span class="label">次へ →</span>サポートプラン</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

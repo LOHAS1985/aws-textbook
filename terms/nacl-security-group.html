@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ネットワークACLとセキュリティグループ | AWS教科書</title>
+<meta name="description" content="VPCで通信を許可・拒否する2つの仕組み">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">ネットワーク</a>
+  <h1>ネットワークACLとセキュリティグループ</h1>
+  <p class="lead">VPCで通信を許可・拒否する2つの仕組み</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(9項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">比較</a></li><li><a href="#c1-2">ネットワークACL(NACL)</a></li><li><a href="#c1-3">セキュリティグループ(SG)</a></li><li><a href="#c1-4">ステートフルとステートレスの違い(試験で重要)</a></li><li><a href="#c1-5">試験でよく問われるポイント</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+<li><a href="#c4">この用語が出てくるページ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>VPCでのネットワークアクセス制御には、主に<strong>ネットワークACL(NACL)</strong>と<strong>セキュリティグループ(SG)</strong>があります。</p>
+<ul>
+<li><strong>ネットワークACL</strong>:<strong>サブネット単位</strong>で通信を制御する</li>
+<li><strong>セキュリティグループ</strong>:ENI(Elastic Network Interface)に関連付けて、<strong>リソース単位</strong>で通信を制御する</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 807 129" style="max-width:807px;min-width:646px" role="img" aria-label="図1 2つの仕組みの位置関係。通信はサブネットの出入口でNACL、リソースの手前でSGのチェックを受ける。NACLとSGの両方で許可される必要がある。"><defs><marker id="dgterms-nacl-security-group-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="420" y="15" width="363" height="90" rx="10" class="dg-group"/>
+<text x="430" y="30" class="dg-s">サブネット</text>
+<g data-node="c">
+<rect x="34" y="49" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="73" text-anchor="middle" class="dg-t">クライアント</text>
+</g>
+<g data-node="nacl">
+<rect x="232" y="43" width="145" height="52" rx="8" class="dg-box"/>
+<text x="304" y="64" text-anchor="middle" class="dg-t">ネットワークACL</text>
+<text x="304" y="82" text-anchor="middle" class="dg-s">サブネットの出入口</text>
+</g>
+<g data-node="sg">
+<rect x="430" y="35" width="145" height="68" rx="8" class="dg-box"/>
+<text x="502" y="56" text-anchor="middle" class="dg-t">セキュリティ</text>
+<text x="502" y="74" text-anchor="middle" class="dg-t">グループ</text>
+<text x="502" y="92" text-anchor="middle" class="dg-s">ENIごと</text>
+</g>
+<g data-node="ec2">
+<rect x="628" y="49" width="145" height="40" rx="8" class="dg-accent"/>
+<text x="700" y="73" text-anchor="middle" class="dg-tb">EC2</text>
+</g>
+<path d="M179.0,69.0 L232.0,69.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-1)"/>
+<path d="M377.0,69.0 L430.0,69.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-1)"/>
+<path d="M575.0,69.0 L628.0,69.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-1)"/>
+</svg>
+</div>
+<figcaption>図1 2つの仕組みの位置関係。通信はサブネットの出入口でNACL、リソースの手前でSGのチェックを受ける。NACLとSGの両方で許可される必要がある。</figcaption>
+</figure>
+
+<h3 id="c1-1">比較<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>ネットワークACL(NACL)</th><th>セキュリティグループ(SG)</th></tr>
+<tr><td>適用単位</td><td>サブネット</td><td>ENI/リソース</td></tr>
+<tr><td>ステート</td><td>ステートレス</td><td>ステートフル</td></tr>
+<tr><td>ルール</td><td>インバウンド・アウトバウンドをそれぞれ設定</td><td>インバウンド・アウトバウンドを同時に設定</td></tr>
+<tr><td>ルールの評価</td><td>ルール番号の小さい順に評価し、最初に一致したルールを適用</td><td>すべての許可ルールを評価</td></tr>
+<tr><td>許可/拒否</td><td>許可・拒否の両方を設定可能</td><td>許可のみ</td></tr>
+<tr><td>デフォルト</td><td>デフォルトNACLはイン・アウトとも許可。カスタムNACLは原則拒否</td><td>インバウンドは原則拒否、アウトバウンドは原則許可</td></tr>
+</table></div>
+
+<h3 id="c1-2">ネットワークACL(NACL)<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>サブネットに関連付けるアクセス制御リスト。</li>
+<li><strong>ステートレス</strong>なので、戻りの通信も別途許可する必要がある。</li>
+<li>ルールには番号があり、<strong>番号の小さい順</strong>に評価され、最初に一致したルールが適用される。</li>
+<li><code>ALLOW</code> と <code>DENY</code> の両方を設定でき、特定のIPやCIDRからの通信を明示的に拒否したい場合に有用。</li>
+</ul>
+<p>例:Webサーバー用サブネットで、<code>10.0.0.0/16</code> からのTCP 80を許可、<code>203.0.113.0/24</code> からのTCP 80を拒否、その他を拒否。拒否ルールが許可ルールより先に評価されるよう、ルール番号を小さくする必要があります。</p>
+
+<h3 id="c1-3">セキュリティグループ(SG)<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>EC2などのリソースに紐づく仮想ファイアウォール。</li>
+<li><strong>ステートフル</strong>なので、許可した通信の戻りの通信は自動的に許可される。</li>
+<li><code>ALLOW</code> ルールのみ設定でき、<code>DENY</code> ルールは設定できない。</li>
+<li>1つのENIに複数のSGを関連付けられ、<strong>いずれかのSGで許可されれば通信が許可</strong>される。</li>
+<li>別のセキュリティグループを送信元として指定することもできる。</li>
+</ul>
+<p>例:TCP 443を <code>0.0.0.0/0</code> から許可、TCP 22を管理用IP <code>203.0.113.10/32</code> から許可 → HTTPSは全世界から、SSHは管理端末からだけ接続できる。</p>
+
+<h3 id="c1-4">ステートフルとステートレスの違い(試験で重要)<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 722 210" style="max-width:722px;min-width:578px" role="img" aria-label="図2 SGは許可したリクエストの戻りの通信を自動で許可する。NACLは戻りの通信もアウトバウンドルールで許可する必要がある。"><defs><marker id="dgterms-nacl-security-group-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="req1">
+<rect x="34" y="38" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="60" text-anchor="middle" class="dg-t">リクエスト</text>
+<text x="114" y="78" text-anchor="middle" class="dg-s">TCP 443</text>
+</g>
+<g data-node="sg">
+<rect x="286" y="38" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="366" y="60" text-anchor="middle" class="dg-tb">SG(ステートフル)</text>
+<text x="366" y="78" text-anchor="middle" class="dg-s">インバウンドを許可</text>
+</g>
+<g data-node="r1">
+<rect x="538" y="38" width="160" height="52" rx="8" class="dg-ok"/>
+<text x="618" y="60" text-anchor="middle" class="dg-t">戻りの通信</text>
+<text x="618" y="78" text-anchor="middle" class="dg-s">自動で許可</text>
+</g>
+<g data-node="req2">
+<rect x="34" y="134" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="156" text-anchor="middle" class="dg-t">リクエスト</text>
+<text x="114" y="174" text-anchor="middle" class="dg-s">TCP 443</text>
+</g>
+<g data-node="nacl">
+<rect x="286" y="134" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="366" y="156" text-anchor="middle" class="dg-tb">NACL(ステートレス)</text>
+<text x="366" y="174" text-anchor="middle" class="dg-s">インバウンドを許可</text>
+</g>
+<g data-node="r2">
+<rect x="538" y="134" width="160" height="52" rx="8" class="dg-ng"/>
+<text x="618" y="156" text-anchor="middle" class="dg-t">戻りの通信</text>
+<text x="618" y="174" text-anchor="middle" class="dg-s">別途許可が必要</text>
+</g>
+<path d="M194.0,64.0 L286.0,64.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-2)"/>
+<path d="M446.0,64.0 L538.0,64.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-2)"/>
+<path d="M194.0,160.0 L286.0,160.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-2)"/>
+<path d="M446.0,160.0 L538.0,160.0" class="dg-line" marker-end="url(#dgterms-nacl-security-group-2)"/>
+</svg>
+</div>
+<figcaption>図2 SGは許可したリクエストの戻りの通信を自動で許可する。NACLは戻りの通信もアウトバウンドルールで許可する必要がある。</figcaption>
+</figure>
+<p><code>SG = 戻りの通信を意識しなくてよい</code>、<code>NACL = 戻りの通信もルールで考える</code> と覚えるとよいでしょう。</p>
+
+<h3 id="c1-5">試験でよく問われるポイント<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="point"><ul>
+<li>特定のIPアドレスからの通信だけを明示的に拒否したい → <strong>ネットワークACL</strong>。</li>
+<li>EC2へのHTTPSを許可したとき、戻りの通信のルールは必要か → <strong>SGなら不要</strong>(ステートフル)。</li>
+<li>サブネット全体に対してアクセス制御したい → <strong>ネットワークACL</strong>。</li>
+<li>SGで明示的なDENYルールを設定したい → <strong>できない</strong>(許可ルールのみ)。</li>
+<li>NACLで許可したのに通信できない → SG、NACLの反対方向のルール、ルートテーブル、ゲートウェイなども確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="route-table.html">ルートテーブル</a>:通信の経路を決める(許可・拒否はしない)</li>
+<li><a href="vpc-flow-logs.html">VPCフローログ</a>:SG・NACLで許可(ACCEPT)・拒否(REJECT)された通信の記録</li>
+<li><a href="inbound-traffic.html">インバウンド通信</a>/<a href="outbound-traffic.html">アウトバウンド通信</a>:SG・NACLが関わる通信パターン</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:NACL・SGを設定するネットワーク</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:SGを関連付ける代表的なリソース</li>
+<li><a href="../services/config.html">AWS Config</a>/<a href="../services/security-hub.html">AWS Security Hub</a>:危険なSG設定の検出</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/vpc.html"><span class="title">Amazon VPC</span><span class="kind">サービス</span><span class="desc">AWS上に論理的に分離された仮想ネットワークを作るサービス</span></a></li>
+<li><a href="../services/waf.html"><span class="title">AWS WAF</span><span class="kind">サービス</span><span class="desc">HTTP/HTTPSのリクエストを検査し、SQLインジェクションや不正なアクセスを防ぐWebアプリケーションファイアウォール</span></a></li>
+<li><a href="../services/shield.html"><span class="title">AWS Shield</span><span class="kind">サービス</span><span class="desc">DDoS攻撃からAWS上のアプリケーションを守るサービス(StandardとAdvanced)</span></a></li>
+<li><a href="../services/network-firewall.html"><span class="title">AWS Network Firewall</span><span class="kind">サービス</span><span class="desc">VPCに出入りする通信を検査・フィルタリングするマネージド型のネットワークファイアウォール</span></a></li>
+<li><a href="../usecases/guardduty-auto-response.html"><span class="title">乗っ取られたEC2を自動で隔離する</span><span class="kind">運用シナリオ</span></a></li>
+<li><a href="../usecases/network-troubleshooting.html"><span class="title">EC2に接続できない原因を調査する</span><span class="kind">運用シナリオ</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 8件・リンク元 13件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 426" style="max-width:784px;min-width:600px" role="img" aria-label="ネットワークACLとセキュリティグループとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/network-firewall.html"><title>サービス:AWS Network Firewall</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Network Firewall</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/shield.html"><title>サービス:AWS Shield</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Shield</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/waf.html"><title>サービス:AWS WAF</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS WAF</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cidr.html"><title>用語:CIDR</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">CIDR</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/eni-elastic-ip.html"><title>用語:ENIとElastic IP</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">ENIとElastic IP</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/http-status-codes.html"><title>用語:HTTPステータスコードと切り分け</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">HTTPステータスコードと切り分け</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-traffic-mirroring.html"><title>用語:VPCトラフィックミラーリング</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">VPCトラフィックミラーリング</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-peering.html"><title>用語:VPCピアリング</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">VPCピアリング</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/port-numbers.html"><title>用語:よく使うポート番号</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="290" class="gr-t">よく使うポート番号</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/default-vpc.html"><title>用語:デフォルトVPC</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="320" class="gr-t">デフォルトVPC</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/monitoring-logging-comparison.html"><title>用語:監視・記録のサービスの選び方</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="350" class="gr-t">監視・記録のサービスの選び方</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/network-troubleshooting.html"><title>運用シナリオ:EC2に接続できない原因を調査する</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="380" class="gr-t">EC2に接続できない原因を調査する</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/guardduty-auto-response.html"><title>運用シナリオ:乗っ取られたEC2を自動で隔離する</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="410" class="gr-t">乗っ取られたEC2を自動で隔離する</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,120 550,120" marker-end="url(#gr-arrow)"/>
+<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="550" y="109" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="124" class="gr-t">AWS Config</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,150 550,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="550" y="139" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="154" class="gr-t">AWS Security Hub</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,180 550,180" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="169" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="184" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,210 550,210" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="199" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="214" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,240 550,240" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/vpc-flow-logs.html"><title>用語:VPCフローログ</title><rect x="550" y="229" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="244" class="gr-t">VPCフローログ</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,270 550,270" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/outbound-traffic.html"><title>用語:アウトバウンド通信</title><rect x="550" y="259" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="274" class="gr-t">アウトバウンド通信</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,300 550,300" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/inbound-traffic.html"><title>用語:インバウンド通信</title><rect x="550" y="289" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="304" class="gr-t">インバウンド通信</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,330 550,330" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/route-table.html"><title>用語:ルートテーブル</title><rect x="550" y="319" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="334" class="gr-t">ルートテーブル</text></a>
+<rect x="300" y="205" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="230" text-anchor="middle" class="gr-tb">ネットワークACLとセ…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(13)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="route-table.html"><span class="label">← 前へ</span>ルートテーブル</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="vpc-flow-logs.html"><span class="label">次へ →</span>VPCフローログ</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

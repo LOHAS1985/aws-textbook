@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon EC2 Auto Scaling | AWS教科書</title>
+<meta name="description" content="負荷や障害に合わせてEC2の台数を自動で増減・維持する">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#ED7100">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/auto-scaling.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">コンピューティング</a>
+  <h1>Amazon EC2 Auto Scaling</h1>
+  <p class="lead">負荷や障害に合わせてEC2の台数を自動で増減・維持する</p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(16項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">Auto Scalingグループの3つの台数</a></li><li><a href="#c2-2">起動テンプレート</a></li><li><a href="#c2-3">混合インスタンスポリシーと割り当て戦略</a></li><li><a href="#c2-4">スケーリングの方法</a></li><li><a href="#c2-5">ヘルスチェックと自己修復</a></li><li><a href="#c2-6">ライフサイクルフック</a></li><li><a href="#c2-7">そのほかの機能</a></li><li><a href="#c2-8">関連する「Auto Scaling」</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon EC2 Auto Scaling</strong>は、<strong>EC2インスタンスの台数を自動で増減・維持</strong>するサービスです。インスタンスを「<strong>Auto Scalingグループ(ASG)</strong>」という単位でまとめ、次の2つを自動化します。</p>
+<ul>
+<li><strong>台数の維持(自己修復)</strong>:異常なインスタンスを終了し、代わりを起動して決めた台数を保つ。</li>
+<li><strong>スケーリング</strong>:負荷が上がったら台数を増やし(スケールアウト)、下がったら減らす(スケールイン)。</li>
+</ul>
+<p>ELBと組み合わせると、増えたインスタンスは自動でターゲットに登録され、減ったインスタンスは登録を解除されます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">Auto Scalingグループの3つの台数<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>意味</th></tr>
+<tr><td>最小(Minimum)</td><td>これより少なくはしない台数</td></tr>
+<tr><td>希望(Desired)</td><td>今この台数で動かしたい、という目標の台数。スケーリングで変わる</td></tr>
+<tr><td>最大(Maximum)</td><td>これより多くはしない台数(コストの上限にもなる)</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 896 252" style="max-width:896px;min-width:717px" role="img" aria-label="図1 Auto Scalingグループの構成。起動テンプレートを元に複数AZへインスタンスを起動し、CloudWatchのメトリクスに応じて台数を変える。起動したインスタンスはELBのターゲットに自動で登録される。"><defs><marker id="dgservices-auto-scaling-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="lt">
+<rect x="34" y="83" width="145" height="52" rx="8" class="dg-box"/>
+<text x="106" y="104" text-anchor="middle" class="dg-t">起動テンプレート</text>
+<text x="106" y="122" text-anchor="middle" class="dg-s">AMI・タイプ・SG</text>
+</g>
+<g data-node="asg">
+<rect x="265" y="83" width="178" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="104" text-anchor="middle" class="dg-tb">Auto Scalingグループ</text>
+<text x="354" y="122" text-anchor="middle" class="dg-s">最小2・希望2・最大6</text>
+</g>
+<g data-node="a">
+<rect x="512" y="46" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="70" text-anchor="middle" class="dg-t">EC2(AZ-a)</text>
+</g>
+<g data-node="c">
+<rect x="512" y="132" width="145" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="156" text-anchor="middle" class="dg-t">EC2(AZ-c)</text>
+</g>
+<g data-node="cw">
+<rect x="265" y="176" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="338" y="198" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="338" y="216" text-anchor="middle" class="dg-s">CPU使用率など</text>
+</g>
+<g data-node="elb">
+<rect x="727" y="83" width="145" height="52" rx="8" class="dg-box"/>
+<text x="800" y="104" text-anchor="middle" class="dg-t">ELB</text>
+<text x="800" y="122" text-anchor="middle" class="dg-s">自動で登録</text>
+</g>
+<path d="M179.0,109.0 L265.0,109.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-1)"/>
+<text x="222" y="113" text-anchor="middle" class="dg-s dg-halo">これを元に起動</text>
+<path d="M443.0,92.6 L512.5,79.8" class="dg-line" marker-end="url(#dgservices-auto-scaling-1)"/>
+<path d="M443.0,125.4 L512.5,138.2" class="dg-line" marker-end="url(#dgservices-auto-scaling-1)"/>
+<path d="M342.1,176.5 L349.4,135.0" class="dg-line dg-dash" marker-end="url(#dgservices-auto-scaling-1)"/>
+<text x="346" y="160" text-anchor="middle" class="dg-s dg-halo">スケーリング</text>
+<path d="M657.5,80.9 L727.0,94.6" class="dg-line dg-dash" marker-end="url(#dgservices-auto-scaling-1)"/>
+<path d="M657.5,137.1 L727.0,123.4" class="dg-line dg-dash" marker-end="url(#dgservices-auto-scaling-1)"/>
+</svg>
+</div>
+<figcaption>図1 Auto Scalingグループの構成。起動テンプレートを元に複数AZへインスタンスを起動し、CloudWatchのメトリクスに応じて台数を変える。起動したインスタンスはELBのターゲットに自動で登録される。</figcaption>
+</figure>
+
+<h3 id="c2-2">起動テンプレート<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>起動するインスタンスの設定(AMI、インスタンスタイプ、キーペア、セキュリティグループ、IAMロール、ユーザーデータなど)をまとめたものです。バージョン管理ができ、オンデマンドとスポットを混ぜる設定(混合インスタンスポリシー)にも使えます。古い仕組みの「起動設定(Launch Configuration)」は非推奨のため、<strong>起動テンプレートを使います</strong>。</p>
+
+<h3 id="c2-3">混合インスタンスポリシーと割り当て戦略<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>1つのグループで<strong>オンデマンドとスポット</strong>、複数のインスタンスタイプを混ぜて使う設定です。コストを下げつつ、スポットの中断(容量不足による回収)に強くできます。「どのインスタンスタイプ・どの購入オプションで起動するか」を決めるルールが<strong>割り当て戦略</strong>です。</p>
+<ul>
+<li><strong>オンデマンドの基本容量</strong>:最低限、必ずオンデマンドで確保する台数。</li>
+<li><strong>基本容量を超えた分のオンデマンドの割合</strong>:それ以降の台数のうち、オンデマンドにする%(残りはスポット)。</li>
+<li><strong>インスタンスタイプの候補</strong>:複数指定する。属性(vCPU・メモリなど)で条件を指定して候補を自動選択する方法もある。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>対象</th><th>割り当て戦略</th><th>動き</th></tr>
+<tr><td rowspan="2">オンデマンド</td><td><code>prioritized</code>(既定)</td><td>候補に付けた優先順位の順に使う。使えなければ次の候補</td></tr>
+<tr><td><code>lowest-price</code></td><td>最も安いタイプから使う</td></tr>
+<tr><td rowspan="4">スポット</td><td><strong class="em"><code>price-capacity-optimized</code></strong></td><td>中断されにくく、かつ価格が安いプールを選ぶ。<strong>推奨</strong></td></tr>
+<tr><td><code>capacity-optimized</code></td><td>空き容量が最も多い(中断されにくい)プールを選ぶ</td></tr>
+<tr><td><code>capacity-optimized-prioritized</code></td><td>優先順位を尊重しつつ、容量の面でも最適化する</td></tr>
+<tr><td><code>lowest-price</code></td><td>最も安いプールを選ぶ(指定した数のプールに分散)。中断されやすい</td></tr>
+</table></div>
+<p>「プール」は、インスタンスタイプとAZの組み合わせのことです。候補のタイプとAZを多くするほどプールが増え、スポットの確保と中断への耐性が高まります。<strong>キャパシティの再調整</strong>を有効にすると、スポットの中断リスクが高まったインスタンスを、中断される前に新しいインスタンスへ入れ替えます。</p>
+
+<h3 id="c2-4">スケーリングの方法<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>動き</th><th>向いている場面</th></tr>
+<tr><td><strong>ターゲット追跡</strong></td><td>「平均CPU使用率50%」のような目標値を保つように自動で増減する</td><td>まず検討する基本の方法</td></tr>
+<tr><td>ステップ</td><td>アラームの超過幅に応じて増減数を変える(例:70%超で+1、90%超で+3)</td><td>急な負荷に段階的に対応したい</td></tr>
+<tr><td>シンプル</td><td>アラームで決まった台数だけ増減し、クールダウン中は次の動作を待つ</td><td>古い方式。ステップの利用が推奨</td></tr>
+<tr><td><strong>スケジュール</strong></td><td>決めた日時に希望・最小・最大の台数を変える</td><td>毎朝9時のアクセス増など、時間で予測できる負荷</td></tr>
+<tr><td>予測</td><td>過去の負荷の傾向から需要を予測し、前もって台数を増やす</td><td>日・週単位で周期的な負荷</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 648 194" style="max-width:648px;min-width:520px" role="img" aria-label="図2 ターゲット追跡スケーリング。目標値(例:平均CPU使用率50%)を設定するだけで、必要なCloudWatchアラームが自動で作られ、目標値に近づくように台数が調整される。"><defs><marker id="dgservices-auto-scaling-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="m">
+<rect x="34" y="78" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="106" y="100" text-anchor="middle" class="dg-t">メトリクス</text>
+<text x="106" y="118" text-anchor="middle" class="dg-s">平均CPU 80%</text>
+</g>
+<g data-node="p">
+<rect x="257" y="78" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="329" y="100" text-anchor="middle" class="dg-tb">ターゲット追跡</text>
+<text x="329" y="118" text-anchor="middle" class="dg-s">目標:CPU 50%</text>
+</g>
+<g data-node="out">
+<rect x="480" y="38" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="552" y="60" text-anchor="middle" class="dg-t">スケールアウト</text>
+<text x="552" y="78" text-anchor="middle" class="dg-s">目標超えで増やす</text>
+</g>
+<g data-node="in">
+<rect x="480" y="118" width="145" height="52" rx="8" class="dg-box"/>
+<text x="552" y="140" text-anchor="middle" class="dg-t">スケールイン</text>
+<text x="552" y="158" text-anchor="middle" class="dg-s">目標未満で減らす</text>
+</g>
+<path d="M179.0,104.0 L256.8,104.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-2)"/>
+<path d="M401.8,91.0 L479.5,77.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-2)"/>
+<path d="M401.8,117.0 L479.5,131.0" class="dg-line dg-dash" marker-end="url(#dgservices-auto-scaling-2)"/>
+</svg>
+</div>
+<figcaption>図2 ターゲット追跡スケーリング。目標値(例:平均CPU使用率50%)を設定するだけで、必要なCloudWatchアラームが自動で作られ、目標値に近づくように台数が調整される。</figcaption>
+</figure>
+
+<h3 id="c2-5">ヘルスチェックと自己修復<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>EC2ヘルスチェック</strong>(既定):EC2のステータスチェックで異常なら入れ替える。</li>
+<li><strong>ELBヘルスチェック</strong>:ロードバランサーのヘルスチェックに失敗した場合も入れ替える。アプリの異常も検知できるため、ELBと組み合わせるときは有効にする。</li>
+<li><strong>ヘルスチェックの猶予期間</strong>:起動直後はアプリの準備が終わっていないため、一定時間ヘルスチェックの結果を無視する。短すぎると「起動してすぐ終了される」を繰り返す。</li>
+</ul>
+
+<h3 id="c2-6">ライフサイクルフック<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>インスタンスの起動時・終了時に<strong>一時停止(Pending:Wait/Terminating:Wait)</strong>させて、独自の処理を入れる仕組みです。例えば、起動時にソフトウェアの設定を終えてからサービスに入れる、終了前にログをS3へ退避する、といった使い方をします。待機時間を過ぎるか、完了の通知を送ると次へ進みます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 593 194" style="max-width:593px;min-width:520px" role="img" aria-label="図3 ライフサイクルフック。起動時(Pending:Wait)と終了時(Terminating:Wait)に一時停止させ、EventBridgeやLambda、Systems Managerなどで独自の処理を実行できる。"><defs><marker id="dgservices-auto-scaling-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="p">
+<rect x="34" y="44" width="130" height="40" rx="8" class="dg-box"/>
+<text x="99" y="68" text-anchor="middle" class="dg-t">Pending</text>
+</g>
+<g data-node="pw">
+<rect x="214" y="38" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="279" y="60" text-anchor="middle" class="dg-tb">Pending:Wait</text>
+<text x="279" y="78" text-anchor="middle" class="dg-s">設定・初期化</text>
+</g>
+<g data-node="ins">
+<rect x="394" y="44" width="130" height="40" rx="8" class="dg-ok"/>
+<text x="459" y="68" text-anchor="middle" class="dg-t">InService</text>
+</g>
+<g data-node="tw">
+<rect x="394" y="118" width="175" height="52" rx="8" class="dg-accent"/>
+<text x="482" y="140" text-anchor="middle" class="dg-tb">Terminating:Wait</text>
+<text x="482" y="158" text-anchor="middle" class="dg-s">ログ退避など</text>
+</g>
+<g data-node="t">
+<rect x="214" y="124" width="130" height="40" rx="8" class="dg-ng"/>
+<text x="279" y="148" text-anchor="middle" class="dg-t">Terminated</text>
+</g>
+<path d="M164.0,64.0 L214.0,64.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
+<path d="M344.0,64.0 L394.0,64.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
+<path d="M464.6,84.0 L474.2,118.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
+<path d="M394.0,144.0 L344.0,144.0" class="dg-line" marker-end="url(#dgservices-auto-scaling-3)"/>
+</svg>
+</div>
+<figcaption>図3 ライフサイクルフック。起動時(Pending:Wait)と終了時(Terminating:Wait)に一時停止させ、EventBridgeやLambda、Systems Managerなどで独自の処理を実行できる。</figcaption>
+</figure>
+
+<h3 id="c2-7">そのほかの機能<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>インスタンスの更新(Instance Refresh)</strong>:起動テンプレートを新しくしたとき、インスタンスを少しずつ入れ替える(ローリング更新)。</li>
+<li><strong>終了ポリシー</strong>:スケールインのとき、どのインスタンスから終了するかを決める。既定では、まずAZ間の台数のバランスを保ち、その中で古い起動テンプレートのインスタンスから終了する。</li>
+<li><strong>スケールイン保護</strong>:特定のインスタンスをスケールインで終了させない。</li>
+<li><strong>スタンバイ</strong>:インスタンスを一時的にグループのサービスから外し、調査や更新を行う。</li>
+<li><strong>プロセスの中断</strong>:<code>ReplaceUnhealthy</code> や <code>Terminate</code> などの処理を一時的に止める(障害調査中にインスタンスが入れ替わらないようにする、など)。</li>
+<li><strong>ウォームプール</strong>:初期化済みのインスタンスを停止状態で待機させ、スケールアウトを速くする。</li>
+</ul>
+
+<h3 id="c2-8">関連する「Auto Scaling」<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>Application Auto Scaling</strong>:EC2以外(ECSのタスク数、DynamoDBの読み書き容量、Auroraのレプリカ数、Lambdaのプロビジョニング済み同時実行数など)をスケーリングする仕組み。</li>
+<li><strong>AWS Auto Scaling(スケーリングプラン)</strong>:複数のリソースのスケーリングをまとめて設定する仕組み。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>アクセス数が変動するWebアプリを、ALBの後ろで必要な台数だけ動かす</li>
+<li>障害が起きたインスタンスを自動で入れ替え、常に最低台数を保つ(台数が1でも自己修復に使える)</li>
+<li>SQSキューのメッセージ数に応じて、ワーカーの台数を増減する</li>
+<li>夜間・休日は台数を減らしてコストを下げる(スケジュール)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>EC2 Auto Scaling自体は<strong>無料</strong>です。起動したEC2インスタンスやEBS、CloudWatch(詳細モニタリングや追加のアラーム)の料金がかかります。スポットインスタンスを混ぜたり、夜間の台数を減らしたりするとコストを下げられます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:スケーリングの対象</li>
+<li><a href="elb.html">Elastic Load Balancing</a>:トラフィックの分散とヘルスチェック</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:スケーリングの判断に使うメトリクスとアラーム</li>
+<li><a href="sqs.html">Amazon SQS</a>:キューの長さに応じたスケーリング</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>/<a href="lambda.html">AWS Lambda</a>:ライフサイクルフックでの処理</li>
+<li><a href="codedeploy.html">AWS CodeDeploy</a>:Auto Scalingグループへのデプロイ</li>
+<li>関連する用語:<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>、<a href="../terms/service-quotas.html">サービスクォータ</a>、<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>、<a href="../terms/cron-rate-expressions.html">cron式とrate式</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>まずは<strong>ターゲット追跡</strong>。時間で予測できる負荷は<strong>スケジュール</strong>、周期的な負荷は<strong>予測スケーリング</strong>。</li>
+<li>メモリ使用率でスケーリングしたい → <strong>CloudWatchエージェント</strong>でメモリのメトリクスを送る(標準では取れない)。</li>
+<li>アプリが応答しないのに入れ替わらない → ヘルスチェックの種類を<strong>ELB</strong>にする。</li>
+<li>起動してすぐ終了されるのを繰り返す → <strong>ヘルスチェックの猶予期間</strong>を延ばす。</li>
+<li>終了前にログを退避したい・起動時に設定を済ませたい → <strong>ライフサイクルフック</strong>。</li>
+<li>インスタンスが起動できない → AMI・キーペア・セキュリティグループの存在、vCPUのクォータ、AZの容量不足を確認する(アクティビティ履歴に理由が出る)。</li>
+<li>起動テンプレートを変えたあと既存インスタンスを入れ替えたい → <strong>インスタンスの更新</strong>。</li>
+<li>高可用性のため、ASGは<strong>複数AZ</strong>のサブネットにまたがるように設定する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>起動テンプレートとASG(最小・希望・最大)で、EC2の台数を自動で増減・維持する。</li>
+<li>スケーリングはターゲット追跡が基本。ステップ・スケジュール・予測も使い分ける。</li>
+<li>ELBヘルスチェック・猶予期間・ライフサイクルフックが運用のポイント。</li>
+<li>サービス自体は無料で、EC2などの料金だけがかかる。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/auto-scaling-web.html"><span class="title">負荷に応じて自動でスケールするWebシステム</span></a></li>
+<li><a href="../usecases/sqs-decoupling.html"><span class="title">キューで処理を分離し、急増や障害に強くする</span></a></li>
+<li><a href="../usecases/az-failure-isolation.html"><span class="title">1つのAZの障害からアプリを切り離す</span></a></li>
+<li><a href="../usecases/golden-ami-pipeline.html"><span class="title">パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</span></a></li>
+<li><a href="../usecases/scheduled-start-stop.html"><span class="title">開発環境を夜間・休日に自動で停止して費用を下げる</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 11件・リンク元 13件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 426" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon EC2 Auto Scalingとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/compute-optimizer.html"><title>サービス:AWS Compute Optimizer</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Compute Optimizer</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Elastic Beanstalk</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/shield.html"><title>サービス:AWS Shield</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Shield</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/application-recovery-controller.html"><title>サービス:Amazon Application Recovery Controller (ARC)</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon Application Recove…</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/image-builder.html"><title>サービス:Amazon EC2 Image Builder</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Amazon EC2 Image Builder</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">Amazon ECS</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-passrole.html"><title>用語:iam:PassRoleとサービスにリンクされたロール</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">iam:PassRoleとサービスにリ…</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/az-failure-isolation.html"><title>運用シナリオ:1つのAZの障害からアプリを切り離す</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">1つのAZの障害からアプリを切り…</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/sqs-decoupling.html"><title>運用シナリオ:キューで処理を分離し、急増や障害に強くする</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="320" class="gr-t">キューで処理を分離し、急増や障…</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/golden-ami-pipeline.html"><title>運用シナリオ:パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="350" class="gr-t">パッチ適用済みのAMIを定期的に…</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/auto-scaling-web.html"><title>運用シナリオ:負荷に応じて自動でスケールするWebシステム</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="380" class="gr-t">負荷に応じて自動でスケールする…</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/scheduled-start-stop.html"><title>運用シナリオ:開発環境を夜間・休日に自動で停止して費用を下げる</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="410" class="gr-t">開発環境を夜間・休日に自動で停…</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/codedeploy.html"><title>サービス:AWS CodeDeploy</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CodeDeploy</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/sqs.html"><title>サービス:Amazon SQS</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon SQS</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Elastic Load Balancing (E…</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/cloudwatch-alarm-states.html"><title>用語:CloudWatchアラームの状態と評価</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">CloudWatchアラームの状態と評価</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/cron-rate-expressions.html"><title>用語:cron式とrate式</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">cron式とrate式</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/service-quotas.html"><title>用語:サービスクォータ</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">サービスクォータ</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="380" class="gr-t">高可用性とスケーリング</text></a>
+<rect x="300" y="205" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="230" text-anchor="middle" class="gr-tb">Amazon EC2 Auto S…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(13)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(11)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="ec2.html"><span class="label">← 前へ</span>Amazon EC2</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="image-builder.html"><span class="label">次へ →</span>Amazon EC2 Image Builder</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

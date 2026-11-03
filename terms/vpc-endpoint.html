@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPCエンドポイント | AWS教科書</title>
+<meta name="description" content="インターネットを経由せずに、VPCからAWSのサービスへプライベートに接続する入り口">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">ネットワーク</a>
+  <h1>VPCエンドポイント</h1>
+  <p class="lead">インターネットを経由せずに、VPCからAWSのサービスへプライベートに接続する入り口</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>S3やSQSなどのAWSサービスのAPIは、本来インターネットに公開されたエンドポイント(<code>s3.ap-northeast-1.amazonaws.com</code> など)で受け付けています。そのため、プライベートサブネットのEC2からこれらを使うには、通常はNATゲートウェイを経由してインターネット側へ出る必要があります。</p>
+<p><strong>VPCエンドポイント</strong>を作ると、<strong>VPCの中からAWSのネットワーク内だけを通って</strong>サービスに接続できます。インターネットゲートウェイやNATゲートウェイが不要になり、通信がインターネットに出ないためセキュリティ要件も満たしやすく、NATゲートウェイのデータ処理料金も減らせます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 VPCエンドポイントの2つの型。ゲートウェイ型はルートテーブルの経路として働き、S3とDynamoDBだけに使える。インターフェイス型(PrivateLink)はサブネット内にENIを作り、多くのサービスに使える。どちらも通信はインターネットに出ない。"><defs><marker id="dgterms-vpc-endpoint-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ec2">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">EC2</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">プライベートサブネット</text>
+</g>
+<g data-node="gw">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">ゲートウェイ型</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">ルートテーブルに経路</text>
+</g>
+<g data-node="ifc">
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="347" y="147" text-anchor="middle" class="dg-t">インターフェイス型</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">サブネット内のENI</text>
+</g>
+<g data-node="s3">
+<rect x="510" y="46" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="585" y="70" text-anchor="middle" class="dg-tb">S3 / DynamoDB</text>
+</g>
+<g data-node="svc">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="147" text-anchor="middle" class="dg-tb">SQS・SSMなど</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">多くのサービス</text>
+</g>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#dgterms-vpc-endpoint-1)"/>
+<path d="M184.0,122.4 L272.0,138.1" class="dg-line" marker-end="url(#dgterms-vpc-endpoint-1)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgterms-vpc-endpoint-1)"/>
+<path d="M422.0,151.5 L510.0,151.5" class="dg-line" marker-end="url(#dgterms-vpc-endpoint-1)"/>
+</svg>
+</div>
+<figcaption>図1 VPCエンドポイントの2つの型。ゲートウェイ型はルートテーブルの経路として働き、S3とDynamoDBだけに使える。インターフェイス型(PrivateLink)はサブネット内にENIを作り、多くのサービスに使える。どちらも通信はインターネットに出ない。</figcaption>
+</figure>
+
+<h3 id="c1-1">2つの型の比較<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>ゲートウェイ型</th><th>インターフェイス型(AWS PrivateLink)</th></tr>
+<tr><td>対応サービス</td><td><strong>S3とDynamoDBのみ</strong></td><td>SQS・SNS・KMS・Secrets Manager・Systems Manager・CloudWatchなど多数(S3も可)</td></tr>
+<tr><td>仕組み</td><td>サブネットのルートテーブルに、サービスのIP範囲(プレフィックスリスト)→エンドポイントの経路が追加される</td><td>サブネットに<strong>ENI(プライベートIP)</strong>が作られ、そこへ接続する</td></tr>
+<tr><td>名前解決</td><td>通常のサービスのDNS名をそのまま使う</td><td>「プライベートDNS」を有効にすると、通常のDNS名がENIのプライベートIPに解決される</td></tr>
+<tr><td>アクセス制御</td><td>エンドポイントポリシー</td><td>エンドポイントポリシー+<strong>セキュリティグループ</strong>(ENIに付く)</td></tr>
+<tr><td>オンプレミス・ピアリング先のVPCから</td><td><strong>使えない</strong></td><td>VPN・Direct Connect・ピアリング経由で使える</td></tr>
+<tr><td>料金</td><td><strong>無料</strong></td><td>エンドポイントのAZごとの時間料金+処理したデータ量</td></tr>
+</table></div>
+
+<h3 id="c1-2">エンドポイントポリシーとバケットポリシー<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>エンドポイントポリシー</strong>:エンドポイントを通して<strong>何ができるか</strong>を制限するポリシー。例:このエンドポイントからは自社のS3バケットにしかアクセスさせない。</li>
+<li>S3のバケットポリシーで <code>aws:SourceVpce</code>(エンドポイントID)や <code>aws:SourceVpc</code> を条件にすると、「<strong>特定のVPCエンドポイント経由のアクセスだけ許可</strong>」できる。</li>
+</ul>
+
+<h3 id="c1-3">よく使う組み合わせ<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>プライベートサブネットのEC2をSystems Managerで管理</strong>:インターフェイス型の <code>ssm</code>・<code>ssmmessages</code>・<code>ec2messages</code> の3つが必要。</li>
+<li><strong>プライベートサブネットからECRのイメージを取得</strong>:<code>ecr.api</code>・<code>ecr.dkr</code>(インターフェイス型)と、イメージの実体があるS3(ゲートウェイ型)が必要。</li>
+<li><strong>大量のデータをS3へ送る</strong>:NATゲートウェイの代わりにゲートウェイ型エンドポイントを使うと、データ処理料金がかからない。</li>
+</ul>
+<div class="point"><p>自社のサービスをNLBの後ろに置いて「エンドポイントサービス」として公開すると、他のVPCやアカウントからインターフェイス型エンドポイントで接続してもらうこともできます(これもPrivateLinkの仕組み)。VPCピアリングと違い、CIDRが重なっていても使えます。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="eni-elastic-ip.html">ENIとElastic IP</a>:インターフェイス型エンドポイントの実体</li>
+<li><a href="route-table.html">ルートテーブル</a>:ゲートウェイ型エンドポイントの経路が追加される</li>
+<li><a href="outbound-traffic.html">アウトバウンド通信</a>:NATゲートウェイとの使い分け</li>
+<li><a href="vpc-peering.html">VPCピアリング</a>:VPC同士の接続(PrivateLinkはサービス単位の接続)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:エンドポイントを作成する場所</li>
+<li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/dynamodb.html">Amazon DynamoDB</a>:ゲートウェイ型に対応</li>
+<li><a href="../services/systems-manager.html">AWS Systems Manager</a>:プライベートサブネットのEC2の管理</li>
+<li><a href="../services/ecr.html">Amazon ECR</a>:プライベートサブネットからのイメージ取得</li>
+<li><a href="../services/elb.html">Elastic Load Balancing</a>:エンドポイントサービスの公開にNLBを使う</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/image-builder.html"><span class="title">Amazon EC2 Image Builder</span><span class="kind">サービス</span><span class="desc">パッチ適用済みのAMIやコンテナイメージの作成・テスト・配布を自動化</span></a></li>
+<li><a href="../services/storage-gateway.html"><span class="title">AWS Storage Gateway</span><span class="kind">サービス</span><span class="desc">オンプレミスのサーバーからAWSのストレージを、ファイル・ボリューム・テープとして使えるようにする</span></a></li>
+<li><a href="../services/vpc.html"><span class="title">Amazon VPC</span><span class="kind">サービス</span><span class="desc">AWS上に論理的に分離された仮想ネットワークを作るサービス</span></a></li>
+<li><a href="../services/systems-manager.html"><span class="title">AWS Systems Manager</span><span class="kind">サービス</span><span class="desc">EC2・オンプレミスを含むシステム運用を一元管理・自動化する機能の集合体</span></a></li>
+<li><a href="../services/codeartifact.html"><span class="title">AWS CodeArtifact</span><span class="kind">サービス</span><span class="desc">ソフトウェアパッケージを保存・共有するリポジトリ</span></a></li>
+<li><a href="../services/bedrock.html"><span class="title">Amazon Bedrock</span><span class="kind">サービス</span><span class="desc">複数の企業の生成AIモデル(基盤モデル)を、1つのAPIでサーバーの管理なしに使える</span></a></li>
+<li><a href="../services/datasync.html"><span class="title">AWS DataSync</span><span class="kind">サービス</span><span class="desc">オンプレミス⇔AWS、AWSストレージ間のデータ転送を自動化・高速化</span></a></li>
+<li><a href="../usecases/private-subnet-endpoints.html"><span class="title">プライベートサブネットからNATなしでAWSのサービスを使う</span><span class="kind">運用シナリオ</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 10件・リンク元 10件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 336" style="max-width:784px;min-width:600px" role="img" aria-label="VPCエンドポイントとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../services/codeartifact.html"><title>サービス:AWS CodeArtifact</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS CodeArtifact</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../services/datasync.html"><title>サービス:AWS DataSync</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS DataSync</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../services/storage-gateway.html"><title>サービス:AWS Storage Gateway</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Storage Gateway</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../services/bedrock.html"><title>サービス:Amazon Bedrock</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon Bedrock</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../services/image-builder.html"><title>サービス:Amazon EC2 Image Builder</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Amazon EC2 Image Builder</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../terms/access-methods.html"><title>用語:AWSの操作方法(コンソール・CLI・SDK・API)</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">AWSの操作方法(コンソール・CL…</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-connectivity.html"><title>用語:VPC同士をつなぐ方法の選び方</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">VPC同士をつなぐ方法の選び方</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../terms/port-numbers.html"><title>用語:よく使うポート番号</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">よく使うポート番号</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="290" class="gr-t">料金の基本</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/private-subnet-endpoints.html"><title>運用シナリオ:プライベートサブネットからNATなしでAWSのサービスを使う</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="320" class="gr-t">プライベートサブネットからNAT…</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon DynamoDB</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/ecr.html"><title>サービス:Amazon ECR</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon ECR</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/elb.html"><title>サービス:Elastic Load Balancing (ELB)</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Elastic Load Balancing (E…</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/eni-elastic-ip.html"><title>用語:ENIとElastic IP</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">ENIとElastic IP</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/vpc-peering.html"><title>用語:VPCピアリング</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">VPCピアリング</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/outbound-traffic.html"><title>用語:アウトバウンド通信</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">アウトバウンド通信</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
+<a href="../terms/route-table.html"><title>用語:ルートテーブル</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">ルートテーブル</text></a>
+<rect x="300" y="160" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="185" text-anchor="middle" class="gr-tb">VPCエンドポイント</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(10)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(10)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="eni-elastic-ip.html"><span class="label">← 前へ</span>ENIとElastic IP</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="vpc-peering.html"><span class="label">次へ →</span>VPCピアリング</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

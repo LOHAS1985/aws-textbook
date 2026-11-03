@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS AppSync | AWS教科書</title>
+<meta name="description" content="マネージドなGraphQL APIサービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#E7157B">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/appsync.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat9">アプリケーション統合</a>
+  <h1>AWS AppSync</h1>
+  <p class="lead">マネージドなGraphQL APIサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">内容の確認:2026年11月3日</p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(12項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">リクエストの流れとリゾルバー</a></li><li><a href="#c2-2">リアルタイム更新(Subscription)</a></li><li><a href="#c2-3">認証の設定</a></li><li><a href="#c2-4">キャッシュとWAF</a></li><li><a href="#c2-5">制限</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS AppSync</strong>は、<strong>GraphQL API</strong>を提供するマネージドサービスです。</p>
+<p>通常のREST APIでは、例えば <code>id: 1, name: aaa, email: a@ex.com</code> のように、nameだけ欲しいのに不要な情報も返ってきます。<strong>必要な項目だけを取得したいとき</strong>にGraphQLを使います。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 188" style="max-width:684px;min-width:547px" role="img" aria-label="図1 AppSyncの仕組み。クライアントはGraphQLで欲しい項目(この例では name)だけを指定して取得する。AppSyncはリゾルバーでDynamoDBやLambdaなどのデータソースにつなぐ。"><defs><marker id="dgservices-appsync-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="cl">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">クライアント</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">name だけ欲しい</text>
+</g>
+<g data-node="as">
+<rect x="272" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="100" text-anchor="middle" class="dg-tb">AppSync</text>
+<text x="347" y="118" text-anchor="middle" class="dg-s">GraphQL API</text>
+</g>
+<g data-node="ddb">
+<rect x="510" y="44" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="68" text-anchor="middle" class="dg-t">DynamoDB</text>
+</g>
+<g data-node="lam">
+<rect x="510" y="124" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="148" text-anchor="middle" class="dg-t">Lambda</text>
+</g>
+<path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#dgservices-appsync-1)"/>
+<text x="228" y="108" text-anchor="middle" class="dg-s dg-halo">GraphQL</text>
+<path d="M422.0,91.4 L510.0,76.6" class="dg-line" marker-end="url(#dgservices-appsync-1)"/>
+<path d="M422.0,116.6 L510.0,131.4" class="dg-line" marker-end="url(#dgservices-appsync-1)"/>
+</svg>
+</div>
+<figcaption>図1 AppSyncの仕組み。クライアントはGraphQLで欲しい項目(この例では name)だけを指定して取得する。AppSyncはリゾルバーでDynamoDBやLambdaなどのデータソースにつなぐ。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>クライアントが必要な項目だけを指定して取得できる(GraphQL)。</li>
+<li><strong>スキーマ</strong>でデータの型を定義し、<strong>リゾルバー</strong>で各フィールドをデータソース(DynamoDB、Lambda、Aurora Serverless、Amazon OpenSearch Service、HTTPエンドポイントなど)に結びつける。</li>
+<li>操作は <strong>Query</strong>(取得)、<strong>Mutation</strong>(更新)、<strong>Subscription</strong>(リアルタイム通知)の3種類。</li>
+<li>認証はAPIキー、IAM、Cognitoユーザープール、OIDC、Lambdaに対応。</li>
+</ul>
+
+<h3 id="c2-1">リクエストの流れとリゾルバー<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>クライアントがGraphQLのクエリを送ると、AppSyncはスキーマに従って、フィールドごとに<strong>リゾルバー</strong>を実行します。リゾルバーは、リクエストをデータソースへの操作に変換し、結果をGraphQLの応答の形に整えます。1つのデータソースへの操作を行う<strong>ユニットリゾルバー</strong>と、複数の処理を順番につなぐ<strong>パイプラインリゾルバー</strong>の2種類があります。</p>
+<p>リゾルバーの処理は、公式ドキュメントでは現在 <code>APPSYNC_JS</code> ランタイム(JavaScript)で書くことが案内されています。</p>
+
+<h3 id="c2-2">リアルタイム更新(Subscription)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>クライアントは<strong>WebSocket</strong>でAppSyncに接続し、<code>subscription</code>を登録して待ちます。どのMutationの実行で通知するかは、スキーマの <code>@aws_subscribe(mutations: [...])</code> で指定します。Mutation(例:<code>sendMessage</code>)が実行されると、AppSyncが購読中のクライアントに変更を送ります。1本のWebSocket接続で複数の購読を扱えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 758 227" style="max-width:758px;min-width:606px" role="img" aria-label="図2 Subscriptionの流れ。購読するクライアントはWebSocketで接続したまま待ち、別のクライアントがMutationを実行すると、AppSyncが変更を購読中のクライアントに配信する。"><defs><marker id="dgservices-appsync-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="sub">
+<rect x="34" y="43" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="64" text-anchor="middle" class="dg-t">購読クライアント</text>
+<text x="114" y="82" text-anchor="middle" class="dg-s">subscription</text>
+</g>
+<g data-node="as">
+<rect x="304" y="88" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="384" y="110" text-anchor="middle" class="dg-tb">AppSync</text>
+<text x="384" y="128" text-anchor="middle" class="dg-s">WebSocket</text>
+</g>
+<g data-node="pub">
+<rect x="574" y="49" width="160" height="40" rx="8" class="dg-blue"/>
+<text x="654" y="73" text-anchor="middle" class="dg-t">更新するクライアント</text>
+</g>
+<g data-node="ddb">
+<rect x="574" y="151" width="160" height="52" rx="8" class="dg-box"/>
+<text x="654" y="172" text-anchor="middle" class="dg-t">データソース</text>
+<text x="654" y="190" text-anchor="middle" class="dg-s">DynamoDBなど</text>
+</g>
+<path d="M194.0,82.3 L304.0,100.7" class="dg-line" marker-end="url(#dgservices-appsync-2)" marker-start="url(#dgservices-appsync-2)"/>
+<text x="249" y="96" text-anchor="middle" class="dg-s dg-halo">購読</text>
+<path d="M574.0,82.3 L464.0,100.7" class="dg-line" marker-end="url(#dgservices-appsync-2)"/>
+<text x="519" y="96" text-anchor="middle" class="dg-s dg-halo">Mutation</text>
+<path d="M464.0,132.7 L574.0,158.3" class="dg-line" marker-end="url(#dgservices-appsync-2)"/>
+<text x="519" y="150" text-anchor="middle" class="dg-s dg-halo">リゾルバー</text>
+</svg>
+</div>
+<figcaption>図2 Subscriptionの流れ。購読するクライアントはWebSocketで接続したまま待ち、別のクライアントがMutationを実行すると、AppSyncが変更を購読中のクライアントに配信する。</figcaption>
+</figure>
+<p>2025年3月からは、GraphQLのQuery・Mutation・Subscriptionとは別に、WebSocketでイベントを配信する<strong>AppSync Events</strong>も提供されています。</p>
+
+<h3 id="c2-3">認証の設定<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>APIごとに<strong>既定の認証方式</strong>を1つ決め、必要に応じて<strong>追加の認証方式</strong>を組み合わせられます。</p>
+<ul>
+<li><strong>APIキー</strong>:認証なしのAPIの呼び出し回数(スロットリング)を制御する簡易な方式。</li>
+<li><strong>IAM</strong>:IAMユーザーやロールの認証情報で署名したリクエスト(SigV4)で認証する。用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</li>
+<li><strong>Amazon Cognitoユーザープール</strong>・<strong>OIDC</strong>:ログインしたユーザーのトークンで認証する。OIDCは用語ページ「<a href="../terms/oidc.html">OIDC(OpenID Connect)</a>」を参照してください。</li>
+<li><strong>Lambda</strong>:独自の認可ロジックをLambda関数で実装する。</li>
+</ul>
+
+<h3 id="c2-4">キャッシュとWAF<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>APIごとに専用のキャッシュを有効にすると、クエリや更新の応答を速くできます。キャッシュはインスタンスタイプを選び、時間単位で課金されます。<strong>AWS WAF</strong>のWebACLをAPIに関連付けると、ルールに基づいて不正なリクエストを遮断できます。</p>
+
+<h3 id="c2-5">制限<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>APIキーの有効期限は最長365日(延長も可能)。開発用や、公開しても安全なAPIに向く方式とされている。</li>
+<li>Lambda認可は、1つのAPIにつき1つだけ設定できる。Lambda関数がリゾルバーに渡すコンテキストデータは5MBまで。</li>
+<li>リアルタイム更新を受け取るには、クライアントが接続を維持しておく必要がある。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>モバイルアプリで通信量を減らすため、必要なデータだけを取得</li>
+<li>チャットやダッシュボードなどのリアルタイム更新(Subscription)</li>
+<li>複数のデータソースを1つのAPIにまとめる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>クエリ・Mutationの実行回数と、リアルタイム更新のメッセージ数・接続時間に応じて課金されます。専用キャッシュを使う場合は、選んだインスタンスの時間料金が加わります。データ転送料金は、EC2のデータ転送と同じ料金体系です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="api-gateway.html">Amazon API Gateway</a>:REST/HTTP/WebSocket API</li>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>/<a href="lambda.html">AWS Lambda</a>/<a href="aurora.html">Amazon Aurora</a>:代表的なデータソース</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:検索用のデータソース</li>
+<li><a href="cognito.html">Amazon Cognito</a>:ユーザー認証</li>
+<li><a href="waf.html">AWS WAF</a>:APIへの不正なリクエストの遮断</li>
+<li><a href="amplify.html">AWS Amplify</a>:AppSyncを使ったアプリ開発</li>
+<li>関連する用語:<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/caching-comparison.html">キャッシュの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「GraphQL」「必要な項目だけ取得」→ <strong>AppSync</strong>。REST API → API Gateway。</li>
+<li>リアルタイムのデータ同期・チャットの更新 → AppSyncの<strong>Subscription</strong>(WebSocket)。</li>
+<li>複数のデータソース(DynamoDB・Lambda・Aurora・OpenSearch)を1つのAPIにまとめる → リゾルバーで各フィールドをデータソースに結びつける。</li>
+<li>Cognitoユーザープール・OIDC・IAMで利用者を認証する → 既定または追加の認証方式として設定する。</li>
+<li>開発用や公開APIの簡易な認証 → APIキー(有効期限は最長365日)。</li>
+<li>APIへの不正なリクエストを遮断したい → <strong>AWS WAF</strong>のWebACLを関連付ける。</li>
+<li>同じクエリが多く、応答を速くしたい → APIごとの専用キャッシュ(時間単位の料金がかかる)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AppSyncはGraphQL APIのマネージドサービス。必要なデータだけを効率よく取得できる。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 12件・リンク元 0件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 396" style="max-width:784px;min-width:600px" role="img" aria-label="AWS AppSyncとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/amplify.html"><title>サービス:AWS Amplify</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Amplify</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/waf.html"><title>サービス:AWS WAF</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS WAF</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/api-gateway.html"><title>サービス:Amazon API Gateway</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon API Gateway</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon Aurora</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cognito.html"><title>サービス:Amazon Cognito</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon Cognito</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon DynamoDB</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/opensearch.html"><title>サービス:Amazon OpenSearch Service</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon OpenSearch Service</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
+<a href="../terms/oidc.html"><title>用語:OIDC(OpenID Connect)</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">OIDC(OpenID Connect)</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,345 550,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/caching-comparison.html"><title>用語:キャッシュの選び方</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">キャッシュの選び方</text></a>
+<path class="gr-line" d="M480,210 C515.0,210 515.0,375 550,375" marker-end="url(#gr-arrow)"/>
+<a href="../terms/managed-serverless.html"><title>用語:マネージドサービスとサーバーレス</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="380" class="gr-t">マネージドサービスとサーバーレス</text></a>
+<rect x="300" y="190" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="215" text-anchor="middle" class="gr-tb">AWS AppSync</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(12)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="step-functions.html"><span class="label">← 前へ</span>AWS Step Functions</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="codepipeline.html"><span class="label">次へ →</span>AWS CodePipeline</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

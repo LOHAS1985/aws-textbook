@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Compute Optimizer | AWS教科書</title>
+<meta name="description" content="機械学習でリソースの使用状況を分析し、最適な設定を推奨">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#E7157B">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/compute-optimizer.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
+  <h1>AWS Compute Optimizer</h1>
+  <p class="lead">機械学習でリソースの使用状況を分析し、最適な設定を推奨</p>
+  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Compute Optimizer</strong>は、<strong>機械学習</strong>を使ってリソースの使用状況を分析し、コスト削減・パフォーマンス向上につながる<strong>最適なリソース設定を推奨</strong>するサービスです。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>CloudWatchの過去のメトリクス</strong>を分析して推奨事項を提示します。</p>
+<ul>
+<li><strong class="em">デフォルトでは無効</strong>。Organizations/アカウントで有効化が必要。</li>
+<li><strong>分析期間</strong>:デフォルトは<strong>14日間</strong>(最大93日間)。</li>
+</ul>
+<h3 id="c2-1">分析対象のリソース<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>リソース</th><th>推奨の内容</th></tr>
+<tr><td>EC2インスタンス</td><td>インスタンスタイプ・サイズ(Gravitonへの移行を含む)</td></tr>
+<tr><td>Auto Scalingグループ</td><td>グループのインスタンスタイプ</td></tr>
+<tr><td>EBSボリューム</td><td>ボリュームタイプ・サイズ・IOPS・スループット(例:gp2からgp3へ)</td></tr>
+<tr><td>Lambda関数</td><td>メモリのサイズ</td></tr>
+<tr><td>ECS on Fargateサービス</td><td>タスクのCPU・メモリ</td></tr>
+<tr><td>RDS・Aurora</td><td>DBインスタンスのクラスとストレージ</td></tr>
+<tr><td>商用ソフトウェアのライセンス</td><td>EC2で動かすSQL Serverのエディションなど</td></tr>
+</table></div>
+<p>EC2の推奨を出すには、一定の期間(少なくとも30時間分)のメトリクスが必要です。作ったばかりのリソースには推奨が出ません。</p>
+
+<h3 id="c2-2">推奨事項<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>サイズが過大(Over-provisioned)</strong>:コスト削減のためにダウンサイジングを推奨</li>
+<li><strong>サイズが過少(Under-provisioned)</strong>:パフォーマンス改善のためにアップサイジングを推奨</li>
+<li><strong>最適化済み(Optimized)</strong>:今の設定が適切</li>
+<li><strong>アイドル</strong>:ほとんど使われていないリソース(EC2・EBS・RDS・NATゲートウェイなど)。停止や削除を検討する</li>
+</ul>
+<p>推奨には、いくつかの候補(オプション)と、それぞれの<strong>月額の削減見込み</strong>と<strong>パフォーマンスのリスク</strong>(変えたときに性能が足りなくなる可能性)が示されます。</p>
+<p>EC2のメモリ使用率を分析に含めたい場合は、CloudWatchエージェントでメモリのメトリクスを送信しておく必要があります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 202" style="max-width:718px;min-width:574px" role="img" aria-label="図1 Compute Optimizerの仕組み。CloudWatchの過去のメトリクス(デフォルト14日、最大93日)を機械学習で分析し、過大なリソースにはダウンサイジング、過少なリソースにはアップサイジングを推奨する。"><defs><marker id="dgservices-compute-optimizer-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="cw">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">過去のメトリクス</text>
+</g>
+<g data-node="co">
+<rect x="289" y="75" width="150" height="68" rx="8" class="dg-accent"/>
+<text x="364" y="96" text-anchor="middle" class="dg-tb">Compute</text>
+<text x="364" y="114" text-anchor="middle" class="dg-tb">Optimizer</text>
+<text x="364" y="132" text-anchor="middle" class="dg-s">機械学習で分析</text>
+</g>
+<g data-node="over">
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">サイズが過大</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">ダウンサイジング</text>
+</g>
+<g data-node="under">
+<rect x="544" y="126" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="619" y="147" text-anchor="middle" class="dg-t">サイズが過少</text>
+<text x="619" y="165" text-anchor="middle" class="dg-s">アップサイジング</text>
+</g>
+<path d="M184.0,109.0 L289.0,109.0" class="dg-line" marker-end="url(#dgservices-compute-optimizer-1)"/>
+<text x="236" y="113" text-anchor="middle" class="dg-s dg-halo">14〜93日分</text>
+<path d="M439.0,96.5 L544.0,79.0" class="dg-line" marker-end="url(#dgservices-compute-optimizer-1)"/>
+<path d="M439.0,121.5 L544.0,139.0" class="dg-line" marker-end="url(#dgservices-compute-optimizer-1)"/>
+</svg>
+</div>
+<figcaption>図1 Compute Optimizerの仕組み。CloudWatchの過去のメトリクス(デフォルト14日、最大93日)を機械学習で分析し、過大なリソースにはダウンサイジング、過少なリソースにはアップサイジングを推奨する。</figcaption>
+</figure>
+
+<h3 id="c2-3">推奨の調整(推奨設定)<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>拡張インフラストラクチャメトリクス</strong>:分析期間を93日に延ばす(有料)。月末だけ負荷が高いなど、周期の長い負荷があるときに使う。</li>
+<li><strong>使用率の余裕(ヘッドルーム)としきい値</strong>:CPUやメモリにどれだけ余裕を残して推奨するかを調整する。</li>
+<li><strong>CPUアーキテクチャ</strong>:Graviton(Arm)のインスタンスを候補に含めるかを選ぶ。</li>
+<li><strong>外部のメトリクス</strong>:Datadogなどの監視ツールで集めたメモリのメトリクスも、分析に使える。</li>
+</ul>
+
+<h3 id="c2-4">組織での利用と、ほかのツールとの関係<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>Organizationsの管理アカウントか委任管理者で有効にすると、<strong>組織内のすべてのアカウント</strong>の推奨をまとめて見られる。</li>
+<li>推奨はCSV・JSONでS3にエクスポートできる。</li>
+<li><strong>Cost Optimization Hub</strong>は、Compute Optimizerのサイズの推奨や、Savings Plans・リザーブドインスタンスの購入の推奨などを集め、組織全体で削減額の大きい順に並べる。</li>
+<li>Trusted Advisorのコスト最適化のチェックにも、Compute Optimizerの推奨が使われる。</li>
+</ul>
+<p>Compute Optimizerは推奨を出すだけで、リソースを自動では変更しません。EC2のインスタンスタイプを変えるには、インスタンスを停止してから変更します(Auto Scalingグループなら起動テンプレートを更新して入れ替える)。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>過剰なスペックのEC2インスタンスを見つけてダウンサイジング</li>
+<li>Lambdaのメモリ設定の最適化</li>
+<li>EBSボリュームのタイプ・サイズの見直し</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>基本的な推奨は無料で利用できます。分析期間を延ばす「拡張インフラストラクチャメトリクス」は有料です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:分析に使うメトリクス</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ebs.html">Amazon EBS</a>/<a href="lambda.html">AWS Lambda</a>/<a href="ecs.html">Amazon ECS</a>/<a href="rds.html">Amazon RDS</a>:分析対象</li>
+<li><a href="trusted-advisor.html">AWS Trusted Advisor</a>:幅広い観点のチェック</li>
+<li><a href="organizations.html">AWS Organizations</a>:組織全体での有効化</li>
+<li><a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:推奨したインスタンスタイプへの入れ替え</li>
+<li><a href="cost-explorer.html">AWS Cost Explorer</a>/<a href="savings-plans.html">Savings Plans</a>:コストの分析と割引の購入</li>
+<li>関連する用語:<a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>、<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「機械学習で」「最適なインスタンスタイプ・サイズを推奨」→ <strong>Compute Optimizer</strong>。</li>
+<li>デフォルトでは<strong>無効</strong>。使う前に有効化(オプトイン)が必要。</li>
+<li>分析期間はデフォルト<strong>14日</strong>、最大<strong>93日</strong>(拡張インフラストラクチャメトリクス)。</li>
+<li>EC2のメモリを考えた推奨が欲しい → <strong>CloudWatchエージェント</strong>でメモリのメトリクスを送る。</li>
+<li>Lambdaの最適なメモリサイズ → Compute Optimizer。ECS on Fargateのタスクのサイズ、EBSのgp2からgp3への変更も推奨される。</li>
+<li>組織全体の推奨をまとめて見る → 管理アカウントか<strong>委任管理者</strong>で有効にする。削減額の大きい順にまとめる → <strong>Cost Optimization Hub</strong>。</li>
+<li>推奨は自動では適用されない。変更は自分で行う。</li>
+<li>Cost Explorer・Budgets・CUR・Compute Optimizerの使い分け → <a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Compute OptimizerはCloudWatchの履歴から、過大・過少・アイドルなリソースを見つけて推奨する。</li>
+<li>対象はEC2・Auto Scalingグループ・EBS・Lambda・ECS on Fargate・RDSなど。メモリの分析にはCloudWatchエージェントが必要。</li>
+<li>推奨設定で分析期間や余裕を調整し、組織全体で使うときはCost Optimization Hubとも組み合わせる。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/ebs-performance.html"><span class="title">EC2・EBSの性能不足を見つけて改善する</span></a></li>
+<li><a href="../usecases/auto-scaling-web.html"><span class="title">負荷に応じて自動でスケールするWebシステム</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 13件・リンク元 4件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 426" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Compute Optimizerとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,180 C265.0,180 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="0" y="169" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="184" class="gr-t">AWS Well-Architected フレ…</text></a>
+<path class="gr-line" d="M230,210 C265.0,210 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="0" y="199" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="214" class="gr-t">料金の基本</text></a>
+<path class="gr-line" d="M230,240 C265.0,240 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ebs-performance.html"><title>運用シナリオ:EC2・EBSの性能不足を見つけて改善する</title><rect x="0" y="229" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="244" class="gr-t">EC2・EBSの性能不足を見つけて…</text></a>
+<path class="gr-line" d="M230,270 C265.0,270 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/auto-scaling-web.html"><title>運用シナリオ:負荷に応じて自動でスケールするWebシステム</title><rect x="0" y="259" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="274" class="gr-t">負荷に応じて自動でスケールする…</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cost-explorer.html"><title>サービス:AWS Cost Explorer</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Cost Explorer</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/trusted-advisor.html"><title>サービス:AWS Trusted Advisor</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Trusted Advisor</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/ebs.html"><title>サービス:Amazon EBS</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon EBS</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Amazon ECS</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
+<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="320" class="gr-t">Amazon RDS</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/savings-plans.html"><title>サービス:Savings Plans</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="350" class="gr-t">Savings Plans</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,375 550,375" marker-end="url(#gr-arrow)"/>
+<a href="../terms/performance-metrics.html"><title>用語:IOPS・スループット・レイテンシー</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="380" class="gr-t">IOPS・スループット・レイテン…</text></a>
+<path class="gr-line" d="M480,225 C515.0,225 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="410" class="gr-t">コスト管理ツールの選び方</text></a>
+<rect x="300" y="205" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="230" text-anchor="middle" class="gr-tb">AWS Compute Optim…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(4)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(13)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="health-dashboard.html"><span class="label">← 前へ</span>AWS Health Dashboard</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="service-catalog.html"><span class="label">次へ →</span>AWS Service Catalog</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

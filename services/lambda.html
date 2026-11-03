@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Lambda | AWS教科書</title>
+<meta name="description" content="サーバーレスでプログラムを実行するサービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#ED7100">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/lambda.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">コンピューティング</a>
+  <h1>AWS Lambda</h1>
+  <p class="lead">サーバーレスでプログラムを実行するサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(19項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">基本の制限値</a></li><li><a href="#c2-2">用語</a></li><li><a href="#c2-3">主な設定値</a></li><li><a href="#c2-4">同時実行数</a></li><li><a href="#c2-5">実行環境のライフサイクル</a></li><li><a href="#c2-6">エラーの種類</a></li><li><a href="#c2-7">呼び出し方式の3種類と再試行・DLQ・デスティネーション</a></li><li><a href="#c2-8">実行ロールとリソースベースのポリシー</a></li><li><a href="#c2-9">バージョン管理とエイリアス</a></li><li><a href="#c2-10">VPC接続</a></li><li><a href="#c2-11">Lambda@Edge</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Lambda</strong>は、サーバーを用意せずにプログラム(関数)を実行できるサーバーレスサービスです。関数はAWSが管理するLambda専用のネットワーク環境で実行されます。</p>
+<p>デフォルトでは<strong>VPC内のリソースにはアクセスできません</strong>。アクセスさせたい場合は後述の「VPC接続」を設定します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 274" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Lambdaの全体像。イベントをきっかけに関数が実行され、処理結果はデスティネーション(成功時・失敗時の送信先)に送れる。"><defs><marker id="dgservices-lambda-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s3">
+<rect x="34" y="38" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="60" text-anchor="middle" class="dg-t">S3</text>
+<text x="109" y="78" text-anchor="middle" class="dg-s">ファイルのアップロード</text>
+</g>
+<g data-node="api">
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">API Gateway</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">HTTPリクエスト</text>
+</g>
+<g data-node="sqs">
+<rect x="34" y="198" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="220" text-anchor="middle" class="dg-t">SQS など</text>
+<text x="109" y="238" text-anchor="middle" class="dg-s">メッセージ・イベント</text>
+</g>
+<g data-node="fn">
+<rect x="272" y="38" width="150" height="212" rx="8" class="dg-accent"/>
+<text x="347" y="140" text-anchor="middle" class="dg-tb">Lambda関数</text>
+<text x="347" y="158" text-anchor="middle" class="dg-s">ハンドラーを実行</text>
+</g>
+<g data-node="ddb">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">DynamoDB など</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">AWSサービスを操作</text>
+</g>
+<g data-node="ok">
+<rect x="510" y="118" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="140" text-anchor="middle" class="dg-t">成功時の送信先</text>
+<text x="585" y="158" text-anchor="middle" class="dg-s">デスティネーション</text>
+</g>
+<g data-node="ng">
+<rect x="510" y="198" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="585" y="220" text-anchor="middle" class="dg-t">失敗時の送信先</text>
+<text x="585" y="238" text-anchor="middle" class="dg-s">デスティネーション</text>
+</g>
+<path d="M184.0,89.2 L272.0,118.8" class="dg-line" marker-end="url(#dgservices-lambda-1)"/>
+<path d="M184.0,144.0 L272.0,144.0" class="dg-line" marker-end="url(#dgservices-lambda-1)"/>
+<path d="M184.0,198.8 L272.0,169.2" class="dg-line" marker-end="url(#dgservices-lambda-1)"/>
+<path d="M422.0,118.8 L510.0,89.2" class="dg-line" marker-end="url(#dgservices-lambda-1)"/>
+<path d="M422.0,144.0 L510.0,144.0" class="dg-line" marker-end="url(#dgservices-lambda-1)"/>
+<path d="M422.0,169.2 L510.0,198.8" class="dg-line" marker-end="url(#dgservices-lambda-1)"/>
+</svg>
+</div>
+<figcaption>図1 Lambdaの全体像。イベントをきっかけに関数が実行され、処理結果はデスティネーション(成功時・失敗時の送信先)に送れる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">基本の制限値<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>関数1回の<strong>最大実行時間は15分</strong>(タイムアウトは1〜900秒で設定)</li>
+<li><strong>非同期呼び出し</strong>(S3・SNS・EventBridgeなどからの呼び出し)で関数がエラーになると、Lambdaが<strong>最大2回リトライ</strong>する(初回+リトライ2回=最大3回実行。回数は0〜2で変更可)。同期呼び出し(API Gatewayなど)では呼び出し元がリトライを判断し、SQSやKinesisなどのイベントソースマッピングでは、メッセージやレコードが期限切れになるか成功するまでリトライされる、というように<strong>呼び出し方式によって動きが違う</strong>。</li>
+<li><strong>デプロイパッケージの上限は250MB(解凍後)</strong>。デプロイパッケージ=コード+依存関係+実行に必要なファイル一式。上限を超える場合は、S3経由でのアップロードや、<strong>ECR経由でコンテナイメージとしてデプロイ</strong>する。</li>
+</ul>
+
+<h3 id="c2-2">用語<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ハンドラー</strong>:最初に呼び出される入口の関数/メソッド。再利用する処理(DB接続など)はハンドラーの外で定義する。</li>
+<li><strong>レイヤー(Lambda Layers)</strong>:複数の関数で共有するライブラリ・SDK・共通コード・証明書などを切り出したパッケージ。デプロイの肥大化・管理の重複・更新作業の負荷を解消する。</li>
+<li><strong>バージョン</strong>:発行したバージョンの中身は修正できない。</li>
+<li><strong>エイリアス</strong>:バージョンの別名。エイリアスを呼び出すと紐づけたバージョンが実行される。</li>
+<li><strong class="em">デスティネーション(送信先)</strong>:関数実行後の結果を送る先。成功時・失敗時それぞれに設定できる。</li>
+<li><strong>Function URLs</strong>:関数にWebエンドポイントを付けて直接呼び出せるようにする。</li>
+</ul>
+
+<h3 id="c2-3">主な設定値<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>設定可能範囲</th><th>用途</th></tr>
+<tr><td>メモリ</td><td>128〜10,240MB</td><td>実行性能の調整(<strong>CPU性能もメモリに比例</strong>)</td></tr>
+<tr><td>タイムアウト</td><td>1〜900秒</td><td>最大実行時間</td></tr>
+<tr><td>一時ストレージ(/tmp)</td><td>512〜10,240MB</td><td>一時ファイルの保存</td></tr>
+<tr><td>予約された同時実行</td><td>0〜アカウント上限</td><td>同時実行数の制御</td></tr>
+<tr><td>プロビジョニングされた同時実行</td><td>0以上</td><td>コールドスタート対策</td></tr>
+<tr><td>環境変数</td><td>任意</td><td>設定値の管理</td></tr>
+</table></div>
+
+<h3 id="c2-4">同時実行数<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong class="em">予約(Reserved)</strong>:同時に実行できる上限数。上限を超えると<strong>スロットリング</strong>が発生する。</li>
+<li><strong class="em">プロビジョニング(Provisioned)</strong>:設定した数だけ実行環境をあらかじめ作成しておく(ウォームスタート)。超えた分はコールドスタートで作成される。</li>
+</ul>
+
+<h3 id="c2-5">実行環境のライフサイクル<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ol>
+<li><strong>初期化</strong>:実行環境作成 → ランタイム作成 → コードのロード</li>
+<li><strong>実行</strong>:ハンドラー関数を実行し、event / context が渡される(同時実行時は自動スケーリング)</li>
+<li><strong>待機</strong>:実行終了後、CPUは停止するがメモリ内容を保持してイベントを待つ</li>
+<li><strong>再利用</strong>:初期化をスキップして実行フェーズから始めるので高速</li>
+<li><strong>シャットダウン</strong>:AWSの判断で実行環境を破棄</li>
+</ol>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 209" style="max-width:718px;min-width:574px" role="img" aria-label="図2 実行環境のライフサイクル。待機中の実行環境が次のリクエストで再利用されると、初期化が省かれて高速に動く(ウォームスタート)。"><defs><marker id="dgservices-lambda-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="init">
+<rect x="34" y="43" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="64" text-anchor="middle" class="dg-t">初期化</text>
+<text x="109" y="82" text-anchor="middle" class="dg-s">環境作成・コード読込</text>
+</g>
+<g data-node="run">
+<rect x="204" y="43" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="279" y="64" text-anchor="middle" class="dg-tb">実行</text>
+<text x="279" y="82" text-anchor="middle" class="dg-s">ハンドラーを呼ぶ</text>
+</g>
+<g data-node="idle">
+<rect x="374" y="43" width="150" height="52" rx="8" class="dg-box"/>
+<text x="449" y="64" text-anchor="middle" class="dg-t">待機</text>
+<text x="449" y="82" text-anchor="middle" class="dg-s">メモリを保持</text>
+</g>
+<g data-node="down">
+<rect x="544" y="43" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="619" y="64" text-anchor="middle" class="dg-t">シャットダウン</text>
+<text x="619" y="82" text-anchor="middle" class="dg-s">AWSが破棄</text>
+</g>
+<g data-node="reuse">
+<rect x="289" y="133" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="364" y="154" text-anchor="middle" class="dg-t">次のリクエスト</text>
+<text x="364" y="172" text-anchor="middle" class="dg-s">初期化をスキップ</text>
+</g>
+<path d="M184.0,69.0 L204.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-2)"/>
+<path d="M354.0,69.0 L374.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-2)"/>
+<path d="M524.0,69.0 L544.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-2)"/>
+<path d="M424.4,95.0 L388.6,133.0" class="dg-line" marker-end="url(#dgservices-lambda-2)"/>
+<text x="406" y="118" text-anchor="middle" class="dg-s dg-halo">再利用</text>
+<path d="M339.4,133.0 L303.6,95.0" class="dg-line" marker-end="url(#dgservices-lambda-2)"/>
+</svg>
+</div>
+<figcaption>図2 実行環境のライフサイクル。待機中の実行環境が次のリクエストで再利用されると、初期化が省かれて高速に動く(ウォームスタート)。</figcaption>
+</figure>
+<h3 id="c2-6">エラーの種類<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>呼び出しエラー</strong>:イベントソースに権限がない/呼び出し先の関数が存在しない/スロットリングが発生している</li>
+<li><strong>関数エラー</strong>:Lambda関数内のコードでエラーが起きている</li>
+</ul>
+
+<h3 id="c2-7">呼び出し方式の3種類と再試行・DLQ・デスティネーション<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>Lambdaの呼び出され方は3種類あり、<strong>エラーになったときの再試行と、失敗したイベントの行き先が方式ごとに違います</strong>。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th>方式</th><th>主な呼び出し元</th><th>エラー時の再試行</th><th>失敗したイベントの行き先</th></tr>
+<tr><td data-label="方式"><strong>同期呼び出し</strong></td><td data-label="主な呼び出し元">API Gateway、ALB、Function URLs、CLIの <code>invoke</code></td><td data-label="エラー時の再試行">Lambdaは再試行しない。<strong>呼び出し元</strong>がエラーを受け取り、再試行するか判断する</td><td data-label="失敗したイベントの行き先">呼び出し元に返る(DLQ・デスティネーションは使わない)</td></tr>
+<tr><td data-label="方式"><strong>非同期呼び出し</strong></td><td data-label="主な呼び出し元">S3、SNS、EventBridge、CloudWatch Logs</td><td data-label="エラー時の再試行">Lambdaの内部キューに入り、<strong>最大2回</strong>再試行する(0〜2回で変更可)。イベントの最大保持期間も設定できる(最大6時間)</td><td data-label="失敗したイベントの行き先"><strong>失敗時のデスティネーション</strong>(SQS・SNS・Lambda・EventBridge・S3)、または<strong>DLQ</strong>(SQS・SNS)</td></tr>
+<tr><td data-label="方式"><strong>イベントソースマッピング</strong></td><td data-label="主な呼び出し元">SQS、Kinesis Data Streams、DynamoDB Streams、Amazon MSK</td><td data-label="エラー時の再試行">Lambdaがポーリングして取得する。SQSは可視性タイムアウト後にメッセージがキューに戻って再処理され、ストリームは<strong>成功するかレコードの期限が切れるまで</strong>再試行する(最大再試行回数・最大レコード期間で制限できる)</td><td data-label="失敗したイベントの行き先">SQS:<strong>キュー側のDLQ</strong>(再処理ポリシー)。ストリーム:<strong>失敗時の送信先</strong>(SQS・SNS・S3)</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 896 202" style="max-width:896px;min-width:716px" role="img" aria-label="図3 非同期呼び出しの流れ。イベントはLambdaの内部キューに入り、エラーなら再試行される。再試行しても失敗したイベントは、失敗時のデスティネーションかDLQに送られる。"><defs><marker id="dgservices-lambda-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="83" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="104" text-anchor="middle" class="dg-t">S3・SNSなど</text>
+<text x="112" y="122" text-anchor="middle" class="dg-s">非同期呼び出し</text>
+</g>
+<g data-node="q">
+<rect x="262" y="83" width="155" height="52" rx="8" class="dg-box"/>
+<text x="339" y="104" text-anchor="middle" class="dg-t">内部キュー</text>
+<text x="339" y="122" text-anchor="middle" class="dg-s">最大2回再試行</text>
+</g>
+<g data-node="fn">
+<rect x="489" y="89" width="155" height="40" rx="8" class="dg-accent"/>
+<text x="566" y="113" text-anchor="middle" class="dg-tb">Lambda関数</text>
+</g>
+<g data-node="ok">
+<rect x="716" y="40" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="794" y="62" text-anchor="middle" class="dg-t">成功時の送信先</text>
+<text x="794" y="80" text-anchor="middle" class="dg-s">デスティネーション</text>
+</g>
+<g data-node="ng">
+<rect x="716" y="126" width="155" height="52" rx="8" class="dg-ng"/>
+<text x="794" y="147" text-anchor="middle" class="dg-t">失敗時の送信先</text>
+<text x="794" y="165" text-anchor="middle" class="dg-s">またはDLQ</text>
+</g>
+<path d="M189.0,109.0 L261.5,109.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<path d="M416.5,109.0 L489.0,109.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<path d="M644.0,94.5 L716.5,81.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<text x="680" y="92" text-anchor="middle" class="dg-s dg-halo">成功</text>
+<path d="M644.0,123.5 L716.5,137.0" class="dg-line" marker-end="url(#dgservices-lambda-3)"/>
+<text x="680" y="134" text-anchor="middle" class="dg-s dg-halo">再試行も失敗</text>
+</svg>
+</div>
+<figcaption>図3 非同期呼び出しの流れ。イベントはLambdaの内部キューに入り、エラーなら再試行される。再試行しても失敗したイベントは、失敗時のデスティネーションかDLQに送られる。</figcaption>
+</figure>
+<ul>
+<li><strong>DLQ(デッドレターキュー)</strong>:失敗したイベントの<strong>内容だけ</strong>をSQS・SNSに送る。失敗時にしか使えない</li>
+<li><strong>デスティネーション</strong>:成功時・失敗時それぞれに送信先を設定でき、イベントの内容に加えて<strong>エラーの内容や関数の応答</strong>も含まれる。新しく作るならデスティネーションが推奨</li>
+<li>SQSのイベントソースマッピングでは、関数側のDLQやデスティネーションではなく、<strong>SQSキューの再処理ポリシー(DLQ)</strong>で失敗したメッセージを退避する。可視性タイムアウトは関数のタイムアウトより長くする</li>
+<li>ストリームでは、失敗したレコードがシャードの処理を止めてしまうため、「バッチを分割して再試行」や「部分的なバッチの失敗の報告(<code>ReportBatchItemFailures</code>)」を使う</li>
+<li>再試行で同じイベントが2回以上処理されることがあるため、関数は<strong>同じイベントを何度処理しても結果が変わらない(冪等な)</strong>作りにする</li>
+</ul>
+
+<h3 id="c2-8">実行ロールとリソースベースのポリシー<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<p>Lambdaの権限は、向きの違う2つのポリシーで決まります。</p>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>決めること</th><th>例</th></tr>
+<tr><td><strong>実行ロール</strong>(IAMロール)</td><td>関数が<strong>何にアクセスできるか</strong>(関数から外への権限)</td><td>DynamoDBへの書き込み、S3の読み取り、CloudWatch Logsへのログ出力、SQSのポーリング(イベントソースマッピング)</td></tr>
+<tr><td><strong>リソースベースのポリシー</strong></td><td><strong>誰が関数を呼び出せるか</strong>(外から関数への権限)</td><td>S3・SNS・EventBridge・API Gatewayや、別のアカウントに <code>lambda:InvokeFunction</code> を許可する</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 774 114" style="max-width:774px;min-width:619px" role="img" aria-label="図4 Lambdaの2つの権限。呼び出してよい相手はリソースベースのポリシー、関数がアクセスしてよい先は実行ロールで許可する。"><defs><marker id="dgservices-lambda-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s3">
+<rect x="34" y="38" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="60" text-anchor="middle" class="dg-t">S3・SNS</text>
+<text x="104" y="78" text-anchor="middle" class="dg-s">呼び出す側</text>
+</g>
+<g data-node="fn">
+<rect x="354" y="44" width="140" height="40" rx="8" class="dg-accent"/>
+<text x="424" y="68" text-anchor="middle" class="dg-tb">Lambda関数</text>
+</g>
+<g data-node="ddb">
+<rect x="610" y="38" width="140" height="52" rx="8" class="dg-box"/>
+<text x="680" y="60" text-anchor="middle" class="dg-t">DynamoDB</text>
+<text x="680" y="78" text-anchor="middle" class="dg-s">アクセス先</text>
+</g>
+<path d="M174.0,64.0 L354.0,64.0" class="dg-line" marker-end="url(#dgservices-lambda-4)"/>
+<text x="264" y="68" text-anchor="middle" class="dg-s dg-halo">リソースベースのポリシー</text>
+<path d="M494.0,64.0 L610.0,64.0" class="dg-line" marker-end="url(#dgservices-lambda-4)"/>
+<text x="552" y="68" text-anchor="middle" class="dg-s dg-halo">実行ロール</text>
+</svg>
+</div>
+<figcaption>図4 Lambdaの2つの権限。呼び出してよい相手はリソースベースのポリシー、関数がアクセスしてよい先は実行ロールで許可する。</figcaption>
+</figure>
+<ul>
+<li>実行ロールの信頼ポリシーでは <code>lambda.amazonaws.com</code> がロールを引き受けられるようにする。ログを出すにはAWS管理ポリシー <code>AWSLambdaBasicExecutionRole</code> の権限が必要</li>
+<li>イベントソースマッピング(SQS・Kinesisなど)は<strong>Lambdaがポーリングする</strong>ため、<code>sqs:ReceiveMessage</code> などの権限は<strong>実行ロール</strong>に付ける</li>
+<li>S3やSNSからの非同期呼び出しは<strong>相手がLambdaを呼び出す</strong>ため、<strong>リソースベースのポリシー</strong>で許可する(コンソールでトリガーを追加すると自動で設定される)</li>
+<li>「AccessDenied」が関数の中で出るなら実行ロール、関数が呼び出されないなら呼び出し元の権限(リソースベースのポリシー)を確認する</li>
+</ul>
+
+<h3 id="c2-9">バージョン管理とエイリアス<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>バージョンを発行するたびに新しいARNが発行されるため、<strong>イベントソースマッピング</strong>(イベント発生元とLambda関数を接続し自動起動する仕組み)が古いARNを参照し続けてしまう問題があります。</p>
+<p>解決策は、イベントソースマッピングを<strong>エイリアスのARN</strong>に向け、新バージョン発行時はエイリアスの向き先だけを更新することです。</p>
+<p><code>旧:S3 → prod(エイリアス) → v1</code><br><code>新:S3 → prod(エイリアス) → v2</code></p>
+<p>また、1つのエイリアスを複数バージョンに紐づけて<strong>トラフィックを分割</strong>(例:v1=90%、v2=10%)し、段階的に移行できます。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 179" style="max-width:684px;min-width:547px" role="img" aria-label="図5 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。"><defs><marker id="dgservices-lambda-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="68" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="90" text-anchor="middle" class="dg-t">イベントソース</text>
+<text x="109" y="108" text-anchor="middle" class="dg-s">S3など</text>
+</g>
+<g data-node="alias">
+<rect x="272" y="74" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="347" y="98" text-anchor="middle" class="dg-tb">エイリアス prod</text>
+</g>
+<g data-node="v1">
+<rect x="510" y="39" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="63" text-anchor="middle" class="dg-t">バージョン1</text>
+</g>
+<g data-node="v2">
+<rect x="510" y="103" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="124" text-anchor="middle" class="dg-t">バージョン2</text>
+<text x="585" y="142" text-anchor="middle" class="dg-s">新しいコード</text>
+</g>
+<path d="M184.0,94.0 L272.0,94.0" class="dg-line" marker-end="url(#dgservices-lambda-5)"/>
+<text x="228" y="98" text-anchor="middle" class="dg-s dg-halo">ARNを指定</text>
+<path d="M422.0,83.0 L510.0,70.0" class="dg-line" marker-end="url(#dgservices-lambda-5)"/>
+<text x="466" y="80" text-anchor="middle" class="dg-s dg-halo">90%</text>
+<path d="M422.0,105.0 L510.0,118.0" class="dg-line" marker-end="url(#dgservices-lambda-5)"/>
+<text x="466" y="116" text-anchor="middle" class="dg-s dg-halo">10%</text>
+</svg>
+</div>
+<figcaption>図5 エイリアスで呼び出し先を切り替える。イベントソースはエイリアスARNを指定しておけば、新バージョン発行時はエイリアスの向き先を変えるだけで済む。トラフィックを分割して段階的に移行することもできる。</figcaption>
+</figure>
+<h3 id="c2-10">VPC接続<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<p>Lambdaに仮想ENIを割り当て、サブネットとセキュリティグループに所属させることで、VPC内のリソースと通信できるようになります。</p>
+<ol>
+<li>VPC・サブネットを作成</li>
+<li>Lambda用のセキュリティグループを作成</li>
+<li>Lambda実行ロールにENI操作の権限を付与:<code>ec2:CreateNetworkInterface</code>、<code>ec2:DescribeNetworkInterfaces</code>、<code>ec2:DeleteNetworkInterface</code></li>
+<li>LambdaにVPC/サブネット/セキュリティグループを設定</li>
+</ol>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 626 134" style="max-width:626px;min-width:520px" role="img" aria-label="図6 VPC接続。LambdaにENIを割り当て、サブネットとセキュリティグループに所属させることで、VPC内のリソースと通信できる。ENIの作成・参照・削除のため、実行ロールにEC2の権限が必要。"><defs><marker id="dgservices-lambda-6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="262" y="20" width="340" height="90" rx="10" class="dg-group"/>
+<text x="272" y="35" class="dg-s">VPC</text>
+<rect x="24" y="20" width="170" height="90" rx="10" class="dg-group"/>
+<text x="34" y="35" class="dg-s">AWS管理の環境</text>
+<g data-node="fn">
+<rect x="34" y="54" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="109" y="78" text-anchor="middle" class="dg-tb">Lambda関数</text>
+</g>
+<g data-node="eni">
+<rect x="272" y="48" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="347" y="70" text-anchor="middle" class="dg-t">ENI</text>
+<text x="347" y="88" text-anchor="middle" class="dg-s">サブネット+SG</text>
+</g>
+<g data-node="rds">
+<rect x="442" y="48" width="150" height="52" rx="8" class="dg-box"/>
+<text x="517" y="70" text-anchor="middle" class="dg-t">RDS など</text>
+<text x="517" y="88" text-anchor="middle" class="dg-s">VPC内のリソース</text>
+</g>
+<path d="M184.0,74.0 L272.0,74.0" class="dg-line" marker-end="url(#dgservices-lambda-6)"/>
+<path d="M422.0,74.0 L442.0,74.0" class="dg-line" marker-end="url(#dgservices-lambda-6)"/>
+</svg>
+</div>
+<figcaption>図6 VPC接続。LambdaにENIを割り当て、サブネットとセキュリティグループに所属させることで、VPC内のリソースと通信できる。ENIの作成・参照・削除のため、実行ロールにEC2の権限が必要。</figcaption>
+</figure>
+<p>VPCに接続したLambdaは、<strong>インターネットやAWSサービスのパブリックなエンドポイントにそのままでは接続できなくなります</strong>。LambdaのENIにはプライベートIPしか付かず、<strong>パブリックサブネットに置いてもパブリックIPは付かない</strong>ためです。</p>
+<ul>
+<li>インターネット(外部API、VPCエンドポイントのないAWSサービス)に出るには、Lambdaを<strong>プライベートサブネット</strong>に置き、そのルートテーブルで<strong>パブリックサブネットのNATゲートウェイ</strong>に向ける</li>
+<li>S3・DynamoDB・Secrets ManagerなどのAWSサービスだけなら、<strong>VPCエンドポイント</strong>を作ればNATゲートウェイなしで使える</li>
+<li>VPC内のリソースにアクセスする必要がない関数は、VPCに接続しない方がシンプル</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 878 227" style="max-width:878px;min-width:702px" role="img" aria-label="図7 VPC接続したLambdaの外への通信。インターネットへはプライベートサブネットからNATゲートウェイ経由で出る。AWSサービスへはVPCエンドポイントでも接続できる。"><defs><marker id="dgservices-lambda-7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="fn">
+<rect x="34" y="151" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="112" y="172" text-anchor="middle" class="dg-tb">Lambda</text>
+<text x="112" y="190" text-anchor="middle" class="dg-s">プライベートサブネット</text>
+</g>
+<g data-node="nat">
+<rect x="262" y="43" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="339" y="64" text-anchor="middle" class="dg-t">NATゲートウェイ</text>
+<text x="339" y="82" text-anchor="middle" class="dg-s">パブリックサブネット</text>
+</g>
+<g data-node="igw">
+<rect x="489" y="49" width="155" height="40" rx="8" class="dg-box"/>
+<text x="566" y="73" text-anchor="middle" class="dg-t">IGW</text>
+</g>
+<g data-node="net">
+<rect x="699" y="43" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="776" y="64" text-anchor="middle" class="dg-t">インターネット</text>
+<text x="776" y="82" text-anchor="middle" class="dg-s">外部API</text>
+</g>
+<g data-node="vpce">
+<rect x="262" y="157" width="155" height="40" rx="8" class="dg-ok"/>
+<text x="339" y="181" text-anchor="middle" class="dg-t">VPCエンドポイント</text>
+</g>
+<g data-node="s3">
+<rect x="489" y="157" width="155" height="40" rx="8" class="dg-box"/>
+<text x="566" y="181" text-anchor="middle" class="dg-t">S3・DynamoDBなど</text>
+</g>
+<path d="M166.3,151.0 L284.2,95.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+<text x="225" y="127" text-anchor="middle" class="dg-s dg-halo">0.0.0.0/0</text>
+<path d="M416.5,69.0 L489.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+<path d="M644.0,69.0 L699.0,69.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+<path d="M189.0,177.0 L261.5,177.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+<path d="M416.5,177.0 L489.0,177.0" class="dg-line" marker-end="url(#dgservices-lambda-7)"/>
+</svg>
+</div>
+<figcaption>図7 VPC接続したLambdaの外への通信。インターネットへはプライベートサブネットからNATゲートウェイ経由で出る。AWSサービスへはVPCエンドポイントでも接続できる。</figcaption>
+</figure>
+<h3 id="c2-11">Lambda@Edge<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<p>CloudFrontのエッジサーバー上でLambdaを実行する仕組みで、低レイテンシーを実現します。単純な処理はCloudFront Functionsを使い、<strong>AWSサービスにアクセスする処理はLambda@Edge</strong>を使います。</p>
+<ul>
+<li>作成できる<strong>リージョンはus-east-1のみ</strong></li>
+<li>環境変数は使用不可</li>
+<li>VPC接続は不可</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>S3へのファイルアップロードをきっかけにした画像変換などのイベント駆動処理</li>
+<li>API GatewayやFunction URLsと組み合わせたサーバーレスAPI</li>
+<li>CloudFrontのエッジでのリクエスト加工(Lambda@Edge)</li>
+<li>15分以内に終わる定期バッチ処理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Lambdaは「リクエスト数」と「実行時間×割り当てメモリ量」で課金されます。関数が動いていない時間は料金がかかりません。プロビジョニングされた同時実行は、設定している間ずっと料金が発生します。</p>
+<p>メモリを増やすとCPU性能も上がるため、実行時間が短くなり結果的に安くなる場合もあります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="api-gateway.html">Amazon API Gateway</a>:LambdaをバックエンドにしたAPIを公開</li>
+<li><a href="cloudfront.html">Amazon CloudFront</a>:Lambda@Edgeの実行場所</li>
+<li><a href="ecr.html">Amazon ECR</a>:コンテナイメージとしてデプロイする際の保存先</li>
+<li><a href="s3.html">Amazon S3</a>:代表的なイベントソース</li>
+<li><a href="vpc.html">Amazon VPC</a>:VPC接続でVPC内リソースにアクセス</li>
+<li><a href="sam.html">AWS SAM</a>:サーバーレスアプリのデプロイ</li>
+<li><a href="xray.html">AWS X-Ray</a>:関数のトレース</li>
+<li>関連する用語:<a href="../terms/throttling-retry.html">スロットリングとリトライ</a>、<a href="../terms/iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a>、<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>制限と性能</h4>
+<ul>
+<li>15分を超える処理はLambdaに向かない(ECS/Fargateなどを検討)。</li>
+<li>デプロイパッケージが250MBを超える → <strong>コンテナイメージ(ECR)</strong>でデプロイ。</li>
+<li>コールドスタート対策 → <strong>プロビジョニングされた同時実行</strong>。同時実行の上限制御 → <strong>予約された同時実行</strong>。</li>
+</ul>
+<h4>呼び出しとエラー処理</h4>
+<ul>
+<li>非同期呼び出しは<strong>最大2回</strong>再試行し、失敗したイベントは<strong>失敗時のデスティネーション</strong>か<strong>DLQ</strong>へ。同期呼び出しは呼び出し元が再試行する。</li>
+<li>SQSから処理して失敗したメッセージを退避 → <strong>SQSキュー側のDLQ</strong>(再処理ポリシー)。</li>
+<li>成功/失敗の結果を他サービスに送る → <strong>デスティネーション</strong>。</li>
+<li>イベントソースはバージョンARNではなく<strong>エイリアスARN</strong>に向ける。</li>
+</ul>
+<h4>権限・ネットワーク</h4>
+<ul>
+<li>関数から他のサービスへの権限 → <strong>実行ロール</strong>。S3・SNSなどから関数を呼び出す権限 → <strong>リソースベースのポリシー</strong>。SQSのポーリングは実行ロール。</li>
+<li>VPC接続には実行ロールに<strong>ENI作成・参照・削除</strong>の権限が必要。</li>
+<li>VPC接続したLambdaがインターネットに出られない → <strong>プライベートサブネット+NATゲートウェイ</strong>(パブリックサブネットに置いてもパブリックIPは付かない)。AWSサービスだけなら<strong>VPCエンドポイント</strong>。</li>
+<li>Lambda@Edgeは<strong>us-east-1</strong>で作成。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Lambdaはサーバー管理不要の関数実行サービス。最大15分、パッケージ250MB。</li>
+<li>同時実行は「予約=上限」「プロビジョニング=事前ウォーム」。</li>
+<li>バージョン+エイリアスで安全にリリースし、トラフィック分割で段階移行できる。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/log-error-alert.html"><span class="title">アプリのエラーログを検知して通知する</span></a></li>
+<li><a href="../usecases/smart-alarms.html"><span class="title">外形監視と、誤報の少ないアラームを作る</span></a></li>
+<li><a href="../usecases/distributed-tracing.html"><span class="title">マイクロサービスの遅延の原因をトレースで特定する</span></a></li>
+<li><a href="../usecases/sqs-decoupling.html"><span class="title">キューで処理を分離し、急増や障害に強くする</span></a></li>
+<li><a href="../usecases/lambda-canary-release.html"><span class="title">Lambdaを段階的にリリースする</span></a></li>
+<li><a href="../usecases/secrets-rotation.html"><span class="title">DBのパスワードを自動でローテーションする</span></a></li>
+<li><a href="../usecases/guardduty-auto-response.html"><span class="title">乗っ取られたEC2を自動で隔離する</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 10件・リンク元 43件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 1326" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Lambdaとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/appsync.html"><title>サービス:AWS AppSync</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS AppSync</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS CloudFormation</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/codedeploy.html"><title>サービス:AWS CodeDeploy</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS CodeDeploy</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS CodePipeline</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/compute-optimizer.html"><title>サービス:AWS Compute Optimizer</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS Compute Optimizer</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">AWS Config</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/sdk.html"><title>サービス:AWS SDK</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">AWS SDK</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/secrets-manager.html"><title>サービス:AWS Secrets Manager</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">AWS Secrets Manager</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/step-functions.html"><title>サービス:AWS Step Functions</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="290" class="gr-t">AWS Step Functions</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/trusted-advisor.html"><title>サービス:AWS Trusted Advisor</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="320" class="gr-t">AWS Trusted Advisor</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="350" class="gr-t">Amazon Athena</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="380" class="gr-t">Amazon Aurora</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/bedrock.html"><title>サービス:Amazon Bedrock</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="410" class="gr-t">Amazon Bedrock</text></a>
+<path class="gr-line" d="M230,435 C265.0,435 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="440" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M230,465 C265.0,465 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/cognito.html"><title>サービス:Amazon Cognito</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="470" class="gr-t">Amazon Cognito</text></a>
+<path class="gr-line" d="M230,495 C265.0,495 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/data-firehose.html"><title>サービス:Amazon Data Firehose</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="500" class="gr-t">Amazon Data Firehose</text></a>
+<path class="gr-line" d="M230,525 C265.0,525 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="530" class="gr-t">Amazon DynamoDB</text></a>
+<path class="gr-line" d="M230,555 C265.0,555 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="560" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M230,585 C265.0,585 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/efs.html"><title>サービス:Amazon EFS</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="590" class="gr-t">Amazon EFS</text></a>
+<path class="gr-line" d="M230,615 C265.0,615 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="620" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M230,645 C265.0,645 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/inspector.html"><title>サービス:Amazon Inspector</title><rect x="0" y="634" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="650" class="gr-t">Amazon Inspector</text></a>
+<path class="gr-line" d="M230,675 C265.0,675 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/kinesis.html"><title>サービス:Amazon Kinesis</title><rect x="0" y="664" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="680" class="gr-t">Amazon Kinesis</text></a>
+<path class="gr-line" d="M230,705 C265.0,705 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="0" y="694" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="710" class="gr-t">Amazon RDS</text></a>
+<path class="gr-line" d="M230,735 C265.0,735 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="0" y="724" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="740" class="gr-t">Amazon SNS</text></a>
+<path class="gr-line" d="M230,765 C265.0,765 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/sqs.html"><title>サービス:Amazon SQS</title><rect x="0" y="754" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="770" class="gr-t">Amazon SQS</text></a>
+<path class="gr-line" d="M230,795 C265.0,795 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/ses.html"><title>サービス:Amazon Simple Email Service(SES)</title><rect x="0" y="784" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="800" class="gr-t">Amazon Simple Email Servi…</text></a>
+<path class="gr-line" d="M230,825 C265.0,825 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../services/savings-plans.html"><title>サービス:Savings Plans</title><rect x="0" y="814" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="830" class="gr-t">Savings Plans</text></a>
+<path class="gr-line" d="M230,855 C265.0,855 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../terms/arn.html"><title>用語:ARN</title><rect x="0" y="844" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="860" class="gr-t">ARN</text></a>
+<path class="gr-line" d="M230,885 C265.0,885 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../terms/eni-elastic-ip.html"><title>用語:ENIとElastic IP</title><rect x="0" y="874" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="890" class="gr-t">ENIとElastic IP</text></a>
+<path class="gr-line" d="M230,915 C265.0,915 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="0" y="904" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="920" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M230,945 C265.0,945 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="0" y="934" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="950" class="gr-t">イベント駆動の自動修復</text></a>
+<path class="gr-line" d="M230,975 C265.0,975 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../terms/service-quotas.html"><title>用語:サービスクォータ</title><rect x="0" y="964" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="980" class="gr-t">サービスクォータ</text></a>
+<path class="gr-line" d="M230,1005 C265.0,1005 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="0" y="994" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="1010" class="gr-t">デプロイ戦略</text></a>
+<path class="gr-line" d="M230,1035 C265.0,1035 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../terms/messaging-comparison.html"><title>用語:メッセージングサービスの選び方</title><rect x="0" y="1024" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="1040" class="gr-t">メッセージングサービスの選び方</text></a>
+<path class="gr-line" d="M230,1065 C265.0,1065 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../terms/secrets-config-comparison.html"><title>用語:機密情報・設定値の保存先の選び方</title><rect x="0" y="1054" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="1070" class="gr-t">機密情報・設定値の保存先の選び方</text></a>
+<path class="gr-line" d="M230,1095 C265.0,1095 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../terms/shared-responsibility.html"><title>用語:責任共有モデル</title><rect x="0" y="1084" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="1100" class="gr-t">責任共有モデル</text></a>
+<path class="gr-line" d="M230,1125 C265.0,1125 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/secrets-rotation.html"><title>運用シナリオ:DBのパスワードを自動でローテーションする</title><rect x="0" y="1114" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="1130" class="gr-t">DBのパスワードを自動でローテ…</text></a>
+<path class="gr-line" d="M230,1155 C265.0,1155 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/lambda-canary-release.html"><title>運用シナリオ:Lambdaを段階的にリリースする</title><rect x="0" y="1144" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="1160" class="gr-t">Lambdaを段階的にリリースする</text></a>
+<path class="gr-line" d="M230,1185 C265.0,1185 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/log-error-alert.html"><title>運用シナリオ:アプリのエラーログを検知して通知する</title><rect x="0" y="1174" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="1190" class="gr-t">アプリのエラーログを検知して通…</text></a>
+<path class="gr-line" d="M230,1215 C265.0,1215 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/sqs-decoupling.html"><title>運用シナリオ:キューで処理を分離し、急増や障害に強くする</title><rect x="0" y="1204" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="1220" class="gr-t">キューで処理を分離し、急増や障…</text></a>
+<path class="gr-line" d="M230,1245 C265.0,1245 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/distributed-tracing.html"><title>運用シナリオ:マイクロサービスの遅延の原因をトレースで特定する</title><rect x="0" y="1234" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="1250" class="gr-t">マイクロサービスの遅延の原因を…</text></a>
+<path class="gr-line" d="M230,1275 C265.0,1275 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/guardduty-auto-response.html"><title>運用シナリオ:乗っ取られたEC2を自動で隔離する</title><rect x="0" y="1264" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="1280" class="gr-t">乗っ取られたEC2を自動で隔離する</text></a>
+<path class="gr-line" d="M230,1305 C265.0,1305 265.0,675 300,675" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/smart-alarms.html"><title>運用シナリオ:外形監視と、誤報の少ないアラームを作る</title><rect x="0" y="1294" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="1310" class="gr-t">外形監視と、誤報の少ないアラー…</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,540 550,540" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/sam.html"><title>サービス:AWS SAM</title><rect x="550" y="529" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="544" class="gr-t">AWS SAM</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,570 550,570" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/xray.html"><title>サービス:AWS X-Ray</title><rect x="550" y="559" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="574" class="gr-t">AWS X-Ray</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,600 550,600" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/api-gateway.html"><title>サービス:Amazon API Gateway</title><rect x="550" y="589" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="604" class="gr-t">Amazon API Gateway</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,630 550,630" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cloudfront.html"><title>サービス:Amazon CloudFront</title><rect x="550" y="619" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="634" class="gr-t">Amazon CloudFront</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,660 550,660" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ecr.html"><title>サービス:Amazon ECR</title><rect x="550" y="649" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="664" class="gr-t">Amazon ECR</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,690 550,690" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="679" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="694" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,720 550,720" marker-end="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="709" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="724" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,750 550,750" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/iam-passrole.html"><title>用語:iam:PassRoleとサービスにリンクされたロール</title><rect x="550" y="739" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="754" class="gr-t">iam:PassRoleとサービスにリ…</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,780 550,780" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/throttling-retry.html"><title>用語:スロットリングとリトライ</title><rect x="550" y="769" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="784" class="gr-t">スロットリングとリトライ</text></a>
+<path class="gr-line" d="M480,675 C515.0,675 515.0,810 550,810" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/managed-serverless.html"><title>用語:マネージドサービスとサーバーレス</title><rect x="550" y="799" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="814" class="gr-t">マネージドサービスとサーバーレス</text></a>
+<rect x="300" y="655" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="680" text-anchor="middle" class="gr-tb">AWS Lambda</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(43)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(10)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="image-builder.html"><span class="label">← 前へ</span>Amazon EC2 Image Builder</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="elastic-beanstalk.html"><span class="label">次へ →</span>AWS Elastic Beanstalk</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

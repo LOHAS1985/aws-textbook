@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elastic Load Balancing (ELB) | AWS教科書</title>
+<meta name="description" content="通信を複数のターゲットへ分散するロードバランサー群">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/elb.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
+  <h1>Elastic Load Balancing (ELB)</h1>
+  <p class="lead">通信を複数のターゲットへ分散するロードバランサー群</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(20項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">種類</a></li><li><a href="#c2-2">機能</a></li><li><a href="#c2-3">リスナールール</a></li><li><a href="#c2-4">ターゲットグループとターゲットタイプ</a></li><li><a href="#c2-5">ヘルスチェックの設定項目</a></li><li><a href="#c2-6">クロスゾーン負荷分散</a></li><li><a href="#c2-7">登録解除の遅延(Connection Draining)</a></li><li><a href="#c2-8">スティッキーセッション</a></li><li><a href="#c2-9">内部向けとインターネット向け</a></li><li><a href="#c2-10">アクセスログ</a></li><li><a href="#c2-11">SNI(1つのリスナーで複数の証明書)</a></li><li><a href="#c2-12">WAFとの連携</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Elastic Load Balancing(ELB)</strong>は、受け取った通信を複数のサーバーへ分散する<strong>ロードバランサーのサービス群</strong>です。<strong>リージョンサービス</strong>で、通信を複数のAZへ分散します(リージョンをまたいだ分散はしません)。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">種類<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>レイヤー</th><th>用途</th></tr>
+<tr><td>ALB(Application Load Balancer)</td><td>L7</td><td>HTTP/HTTPS用</td></tr>
+<tr><td>NLB(Network Load Balancer)</td><td>L4</td><td>TCP/UDP用。通信の高速転送</td></tr>
+<tr><td>GWLB(Gateway Load Balancer)</td><td>L3/L4</td><td>ネットワークセキュリティ機器用。通信をファイアウォールなどのセキュリティ機器群へ分散</td></tr>
+<tr><td>CLB(Classic Load Balancer)</td><td>L4/L7</td><td>旧世代。新規ではALB・NLBを使う</td></tr>
+</table></div>
+
+<h3 id="c2-2">機能<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ヘルスチェック</strong>:ALBはHTTP/HTTPSで行う。NLBはTCP・HTTP・HTTPSで行う(UDPのターゲットグループでも、ヘルスチェック自体はTCP・HTTP・HTTPSのいずれかで行う)。</li>
+<li><strong>パスルーティング</strong>:URLによって転送先を変える(例:<code>https://api.example.com/users/list</code> の <code>api.example.com</code> がホスト、<code>/users/list</code> がパス)。
+  <ul><li>ホストベース:異なるホストへの分散</li><li>パスベース:同じドメイン内での分散</li></ul></li>
+<li><strong>HTTPS終端</strong>:HTTPSの復号をALBで行い、EC2の負担を軽減する。</li>
+</ul>
+<p>NLBはAZごとに静的IP(Elastic IP)を割り当てられるのが特徴です。</p>
+
+<h3 class="em" id="c2-3">リスナールール<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>受け取ったリクエストの処理ルールです。</p>
+<ol>
+<li><strong>IF(条件)</strong>:リクエストを判定する条件。例:パスベース、ホストベース、HTTPヘッダーなど</li>
+<li><strong>THEN(アクション)</strong>:条件に一致したときの動作。例:特定のターゲットグループへ転送、リダイレクト</li>
+</ol>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 722 242" style="max-width:722px;min-width:578px" role="img" aria-label="図1 ALBのリスナールール。HTTPSを終端したあと、条件(IF)に一致したターゲットグループへ転送(THEN)する。この例はパスベースのルーティング。ターゲットは複数のAZに分散して配置する。"><defs><marker id="dgservices-elb-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="124" width="160" height="40" rx="8" class="dg-blue"/>
+<text x="114" y="148" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="alb">
+<rect x="286" y="118" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="366" y="140" text-anchor="middle" class="dg-tb">ALB</text>
+<text x="366" y="158" text-anchor="middle" class="dg-s">HTTPS終端・ルール判定</text>
+</g>
+<g data-node="tg1">
+<rect x="538" y="70" width="160" height="52" rx="8" class="dg-box"/>
+<text x="618" y="92" text-anchor="middle" class="dg-t">ターゲットグループA</text>
+<text x="618" y="110" text-anchor="middle" class="dg-s">/api/* → APIサーバー</text>
+</g>
+<g data-node="tg2">
+<rect x="538" y="166" width="160" height="52" rx="8" class="dg-box"/>
+<text x="618" y="188" text-anchor="middle" class="dg-t">ターゲットグループB</text>
+<text x="618" y="206" text-anchor="middle" class="dg-s">/img/* → 画像サーバー</text>
+</g>
+<path d="M194.0,144.0 L286.0,144.0" class="dg-line" marker-end="url(#dgservices-elb-1)"/>
+<text x="240" y="148" text-anchor="middle" class="dg-s dg-halo">HTTPS</text>
+<path d="M446.0,128.8 L538.0,111.2" class="dg-line" marker-end="url(#dgservices-elb-1)"/>
+<path d="M446.0,159.2 L538.0,176.8" class="dg-line" marker-end="url(#dgservices-elb-1)"/>
+</svg>
+</div>
+<figcaption>図1 ALBのリスナールール。HTTPSを終端したあと、条件(IF)に一致したターゲットグループへ転送(THEN)する。この例はパスベースのルーティング。ターゲットは複数のAZに分散して配置する。</figcaption>
+</figure>
+
+<h3 id="c2-4">ターゲットグループとターゲットタイプ<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>ターゲットグループ</strong>は、通信の転送先(ターゲット)をまとめたものです。リスナーやリスナールールの転送先にはターゲットグループを指定し、ヘルスチェックの設定もターゲットグループごとに持ちます。ターゲットグループを作るときに<strong>ターゲットタイプ</strong>を選び、後から変更はできません。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th>ターゲットタイプ</th><th>登録するもの</th><th>使えるLB</th><th>主な用途</th></tr>
+<tr><td data-label="ターゲットタイプ">インスタンス</td><td data-label="登録するもの">EC2インスタンスID</td><td data-label="使えるLB">ALB・NLB・GWLB</td><td data-label="主な用途">EC2への分散。Auto Scalingグループと組み合わせる</td></tr>
+<tr><td data-label="ターゲットタイプ">IP</td><td data-label="登録するもの">プライベートIPアドレス</td><td data-label="使えるLB">ALB・NLB・GWLB</td><td data-label="主な用途">ECS(Fargate、awsvpcモード)、ピアリング先VPCやオンプレミスのサーバー</td></tr>
+<tr><td data-label="ターゲットタイプ">Lambda</td><td data-label="登録するもの">Lambda関数</td><td data-label="使えるLB"><strong>ALBのみ</strong></td><td data-label="主な用途">HTTPリクエストをサーバーレスで処理</td></tr>
+<tr><td data-label="ターゲットタイプ">ALB</td><td data-label="登録するもの">Application Load Balancer</td><td data-label="使えるLB"><strong>NLBのみ</strong></td><td data-label="主な用途">NLBの静的IPとALBのL7ルーティングを組み合わせる</td></tr>
+</table></div>
+
+<h3 id="c2-5">ヘルスチェックの設定項目<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>ロードバランサーは、ターゲットグループの設定に従って各ターゲットへ定期的にリクエストを送り、<strong>正常(healthy)なターゲットにだけ</strong>通信を転送します。</p>
+<div class="table-wrap"><table>
+<tr><th>設定項目</th><th>意味</th><th>ALBの既定値</th></tr>
+<tr><td>プロトコル・ポート</td><td>ヘルスチェックに使うプロトコルとポート(既定は通信と同じポート)</td><td>HTTP・トラフィックポート</td></tr>
+<tr><td>パス</td><td>HTTP/HTTPSの場合にリクエストするパス(例:<code>/health</code>)</td><td><code>/</code></td></tr>
+<tr><td>間隔</td><td>ヘルスチェックを送る間隔</td><td>30秒</td></tr>
+<tr><td>タイムアウト</td><td>応答がないと失敗とみなすまでの時間</td><td>5秒</td></tr>
+<tr><td>正常のしきい値</td><td>何回連続で成功したら正常に戻すか</td><td>5回</td></tr>
+<tr><td>非正常のしきい値</td><td>何回連続で失敗したら非正常にするか</td><td>2回</td></tr>
+<tr><td>成功コード</td><td>成功とみなすHTTPステータスコード(例:<code>200</code>、<code>200-299</code>)</td><td>200</td></tr>
+</table></div>
+<p>パスにアプリやDBの状態まで確認する専用のページを用意すると、「サーバーは動いているがアプリが壊れている」状態も検知できます。ログイン画面へのリダイレクト(302)が返るパスを指定すると、成功コードが200のままでは全ターゲットが非正常になる点に注意します。Auto Scalingグループで<strong>ELBのヘルスチェック</strong>を有効にすると、非正常と判定されたインスタンスは自動で置き換えられます。</p>
+
+<h3 id="c2-6">クロスゾーン負荷分散<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>ロードバランサーのノードはAZごとに置かれます。<strong>クロスゾーン負荷分散</strong>が無効だと、各ノードは<strong>自分のAZのターゲットにだけ</strong>転送し、有効だと<strong>全AZのターゲットに均等に</strong>転送します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 573 229" style="max-width:573px;min-width:520px" role="img" aria-label="図2 クロスゾーン負荷分散が無効な場合。各AZのノードは自分のAZのターゲットにだけ転送するため、AZ-cの1台に50%が集中する。有効にすると3台に約33%ずつ均等に分散される。"><defs><marker id="dgservices-elb-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="24" y="12" width="300" height="192" rx="10" class="dg-group"/>
+<text x="34" y="28" class="dg-s">AZ-a</text>
+<rect x="399" y="12" width="150" height="192" rx="10" class="dg-group"/>
+<text x="409" y="28" class="dg-s">AZ-c</text>
+<g data-node="na">
+<rect x="109" y="40" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="174" y="62" text-anchor="middle" class="dg-tb">LBノード</text>
+<text x="174" y="80" text-anchor="middle" class="dg-s">AZ-a 50%</text>
+</g>
+<g data-node="nc">
+<rect x="409" y="40" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="474" y="62" text-anchor="middle" class="dg-tb">LBノード</text>
+<text x="474" y="80" text-anchor="middle" class="dg-s">AZ-c 50%</text>
+</g>
+<g data-node="a1">
+<rect x="34" y="148" width="130" height="40" rx="8" class="dg-box"/>
+<text x="99" y="172" text-anchor="middle" class="dg-t">EC2</text>
+</g>
+<g data-node="a2">
+<rect x="184" y="148" width="130" height="40" rx="8" class="dg-box"/>
+<text x="249" y="172" text-anchor="middle" class="dg-t">EC2</text>
+</g>
+<g data-node="c1">
+<rect x="409" y="148" width="130" height="40" rx="8" class="dg-box"/>
+<text x="474" y="172" text-anchor="middle" class="dg-t">EC2</text>
+</g>
+<path d="M154.9,92.5 L113.7,148.5" class="dg-line" marker-end="url(#dgservices-elb-2)"/>
+<text x="134" y="124" text-anchor="middle" class="dg-s dg-halo">25%</text>
+<path d="M193.1,92.5 L234.3,148.5" class="dg-line" marker-end="url(#dgservices-elb-2)"/>
+<text x="214" y="124" text-anchor="middle" class="dg-s dg-halo">25%</text>
+<path d="M474.0,92.5 L474.0,148.5" class="dg-line" marker-end="url(#dgservices-elb-2)"/>
+<text x="474" y="124" text-anchor="middle" class="dg-s dg-halo">50%</text>
+</svg>
+</div>
+<figcaption>図2 クロスゾーン負荷分散が無効な場合。各AZのノードは自分のAZのターゲットにだけ転送するため、AZ-cの1台に50%が集中する。有効にすると3台に約33%ずつ均等に分散される。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>既定</th><th>補足</th></tr>
+<tr><td>ALB</td><td><strong>有効</strong></td><td>AZ間のデータ転送料金はかからない。ターゲットグループ単位で無効にもできる</td></tr>
+<tr><td>NLB・GWLB</td><td><strong>無効</strong></td><td>有効にするとAZ間のデータ転送料金がかかる</td></tr>
+<tr><td>CLB</td><td>コンソールで作ると有効、API・CLIで作ると無効</td><td>—</td></tr>
+</table></div>
+
+<h3 id="c2-7">登録解除の遅延(Connection Draining)<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>スケールインやデプロイでターゲットをターゲットグループから外すとき、いきなり切り離すと処理中のリクエストが失敗します。<strong>登録解除の遅延</strong>を設定すると、ターゲットは「draining」状態になり、<strong>新しいリクエストは送られず、処理中のリクエストだけ</strong>指定時間まで完了を待ってから外されます。</p>
+<ul>
+<li>既定は<strong>300秒</strong>、0〜3600秒で設定できる</li>
+<li>短い処理しかないアプリでは短くすると、スケールインやデプロイが早く終わる</li>
+<li>CLBでは「Connection Draining」という名前の設定</li>
+</ul>
+
+<h3 id="c2-8">スティッキーセッション<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>スティッキーセッション(セッション維持)</strong>を有効にすると、同じクライアントからのリクエストを<strong>同じターゲットに送り続けます</strong>。セッション情報をサーバーのメモリに持つアプリで使います。</p>
+<ul>
+<li>ALB:Cookieで実現する。ロードバランサーが発行するCookie(<code>AWSALB</code>、期間ベース)か、アプリが発行するCookie(アプリケーションベース)を使う。維持する期間は1秒〜7日</li>
+<li>NLB:送信元IPアドレスで同じターゲットに送る</li>
+<li>負荷が偏りやすく、ターゲットが停止するとセッションが失われる。可能ならセッション情報を<a href="elasticache.html">ElastiCache</a>や<a href="dynamodb.html">DynamoDB</a>に置いてサーバーをステートレスにする方がよい</li>
+</ul>
+
+<h3 id="c2-9">内部向けとインターネット向け<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>ロードバランサーは作成時に<strong>スキーム</strong>を選びます。作成後は変更できません。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th>スキーム</th><th>IPアドレス</th><th>配置するサブネット</th><th>用途</th></tr>
+<tr><td data-label="スキーム">インターネット向け(internet-facing)</td><td data-label="IPアドレス">パブリックIP(DNS名がパブリックIPに解決される)</td><td data-label="配置するサブネット">パブリックサブネット</td><td data-label="用途">インターネットからの入り口</td></tr>
+<tr><td data-label="スキーム">内部向け(internal)</td><td data-label="IPアドレス"><strong>プライベートIPのみ</strong></td><td data-label="配置するサブネット">プライベートサブネット</td><td data-label="用途">Web層からアプリ層への分散など、VPC内(とVPN・Direct Connectの先)からの通信</td></tr>
+</table></div>
+<p>インターネット向けのALBでも、ターゲットのEC2はプライベートサブネットに置けます(ALBからはプライベートIPで転送されるため)。</p>
+
+<h3 id="c2-10">アクセスログ<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>アクセスログ</strong>を有効にすると、リクエストごとの記録(受信時刻、クライアントIP、処理時間、リクエストの内容、ステータスコード、転送先のターゲットなど)が<strong>S3バケットに5分ごと</strong>に出力されます。</p>
+<ul>
+<li>既定では<strong>無効</strong>。有効にし、出力先のバケットのバケットポリシーでELBからの書き込みを許可する</li>
+<li>機能自体は無料で、S3の保存料金だけがかかる</li>
+<li>出力したログは<a href="athena.html">Athena</a>でSQLを使って分析できる</li>
+<li>NLBのアクセスログはTLSリスナーの通信だけが対象</li>
+</ul>
+<p>集計値(リクエスト数、5xxの数、レイテンシーなど)を見るならCloudWatchメトリクス、リクエスト1件ずつの詳細を調べるならアクセスログ、と使い分けます。</p>
+
+<h3 id="c2-11">SNI(1つのリスナーで複数の証明書)<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>SNI(Server Name Indication)</strong>は、TLSの接続開始時にクライアントが「どのホスト名に接続したいか」をサーバーへ伝える仕組みです。ALBとNLB(TLSリスナー)はSNIに対応していて、<strong>1つのHTTPS/TLSリスナーに複数の証明書</strong>を登録でき、クライアントが指定したホスト名に合う証明書を自動で選びます。</p>
+<p>これにより、<code>a.example.com</code> と <code>b.example.org</code> のような別ドメインのサイトを、1つのALB・1つのリスナー(443)でまとめて提供できます。証明書は<a href="acm.html">ACM</a>で発行・管理するのが一般的です。CLBはSNIに対応していません。</p>
+
+<h3 id="c2-12">WAFとの連携<a class="anchor" href="#c2-12" aria-label="この見出しへのリンク">#</a></h3>
+<p>ALBには<strong>AWS WAF</strong>のウェブACLを関連付けられます。ALBに届いたリクエストはWAFのルールで検査され、SQLインジェクションやクロスサイトスクリプティング、特定のIP・国からのアクセス、短時間の大量アクセス(レートベースのルール)などを<strong>ターゲットに届く前にブロック</strong>できます。</p>
+<p>WAFを関連付けられるのは<strong>ALB</strong>で、NLB・GWLBには関連付けられません(WAFはHTTPの中身を検査するL7の機能のため)。<a href="cloudfront.html">CloudFront</a>や<a href="api-gateway.html">API Gateway</a>にも関連付けられます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>複数AZのEC2/ECSへWebトラフィックを分散(ALB)</li>
+<li><code>/api/*</code> はAPIサーバー、<code>/images/*</code> は画像サーバーへ振り分け(パスベースルーティング)</li>
+<li>ゲームやIoTなどTCP/UDPの大量・高速通信(NLB)</li>
+<li>サードパーティ製ファイアウォールへの通信分散(GWLB)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>ロードバランサーの稼働時間と、処理量の単位(ALBはLCU、NLBはNLCU)に応じて課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="ecs.html">Amazon ECS</a>:代表的なターゲット</li>
+<li><a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:ターゲットの自動登録・ELBヘルスチェック</li>
+<li><a href="eks.html">Amazon EKS</a>:Ingress→ALB、Service→NLB</li>
+<li><a href="acm.html">AWS Certificate Manager</a>:HTTPS終端に使う証明書</li>
+<li><a href="global-accelerator.html">AWS Global Accelerator</a>:ALB/NLBの前段でグローバルに最適化</li>
+<li><a href="route53.html">Amazon Route 53</a>:エイリアスレコードでELBを指す</li>
+<li><a href="waf.html">AWS WAF</a>:ALBに関連付けてHTTPの攻撃を防ぐ</li>
+<li><a href="application-recovery-controller.html">Amazon Application Recovery Controller</a>:ゾーンシフトでAZを切り離す</li>
+<li>関連する用語:<a href="../terms/http-status-codes.html">HTTPステータスコードと切り分け</a>、<a href="../terms/tls-termination.html">TLS終端と証明書の配置</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>種類の選び方</h4>
+<ul>
+<li>HTTP/HTTPSでパス・ホストによる振り分け → <strong>ALB</strong>。</li>
+<li>TCP/UDP・超高速・静的IP → <strong>NLB</strong>。</li>
+<li>セキュリティアプライアンスへの分散 → <strong>GWLB</strong>。</li>
+<li>Lambdaをターゲットにできる → <strong>ALB</strong>。NLBの後ろにALBを置く → ターゲットタイプ「<strong>ALB</strong>」。Fargateのタスク → ターゲットタイプ「<strong>IP</strong>」。</li>
+<li>ELBはリージョン内の複数AZに分散する(リージョン間は Route 53 や Global Accelerator)。</li>
+</ul>
+<h4>ターゲットとヘルスチェック</h4>
+<ul>
+<li>全ターゲットが非正常になった → ヘルスチェックの<strong>パス・ポート・成功コード</strong>と、ターゲットのセキュリティグループでLBからの通信を許可しているかを確認する。</li>
+<li>AZごとのターゲット数が違い負荷が偏る → <strong>クロスゾーン負荷分散</strong>を有効にする(NLBは既定で無効)。</li>
+<li>スケールイン時に処理中のリクエストを失敗させない → <strong>登録解除の遅延</strong>。</li>
+<li>同じユーザーを同じサーバーに送りたい → <strong>スティッキーセッション</strong>(ただしステートレス化の方が望ましい)。</li>
+</ul>
+<h4>セキュリティ・ログ</h4>
+<ul>
+<li>EC2のSSL処理負荷を減らす → ALBで<strong>HTTPS終端</strong>。</li>
+<li>複数のドメインの証明書を1つのALBで扱う → <strong>SNI</strong>。</li>
+<li>SQLインジェクションなどをブロック → ALBに<strong>AWS WAF</strong>を関連付ける。</li>
+<li>リクエスト単位で記録を残したい → <strong>アクセスログ</strong>(S3に出力、既定は無効)。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ELBはALB(L7)・NLB(L4)・GWLB(L3/4)・CLB(旧世代)の4種類。</li>
+<li>ALBはリスナールール(IF/THEN)でホスト・パスごとに振り分ける。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/auto-scaling-web.html"><span class="title">負荷に応じて自動でスケールするWebシステム</span></a></li>
+<li><a href="../usecases/az-failure-isolation.html"><span class="title">1つのAZの障害からアプリを切り離す</span></a></li>
+<li><a href="../usecases/multi-region-failover.html"><span class="title">リージョン障害に備えて別リージョンへ切り替える</span></a></li>
+<li><a href="../usecases/ec2-blue-green-pipeline.html"><span class="title">EC2のアプリをCI/CDでBlue/Greenデプロイする</span></a></li>
+<li><a href="../usecases/ecs-safe-deploy.html"><span class="title">ECSのサービスを止めずに更新し、失敗したら自動で戻す</span></a></li>
+<li><a href="../usecases/waf-web-protection.html"><span class="title">Webアプリを攻撃や大量アクセスから守る</span></a></li>
+<li><a href="../usecases/route53-traffic-routing.html"><span class="title">利用者の場所や割合でアクセスを振り分ける</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 16件・リンク元 21件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 666" style="max-width:784px;min-width:600px" role="img" aria-label="Elastic Load Balancing (ELB)とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Elastic Beanstalk</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../services/private-ca.html"><title>サービス:AWS Private CA</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Private CA</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../services/shield.html"><title>サービス:AWS Shield</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Shield</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../services/xray.html"><title>サービス:AWS X-Ray</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS X-Ray</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/dns.html"><title>用語:DNS</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">DNS</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/eni-elastic-ip.html"><title>用語:ENIとElastic IP</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">ENIとElastic IP</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/sla-availability.html"><title>用語:SLAと可用性</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">SLAと可用性</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-endpoint.html"><title>用語:VPCエンドポイント</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="290" class="gr-t">VPCエンドポイント</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-traffic-mirroring.html"><title>用語:VPCトラフィックミラーリング</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="320" class="gr-t">VPCトラフィックミラーリング</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-connectivity.html"><title>用語:VPC同士をつなぐ方法の選び方</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="350" class="gr-t">VPC同士をつなぐ方法の選び方</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/inbound-traffic.html"><title>用語:インバウンド通信</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="380" class="gr-t">インバウンド通信</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/encryption.html"><title>用語:保存時の暗号化と転送時の暗号化</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="410" class="gr-t">保存時の暗号化と転送時の暗号化</text></a>
+<path class="gr-line" d="M230,435 C265.0,435 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="440" class="gr-t">高可用性とスケーリング</text></a>
+<path class="gr-line" d="M230,465 C265.0,465 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/az-failure-isolation.html"><title>運用シナリオ:1つのAZの障害からアプリを切り離す</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="470" class="gr-t">1つのAZの障害からアプリを切り…</text></a>
+<path class="gr-line" d="M230,495 C265.0,495 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ec2-blue-green-pipeline.html"><title>運用シナリオ:EC2のアプリをCI/CDでBlue/Greenデプロイする</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="500" class="gr-t">EC2のアプリをCI/CDでBlue/Gr…</text></a>
+<path class="gr-line" d="M230,525 C265.0,525 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ecs-safe-deploy.html"><title>運用シナリオ:ECSのサービスを止めずに更新し、失敗したら自動で戻す</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="530" class="gr-t">ECSのサービスを止めずに更新し…</text></a>
+<path class="gr-line" d="M230,555 C265.0,555 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/waf-web-protection.html"><title>運用シナリオ:Webアプリを攻撃や大量アクセスから守る</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="560" class="gr-t">Webアプリを攻撃や大量アクセス…</text></a>
+<path class="gr-line" d="M230,585 C265.0,585 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/multi-region-failover.html"><title>運用シナリオ:リージョン障害に備えて別リージョンへ切り替える</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="590" class="gr-t">リージョン障害に備えて別リージ…</text></a>
+<path class="gr-line" d="M230,615 C265.0,615 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/route53-traffic-routing.html"><title>運用シナリオ:利用者の場所や割合でアクセスを振り分ける</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="620" class="gr-t">利用者の場所や割合でアクセスを…</text></a>
+<path class="gr-line" d="M230,645 C265.0,645 265.0,345 300,345" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/auto-scaling-web.html"><title>運用シナリオ:負荷に応じて自動でスケールするWebシステム</title><rect x="0" y="634" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="650" class="gr-t">負荷に応じて自動でスケールする…</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,120 550,120" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/acm.html"><title>サービス:AWS Certificate Manager</title><rect x="550" y="109" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="124" class="gr-t">AWS Certificate Manager</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,150 550,150" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/global-accelerator.html"><title>サービス:AWS Global Accelerator</title><rect x="550" y="139" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="154" class="gr-t">AWS Global Accelerator</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,180 550,180" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/waf.html"><title>サービス:AWS WAF</title><rect x="550" y="169" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="184" class="gr-t">AWS WAF</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,210 550,210" marker-end="url(#gr-arrow)"/>
+<a href="../services/api-gateway.html"><title>サービス:Amazon API Gateway</title><rect x="550" y="199" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="214" class="gr-t">Amazon API Gateway</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,240 550,240" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/application-recovery-controller.html"><title>サービス:Amazon Application Recovery Controller (ARC)</title><rect x="550" y="229" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="244" class="gr-t">Amazon Application Recove…</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,270 550,270" marker-end="url(#gr-arrow)"/>
+<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="550" y="259" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="274" class="gr-t">Amazon Athena</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,300 550,300" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cloudfront.html"><title>サービス:Amazon CloudFront</title><rect x="550" y="289" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="304" class="gr-t">Amazon CloudFront</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,330 550,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="319" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="334" class="gr-t">Amazon DynamoDB</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,360 550,360" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="349" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="364" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,390 550,390" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="379" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="394" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,420 550,420" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="550" y="409" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="424" class="gr-t">Amazon ECS</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,450 550,450" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/eks.html"><title>サービス:Amazon EKS</title><rect x="550" y="439" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="454" class="gr-t">Amazon EKS</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,480 550,480" marker-end="url(#gr-arrow)"/>
+<a href="../services/elasticache.html"><title>サービス:Amazon ElastiCache</title><rect x="550" y="469" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="484" class="gr-t">Amazon ElastiCache</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,510 550,510" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/route53.html"><title>サービス:Amazon Route 53</title><rect x="550" y="499" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="514" class="gr-t">Amazon Route 53</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,540 550,540" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/http-status-codes.html"><title>用語:HTTPステータスコードと切り分け</title><rect x="550" y="529" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="544" class="gr-t">HTTPステータスコードと切り分け</text></a>
+<path class="gr-line" d="M480,345 C515.0,345 515.0,570 550,570" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/tls-termination.html"><title>用語:TLS終端と証明書の配置</title><rect x="550" y="559" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="574" class="gr-t">TLS終端と証明書の配置</text></a>
+<rect x="300" y="325" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="350" text-anchor="middle" class="gr-tb">Elastic Load Bala…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(21)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(16)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="application-recovery-controller.html"><span class="label">← 前へ</span>Amazon Application Recovery Controller (ARC)</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="cloudfront.html"><span class="label">次へ →</span>Amazon CloudFront</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

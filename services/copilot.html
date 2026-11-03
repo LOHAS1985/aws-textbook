@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Copilot | AWS教科書</title>
+<meta name="description" content="コンテナアプリを対話形式で簡単にデプロイ・運用するCLI">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#ED7100">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/copilot.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">コンテナ</a>
+  <h1>AWS Copilot</h1>
+  <p class="lead">コンテナアプリを対話形式で簡単にデプロイ・運用するCLI</p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Copilot</strong>は、コンテナアプリを簡単にデプロイ・運用するための<strong>CLIツール</strong>です。対話形式で質問に答えるだけで、コンテナアプリの実行環境を自動で構築してくれます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>対話形式でコンテナアプリを自動構築できる。</li>
+</ul>
+<p>Copilotは主にAmazon ECS(Fargate)向けのツールで、VPC・ロードバランサー・ECSサービスなどをまとめて作成します。Fargateのように、サーバーの管理をAWSに任せる仕組みは用語ページ「<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>」を参照してください。裏側ではCloudFormationが使われ、<code>copilot init</code> などのコマンドで操作します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 696 214" style="max-width:696px;min-width:557px" role="img" aria-label="図1 Copilotの仕組み。CLIで質問に答えると、CloudFormationを通じてVPC・ALB・ECSサービスなどがまとめて作られる。"><defs><marker id="dgservices-copilot-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="498" y="10" width="174" height="179" rx="10" class="dg-group"/>
+<text x="508" y="26" class="dg-s">自動で作られる環境</text>
+<g data-node="cli">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">copilot init</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">対話形式で回答</text>
+</g>
+<g data-node="cfn">
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="104" text-anchor="middle" class="dg-t">CloudFormation</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">裏側で構築</text>
+</g>
+<g data-node="net">
+<rect x="510" y="46" width="150" height="40" rx="8" class="dg-box"/>
+<text x="585" y="70" text-anchor="middle" class="dg-t">VPC・ALB</text>
+</g>
+<g data-node="ecs">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="147" text-anchor="middle" class="dg-tb">ECSサービス</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">Fargate</text>
+</g>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgservices-copilot-1)"/>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#dgservices-copilot-1)"/>
+<path d="M422.0,122.4 L510.0,138.1" class="dg-line" marker-end="url(#dgservices-copilot-1)"/>
+</svg>
+</div>
+<figcaption>図1 Copilotの仕組み。CLIで質問に答えると、CloudFormationを通じてVPC・ALB・ECSサービスなどがまとめて作られる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ECSの構成要素を1つずつ作らずに、Dockerfileからすぐにアプリを公開したい</li>
+<li>開発・ステージング・本番などの環境をコマンドで揃えて作りたい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Copilot自体は無料のツールです。作成されたECS(Fargate)・ロードバランサーなどのリソースに料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="ecs.html">Amazon ECS</a>:Copilotがデプロイする実行環境</li>
+<li><a href="ecr.html">Amazon ECR</a>:イメージの保存先</li>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:裏側のリソース構築</li>
+<li><a href="elastic-beanstalk.html">AWS Elastic Beanstalk</a>:同じく「簡単にデプロイ」系のサービス</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「コンテナアプリをCLIで簡単に構築・デプロイしたい」→ AWS Copilot。</li>
+<li>Copilotは<strong>CLIツール</strong>であり、コンテナの実行基盤そのものではない(実行はECS)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Copilotはコンテナアプリを対話形式で自動構築するCLI。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 5件・リンク元 0件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Copilotとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudFormation</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Elastic Beanstalk</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/ecr.html"><title>サービス:Amazon ECR</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon ECR</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon ECS</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/managed-serverless.html"><title>用語:マネージドサービスとサーバーレス</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">マネージドサービスとサーバーレス</text></a>
+<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">AWS Copilot</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="ecr.html"><span class="label">← 前へ</span>Amazon ECR</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="s3.html"><span class="label">次へ →</span>Amazon S3</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
