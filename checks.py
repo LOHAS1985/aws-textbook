@@ -145,6 +145,8 @@ def _check_meta(col, p, where, warnings):
         warnings.append(f"{where}: lead がありません")
     if col["categories"] and p["category"] not in col["categories"]:
         warnings.append(f"{where}: カテゴリ「{p['category']}」が build.py の categories にありません")
+    if p["verified"] and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", p["verified"]):
+        warnings.append(f"{where}: verified は YYYY-MM-DD の形で書く({p['verified']})")
     if col.get("order") and p["slug"] not in col["order"]:
         warnings.append(f"{where}: build.py の order にありません(一覧の末尾に表示されます)")
 

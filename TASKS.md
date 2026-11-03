@@ -201,3 +201,12 @@ AWSアカウントを使わずに、要件を満たす構成を組み立てる�
 試験でよく問われるのに薄かったページを加筆する。
 - [x] 優先度 高:DR戦略(dr-strategies)、AWS Backup、Route 53、Organizations、ECS
 - [x] 優先度 中:CloudTrail、KMS、ElastiCache、Config、Trusted Advisor、Compute Optimizer、CDK
+
+# 残タスク(薄いページ・つながり・新規サービス・内容の鮮度)
+
+数回の棚卸しで見つかった課題への対応。
+- [x] 薄いサービスページの加筆(2章・6章の拡充、図の追加、用語ページへの参照): Elastic Beanstalk・CodePipeline・CodeBuild・FSx・Global Accelerator・DataSync・AppSync・Athena・Macie・Secrets Manager
+- [x] 用語ページへの参照がなかったサービスに、関連する用語へのリンクを追加(Aurora・EFS・EKS・ECR・Step Functions・Shield・Control Tower など、計約25ページ)
+- [x] 試験範囲のサービスページを追加: AWS Budgets(budgets)・AWS Elastic Disaster Recovery(elastic-disaster-recovery)・AWS Resource Groups と Tag Editor(resource-groups)。S3 Glacier は S3 ページのストレージクラスの表で扱うため、別ページにはしない
+- [x] 本文の小さな体裁の修正(箇条書きの中の不要な span の除去、分かれていた箇条書きの統合)
+- [x] 数字の鮮度:ページのメタ情報に verified(確認日)を追加し、「内容の確認」として表示する。数字を確認したページに書く

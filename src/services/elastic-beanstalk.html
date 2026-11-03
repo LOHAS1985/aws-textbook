@@ -1,6 +1,7 @@
 <!-- title: AWS Elastic Beanstalk -->
 <!-- category: コンピューティング -->
 <!-- lead: コードを渡すだけでアプリを簡単にデプロイ・運用できるPaaS -->
+<!-- verified: 2026-11-03 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>AWS Elastic Beanstalk</strong>は、バックエンドアプリケーションを簡単にデプロイ・運用するための<strong>PaaS</strong>です。開発者はアプリのコードを渡すだけで、AWSが実行環境を自動で構築してくれます。</p>
@@ -22,16 +23,65 @@ edge elb ec2
 <h2>2. 主な機能・特徴</h2>
 <h3>利用フロー</h3>
 <ol>
-<li>アプリケーションを作成</li>
-<li>デプロイ設定を定義</li>
-<li>アプリケーションバージョンを作成</li>
-<li>Environment(アプリを実行するAWS環境全体)へデプロイ
+<li>アプリケーションを作成する(アプリをまとめる入れ物)</li>
+<li>アプリケーションバージョンを作成する(コードをまとめたソースバンドルをS3に置き、バージョンとして登録する)</li>
+<li>Environment(アプリを実行するAWS環境全体)を作成する(プラットフォームと環境の種類を選ぶ)</li>
+<li>Environmentへバージョンをデプロイする
   <ul><li>Beanstalkが内部でAWSリソースを操作する</li><li>EC2内にコードを配置する</li></ul></li>
-<li>ヘルスチェック</li>
+<li>ヘルスチェックで状態を確認する</li>
 </ol>
 <p>デメリットは、ECS/EKSに比べて<strong>柔軟性が低い</strong>ことです。</p>
 <p>Beanstalkが自動で作るリソースには、EC2インスタンス、Auto Scalingグループ、ロードバランサーなどが含まれます。裏側ではCloudFormationが使われています。</p>
-<p>代表的なデプロイ方式として、All at once(一斉)、Rolling、Rolling with additional batch、Immutable、Blue/Green(環境URLのスワップ)があります。</p>
+
+<h3>環境の種類とモード</h3>
+<p>Environmentを作るときは、<strong>環境のティア</strong>を選びます。ティアには、HTTPのリクエストを受けるウェブサーバー環境と、キューからタスクを取り出して処理するワーカー環境があります。</p>
+<ul>
+<li><strong>ウェブサーバー環境</strong>:HTTPのリクエストを受けるアプリを動かす。ロードバランサーを付けた負荷分散の構成と、インスタンス1台だけのシングルインスタンス構成を選べる(シングルインスタンスは主に開発用)</li>
+<li><strong>ワーカー環境</strong>:Amazon SQSのキューからメッセージを読み取るデーモンを、EC2上で動かす。時間のかかる処理を画面の応答から切り離せる。処理に失敗したメッセージはデッドレターキューへ移せ、定期的に実行するタスクも設定できる</li>
+</ul>
+<p>Beanstalkには、実行基盤の違いによる2つのモードもあります。<strong>Beanstalk Standard</strong>はEC2上でアプリを直接動かし、Beanstalk ClusterはEKS上でコンテナとして動かします。</p>
+
+<h3>デプロイ方式</h3>
+<p>新しいバージョンをEnvironmentへ反映する方法は、デプロイポリシーで選びます。停止時間・追加で必要な容量・完了までの時間のどれを優先するかで使い分けます。</p>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>仕組み</th><th>特徴</th></tr>
+<tr><td>All at once(一斉)</td><td>全インスタンスに同時に反映する</td><td>最も速いが、反映中は短い時間サービスが止まる</td></tr>
+<tr><td>Rolling</td><td>インスタンスをバッチ(まとまり)ごとに順に更新する</td><td>停止は避けられるが、更新中は処理能力が下がる</td></tr>
+<tr><td>Rolling with additional batch</td><td>追加のバッチを先に起動してから、順に更新する</td><td>処理能力を保てるが、完了までの時間が長くなる</td></tr>
+<tr><td>Immutable</td><td>新しいAuto Scalingグループに新バージョンのインスタンスを作り、正常と判定されてから旧インスタンスを終了する</td><td>新しいインスタンスが失敗しても旧バージョンへ戻しやすい。時間は長くなる</td></tr>
+<tr><td>Traffic splitting(カナリア)</td><td>一部のトラフィックだけを新バージョンに送って確認し、残りは旧バージョンが受ける</td><td>本番の一部で検証してから全体へ広げられる</td></tr>
+</table></div>
+<p>Immutable と Traffic splitting は、現在 Beanstalk Standard だけで使えます。</p>
+<p><strong class="em">Blue/Green</strong>は、デプロイポリシーではなく、<strong>別のEnvironmentに新バージョンを作り、2つの環境のCNAMEを入れ替える</strong>方法です。既存の環境は残るため、問題があれば入れ替えを戻せます。デプロイポリシーによる更新は同じ環境を書き換えるため、短い時間利用できなくなることがあります。プラットフォームの互換性がないバージョンへの更新では、Blue/Greenが必要です。</p>
+<figure class="figure" data-diagram>
+grid 170 90
+node user 0 0.5 blue "利用者"
+node cname 1.5 0.5 accent "環境のURL" "CNAME"
+node blue 3 0 box "Blue環境" "現行バージョン"
+node green 3 1.2 ok "Green環境" "新バージョン"
+edge user cname
+edge cname blue "現在"
+edge cname green "入れ替え後" dash
+<figcaption>図2 Blue/Green(CNAMEの入れ替え)。新バージョンを別の環境(Green)に作って確認し、環境のURLが指す先をBlueからGreenへ入れ替える。戻すときは、もう一度入れ替える。</figcaption>
+</figure>
+
+<h3>ヘルスチェックと自動更新</h3>
+<ul>
+<li><strong>拡張ヘルスレポート</strong>:EC2インスタンス・ロードバランサー・Auto Scalingグループの状態を集めて、Environmentの健全性を判定する。マネージドプラットフォーム更新の前提にもなる</li>
+<li><strong>マネージドプラットフォーム更新</strong>:プラットフォームのマイナー・パッチ更新を、設定した週1回のメンテナンスウィンドウの中で自動で適用する。必要に応じて、ウィンドウ内でインスタンスをすべて入れ替えることもできる</li>
+</ul>
+
+<h3>制限(クォータ)</h3>
+<p>次の上限はリージョンごとに決められていて、引き上げを申請できます。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>既定の上限</th></tr>
+<tr><td>アプリケーションバージョン</td><td>1,000(アカウント内の全アプリケーションの合計)</td></tr>
+<tr><td>Environment</td><td>200(アカウント内の全アプリケーションの合計)</td></tr>
+<tr><td>アプリケーション</td><td>75</td></tr>
+<tr><td>構成テンプレート</td><td>2,000</td></tr>
+<tr><td>カスタムプラットフォームバージョン</td><td>50</td></tr>
+</table></div>
+<p>1つのソースバンドルは500 MBまでです。アプリケーションバージョンが上限に近づくと新しいバージョンを作れなくなるため、<strong>ライフサイクルポリシー</strong>で古いバージョンを自動で削除できます(Beanstalk Standardの環境で使え、Environmentで使用中のバージョンは削除されない)。上限の考え方は用語ページ「<a href="../terms/service-quotas.html">サービスクォータ</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -52,20 +102,26 @@ edge elb ec2
 <ul>
 <li><a href="ec2.html">Amazon EC2</a>:アプリが配置される実行環境</li>
 <li><a href="elb.html">Elastic Load Balancing</a>:環境のトラフィック分散</li>
+<li><a href="auto-scaling.html">Amazon EC2 Auto Scaling</a>:環境のインスタンス数の増減</li>
 <li><a href="cloudformation.html">AWS CloudFormation</a>:裏側で環境を構築する仕組み</li>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:ビルドしたコードをBeanstalkへデプロイするアクション</li>
+<li><a href="sqs.html">Amazon SQS</a>:ワーカー環境が処理するキュー</li>
 <li><a href="ecs.html">Amazon ECS</a>/<a href="eks.html">Amazon EKS</a>:より柔軟なコンテナ実行の選択肢</li>
+<li>関連する用語:<a href="../terms/deploy-strategies.html">デプロイ戦略</a>、<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/instance-profile.html">インスタンスプロファイル</a>、<a href="../terms/service-quotas.html">サービスクォータ</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
-<div class="point">
-<ul>
-<li>「インフラ管理を最小限にしてアプリをデプロイしたい」→ Elastic Beanstalk。</li>
+<div class="point"><ul>
+<li>「インフラ管理を最小限にしてアプリをデプロイしたい」→ <strong>Elastic Beanstalk</strong>。</li>
 <li>細かな制御や柔軟性が必要なら ECS/EKS を選ぶ。</li>
 <li>デプロイの単位は「アプリケーションバージョン」を「Environment」へ。</li>
-</ul>
-</div>
+<li>停止を避けて更新したい → <strong>Rolling</strong>(処理能力も保つなら Rolling with additional batch)、または <strong>Immutable</strong>。All at once は短い時間の停止がある。</li>
+<li>本番の一部で新バージョンを試したい → <strong>Traffic splitting</strong>。環境のURLを切り替えて、問題があれば戻せるようにしたい → <strong>Blue/Green</strong>(CNAMEの入れ替え)。</li>
+<li>SQSのメッセージを非同期に処理したい → <strong>ワーカー環境</strong>。</li>
+<li>Beanstalk自体には料金がかからず、作られたEC2・ELBなどに料金がかかる。</li>
+</ul></div>
 </section>
 
 <section class="chapter">

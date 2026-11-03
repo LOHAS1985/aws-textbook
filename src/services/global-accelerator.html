@@ -1,6 +1,7 @@
 <!-- title: AWS Global Accelerator -->
 <!-- category: ネットワークとコンテンツ配信 -->
 <!-- lead: AWSのグローバルネットワークで通信経路を最適化 -->
+<!-- verified: 2026-11-03 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>AWS Global Accelerator</strong>は、AWSのグローバルネットワークを使って、<strong>ユーザーからアプリケーションまでの通信経路を最適化</strong>するサービスです。</p>
@@ -30,8 +31,56 @@ edge e2 ep1
 edge e2 ep2 dash
 <figcaption>図1 Global Acceleratorの仕組み。2つの固定Anycast IPで最寄りのエッジに入り、インターネットではなくAWSのバックボーンでエンドポイントへ届ける。ヘルスチェックで異常を検知すると、正常なエンドポイントへ自動で切り替える。</figcaption>
 </figure>
+
+<h3>構成要素と2種類のアクセラレーター</h3>
+<p>アクセラレーターの中は、<strong>リスナー</strong>、<strong>エンドポイントグループ</strong>、<strong>エンドポイント</strong>の階層になっています。リスナーは受け付けるプロトコル(TCPまたはUDP)とポート範囲を指定します。エンドポイントグループはリージョンごとに作り、その中のエンドポイントは同じリージョンに置きます。</p>
+<ul>
+<li><strong>標準アクセラレーター</strong>:利用者を、場所と健全性に応じて最適なリージョンのエンドポイントへ振り分ける</li>
+<li><strong>カスタムルーティングアクセラレーター</strong>:1人の利用者を、多数の宛先の中の特定の宛先に割り当てる。宛先はVPCのサブネット内のプライベートIPアドレス</li>
+</ul>
+
 <h3>対応エンドポイント</h3>
 <ul><li>ALB/NLB</li><li>EC2インスタンス</li><li>Elastic IPアドレス</li></ul>
+
+<h3>トラフィックダイヤルとエンドポイントの重み</h3>
+<p>標準アクセラレーターでは、エンドポイントグループごとに<strong>トラフィックダイヤル</strong>(0〜100%。既定は100%)で、そのリージョンへ向かう通信の割合を調整できます。メンテナンスの前にダイヤルを0%にすると、そのリージョンへの通信を止めて作業できます。</p>
+<ul>
+<li>ダイヤルの変更は<strong>新しい接続</strong>から反映される。既存の接続は切れない</li>
+<li>ヘルスチェックはダイヤルの影響を受けない</li>
+<li>エンドポイントごとの重み(weight)で、同じエンドポイントグループの中の配分を調整できる</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 90
+node acc 0 0.5 accent "アクセラレーター" "静的IP 2つ"
+node tk 1.8 0 ng "東京リージョン" "ダイヤル 0%"
+node os 1.8 1 ok "大阪リージョン" "ダイヤル 100%"
+edge acc tk "流さない" dash
+edge acc os "流す"
+<figcaption>図2 トラフィックダイヤル。メンテナンス中のリージョンはダイヤルを0%にすると、そのリージョンへの新しい通信を止められる。既存の接続は切れない。</figcaption>
+</figure>
+
+<h3>ヘルスチェック</h3>
+<p>エンドポイントグループごとにヘルスチェックを設定できます。EC2インスタンスとElastic IPアドレスは、Global Acceleratorのエンドポイントグループでヘルスチェックの設定を変えられ、ALBとNLBは Elastic Load Balancingのコンソールで設定します。正常なエンドポイントが1つもない場合は、リージョン内のすべてのエンドポイントへ振り分けます。</p>
+
+<h3>固定IPアドレス</h3>
+<p>アクセラレーターには固定IPアドレスが割り当てられ、アクセラレーターが存在する間は保持されます。無効化(disable)すると通信は受け付けなくなりますが、IPアドレスは残ります。アクセラレーターを<strong>削除すると固定IPアドレスも失われ</strong>、そのIPでは通信を受けられなくなります。</p>
+<ul>
+<li>IPv4の固定IPアドレスは2つ。デュアルスタックの場合は、IPv6の2つを加えて計4つになる</li>
+<li>IPv4は、自分が持つIP範囲(BYOIP)をアクセラレーターに使うこともできる</li>
+<li>デュアルスタックで使うには、エンドポイントもデュアルスタックに対応している必要がある</li>
+</ul>
+
+<h3>制限(クォータ)</h3>
+<p>主な上限は次のとおりです。引き上げを申請するには、Service Quotasのコンソール(us-east-1リージョン)を使います。上限の考え方は用語ページ「<a href="../terms/service-quotas.html">サービスクォータ</a>」を参照してください。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>上限</th></tr>
+<tr><td>標準アクセラレーター(1アカウントあたり)</td><td>20</td></tr>
+<tr><td>カスタムルーティングアクセラレーター(1アカウントあたり)</td><td>10</td></tr>
+<tr><td>リスナー(1アクセラレーターあたり)</td><td>10</td></tr>
+<tr><td>ポート範囲(1リスナーあたり)</td><td>10</td></tr>
+<tr><td>リスナー数 × エンドポイントグループ数</td><td>42以下</td></tr>
+</table></div>
+<p>リスナーを増やすほど、指定できるリージョンの数は減ります。</p>
 
 <h3>CloudFrontとの違い</h3>
 <div class="table-wrap"><table>
@@ -61,6 +110,8 @@ edge e2 ep2 dash
 <li><a href="cloudfront.html">Amazon CloudFront</a>:HTTPのキャッシュ配信</li>
 <li><a href="elb.html">Elastic Load Balancing</a>/<a href="ec2.html">Amazon EC2</a>:エンドポイント</li>
 <li><a href="route53.html">Amazon Route 53</a>:DNSベースのルーティング</li>
+<li><a href="application-recovery-controller.html">Amazon Application Recovery Controller (ARC)</a>:ゾーンシフトで障害のあるAZから通信を逃がす(Global Acceleratorが対応)</li>
+<li>関連する用語:<a href="../terms/caching-comparison.html">キャッシュの選び方</a>、<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></li>
 </ul>
 </section>
 
@@ -70,6 +121,9 @@ edge e2 ep2 dash
 <li>「<strong>静的IP</strong>」「<strong>TCP/UDP</strong>」「グローバルにレイテンシー改善」→ Global Accelerator。</li>
 <li>「キャッシュ」「HTTP」→ CloudFront。</li>
 <li>DNSのキャッシュに左右されずにフェイルオーバーしたい → Global Accelerator。</li>
+<li>取引先のファイアウォールで接続元を許可リストに登録したい → Global Acceleratorの<strong>固定IPアドレス</strong>。</li>
+<li>リージョンのメンテナンス中に通信を止めたい → <strong>トラフィックダイヤル</strong>を0%にする。</li>
+<li>アクセラレーターを止めたいが、IPは残しておきたい → <strong>無効化</strong>。削除すると固定IPは失われる。</li>
 </ul></div>
 </section>
 

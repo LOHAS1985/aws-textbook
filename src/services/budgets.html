@@ -1,0 +1,150 @@
+<!-- title: AWS Budgets -->
+<!-- category: クラウド財務管理 -->
+<!-- lead: 費用や使用量に予算を決め、超えそうなときに通知し、必要なら予算アクションで自動的に制限する -->
+<!-- verified: 2026-11-03 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Budgets</strong>は、AWSの費用や使用量に予算(目標の上限)を決めて、実績や予測が予算に近づいたとき・超えそうなときに通知するサービスです。通知だけでなく、超えたときは<strong>予算アクション</strong>で、IAMポリシーやSCPの適用、EC2・RDSインスタンスの停止を自動で行えます。</p>
+<p>予算を作って通知を受けるだけなら料金はかかりません。予算アクションを使う場合の料金は4章で説明します。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node bill 0 0 blue "請求・使用量" "1日数回更新"
+node bud 0 1 blue "予算" "金額・使用量の上限"
+node calc 1.4 0.5 accent "実績・予測と比較" "しきい値で判定"
+node notice 2.8 0 ok "通知" "メール・SNS"
+node act 2.8 1 box "予算アクション" "自動・承認後に実行"
+edge bill calc
+edge bud calc
+edge calc notice
+edge calc act
+<figcaption>図1 AWS Budgetsの流れ。請求データと予算を比べ、実績または予測がしきい値を超えると、通知を送るか、設定したアクションを実行する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>予算の種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>監視する値</th><th>通知されるとき</th></tr>
+<tr><td>コスト予算</td><td>費用(金額)</td><td>実績または予測が予算の金額を超えたとき</td></tr>
+<tr><td>使用量予算</td><td>1つ以上のサービスの使用量(例: EC2の使用時間)</td><td>使用量が予算に近づいた・超えたとき</td></tr>
+<tr><td>RI使用率予算・RIカバレッジ予算</td><td>リザーブドインスタンス(RI)の使用率・カバレッジ</td><td>目標を下回ったとき</td></tr>
+<tr><td>Savings Plans使用率予算・カバレッジ予算</td><td>Savings Plansの使用率・カバレッジ</td><td>目標を下回ったとき</td></tr>
+</table></div>
+<ul>
+<li>期間は、毎月・四半期・毎年・毎日(使用率・カバレッジ予算)から選べる。開始日と終了日を決めるカスタム期間(年度や案件期間に合わせる)も作れる。カスタム期間は自動では更新されず、終了日は開始日から3年以内にする。</li>
+<li>コスト予算では、費用の計算方法(ブレンデッド、アンブレンデッド、償却など)を選べる。割引・返金・クレジット・税・サポート料金を含めるかも選べる。</li>
+</ul>
+
+<h3>通知</h3>
+<ul>
+<li>通知の基準は、<strong>実績</strong>(課金が発生した後)と<strong>予測</strong>(発生する前)から選べる。予測の通知なら、予算を超えそうなことを先に知らせられる。</li>
+<li>送り先は、1つの通知あたりメールアドレス最大10件と、Amazon SNSトピック1つ。</li>
+<li>予測の通知を計算するには、約5週間分の利用データが必要。データがそろうまでは、予測のアラートは発動しない。</li>
+<li>課金から通知までには遅れがある。請求データの更新に合わせて計算されるため、通知を受けたあとも費用が増えることがある。</li>
+<li>実績の通知は、予算期間ごとに1回だけ送られる。予測の通知は、予測値が予算を上下した場合に期間内で何度か送られることがある。</li>
+</ul>
+
+<h3>予算アクション</h3>
+<p>予算を超えた(または予測で超えそう)ときに、設定したアクションを<strong>自動で実行</strong>するか、承認したあとに実行するかを選べます。アクションの種類は次のとおりです。</p>
+<ul>
+<li>IAMポリシーの適用:ユーザー・グループ・ロールに、EC2の新規作成を拒否するポリシーなどを付ける。</li>
+<li>SCP(サービスコントロールポリシー)の適用:組織のメンバーアカウントに、管理アカウントからSCPを付ける。</li>
+<li>EC2・RDSインスタンスの停止:対象のインスタンスを指定して停止する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node fc 0 0.5 blue "予測が超えそう" "例: 予算の90%"
+node run 1.4 0.5 box "実行方法" "自動・承認後"
+node iam 2.8 0 accent "IAMポリシー" "新規作成を拒否"
+node scp 2.8 1 accent "SCP" "組織の複数アカウント"
+node stop 4.2 0.5 box "EC2・RDSを停止" "対象を指定"
+edge fc run
+edge run iam
+edge run scp
+edge run stop
+<figcaption>図2 予算アクションの流れ。予測が予算を超えそうになったら、自動か承認後にアクションを実行する。IAMポリシーやSCPで作成を止めたり、EC2・RDSを停止したりする。</figcaption>
+</figure>
+
+<h3>Budgets Reports(予算レポート)</h3>
+<p>複数の予算の状況を、日次・週次・月次のレポートとしてメールで受け取る機能です。予算の数が多いときに、どの予算が危ないかを一覧で確認できます。レポートは1通ごとに料金がかかります(4章)。</p>
+
+<h3>Cost Explorerとの違い</h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>AWS Budgets</th><th>Cost Explorer</th></tr>
+<tr><td>目的</td><td>決めた予算(目標)に対して、超えそうか・超えたかを監視する</td><td>過去の費用と使用量を分析し、将来の費用を予測する</td></tr>
+<tr><td>見る軸</td><td>予算の金額・使用量と、実績・予測の差</td><td>サービス、アカウント、タグなどで分けた費用の推移</td></tr>
+<tr><td>行動</td><td>通知と、予算アクション(自動での制限)</td><td>分析の結果を見て、人が判断して対応する</td></tr>
+<tr><td>RI・Savings Plans</td><td>使用率・カバレッジの予算で、目標を下回ったら通知</td><td>推奨事項、使用率、カバレッジを画面で確認</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>月の費用が予算の一定割合を超えそうになったら、担当者にメールとSNSで知らせる</li>
+<li>開発用のアカウントで、予算を超えたら新しいEC2インスタンスを作れないようにする</li>
+<li>Savings Plansの使用率が目標を下回ったら通知を受け、購入量を見直す</li>
+<li>年度末や案件期間に合わせたカスタム期間の予算で、期間全体の費用を管理する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>予算の作成・監視・通知は無料です。予算アクションは、アクションを設定した予算のうち<strong>最初の2つまで無料</strong>です。3つ目以降は1つにつき1日$0.10かかります。1つの予算にアクションをいくつ設定しても、無料の枠の数は変わりません。</p>
+<p>Budgets Reportsは、レポート1通ごとに$0.01かかります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cost-explorer.html">AWS Cost Explorer</a>:費用の内訳と推移の分析。どこで費用が増えているかを調べる</li>
+<li><a href="cost-and-usage-reports.html">AWS Cost and Usage Reports</a>:詳細な請求データの出力</li>
+<li><a href="savings-plans.html">Savings Plans</a>:使用率・カバレッジの予算で、購入量が適切かを監視</li>
+<li><a href="organizations.html">AWS Organizations</a>:管理アカウントから、メンバーアカウントの予算やSCPを使う</li>
+<li><a href="iam.html">AWS IAM</a>:予算アクションで適用するポリシー。Budgetsがアクションを実行するためのロール</li>
+<li><a href="ec2.html">Amazon EC2</a>/<a href="rds.html">Amazon RDS</a>:予算アクションで停止できるインスタンス</li>
+<li><a href="sns.html">Amazon SNS</a>:予算の通知の送り先になるトピック</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:請求額のアラーム。予算とは別に用意する監視の仕組み</li>
+<li>関連する用語:<a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>、<a href="../terms/pricing-basics.html">料金の基本</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point">
+<h4>通知と予測</h4>
+<ul>
+<li>「費用が予算を超えそうなら、先に知らせたい」→ <strong class="em">予測の通知</strong>。実績の通知は、課金が発生したあとに送られる。</li>
+<li>予測の通知が出ない → 利用データが約5週間分そろっていない(使い始めたばかりのアカウントなど)。</li>
+<li>通知が遅れる → 請求データは1日1回以上更新され、予算の状況は最大で1日3回更新される。リアルタイムの監視ではない。</li>
+<li>通知の送り先は、メール最大10件と、SNSトピック1つ(1通知につき)。SNSを使うと、SMSなど別の方法でも受け取れる。</li>
+</ul>
+<h4>予算アクション</h4>
+<ul>
+<li>「超えたら新しいEC2を作れないようにしたい」→ 予算アクションで<strong>IAMポリシー</strong>またはSCPを適用する。</li>
+<li>「超えたらインスタンスを止めたい」→ EC2・RDSを対象に指定する。Auto Scalingグループの中のインスタンスは、停止しても再起動や新規の起動が行われるため、起動の権限を外す2つ目のアクションを組み合わせる。</li>
+<li>管理アカウントから、別のアカウントのEC2・RDSを停止の対象にはできない(SCPは別のアカウントに適用できる)。</li>
+</ul>
+<h4>使い分け・組織</h4>
+<ul>
+<li>費用の内訳や推移を見る → Cost Explorer。目標との差を知らせる・制限する → Budgets。詳しくは<a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>
+<li>RI・Savings Plansの使用率やカバレッジが下がったら知らせたい → 使用率予算・カバレッジ予算。</li>
+<li>管理アカウントは、メンバーアカウントの費用を追う予算を作れる。ただし、メンバーアカウントが同じ予算を見るには、管理アカウントへのアクセス権が必要。</li>
+</ul>
+<h4>SOA-C03での位置づけ</h4>
+<ul>
+<li>費用の監視(通知)と自動の制限(アクション)を組み合わせた運用の例として扱う。</li>
+<li>Cost Explorerとの違い(分析するか、目標を監視するか)を区別できることが基本。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS Budgetsは、費用や使用量の予算に対して、実績と予測を監視して通知する。</li>
+<li>予算アクションで、IAMポリシー・SCPの適用やEC2・RDSの停止を、自動または承認後に行える。</li>
+<li>分析はCost Explorer、目標との比較と制限はBudgetsと使い分ける。</li>
+</ul>
+</section>

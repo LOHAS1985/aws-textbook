@@ -1,6 +1,7 @@
 <!-- title: Amazon Athena -->
 <!-- category: 分析 -->
 <!-- lead: S3上のデータを標準SQLで直接分析するサーバーレスなクエリサービス -->
+<!-- verified: 2026-11-03 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>Amazon Athena</strong>は、<strong>S3に保存されたデータを標準SQLで直接分析</strong>できる<strong>サーバーレス</strong>なクエリサービスです。データベースにデータを読み込む必要がなく、サーバーの管理も不要です。</p>
@@ -9,12 +10,13 @@
 <section class="chapter">
 <h2>2. 主な機能・特徴</h2>
 <ul>
-<li>CSV、JSON、Parquet、ORCなどの形式に対応。</li>
+<li>CSV、JSON、Parquet、ORC、Avroなどの形式に対応。</li>
 <li>テーブル定義(スキーマ)は<strong>AWS Glue データカタログ</strong>で管理する。</li>
 <li>クエリ結果はS3に出力される。</li>
-<li><strong>パーティション</strong>(日付ごとのフォルダ分けなど)や<strong>列指向形式(Parquet/ORC)</strong>・圧縮を使うと、スキャン量が減り高速・低コストになる。</li>
-<li>ワークグループで、チームごとにクエリの実行やスキャン量の上限を管理できる。</li>
 </ul>
+
+<h3>仕組み</h3>
+<p>Athenaは、Glueデータカタログに登録したテーブル定義(データの場所・形式・列)をもとに、S3のオブジェクトを読みながらSQLを実行します。サーバーの準備は不要で、クエリは並列に実行されて自動で拡張されます。料金は<strong>スキャンしたデータ量</strong>で決まるため、読むデータを減らすことが費用の削減につながります。</p>
 <figure class="figure" data-diagram>
 grid 170 85
 node s3 0 0.5 blue "S3" "CSV・Parquetなど"
@@ -28,6 +30,38 @@ edge ath res
 edge user ath "SQL"
 <figcaption>図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。</figcaption>
 </figure>
+<p>SQLのほかに、Apache SparkのPythonコードをノートブックからAthenaで実行できます。S3以外のデータも、フェデレーテッドクエリでLambda関数のコネクタを経由して分析できます。</p>
+
+<h3>スキャン量を減らす</h3>
+<p><strong>パーティション</strong>は、日付などの値ごとにS3のフォルダを分けておく仕組みです。<code>WHERE</code>句でパーティションのキーを指定すると、Athenaはその値のフォルダだけを読みます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node q 0 0.5 blue "クエリ" "日付で絞り込む"
+node p1 1.5 0 ok "dt=2026-10-01" "読む"
+node p2 1.5 1 box "dt=2026-09-30" "読まない"
+node p3 1.5 2 box "dt=2026-10-02" "読まない"
+edge q p1 "スキャン"
+edge q p2 dash
+edge q p3 dash
+<figcaption>図2 パーティションによるスキャン量の削減。WHEREでパーティションのキーを指定すると、該当するフォルダ(この例では dt=2026-10-01)だけを読み、ほかのフォルダは読まない。</figcaption>
+</figure>
+<p>データを<strong>列指向形式(Parquet・ORC)</strong>にすると、クエリに必要な列だけを読めます。<strong>圧縮</strong>(GZIP・SNAPPY・ZSTDなど)をかけると、S3上の容量と読み取る量も減ります。既存のCSVなどは、CTAS(<code>CREATE TABLE AS SELECT</code>)でParquetやORCに変換できます。公式ドキュメントでは、圧縮・パーティション・列指向形式の組み合わせで、クエリあたりのコストを最大90%減らせるとされています。</p>
+
+<h3>設定の要点</h3>
+<ul>
+<li><strong>テーブルの作成</strong>:<code>CREATE TABLE</code>で、データの場所(<code>LOCATION</code>・S3のプレフィックス)、形式、パーティションのキー(<code>PARTITIONED BY</code>)を指定する。</li>
+<li><strong>パーティションの追加</strong>:<code>dt=2026-10-01</code>のようなHive形式なら<code>MSCK REPAIR TABLE</code>で登録する。それ以外の形式は<code>ALTER TABLE ... ADD PARTITION</code>で追加する。</li>
+<li><strong>ワークグループ</strong>:チームや用途ごとに、クエリ結果の保存先、暗号化の設定、IAMによるアクセス制御を分けて管理する。暗号化はワークグループ単位で決まるため、暗号化が必要な結果と不要な結果は別のワークグループにする。</li>
+<li><strong>データ使用量の制御</strong>:クエリ単位とワークグループ単位で、スキャンするデータ量のしきい値を設定する。しきい値を超えたときの動作を決められ、CloudWatchアラームで通知もできる。</li>
+</ul>
+
+<h3>制限</h3>
+<ul>
+<li>1回のクエリの文字列は256KBまで(変更できない)。長いクエリは分けて実行する。</li>
+<li>1回のスキャンで読めるパーティションは100万個まで。</li>
+<li>DMLクエリ(SELECT・CTAS・INSERT INTO)には、同時に実行できる数の上限(リージョンにより異なる)と実行時間の上限がある。実行時間は申請により最長240分まで延ばせる。</li>
+<li>キャンセルや失敗したクエリの途中までの結果が、S3に残ることがある。S3のライフサイクルルールで削除する。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -41,7 +75,7 @@ edge user ath "SQL"
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p><strong>クエリでスキャンしたデータ量</strong>に応じて課金されます。パーティション分割・列指向形式・圧縮でスキャン量を減らすと、コストを大きく下げられます。</p>
+<p><strong>クエリでスキャンしたデータ量</strong>に応じて課金されます。スキャン量は1MB単位で切り上げられ、1クエリあたり最低10MBで計算されます。CREATE・ALTER・DROPなどのDDLと、失敗したクエリは無料です。キャンセルしたクエリは、キャンセルまでにスキャンした分が課金されます。パーティション分割・列指向形式・圧縮でスキャン量を減らすと、コストを大きく下げられます。料金の考え方は用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -49,8 +83,11 @@ edge user ath "SQL"
 <ul>
 <li><a href="s3.html">Amazon S3</a>:分析対象のデータの保存先</li>
 <li><a href="cloudtrail.html">AWS CloudTrail</a>:S3に出力したログの分析</li>
-<li><a href="kinesis.html">Amazon Kinesis</a>:Firehose経由でS3にデータを蓄積</li>
+<li><a href="data-firehose.html">Amazon Data Firehose</a>:ストリーミングデータをS3に配信し、Athenaで分析する</li>
+<li><a href="lambda.html">AWS Lambda</a>:フェデレーテッドクエリで、S3以外のデータに接続するコネクタの実行</li>
 <li><a href="opensearch.html">Amazon OpenSearch Service</a>:全文検索・リアルタイム分析</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:スキャン量のアラーム</li>
+<li>関連する用語:<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/pricing-basics.html">料金の基本</a></li>
 </ul>
 </section>
 
@@ -59,6 +96,10 @@ edge user ath "SQL"
 <div class="point"><ul>
 <li>「S3のデータ」「SQL」「サーバーレス」「アドホック分析」→ <strong>Athena</strong>。</li>
 <li>コスト削減 → <strong>パーティション+Parquet/ORC+圧縮</strong>でスキャン量を減らす。</li>
+<li>特定の期間だけを分析したい → <code>WHERE</code>でパーティションのキーを指定する(読むのはその範囲だけ)。</li>
+<li>Hive形式でないパーティションを追加したい → <code>MSCK REPAIR TABLE</code>は使えず、<code>ALTER TABLE ... ADD PARTITION</code>で追加する。</li>
+<li>誤って大量のデータをスキャンして高額になるのを防ぎたい → クエリ単位・ワークグループ単位の<strong>データ使用量の制御</strong>とCloudWatchアラーム。</li>
+<li>テーブルの定義を一元管理したい → <strong>AWS Glue データカタログ</strong>。</li>
 </ul></div>
 </section>
 

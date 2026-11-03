@@ -40,9 +40,24 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat15">移行と転送</a>
   <h1>AWS DataSync</h1>
   <p class="lead">オンプレミス⇔AWS、AWSストレージ間のデータ転送を自動化・高速化</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">内容の確認:2026年11月3日</p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(14項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">機能</a></li><li><a href="#c2-3">転送の流れ</a></li><li><a href="#c2-4">タスクモード(BasicとEnhanced)</a></li><li><a href="#c2-5">フィルターと帯域幅の制限</a></li><li><a href="#c2-6">開いているファイルとロックされたファイル</a></li><li><a href="#c2-7">ネットワーク接続</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS DataSync</strong>は、<strong>オンプレミスとAWSの間、またはAWSのストレージサービス間でデータ転送を自動化・高速化</strong>するサービスです。</p>
@@ -58,7 +73,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
 <h3 id="c2-1">構成要素<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
-<li><strong>エージェント</strong>:オンプレミス/他クラウドのストレージにアクセスするために配置する。<strong>AWSのストレージ間の転送では不要</strong>。</li>
+<li><strong>エージェント</strong>:オンプレミスのストレージに接続するために、VMware ESXi・KVM・Nutanix AHV・Hyper-Vの仮想マシンとして配置する(VPC内のストレージを対象にする場合は、Amazon EC2インスタンスとして配置する)。<strong>AWSのストレージ間の転送では不要</strong>。他クラウドとの転送は、エージェントを使う場合と使わない場合がある</li>
 <li><strong>ロケーション</strong>:転送元と転送先の定義</li>
 <li><strong>タスク</strong>:転送ジョブの定義(転送元・転送先・オプション・スケジュールをまとめる)</li>
 </ul>
@@ -104,20 +119,65 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 DataSyncの構成。オンプレミスのNFS/SMBからはエージェント経由で、AWSのストレージ間ではエージェントなしで、タスクに従って転送する。</figcaption>
 </figure>
+
 <h3 id="c2-2">機能<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>増分転送</strong>:初回は全データ、2回目以降は変更分だけを転送</li>
-<li><strong>スケジュール実行</strong>:最短1時間単位で定期実行</li>
-<li><strong>整合性の検証</strong>:転送後にチェックサムで検証</li>
-<li><strong>メタデータの保持</strong>:タイムスタンプ・所有者・権限などを引き継ぐ</li>
+<li><strong>スケジュール実行</strong>:最短1時間間隔で、cron式かrate式を使って定期実行(曜日や時刻も指定できる)</li>
+<li><strong>整合性の検証</strong>:転送中は常にチェックし、転送後に「転送したデータだけ」または「転送元と転送先の全体」を検証できる。差があると検証が失敗としてエラーになる</li>
+<li><strong>メタデータの扱い</strong>:メタデータ(権限など)と、転送元で削除されたファイルの扱いを設定で指定できる</li>
 <li><strong>暗号化</strong>:転送中はTLSを使用</li>
 </ul>
 
-<h3 id="c2-3">ネットワーク接続<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-3">転送の流れ<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>タスクを実行すると、DataSyncは<strong>準備・転送・検証</strong>の順に処理します。準備では転送元と転送先を比べ、変更された分だけを転送対象にします。すべてのデータを転送する設定にすると、比べずに全件を転送します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 159" style="max-width:752px;min-width:602px" role="img" aria-label="図2 タスク実行の流れ。準備で転送元と転送先の差分を調べ、差分を転送したあと、検証で両方のデータを比べる。"><defs><marker id="dgservices-datasync-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="p">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">準備</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">差分を調べる</text>
+</g>
+<g data-node="t">
+<rect x="306" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="104" text-anchor="middle" class="dg-tb">転送</text>
+<text x="381" y="122" text-anchor="middle" class="dg-s">変更分だけ</text>
+</g>
+<g data-node="v">
+<rect x="578" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="104" text-anchor="middle" class="dg-t">検証</text>
+<text x="653" y="122" text-anchor="middle" class="dg-s">チェックサム</text>
+</g>
+<path d="M184.0,109.0 L306.0,109.0" class="dg-line" marker-end="url(#dgservices-datasync-2)"/>
+<path d="M456.0,109.0 L578.0,109.0" class="dg-line" marker-end="url(#dgservices-datasync-2)"/>
+</svg>
+</div>
+<figcaption>図2 タスク実行の流れ。準備で転送元と転送先の差分を調べ、差分を転送したあと、検証で両方のデータを比べる。</figcaption>
+</figure>
+
+<h3 id="c2-4">タスクモード(BasicとEnhanced)<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>タスクには、Basicモードと Enhancedモードの2つがあります。Enhancedモードは、一覧の取得・準備・転送・検証を並列に行うため、大量のファイルでも高い性能で扱えます。Basicモードは準備・転送・検証を順番に行い、扱える件数に上限があります。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Enhancedモード</th><th>Basicモード</th></tr>
+<tr><td>処理の進め方</td><td>一覧の取得・準備・転送・検証を並列に行う</td><td>準備・転送・検証を順番に行う</td></tr>
+<tr><td>扱える件数(1回の実行あたり)</td><td>実質無制限</td><td>オンプレミスなどとの転送は5,000万件、AWSストレージ間は2,500万件まで</td></tr>
+<tr><td>性能</td><td>大半のワークロードで高い</td><td>Enhancedモードより遅い</td></tr>
+</table></div>
+<p>Basicモードの件数の上限に近い場合は、フィルターで対象のフォルダーを分けたタスクを作る方法もあります。NFS・SMB・HDFSとAWSストレージの間の転送には、Enhancedモード用のエージェントが必要です。</p>
+
+<h3 id="c2-5">フィルターと帯域幅の制限<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>フィルター</strong>で、転送するファイルやフォルダーを絞り込めます。含める(include)と除外する(exclude)を組み合わせて指定でき、変更は次回の実行から反映されます。<strong>帯域幅の上限</strong>は、タスクごとに設定できます。</p>
+
+<h3 id="c2-6">開いているファイルとロックされたファイル<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>転送中に書き込まれているファイルは、検証の段階で不整合として検出されます。最新の内容を転送するには、タスクをもう一度実行します。サーバーがロックしていて開けないファイルは、転送の途中でスキップされ、エラーとして記録されます。DataSyncがファイルをロックしたりロックを解除したりすることはありません。</p>
+
+<h3 id="c2-7">ネットワーク接続<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>パブリックエンドポイント</strong>:インターネット経由</li>
 <li><strong>VPCエンドポイント</strong>:Direct ConnectやSite-to-Site VPNと組み合わせ、インターネットを経由せずに転送</li>
 </ul>
+<p>インターネットを通さない接続の組み合わせは用語ページ「<a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -140,8 +200,10 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ul>
 <li><a href="s3.html">Amazon S3</a>/<a href="efs.html">Amazon EFS</a>/<a href="fsx.html">Amazon FSx</a>:転送先のAWSストレージ</li>
 <li><a href="vpc.html">Amazon VPC</a>:VPCエンドポイントでのプライベート転送</li>
+<li><a href="direct-connect.html">AWS Direct Connect</a>/<a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>:オンプレミスとAWSをつなぐ回線</li>
 <li><a href="backup.html">AWS Backup</a>:転送後のバックアップ管理</li>
 <li><a href="storage-gateway.html">AWS Storage Gateway</a>:オンプレミスからAWSのストレージを使い続ける</li>
+<li>関連する用語:<a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>、<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>、<a href="../terms/encryption.html">保存時の暗号化と転送時の暗号化</a></li>
 </ul>
 </section>
 
@@ -151,7 +213,11 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>オンプレミスのNFS/SMBからAWSへ<strong>オンラインでデータ移行・同期</strong> → DataSync。</li>
 <li>オンプレミスから転送するときは<strong>エージェント</strong>が必要。AWSストレージ間は不要。</li>
 <li>インターネットを通さずに転送 → <strong>VPCエンドポイント+Direct Connect/VPN</strong>。</li>
-<li>2回目以降は<strong>増分転送</strong>、転送後は<strong>チェックサムで整合性を検証</strong>。</li>
+<li>2回目以降は<strong>増分転送</strong>。転送中は常に整合性をチェックし、転送後の検証も設定できる。</li>
+<li>一部のファイルだけを移す・除外する → <strong>フィルター</strong>(include/exclude)。</li>
+<li>ネットワークの使用量を抑えたい → タスクに<strong>帯域幅の上限</strong>を設定する。</li>
+<li>定期的に同期したい → <strong>スケジュール実行</strong>(最短1時間間隔)。</li>
+<li>数千万件のファイルを移す → <strong>Enhancedモード</strong>(Basicモードは1回の実行で扱える件数に上限がある)。</li>
 </ul></div>
 </section>
 
@@ -165,27 +231,34 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 6件・リンク元 1件)</summary>
+<summary>つながり図を開く(リンク先 11件・リンク元 0件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="AWS DataSyncとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,120 C265.0,120 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
-<a href="../services/direct-connect.html"><title>サービス:AWS Direct Connect</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="124" class="gr-t">AWS Direct Connect</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 366" style="max-width:784px;min-width:600px" role="img" aria-label="AWS DataSyncとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
 <a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Backup</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/storage-gateway.html"><title>サービス:AWS Storage Gateway</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Storage Gateway</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/efs.html"><title>サービス:Amazon EFS</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon EFS</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/fsx.html"><title>サービス:Amazon FSx</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon FSx</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
-<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon S3</text></a>
-<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
-<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon VPC</text></a>
-<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">AWS DataSync</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/direct-connect.html"><title>サービス:AWS Direct Connect</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Direct Connect</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/site-to-site-vpn.html"><title>サービス:AWS Site-to-Site VPN</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Site-to-Site VPN</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/storage-gateway.html"><title>サービス:AWS Storage Gateway</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Storage Gateway</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/efs.html"><title>サービス:Amazon EFS</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EFS</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/fsx.html"><title>サービス:Amazon FSx</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon FSx</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-endpoint.html"><title>用語:VPCエンドポイント</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">VPCエンドポイント</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
+<a href="../terms/hybrid-connectivity.html"><title>用語:オンプレミスとAWSをつなぐ方法の選び方</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">オンプレミスとAWSをつなぐ方法…</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,345 550,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/encryption.html"><title>用語:保存時の暗号化と転送時の暗号化</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">保存時の暗号化と転送時の暗号化</text></a>
+<rect x="300" y="175" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="200" text-anchor="middle" class="gr-tb">AWS DataSync</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(11)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>

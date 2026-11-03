@@ -76,7 +76,7 @@ COLLECTIONS = [
         "order": [
             "ec2", "auto-scaling", "image-builder", "lambda", "elastic-beanstalk",
             "ecs", "eks", "ecr", "copilot",
-            "s3", "ebs", "efs", "fsx", "backup", "storage-gateway",
+            "s3", "ebs", "efs", "fsx", "backup", "elastic-disaster-recovery", "storage-gateway",
             "rds", "aurora", "dynamodb", "elasticache", "memorydb",
             "vpc", "ipam", "transit-gateway", "site-to-site-vpn", "client-vpn", "direct-connect",
             "route53", "dns-firewall", "application-recovery-controller",
@@ -85,9 +85,9 @@ COLLECTIONS = [
             "secrets-manager", "acm", "private-ca", "guardduty", "inspector", "macie", "security-hub",
             "waf", "shield", "network-firewall", "security-agent", "artifact",
             "cloudwatch", "cloudtrail", "config", "systems-manager", "cloudformation", "cdk",
-            "control-tower", "trusted-advisor", "health-dashboard", "compute-optimizer", "service-catalog", "ram",
+            "control-tower", "trusted-advisor", "health-dashboard", "compute-optimizer", "service-catalog", "ram", "resource-groups",
             "managed-grafana", "managed-prometheus", "devops-agent",
-            "cost-explorer", "cost-and-usage-reports", "savings-plans",
+            "cost-explorer", "budgets", "cost-and-usage-reports", "savings-plans",
             "sqs", "sns", "eventbridge", "step-functions", "appsync",
             "codepipeline", "codebuild", "codedeploy", "codeartifact", "xray", "cloudshell", "amplify", "kiro",
             "sam", "sdk", "database-encryption-sdk",
@@ -183,7 +183,7 @@ EXAM_DOMAINS = [
 TOC_MIN_H3 = 5  # 小見出し(h3)がこの数以上あるページにだけページ内目次を付ける
 STACK_MIN_COLS = 4  # この列数以上の表は、スマホで行ごとのカード表示にする
 
-META_RE = re.compile(r"<!--\s*(title|category|lead):\s*(.*?)\s*-->\s*")
+META_RE = re.compile(r"<!--\s*(title|category|lead|verified):\s*(.*?)\s*-->\s*")
 
 
 def git_updated():
@@ -236,6 +236,7 @@ def load_pages(col, warnings, updated):
             "title": meta.get("title", slug),
             "category": meta.get("category", "その他"),
             "lead": meta.get("lead", ""),
+            "verified": meta.get("verified", ""),  # 料金・上限などを公式ドキュメントで確認した日(YYYY-MM-DD)
             "date": page_date,
             "raw": text,  # 検査用(行番号がファイルと一致するよう、メタ情報も含める)
             "body": render_figures(body, where, warnings),
@@ -441,6 +442,11 @@ def pager(prev, nxt):
             '</nav>\n')
 
 
+def verified_label(ymd):
+    y, m, d = ymd.split("-")
+    return f"{int(y)}年{int(m)}月{int(d)}日"
+
+
 def render_page(col, pages, i):
     p = pages[i]
     prev = pages[i - 1] if i > 0 else None
@@ -461,6 +467,7 @@ def render_page(col, pages, i):
             + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
             + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
             + f'{fmt_date(p["updated"])}</time></p>\n'
+            + (f'  <p class="updated">内容の確認:{verified_label(p["verified"])}</p>\n' if p["verified"] else "")
             + "  </div>\n</div>\n" + page_toc(items) + body + "\n" + p.get("graph", "")
             + pager(prev, nxt) + "</main>\n" + TO_TOP
             + exercise_graph(col, p) + page_script(col) + TAIL)
@@ -689,6 +696,9 @@ SYNONYMS = [
     ["cidr", "ipアドレス", "ip address", "サブネットマスク", "ipam"],
     ["踏み台", "bastion", "ssh", "rdp"],
     ["パッチ", "patch", "更新プログラム"],
+    ["budgets", "aws budgets", "予算", "予算管理", "予算アラート", "予算アクション"],
+    ["elastic disaster recovery", "drs", "災害復旧", "ディザスタリカバリ", "ステージングエリア"],
+    ["resource groups", "リソースグループ", "tag editor", "タグエディター", "タグ編集", "resource tagging api"],
 ]
 
 

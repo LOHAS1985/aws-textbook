@@ -1,0 +1,141 @@
+<!-- title: AWS Elastic Disaster Recovery -->
+<!-- category: ストレージ -->
+<!-- lead: オンプレミスやクラウドのサーバーを継続的に複製し、障害のときはAWS上で数分で起動して復旧する -->
+<!-- verified: 2026-11-03 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Elastic Disaster Recovery</strong>(略称はAWS DRS)は、オンプレミスや他のクラウドのサーバーを、AWSに<strong>継続的に複製</strong>しておき、障害のときにAWS上でサーバーを起動して業務を再開する災害復旧(DR)のサービスです。</p>
+<p>本番と同じ規模の待機環境をAWSに常に置いておく必要はありません。複製先には、ステージングエリアと呼ばれる小さな領域だけを保っておき、障害のときに必要なEC2を起動します。待機のコストを抑えながら、<a href="../terms/dr-strategies.html">RTOとRPO</a>を短くできる点が特徴です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node src 0 0.5 blue "本番サーバー" "オンプレミス等"
+node stg 1.4 0.5 accent "ステージングエリア" "低コストで継続複製"
+node rec 2.8 0 ok "復旧インスタンス" "障害時にAWSで起動"
+node drill 2.8 1 box "ドリル" "本番に影響しない"
+node dns 4.2 0.5 blue "通信の切り替え" "Route 53など"
+edge src stg "継続的に複製"
+edge stg rec "障害時に起動"
+edge stg drill "テスト起動" dash
+edge rec dns "切り替え"
+<figcaption>図1 AWS DRSの流れ。本番サーバーのデータを、ステージングエリアへ継続的に複製する。障害のときは復旧インスタンスをAWSで起動する。通信の切り替えはDRSの外で、Route 53などを使って行う。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>レプリケーションの仕組み</h3>
+<ul>
+<li><strong>レプリケーションエージェント</strong>(AWS Replication Agent)を、複製する本番サーバーにインストールする。ディスクへの変更を、ブロック単位で複製先へ送る。</li>
+<li>複製先は、選んだリージョンのAWSアカウント内にある<strong>ステージングエリア</strong>(専用のサブネット)。本番のディスクごとに、同じ容量のEBSボリューム(ステージングディスク)が作られる。</li>
+<li>ステージングエリアには、<strong>複製サーバー</strong>(EC2)とステージングディスクがあり、待機中のコストを小さく抑えている。</li>
+<li>最初に初期同期を行い、その後は変更を継続的に送る(継続的データ保護、CDP)。CDPの状態から外れてからの経過時間が<strong>Lag</strong>、まだ複製していないデータ量が<strong>Backlog</strong>。</li>
+<li>通信中のデータは暗号化される。復旧のときは、最新の状態か、過去の時点(ポイントインタイム)のどちらかで起動できる。ポイントインタイムは、EBSスナップショットで保持する。</li>
+</ul>
+
+<h3>ネットワークと準備</h3>
+<ul>
+<li>本番サーバーから、ステージングエリアの複製サーバーへ TCP 1500 番で送る。</li>
+<li>複製サーバーと本番サーバーは、DRSのAPIエンドポイント(HTTPS・TCP 443)へ送る。</li>
+<li>ドリルと復旧のインスタンスは、サーバーごとの起動テンプレートで指定したサブネットに起動する。</li>
+</ul>
+
+<h3>ドリル(Recovery Drill)と復旧(Recovery)の違い</h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>ドリル(Recovery Drill)</th><th>復旧(Recovery)</th></tr>
+<tr><td>目的</td><td>復旧の手順と起動の確認を、本番に影響させずに試す</td><td>本番が障害になったときに、AWS上で業務を再開する</td></tr>
+<tr><td>本番サーバーと複製</td><td>影響を受けない。複製は続く</td><td>業務を本番からAWSへ切り替える。切り替えはDRSの外で行う</td></tr>
+<tr><td>起動するインスタンス</td><td>ドリルインスタンス(テストが終わったら削除する)</td><td>復旧インスタンス(業務を続ける)</td></tr>
+<tr><td>行う頻度の目安</td><td>少なくとも四半期に1回</td><td>障害のときだけ</td></tr>
+</table></div>
+<ul>
+<li>切り替え(フェイルオーバー)は、DRSの外で行う。Route 53などのDNSやトラフィック管理の仕組みで、通信の向き先を復旧インスタンスに変える。</li>
+<li>復旧後に、AWS上の業務を元の環境へ戻すのがフェイルバック。オンプレミスへ戻すときは、フェイルバック用のクライアントを使う。</li>
+</ul>
+
+<h3>RTOとRPO</h3>
+<ul>
+<li><strong>RPO</strong>(目標復旧時点):通常は1秒未満(sub-second)。障害の直前までのデータを復旧できる。ただし、Lagが続いてCDPの状態から外れたままだと、RPOは悪くなる。</li>
+<li><strong>RTO</strong>(目標復旧時間):通常は数分。OSの起動時間に左右される。起動するインスタンスタイプの在庫が不足すると、起動に時間がかかり、RTOに影響する。</li>
+<li>RTOは、ドリルで実際の起動時間を測って、目標と比べる。</li>
+</ul>
+
+<h3>運用の流れ</h3>
+<ol>
+<li>復旧先のリージョンでDRSを初期化する</li>
+<li>本番サーバーにレプリケーションエージェントをインストールする</li>
+<li>初期同期が終わり、Lagが増えていないことを確認する</li>
+<li>ドリルを行い、ドリルインスタンスの動作を確かめたら、削除する</li>
+<li>障害のときは、復旧インスタンスを起動し、通信を切り替える</li>
+<li>復旧後は、フェイルバックして元の環境へ戻す</li>
+</ol>
+
+<h3>台数の上限</h3>
+<p>1つのAWSアカウントで複製できるサーバーは最大300台です。これを超えるときは、アカウントやリージョンを分けてDRSを設定します。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>オンプレミスのデータセンターの障害に備えて、AWSを復旧先にする</li>
+<li>他のクラウドで動かしているサーバーを、AWSに複製して復旧先にする</li>
+<li>リージョン全体の障害に備えて、AWSの別のリージョンを復旧先にする</li>
+<li>定期的にドリルを行い、復旧の手順と起動時間を確かめて、DR計画を更新する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>DRSの料金は、複製しているサーバーの台数と時間で決まります。<strong>ソースサーバー1台あたり1時間$0.028</strong>で、最低料金も前払いもありません。この料金には、継続的な複製、テストの起動(ドリル)、復旧の起動、ポイントインタイムの復旧が含まれます。</p>
+<p>これとは別に、AWS側のリソースの料金がかかります。主なものは、ステージングエリアのEBSボリューム(本番のディスクと同じ容量)、複製サーバーのEC2、ドリルや復旧で起動したEC2とEBSです。ドリルのインスタンスは、テストが終わったら削除しないと、通常のEC2の料金がかかり続けます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ec2.html">Amazon EC2</a>:複製サーバーと、ドリル・復旧で起動するインスタンス</li>
+<li><a href="ebs.html">Amazon EBS</a>:ステージングディスク、ポイントインタイムを保持するスナップショット</li>
+<li><a href="route53.html">Amazon Route 53</a>:障害時に通信の向き先をAWSへ切り替える(DRSの外で行う)</li>
+<li><a href="application-recovery-controller.html">AWS Application Recovery Controller</a>:切り替えの準備と制御</li>
+<li><a href="backup.html">AWS Backup</a>:決めた時点の復旧ポイントを保管する。誤削除やランサムウェアへの備えとして併用する</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:DRSが出すイベント(レプリケーションの状態の変化)を検知する</li>
+<li>関連する用語:<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/region-az.html">リージョンとアベイラビリティーゾーン</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point">
+<h4>仕組みと数字</h4>
+<ul>
+<li>「オンプレミスや他のクラウドのサーバーを、AWSの災害復旧先に継続的に複製したい」→ <strong class="em">AWS Elastic Disaster Recovery</strong>。</li>
+<li>RPOは通常1秒未満、RTOは通常数分。RTOはOSの起動時間に左右される。</li>
+<li>複製先は、ステージングエリアの複製サーバーとEBSボリューム。障害のときにだけ、EC2を起動する。</li>
+</ul>
+<h4>ドリルと切り替え</h4>
+<ul>
+<li>「本番に影響させず、復旧の手順と起動時間を確かめたい」→ <strong class="em">Recovery Drill(ドリル)</strong>。少なくとも四半期に1回。</li>
+<li>通信の切り替え(フェイルオーバー)は、DRSの外で行う。Route 53などで向き先を変える。</li>
+<li>ドリルで起動したEC2は、テストが終わったら削除する。残すと料金がかかり続ける。</li>
+</ul>
+<h4>ほかのバックアップ・DRとの違い</h4>
+<ul>
+<li>AWS Backupは、決めた時点の復旧ポイントを保管する。DRSは、サーバーを継続的に複製し、起動して復旧する。</li>
+<li>複製は、誤った変更やランサムウェアによる暗号化もそのまま複製する。誤削除やランサムウェアには、AWS Backupと併用する。</li>
+<li>DR戦略の比較では、待機コストを小さく抑えたまま、RTOとRPOを短くできる仕組みとして位置づけられる。</li>
+</ul>
+<h4>制限と試験での位置づけ</h4>
+<ul>
+<li>1つのAWSアカウントで複製できるサーバーは最大300台。</li>
+<li>SOA-C03では、信頼性・事業継続の文脈で、RTOとRPOの違い、ドリル(テスト)と復旧の違いを区別することが基本。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS DRSは、サーバーを継続的に複製し、障害のときにAWSで数分で起動する災害復旧サービス。</li>
+<li>複製先は低コストのステージングエリアに保ち、RTOとRPOを短くできる。</li>
+<li>ドリルで復旧を定期的に試し、切り替え(Route 53など)とフェイルバックはDRSの外で扱う。</li>
+</ul>
+</section>

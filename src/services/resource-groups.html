@@ -1,0 +1,124 @@
+<!-- title: AWS Resource Groups と Tag Editor -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: タグやCloudFormationスタックでリソースをまとめ、Tag Editorで複数のリソースにタグを一括で付ける -->
+<!-- verified: 2026-11-03 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Resource Groups</strong>は、タグや<a href="cloudformation.html">CloudFormation</a>のスタックを条件に、リソースを<strong>グループ</strong>にまとめるサービスです。同じ条件のリソースを一覧にしたり、Systems Managerなどの操作の対象にしたりできます。</p>
+<p><strong>Tag Editor</strong>は、リージョンを指定してリソースを検索し、選んだ複数のリソースに<strong>タグをまとめて付ける・変える・外す</strong>ための機能です。グループの条件になるタグは、まずTag Editorで付けておきます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node te 0 0.5 blue "Tag Editor" "一括でタグ付け"
+node ec2 1.4 0 box "EC2" "Stage=Test"
+node s3 1.4 1 box "S3バケット" "Stage=Test"
+node grp 2.8 0.5 accent "リソースグループ" "タグ・スタックで定義"
+node ssm 4.2 0.5 ok "グループ単位で操作" "Systems Manager"
+edge te ec2 "タグ付け"
+edge te s3
+edge ec2 grp
+edge s3 grp
+edge grp ssm
+<figcaption>図1 Tag Editorで、リソースに同じタグを一括で付ける。そのタグを条件にリソースグループを作ると、Systems Managerなどでまとめて操作できる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>グループの種類</h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>条件の決め方</th><th>例</th></tr>
+<tr><td>タグベース(TAG_FILTERS_1_0)</td><td>リソースの種類(例: <code>AWS::EC2::Instance</code>)と、タグのキー・値で絞る。種類に <code>AWS::AllSupported</code> を指定すると、対応するすべての種類が対象になる</td><td><code>Stage=Test</code> のEC2インスタンスとS3バケット</td></tr>
+<tr><td>CloudFormationスタックベース</td><td>現在のリージョンにある1つのスタックを選び、その中からリソースの種類で絞る</td><td>スタック「web-prod」のEC2インスタンスとEBSボリューム</td></tr>
+</table></div>
+<ul>
+<li>タグベースのグループには、条件に合うリソースが自動で入る。タグを付けたり外したりすると、メンバーが変わる。</li>
+<li>スタックベースのグループは、1つのスタックだけを元にする。親スタックのグループには、子スタックが1つのメンバーとして入り、子スタックの中のリソースは展開されない。</li>
+</ul>
+
+<h3>Tag Editor</h3>
+<ul>
+<li><strong>検索</strong>:リソースの種類、タグのキーと値、リージョンで絞り込み、対象のリソースの一覧を作る。</li>
+<li><strong>一括のタグ付け</strong>:一覧で選んだリソースに、キーと値をまとめて付ける。1つのリソースに付けられるタグは最大50個。</li>
+<li><strong>対応範囲</strong>:Tag Editorとグループで扱えるリソースの種類は、サービスごとに異なる。対応していないサービスのリソースは、そのサービス独自のタグ操作を使う(例: <code>aws iam tag-role</code>)。</li>
+<li><strong>タグポリシーの準拠レポート</strong>:<a href="organizations.html">AWS Organizations</a>のタグポリシーに、各リソースが準拠しているかを報告させられる(Tagging APIの <code>StartReportCreation</code>)。</li>
+</ul>
+
+<h3>APIで使う</h3>
+<p>Resource Groupsには2つのAPIがあり、役割が違います。</p>
+<div class="table-wrap"><table>
+<tr><th>API</th><th>主な操作</th><th>用途</th></tr>
+<tr><td>Resource Groups API</td><td><code>CreateGroup</code>、<code>SearchResources</code> など</td><td>グループの作成・更新・削除、グループへのタグ付け、クエリによるリソースの検索</td></tr>
+<tr><td>Resource Groups Tagging API</td><td><code>GetResources</code>、<code>TagResources</code>、<code>UntagResources</code>、<code>GetTagKeys</code>、<code>GetTagValues</code></td><td>リソースのタグの検索・付与・削除。タグの一覧や値の一覧の取得</td></tr>
+</table></div>
+<ul>
+<li><code>TagResources</code>は、1回の呼び出しで最大20個のARNにタグを付けられる。</li>
+<li><code>GetResources</code>は、1回に指定できるARNが最大100個。結果はページ単位で返り、呼び出しの回数にはレート制限がある。</li>
+<li>Tagging APIは、指定したリージョンのリソースだけを対象にする。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>本番環境のすべてのリソースに <code>Environment=prod</code> のタグを付け、そのタグで一覧を作る</li>
+<li>既存の多数のリソースに、部署のタグをTag Editorで一括で付ける</li>
+<li>タグで作ったグループを対象に、Systems ManagerのRun CommandやAutomationで一括の操作を行う</li>
+<li>CloudFormationのスタックごとにリソースをまとめて、スタックの単位で確認する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>リソースグループとTag Editorの機能そのものに、単独の料金は設定されていません。料金は、タグを付けたリソース(EC2やS3など)の料金として発生します。タグは費用の集計にも使えます。コスト配分タグとして有効化すると、<a href="cost-explorer.html">Cost Explorer</a>でタグごとの費用を確認できます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="systems-manager.html">AWS Systems Manager</a>:リソースグループを対象に、Run CommandやAutomationを実行する</li>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:スタックベースのグループの元になるスタック</li>
+<li><a href="organizations.html">AWS Organizations</a>:タグポリシーと、タグの準拠レポート</li>
+<li><a href="config.html">AWS Config</a>:リソースの構成とタグの変更を記録する</li>
+<li><a href="backup.html">AWS Backup</a>:タグを条件に、バックアップの対象のリソースを指定する</li>
+<li><a href="cost-explorer.html">AWS Cost Explorer</a>:コスト配分タグで、タグごとの費用を分析する</li>
+<li><a href="iam.html">AWS IAM</a>:タグを条件にして、アクセスを許可・拒否する</li>
+<li>関連する用語:<a href="../terms/tags.html">タグ</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point">
+<h4>グループの作り方</h4>
+<ul>
+<li>「タグの値で同じ役割のリソースをまとめたい」→ <strong class="em">タグベース</strong>のリソースグループ。</li>
+<li>「CloudFormationのスタックごとにまとめたい」→ <strong class="em">CloudFormationスタックベース</strong>(1つのスタック・現在のリージョンだけ)。</li>
+<li>親スタックのグループには、子スタックのリソースは入らない(子スタックが1つのメンバーとして入る)。</li>
+</ul>
+<h4>タグ付け</h4>
+<ul>
+<li>既存のリソースに、まとめて同じタグを付ける → <strong class="em">Tag Editor</strong>。</li>
+<li>APIで一括で付ける → <code>TagResources</code>(1回の呼び出しで最大20個のARN)。</li>
+<li>Tagging APIはリージョンごとに動く。別のリージョンのリソースは、そのリージョンを指定して操作する。</li>
+<li>対応していないサービスのリソースは、Tag Editorやグループの対象外。そのサービスのタグ操作を使う。</li>
+</ul>
+<h4>検索・監査</h4>
+<ul>
+<li>タグのキーや値の一覧を調べる → <code>GetTagKeys</code>・<code>GetTagValues</code>。</li>
+<li>タグのルールを守れているかを確認する → Organizationsのタグポリシーと、準拠レポート(<code>StartReportCreation</code>)。</li>
+</ul>
+<h4>SOA-C03での位置づけ</h4>
+<ul>
+<li>タグで対象を指定して、Systems Managerなどで一括で操作する運用の基礎として扱う。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS Resource Groupsは、タグかCloudFormationスタックを条件に、リソースをグループにまとめるサービス。</li>
+<li>Tag Editorで既存のリソースに一括でタグを付け、そのタグを条件にグループを作る。</li>
+<li>グループ用のResource Groups APIと、タグ用のResource Groups Tagging APIを使い分ける。</li>
+</ul>
+</section>

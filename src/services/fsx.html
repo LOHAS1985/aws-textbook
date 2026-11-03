@@ -1,6 +1,7 @@
 <!-- title: Amazon FSx -->
 <!-- category: ストレージ -->
 <!-- lead: 市販・オープンソースのファイルシステムをマネージドで提供 -->
+<!-- verified: 2026-11-03 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>Amazon FSx</strong>は、Windowsファイルサーバーや Lustre など、<strong>市販・オープンソースのファイルシステムをマネージドで提供</strong>するサービスです。用途に合わせて4種類から選びます。</p>
@@ -10,9 +11,9 @@
 <h2>2. 主な機能・特徴</h2>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>プロトコル</th><th>特徴</th></tr>
-<tr><td>FSx for Windows File Server</td><td>SMB</td><td><strong>Active Directory連携</strong>(ファイルアクセス制御はFSxが担当)。NTFSを使ったファイル管理</td></tr>
+<tr><td>FSx for Windows File Server</td><td>SMB</td><td><strong>Active Directory連携</strong>(利用者の認証とアクセス制御)。NTFSを使ったファイル管理</td></tr>
 <tr><td>FSx for Lustre</td><td>Lustre</td><td>ビッグデータ分析向け。高スループット・ミリ秒未満のレイテンシー。Linux向け</td></tr>
-<tr><td>FSx for NetApp ONTAP</td><td>NFS、SMB、iSCSI</td><td>オンプレミスのNetApp環境を拡張</td></tr>
+<tr><td>FSx for NetApp ONTAP</td><td>NFS、SMB、iSCSI、NVMe</td><td>オンプレミスのNetApp環境を拡張</td></tr>
 <tr><td>FSx for OpenZFS</td><td>NFS</td><td>OpenZFSファイルシステムをマネージドで提供。スナップショットやデータ圧縮に対応</td></tr>
 </table></div>
 <p>FSx for LustreはS3バケットと連携でき、S3上のデータを高速なファイルシステムとして処理できます。HPCや機械学習で使われます。</p>
@@ -32,6 +33,41 @@ edge r3 t3
 edge r4 t4
 <figcaption>図1 FSxの4種類と選び方。OS・用途・既存環境などの要件から種類を選ぶ。</figcaption>
 </figure>
+
+<h3>可用性:Single-AZとMulti-AZ</h3>
+<p>Windows・ONTAP・OpenZFSは、1つのAZの中で完結する<strong>Single-AZ</strong>と、別のAZにも待機用のファイルサーバーを置く<strong>Multi-AZ</strong>から選べます。Single-AZでも部品の故障は自動で検知・対処されますが、AZ全体の障害には耐えられません。Windows(Single-AZ)は、障害からの復旧時に約30分止まることがあります。高可用性の考え方は用語ページ「<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>」を参照してください。</p>
+<p>Multi-AZでは、待機用のファイルサーバーに変更を同期しておき、障害時はフェイルオーバーで切り替えます。Windowsでは通常30秒未満で切り替わり、ファイルシステムのDNS名は変わりません。OpenZFSのMulti-AZは通常60秒以内に切り替わります。Windowsの Multi-AZ では、Linuxクライアントは DNS名による自動の切り替えに対応していないため、待機側へ自動では接続し直されません。</p>
+<figure class="figure" data-diagram>
+grid 170 90
+node cl 1.5 0 blue "クライアント" "DNS名で接続"
+node a 0 1.2 accent "ファイルサーバー" "稼働中"
+node s 3 1.2 box "ファイルサーバー" "待機中"
+group 0 1.2 0 1.2 "AZ-a" pad=12
+group 3 1.2 3 1.2 "AZ-c" pad=12
+edge cl a "通常"
+edge cl s "障害時" dash
+edge a s "同期" both
+<figcaption>図2 Multi-AZの構成。稼働中のファイルサーバーの変更を待機側へ同期しておき、障害時はDNS名を変えずに待機側へ切り替える。</figcaption>
+</figure>
+
+<h3>容量と性能の設定</h3>
+<p>FSx for Windowsでは、ストレージ容量・SSDのIOPS・スループット容量を作成時に指定し、あとから変更できます。ストレージはSSDかHDDを選びます。IOPSとスループットの違いは用語ページ「<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>」を参照してください。主な上限は次のとおりです。</p>
+<div class="table-wrap"><table>
+<tr><th>項目(FSx for Windows)</th><th>上限・下限</th></tr>
+<tr><td>SSDの最小ストレージ容量</td><td>32 GiB</td></tr>
+<tr><td>HDDの最小ストレージ容量</td><td>2,000 GiB</td></tr>
+<tr><td>最大ストレージ容量(SSD・HDD)</td><td>64 TiB</td></tr>
+<tr><td>スループット容量</td><td>8〜12,288 MBps</td></tr>
+</table></div>
+<p>Lustreには、SSD・Intelligent-Tiering・HDDの3つのストレージクラスがあります。小さなファイルのランダムな読み書きが多い用途はSSD、全体に一定の低レイテンシーが不要な用途はIntelligent-Tieringが向いています。HDDは、1桁ミリ秒の一定のレイテンシーと大きなスループットが必要な用途向けです。</p>
+
+<h3>バックアップと暗号化</h3>
+<p>FSx for Windowsは、作成時に自動の日次バックアップが既定で有効になります。バックアップはVSS(Volume Shadow Copy Service)を使ってファイルシステムの整合性を保ち、2回目以降は増分で保存されます。手動のバックアップはいつでも取れ、自動バックアップの保持期間は最大90日です。</p>
+<p>作成時にMicrosoft Active Directoryに参加させ、利用者の認証とアクセス制御をADで行います。保存データはAWS KMSの鍵で暗号化され、通信中のデータはSMBのKerberosセッションキーで暗号化されます。</p>
+
+<h3>Lustreの種類とS3との連携</h3>
+<p>FSx for Lustreには、一時的な処理向けの<strong>Scratch</strong>と、長期的な保存やスループット重視の<strong>Persistent</strong>があります。Scratchはデータを複製しないため、ファイルサーバーが故障するとそのデータは残りません。Persistentはデータを複製し、故障したファイルサーバーは交換されます。</p>
+<p>S3バケットをデータリポジトリとして関連付けると、S3のオブジェクトがファイルとして見えるようになります。ファイルシステムの作成時にS3上のファイル一覧を取り込み、自動インポート・自動エクスポートを設定すると、変更がS3との間で同期されます。S3のバケットが、データの永続的な保管先になります。</p>
 </section>
 
 <section class="chapter">
@@ -54,8 +90,11 @@ edge r4 t4
 <li><a href="efs.html">Amazon EFS</a>:Linux向けの共有ファイルストレージ</li>
 <li><a href="directory-service.html">AWS Directory Service</a>:FSx for WindowsのActive Directory連携</li>
 <li><a href="s3.html">Amazon S3</a>:FSx for Lustreのデータ連携先</li>
+<li><a href="ec2.html">Amazon EC2</a>:ファイルシステムにアクセスするクライアント</li>
 <li><a href="datasync.html">AWS DataSync</a>:オンプレミスからのデータ移行</li>
 <li><a href="backup.html">AWS Backup</a>:バックアップの一元管理</li>
+<li><a href="kms.html">AWS KMS</a>:保存データの暗号化に使う鍵</li>
+<li>関連する用語:<a href="../terms/storage-types.html">ブロック・ファイル・オブジェクトストレージ</a>、<a href="../terms/region-az.html">リージョンとアベイラビリティーゾーン</a></li>
 </ul>
 </section>
 
@@ -66,6 +105,9 @@ edge r4 t4
 <li>HPC・高スループット・ミリ秒未満のレイテンシー → <strong>FSx for Lustre</strong>。</li>
 <li>NetApp・iSCSI → <strong>FSx for NetApp ONTAP</strong>。</li>
 <li>LinuxでNFS共有だけなら → <strong>EFS</strong>も候補。</li>
+<li>Lustreで一時的な処理に使う → <strong>Scratch</strong>(データは複製されない)。長期の保存には <strong>Persistent</strong>(データを複製する)。</li>
+<li>Windowsのファイル共有を高可用性にしたい → <strong>Multi-AZ</strong>(通常30秒未満で切り替え)。Linuxクライアントは DNS名による自動の切り替えに対応しない点に注意。</li>
+<li>S3上のデータを高速に処理したい → <strong>FSx for Lustre</strong>とS3のデータリポジトリ。</li>
 </ul></div>
 </section>
 

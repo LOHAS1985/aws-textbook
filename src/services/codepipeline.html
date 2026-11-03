@@ -1,6 +1,7 @@
 <!-- title: AWS CodePipeline -->
 <!-- category: デベロッパーツール -->
 <!-- lead: ソース取得からデプロイまでを自動化するCI/CDサービス -->
+<!-- verified: 2026-11-03 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>AWS CodePipeline</strong>は、<strong>CI/CD(継続的インテグレーション/継続的デリバリー)</strong>のサービスです。ソースコードの変更から、ビルド・テスト・デプロイまでを自動化します。</p>
@@ -28,18 +29,47 @@ edge a d
 <tr><td>Build</td><td>コードのビルド</td><td>CodeBuild</td></tr>
 <tr><td>Test</td><td>自動テスト</td><td>-</td></tr>
 <tr><td>Approval</td><td><strong class="em">手動承認(Manual Approval Action)</strong></td><td>-</td></tr>
-<tr><td>Deploy</td><td>デプロイ</td><td>CodeDeploy、ECS、Lambda、CloudFormation</td></tr>
+<tr><td>Deploy</td><td>デプロイ</td><td>CodeDeploy、ECS、Lambda、CloudFormation、Elastic Beanstalk</td></tr>
 </table></div>
 
-<h3>デプロイ先の比較</h3>
+<h3>実行とアクション</h3>
+<p>変更が1回入るたびに、パイプラインは<strong>実行(execution)</strong>として進みます。ステージの中のアクションは、順番に(直列)実行することも、同時に(並列)実行することもできます。アクションの種類は、<strong>Source・Build・Test・Deploy・Approval・Invoke</strong>の6つです。</p>
+<p>アクションどうしは、ソースコードやビルドの成果物を<strong>アーティファクト</strong>として受け渡します。CodePipelineは、アーティファクトをS3のアーティファクトストアにコピーし、次のアクションが取り出せるようにします。各アクションは、パイプラインのサービスロールの権限で動きます。権限の仕組みは用語ページ「<a href="../terms/iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a>」を参照してください。</p>
+<p>同じステージには、同時に1つの実行しか入れません。前の実行がステージを使っている間、次の実行は待機します。</p>
+
+<h3>パイプラインの種類と実行モード</h3>
+<p>パイプラインには<strong>V1</strong>と<strong>V2</strong>の2種類があります。V2は、V1と同じ構造に、リリースの安全性(実行モードやロールバックの条件)とトリガーの設定が加わったものです。QUEUEDとPARALLELの実行モード、トリガーのフィルターはV2だけで使えます。</p>
+<p>待機中の実行の扱いは実行モードで決まります。既定の<strong>SUPERSEDED</strong>では、待機中の古い実行を、より新しい実行が追い越して置き換えます。V2では、待機中の実行を順番に流す<strong>QUEUED</strong>や、複数の実行を同時に流す<strong>PARALLEL</strong>も選べます。PARALLELでは、ステージのロールバックは使えません。</p>
+
+<h3>手動承認(Manual Approval Action)</h3>
+<p>承認アクションに着くと、パイプラインは止まって承認を待ちます。承認依頼は、設定したSNSトピックに通知できます。承認されると次のステージへ進みます。却下されるか、7日以内に誰も承認も却下もしなければ、アクションは失敗となり、実行は先へ進みません。</p>
+<figure class="figure" data-diagram>
+grid 170 90
+node ap 0 0.5 accent "承認アクション" "パイプライン停止"
+node who 1.6 0 blue "承認者" "SNSで通知を受ける"
+node ok 3.2 0 ok "承認" "次のステージへ"
+node ng 3.2 1 ng "却下・7日超過" "実行は失敗"
+edge ap who "通知"
+edge who ok "承認"
+edge who ng "却下"
+<figcaption>図2 手動承認の流れ。承認アクションでパイプラインが止まり、承認者にSNSで通知される。承認すると次のステージへ進み、却下されるか7日以内に応答がないと実行は失敗する。</figcaption>
+</figure>
+
+<h3>トリガーとソースの取得</h3>
+<p>GitHub・GitLab・Bitbucketなどのリポジトリは<strong>CodeConnections</strong>の接続を使ってソースを取得し、変更をきっかけにパイプラインを開始します。CodeCommitやS3のソースは、<a href="eventbridge.html">Amazon EventBridge</a>による変更の検出でパイプラインを開始します。V2のトリガーでは、Gitのタグ・ブランチ・ファイルパスによるフィルターを付けられます。特定のブランチやタグへのプッシュだけを本番用のパイプラインに流す、といった使い分けができます。</p>
+
+<h3>ロールバックと再試行</h3>
+<p>失敗したステージは<strong>再試行(retry)</strong>できます。また、ステージを以前に成功した実行の状態へ戻す<strong>ステージのロールバック</strong>もあります。ステージには、失敗時や成功時の条件を満たしたときに自動でロールバックする設定もできます。デプロイの方式の違いは用語ページ「<a href="../terms/deploy-strategies.html">デプロイ戦略</a>」を参照してください。</p>
+
+<h3>制限(クォータ)</h3>
+<p>次の上限はリージョンごとの既定値です。</p>
 <div class="table-wrap"><table>
-<tr><th>項目</th><th>CodeDeploy</th><th>ECS</th><th>Lambda</th><th>CloudFormation</th></tr>
-<tr><td>主な用途</td><td>EC2/オンプレミスへのアプリ配置</td><td>ECSサービスの更新</td><td>Lambda関数の更新</td><td>AWSインフラの構築・更新</td></tr>
-<tr><td>デプロイ対象</td><td>EC2、オンプレミスサーバー</td><td>ECSタスク・コンテナ</td><td>Lambda関数</td><td>VPC・ALB・RDS・ECS・Lambdaなど</td></tr>
-<tr><td>管理対象</td><td>アプリケーション</td><td>コンテナ</td><td>関数コード</td><td>インフラリソース</td></tr>
-<tr><td>Blue/Green</td><td>○</td><td>○(CodeDeploy連携時)</td><td>○(エイリアス利用)</td><td>×</td></tr>
-<tr><td>ローリング更新</td><td>○</td><td>○</td><td>×</td><td>×</td></tr>
-<tr><td>自動ロールバック</td><td>○</td><td>○</td><td>○</td><td>○</td></tr>
+<tr><th>項目</th><th>既定の上限</th></tr>
+<tr><td>パイプラインの数</td><td>1,000(引き上げを申請できる)</td></tr>
+<tr><td>1パイプラインのステージ数</td><td>2〜50</td></tr>
+<tr><td>1パイプラインのアクション数</td><td>1,000</td></tr>
+<tr><td>1ステージの直列アクション数・並列アクション数</td><td>それぞれ100</td></tr>
+<tr><td>PARALLELモードでのアクティブな実行数</td><td>50</td></tr>
 </table></div>
 </section>
 
@@ -54,7 +84,7 @@ edge a d
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>V1タイプはアクティブなパイプラインの数(月額)、V2タイプはアクションの実行時間(分)で課金されます。CodeBuildなど各ステージで使うサービスの料金は別途かかります。</p>
+<p>V1タイプは、1か月の間に変更が流れたアクティブなパイプラインごとに、月額1.00 USDかかります(作成から30日間は無料)。V2タイプは、アクションの実行時間(分単位で切り上げ)に対して、1分あたり0.002 USDかかります。手動承認とカスタムアクションは、実行時間に含まれません。無料利用枠は、V1で1パイプライン、V2で月100分です。CodeBuildなど各ステージで使うサービスの料金は別途かかります。</p>
 </section>
 
 <section class="chapter">
@@ -64,17 +94,23 @@ edge a d
 <li><a href="codedeploy.html">AWS CodeDeploy</a>:デプロイ</li>
 <li><a href="cloudformation.html">AWS CloudFormation</a>:インフラのデプロイ</li>
 <li><a href="ecs.html">Amazon ECS</a>/<a href="lambda.html">AWS Lambda</a>:デプロイ先</li>
+<li><a href="elastic-beanstalk.html">AWS Elastic Beanstalk</a>:デプロイ先</li>
 <li><a href="sns.html">Amazon SNS</a>:承認依頼・結果の通知</li>
-<li>関連する用語:<a href="../terms/terraform-git.html">TerraformとGit</a></li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:S3・CodeCommitなどの変更の検出</li>
+<li>関連する用語:<a href="../terms/terraform-git.html">TerraformとGit</a>、<a href="../terms/deploy-strategies.html">デプロイ戦略</a>、<a href="../terms/iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
 <div class="point"><ul>
-<li>本番前に人の確認を挟む → <strong>Manual Approval Action</strong>。</li>
+<li>本番前に人の確認を挟む → <strong>Manual Approval Action</strong>(7日以内に応答がないと失敗する)。</li>
 <li>EC2/オンプレミスへのBlue/Green → <strong>CodeDeploy</strong>。インフラ → <strong>CloudFormation</strong>。</li>
 <li>Lambdaの段階的な切り替え → エイリアスを使ったBlue/Green(CodeDeploy)。</li>
+<li>新しい変更を優先し、待機中の古い実行を置き換えたい → 実行モードの<strong>SUPERSEDED</strong>(既定)。</li>
+<li>特定のブランチやタグへのプッシュだけでパイプラインを起動したい → V2のトリガーのフィルター。</li>
+<li>失敗したステージを以前の成功した実行へ戻したい → ステージのロールバック(PARALLELモードでは使えない)。</li>
+<li>料金 → V1はアクティブなパイプライン数、V2はアクションの実行時間(分)で課金される。手動承認は実行時間に含まれない。</li>
 </ul></div>
 </section>
 

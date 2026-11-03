@@ -1,6 +1,7 @@
 <!-- title: AWS AppSync -->
 <!-- category: アプリケーション統合 -->
 <!-- lead: マネージドなGraphQL APIサービス -->
+<!-- verified: 2026-11-03 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>AWS AppSync</strong>は、<strong>GraphQL API</strong>を提供するマネージドサービスです。</p>
@@ -22,12 +23,47 @@ edge as lam
 <h2>2. 主な機能・特徴</h2>
 <ul>
 <li>クライアントが必要な項目だけを指定して取得できる(GraphQL)。</li>
-</ul>
-<ul>
-<li><strong>スキーマ</strong>でデータの型を定義し、<strong>リゾルバー</strong>で各フィールドをデータソース(DynamoDB、Lambda、RDS、HTTPなど)に結びつける。</li>
+<li><strong>スキーマ</strong>でデータの型を定義し、<strong>リゾルバー</strong>で各フィールドをデータソース(DynamoDB、Lambda、Aurora Serverless、Amazon OpenSearch Service、HTTPエンドポイントなど)に結びつける。</li>
 <li>操作は <strong>Query</strong>(取得)、<strong>Mutation</strong>(更新)、<strong>Subscription</strong>(リアルタイム通知)の3種類。</li>
-<li>Subscriptionにより、WebSocketでデータの変更をリアルタイムにクライアントへ配信できる。</li>
 <li>認証はAPIキー、IAM、Cognitoユーザープール、OIDC、Lambdaに対応。</li>
+</ul>
+
+<h3>リクエストの流れとリゾルバー</h3>
+<p>クライアントがGraphQLのクエリを送ると、AppSyncはスキーマに従って、フィールドごとに<strong>リゾルバー</strong>を実行します。リゾルバーは、リクエストをデータソースへの操作に変換し、結果をGraphQLの応答の形に整えます。1つのデータソースへの操作を行う<strong>ユニットリゾルバー</strong>と、複数の処理を順番につなぐ<strong>パイプラインリゾルバー</strong>の2種類があります。</p>
+<p>リゾルバーの処理は、公式ドキュメントでは現在 <code>APPSYNC_JS</code> ランタイム(JavaScript)で書くことが案内されています。</p>
+
+<h3>リアルタイム更新(Subscription)</h3>
+<p>クライアントは<strong>WebSocket</strong>でAppSyncに接続し、<code>subscription</code>を登録して待ちます。どのMutationの実行で通知するかは、スキーマの <code>@aws_subscribe(mutations: [...])</code> で指定します。Mutation(例:<code>sendMessage</code>)が実行されると、AppSyncが購読中のクライアントに変更を送ります。1本のWebSocket接続で複数の購読を扱えます。</p>
+<figure class="figure" data-diagram>
+grid 180 90
+node sub 0 0 blue "購読クライアント" "subscription"
+node as 1.5 0.5 accent "AppSync" "WebSocket"
+node pub 3 0 blue "更新するクライアント"
+node ddb 3 1.2 box "データソース" "DynamoDBなど"
+edge sub as "購読" both
+edge pub as "Mutation"
+edge as ddb "リゾルバー"
+<figcaption>図2 Subscriptionの流れ。購読するクライアントはWebSocketで接続したまま待ち、別のクライアントがMutationを実行すると、AppSyncが変更を購読中のクライアントに配信する。</figcaption>
+</figure>
+<p>2025年3月からは、GraphQLのQuery・Mutation・Subscriptionとは別に、WebSocketでイベントを配信する<strong>AppSync Events</strong>も提供されています。</p>
+
+<h3>認証の設定</h3>
+<p>APIごとに<strong>既定の認証方式</strong>を1つ決め、必要に応じて<strong>追加の認証方式</strong>を組み合わせられます。</p>
+<ul>
+<li><strong>APIキー</strong>:認証なしのAPIの呼び出し回数(スロットリング)を制御する簡易な方式。</li>
+<li><strong>IAM</strong>:IAMユーザーやロールの認証情報で署名したリクエスト(SigV4)で認証する。用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</li>
+<li><strong>Amazon Cognitoユーザープール</strong>・<strong>OIDC</strong>:ログインしたユーザーのトークンで認証する。OIDCは用語ページ「<a href="../terms/oidc.html">OIDC(OpenID Connect)</a>」を参照してください。</li>
+<li><strong>Lambda</strong>:独自の認可ロジックをLambda関数で実装する。</li>
+</ul>
+
+<h3>キャッシュとWAF</h3>
+<p>APIごとに専用のキャッシュを有効にすると、クエリや更新の応答を速くできます。キャッシュはインスタンスタイプを選び、時間単位で課金されます。<strong>AWS WAF</strong>のWebACLをAPIに関連付けると、ルールに基づいて不正なリクエストを遮断できます。</p>
+
+<h3>制限</h3>
+<ul>
+<li>APIキーの有効期限は最長365日(延長も可能)。開発用や、公開しても安全なAPIに向く方式とされている。</li>
+<li>Lambda認可は、1つのAPIにつき1つだけ設定できる。Lambda関数がリゾルバーに渡すコンテキストデータは5MBまで。</li>
+<li>リアルタイム更新を受け取るには、クライアントが接続を維持しておく必要がある。</li>
 </ul>
 </section>
 
@@ -35,32 +71,39 @@ edge as lam
 <h2>3. ユースケース</h2>
 <ul>
 <li>モバイルアプリで通信量を減らすため、必要なデータだけを取得</li>
-<li><span>チャットやダッシュボードなどのリアルタイム更新(Subscription)</span></li>
-<li><span>複数のデータソースを1つのAPIにまとめる</span></li>
+<li>チャットやダッシュボードなどのリアルタイム更新(Subscription)</li>
+<li>複数のデータソースを1つのAPIにまとめる</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>クエリ・ミューテーションの実行回数と、リアルタイム更新のメッセージ数・接続時間に応じて課金されます。</p>
+<p>クエリ・Mutationの実行回数と、リアルタイム更新のメッセージ数・接続時間に応じて課金されます。専用キャッシュを使う場合は、選んだインスタンスの時間料金が加わります。データ転送料金は、EC2のデータ転送と同じ料金体系です。</p>
 </section>
 
 <section class="chapter">
 <h2>5. 関連サービス</h2>
 <ul>
 <li><a href="api-gateway.html">Amazon API Gateway</a>:REST/HTTP/WebSocket API</li>
-<li><a href="dynamodb.html">Amazon DynamoDB</a>/<a href="lambda.html">AWS Lambda</a>:代表的なデータソース</li>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>/<a href="lambda.html">AWS Lambda</a>/<a href="aurora.html">Amazon Aurora</a>:代表的なデータソース</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:検索用のデータソース</li>
 <li><a href="cognito.html">Amazon Cognito</a>:ユーザー認証</li>
+<li><a href="waf.html">AWS WAF</a>:APIへの不正なリクエストの遮断</li>
 <li><a href="amplify.html">AWS Amplify</a>:AppSyncを使ったアプリ開発</li>
+<li>関連する用語:<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/caching-comparison.html">キャッシュの選び方</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
 <div class="point"><ul>
-<li>「GraphQL」「必要な項目だけ取得」→ <strong>AppSync</strong>。</li>
-<li>REST API → API Gateway。</li>
-<li>リアルタイムのデータ同期 → AppSyncのSubscription。</li>
+<li>「GraphQL」「必要な項目だけ取得」→ <strong>AppSync</strong>。REST API → API Gateway。</li>
+<li>リアルタイムのデータ同期・チャットの更新 → AppSyncの<strong>Subscription</strong>(WebSocket)。</li>
+<li>複数のデータソース(DynamoDB・Lambda・Aurora・OpenSearch)を1つのAPIにまとめる → リゾルバーで各フィールドをデータソースに結びつける。</li>
+<li>Cognitoユーザープール・OIDC・IAMで利用者を認証する → 既定または追加の認証方式として設定する。</li>
+<li>開発用や公開APIの簡易な認証 → APIキー(有効期限は最長365日)。</li>
+<li>APIへの不正なリクエストを遮断したい → <strong>AWS WAF</strong>のWebACLを関連付ける。</li>
+<li>同じクエリが多く、応答を速くしたい → APIごとの専用キャッシュ(時間単位の料金がかかる)。</li>
 </ul></div>
 </section>
 

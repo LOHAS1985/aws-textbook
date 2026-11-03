@@ -3,7 +3,7 @@
 <!-- lead: 複数の処理をつなぎ合わせてワークフローを作る -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
-<p><strong>AWS Step Functions</strong>は、<strong>複数の処理をつなぎ合わせてワークフローを作成</strong>するサービスです。Lambdaや各種AWSサービスの呼び出しを、順番・分岐・並列・リトライを含めて定義できます。</p>
+<p><strong>AWS Step Functions</strong>は、<strong>複数の処理をつなぎ合わせてワークフローを作成</strong>するサービスです。Lambdaや各種AWSサービスの呼び出しを、順番・分岐・並列・リトライを含めて定義できます。SQSやEventBridgeなどのメッセージングとの使い分けは用語ページ「<a href="../terms/messaging-comparison.html">メッセージングサービスの選び方</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -50,7 +50,7 @@ edge par ok
   <li><code>BackoffRate</code>:待機時間の増加倍率</li>
   </ul></li>
 </ul>
-<p>AWSの仕様では <code>MaxAttempts</code> は「初回実行を含まないリトライ回数」です(MaxAttempts=3なら、初回+最大3回のリトライ)。また、失敗後の遷移先は <code>Catch</code>(<code>ErrorEquals</code>・<code>Next</code>・<code>ResultPath</code>)で指定します。</p>
+<p>AWSの仕様では <code>MaxAttempts</code> は「初回実行を含まないリトライ回数」です(MaxAttempts=3なら、初回+最大3回のリトライ)。また、失敗後の遷移先は <code>Catch</code>(<code>ErrorEquals</code>・<code>Next</code>・<code>ResultPath</code>)で指定します。リトライの待ち方(バックオフ)の考え方は用語ページ「<a href="../terms/throttling-retry.html">スロットリングとリトライ</a>」を参照してください。</p>
 
 <h3>ステートの種類</h3>
 <div class="table-wrap"><table>

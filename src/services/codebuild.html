@@ -1,6 +1,7 @@
 <!-- title: AWS CodeBuild -->
 <!-- category: デベロッパーツール -->
 <!-- lead: CI/CDパイプラインのビルド・テストを実行するサービス -->
+<!-- verified: 2026-11-03 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>AWS CodeBuild</strong>は、CI/CDパイプラインで<strong>ビルド・テストを実行</strong>するフルマネージドなサービスです。ビルドサーバーを自分で用意する必要がありません。</p>
@@ -17,8 +18,15 @@
 <li>後処理</li>
 <li>成果物(アーティファクト)の出力</li>
 </ol>
-<p>buildspec.ymlのフェーズ名は <code>install</code> → <code>pre_build</code> → <code>build</code> → <code>post_build</code> で、成果物は <code>artifacts</code>、キャッシュは <code>cache</code> セクションで指定します。ファイルはソースのルートディレクトリに置くのが標準です。</p>
-
+<p>buildspec.ymlはソースのルートディレクトリに置くのが標準です。主な項目は次のとおりです。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>役割</th></tr>
+<tr><td>env</td><td>環境変数。<code>variables</code>(平文)、<code>parameter-store</code>、<code>secrets-manager</code>(機密情報の参照)</td></tr>
+<tr><td>phases</td><td><code>install</code>→<code>pre_build</code>→<code>build</code>→<code>post_build</code>の各フェーズ。<code>install</code>では<code>runtime-versions</code>で言語のバージョンを指定できる。各フェーズに失敗時の動作(<code>on-failure</code>)と<code>finally</code>を書ける</td></tr>
+<tr><td>artifacts</td><td>成果物として出力するファイルの指定</td></tr>
+<tr><td>cache</td><td>キャッシュするフォルダ(<code>paths</code>)の指定</td></tr>
+<tr><td>reports</td><td>テストレポートにするファイルの指定</td></tr>
+</table></div>
 <figure class="figure" data-diagram>
 grid 160 85
 node src 0 0.5 blue "ソースコード" "buildspec.yml"
@@ -32,11 +40,39 @@ edge cb rep
 edge cache cb "再利用"
 <figcaption>図1 CodeBuildの流れ。buildspec.ymlの手順(依存のインストール → ビルド → テスト → 後処理)で実行し、成果物とテストレポートを出力する。キャッシュを使うと依存ファイルを再利用でき、高速になる。</figcaption>
 </figure>
-<h3>ローカルキャッシュ</h3>
-<p>前回のビルドの依存ファイルや中間成果物を再利用して<strong>ビルドを高速化</strong>します。buildspec.ymlにキャッシュするフォルダのパスを追加します。</p>
+
+<h3>環境変数と機密情報</h3>
+<p>環境変数は、プロジェクトの設定とbuildspec.ymlの<code>env</code>のどちらでも指定できます。buildspec.ymlの値は優先順位が最も低く、ほかの場所で指定した値が優先されます。平文の環境変数はコンソールやCLIで値が見えてしまうため、パスワードやAPIキーは<strong>Secrets Manager</strong>または<strong>Parameter Store</strong>から参照します(<code>secrets-manager</code>・<code>parameter-store</code>)。保存先の選び方は用語ページ「<a href="../terms/secrets-config-comparison.html">機密情報・設定値の保存先の選び方</a>」を参照してください。</p>
+
+<h3>キャッシュ(S3とローカル)</h3>
+<p>前回のビルドの依存ファイルなどを再利用すると、ダウンロードや再ビルドの時間を減らせます。キャッシュは2種類から選びます。</p>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>保存先</th><th>向いている場面</th></tr>
+<tr><td>Amazon S3キャッシュ</td><td>S3バケット。複数のビルドホストで共有できる</td><td>小さめから中くらいのサイズで、作るより取得するほうが速い成果物</td></tr>
+<tr><td>ローカルキャッシュ</td><td>ビルドを実行したホストの上。そのホストだけで使える</td><td>中くらいから大きな成果物。ビルドの頻度が低い場合には向かない</td></tr>
+</table></div>
+<p>ローカルキャッシュには3つのモードがあります。<strong>ソースキャッシュ</strong>はGitのメタデータを保存し、次のビルドでは差分だけを取得します。<strong>Dockerレイヤーキャッシュ</strong>はDockerイメージの層を再利用します(Linuxのみで、特権モードが必要)。<strong>カスタムキャッシュ</strong>は、buildspec.ymlで指定したフォルダを保存します。ローカルキャッシュは、VPC内でビルドする場合には使えません。</p>
+<figure class="figure" data-diagram>
+grid 170 90
+node h1 0 0 accent "ビルドホストA" "1回目のビルド"
+node s3c 1.6 0.6 ok "S3キャッシュ" "依存ファイル"
+node h2 3.2 0 accent "ビルドホストB" "2回目のビルド"
+edge h1 s3c "保存"
+edge s3c h2 "取得"
+<figcaption>図2 S3キャッシュの共有。1回目のビルドが依存ファイルをS3に保存し、別のビルドホストで動く2回目のビルドがそれを取得する。ローカルキャッシュは、保存したホストの中だけで使える。</figcaption>
+</figure>
 
 <h3>テストレポート</h3>
-<p>テストの結果を可視化できます。</p>
+<p>buildspec.ymlの<code>reports</code>で、テスト結果のファイルとレポートグループを指定すると、ビルドの結果でテストの成功・失敗を確認できます。対応する形式は、JUnit XML、Cucumber JSON、NUnit XML、NUnit3 XML、TestNG XML、Visual Studio TRX などです。</p>
+
+<h3>ビルド環境と実行時間</h3>
+<ul>
+<li><strong>コンピュートタイプ</strong>:CPU・メモリ・OSの組み合わせを選ぶ。オンデマンドでは <code>BUILD_GENERAL1_SMALL</code> などの定義済みのタイプから選ぶ</li>
+<li><strong>特権モード</strong>:Dockerイメージをビルドするときに有効にする。Dockerレイヤーキャッシュも特権モードが必要</li>
+<li><strong>タイムアウト</strong>:既定は60分。5分から36時間(2,160分)の範囲で設定し、超えるとビルドは停止する</li>
+<li><strong>サービスロール</strong>:ビルドがS3やECRなどのAWSリソースを操作するための権限。IAMロールで付与する</li>
+</ul>
+<p>サービスロールの仕組みは用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -50,7 +86,7 @@ edge cache cb "再利用"
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>選んだコンピューティングタイプでビルドを実行した時間(分単位)に応じて課金されます。ビルドしていない時間は料金がかかりません。キャッシュでビルド時間を短くするとコストも下がります。</p>
+<p>選んだコンピュートタイプごとに、ビルドを実行した時間(分単位)に応じて課金されます。ビルドしていない時間は料金がかかりません。キャッシュでビルド時間を短くするとコストも下がります。無料利用枠は、オンデマンドの general1.small または arm1.small で月100分のビルド時間です。</p>
 </section>
 
 <section class="chapter">
@@ -61,6 +97,9 @@ edge cache cb "再利用"
 <li><a href="ecr.html">Amazon ECR</a>:イメージのプッシュ先</li>
 <li><a href="codeartifact.html">AWS CodeArtifact</a>:依存パッケージの取得元</li>
 <li><a href="s3.html">Amazon S3</a>:成果物の保存先</li>
+<li><a href="secrets-manager.html">AWS Secrets Manager</a>:ビルドで使う機密情報の参照元</li>
+<li><a href="systems-manager.html">AWS Systems Manager</a>:Parameter Storeのパラメータの参照元</li>
+<li>関連する用語:<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>、<a href="../terms/secrets-config-comparison.html">機密情報・設定値の保存先の選び方</a></li>
 </ul>
 </section>
 
@@ -68,8 +107,12 @@ edge cache cb "再利用"
 <h2>6. 試験・実務でのポイント</h2>
 <div class="point"><ul>
 <li>ビルド手順の定義ファイル → <strong>buildspec.yml</strong>(CodeDeployのappspecと混同しない)。</li>
-<li>ビルドが遅い → <strong>ローカルキャッシュ</strong>を設定。</li>
-<li>テスト結果の可視化 → <strong>テストレポート</strong>。</li>
+<li>ビルドが遅い → キャッシュ。複数のビルドホストで共有するなら<strong>S3キャッシュ</strong>、大きなソースなら<strong>ローカルキャッシュ</strong>(VPC内のビルドでは使えない)。</li>
+<li>テスト結果の可視化 → <strong>テストレポート</strong>(JUnit XMLなどの形式で出力)。</li>
+<li>Dockerイメージをビルドする → <strong>特権モード</strong>を有効にして、ECRへプッシュする。</li>
+<li>パスワードやAPIキーをビルドで使う → 平文の環境変数ではなく、Secrets ManagerやParameter Storeから参照する。</li>
+<li>ビルドが終わらず長時間続く → タイムアウト(既定60分)で停止させる。</li>
+<li>料金 → 実行したビルド時間で課金される。キャッシュで時間を短くすると、料金も下がる。</li>
 </ul></div>
 </section>
 

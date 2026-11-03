@@ -40,9 +40,25 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat10">デベロッパーツール</a>
   <h1>AWS CodePipeline</h1>
   <p class="lead">ソース取得からデプロイまでを自動化するCI/CDサービス</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">内容の確認:2026年11月3日</p>
   </div>
 </div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(15項目)</summary>
+<ol>
+<li><a href="#c1">1. サービス概要</a></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">ステージ(パイプラインの工程)</a></li><li><a href="#c2-2">実行とアクション</a></li><li><a href="#c2-3">パイプラインの種類と実行モード</a></li><li><a href="#c2-4">手動承認(Manual Approval Action)</a></li><li><a href="#c2-5">トリガーとソースの取得</a></li><li><a href="#c2-6">ロールバックと再試行</a></li><li><a href="#c2-7">制限(クォータ)</a></li></ul></li>
+<li><a href="#c3">3. ユースケース</a></li>
+<li><a href="#c4">4. 料金の考え方</a></li>
+<li><a href="#c5">5. 関連サービス</a></li>
+<li><a href="#c6">6. 試験・実務でのポイント</a></li>
+<li><a href="#c7">7. まとめ</a></li>
+<li><a href="#c8">このサービスが登場する運用シナリオ</a></li>
+</ol>
+</details>
+</nav>
 <section class="chapter">
 <h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS CodePipeline</strong>は、<strong>CI/CD(継続的インテグレーション/継続的デリバリー)</strong>のサービスです。ソースコードの変更から、ビルド・テスト・デプロイまでを自動化します。</p>
@@ -93,18 +109,69 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td>Build</td><td>コードのビルド</td><td>CodeBuild</td></tr>
 <tr><td>Test</td><td>自動テスト</td><td>-</td></tr>
 <tr><td>Approval</td><td><strong class="em">手動承認(Manual Approval Action)</strong></td><td>-</td></tr>
-<tr><td>Deploy</td><td>デプロイ</td><td>CodeDeploy、ECS、Lambda、CloudFormation</td></tr>
+<tr><td>Deploy</td><td>デプロイ</td><td>CodeDeploy、ECS、Lambda、CloudFormation、Elastic Beanstalk</td></tr>
 </table></div>
 
-<h3 id="c2-2">デプロイ先の比較<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
-<div class="table-wrap"><table class="stack">
-<tr><th>項目</th><th>CodeDeploy</th><th>ECS</th><th>Lambda</th><th>CloudFormation</th></tr>
-<tr><td data-label="項目">主な用途</td><td data-label="CodeDeploy">EC2/オンプレミスへのアプリ配置</td><td data-label="ECS">ECSサービスの更新</td><td data-label="Lambda">Lambda関数の更新</td><td data-label="CloudFormation">AWSインフラの構築・更新</td></tr>
-<tr><td data-label="項目">デプロイ対象</td><td data-label="CodeDeploy">EC2、オンプレミスサーバー</td><td data-label="ECS">ECSタスク・コンテナ</td><td data-label="Lambda">Lambda関数</td><td data-label="CloudFormation">VPC・ALB・RDS・ECS・Lambdaなど</td></tr>
-<tr><td data-label="項目">管理対象</td><td data-label="CodeDeploy">アプリケーション</td><td data-label="ECS">コンテナ</td><td data-label="Lambda">関数コード</td><td data-label="CloudFormation">インフラリソース</td></tr>
-<tr><td data-label="項目">Blue/Green</td><td data-label="CodeDeploy">○</td><td data-label="ECS">○(CodeDeploy連携時)</td><td data-label="Lambda">○(エイリアス利用)</td><td data-label="CloudFormation">×</td></tr>
-<tr><td data-label="項目">ローリング更新</td><td data-label="CodeDeploy">○</td><td data-label="ECS">○</td><td data-label="Lambda">×</td><td data-label="CloudFormation">×</td></tr>
-<tr><td data-label="項目">自動ロールバック</td><td data-label="CodeDeploy">○</td><td data-label="ECS">○</td><td data-label="Lambda">○</td><td data-label="CloudFormation">○</td></tr>
+<h3 id="c2-2">実行とアクション<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>変更が1回入るたびに、パイプラインは<strong>実行(execution)</strong>として進みます。ステージの中のアクションは、順番に(直列)実行することも、同時に(並列)実行することもできます。アクションの種類は、<strong>Source・Build・Test・Deploy・Approval・Invoke</strong>の6つです。</p>
+<p>アクションどうしは、ソースコードやビルドの成果物を<strong>アーティファクト</strong>として受け渡します。CodePipelineは、アーティファクトをS3のアーティファクトストアにコピーし、次のアクションが取り出せるようにします。各アクションは、パイプラインのサービスロールの権限で動きます。権限の仕組みは用語ページ「<a href="../terms/iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a>」を参照してください。</p>
+<p>同じステージには、同時に1つの実行しか入れません。前の実行がステージを使っている間、次の実行は待機します。</p>
+
+<h3 id="c2-3">パイプラインの種類と実行モード<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>パイプラインには<strong>V1</strong>と<strong>V2</strong>の2種類があります。V2は、V1と同じ構造に、リリースの安全性(実行モードやロールバックの条件)とトリガーの設定が加わったものです。QUEUEDとPARALLELの実行モード、トリガーのフィルターはV2だけで使えます。</p>
+<p>待機中の実行の扱いは実行モードで決まります。既定の<strong>SUPERSEDED</strong>では、待機中の古い実行を、より新しい実行が追い越して置き換えます。V2では、待機中の実行を順番に流す<strong>QUEUED</strong>や、複数の実行を同時に流す<strong>PARALLEL</strong>も選べます。PARALLELでは、ステージのロールバックは使えません。</p>
+
+<h3 id="c2-4">手動承認(Manual Approval Action)<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>承認アクションに着くと、パイプラインは止まって承認を待ちます。承認依頼は、設定したSNSトピックに通知できます。承認されると次のステージへ進みます。却下されるか、7日以内に誰も承認も却下もしなければ、アクションは失敗となり、実行は先へ進みません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 209" style="max-width:752px;min-width:602px" role="img" aria-label="図2 手動承認の流れ。承認アクションでパイプラインが止まり、承認者にSNSで通知される。承認すると次のステージへ進み、却下されるか7日以内に応答がないと実行は失敗する。"><defs><marker id="dgservices-codepipeline-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ap">
+<rect x="34" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="110" text-anchor="middle" class="dg-tb">承認アクション</text>
+<text x="109" y="128" text-anchor="middle" class="dg-s">パイプライン停止</text>
+</g>
+<g data-node="who">
+<rect x="306" y="43" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="381" y="64" text-anchor="middle" class="dg-t">承認者</text>
+<text x="381" y="82" text-anchor="middle" class="dg-s">SNSで通知を受ける</text>
+</g>
+<g data-node="ok">
+<rect x="578" y="43" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="64" text-anchor="middle" class="dg-t">承認</text>
+<text x="653" y="82" text-anchor="middle" class="dg-s">次のステージへ</text>
+</g>
+<g data-node="ng">
+<rect x="578" y="133" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="653" y="154" text-anchor="middle" class="dg-t">却下・7日超過</text>
+<text x="653" y="172" text-anchor="middle" class="dg-s">実行は失敗</text>
+</g>
+<path d="M184.0,101.6 L306.0,81.4" class="dg-line" marker-end="url(#dgservices-codepipeline-2)"/>
+<text x="245" y="96" text-anchor="middle" class="dg-s dg-halo">通知</text>
+<path d="M456.0,69.0 L578.0,69.0" class="dg-line" marker-end="url(#dgservices-codepipeline-2)"/>
+<text x="517" y="73" text-anchor="middle" class="dg-s dg-halo">承認</text>
+<path d="M456.0,93.8 L578.0,134.2" class="dg-line" marker-end="url(#dgservices-codepipeline-2)"/>
+<text x="517" y="118" text-anchor="middle" class="dg-s dg-halo">却下</text>
+</svg>
+</div>
+<figcaption>図2 手動承認の流れ。承認アクションでパイプラインが止まり、承認者にSNSで通知される。承認すると次のステージへ進み、却下されるか7日以内に応答がないと実行は失敗する。</figcaption>
+</figure>
+
+<h3 id="c2-5">トリガーとソースの取得<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>GitHub・GitLab・Bitbucketなどのリポジトリは<strong>CodeConnections</strong>の接続を使ってソースを取得し、変更をきっかけにパイプラインを開始します。CodeCommitやS3のソースは、<a href="eventbridge.html">Amazon EventBridge</a>による変更の検出でパイプラインを開始します。V2のトリガーでは、Gitのタグ・ブランチ・ファイルパスによるフィルターを付けられます。特定のブランチやタグへのプッシュだけを本番用のパイプラインに流す、といった使い分けができます。</p>
+
+<h3 id="c2-6">ロールバックと再試行<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>失敗したステージは<strong>再試行(retry)</strong>できます。また、ステージを以前に成功した実行の状態へ戻す<strong>ステージのロールバック</strong>もあります。ステージには、失敗時や成功時の条件を満たしたときに自動でロールバックする設定もできます。デプロイの方式の違いは用語ページ「<a href="../terms/deploy-strategies.html">デプロイ戦略</a>」を参照してください。</p>
+
+<h3 id="c2-7">制限(クォータ)<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>次の上限はリージョンごとの既定値です。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>既定の上限</th></tr>
+<tr><td>パイプラインの数</td><td>1,000(引き上げを申請できる)</td></tr>
+<tr><td>1パイプラインのステージ数</td><td>2〜50</td></tr>
+<tr><td>1パイプラインのアクション数</td><td>1,000</td></tr>
+<tr><td>1ステージの直列アクション数・並列アクション数</td><td>それぞれ100</td></tr>
+<tr><td>PARALLELモードでのアクティブな実行数</td><td>50</td></tr>
 </table></div>
 </section>
 
@@ -119,7 +186,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="chapter">
 <h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>V1タイプはアクティブなパイプラインの数(月額)、V2タイプはアクションの実行時間(分)で課金されます。CodeBuildなど各ステージで使うサービスの料金は別途かかります。</p>
+<p>V1タイプは、1か月の間に変更が流れたアクティブなパイプラインごとに、月額1.00 USDかかります(作成から30日間は無料)。V2タイプは、アクションの実行時間(分単位で切り上げ)に対して、1分あたり0.002 USDかかります。手動承認とカスタムアクションは、実行時間に含まれません。無料利用枠は、V1で1パイプライン、V2で月100分です。CodeBuildなど各ステージで使うサービスの料金は別途かかります。</p>
 </section>
 
 <section class="chapter">
@@ -129,17 +196,23 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="codedeploy.html">AWS CodeDeploy</a>:デプロイ</li>
 <li><a href="cloudformation.html">AWS CloudFormation</a>:インフラのデプロイ</li>
 <li><a href="ecs.html">Amazon ECS</a>/<a href="lambda.html">AWS Lambda</a>:デプロイ先</li>
+<li><a href="elastic-beanstalk.html">AWS Elastic Beanstalk</a>:デプロイ先</li>
 <li><a href="sns.html">Amazon SNS</a>:承認依頼・結果の通知</li>
-<li>関連する用語:<a href="../terms/terraform-git.html">TerraformとGit</a></li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:S3・CodeCommitなどの変更の検出</li>
+<li>関連する用語:<a href="../terms/terraform-git.html">TerraformとGit</a>、<a href="../terms/deploy-strategies.html">デプロイ戦略</a>、<a href="../terms/iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
-<li>本番前に人の確認を挟む → <strong>Manual Approval Action</strong>。</li>
+<li>本番前に人の確認を挟む → <strong>Manual Approval Action</strong>(7日以内に応答がないと失敗する)。</li>
 <li>EC2/オンプレミスへのBlue/Green → <strong>CodeDeploy</strong>。インフラ → <strong>CloudFormation</strong>。</li>
 <li>Lambdaの段階的な切り替え → エイリアスを使ったBlue/Green(CodeDeploy)。</li>
+<li>新しい変更を優先し、待機中の古い実行を置き換えたい → 実行モードの<strong>SUPERSEDED</strong>(既定)。</li>
+<li>特定のブランチやタグへのプッシュだけでパイプラインを起動したい → V2のトリガーのフィルター。</li>
+<li>失敗したステージを以前の成功した実行へ戻したい → ステージのロールバック(PARALLELモードでは使えない)。</li>
+<li>料金 → V1はアクティブなパイプライン数、V2はアクションの実行時間(分)で課金される。手動承認は実行時間に含まれない。</li>
 </ul></div>
 </section>
 
@@ -161,37 +234,45 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 7件・リンク元 5件)</summary>
+<summary>つながり図を開く(リンク先 11件・リンク元 5件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 246" style="max-width:784px;min-width:600px" role="img" aria-label="AWS CodePipelineとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
-<a href="../services/amplify.html"><title>サービス:AWS Amplify</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Amplify</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
-<a href="../services/cdk.html"><title>サービス:AWS CDK</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS CDK</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
-<a href="../services/devops-agent.html"><title>サービス:AWS DevOps Agent</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS DevOps Agent</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/ec2-blue-green-pipeline.html"><title>運用シナリオ:EC2のアプリをCI/CDでBlue/Greenデプロイする</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="170" class="gr-t">EC2のアプリをCI/CDでBlue/Gr…</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/ecs-safe-deploy.html"><title>運用シナリオ:ECSのサービスを止めずに更新し、失敗したら自動で戻す</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="200" class="gr-t">ECSのサービスを止めずに更新し…</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 366" style="max-width:784px;min-width:600px" role="img" aria-label="AWS CodePipelineとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/amplify.html"><title>サービス:AWS Amplify</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS Amplify</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/cdk.html"><title>サービス:AWS CDK</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS CDK</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/devops-agent.html"><title>サービス:AWS DevOps Agent</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">AWS DevOps Agent</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ec2-blue-green-pipeline.html"><title>運用シナリオ:EC2のアプリをCI/CDでBlue/Greenデプロイする</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="230" class="gr-t">EC2のアプリをCI/CDでBlue/Gr…</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ecs-safe-deploy.html"><title>運用シナリオ:ECSのサービスを止めずに更新し、失敗したら自動で戻す</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">ECSのサービスを止めずに更新し…</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudFormation</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/codebuild.html"><title>サービス:AWS CodeBuild</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CodeBuild</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/codedeploy.html"><title>サービス:AWS CodeDeploy</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS CodeDeploy</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
-<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Lambda</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon ECS</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
-<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon SNS</text></a>
-<path class="gr-line" d="M480,135 C515.0,135 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">TerraformとGit</text></a>
-<rect x="300" y="115" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="140" text-anchor="middle" class="gr-tb">AWS CodePipeline</text>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Elastic Beanstalk</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon ECS</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/sns.html"><title>サービス:Amazon SNS</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon SNS</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">TerraformとGit</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-passrole.html"><title>用語:iam:PassRoleとサービスにリンクされたロール</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">iam:PassRoleとサービスにリ…</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,345 550,345" marker-end="url(#gr-arrow)"/>
+<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">デプロイ戦略</text></a>
+<rect x="300" y="175" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="200" text-anchor="middle" class="gr-tb">AWS CodePipeline</text>
 <text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(5)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(11)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>

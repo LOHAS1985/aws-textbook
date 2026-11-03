@@ -1,6 +1,7 @@
 <!-- title: Amazon Macie -->
 <!-- category: セキュリティ、アイデンティティ、コンプライアンス -->
 <!-- lead: S3の機密データや個人情報(PII)を検出・分類 -->
+<!-- verified: 2026-11-03 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>Amazon Macie</strong>は、<strong>S3に保存された機密データや個人情報(PII)を検出・分類</strong>するサービスです。</p>
@@ -34,6 +35,43 @@ edge macie f1
 edge macie sh
 <figcaption>図1 Macieの流れ。S3のオブジェクトやバケット設定を分析して機密データや公開リスクを検出し、結果をSecurity HubやEventBridgeに連携できる。</figcaption>
 </figure>
+
+<h3>自動検出とジョブ</h3>
+<p><strong>自動検出</strong>は、MacieがS3バケットの一覧を継続的に確認し、サンプリングでオブジェクトを選んで分析する機能です。アカウント全体で、機密データがありそうな場所を広く把握するために使います。</p>
+<p>特定の対象を指定して詳しく調べるには<strong>ジョブ</strong>を作ります。ジョブは1回だけ実行することも、定期的に繰り返すこともできます。対象は、バケットの指定や、タグ・プレフィックス・最終更新日などの条件で絞り込めます。</p>
+<figure class="figure" data-diagram>
+grid 170 90
+node s3 0 0.5 blue "S3バケット群"
+node auto 1.4 0 accent "自動検出" "毎日サンプリング" w=2
+node job 1.4 1.2 box "ジョブ" "指定した範囲を分析" w=2
+node res 3.8 0.6 ok "検出結果" "機密データ・ポリシー"
+edge s3 auto "分析"
+edge s3 job "分析"
+edge auto res
+edge job res
+<figcaption>図2 自動検出とジョブの違い。自動検出は毎日サンプリングで全体を把握し、ジョブは指定した範囲のオブジェクトを分析する。どちらも、機密データの検出結果を残す。</figcaption>
+</figure>
+<p>検出する対象は、<strong>マネージドデータ識別子</strong>(AWSのシークレットアクセスキー、クレジットカード番号、パスポート番号など)で決まります。社員番号や顧客番号などの独自形式は、正規表現に、近くにあるキーワードや除外する語を組み合わせた<strong>カスタムデータ識別子</strong>で検出します。検出させたくない文字列は<strong>許可リスト</strong>に登録します。</p>
+
+<h3>検出結果と連携</h3>
+<p>Macieの検出結果には、<strong>機密データの検出結果</strong>(個々のS3オブジェクトに機密データが含まれていた)と、<strong>ポリシーの検出結果</strong>(バケットが公開されている、他のアカウントと共有されているなど、設定上のリスク)の2種類があります。</p>
+<p>検出結果は<strong>EventBridge</strong>にイベントとして送られ、AWS Security Hub CSPMにも連携できます。EventBridgeのルールと組み合わせて、通知や自動対応につなげられます。</p>
+<p>コンソールのダッシュボードでは、S3バケットのインベントリ(一覧)と、公開されているバケットや他のアカウントと共有されているバケットの数などの統計を確認できます。自動検出では、バケットごとに機密度スコアが付くため、どのバケットを優先して確認するかを決められます。</p>
+
+<h3>設定の要点</h3>
+<ul>
+<li>複数アカウントの場合は、AWS Organizationsと連携して<strong>Macie管理者アカウント</strong>を指定する。管理者は、メンバーアカウントのバケットやポリシーの検出結果をまとめて確認できる。</li>
+<li>ログ保存用のバケットなど、分析が不要なバケットは自動検出の対象から除外できる。</li>
+<li>自動検出とジョブは、マネージドデータ識別子・カスタムデータ識別子・許可リストを組み合わせて分析内容を絞り込める。</li>
+</ul>
+
+<h3>制限</h3>
+<ul>
+<li>分析の対象は、S3の<strong>汎用バケット</strong>にあるオブジェクト。ディレクトリバケットのオブジェクトは分析されない。</li>
+<li>S3 Glacier Deep ArchiveやS3 Express One Zoneのオブジェクトは分析されず、対象外として扱われる。</li>
+<li>DynamoDBやRDSのデータは、S3にエクスポートしてから分析する。</li>
+<li>検出結果は90日間保持される。それより長く残す場合は、EventBridgeで別の保存先に転送するか、検出結果をS3バケットに保存する。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -47,17 +85,19 @@ edge macie sh
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>監視対象のバケット数と、機密データ検出でスキャンしたデータ量に応じて課金されます。</p>
+<p>評価するS3バケットの数、自動検出で監視するS3オブジェクトの数、機密データ検出で<strong>検査したデータ量(GB)</strong>に応じて課金されます。ジョブで検査したデータ量も課金の対象ですが、ジョブは無料トライアルに含まれません。新しく有効にしたアカウントには30日間の無料トライアルがあり、自動検出は最大150GBまで検査されます。</p>
 </section>
 
 <section class="chapter">
 <h2>5. 関連サービス</h2>
 <ul>
 <li><a href="s3.html">Amazon S3</a>:検査の対象</li>
-<li><a href="security-hub.html">AWS Security Hub</a>:検出結果の集約</li>
+<li><a href="security-hub.html">AWS Security Hub CSPM</a>:検出結果の集約</li>
 <li><a href="eventbridge.html">Amazon EventBridge</a>:検出結果をトリガーに自動対応</li>
+<li><a href="organizations.html">AWS Organizations</a>:複数アカウントのMacieを一括管理</li>
 <li><a href="guardduty.html">Amazon GuardDuty</a>:脅威の検出</li>
 <li><a href="inspector.html">Amazon Inspector</a>:脆弱性の検出</li>
+<li>関連する用語:<a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>、<a href="../terms/shared-responsibility.html">責任共有モデル</a></li>
 </ul>
 </section>
 
@@ -67,6 +107,9 @@ edge macie sh
 <li>「S3」「個人情報(PII)」「機密データの検出」→ <strong>Macie</strong>。</li>
 <li>「不正アクセス」「マルウェア」「脅威検出」→ <strong>GuardDuty</strong>。</li>
 <li>独自形式のデータ → <strong>カスタムデータ識別子</strong>。</li>
+<li>公開されているバケットや過剰な共有の発見 → Macieの<strong>ポリシーの検出結果</strong>。</li>
+<li>複数アカウントのS3を一括で確認 → AWS Organizationsと連携した<strong>Macie管理者アカウント</strong>。</li>
+<li>検出結果を90日を超えて残したい → EventBridgeで転送するか、S3に保存する。</li>
 <li>GuardDuty・Inspector・Macie・Security Hub CSPMの使い分け → <a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>。</li>
 </ul></div>
 </section>

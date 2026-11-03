@@ -10,11 +10,11 @@
 <h2>2. 主な機能・特徴</h2>
 <ul>
 <li><strong>共有ストレージ</strong>:EC2・ECS・EKS・Lambdaから同時にマウントできる。</li>
-<li>オンプレミスからもDirect Connect・VPN経由で利用できる。</li>
+<li>オンプレミスからもDirect Connect・VPN経由で利用できる。接続方法の選び方は用語ページ「<a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>」を参照してください。</li>
 </ul>
 
 <h3>マウントターゲット</h3>
-<p>NFSで接続するための入り口で、実体はサブネット内のENIです。<strong>1つのファイルシステムにつき、AZごとに1つまで</strong>作成できます。</p>
+<p>NFSで接続するための入り口で、実体はサブネット内のENIです。ENIの仕組みは用語ページ「<a href="../terms/eni-elastic-ip.html">ENIとElastic IP</a>」を参照してください。<strong>1つのファイルシステムにつき、AZごとに1つまで</strong>作成できます。</p>
 
 <figure class="figure" data-diagram>
 grid 170 90
@@ -35,7 +35,7 @@ edge onp efs
 <figcaption>図1 EFSの構成。AZごとに1つマウントターゲット(サブネット内のENI)を作り、各AZのEC2・ECS・LambdaからNFSで同じファイルシステムを共有する。オンプレミスからも接続できる。</figcaption>
 </figure>
 <h3>パフォーマンスモード(作成後に変更不可)</h3>
-<p>最大I/Oは旧世代のモードで、操作ごとのレイテンシーが高くなります。AWSは<strong>すべてのファイルシステムで汎用モードを推奨</strong>しており、高い性能が必要な場合は汎用モード+Elasticスループットを使います。</p>
+<p>最大I/Oは旧世代のモードで、操作ごとのレイテンシーが高くなります。IOPSやレイテンシーの見方は用語ページ「<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>」を参照してください。AWSは<strong>すべてのファイルシステムで汎用モードを推奨</strong>しており、高い性能が必要な場合は汎用モード+Elasticスループットを使います。</p>
 <div class="table-wrap"><table>
 <tr><th></th><th>汎用</th><th>最大I/O</th></tr>
 <tr><td>レイテンシー</td><td>低い</td><td>高い</td></tr>

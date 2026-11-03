@@ -34,7 +34,7 @@ edge test dist
 <h3>主な機能</h3>
 <ul>
 <li>パイプラインの実行は手動・スケジュール(cron)・<strong>ベースイメージや依存するコンポーネントの更新時</strong>から選べる。</li>
-<li>ビルド用インスタンスは<strong>SSMエージェント</strong>を使って操作される。インスタンスプロファイルに <code>AmazonSSMManagedInstanceCore</code> と <code>EC2InstanceProfileForImageBuilder</code> のポリシーが必要。</li>
+<li>ビルド用インスタンスは<strong>SSMエージェント</strong>を使って操作される。インスタンスプロファイルに <code>AmazonSSMManagedInstanceCore</code> と <code>EC2InstanceProfileForImageBuilder</code> のポリシーが必要。インスタンスプロファイルの仕組みは用語ページ「<a href="../terms/instance-profile.html">インスタンスプロファイル</a>」を参照してください。</li>
 <li>Inspectorと連携して、作ったイメージの脆弱性をスキャンできる。</li>
 <li>ディストリビューション設定で<strong>起動テンプレートの新しいバージョン</strong>を自動で作れる。Auto Scalingグループのインスタンスの更新と組み合わせると、新しいAMIへの入れ替えまで自動化できる。</li>
 <li>ライフサイクルポリシーで、古いイメージやスナップショットを自動で削除できる。</li>
@@ -73,8 +73,8 @@ edge test dist
 <div class="point"><ul>
 <li>「パッチ適用済みのAMIを定期的に自動作成」「ゴールデンイメージ」→ <strong class="em">EC2 Image Builder</strong>。</li>
 <li>他のリージョン・アカウントへの配布は<strong>ディストリビューション設定</strong>で行う。</li>
-<li>ビルドが失敗する → インスタンスプロファイルの権限、SSMエージェント、サブネットからSSMやS3への経路を確認する。ログはS3に出力される。</li>
-<li>新しいAMIへの切り替え → 起動テンプレートの更新+Auto Scalingのインスタンスの更新。</li>
+<li>ビルドが失敗する → インスタンスプロファイルの権限、SSMエージェント、サブネットからSSMやS3への経路を確認する。ログはS3に出力される。プライベートサブネットからSSMやS3につなぐ方法は用語ページ「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」を参照してください。</li>
+<li>新しいAMIへの切り替え → 起動テンプレートの更新+Auto Scalingのインスタンスの更新。インスタンスを入れ替える方式の違いは用語ページ「<a href="../terms/deploy-strategies.html">デプロイ戦略</a>」を参照してください。</li>
 </ul></div>
 </section>
 
