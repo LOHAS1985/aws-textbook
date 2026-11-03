@@ -54,7 +54,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><strong>製品</strong>:CloudFormationテンプレートで定義した構成。</li>
 <li><strong>ポートフォリオ</strong>:関連する製品をまとめたもの。他のアカウントから<strong>共有(インポート)されたポートフォリオでは、製品や制約を変更できない</strong>。受け取った側の管理者ができるのは、利用者(IAMユーザー/グループ/ロール)へのアクセス許可の付与と、製品を自分のアカウントの<strong>ローカルポートフォリオ</strong>に追加すること。ローカルポートフォリオでは制約を追加できるが、共有元から引き継いだ制約は外せない。</li>
 </ul>
-<p>管理者は、ポートフォリオに対して「誰が使えるか(IAMユーザー/グループ/ロール)」と「制約」を設定します。<strong>起動制約</strong>を使うと、利用者本人には強い権限がなくても、指定したIAMロールの権限で製品を起動できます。ポートフォリオは他のアカウントやOrganizations全体と共有できます。</p>
+<p>管理者は、ポートフォリオに対して「誰が使えるか(IAMユーザー/グループ/ロール)」と「制約」を設定します。<strong>起動制約</strong>を使うと、利用者本人には強い権限がなくても、指定したIAMロールの権限で製品を起動できます。ポートフォリオは他のアカウントやOrganizations全体と共有できます。ロールの仕組みは用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 822 202" style="max-width:822px;min-width:658px" role="img" aria-label="図1 Service Catalogの構成。管理者がCloudFormationテンプレートを製品として登録し、ポートフォリオにまとめて利用者に公開する。利用者はカタログから承認済みの構成だけを起動できる。"><defs><marker id="dgservices-service-catalog-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -114,7 +114,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td>StackSet制約</td><td>製品を、複数のアカウント・リージョンへStackSetとして展開する範囲を指定する</td></tr>
 <tr><td>リソース更新制約</td><td>起動後のリソースに対するタグの更新を許可するかを決める</td></tr>
 </table></div>
-<p><strong>TagOption</strong>を使うと、製品の起動時に付けるタグのキーと選べる値を、管理者が決められます。コスト配分タグの統一に役立ちます。</p>
+<p><strong>TagOption</strong>を使うと、製品の起動時に付けるタグのキーと選べる値を、管理者が決められます。コスト配分タグの統一に役立ちます。タグの考え方は用語ページ「<a href="../terms/tags.html">タグ</a>」を参照してください。</p>
 <p>起動制約で指定するロールには、製品が作るリソースの作成権限が必要です。また、利用者側にはService Catalogの利用権限(<code>servicecatalog:*</code>相当の起動操作)が必要で、リソースの作成権限は不要になります。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -199,23 +199,27 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 3件・リンク元 2件)</summary>
+<summary>つながり図を開く(リンク先 5件・リンク元 2件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 126" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Service Catalogとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,60 C265.0,60 265.0,75 300,75" marker-end="url(#gr-arrow)"/>
-<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="0" y="49" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="64" class="gr-t">AWS Control Tower</text></a>
-<path class="gr-line" d="M230,90 C265.0,90 265.0,75 300,75" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/multi-account-stacksets.html"><title>運用シナリオ:複数アカウント・リージョンに共通設定を展開する</title><rect x="0" y="79" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="94" class="gr-t">複数アカウント・リージョンに共…</text></a>
-<path class="gr-line" d="M480,75 C515.0,75 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Service Catalogとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,90 C265.0,90 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="0" y="79" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="94" class="gr-t">AWS Control Tower</text></a>
+<path class="gr-line" d="M230,120 C265.0,120 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/multi-account-stacksets.html"><title>運用シナリオ:複数アカウント・リージョンに共通設定を展開する</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="124" class="gr-t">複数アカウント・リージョンに共…</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudFormation</text></a>
-<path class="gr-line" d="M480,75 C515.0,75 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
 <a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS IAM</text></a>
-<path class="gr-line" d="M480,75 C515.0,75 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
 <a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Organizations</text></a>
-<rect x="300" y="55" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="80" text-anchor="middle" class="gr-tb">AWS Service Catalog</text>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="140" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">タグ</text></a>
+<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">AWS Service Catalog</text>
 <text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(2)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(3)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>

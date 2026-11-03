@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <div class="page-head booklet-cover">
 <p class="booklet-site">AWS教科書</p>
 <h1>サービス</h1>
-<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全93ページ)</p>
+<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全96ページ)</p>
 <p class="booklet-help">このページは、印刷やPDFでの保存のために全ページを1つにまとめたものです。ブラウザーの印刷(Ctrl+P、スマホは共有メニューの「プリント」)から、紙に印刷するかPDFとして保存してください。ページの順番は目次と同じです。</p>
 <p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button> <a href="../services/index.html">目次へ戻る</a></p>
 </div>
@@ -65,6 +65,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-efs">Amazon EFS</a></li>
 <li><a href="#p-fsx">Amazon FSx</a></li>
 <li><a href="#p-backup">AWS Backup</a></li>
+<li><a href="#p-elastic-disaster-recovery">AWS Elastic Disaster Recovery</a></li>
 <li><a href="#p-storage-gateway">AWS Storage Gateway</a></li>
 </ol>
 <h3>データベース</h3>
@@ -127,6 +128,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-compute-optimizer">AWS Compute Optimizer</a></li>
 <li><a href="#p-service-catalog">AWS Service Catalog</a></li>
 <li><a href="#p-ram">AWS Resource Access Manager</a></li>
+<li><a href="#p-resource-groups">AWS Resource Groups と Tag Editor</a></li>
 <li><a href="#p-managed-grafana">Amazon Managed Grafana</a></li>
 <li><a href="#p-managed-prometheus">Amazon Managed Service for Prometheus</a></li>
 <li><a href="#p-devops-agent">AWS DevOps Agent</a></li>
@@ -134,6 +136,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h3>クラウド財務管理</h3>
 <ol>
 <li><a href="#p-cost-explorer">AWS Cost Explorer</a></li>
+<li><a href="#p-budgets">AWS Budgets</a></li>
 <li><a href="#p-cost-and-usage-reports">AWS Cost and Usage Reports</a></li>
 <li><a href="#p-savings-plans">Savings Plans</a></li>
 </ol>
@@ -1061,7 +1064,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <h3 id="image-builder-c2-2">主な機能<a class="anchor" href="#image-builder-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>パイプラインの実行は手動・スケジュール(cron)・<strong>ベースイメージや依存するコンポーネントの更新時</strong>から選べる。</li>
-<li>ビルド用インスタンスは<strong>SSMエージェント</strong>を使って操作される。インスタンスプロファイルに <code>AmazonSSMManagedInstanceCore</code> と <code>EC2InstanceProfileForImageBuilder</code> のポリシーが必要。</li>
+<li>ビルド用インスタンスは<strong>SSMエージェント</strong>を使って操作される。インスタンスプロファイルに <code>AmazonSSMManagedInstanceCore</code> と <code>EC2InstanceProfileForImageBuilder</code> のポリシーが必要。インスタンスプロファイルの仕組みは用語ページ「<a href="../terms/instance-profile.html">インスタンスプロファイル</a>」を参照してください。</li>
 <li>Inspectorと連携して、作ったイメージの脆弱性をスキャンできる。</li>
 <li>ディストリビューション設定で<strong>起動テンプレートの新しいバージョン</strong>を自動で作れる。Auto Scalingグループのインスタンスの更新と組み合わせると、新しいAMIへの入れ替えまで自動化できる。</li>
 <li>ライフサイクルポリシーで、古いイメージやスナップショットを自動で削除できる。</li>
@@ -1100,8 +1103,8 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <div class="point"><ul>
 <li>「パッチ適用済みのAMIを定期的に自動作成」「ゴールデンイメージ」→ <strong class="em">EC2 Image Builder</strong>。</li>
 <li>他のリージョン・アカウントへの配布は<strong>ディストリビューション設定</strong>で行う。</li>
-<li>ビルドが失敗する → インスタンスプロファイルの権限、SSMエージェント、サブネットからSSMやS3への経路を確認する。ログはS3に出力される。</li>
-<li>新しいAMIへの切り替え → 起動テンプレートの更新+Auto Scalingのインスタンスの更新。</li>
+<li>ビルドが失敗する → インスタンスプロファイルの権限、SSMエージェント、サブネットからSSMやS3への経路を確認する。ログはS3に出力される。プライベートサブネットからSSMやS3につなぐ方法は用語ページ「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」を参照してください。</li>
+<li>新しいAMIへの切り替え → 起動テンプレートの更新+Auto Scalingのインスタンスの更新。インスタンスを入れ替える方式の違いは用語ページ「<a href="../terms/deploy-strategies.html">デプロイ戦略</a>」を参照してください。</li>
 </ul></div>
 </section>
 
@@ -1598,16 +1601,85 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <h2 id="elastic-beanstalk-c2">2. 主な機能・特徴<a class="anchor" href="#elastic-beanstalk-c2" aria-label="この見出しへのリンク">#</a></h2>
 <h3 id="elastic-beanstalk-c2-1">利用フロー<a class="anchor" href="#elastic-beanstalk-c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
-<li>アプリケーションを作成</li>
-<li>デプロイ設定を定義</li>
-<li>アプリケーションバージョンを作成</li>
-<li>Environment(アプリを実行するAWS環境全体)へデプロイ
+<li>アプリケーションを作成する(アプリをまとめる入れ物)</li>
+<li>アプリケーションバージョンを作成する(コードをまとめたソースバンドルをS3に置き、バージョンとして登録する)</li>
+<li>Environment(アプリを実行するAWS環境全体)を作成する(プラットフォームと環境の種類を選ぶ)</li>
+<li>Environmentへバージョンをデプロイする
   <ul><li>Beanstalkが内部でAWSリソースを操作する</li><li>EC2内にコードを配置する</li></ul></li>
-<li>ヘルスチェック</li>
+<li>ヘルスチェックで状態を確認する</li>
 </ol>
 <p>デメリットは、ECS/EKSに比べて<strong>柔軟性が低い</strong>ことです。</p>
 <p>Beanstalkが自動で作るリソースには、EC2インスタンス、Auto Scalingグループ、ロードバランサーなどが含まれます。裏側ではCloudFormationが使われています。</p>
-<p>代表的なデプロイ方式として、All at once(一斉)、Rolling、Rolling with additional batch、Immutable、Blue/Green(環境URLのスワップ)があります。</p>
+
+<h3 id="elastic-beanstalk-c2-2">環境の種類とモード<a class="anchor" href="#elastic-beanstalk-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Environmentを作るときは、<strong>環境のティア</strong>を選びます。ティアには、HTTPのリクエストを受けるウェブサーバー環境と、キューからタスクを取り出して処理するワーカー環境があります。</p>
+<ul>
+<li><strong>ウェブサーバー環境</strong>:HTTPのリクエストを受けるアプリを動かす。ロードバランサーを付けた負荷分散の構成と、インスタンス1台だけのシングルインスタンス構成を選べる(シングルインスタンスは主に開発用)</li>
+<li><strong>ワーカー環境</strong>:Amazon SQSのキューからメッセージを読み取るデーモンを、EC2上で動かす。時間のかかる処理を画面の応答から切り離せる。処理に失敗したメッセージはデッドレターキューへ移せ、定期的に実行するタスクも設定できる</li>
+</ul>
+<p>Beanstalkには、実行基盤の違いによる2つのモードもあります。<strong>Beanstalk Standard</strong>はEC2上でアプリを直接動かし、Beanstalk ClusterはEKS上でコンテナとして動かします。</p>
+
+<h3 id="elastic-beanstalk-c2-3">デプロイ方式<a class="anchor" href="#elastic-beanstalk-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>新しいバージョンをEnvironmentへ反映する方法は、デプロイポリシーで選びます。停止時間・追加で必要な容量・完了までの時間のどれを優先するかで使い分けます。</p>
+<div class="table-wrap"><table>
+<tr><th>方式</th><th>仕組み</th><th>特徴</th></tr>
+<tr><td>All at once(一斉)</td><td>全インスタンスに同時に反映する</td><td>最も速いが、反映中は短い時間サービスが止まる</td></tr>
+<tr><td>Rolling</td><td>インスタンスをバッチ(まとまり)ごとに順に更新する</td><td>停止は避けられるが、更新中は処理能力が下がる</td></tr>
+<tr><td>Rolling with additional batch</td><td>追加のバッチを先に起動してから、順に更新する</td><td>処理能力を保てるが、完了までの時間が長くなる</td></tr>
+<tr><td>Immutable</td><td>新しいAuto Scalingグループに新バージョンのインスタンスを作り、正常と判定されてから旧インスタンスを終了する</td><td>新しいインスタンスが失敗しても旧バージョンへ戻しやすい。時間は長くなる</td></tr>
+<tr><td>Traffic splitting(カナリア)</td><td>一部のトラフィックだけを新バージョンに送って確認し、残りは旧バージョンが受ける</td><td>本番の一部で検証してから全体へ広げられる</td></tr>
+</table></div>
+<p>Immutable と Traffic splitting は、現在 Beanstalk Standard だけで使えます。</p>
+<p><strong class="em">Blue/Green</strong>は、デプロイポリシーではなく、<strong>別のEnvironmentに新バージョンを作り、2つの環境のCNAMEを入れ替える</strong>方法です。既存の環境は残るため、問題があれば入れ替えを戻せます。デプロイポリシーによる更新は同じ環境を書き換えるため、短い時間利用できなくなることがあります。プラットフォームの互換性がないバージョンへの更新では、Blue/Greenが必要です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 227" style="max-width:718px;min-width:574px" role="img" aria-label="図2 Blue/Green(CNAMEの入れ替え)。新バージョンを別の環境(Green)に作って確認し、環境のURLが指す先をBlueからGreenへ入れ替える。戻すときは、もう一度入れ替える。"><defs><marker id="elastic-beanstalk-dgservices-elastic-beanstalk-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="94" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="118" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="cname">
+<rect x="289" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="110" text-anchor="middle" class="dg-tb">環境のURL</text>
+<text x="364" y="128" text-anchor="middle" class="dg-s">CNAME</text>
+</g>
+<g data-node="blue">
+<rect x="544" y="43" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="64" text-anchor="middle" class="dg-t">Blue環境</text>
+<text x="619" y="82" text-anchor="middle" class="dg-s">現行バージョン</text>
+</g>
+<g data-node="green">
+<rect x="544" y="151" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="172" text-anchor="middle" class="dg-t">Green環境</text>
+<text x="619" y="190" text-anchor="middle" class="dg-s">新バージョン</text>
+</g>
+<path d="M184.0,114.0 L289.0,114.0" class="dg-line" marker-end="url(#elastic-beanstalk-dgservices-elastic-beanstalk-2)"/>
+<path d="M439.0,100.8 L544.0,82.2" class="dg-line" marker-end="url(#elastic-beanstalk-dgservices-elastic-beanstalk-2)"/>
+<text x="492" y="96" text-anchor="middle" class="dg-s dg-halo">現在</text>
+<path d="M439.0,132.5 L544.0,158.5" class="dg-line dg-dash" marker-end="url(#elastic-beanstalk-dgservices-elastic-beanstalk-2)"/>
+<text x="492" y="150" text-anchor="middle" class="dg-s dg-halo">入れ替え後</text>
+</svg>
+</div>
+<figcaption>図2 Blue/Green(CNAMEの入れ替え)。新バージョンを別の環境(Green)に作って確認し、環境のURLが指す先をBlueからGreenへ入れ替える。戻すときは、もう一度入れ替える。</figcaption>
+</figure>
+
+<h3 id="elastic-beanstalk-c2-4">ヘルスチェックと自動更新<a class="anchor" href="#elastic-beanstalk-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>拡張ヘルスレポート</strong>:EC2インスタンス・ロードバランサー・Auto Scalingグループの状態を集めて、Environmentの健全性を判定する。マネージドプラットフォーム更新の前提にもなる</li>
+<li><strong>マネージドプラットフォーム更新</strong>:プラットフォームのマイナー・パッチ更新を、設定した週1回のメンテナンスウィンドウの中で自動で適用する。必要に応じて、ウィンドウ内でインスタンスをすべて入れ替えることもできる</li>
+</ul>
+
+<h3 id="elastic-beanstalk-c2-5">制限(クォータ)<a class="anchor" href="#elastic-beanstalk-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>次の上限はリージョンごとに決められていて、引き上げを申請できます。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>既定の上限</th></tr>
+<tr><td>アプリケーションバージョン</td><td>1,000(アカウント内の全アプリケーションの合計)</td></tr>
+<tr><td>Environment</td><td>200(アカウント内の全アプリケーションの合計)</td></tr>
+<tr><td>アプリケーション</td><td>75</td></tr>
+<tr><td>構成テンプレート</td><td>2,000</td></tr>
+<tr><td>カスタムプラットフォームバージョン</td><td>50</td></tr>
+</table></div>
+<p>1つのソースバンドルは500 MBまでです。アプリケーションバージョンが上限に近づくと新しいバージョンを作れなくなるため、<strong>ライフサイクルポリシー</strong>で古いバージョンを自動で削除できます(Beanstalk Standardの環境で使え、Environmentで使用中のバージョンは削除されない)。上限の考え方は用語ページ「<a href="../terms/service-quotas.html">サービスクォータ</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -1628,20 +1700,26 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <ul>
 <li><a href="#p-ec2">Amazon EC2</a>:アプリが配置される実行環境</li>
 <li><a href="#p-elb">Elastic Load Balancing</a>:環境のトラフィック分散</li>
+<li><a href="#p-auto-scaling">Amazon EC2 Auto Scaling</a>:環境のインスタンス数の増減</li>
 <li><a href="#p-cloudformation">AWS CloudFormation</a>:裏側で環境を構築する仕組み</li>
+<li><a href="#p-codepipeline">AWS CodePipeline</a>:ビルドしたコードをBeanstalkへデプロイするアクション</li>
+<li><a href="#p-sqs">Amazon SQS</a>:ワーカー環境が処理するキュー</li>
 <li><a href="#p-ecs">Amazon ECS</a>/<a href="#p-eks">Amazon EKS</a>:より柔軟なコンテナ実行の選択肢</li>
+<li>関連する用語:<a href="../terms/deploy-strategies.html">デプロイ戦略</a>、<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/instance-profile.html">インスタンスプロファイル</a>、<a href="../terms/service-quotas.html">サービスクォータ</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="elastic-beanstalk-c6">6. 試験・実務でのポイント<a class="anchor" href="#elastic-beanstalk-c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point">
-<ul>
-<li>「インフラ管理を最小限にしてアプリをデプロイしたい」→ Elastic Beanstalk。</li>
+<div class="point"><ul>
+<li>「インフラ管理を最小限にしてアプリをデプロイしたい」→ <strong>Elastic Beanstalk</strong>。</li>
 <li>細かな制御や柔軟性が必要なら ECS/EKS を選ぶ。</li>
 <li>デプロイの単位は「アプリケーションバージョン」を「Environment」へ。</li>
-</ul>
-</div>
+<li>停止を避けて更新したい → <strong>Rolling</strong>(処理能力も保つなら Rolling with additional batch)、または <strong>Immutable</strong>。All at once は短い時間の停止がある。</li>
+<li>本番の一部で新バージョンを試したい → <strong>Traffic splitting</strong>。環境のURLを切り替えて、問題があれば戻せるようにしたい → <strong>Blue/Green</strong>(CNAMEの入れ替え)。</li>
+<li>SQSのメッセージを非同期に処理したい → <strong>ワーカー環境</strong>。</li>
+<li>Beanstalk自体には料金がかからず、作られたEC2・ELBなどに料金がかかる。</li>
+</ul></div>
 </section>
 
 <section class="chapter">
@@ -2041,7 +2119,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <h3 id="eks-c2-4">ネットワーク<a class="anchor" href="#eks-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>Amazon VPC CNIプラグイン</strong>により、PodにはVPCのプライベートIPアドレスが割り当てられる。</li>
-<li>Podが多いと<strong>サブネットのIPアドレスが枯渇</strong>しやすい。サブネットのサイズやCIDRの設計に注意する。</li>
+<li>Podが多いと<strong>サブネットのIPアドレスが枯渇</strong>しやすい。サブネットのサイズやCIDRの設計に注意する。CIDRの読み方は用語ページ「<a href="../terms/cidr.html">CIDR</a>」を参照してください。</li>
 </ul>
 <div class="table-wrap"><table>
 <tr><th>クラスターエンドポイントの設定</th><th>動作</th></tr>
@@ -2060,7 +2138,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <tr><td>IRSA(IAM Roles for Service Accounts)</td><td>OIDCプロバイダーを使い、サービスアカウントにIAMロールを紐付ける</td></tr>
 <tr><td>EKS Pod Identity</td><td>より簡単な設定で、PodにIAMロールを割り当てる</td></tr>
 </table></div>
-<p>ノードのIAMロールに広い権限を付けるのではなく、<strong>Pod単位で最小権限</strong>を与えます。</p>
+<p>ノードのIAMロールに広い権限を付けるのではなく、<strong>Pod単位で最小権限</strong>を与えます。Podが期限付きの認証情報でAWSを操作する仕組みは用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</p>
 
 <figure class="figure">
 <div class="fig-scroll">
@@ -2127,7 +2205,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <ul>
 <li><strong>EBS CSIドライバー</strong>:EBSボリュームをPodの永続ボリュームとして使う。<strong>単一AZに紐付く</strong>。</li>
 <li><strong>EFS CSIドライバー</strong>:<strong>複数Pod・複数AZから共有</strong>できるファイルストレージとして使う。</li>
-<li>CSIドライバーはEKSアドオンとして導入する。</li>
+<li>CSIドライバーはEKSアドオンとして導入する。ブロック(EBS)とファイル(EFS)の違いは用語ページ「<a href="../terms/storage-types.html">ブロック・ファイル・オブジェクトストレージ</a>」を参照してください。</li>
 </ul>
 </section>
 
@@ -2197,7 +2275,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <h2 id="ecr-c2">2. 主な機能・特徴<a class="anchor" href="#ecr-c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><strong>イメージの保存と管理</strong>:Dockerイメージをリポジトリ単位で管理し、バージョン管理ができる。</li>
-<li><strong>セキュリティ</strong>:IAMと統合し、プッシュ/プルを制御する。</li>
+<li><strong>セキュリティ</strong>:IAMと統合し、プッシュ/プルを制御する。権限の判断の仕組みは用語ページ「<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>」を参照してください。</li>
 </ul>
 <h3 id="ecr-c2-1">コンテナ運用の流れ<a class="anchor" href="#ecr-c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
@@ -2247,7 +2325,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li>保存の構造:リポジトリ → タグ → イメージダイジェスト(イメージ実体のハッシュ値)</li>
 <li>タグの例:<code>latest</code>(最新版)、<code>v1.0.0</code>(固定版)、<code>dev</code>(開発環境)、<code>staging</code>(ステージング)</li>
 </ul>
-<p>ECRには、プッシュ時のイメージの脆弱性スキャン、古いイメージを自動削除するライフサイクルポリシー、他リージョン・他アカウントへのレプリケーションなどの機能もあります。</p>
+<p>ECRには、プッシュ時のイメージの脆弱性スキャン、古いイメージを自動削除するライフサイクルポリシー、他リージョン・他アカウントへのレプリケーションなどの機能もあります。脆弱性スキャンなどセキュリティの検出の仕組みは用語ページ「<a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>」を参照してください。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 249" style="max-width:684px;min-width:547px" role="img" aria-label="図2 リポジトリ・タグ・イメージダイジェストの関係。1つのイメージに複数のタグを付けられ、latest のように付け替わるタグもある。本番では固定のタグかダイジェストで指定すると安全。"><defs><marker id="ecr-dgservices-ecr-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -2351,7 +2429,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <ul>
 <li>対話形式でコンテナアプリを自動構築できる。</li>
 </ul>
-<p>Copilotは主にAmazon ECS(Fargate)向けのツールで、VPC・ロードバランサー・ECSサービスなどをまとめて作成します。裏側ではCloudFormationが使われ、<code>copilot init</code> などのコマンドで操作します。</p>
+<p>Copilotは主にAmazon ECS(Fargate)向けのツールで、VPC・ロードバランサー・ECSサービスなどをまとめて作成します。Fargateのように、サーバーの管理をAWSに任せる仕組みは用語ページ「<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>」を参照してください。裏側ではCloudFormationが使われ、<code>copilot init</code> などのコマンドで操作します。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 696 214" style="max-width:696px;min-width:557px" role="img" aria-label="図1 Copilotの仕組み。CLIで質問に答えると、CloudFormationを通じてVPC・ALB・ECSサービスなどがまとめて作られる。"><defs><marker id="copilot-dgservices-copilot-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -3301,11 +3379,11 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h2 id="efs-c2">2. 主な機能・特徴<a class="anchor" href="#efs-c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><strong>共有ストレージ</strong>:EC2・ECS・EKS・Lambdaから同時にマウントできる。</li>
-<li>オンプレミスからもDirect Connect・VPN経由で利用できる。</li>
+<li>オンプレミスからもDirect Connect・VPN経由で利用できる。接続方法の選び方は用語ページ「<a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>」を参照してください。</li>
 </ul>
 
 <h3 id="efs-c2-1">マウントターゲット<a class="anchor" href="#efs-c2-1" aria-label="この見出しへのリンク">#</a></h3>
-<p>NFSで接続するための入り口で、実体はサブネット内のENIです。<strong>1つのファイルシステムにつき、AZごとに1つまで</strong>作成できます。</p>
+<p>NFSで接続するための入り口で、実体はサブネット内のENIです。ENIの仕組みは用語ページ「<a href="../terms/eni-elastic-ip.html">ENIとElastic IP</a>」を参照してください。<strong>1つのファイルシステムにつき、AZごとに1つまで</strong>作成できます。</p>
 
 <figure class="figure">
 <div class="fig-scroll">
@@ -3354,7 +3432,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <figcaption>図1 EFSの構成。AZごとに1つマウントターゲット(サブネット内のENI)を作り、各AZのEC2・ECS・LambdaからNFSで同じファイルシステムを共有する。オンプレミスからも接続できる。</figcaption>
 </figure>
 <h3 id="efs-c2-2">パフォーマンスモード(作成後に変更不可)<a class="anchor" href="#efs-c2-2" aria-label="この見出しへのリンク">#</a></h3>
-<p>最大I/Oは旧世代のモードで、操作ごとのレイテンシーが高くなります。AWSは<strong>すべてのファイルシステムで汎用モードを推奨</strong>しており、高い性能が必要な場合は汎用モード+Elasticスループットを使います。</p>
+<p>最大I/Oは旧世代のモードで、操作ごとのレイテンシーが高くなります。IOPSやレイテンシーの見方は用語ページ「<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>」を参照してください。AWSは<strong>すべてのファイルシステムで汎用モードを推奨</strong>しており、高い性能が必要な場合は汎用モード+Elasticスループットを使います。</p>
 <div class="table-wrap"><table>
 <tr><th></th><th>汎用</th><th>最大I/O</th></tr>
 <tr><td>レイテンシー</td><td>低い</td><td>高い</td></tr>
@@ -3444,9 +3522,9 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h2 id="fsx-c2">2. 主な機能・特徴<a class="anchor" href="#fsx-c2" aria-label="この見出しへのリンク">#</a></h2>
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>プロトコル</th><th>特徴</th></tr>
-<tr><td>FSx for Windows File Server</td><td>SMB</td><td><strong>Active Directory連携</strong>(ファイルアクセス制御はFSxが担当)。NTFSを使ったファイル管理</td></tr>
+<tr><td>FSx for Windows File Server</td><td>SMB</td><td><strong>Active Directory連携</strong>(利用者の認証とアクセス制御)。NTFSを使ったファイル管理</td></tr>
 <tr><td>FSx for Lustre</td><td>Lustre</td><td>ビッグデータ分析向け。高スループット・ミリ秒未満のレイテンシー。Linux向け</td></tr>
-<tr><td>FSx for NetApp ONTAP</td><td>NFS、SMB、iSCSI</td><td>オンプレミスのNetApp環境を拡張</td></tr>
+<tr><td>FSx for NetApp ONTAP</td><td>NFS、SMB、iSCSI、NVMe</td><td>オンプレミスのNetApp環境を拡張</td></tr>
 <tr><td>FSx for OpenZFS</td><td>NFS</td><td>OpenZFSファイルシステムをマネージドで提供。スナップショットやデータ圧縮に対応</td></tr>
 </table></div>
 <p>FSx for LustreはS3バケットと連携でき、S3上のデータを高速なファイルシステムとして処理できます。HPCや機械学習で使われます。</p>
@@ -3497,6 +3575,61 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図1 FSxの4種類と選び方。OS・用途・既存環境などの要件から種類を選ぶ。</figcaption>
 </figure>
+
+<h3 id="fsx-c2-1">可用性:Single-AZとMulti-AZ<a class="anchor" href="#fsx-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>Windows・ONTAP・OpenZFSは、1つのAZの中で完結する<strong>Single-AZ</strong>と、別のAZにも待機用のファイルサーバーを置く<strong>Multi-AZ</strong>から選べます。Single-AZでも部品の故障は自動で検知・対処されますが、AZ全体の障害には耐えられません。Windows(Single-AZ)は、障害からの復旧時に約30分止まることがあります。高可用性の考え方は用語ページ「<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>」を参照してください。</p>
+<p>Multi-AZでは、待機用のファイルサーバーに変更を同期しておき、障害時はフェイルオーバーで切り替えます。Windowsでは通常30秒未満で切り替わり、ファイルシステムのDNS名は変わりません。OpenZFSのMulti-AZは通常60秒以内に切り替わります。Windowsの Multi-AZ では、Linuxクライアントは DNS名による自動の切り替えに対応していないため、待機側へ自動では接続し直されません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 730 239" style="max-width:730px;min-width:584px" role="img" aria-label="図2 Multi-AZの構成。稼働中のファイルサーバーの変更を待機側へ同期しておき、障害時はDNS名を変えずに待機側へ切り替える。"><defs><marker id="fsx-dgservices-fsx-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="22" y="121" width="174" height="94" rx="10" class="dg-group"/>
+<text x="32" y="136" class="dg-s">AZ-a</text>
+<rect x="532" y="121" width="174" height="94" rx="10" class="dg-group"/>
+<text x="542" y="136" class="dg-s">AZ-c</text>
+<g data-node="cl">
+<rect x="289" y="43" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="364" y="64" text-anchor="middle" class="dg-t">クライアント</text>
+<text x="364" y="82" text-anchor="middle" class="dg-s">DNS名で接続</text>
+</g>
+<g data-node="a">
+<rect x="34" y="151" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="172" text-anchor="middle" class="dg-tb">ファイルサーバー</text>
+<text x="109" y="190" text-anchor="middle" class="dg-s">稼働中</text>
+</g>
+<g data-node="s">
+<rect x="544" y="151" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="172" text-anchor="middle" class="dg-t">ファイルサーバー</text>
+<text x="619" y="190" text-anchor="middle" class="dg-s">待機中</text>
+</g>
+<path d="M302.6,95.0 L170.4,151.0" class="dg-line" marker-end="url(#fsx-dgservices-fsx-2)"/>
+<text x="236" y="127" text-anchor="middle" class="dg-s dg-halo">通常</text>
+<path d="M425.4,95.0 L557.6,151.0" class="dg-line dg-dash" marker-end="url(#fsx-dgservices-fsx-2)"/>
+<text x="492" y="127" text-anchor="middle" class="dg-s dg-halo">障害時</text>
+<path d="M184.0,177.0 L544.0,177.0" class="dg-line" marker-end="url(#fsx-dgservices-fsx-2)" marker-start="url(#fsx-dgservices-fsx-2)"/>
+<text x="364" y="181" text-anchor="middle" class="dg-s dg-halo">同期</text>
+</svg>
+</div>
+<figcaption>図2 Multi-AZの構成。稼働中のファイルサーバーの変更を待機側へ同期しておき、障害時はDNS名を変えずに待機側へ切り替える。</figcaption>
+</figure>
+
+<h3 id="fsx-c2-2">容量と性能の設定<a class="anchor" href="#fsx-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>FSx for Windowsでは、ストレージ容量・SSDのIOPS・スループット容量を作成時に指定し、あとから変更できます。ストレージはSSDかHDDを選びます。IOPSとスループットの違いは用語ページ「<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>」を参照してください。主な上限は次のとおりです。</p>
+<div class="table-wrap"><table>
+<tr><th>項目(FSx for Windows)</th><th>上限・下限</th></tr>
+<tr><td>SSDの最小ストレージ容量</td><td>32 GiB</td></tr>
+<tr><td>HDDの最小ストレージ容量</td><td>2,000 GiB</td></tr>
+<tr><td>最大ストレージ容量(SSD・HDD)</td><td>64 TiB</td></tr>
+<tr><td>スループット容量</td><td>8〜12,288 MBps</td></tr>
+</table></div>
+<p>Lustreには、SSD・Intelligent-Tiering・HDDの3つのストレージクラスがあります。小さなファイルのランダムな読み書きが多い用途はSSD、全体に一定の低レイテンシーが不要な用途はIntelligent-Tieringが向いています。HDDは、1桁ミリ秒の一定のレイテンシーと大きなスループットが必要な用途向けです。</p>
+
+<h3 id="fsx-c2-3">バックアップと暗号化<a class="anchor" href="#fsx-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>FSx for Windowsは、作成時に自動の日次バックアップが既定で有効になります。バックアップはVSS(Volume Shadow Copy Service)を使ってファイルシステムの整合性を保ち、2回目以降は増分で保存されます。手動のバックアップはいつでも取れ、自動バックアップの保持期間は最大90日です。</p>
+<p>作成時にMicrosoft Active Directoryに参加させ、利用者の認証とアクセス制御をADで行います。保存データはAWS KMSの鍵で暗号化され、通信中のデータはSMBのKerberosセッションキーで暗号化されます。</p>
+
+<h3 id="fsx-c2-4">Lustreの種類とS3との連携<a class="anchor" href="#fsx-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>FSx for Lustreには、一時的な処理向けの<strong>Scratch</strong>と、長期的な保存やスループット重視の<strong>Persistent</strong>があります。Scratchはデータを複製しないため、ファイルサーバーが故障するとそのデータは残りません。Persistentはデータを複製し、故障したファイルサーバーは交換されます。</p>
+<p>S3バケットをデータリポジトリとして関連付けると、S3のオブジェクトがファイルとして見えるようになります。ファイルシステムの作成時にS3上のファイル一覧を取り込み、自動インポート・自動エクスポートを設定すると、変更がS3との間で同期されます。S3のバケットが、データの永続的な保管先になります。</p>
 </section>
 
 <section class="chapter">
@@ -3519,8 +3652,11 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li><a href="#p-efs">Amazon EFS</a>:Linux向けの共有ファイルストレージ</li>
 <li><a href="#p-directory-service">AWS Directory Service</a>:FSx for WindowsのActive Directory連携</li>
 <li><a href="#p-s3">Amazon S3</a>:FSx for Lustreのデータ連携先</li>
+<li><a href="#p-ec2">Amazon EC2</a>:ファイルシステムにアクセスするクライアント</li>
 <li><a href="#p-datasync">AWS DataSync</a>:オンプレミスからのデータ移行</li>
 <li><a href="#p-backup">AWS Backup</a>:バックアップの一元管理</li>
+<li><a href="#p-kms">AWS KMS</a>:保存データの暗号化に使う鍵</li>
+<li>関連する用語:<a href="../terms/storage-types.html">ブロック・ファイル・オブジェクトストレージ</a>、<a href="../terms/region-az.html">リージョンとアベイラビリティーゾーン</a></li>
 </ul>
 </section>
 
@@ -3531,6 +3667,9 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>HPC・高スループット・ミリ秒未満のレイテンシー → <strong>FSx for Lustre</strong>。</li>
 <li>NetApp・iSCSI → <strong>FSx for NetApp ONTAP</strong>。</li>
 <li>LinuxでNFS共有だけなら → <strong>EFS</strong>も候補。</li>
+<li>Lustreで一時的な処理に使う → <strong>Scratch</strong>(データは複製されない)。長期の保存には <strong>Persistent</strong>(データを複製する)。</li>
+<li>Windowsのファイル共有を高可用性にしたい → <strong>Multi-AZ</strong>(通常30秒未満で切り替え)。Linuxクライアントは DNS名による自動の切り替えに対応しない点に注意。</li>
+<li>S3上のデータを高速に処理したい → <strong>FSx for Lustre</strong>とS3のデータリポジトリ。</li>
 </ul></div>
 </section>
 
@@ -3766,6 +3905,179 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </ul>
 </section>
 </article>
+<article class="booklet-page" id="p-elastic-disaster-recovery">
+<div class="page-head hero" style="--cat:#7AA116">
+<div class="hero-text">
+<span class="category">ストレージ</span>
+<h1>AWS Elastic Disaster Recovery</h1>
+<p class="lead">オンプレミスやクラウドのサーバーを継続的に複製し、障害のときはAWS上で数分で起動して復旧する</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="elastic-disaster-recovery-c1">1. サービス概要<a class="anchor" href="#elastic-disaster-recovery-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Elastic Disaster Recovery</strong>(略称はAWS DRS)は、オンプレミスや他のクラウドのサーバーを、AWSに<strong>継続的に複製</strong>しておき、障害のときにAWS上でサーバーを起動して業務を再開する災害復旧(DR)のサービスです。</p>
+<p>本番と同じ規模の待機環境をAWSに常に置いておく必要はありません。複製先には、ステージングエリアと呼ばれる小さな領域だけを保っておき、障害のときに必要なEC2を起動します。待機のコストを抑えながら、<a href="../terms/dr-strategies.html">RTOとRPO</a>を短くできる点が特徴です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 922 202" style="max-width:922px;min-width:738px" role="img" aria-label="図1 AWS DRSの流れ。本番サーバーのデータを、ステージングエリアへ継続的に複製する。障害のときは復旧インスタンスをAWSで起動する。通信の切り替えはDRSの外で、Route 53などを使って行う。"><defs><marker id="elastic-disaster-recovery-dgservices-elastic-disaster-recovery-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">本番サーバー</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">オンプレミス等</text>
+</g>
+<g data-node="stg">
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">ステージングエリア</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">低コストで継続複製</text>
+</g>
+<g data-node="rec">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">復旧インスタンス</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">障害時にAWSで起動</text>
+</g>
+<g data-node="drill">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">ドリル</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">本番に影響しない</text>
+</g>
+<g data-node="dns">
+<rect x="748" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="823" y="104" text-anchor="middle" class="dg-t">通信の切り替え</text>
+<text x="823" y="122" text-anchor="middle" class="dg-s">Route 53など</text>
+</g>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#elastic-disaster-recovery-dgservices-elastic-disaster-recovery-1)"/>
+<text x="228" y="113" text-anchor="middle" class="dg-s dg-halo">継続的に複製</text>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#elastic-disaster-recovery-dgservices-elastic-disaster-recovery-1)"/>
+<text x="466" y="92" text-anchor="middle" class="dg-s dg-halo">障害時に起動</text>
+<path d="M422.0,122.4 L510.0,138.1" class="dg-line dg-dash" marker-end="url(#elastic-disaster-recovery-dgservices-elastic-disaster-recovery-1)"/>
+<text x="466" y="134" text-anchor="middle" class="dg-s dg-halo">テスト起動</text>
+<path d="M660.0,79.9 L748.0,95.6" class="dg-line" marker-end="url(#elastic-disaster-recovery-dgservices-elastic-disaster-recovery-1)"/>
+<text x="704" y="92" text-anchor="middle" class="dg-s dg-halo">切り替え</text>
+</svg>
+</div>
+<figcaption>図1 AWS DRSの流れ。本番サーバーのデータを、ステージングエリアへ継続的に複製する。障害のときは復旧インスタンスをAWSで起動する。通信の切り替えはDRSの外で、Route 53などを使って行う。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="elastic-disaster-recovery-c2">2. 主な機能・特徴<a class="anchor" href="#elastic-disaster-recovery-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="elastic-disaster-recovery-c2-1">レプリケーションの仕組み<a class="anchor" href="#elastic-disaster-recovery-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>レプリケーションエージェント</strong>(AWS Replication Agent)を、複製する本番サーバーにインストールする。ディスクへの変更を、ブロック単位で複製先へ送る。</li>
+<li>複製先は、選んだリージョンのAWSアカウント内にある<strong>ステージングエリア</strong>(専用のサブネット)。本番のディスクごとに、同じ容量のEBSボリューム(ステージングディスク)が作られる。</li>
+<li>ステージングエリアには、<strong>複製サーバー</strong>(EC2)とステージングディスクがあり、待機中のコストを小さく抑えている。</li>
+<li>最初に初期同期を行い、その後は変更を継続的に送る(継続的データ保護、CDP)。CDPの状態から外れてからの経過時間が<strong>Lag</strong>、まだ複製していないデータ量が<strong>Backlog</strong>。</li>
+<li>通信中のデータは暗号化される。復旧のときは、最新の状態か、過去の時点(ポイントインタイム)のどちらかで起動できる。ポイントインタイムは、EBSスナップショットで保持する。</li>
+</ul>
+
+<h3 id="elastic-disaster-recovery-c2-2">ネットワークと準備<a class="anchor" href="#elastic-disaster-recovery-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>本番サーバーから、ステージングエリアの複製サーバーへ TCP 1500 番で送る。</li>
+<li>複製サーバーと本番サーバーは、DRSのAPIエンドポイント(HTTPS・TCP 443)へ送る。</li>
+<li>ドリルと復旧のインスタンスは、サーバーごとの起動テンプレートで指定したサブネットに起動する。</li>
+</ul>
+
+<h3 id="elastic-disaster-recovery-c2-3">ドリル(Recovery Drill)と復旧(Recovery)の違い<a class="anchor" href="#elastic-disaster-recovery-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>ドリル(Recovery Drill)</th><th>復旧(Recovery)</th></tr>
+<tr><td>目的</td><td>復旧の手順と起動の確認を、本番に影響させずに試す</td><td>本番が障害になったときに、AWS上で業務を再開する</td></tr>
+<tr><td>本番サーバーと複製</td><td>影響を受けない。複製は続く</td><td>業務を本番からAWSへ切り替える。切り替えはDRSの外で行う</td></tr>
+<tr><td>起動するインスタンス</td><td>ドリルインスタンス(テストが終わったら削除する)</td><td>復旧インスタンス(業務を続ける)</td></tr>
+<tr><td>行う頻度の目安</td><td>少なくとも四半期に1回</td><td>障害のときだけ</td></tr>
+</table></div>
+<ul>
+<li>切り替え(フェイルオーバー)は、DRSの外で行う。Route 53などのDNSやトラフィック管理の仕組みで、通信の向き先を復旧インスタンスに変える。</li>
+<li>復旧後に、AWS上の業務を元の環境へ戻すのがフェイルバック。オンプレミスへ戻すときは、フェイルバック用のクライアントを使う。</li>
+</ul>
+
+<h3 id="elastic-disaster-recovery-c2-4">RTOとRPO<a class="anchor" href="#elastic-disaster-recovery-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>RPO</strong>(目標復旧時点):通常は1秒未満(sub-second)。障害の直前までのデータを復旧できる。ただし、Lagが続いてCDPの状態から外れたままだと、RPOは悪くなる。</li>
+<li><strong>RTO</strong>(目標復旧時間):通常は数分。OSの起動時間に左右される。起動するインスタンスタイプの在庫が不足すると、起動に時間がかかり、RTOに影響する。</li>
+<li>RTOは、ドリルで実際の起動時間を測って、目標と比べる。</li>
+</ul>
+
+<h3 id="elastic-disaster-recovery-c2-5">運用の流れ<a class="anchor" href="#elastic-disaster-recovery-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ol>
+<li>復旧先のリージョンでDRSを初期化する</li>
+<li>本番サーバーにレプリケーションエージェントをインストールする</li>
+<li>初期同期が終わり、Lagが増えていないことを確認する</li>
+<li>ドリルを行い、ドリルインスタンスの動作を確かめたら、削除する</li>
+<li>障害のときは、復旧インスタンスを起動し、通信を切り替える</li>
+<li>復旧後は、フェイルバックして元の環境へ戻す</li>
+</ol>
+
+<h3 id="elastic-disaster-recovery-c2-6">台数の上限<a class="anchor" href="#elastic-disaster-recovery-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>1つのAWSアカウントで複製できるサーバーは最大300台です。これを超えるときは、アカウントやリージョンを分けてDRSを設定します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="elastic-disaster-recovery-c3">3. ユースケース<a class="anchor" href="#elastic-disaster-recovery-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>オンプレミスのデータセンターの障害に備えて、AWSを復旧先にする</li>
+<li>他のクラウドで動かしているサーバーを、AWSに複製して復旧先にする</li>
+<li>リージョン全体の障害に備えて、AWSの別のリージョンを復旧先にする</li>
+<li>定期的にドリルを行い、復旧の手順と起動時間を確かめて、DR計画を更新する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="elastic-disaster-recovery-c4">4. 料金の考え方<a class="anchor" href="#elastic-disaster-recovery-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>DRSの料金は、複製しているサーバーの台数と時間で決まります。<strong>ソースサーバー1台あたり1時間$0.028</strong>で、最低料金も前払いもありません。この料金には、継続的な複製、テストの起動(ドリル)、復旧の起動、ポイントインタイムの復旧が含まれます。</p>
+<p>これとは別に、AWS側のリソースの料金がかかります。主なものは、ステージングエリアのEBSボリューム(本番のディスクと同じ容量)、複製サーバーのEC2、ドリルや復旧で起動したEC2とEBSです。ドリルのインスタンスは、テストが終わったら削除しないと、通常のEC2の料金がかかり続けます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="elastic-disaster-recovery-c5">5. 関連サービス<a class="anchor" href="#elastic-disaster-recovery-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-ec2">Amazon EC2</a>:複製サーバーと、ドリル・復旧で起動するインスタンス</li>
+<li><a href="#p-ebs">Amazon EBS</a>:ステージングディスク、ポイントインタイムを保持するスナップショット</li>
+<li><a href="#p-route53">Amazon Route 53</a>:障害時に通信の向き先をAWSへ切り替える(DRSの外で行う)</li>
+<li><a href="#p-application-recovery-controller">AWS Application Recovery Controller</a>:切り替えの準備と制御</li>
+<li><a href="#p-backup">AWS Backup</a>:決めた時点の復旧ポイントを保管する。誤削除やランサムウェアへの備えとして併用する</li>
+<li><a href="#p-eventbridge">Amazon EventBridge</a>:DRSが出すイベント(レプリケーションの状態の変化)を検知する</li>
+<li>関連する用語:<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/region-az.html">リージョンとアベイラビリティーゾーン</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="elastic-disaster-recovery-c6">6. 試験・実務でのポイント<a class="anchor" href="#elastic-disaster-recovery-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>仕組みと数字</h4>
+<ul>
+<li>「オンプレミスや他のクラウドのサーバーを、AWSの災害復旧先に継続的に複製したい」→ <strong class="em">AWS Elastic Disaster Recovery</strong>。</li>
+<li>RPOは通常1秒未満、RTOは通常数分。RTOはOSの起動時間に左右される。</li>
+<li>複製先は、ステージングエリアの複製サーバーとEBSボリューム。障害のときにだけ、EC2を起動する。</li>
+</ul>
+<h4>ドリルと切り替え</h4>
+<ul>
+<li>「本番に影響させず、復旧の手順と起動時間を確かめたい」→ <strong class="em">Recovery Drill(ドリル)</strong>。少なくとも四半期に1回。</li>
+<li>通信の切り替え(フェイルオーバー)は、DRSの外で行う。Route 53などで向き先を変える。</li>
+<li>ドリルで起動したEC2は、テストが終わったら削除する。残すと料金がかかり続ける。</li>
+</ul>
+<h4>ほかのバックアップ・DRとの違い</h4>
+<ul>
+<li>AWS Backupは、決めた時点の復旧ポイントを保管する。DRSは、サーバーを継続的に複製し、起動して復旧する。</li>
+<li>複製は、誤った変更やランサムウェアによる暗号化もそのまま複製する。誤削除やランサムウェアには、AWS Backupと併用する。</li>
+<li>DR戦略の比較では、待機コストを小さく抑えたまま、RTOとRPOを短くできる仕組みとして位置づけられる。</li>
+</ul>
+<h4>制限と試験での位置づけ</h4>
+<ul>
+<li>1つのAWSアカウントで複製できるサーバーは最大300台。</li>
+<li>SOA-C03では、信頼性・事業継続の文脈で、RTOとRPOの違い、ドリル(テスト)と復旧の違いを区別することが基本。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="elastic-disaster-recovery-c7">7. まとめ<a class="anchor" href="#elastic-disaster-recovery-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS DRSは、サーバーを継続的に複製し、障害のときにAWSで数分で起動する災害復旧サービス。</li>
+<li>複製先は低コストのステージングエリアに保ち、RTOとRPOを短くできる。</li>
+<li>ドリルで復旧を定期的に試し、切り替え(Route 53など)とフェイルバックはDRSの外で扱う。</li>
+</ul>
+</section>
+</article>
 <article class="booklet-page" id="p-storage-gateway">
 <div class="page-head hero" style="--cat:#7AA116">
 <div class="hero-text">
@@ -3776,7 +4088,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <section class="chapter">
 <h2 id="storage-gateway-c1">1. サービス概要<a class="anchor" href="#storage-gateway-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>AWS Storage Gateway</strong>は、<strong>オンプレミスのサーバーから、AWSのストレージ(S3など)をいつものファイル共有・ディスク・テープ装置として使えるようにする</strong>ハイブリッドストレージのサービスです。</p>
+<p><strong>AWS Storage Gateway</strong>は、<strong>オンプレミスのサーバーから、AWSのストレージ(S3など)をいつものファイル共有・ディスク・テープ装置として使えるようにする</strong>ハイブリッドストレージのサービスです。ブロック・ファイル・オブジェクトの違いは用語ページ「<a href="../terms/storage-types.html">ブロック・ファイル・オブジェクトストレージ</a>」を参照してください。</p>
 <p>オンプレミスに<strong>ゲートウェイ</strong>(VMware・Hyper-V・KVM上の仮想マシン、またはハードウェアアプライアンス。EC2上にも置ける)を置きます。よく使うデータはゲートウェイのローカルにキャッシュして速く読み書きし、データ本体はAWSに保存します。</p>
 </section>
 
@@ -3840,7 +4152,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <ul>
 <li>S3ファイルゲートウェイで、ゲートウェイを経由せずにS3へ直接追加されたファイルは、すぐには見えない。<strong>キャッシュの更新(RefreshCache)</strong>を実行するか、自動更新の間隔を設定する。</li>
 <li>キャッシュ用ディスクやアップロード用バッファの使用率は CloudWatch のメトリクスで監視する。不足すると書き込みが遅くなる。</li>
-<li>ゲートウェイとAWSの通信は暗号化され、VPCエンドポイント経由にもできる。帯域幅の上限を時間帯ごとに設定できる。</li>
+<li>ゲートウェイとAWSの通信は暗号化され、VPCエンドポイント経由にもできる。その仕組みは用語ページ「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」を参照してください。帯域幅の上限を時間帯ごとに設定できる。</li>
 <li>ゲートウェイのソフトウェアの更新はメンテナンス時間に自動で適用される。</li>
 <li>AWS Backupでボリュームゲートウェイのボリュームをバックアップできる。</li>
 </ul>
@@ -4347,7 +4659,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h3 id="aurora-c2-3">可用性とフェイルオーバー<a class="anchor" href="#aurora-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>プライマリに障害が起きると、<strong>レプリカが自動で昇格</strong>する。</li>
-<li>レプリカがない場合は新しいインスタンスを作成するため、復旧に時間がかかる。可用性を重視するなら<strong>別AZにレプリカを置く</strong>。</li>
+<li>レプリカがない場合は新しいインスタンスを作成するため、復旧に時間がかかる。可用性を重視するなら<strong>別AZにレプリカを置く</strong>。高可用性の考え方は用語ページ「<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>」を参照してください。</li>
 <li>通常のRDS Multi-AZと違い、スタンバイ専用インスタンスはなく、<strong>レプリカが読み取りとフェイルオーバーを兼ねる</strong>。</li>
 </ul>
 
@@ -4377,13 +4689,13 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>高い可用性・性能が必要な業務システムのDB</li>
 <li>読み取りが多いWebサービス(最大15レプリカ+リーダーエンドポイント)</li>
 <li>負荷の変動が大きいアプリ(Serverless v2)</li>
-<li>複数リージョンでの災害対策・グローバル読み取り(グローバルデータベース)</li>
+<li>複数リージョンでの災害対策・グローバル読み取り(グローバルデータベース)。災害対策の4つの方式は用語ページ「<a href="../terms/dr-strategies.html">DR戦略</a>」を参照してください。</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="aurora-c4">4. 料金の考え方<a class="anchor" href="#aurora-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>インスタンスの稼働時間(Serverless v2ではACUの使用量)、ストレージの使用量、I/Oリクエスト、バックアップ容量で課金されます。ストレージは使った分だけ自動で拡張されます。</p>
+<p>インスタンスの稼働時間(Serverless v2ではACUの使用量)、ストレージの使用量、I/Oリクエスト、バックアップ容量で課金されます。ストレージは使った分だけ自動で拡張されます。従量課金の仕組みは用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -7404,10 +7716,75 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図1 Global Acceleratorの仕組み。2つの固定Anycast IPで最寄りのエッジに入り、インターネットではなくAWSのバックボーンでエンドポイントへ届ける。ヘルスチェックで異常を検知すると、正常なエンドポイントへ自動で切り替える。</figcaption>
 </figure>
-<h3 id="global-accelerator-c2-2">対応エンドポイント<a class="anchor" href="#global-accelerator-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+
+<h3 id="global-accelerator-c2-2">構成要素と2種類のアクセラレーター<a class="anchor" href="#global-accelerator-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>アクセラレーターの中は、<strong>リスナー</strong>、<strong>エンドポイントグループ</strong>、<strong>エンドポイント</strong>の階層になっています。リスナーは受け付けるプロトコル(TCPまたはUDP)とポート範囲を指定します。エンドポイントグループはリージョンごとに作り、その中のエンドポイントは同じリージョンに置きます。</p>
+<ul>
+<li><strong>標準アクセラレーター</strong>:利用者を、場所と健全性に応じて最適なリージョンのエンドポイントへ振り分ける</li>
+<li><strong>カスタムルーティングアクセラレーター</strong>:1人の利用者を、多数の宛先の中の特定の宛先に割り当てる。宛先はVPCのサブネット内のプライベートIPアドレス</li>
+</ul>
+
+<h3 id="global-accelerator-c2-3">対応エンドポイント<a class="anchor" href="#global-accelerator-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul><li>ALB/NLB</li><li>EC2インスタンス</li><li>Elastic IPアドレス</li></ul>
 
-<h3 id="global-accelerator-c2-3">CloudFrontとの違い<a class="anchor" href="#global-accelerator-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="global-accelerator-c2-4">トラフィックダイヤルとエンドポイントの重み<a class="anchor" href="#global-accelerator-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>標準アクセラレーターでは、エンドポイントグループごとに<strong>トラフィックダイヤル</strong>(0〜100%。既定は100%)で、そのリージョンへ向かう通信の割合を調整できます。メンテナンスの前にダイヤルを0%にすると、そのリージョンへの通信を止めて作業できます。</p>
+<ul>
+<li>ダイヤルの変更は<strong>新しい接続</strong>から反映される。既存の接続は切れない</li>
+<li>ヘルスチェックはダイヤルの影響を受けない</li>
+<li>エンドポイントごとの重み(weight)で、同じエンドポイントグループの中の配分を調整できる</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 514 209" style="max-width:514px;min-width:514px" role="img" aria-label="図2 トラフィックダイヤル。メンテナンス中のリージョンはダイヤルを0%にすると、そのリージョンへの新しい通信を止められる。既存の接続は切れない。"><defs><marker id="global-accelerator-dgservices-global-accelerator-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="acc">
+<rect x="34" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="110" text-anchor="middle" class="dg-tb">アクセラレーター</text>
+<text x="109" y="128" text-anchor="middle" class="dg-s">静的IP 2つ</text>
+</g>
+<g data-node="tk">
+<rect x="340" y="43" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="415" y="64" text-anchor="middle" class="dg-t">東京リージョン</text>
+<text x="415" y="82" text-anchor="middle" class="dg-s">ダイヤル 0%</text>
+</g>
+<g data-node="os">
+<rect x="340" y="133" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="415" y="154" text-anchor="middle" class="dg-t">大阪リージョン</text>
+<text x="415" y="172" text-anchor="middle" class="dg-s">ダイヤル 100%</text>
+</g>
+<path d="M184.0,103.0 L340.0,80.0" class="dg-line dg-dash" marker-end="url(#global-accelerator-dgservices-global-accelerator-2)"/>
+<text x="262" y="96" text-anchor="middle" class="dg-s dg-halo">流さない</text>
+<path d="M184.0,125.0 L340.0,148.0" class="dg-line" marker-end="url(#global-accelerator-dgservices-global-accelerator-2)"/>
+<text x="262" y="140" text-anchor="middle" class="dg-s dg-halo">流す</text>
+</svg>
+</div>
+<figcaption>図2 トラフィックダイヤル。メンテナンス中のリージョンはダイヤルを0%にすると、そのリージョンへの新しい通信を止められる。既存の接続は切れない。</figcaption>
+</figure>
+
+<h3 id="global-accelerator-c2-5">ヘルスチェック<a class="anchor" href="#global-accelerator-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>エンドポイントグループごとにヘルスチェックを設定できます。EC2インスタンスとElastic IPアドレスは、Global Acceleratorのエンドポイントグループでヘルスチェックの設定を変えられ、ALBとNLBは Elastic Load Balancingのコンソールで設定します。正常なエンドポイントが1つもない場合は、リージョン内のすべてのエンドポイントへ振り分けます。</p>
+
+<h3 id="global-accelerator-c2-6">固定IPアドレス<a class="anchor" href="#global-accelerator-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>アクセラレーターには固定IPアドレスが割り当てられ、アクセラレーターが存在する間は保持されます。無効化(disable)すると通信は受け付けなくなりますが、IPアドレスは残ります。アクセラレーターを<strong>削除すると固定IPアドレスも失われ</strong>、そのIPでは通信を受けられなくなります。</p>
+<ul>
+<li>IPv4の固定IPアドレスは2つ。デュアルスタックの場合は、IPv6の2つを加えて計4つになる</li>
+<li>IPv4は、自分が持つIP範囲(BYOIP)をアクセラレーターに使うこともできる</li>
+<li>デュアルスタックで使うには、エンドポイントもデュアルスタックに対応している必要がある</li>
+</ul>
+
+<h3 id="global-accelerator-c2-7">制限(クォータ)<a class="anchor" href="#global-accelerator-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>主な上限は次のとおりです。引き上げを申請するには、Service Quotasのコンソール(us-east-1リージョン)を使います。上限の考え方は用語ページ「<a href="../terms/service-quotas.html">サービスクォータ</a>」を参照してください。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>上限</th></tr>
+<tr><td>標準アクセラレーター(1アカウントあたり)</td><td>20</td></tr>
+<tr><td>カスタムルーティングアクセラレーター(1アカウントあたり)</td><td>10</td></tr>
+<tr><td>リスナー(1アクセラレーターあたり)</td><td>10</td></tr>
+<tr><td>ポート範囲(1リスナーあたり)</td><td>10</td></tr>
+<tr><td>リスナー数 × エンドポイントグループ数</td><td>42以下</td></tr>
+</table></div>
+<p>リスナーを増やすほど、指定できるリージョンの数は減ります。</p>
+
+<h3 id="global-accelerator-c2-8">CloudFrontとの違い<a class="anchor" href="#global-accelerator-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>項目</th><th>Global Accelerator</th><th>CloudFront</th></tr>
 <tr><td>目的</td><td>通信経路の最適化</td><td>コンテンツのキャッシュ配信</td></tr>
@@ -7435,6 +7812,8 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li><a href="#p-cloudfront">Amazon CloudFront</a>:HTTPのキャッシュ配信</li>
 <li><a href="#p-elb">Elastic Load Balancing</a>/<a href="#p-ec2">Amazon EC2</a>:エンドポイント</li>
 <li><a href="#p-route53">Amazon Route 53</a>:DNSベースのルーティング</li>
+<li><a href="#p-application-recovery-controller">Amazon Application Recovery Controller (ARC)</a>:ゾーンシフトで障害のあるAZから通信を逃がす(Global Acceleratorが対応)</li>
+<li>関連する用語:<a href="../terms/caching-comparison.html">キャッシュの選び方</a>、<a href="../terms/dr-strategies.html">DR戦略</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></li>
 </ul>
 </section>
 
@@ -7444,6 +7823,9 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>「<strong>静的IP</strong>」「<strong>TCP/UDP</strong>」「グローバルにレイテンシー改善」→ Global Accelerator。</li>
 <li>「キャッシュ」「HTTP」→ CloudFront。</li>
 <li>DNSのキャッシュに左右されずにフェイルオーバーしたい → Global Accelerator。</li>
+<li>取引先のファイアウォールで接続元を許可リストに登録したい → Global Acceleratorの<strong>固定IPアドレス</strong>。</li>
+<li>リージョンのメンテナンス中に通信を止めたい → <strong>トラフィックダイヤル</strong>を0%にする。</li>
+<li>アクセラレーターを止めたいが、IPは残しておきたい → <strong>無効化</strong>。削除すると固定IPは失われる。</li>
 </ul></div>
 </section>
 
@@ -8675,7 +9057,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <p>低コストで使える<strong>簡易版のActive Directory</strong>(機能制限版)です。小規模・検証用での利用が推奨されます。</p>
 
 <h3 id="directory-service-c2-3">AD Connector<a class="anchor" href="#directory-service-c2-3" aria-label="この見出しへのリンク">#</a></h3>
-<p>AWSと既存のActive Directoryを<strong>中継するだけ</strong>のサービスです。オンプレミスのADとAWSを接続します(AWS側にディレクトリのデータは持ちません)。</p>
+<p>AWSと既存のActive Directoryを<strong>中継するだけ</strong>のサービスです。オンプレミスのADとAWSを接続します(AWS側にディレクトリのデータは持ちません)。接続には VPN または Direct Connect が必要です。接続方法の選び方は用語ページ「<a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>」を参照してください。</p>
 
 <div class="table-wrap"><table>
 <tr><th>種類</th><th>ADの実体</th><th>向いているケース</th></tr>
@@ -8826,7 +9208,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h2 id="cognito-c2">2. 主な機能・特徴<a class="anchor" href="#cognito-c2" aria-label="この見出しへのリンク">#</a></h2>
 <h3 id="cognito-c2-1">ユーザープール(ユーザー認証)<a class="anchor" href="#cognito-c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
-<li>サインアップ・サインイン(ソーシャルサインイン:Facebook・Googleなど/SAML・OIDC IDプロバイダー経由)</li>
+<li>サインアップ・サインイン(ソーシャルサインイン:Facebook・Googleなど/SAML・OIDC IDプロバイダー経由)。OIDCの仕組みは用語ページ「<a href="../terms/oidc.html">OIDC(OpenID Connect)</a>」を参照してください。</li>
 <li>ユーザーディレクトリ/プロファイル管理(ログイン情報+ユーザープロファイル+セキュリティ状態)</li>
 <li>多要素認証(MFA)などのセキュリティ機能</li>
 </ul>
@@ -8849,7 +9231,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>クライアントがログインしてトークンを取得</li>
 <li>クライアントがIDプールにトークンを渡す</li>
 <li>IDプールがトークンを検証(ユーザーを特定)</li>
-<li>IDプールがIAMロールを決定し、<strong>一時的なAWS資格情報を発行</strong>(トークン → AWS資格情報に変換)</li>
+<li>IDプールがIAMロールを決定し、<strong>一時的なAWS資格情報を発行</strong>(トークン → AWS資格情報に変換)。仕組みは用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</li>
 <li>クライアントがそのロールでAWSリソースにアクセス</li>
 </ol>
 
@@ -8942,7 +9324,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <section class="chapter">
 <h2 id="cognito-c4">4. 料金の考え方<a class="anchor" href="#cognito-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>ユーザープールは月間アクティブユーザー(MAU)数に応じて課金され、一定数までは無料枠があります。IDプール自体は無料です。</p>
+<p>ユーザープールは月間アクティブユーザー(MAU)数に応じて課金され、一定数までは無料枠があります。IDプール自体は無料です。料金の仕組みの基本は用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -9213,11 +9595,48 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h2 id="secrets-manager-c2">2. 主な機能・特徴<a class="anchor" href="#secrets-manager-c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><strong>自動暗号化</strong>:保存時はKMS、転送時はHTTPSで暗号化される。</li>
-<li><strong>シークレットのレプリケーション</strong>:リージョンサービスのため、別リージョンへ自動でレプリケーションできる。</li>
+<li><strong>レプリケーション</strong>:設定したリージョンに暗号化されたシークレットを複製し、別リージョンのアプリからも使える。ローテーションは元のシークレットで行えば、複製先にも反映される。</li>
 <li><strong>ローテーション</strong>:パスワードを定期的に自動変更できる。</li>
 </ul>
 
-<h3 id="secrets-manager-c2-1">ローテーション方式<a class="anchor" href="#secrets-manager-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="secrets-manager-c2-1">ローテーションの仕組み<a class="anchor" href="#secrets-manager-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>マネージドローテーション</strong>:Amazon AuroraやRDSのマスターユーザーなど、サービスが管理する認証情報で使う。Lambda関数は不要で、最短4時間おきに実行できる。</li>
+<li><strong>Lambda関数によるローテーション</strong>:それ以外のシークレットで使う。AWSが用意したローテーション関数テンプレートを使うか、独自のLambda関数を作成する。</li>
+</ul>
+<p>Lambda関数によるローテーションは、<code>createSecret</code>・<code>setSecret</code>・<code>testSecret</code>・<code>finishSecret</code> の4つのステップで進みます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 164" style="max-width:718px;min-width:574px" role="img" aria-label="図1 Lambda関数によるローテーションの4ステップ。新しい版はAWSPENDINGのラベルで作成・検証し、finishSecretでAWSCURRENTを新しい版に移す。"><defs><marker id="secrets-manager-dgservices-secrets-manager-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="c">
+<rect x="34" y="88" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="110" text-anchor="middle" class="dg-t">createSecret</text>
+<text x="109" y="128" text-anchor="middle" class="dg-s">新しい版を作成</text>
+</g>
+<g data-node="s">
+<rect x="204" y="88" width="150" height="52" rx="8" class="dg-box"/>
+<text x="279" y="110" text-anchor="middle" class="dg-t">setSecret</text>
+<text x="279" y="128" text-anchor="middle" class="dg-s">DBの認証情報を変更</text>
+</g>
+<g data-node="t">
+<rect x="374" y="88" width="150" height="52" rx="8" class="dg-box"/>
+<text x="449" y="110" text-anchor="middle" class="dg-t">testSecret</text>
+<text x="449" y="128" text-anchor="middle" class="dg-s">新しい版で接続を確認</text>
+</g>
+<g data-node="f">
+<rect x="544" y="88" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="110" text-anchor="middle" class="dg-t">finishSecret</text>
+<text x="619" y="128" text-anchor="middle" class="dg-s">新しい版を有効化</text>
+</g>
+<path d="M184.0,114.0 L204.0,114.0" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-1)"/>
+<path d="M354.0,114.0 L374.0,114.0" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-1)"/>
+<path d="M524.0,114.0 L544.0,114.0" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-1)"/>
+</svg>
+</div>
+<figcaption>図1 Lambda関数によるローテーションの4ステップ。新しい版はAWSPENDINGのラベルで作成・検証し、finishSecretでAWSCURRENTを新しい版に移す。</figcaption>
+</figure>
+
+<h3 id="secrets-manager-c2-2">ローテーション方式<a class="anchor" href="#secrets-manager-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>項目</th><th>シングルユーザー</th><th>交代ユーザー</th></tr>
 <tr><td>DBユーザー数</td><td>1</td><td>2</td></tr>
@@ -9228,17 +9647,17 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td>構成</td><td>シンプル</td><td>やや複雑</td></tr>
 </table></div>
 
-<h3 id="secrets-manager-c2-2">Parameter Storeとの違い<a class="anchor" href="#secrets-manager-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="secrets-manager-c2-3">Parameter Storeとの違い<a class="anchor" href="#secrets-manager-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th></th><th>Secrets Manager</th><th>Parameter Store</th></tr>
 <tr><td>主な用途</td><td>機密情報</td><td>設定値</td></tr>
 <tr><td>自動ローテーション</td><td>○</td><td>×</td></tr>
-<tr><td>コスト</td><td>有料</td><td>一部無料</td></tr>
+<tr><td>コスト</td><td>シークレット数とAPI呼び出し数で課金</td><td>標準パラメータは追加料金なし</td></tr>
 <tr><td>機能</td><td>高機能</td><td>シンプル</td></tr>
 </table></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 463 194" style="max-width:463px;min-width:463px" role="img" aria-label="図1 交代ユーザー方式。使っていないユーザーのパスワードを更新してから切り替えるため、使用中の接続が切れず、ダウンタイムがほぼない。"><defs><marker id="secrets-manager-dgservices-secrets-manager-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 463 194" style="max-width:463px;min-width:463px" role="img" aria-label="図2 交代ユーザー方式。使っていないユーザーのパスワードを更新してから切り替えるため、使用中の接続が切れず、ダウンタイムがほぼない。"><defs><marker id="secrets-manager-dgservices-secrets-manager-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="app">
 <rect x="34" y="84" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="108" text-anchor="middle" class="dg-t">アプリ</text>
@@ -9253,13 +9672,20 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="364" y="140" text-anchor="middle" class="dg-t">ユーザーB</text>
 <text x="364" y="158" text-anchor="middle" class="dg-s">パスワードを更新中</text>
 </g>
-<path d="M184.0,92.2 L289.0,75.8" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-1)"/>
-<path d="M184.0,115.8 L289.0,132.2" class="dg-line dg-dash" marker-end="url(#secrets-manager-dgservices-secrets-manager-1)"/>
+<path d="M184.0,92.2 L289.0,75.8" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-2)"/>
+<path d="M184.0,115.8 L289.0,132.2" class="dg-line dg-dash" marker-end="url(#secrets-manager-dgservices-secrets-manager-2)"/>
 <text x="236" y="128" text-anchor="middle" class="dg-s dg-halo">次回から切替</text>
 </svg>
 </div>
-<figcaption>図1 交代ユーザー方式。使っていないユーザーのパスワードを更新してから切り替えるため、使用中の接続が切れず、ダウンタイムがほぼない。</figcaption>
+<figcaption>図2 交代ユーザー方式。使っていないユーザーのパスワードを更新してから切り替えるため、使用中の接続が切れず、ダウンタイムがほぼない。</figcaption>
 </figure>
+
+<h3 id="secrets-manager-c2-4">アクセス制御と共有<a class="anchor" href="#secrets-manager-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>シークレットには<strong>リソースポリシー</strong>を付けて、複数のユーザーやロールに許可を与えられます。別のAWSアカウントから使わせる場合は、リソースポリシーに加えて、呼び出し側のIAMポリシーでも許可が必要です。</p>
+<p>暗号化に使うKMSキーも共有が必要です。<strong>AWS管理キー(aws/secretsmanager)は別アカウントからは使えない</strong>ため、カスタマー管理キーを作成し、キーポリシーで相手アカウントに使用を許可します。許可の判断の仕組みは用語ページ「<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>」を参照してください。</p>
+
+<h3 id="secrets-manager-c2-5">暗号化の仕組み<a class="anchor" href="#secrets-manager-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>Secrets Managerは<strong>エンベロープ暗号化</strong>で値を保護します。KMSキーで256ビットのAESデータキーを生成・暗号化し、そのデータキーでシークレットの値を暗号化します。暗号化されたデータキーはシークレットのメタデータとして保存されます。暗号化の基本は用語ページ「<a href="../terms/encryption.html">保存時の暗号化と転送時の暗号化</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -9275,7 +9701,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <div class="point"><p><strong>「アプリの会員(エンドユーザー)のID/パスワードもSecrets Managerに保存すればよいのでは?」→ 非推奨。</strong>Secrets Managerは、DBのパスワードやAPIキーのような<strong>システムが使う少数の機密情報</strong>を管理するためのサービスで、シークレット1件ごとに料金がかかります。会員のパスワードは、DBにハッシュ化して保存するか、Amazon Cognitoなどの認証サービスで管理します。</p></div>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 684 196" style="max-width:684px;min-width:547px" role="img" aria-label="図2 Secrets Managerの使い方。アプリはGetSecretValueでDBの認証情報を取得して接続する。ローテーションではLambdaがDBのパスワードとシークレットを定期的に更新するため、アプリのコードを変えずに済む。"><defs><marker id="secrets-manager-dgservices-secrets-manager-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 684 196" style="max-width:684px;min-width:547px" role="img" aria-label="図3 Secrets Managerの使い方。アプリはGetSecretValueでDBの認証情報を取得して接続する。ローテーションではLambdaがDBのパスワードとシークレットを定期的に更新するため、アプリのコードを変えずに済む。"><defs><marker id="secrets-manager-dgservices-secrets-manager-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="app">
 <rect x="34" y="89" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="113" text-anchor="middle" class="dg-t">アプリ</text>
@@ -9294,24 +9720,24 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <text x="585" y="62" text-anchor="middle" class="dg-t">ローテーション</text>
 <text x="585" y="80" text-anchor="middle" class="dg-s">Lambdaが定期実行</text>
 </g>
-<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-2)"/>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-3)"/>
 <text x="228" y="92" text-anchor="middle" class="dg-s dg-halo">① 取得</text>
-<path d="M184.0,122.4 L272.0,138.1" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-2)"/>
+<path d="M184.0,122.4 L272.0,138.1" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-3)"/>
 <text x="228" y="134" text-anchor="middle" class="dg-s dg-halo">② 接続</text>
-<path d="M510.0,66.5 L422.0,66.5" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-2)"/>
+<path d="M510.0,66.5 L422.0,66.5" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-3)"/>
 <text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">更新</text>
-<path d="M512.2,92.5 L403.0,131.5" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-2)"/>
+<path d="M512.2,92.5 L403.0,131.5" class="dg-line" marker-end="url(#secrets-manager-dgservices-secrets-manager-3)"/>
 <text x="458" y="116" text-anchor="middle" class="dg-s dg-halo">パスワード変更</text>
 </svg>
 </div>
-<figcaption>図2 Secrets Managerの使い方。アプリはGetSecretValueでDBの認証情報を取得して接続する。ローテーションではLambdaがDBのパスワードとシークレットを定期的に更新するため、アプリのコードを変えずに済む。</figcaption>
+<figcaption>図3 Secrets Managerの使い方。アプリはGetSecretValueでDBの認証情報を取得して接続する。ローテーションではLambdaがDBのパスワードとシークレットを定期的に更新するため、アプリのコードを変えずに済む。</figcaption>
 </figure>
 </section>
 
 <section class="chapter">
 <h2 id="secrets-manager-c4">4. 料金の考え方<a class="anchor" href="#secrets-manager-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>シークレット1件ごとの月額料金と、APIの呼び出し回数で課金されます。</p>
-<p>Parameter Storeは一部無料で使えるため、ローテーションが不要な設定値はParameter Storeが向いています。</p>
+<p>シークレット1件ごとの月額料金と、APIの呼び出し回数で課金されます。公式料金ページの例では、1シークレットあたり月額 $0.40、API呼び出し1万回あたり $0.05です(最新の料金は料金ページで確認してください)。別リージョンに複製したシークレットは、別のシークレットとして課金されます。</p>
+<p>Parameter Storeは標準パラメータであれば追加料金がかからないため、ローテーションが不要な設定値はParameter Storeが向いています。</p>
 </section>
 
 <section class="chapter">
@@ -9328,11 +9754,14 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <section class="chapter">
 <h2 id="secrets-manager-c6">6. 試験・実務でのポイント<a class="anchor" href="#secrets-manager-c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
-<li>DBパスワードの<strong>自動ローテーション</strong> → Secrets Manager(Parameter Storeは不可)。</li>
-<li>ダウンタイムなしでローテーション → <strong>交代ユーザー方式</strong>。</li>
-<li>コストを抑えて設定値を管理 → <strong>Parameter Store</strong>。</li>
-<li>シークレットの取得は <code>secretsmanager:GetSecretValue</code>(KMSの復号権限も必要)。</li>
-<li>DRで別リージョンでも使いたい → <strong>シークレットのレプリケーション</strong>。</li>
+<li>DBパスワードの<strong>自動ローテーション</strong> → Secrets Manager(Parameter Storeは自動ローテーションを提供しない)。</li>
+<li>Aurora・RDSのマスターユーザー → <strong>マネージドローテーション</strong>(Lambda関数は不要)。それ以外のシークレットは<strong>Lambda関数</strong>でローテーションする。</li>
+<li>ダウンタイムをほぼなくしたい → <strong>交代ユーザー方式</strong>。クローンのユーザーは元と同じ権限で作られるため、後から権限を変えたら両方に反映する必要がある。</li>
+<li>ローテーションが不要な設定値 → <strong>Parameter Store</strong>(標準パラメータは追加料金なし)。</li>
+<li>料金は<strong>シークレット数</strong>と<strong>API呼び出し数</strong>で決まる。レプリカも別のシークレットとして課金される。</li>
+<li>別のアカウントに使わせる → リソースポリシーと呼び出し側のIAMポリシーの両方が必要。KMSキーは<strong>カスタマー管理キー</strong>にする(AWS管理キーは使えない)。</li>
+<li>DRで別リージョンでも使いたい → <strong>レプリケーション</strong>。DR戦略の考え方は用語ページ「<a href="../terms/dr-strategies.html">DR戦略</a>」を参照してください。</li>
+<li>アプリのコードには<strong>パスワードを書かず</strong>、シークレット名(ARN)だけを設定して <code>GetSecretValue</code> で取得する。</li>
 </ul></div>
 </section>
 
@@ -9491,7 +9920,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <section class="chapter">
 <h2 id="private-ca-c1">1. サービス概要<a class="anchor" href="#private-ca-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>AWS Private CA(Private Certificate Authority)</strong>は、組織内だけで使う<strong>プライベート証明書を発行するための認証局(CA)</strong>をマネージドで提供するサービスです。インターネットに公開しない社内システムや、サービス間の通信の認証に使います。</p>
+<p><strong>AWS Private CA(Private Certificate Authority)</strong>は、組織内だけで使う<strong>プライベート証明書を発行するための認証局(CA)</strong>をマネージドで提供するサービスです。インターネットに公開しない社内システムや、サービス間の通信の認証に使います。HTTPSやmTLSで証明書をどこに置くかは用語ページ「<a href="../terms/tls-termination.html">TLS終端と証明書の配置</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -9543,7 +9972,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <section class="chapter">
 <h2 id="private-ca-c4">4. 料金の考え方<a class="anchor" href="#private-ca-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>CAごとの月額料金と、発行した証明書の枚数に応じて課金されます。ACMのパブリック証明書(無料)と違い、有料です。</p>
+<p>CAごとの月額料金と、発行した証明書の枚数に応じて課金されます。ACMのパブリック証明書(無料)と違い、有料です。料金の全体像は用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -9902,6 +10331,63 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図1 Macieの流れ。S3のオブジェクトやバケット設定を分析して機密データや公開リスクを検出し、結果をSecurity HubやEventBridgeに連携できる。</figcaption>
 </figure>
+
+<h3 id="macie-c2-2">自動検出とジョブ<a class="anchor" href="#macie-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>自動検出</strong>は、MacieがS3バケットの一覧を継続的に確認し、サンプリングでオブジェクトを選んで分析する機能です。アカウント全体で、機密データがありそうな場所を広く把握するために使います。</p>
+<p>特定の対象を指定して詳しく調べるには<strong>ジョブ</strong>を作ります。ジョブは1回だけ実行することも、定期的に繰り返すこともできます。対象は、バケットの指定や、タグ・プレフィックス・最終更新日などの条件で絞り込めます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 854 227" style="max-width:854px;min-width:683px" role="img" aria-label="図2 自動検出とジョブの違い。自動検出は毎日サンプリングで全体を把握し、ジョブは指定した範囲のオブジェクトを分析する。どちらも、機密データの検出結果を残す。"><defs><marker id="macie-dgservices-macie-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s3">
+<rect x="34" y="94" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="118" text-anchor="middle" class="dg-t">S3バケット群</text>
+</g>
+<g data-node="auto">
+<rect x="272" y="43" width="320" height="52" rx="8" class="dg-accent"/>
+<text x="432" y="64" text-anchor="middle" class="dg-tb">自動検出</text>
+<text x="432" y="82" text-anchor="middle" class="dg-s">毎日サンプリング</text>
+</g>
+<g data-node="job">
+<rect x="272" y="151" width="320" height="52" rx="8" class="dg-box"/>
+<text x="432" y="172" text-anchor="middle" class="dg-t">ジョブ</text>
+<text x="432" y="190" text-anchor="middle" class="dg-s">指定した範囲を分析</text>
+</g>
+<g data-node="res">
+<rect x="680" y="97" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="755" y="118" text-anchor="middle" class="dg-t">検出結果</text>
+<text x="755" y="136" text-anchor="middle" class="dg-s">機密データ・ポリシー</text>
+</g>
+<path d="M184.0,103.6 L272.0,91.3" class="dg-line" marker-end="url(#macie-dgservices-macie-2)"/>
+<text x="228" y="101" text-anchor="middle" class="dg-s dg-halo">分析</text>
+<path d="M184.0,128.6 L298.7,151.0" class="dg-line" marker-end="url(#macie-dgservices-macie-2)"/>
+<text x="241" y="144" text-anchor="middle" class="dg-s dg-halo">分析</text>
+<path d="M587.5,95.0 L680.0,110.5" class="dg-line" marker-end="url(#macie-dgservices-macie-2)"/>
+<path d="M587.5,151.0 L680.0,135.5" class="dg-line" marker-end="url(#macie-dgservices-macie-2)"/>
+</svg>
+</div>
+<figcaption>図2 自動検出とジョブの違い。自動検出は毎日サンプリングで全体を把握し、ジョブは指定した範囲のオブジェクトを分析する。どちらも、機密データの検出結果を残す。</figcaption>
+</figure>
+<p>検出する対象は、<strong>マネージドデータ識別子</strong>(AWSのシークレットアクセスキー、クレジットカード番号、パスポート番号など)で決まります。社員番号や顧客番号などの独自形式は、正規表現に、近くにあるキーワードや除外する語を組み合わせた<strong>カスタムデータ識別子</strong>で検出します。検出させたくない文字列は<strong>許可リスト</strong>に登録します。</p>
+
+<h3 id="macie-c2-3">検出結果と連携<a class="anchor" href="#macie-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Macieの検出結果には、<strong>機密データの検出結果</strong>(個々のS3オブジェクトに機密データが含まれていた)と、<strong>ポリシーの検出結果</strong>(バケットが公開されている、他のアカウントと共有されているなど、設定上のリスク)の2種類があります。</p>
+<p>検出結果は<strong>EventBridge</strong>にイベントとして送られ、AWS Security Hub CSPMにも連携できます。EventBridgeのルールと組み合わせて、通知や自動対応につなげられます。</p>
+<p>コンソールのダッシュボードでは、S3バケットのインベントリ(一覧)と、公開されているバケットや他のアカウントと共有されているバケットの数などの統計を確認できます。自動検出では、バケットごとに機密度スコアが付くため、どのバケットを優先して確認するかを決められます。</p>
+
+<h3 id="macie-c2-4">設定の要点<a class="anchor" href="#macie-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>複数アカウントの場合は、AWS Organizationsと連携して<strong>Macie管理者アカウント</strong>を指定する。管理者は、メンバーアカウントのバケットやポリシーの検出結果をまとめて確認できる。</li>
+<li>ログ保存用のバケットなど、分析が不要なバケットは自動検出の対象から除外できる。</li>
+<li>自動検出とジョブは、マネージドデータ識別子・カスタムデータ識別子・許可リストを組み合わせて分析内容を絞り込める。</li>
+</ul>
+
+<h3 id="macie-c2-5">制限<a class="anchor" href="#macie-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>分析の対象は、S3の<strong>汎用バケット</strong>にあるオブジェクト。ディレクトリバケットのオブジェクトは分析されない。</li>
+<li>S3 Glacier Deep ArchiveやS3 Express One Zoneのオブジェクトは分析されず、対象外として扱われる。</li>
+<li>DynamoDBやRDSのデータは、S3にエクスポートしてから分析する。</li>
+<li>検出結果は90日間保持される。それより長く残す場合は、EventBridgeで別の保存先に転送するか、検出結果をS3バケットに保存する。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -9915,17 +10401,19 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <section class="chapter">
 <h2 id="macie-c4">4. 料金の考え方<a class="anchor" href="#macie-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>監視対象のバケット数と、機密データ検出でスキャンしたデータ量に応じて課金されます。</p>
+<p>評価するS3バケットの数、自動検出で監視するS3オブジェクトの数、機密データ検出で<strong>検査したデータ量(GB)</strong>に応じて課金されます。ジョブで検査したデータ量も課金の対象ですが、ジョブは無料トライアルに含まれません。新しく有効にしたアカウントには30日間の無料トライアルがあり、自動検出は最大150GBまで検査されます。</p>
 </section>
 
 <section class="chapter">
 <h2 id="macie-c5">5. 関連サービス<a class="anchor" href="#macie-c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="#p-s3">Amazon S3</a>:検査の対象</li>
-<li><a href="#p-security-hub">AWS Security Hub</a>:検出結果の集約</li>
+<li><a href="#p-security-hub">AWS Security Hub CSPM</a>:検出結果の集約</li>
 <li><a href="#p-eventbridge">Amazon EventBridge</a>:検出結果をトリガーに自動対応</li>
+<li><a href="#p-organizations">AWS Organizations</a>:複数アカウントのMacieを一括管理</li>
 <li><a href="#p-guardduty">Amazon GuardDuty</a>:脅威の検出</li>
 <li><a href="#p-inspector">Amazon Inspector</a>:脆弱性の検出</li>
+<li>関連する用語:<a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>、<a href="../terms/shared-responsibility.html">責任共有モデル</a></li>
 </ul>
 </section>
 
@@ -9935,6 +10423,9 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>「S3」「個人情報(PII)」「機密データの検出」→ <strong>Macie</strong>。</li>
 <li>「不正アクセス」「マルウェア」「脅威検出」→ <strong>GuardDuty</strong>。</li>
 <li>独自形式のデータ → <strong>カスタムデータ識別子</strong>。</li>
+<li>公開されているバケットや過剰な共有の発見 → Macieの<strong>ポリシーの検出結果</strong>。</li>
+<li>複数アカウントのS3を一括で確認 → AWS Organizationsと連携した<strong>Macie管理者アカウント</strong>。</li>
+<li>検出結果を90日を超えて残したい → EventBridgeで転送するか、S3に保存する。</li>
 <li>GuardDuty・Inspector・Macie・Security Hub CSPMの使い分け → <a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>。</li>
 </ul></div>
 </section>
@@ -10343,6 +10834,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>ELBとAuto Scalingで、負荷が増えてもスケールできるようにする。</li>
 <li>セキュリティグループで、オリジンには前段のサービスからの通信だけを許可する。</li>
 </ul>
+<p>負荷に合わせてスケールさせる考え方は用語ページ「<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>」を参照してください。通信の許可の仕組みは用語ページ「<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -10526,7 +11018,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <section class="chapter">
 <h2 id="security-agent-c1">1. サービス概要<a class="anchor" href="#security-agent-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>AWS Security Agent</strong>は、アプリケーションの<strong>設計から本番前まで、セキュリティの確認をAIエージェントが行う</strong>サービスです。設計書のレビュー・ソースコードのレビュー・脅威モデリング・<strong>ペネトレーションテスト(侵入テスト)</strong>を、必要なときにすぐ実行できます。</p>
+<p><strong>AWS Security Agent</strong>は、アプリケーションの<strong>設計から本番前まで、セキュリティの確認をAIエージェントが行う</strong>サービスです。設計書のレビュー・ソースコードのレビュー・脅威モデリング・<strong>ペネトレーションテスト(侵入テスト)</strong>を、必要なときにすぐ実行できます。AWS上で動かすアプリケーションのセキュリティは利用者の責任で、AWSとの分担は用語ページ「<a href="../terms/shared-responsibility.html">責任共有モデル</a>」を参照してください。</p>
 <p>AWSのセキュリティ関連のエージェント群をまとめた <strong>AWS Continuum</strong> の一部と位置づけられています。ペネトレーションテストは2026年3月に一般提供が始まり、設計レビュー・コードレビュー・脅威モデリングはプレビューとして提供されています。</p>
 </section>
 
@@ -10590,7 +11082,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td>Inspector</td><td>デプロイ済みのEC2・イメージ・Lambdaの既知の脆弱性(CVE)のスキャン</td></tr>
 <tr><td>GuardDuty</td><td>本番環境で起きている脅威の検出</td></tr>
 </table></div>
-<p>AWS環境に対するペネトレーションテストは、一部の禁止された行為(DoS攻撃など)を除き、事前の申請なしで実施できます。Security Agentのテストは、AWSのほか、オンプレミスや他のクラウドのアプリにも使えます。</p>
+<p>AWS環境に対するペネトレーションテストは、一部の禁止された行為(DoS攻撃など)を除き、事前の申請なしで実施できます。Security Agentのテストは、AWSのほか、オンプレミスや他のクラウドのアプリにも使えます。Security Agent・Inspector・GuardDutyの使い分けは用語ページ「<a href="../terms/security-detection-comparison.html">セキュリティ検出のサービスの選び方</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -12924,10 +13416,10 @@ bucket.grantRead(fn);</code></pre>
 <tr><td>検出型</td><td>違反しているリソースを<strong>見つけて知らせる</strong></td><td>Configルール</td></tr>
 <tr><td>事前対応型(プロアクティブ)</td><td>違反するリソースを<strong>作る前に止める</strong></td><td>CloudFormationフック</td></tr>
 </table></div>
-<p>適用の度合いとして、必須(常に有効・無効にできない)・強く推奨・選択の3段階があります。コントロールは<strong>OU単位</strong>で有効化します。</p>
+<p>適用の度合いとして、必須(常に有効・無効にできない)・強く推奨・選択の3段階があります。コントロールは<strong>OU単位</strong>で有効化します。予防型のSCPが権限をどう制限するかは用語ページ「<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>」を参照してください。</p>
 
 <h3 id="control-tower-c2-3">Account Factory<a class="anchor" href="#control-tower-c2-3" aria-label="この見出しへのリンク">#</a></h3>
-<p>あらかじめ決めた設定(OU・ネットワークなど)で、新しいアカウントを作る仕組みです。作られたアカウントには、所属するOUのコントロールが自動で適用されます。Terraformで定義する Account Factory for Terraform(AFT)や、アカウントのカスタマイズ用のブループリントもあります。</p>
+<p>あらかじめ決めた設定(OU・ネットワークなど)で、新しいアカウントを作る仕組みです。作られたアカウントには、所属するOUのコントロールが自動で適用されます。Terraformで定義する Account Factory for Terraform(AFT)や、アカウントのカスタマイズ用のブループリントもあります。Terraformの基本は用語ページ「<a href="../terms/terraform-git.html">TerraformとGit</a>」を参照してください。</p>
 
 <h3 id="control-tower-c2-4">ドリフト<a class="anchor" href="#control-tower-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>Control Tower の外(Organizationsの画面など)で、OUの移動やSCPの変更を行うと、ランディングゾーンの状態と食い違う「ドリフト」になります。ダッシュボードで確認し、ランディングゾーンの<strong>修復(リセット)</strong>で元に戻します。</p>
@@ -12947,7 +13439,7 @@ bucket.grantRead(fn);</code></pre>
 
 <section class="chapter">
 <h2 id="control-tower-c4">4. 料金の考え方<a class="anchor" href="#control-tower-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>Control Tower 自体は無料です。裏で使われる Config・CloudTrail・S3・Service Catalogなどのサービスの料金がかかります。アカウント数・リージョン数・検出型コントロールが増えると、Configの記録や評価の費用も増えます。リソースの作成と削除をくり返す環境(スポットインスタンスやAuto Scalingが多いなど)では、Configの費用が大きくなりやすい点に注意します。</p>
+<p>Control Tower 自体は無料です。裏で使われる Config・CloudTrail・S3・Service Catalogなどのサービスの料金がかかります。アカウント数・リージョン数・検出型コントロールが増えると、Configの記録や評価の費用も増えます。リソースの作成と削除をくり返す環境(スポットインスタンスやAuto Scalingが多いなど)では、Configの費用が大きくなりやすい点に注意します。料金の仕組みの基本は用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -13490,7 +13982,7 @@ bucket.grantRead(fn);</code></pre>
 <li><strong>製品</strong>:CloudFormationテンプレートで定義した構成。</li>
 <li><strong>ポートフォリオ</strong>:関連する製品をまとめたもの。他のアカウントから<strong>共有(インポート)されたポートフォリオでは、製品や制約を変更できない</strong>。受け取った側の管理者ができるのは、利用者(IAMユーザー/グループ/ロール)へのアクセス許可の付与と、製品を自分のアカウントの<strong>ローカルポートフォリオ</strong>に追加すること。ローカルポートフォリオでは制約を追加できるが、共有元から引き継いだ制約は外せない。</li>
 </ul>
-<p>管理者は、ポートフォリオに対して「誰が使えるか(IAMユーザー/グループ/ロール)」と「制約」を設定します。<strong>起動制約</strong>を使うと、利用者本人には強い権限がなくても、指定したIAMロールの権限で製品を起動できます。ポートフォリオは他のアカウントやOrganizations全体と共有できます。</p>
+<p>管理者は、ポートフォリオに対して「誰が使えるか(IAMユーザー/グループ/ロール)」と「制約」を設定します。<strong>起動制約</strong>を使うと、利用者本人には強い権限がなくても、指定したIAMロールの権限で製品を起動できます。ポートフォリオは他のアカウントやOrganizations全体と共有できます。ロールの仕組みは用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 822 202" style="max-width:822px;min-width:658px" role="img" aria-label="図1 Service Catalogの構成。管理者がCloudFormationテンプレートを製品として登録し、ポートフォリオにまとめて利用者に公開する。利用者はカタログから承認済みの構成だけを起動できる。"><defs><marker id="service-catalog-dgservices-service-catalog-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -13550,7 +14042,7 @@ bucket.grantRead(fn);</code></pre>
 <tr><td>StackSet制約</td><td>製品を、複数のアカウント・リージョンへStackSetとして展開する範囲を指定する</td></tr>
 <tr><td>リソース更新制約</td><td>起動後のリソースに対するタグの更新を許可するかを決める</td></tr>
 </table></div>
-<p><strong>TagOption</strong>を使うと、製品の起動時に付けるタグのキーと選べる値を、管理者が決められます。コスト配分タグの統一に役立ちます。</p>
+<p><strong>TagOption</strong>を使うと、製品の起動時に付けるタグのキーと選べる値を、管理者が決められます。コスト配分タグの統一に役立ちます。タグの考え方は用語ページ「<a href="../terms/tags.html">タグ</a>」を参照してください。</p>
 <p>起動制約で指定するロールには、製品が作るリソースの作成権限が必要です。また、利用者側にはService Catalogの利用権限(<code>servicecatalog:*</code>相当の起動操作)が必要で、リソースの作成権限は不要になります。</p>
 <figure class="figure">
 <div class="fig-scroll">
@@ -13724,6 +14216,159 @@ bucket.grantRead(fn);</code></pre>
 </ul>
 </section>
 </article>
+<article class="booklet-page" id="p-resource-groups">
+<div class="page-head hero" style="--cat:#E7157B">
+<div class="hero-text">
+<span class="category">マネジメントとガバナンス</span>
+<h1>AWS Resource Groups と Tag Editor</h1>
+<p class="lead">タグやCloudFormationスタックでリソースをまとめ、Tag Editorで複数のリソースにタグを一括で付ける</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="resource-groups-c1">1. サービス概要<a class="anchor" href="#resource-groups-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Resource Groups</strong>は、タグや<a href="#p-cloudformation">CloudFormation</a>のスタックを条件に、リソースを<strong>グループ</strong>にまとめるサービスです。同じ条件のリソースを一覧にしたり、Systems Managerなどの操作の対象にしたりできます。</p>
+<p><strong>Tag Editor</strong>は、リージョンを指定してリソースを検索し、選んだ複数のリソースに<strong>タグをまとめて付ける・変える・外す</strong>ための機能です。グループの条件になるタグは、まずTag Editorで付けておきます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 922 202" style="max-width:922px;min-width:738px" role="img" aria-label="図1 Tag Editorで、リソースに同じタグを一括で付ける。そのタグを条件にリソースグループを作ると、Systems Managerなどでまとめて操作できる。"><defs><marker id="resource-groups-dgservices-resource-groups-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="te">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">Tag Editor</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">一括でタグ付け</text>
+</g>
+<g data-node="ec2">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="62" text-anchor="middle" class="dg-t">EC2</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">Stage=Test</text>
+</g>
+<g data-node="s3">
+<rect x="272" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="147" text-anchor="middle" class="dg-t">S3バケット</text>
+<text x="347" y="165" text-anchor="middle" class="dg-s">Stage=Test</text>
+</g>
+<g data-node="grp">
+<rect x="510" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="104" text-anchor="middle" class="dg-tb">リソースグループ</text>
+<text x="585" y="122" text-anchor="middle" class="dg-s">タグ・スタックで定義</text>
+</g>
+<g data-node="ssm">
+<rect x="748" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="823" y="104" text-anchor="middle" class="dg-t">グループ単位で操作</text>
+<text x="823" y="122" text-anchor="middle" class="dg-s">Systems Manager</text>
+</g>
+<path d="M184.0,95.6 L272.0,79.9" class="dg-line" marker-end="url(#resource-groups-dgservices-resource-groups-1)"/>
+<text x="228" y="92" text-anchor="middle" class="dg-s dg-halo">タグ付け</text>
+<path d="M184.0,122.4 L272.0,138.1" class="dg-line" marker-end="url(#resource-groups-dgservices-resource-groups-1)"/>
+<path d="M422.0,79.9 L510.0,95.6" class="dg-line" marker-end="url(#resource-groups-dgservices-resource-groups-1)"/>
+<path d="M422.0,138.1 L510.0,122.4" class="dg-line" marker-end="url(#resource-groups-dgservices-resource-groups-1)"/>
+<path d="M660.0,109.0 L748.0,109.0" class="dg-line" marker-end="url(#resource-groups-dgservices-resource-groups-1)"/>
+</svg>
+</div>
+<figcaption>図1 Tag Editorで、リソースに同じタグを一括で付ける。そのタグを条件にリソースグループを作ると、Systems Managerなどでまとめて操作できる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="resource-groups-c2">2. 主な機能・特徴<a class="anchor" href="#resource-groups-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="resource-groups-c2-1">グループの種類<a class="anchor" href="#resource-groups-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>条件の決め方</th><th>例</th></tr>
+<tr><td>タグベース(TAG_FILTERS_1_0)</td><td>リソースの種類(例: <code>AWS::EC2::Instance</code>)と、タグのキー・値で絞る。種類に <code>AWS::AllSupported</code> を指定すると、対応するすべての種類が対象になる</td><td><code>Stage=Test</code> のEC2インスタンスとS3バケット</td></tr>
+<tr><td>CloudFormationスタックベース</td><td>現在のリージョンにある1つのスタックを選び、その中からリソースの種類で絞る</td><td>スタック「web-prod」のEC2インスタンスとEBSボリューム</td></tr>
+</table></div>
+<ul>
+<li>タグベースのグループには、条件に合うリソースが自動で入る。タグを付けたり外したりすると、メンバーが変わる。</li>
+<li>スタックベースのグループは、1つのスタックだけを元にする。親スタックのグループには、子スタックが1つのメンバーとして入り、子スタックの中のリソースは展開されない。</li>
+</ul>
+
+<h3 id="resource-groups-c2-2">Tag Editor<a class="anchor" href="#resource-groups-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>検索</strong>:リソースの種類、タグのキーと値、リージョンで絞り込み、対象のリソースの一覧を作る。</li>
+<li><strong>一括のタグ付け</strong>:一覧で選んだリソースに、キーと値をまとめて付ける。1つのリソースに付けられるタグは最大50個。</li>
+<li><strong>対応範囲</strong>:Tag Editorとグループで扱えるリソースの種類は、サービスごとに異なる。対応していないサービスのリソースは、そのサービス独自のタグ操作を使う(例: <code>aws iam tag-role</code>)。</li>
+<li><strong>タグポリシーの準拠レポート</strong>:<a href="#p-organizations">AWS Organizations</a>のタグポリシーに、各リソースが準拠しているかを報告させられる(Tagging APIの <code>StartReportCreation</code>)。</li>
+</ul>
+
+<h3 id="resource-groups-c2-3">APIで使う<a class="anchor" href="#resource-groups-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Resource Groupsには2つのAPIがあり、役割が違います。</p>
+<div class="table-wrap"><table>
+<tr><th>API</th><th>主な操作</th><th>用途</th></tr>
+<tr><td>Resource Groups API</td><td><code>CreateGroup</code>、<code>SearchResources</code> など</td><td>グループの作成・更新・削除、グループへのタグ付け、クエリによるリソースの検索</td></tr>
+<tr><td>Resource Groups Tagging API</td><td><code>GetResources</code>、<code>TagResources</code>、<code>UntagResources</code>、<code>GetTagKeys</code>、<code>GetTagValues</code></td><td>リソースのタグの検索・付与・削除。タグの一覧や値の一覧の取得</td></tr>
+</table></div>
+<ul>
+<li><code>TagResources</code>は、1回の呼び出しで最大20個のARNにタグを付けられる。</li>
+<li><code>GetResources</code>は、1回に指定できるARNが最大100個。結果はページ単位で返り、呼び出しの回数にはレート制限がある。</li>
+<li>Tagging APIは、指定したリージョンのリソースだけを対象にする。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="resource-groups-c3">3. ユースケース<a class="anchor" href="#resource-groups-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>本番環境のすべてのリソースに <code>Environment=prod</code> のタグを付け、そのタグで一覧を作る</li>
+<li>既存の多数のリソースに、部署のタグをTag Editorで一括で付ける</li>
+<li>タグで作ったグループを対象に、Systems ManagerのRun CommandやAutomationで一括の操作を行う</li>
+<li>CloudFormationのスタックごとにリソースをまとめて、スタックの単位で確認する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="resource-groups-c4">4. 料金の考え方<a class="anchor" href="#resource-groups-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>リソースグループとTag Editorの機能そのものに、単独の料金は設定されていません。料金は、タグを付けたリソース(EC2やS3など)の料金として発生します。タグは費用の集計にも使えます。コスト配分タグとして有効化すると、<a href="#p-cost-explorer">Cost Explorer</a>でタグごとの費用を確認できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="resource-groups-c5">5. 関連サービス<a class="anchor" href="#resource-groups-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-systems-manager">AWS Systems Manager</a>:リソースグループを対象に、Run CommandやAutomationを実行する</li>
+<li><a href="#p-cloudformation">AWS CloudFormation</a>:スタックベースのグループの元になるスタック</li>
+<li><a href="#p-organizations">AWS Organizations</a>:タグポリシーと、タグの準拠レポート</li>
+<li><a href="#p-config">AWS Config</a>:リソースの構成とタグの変更を記録する</li>
+<li><a href="#p-backup">AWS Backup</a>:タグを条件に、バックアップの対象のリソースを指定する</li>
+<li><a href="#p-cost-explorer">AWS Cost Explorer</a>:コスト配分タグで、タグごとの費用を分析する</li>
+<li><a href="#p-iam">AWS IAM</a>:タグを条件にして、アクセスを許可・拒否する</li>
+<li>関連する用語:<a href="../terms/tags.html">タグ</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="resource-groups-c6">6. 試験・実務でのポイント<a class="anchor" href="#resource-groups-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>グループの作り方</h4>
+<ul>
+<li>「タグの値で同じ役割のリソースをまとめたい」→ <strong class="em">タグベース</strong>のリソースグループ。</li>
+<li>「CloudFormationのスタックごとにまとめたい」→ <strong class="em">CloudFormationスタックベース</strong>(1つのスタック・現在のリージョンだけ)。</li>
+<li>親スタックのグループには、子スタックのリソースは入らない(子スタックが1つのメンバーとして入る)。</li>
+</ul>
+<h4>タグ付け</h4>
+<ul>
+<li>既存のリソースに、まとめて同じタグを付ける → <strong class="em">Tag Editor</strong>。</li>
+<li>APIで一括で付ける → <code>TagResources</code>(1回の呼び出しで最大20個のARN)。</li>
+<li>Tagging APIはリージョンごとに動く。別のリージョンのリソースは、そのリージョンを指定して操作する。</li>
+<li>対応していないサービスのリソースは、Tag Editorやグループの対象外。そのサービスのタグ操作を使う。</li>
+</ul>
+<h4>検索・監査</h4>
+<ul>
+<li>タグのキーや値の一覧を調べる → <code>GetTagKeys</code>・<code>GetTagValues</code>。</li>
+<li>タグのルールを守れているかを確認する → Organizationsのタグポリシーと、準拠レポート(<code>StartReportCreation</code>)。</li>
+</ul>
+<h4>SOA-C03での位置づけ</h4>
+<ul>
+<li>タグで対象を指定して、Systems Managerなどで一括で操作する運用の基礎として扱う。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="resource-groups-c7">7. まとめ<a class="anchor" href="#resource-groups-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS Resource Groupsは、タグかCloudFormationスタックを条件に、リソースをグループにまとめるサービス。</li>
+<li>Tag Editorで既存のリソースに一括でタグを付け、そのタグを条件にグループを作る。</li>
+<li>グループ用のResource Groups APIと、タグ用のResource Groups Tagging APIを使い分ける。</li>
+</ul>
+</section>
+</article>
 <article class="booklet-page" id="p-managed-grafana">
 <div class="page-head hero" style="--cat:#E7157B">
 <div class="hero-text">
@@ -13795,13 +14440,13 @@ bucket.grantRead(fn);</code></pre>
 <li>ワークスペースの作成を選択</li>
 <li>ワークスペース名・バージョンを指定</li>
 <li>認証方式を選択(IAM Identity Center/SAML 2.0)</li>
-<li>アクセス許可タイプを選択(サービスマネージド/カスタマーマネージドのIAMロール)</li>
+<li>アクセス許可タイプを選択(サービスマネージド/カスタマーマネージドのIAMロール)。IAMロールの仕組みは用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</li>
 <li>連携するAWSデータソースを選択(CloudWatch、X-Rayなど)</li>
 </ol>
 
 <h3 id="managed-grafana-c2-2">モニタリング<a class="anchor" href="#managed-grafana-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
-<li>連携するAWSサービス:<strong>CloudWatch</strong>(メトリクス・ログ)、<strong>X-Ray</strong>(分散トレーシング)、<strong>Managed Service for Prometheus</strong></li>
+<li>連携するAWSサービス:<strong>CloudWatch</strong>(メトリクス・ログ)、<strong>X-Ray</strong>(分散トレーシング)、<strong>Managed Service for Prometheus</strong>。CloudWatchなどの使い分けは用語ページ「<a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>」を参照してください。</li>
 <li>アラートと通知:しきい値ベースのアラート(例:エラーレートが5%を超えた)を設定し、SNSトピックなどへ通知</li>
 </ul>
 
@@ -13955,6 +14600,7 @@ bucket.grantRead(fn);</code></pre>
         labels:
           severity: warning</code></pre>
 <p>自動修復の流れ:<code>AMP Alertmanager → SNS/EventBridge → Lambda/SSM Automation → Kubernetes API/AWS API</code></p>
+<p>何かが起きたイベントをきっかけに修復を自動で行う考え方は用語ページ「<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a>」を参照してください。</p>
 
 <h3 id="managed-prometheus-c2-4">AWSサービスとの統合<a class="anchor" href="#managed-prometheus-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
@@ -13987,7 +14633,7 @@ bucket.grantRead(fn);</code></pre>
 <li><a href="#p-eks">Amazon EKS</a>:主な監視対象</li>
 <li><a href="#p-managed-grafana">Amazon Managed Grafana</a>:可視化</li>
 <li><a href="#p-sns">Amazon SNS</a>/<a href="#p-eventbridge">Amazon EventBridge</a>:通知・自動化</li>
-<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:AWS標準の監視サービス</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:AWS標準の監視サービス。CloudWatchなどの使い分けは用語ページ「<a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>」を参照してください。</li>
 </ul>
 </section>
 
@@ -14096,7 +14742,7 @@ bucket.grantRead(fn);</code></pre>
 
 <section class="chapter">
 <h2 id="devops-agent-c4">4. 料金の考え方<a class="anchor" href="#devops-agent-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>エージェントが作業(調査・評価・SRE作業)をした時間に応じて<strong>秒単位</strong>で課金されます。待機中は課金されません。新規の利用者には2か月の無料試用があります。</p>
+<p>エージェントが作業(調査・評価・SRE作業)をした時間に応じて<strong>秒単位</strong>で課金されます。待機中は課金されません。従量課金の基本は用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。新規の利用者には2か月の無料試用があります。</p>
 </section>
 
 <section class="chapter">
@@ -14117,7 +14763,7 @@ bucket.grantRead(fn);</code></pre>
 <li>「障害の<strong>根本原因の調査をAIエージェントで自動化</strong>」「MTTRの短縮」→ <strong>DevOps Agent</strong>。</li>
 <li>調べる範囲(アカウント・連携先・権限)は<strong>エージェントスペース</strong>で決める。</li>
 <li>エージェントは原因と対応策を示す。復旧の判断・操作は運用担当者が行う。</li>
-<li>メトリクスの異常の検知そのものはCloudWatchのアラームや異常検出で行い、その後の調査をDevOps Agentが担う。</li>
+<li>メトリクスの異常の検知そのものはCloudWatchのアラームや異常検出で行い、その後の調査をDevOps Agentが担う。アラームの状態が変わる仕組みは用語ページ「<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>」を参照してください。</li>
 </ul></div>
 </section>
 
@@ -14263,6 +14909,207 @@ bucket.grantRead(fn);</code></pre>
 <ul>
 <li>Cost Explorerは、料金と使用量を軸ごとに分けて分析し、将来の費用を予測するツール。</li>
 <li>RI・Savings Plansの推奨と効果の確認にも使う。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-budgets">
+<div class="page-head hero" style="--cat:#7AA116">
+<div class="hero-text">
+<span class="category">クラウド財務管理</span>
+<h1>AWS Budgets</h1>
+<p class="lead">費用や使用量に予算を決め、超えそうなときに通知し、必要なら予算アクションで自動的に制限する</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="budgets-c1">1. サービス概要<a class="anchor" href="#budgets-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Budgets</strong>は、AWSの費用や使用量に予算(目標の上限)を決めて、実績や予測が予算に近づいたとき・超えそうなときに通知するサービスです。通知だけでなく、超えたときは<strong>予算アクション</strong>で、IAMポリシーやSCPの適用、EC2・RDSインスタンスの停止を自動で行えます。</p>
+<p>予算を作って通知を受けるだけなら料金はかかりません。予算アクションを使う場合の料金は4章で説明します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 AWS Budgetsの流れ。請求データと予算を比べ、実績または予測がしきい値を超えると、通知を送るか、設定したアクションを実行する。"><defs><marker id="budgets-dgservices-budgets-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="bill">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">請求・使用量</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">1日数回更新</text>
+</g>
+<g data-node="bud">
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="147" text-anchor="middle" class="dg-t">予算</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">金額・使用量の上限</text>
+</g>
+<g data-node="calc">
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">実績・予測と比較</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">しきい値で判定</text>
+</g>
+<g data-node="notice">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">通知</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">メール・SNS</text>
+</g>
+<g data-node="act">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">予算アクション</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">自動・承認後に実行</text>
+</g>
+<path d="M184.0,79.9 L272.0,95.6" class="dg-line" marker-end="url(#budgets-dgservices-budgets-1)"/>
+<path d="M184.0,138.1 L272.0,122.4" class="dg-line" marker-end="url(#budgets-dgservices-budgets-1)"/>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#budgets-dgservices-budgets-1)"/>
+<path d="M422.0,122.4 L510.0,138.1" class="dg-line" marker-end="url(#budgets-dgservices-budgets-1)"/>
+</svg>
+</div>
+<figcaption>図1 AWS Budgetsの流れ。請求データと予算を比べ、実績または予測がしきい値を超えると、通知を送るか、設定したアクションを実行する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="budgets-c2">2. 主な機能・特徴<a class="anchor" href="#budgets-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="budgets-c2-1">予算の種類<a class="anchor" href="#budgets-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>監視する値</th><th>通知されるとき</th></tr>
+<tr><td>コスト予算</td><td>費用(金額)</td><td>実績または予測が予算の金額を超えたとき</td></tr>
+<tr><td>使用量予算</td><td>1つ以上のサービスの使用量(例: EC2の使用時間)</td><td>使用量が予算に近づいた・超えたとき</td></tr>
+<tr><td>RI使用率予算・RIカバレッジ予算</td><td>リザーブドインスタンス(RI)の使用率・カバレッジ</td><td>目標を下回ったとき</td></tr>
+<tr><td>Savings Plans使用率予算・カバレッジ予算</td><td>Savings Plansの使用率・カバレッジ</td><td>目標を下回ったとき</td></tr>
+</table></div>
+<ul>
+<li>期間は、毎月・四半期・毎年・毎日(使用率・カバレッジ予算)から選べる。開始日と終了日を決めるカスタム期間(年度や案件期間に合わせる)も作れる。カスタム期間は自動では更新されず、終了日は開始日から3年以内にする。</li>
+<li>コスト予算では、費用の計算方法(ブレンデッド、アンブレンデッド、償却など)を選べる。割引・返金・クレジット・税・サポート料金を含めるかも選べる。</li>
+</ul>
+
+<h3 id="budgets-c2-2">通知<a class="anchor" href="#budgets-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>通知の基準は、<strong>実績</strong>(課金が発生した後)と<strong>予測</strong>(発生する前)から選べる。予測の通知なら、予算を超えそうなことを先に知らせられる。</li>
+<li>送り先は、1つの通知あたりメールアドレス最大10件と、Amazon SNSトピック1つ。</li>
+<li>予測の通知を計算するには、約5週間分の利用データが必要。データがそろうまでは、予測のアラートは発動しない。</li>
+<li>課金から通知までには遅れがある。請求データの更新に合わせて計算されるため、通知を受けたあとも費用が増えることがある。</li>
+<li>実績の通知は、予算期間ごとに1回だけ送られる。予測の通知は、予測値が予算を上下した場合に期間内で何度か送られることがある。</li>
+</ul>
+
+<h3 id="budgets-c2-3">予算アクション<a class="anchor" href="#budgets-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>予算を超えた(または予測で超えそう)ときに、設定したアクションを<strong>自動で実行</strong>するか、承認したあとに実行するかを選べます。アクションの種類は次のとおりです。</p>
+<ul>
+<li>IAMポリシーの適用:ユーザー・グループ・ロールに、EC2の新規作成を拒否するポリシーなどを付ける。</li>
+<li>SCP(サービスコントロールポリシー)の適用:組織のメンバーアカウントに、管理アカウントからSCPを付ける。</li>
+<li>EC2・RDSインスタンスの停止:対象のインスタンスを指定して停止する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 922 202" style="max-width:922px;min-width:738px" role="img" aria-label="図2 予算アクションの流れ。予測が予算を超えそうになったら、自動か承認後にアクションを実行する。IAMポリシーやSCPで作成を止めたり、EC2・RDSを停止したりする。"><defs><marker id="budgets-dgservices-budgets-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="fc">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">予測が超えそう</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">例: 予算の90%</text>
+</g>
+<g data-node="run">
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="104" text-anchor="middle" class="dg-t">実行方法</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">自動・承認後</text>
+</g>
+<g data-node="iam">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="62" text-anchor="middle" class="dg-tb">IAMポリシー</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">新規作成を拒否</text>
+</g>
+<g data-node="scp">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="147" text-anchor="middle" class="dg-tb">SCP</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">組織の複数アカウント</text>
+</g>
+<g data-node="stop">
+<rect x="748" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="823" y="104" text-anchor="middle" class="dg-t">EC2・RDSを停止</text>
+<text x="823" y="122" text-anchor="middle" class="dg-s">対象を指定</text>
+</g>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#budgets-dgservices-budgets-2)"/>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#budgets-dgservices-budgets-2)"/>
+<path d="M422.0,122.4 L510.0,138.1" class="dg-line" marker-end="url(#budgets-dgservices-budgets-2)"/>
+<path d="M422.0,109.0 L748.0,109.0" class="dg-line" marker-end="url(#budgets-dgservices-budgets-2)"/>
+</svg>
+</div>
+<figcaption>図2 予算アクションの流れ。予測が予算を超えそうになったら、自動か承認後にアクションを実行する。IAMポリシーやSCPで作成を止めたり、EC2・RDSを停止したりする。</figcaption>
+</figure>
+
+<h3 id="budgets-c2-4">Budgets Reports(予算レポート)<a class="anchor" href="#budgets-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>複数の予算の状況を、日次・週次・月次のレポートとしてメールで受け取る機能です。予算の数が多いときに、どの予算が危ないかを一覧で確認できます。レポートは1通ごとに料金がかかります(4章)。</p>
+
+<h3 id="budgets-c2-5">Cost Explorerとの違い<a class="anchor" href="#budgets-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>AWS Budgets</th><th>Cost Explorer</th></tr>
+<tr><td>目的</td><td>決めた予算(目標)に対して、超えそうか・超えたかを監視する</td><td>過去の費用と使用量を分析し、将来の費用を予測する</td></tr>
+<tr><td>見る軸</td><td>予算の金額・使用量と、実績・予測の差</td><td>サービス、アカウント、タグなどで分けた費用の推移</td></tr>
+<tr><td>行動</td><td>通知と、予算アクション(自動での制限)</td><td>分析の結果を見て、人が判断して対応する</td></tr>
+<tr><td>RI・Savings Plans</td><td>使用率・カバレッジの予算で、目標を下回ったら通知</td><td>推奨事項、使用率、カバレッジを画面で確認</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="budgets-c3">3. ユースケース<a class="anchor" href="#budgets-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>月の費用が予算の一定割合を超えそうになったら、担当者にメールとSNSで知らせる</li>
+<li>開発用のアカウントで、予算を超えたら新しいEC2インスタンスを作れないようにする</li>
+<li>Savings Plansの使用率が目標を下回ったら通知を受け、購入量を見直す</li>
+<li>年度末や案件期間に合わせたカスタム期間の予算で、期間全体の費用を管理する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="budgets-c4">4. 料金の考え方<a class="anchor" href="#budgets-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>予算の作成・監視・通知は無料です。予算アクションは、アクションを設定した予算のうち<strong>最初の2つまで無料</strong>です。3つ目以降は1つにつき1日$0.10かかります。1つの予算にアクションをいくつ設定しても、無料の枠の数は変わりません。</p>
+<p>Budgets Reportsは、レポート1通ごとに$0.01かかります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="budgets-c5">5. 関連サービス<a class="anchor" href="#budgets-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-cost-explorer">AWS Cost Explorer</a>:費用の内訳と推移の分析。どこで費用が増えているかを調べる</li>
+<li><a href="#p-cost-and-usage-reports">AWS Cost and Usage Reports</a>:詳細な請求データの出力</li>
+<li><a href="#p-savings-plans">Savings Plans</a>:使用率・カバレッジの予算で、購入量が適切かを監視</li>
+<li><a href="#p-organizations">AWS Organizations</a>:管理アカウントから、メンバーアカウントの予算やSCPを使う</li>
+<li><a href="#p-iam">AWS IAM</a>:予算アクションで適用するポリシー。Budgetsがアクションを実行するためのロール</li>
+<li><a href="#p-ec2">Amazon EC2</a>/<a href="#p-rds">Amazon RDS</a>:予算アクションで停止できるインスタンス</li>
+<li><a href="#p-sns">Amazon SNS</a>:予算の通知の送り先になるトピック</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:請求額のアラーム。予算とは別に用意する監視の仕組み</li>
+<li>関連する用語:<a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>、<a href="../terms/pricing-basics.html">料金の基本</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="budgets-c6">6. 試験・実務でのポイント<a class="anchor" href="#budgets-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>通知と予測</h4>
+<ul>
+<li>「費用が予算を超えそうなら、先に知らせたい」→ <strong class="em">予測の通知</strong>。実績の通知は、課金が発生したあとに送られる。</li>
+<li>予測の通知が出ない → 利用データが約5週間分そろっていない(使い始めたばかりのアカウントなど)。</li>
+<li>通知が遅れる → 請求データは1日1回以上更新され、予算の状況は最大で1日3回更新される。リアルタイムの監視ではない。</li>
+<li>通知の送り先は、メール最大10件と、SNSトピック1つ(1通知につき)。SNSを使うと、SMSなど別の方法でも受け取れる。</li>
+</ul>
+<h4>予算アクション</h4>
+<ul>
+<li>「超えたら新しいEC2を作れないようにしたい」→ 予算アクションで<strong>IAMポリシー</strong>またはSCPを適用する。</li>
+<li>「超えたらインスタンスを止めたい」→ EC2・RDSを対象に指定する。Auto Scalingグループの中のインスタンスは、停止しても再起動や新規の起動が行われるため、起動の権限を外す2つ目のアクションを組み合わせる。</li>
+<li>管理アカウントから、別のアカウントのEC2・RDSを停止の対象にはできない(SCPは別のアカウントに適用できる)。</li>
+</ul>
+<h4>使い分け・組織</h4>
+<ul>
+<li>費用の内訳や推移を見る → Cost Explorer。目標との差を知らせる・制限する → Budgets。詳しくは<a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>
+<li>RI・Savings Plansの使用率やカバレッジが下がったら知らせたい → 使用率予算・カバレッジ予算。</li>
+<li>管理アカウントは、メンバーアカウントの費用を追う予算を作れる。ただし、メンバーアカウントが同じ予算を見るには、管理アカウントへのアクセス権が必要。</li>
+</ul>
+<h4>SOA-C03での位置づけ</h4>
+<ul>
+<li>費用の監視(通知)と自動の制限(アクション)を組み合わせた運用の例として扱う。</li>
+<li>Cost Explorerとの違い(分析するか、目標を監視するか)を区別できることが基本。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="budgets-c7">7. まとめ<a class="anchor" href="#budgets-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS Budgetsは、費用や使用量の予算に対して、実績と予測を監視して通知する。</li>
+<li>予算アクションで、IAMポリシー・SCPの適用やEC2・RDSの停止を、自動または承認後に行える。</li>
+<li>分析はCost Explorer、目標との比較と制限はBudgetsと使い分ける。</li>
 </ul>
 </section>
 </article>
@@ -15104,7 +15951,7 @@ bucket.grantRead(fn);</code></pre>
 </div>
 <section class="chapter">
 <h2 id="step-functions-c1">1. サービス概要<a class="anchor" href="#step-functions-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>AWS Step Functions</strong>は、<strong>複数の処理をつなぎ合わせてワークフローを作成</strong>するサービスです。Lambdaや各種AWSサービスの呼び出しを、順番・分岐・並列・リトライを含めて定義できます。</p>
+<p><strong>AWS Step Functions</strong>は、<strong>複数の処理をつなぎ合わせてワークフローを作成</strong>するサービスです。Lambdaや各種AWSサービスの呼び出しを、順番・分岐・並列・リトライを含めて定義できます。SQSやEventBridgeなどのメッセージングとの使い分けは用語ページ「<a href="../terms/messaging-comparison.html">メッセージングサービスの選び方</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -15179,7 +16026,7 @@ bucket.grantRead(fn);</code></pre>
   <li><code>BackoffRate</code>:待機時間の増加倍率</li>
   </ul></li>
 </ul>
-<p>AWSの仕様では <code>MaxAttempts</code> は「初回実行を含まないリトライ回数」です(MaxAttempts=3なら、初回+最大3回のリトライ)。また、失敗後の遷移先は <code>Catch</code>(<code>ErrorEquals</code>・<code>Next</code>・<code>ResultPath</code>)で指定します。</p>
+<p>AWSの仕様では <code>MaxAttempts</code> は「初回実行を含まないリトライ回数」です(MaxAttempts=3なら、初回+最大3回のリトライ)。また、失敗後の遷移先は <code>Catch</code>(<code>ErrorEquals</code>・<code>Next</code>・<code>ResultPath</code>)で指定します。リトライの待ち方(バックオフ)の考え方は用語ページ「<a href="../terms/throttling-retry.html">スロットリングとリトライ</a>」を参照してください。</p>
 
 <h3 id="step-functions-c2-4">ステートの種類<a class="anchor" href="#step-functions-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
@@ -15290,12 +16137,68 @@ bucket.grantRead(fn);</code></pre>
 <h2 id="appsync-c2">2. 主な機能・特徴<a class="anchor" href="#appsync-c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>クライアントが必要な項目だけを指定して取得できる(GraphQL)。</li>
-</ul>
-<ul>
-<li><strong>スキーマ</strong>でデータの型を定義し、<strong>リゾルバー</strong>で各フィールドをデータソース(DynamoDB、Lambda、RDS、HTTPなど)に結びつける。</li>
+<li><strong>スキーマ</strong>でデータの型を定義し、<strong>リゾルバー</strong>で各フィールドをデータソース(DynamoDB、Lambda、Aurora Serverless、Amazon OpenSearch Service、HTTPエンドポイントなど)に結びつける。</li>
 <li>操作は <strong>Query</strong>(取得)、<strong>Mutation</strong>(更新)、<strong>Subscription</strong>(リアルタイム通知)の3種類。</li>
-<li>Subscriptionにより、WebSocketでデータの変更をリアルタイムにクライアントへ配信できる。</li>
 <li>認証はAPIキー、IAM、Cognitoユーザープール、OIDC、Lambdaに対応。</li>
+</ul>
+
+<h3 id="appsync-c2-1">リクエストの流れとリゾルバー<a class="anchor" href="#appsync-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>クライアントがGraphQLのクエリを送ると、AppSyncはスキーマに従って、フィールドごとに<strong>リゾルバー</strong>を実行します。リゾルバーは、リクエストをデータソースへの操作に変換し、結果をGraphQLの応答の形に整えます。1つのデータソースへの操作を行う<strong>ユニットリゾルバー</strong>と、複数の処理を順番につなぐ<strong>パイプラインリゾルバー</strong>の2種類があります。</p>
+<p>リゾルバーの処理は、公式ドキュメントでは現在 <code>APPSYNC_JS</code> ランタイム(JavaScript)で書くことが案内されています。</p>
+
+<h3 id="appsync-c2-2">リアルタイム更新(Subscription)<a class="anchor" href="#appsync-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>クライアントは<strong>WebSocket</strong>でAppSyncに接続し、<code>subscription</code>を登録して待ちます。どのMutationの実行で通知するかは、スキーマの <code>@aws_subscribe(mutations: [...])</code> で指定します。Mutation(例:<code>sendMessage</code>)が実行されると、AppSyncが購読中のクライアントに変更を送ります。1本のWebSocket接続で複数の購読を扱えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 758 227" style="max-width:758px;min-width:606px" role="img" aria-label="図2 Subscriptionの流れ。購読するクライアントはWebSocketで接続したまま待ち、別のクライアントがMutationを実行すると、AppSyncが変更を購読中のクライアントに配信する。"><defs><marker id="appsync-dgservices-appsync-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="sub">
+<rect x="34" y="43" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="64" text-anchor="middle" class="dg-t">購読クライアント</text>
+<text x="114" y="82" text-anchor="middle" class="dg-s">subscription</text>
+</g>
+<g data-node="as">
+<rect x="304" y="88" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="384" y="110" text-anchor="middle" class="dg-tb">AppSync</text>
+<text x="384" y="128" text-anchor="middle" class="dg-s">WebSocket</text>
+</g>
+<g data-node="pub">
+<rect x="574" y="49" width="160" height="40" rx="8" class="dg-blue"/>
+<text x="654" y="73" text-anchor="middle" class="dg-t">更新するクライアント</text>
+</g>
+<g data-node="ddb">
+<rect x="574" y="151" width="160" height="52" rx="8" class="dg-box"/>
+<text x="654" y="172" text-anchor="middle" class="dg-t">データソース</text>
+<text x="654" y="190" text-anchor="middle" class="dg-s">DynamoDBなど</text>
+</g>
+<path d="M194.0,82.3 L304.0,100.7" class="dg-line" marker-end="url(#appsync-dgservices-appsync-2)" marker-start="url(#appsync-dgservices-appsync-2)"/>
+<text x="249" y="96" text-anchor="middle" class="dg-s dg-halo">購読</text>
+<path d="M574.0,82.3 L464.0,100.7" class="dg-line" marker-end="url(#appsync-dgservices-appsync-2)"/>
+<text x="519" y="96" text-anchor="middle" class="dg-s dg-halo">Mutation</text>
+<path d="M464.0,132.7 L574.0,158.3" class="dg-line" marker-end="url(#appsync-dgservices-appsync-2)"/>
+<text x="519" y="150" text-anchor="middle" class="dg-s dg-halo">リゾルバー</text>
+</svg>
+</div>
+<figcaption>図2 Subscriptionの流れ。購読するクライアントはWebSocketで接続したまま待ち、別のクライアントがMutationを実行すると、AppSyncが変更を購読中のクライアントに配信する。</figcaption>
+</figure>
+<p>2025年3月からは、GraphQLのQuery・Mutation・Subscriptionとは別に、WebSocketでイベントを配信する<strong>AppSync Events</strong>も提供されています。</p>
+
+<h3 id="appsync-c2-3">認証の設定<a class="anchor" href="#appsync-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>APIごとに<strong>既定の認証方式</strong>を1つ決め、必要に応じて<strong>追加の認証方式</strong>を組み合わせられます。</p>
+<ul>
+<li><strong>APIキー</strong>:認証なしのAPIの呼び出し回数(スロットリング)を制御する簡易な方式。</li>
+<li><strong>IAM</strong>:IAMユーザーやロールの認証情報で署名したリクエスト(SigV4)で認証する。用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</li>
+<li><strong>Amazon Cognitoユーザープール</strong>・<strong>OIDC</strong>:ログインしたユーザーのトークンで認証する。OIDCは用語ページ「<a href="../terms/oidc.html">OIDC(OpenID Connect)</a>」を参照してください。</li>
+<li><strong>Lambda</strong>:独自の認可ロジックをLambda関数で実装する。</li>
+</ul>
+
+<h3 id="appsync-c2-4">キャッシュとWAF<a class="anchor" href="#appsync-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>APIごとに専用のキャッシュを有効にすると、クエリや更新の応答を速くできます。キャッシュはインスタンスタイプを選び、時間単位で課金されます。<strong>AWS WAF</strong>のWebACLをAPIに関連付けると、ルールに基づいて不正なリクエストを遮断できます。</p>
+
+<h3 id="appsync-c2-5">制限<a class="anchor" href="#appsync-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>APIキーの有効期限は最長365日(延長も可能)。開発用や、公開しても安全なAPIに向く方式とされている。</li>
+<li>Lambda認可は、1つのAPIにつき1つだけ設定できる。Lambda関数がリゾルバーに渡すコンテキストデータは5MBまで。</li>
+<li>リアルタイム更新を受け取るには、クライアントが接続を維持しておく必要がある。</li>
 </ul>
 </section>
 
@@ -15303,32 +16206,39 @@ bucket.grantRead(fn);</code></pre>
 <h2 id="appsync-c3">3. ユースケース<a class="anchor" href="#appsync-c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>モバイルアプリで通信量を減らすため、必要なデータだけを取得</li>
-<li><span>チャットやダッシュボードなどのリアルタイム更新(Subscription)</span></li>
-<li><span>複数のデータソースを1つのAPIにまとめる</span></li>
+<li>チャットやダッシュボードなどのリアルタイム更新(Subscription)</li>
+<li>複数のデータソースを1つのAPIにまとめる</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="appsync-c4">4. 料金の考え方<a class="anchor" href="#appsync-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>クエリ・ミューテーションの実行回数と、リアルタイム更新のメッセージ数・接続時間に応じて課金されます。</p>
+<p>クエリ・Mutationの実行回数と、リアルタイム更新のメッセージ数・接続時間に応じて課金されます。専用キャッシュを使う場合は、選んだインスタンスの時間料金が加わります。データ転送料金は、EC2のデータ転送と同じ料金体系です。</p>
 </section>
 
 <section class="chapter">
 <h2 id="appsync-c5">5. 関連サービス<a class="anchor" href="#appsync-c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="#p-api-gateway">Amazon API Gateway</a>:REST/HTTP/WebSocket API</li>
-<li><a href="#p-dynamodb">Amazon DynamoDB</a>/<a href="#p-lambda">AWS Lambda</a>:代表的なデータソース</li>
+<li><a href="#p-dynamodb">Amazon DynamoDB</a>/<a href="#p-lambda">AWS Lambda</a>/<a href="#p-aurora">Amazon Aurora</a>:代表的なデータソース</li>
+<li><a href="#p-opensearch">Amazon OpenSearch Service</a>:検索用のデータソース</li>
 <li><a href="#p-cognito">Amazon Cognito</a>:ユーザー認証</li>
+<li><a href="#p-waf">AWS WAF</a>:APIへの不正なリクエストの遮断</li>
 <li><a href="#p-amplify">AWS Amplify</a>:AppSyncを使ったアプリ開発</li>
+<li>関連する用語:<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/caching-comparison.html">キャッシュの選び方</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="appsync-c6">6. 試験・実務でのポイント<a class="anchor" href="#appsync-c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
-<li>「GraphQL」「必要な項目だけ取得」→ <strong>AppSync</strong>。</li>
-<li>REST API → API Gateway。</li>
-<li>リアルタイムのデータ同期 → AppSyncのSubscription。</li>
+<li>「GraphQL」「必要な項目だけ取得」→ <strong>AppSync</strong>。REST API → API Gateway。</li>
+<li>リアルタイムのデータ同期・チャットの更新 → AppSyncの<strong>Subscription</strong>(WebSocket)。</li>
+<li>複数のデータソース(DynamoDB・Lambda・Aurora・OpenSearch)を1つのAPIにまとめる → リゾルバーで各フィールドをデータソースに結びつける。</li>
+<li>Cognitoユーザープール・OIDC・IAMで利用者を認証する → 既定または追加の認証方式として設定する。</li>
+<li>開発用や公開APIの簡易な認証 → APIキー(有効期限は最長365日)。</li>
+<li>APIへの不正なリクエストを遮断したい → <strong>AWS WAF</strong>のWebACLを関連付ける。</li>
+<li>同じクエリが多く、応答を速くしたい → APIごとの専用キャッシュ(時間単位の料金がかかる)。</li>
 </ul></div>
 </section>
 
@@ -15397,18 +16307,69 @@ bucket.grantRead(fn);</code></pre>
 <tr><td>Build</td><td>コードのビルド</td><td>CodeBuild</td></tr>
 <tr><td>Test</td><td>自動テスト</td><td>-</td></tr>
 <tr><td>Approval</td><td><strong class="em">手動承認(Manual Approval Action)</strong></td><td>-</td></tr>
-<tr><td>Deploy</td><td>デプロイ</td><td>CodeDeploy、ECS、Lambda、CloudFormation</td></tr>
+<tr><td>Deploy</td><td>デプロイ</td><td>CodeDeploy、ECS、Lambda、CloudFormation、Elastic Beanstalk</td></tr>
 </table></div>
 
-<h3 id="codepipeline-c2-2">デプロイ先の比較<a class="anchor" href="#codepipeline-c2-2" aria-label="この見出しへのリンク">#</a></h3>
-<div class="table-wrap"><table class="stack">
-<tr><th>項目</th><th>CodeDeploy</th><th>ECS</th><th>Lambda</th><th>CloudFormation</th></tr>
-<tr><td data-label="項目">主な用途</td><td data-label="CodeDeploy">EC2/オンプレミスへのアプリ配置</td><td data-label="ECS">ECSサービスの更新</td><td data-label="Lambda">Lambda関数の更新</td><td data-label="CloudFormation">AWSインフラの構築・更新</td></tr>
-<tr><td data-label="項目">デプロイ対象</td><td data-label="CodeDeploy">EC2、オンプレミスサーバー</td><td data-label="ECS">ECSタスク・コンテナ</td><td data-label="Lambda">Lambda関数</td><td data-label="CloudFormation">VPC・ALB・RDS・ECS・Lambdaなど</td></tr>
-<tr><td data-label="項目">管理対象</td><td data-label="CodeDeploy">アプリケーション</td><td data-label="ECS">コンテナ</td><td data-label="Lambda">関数コード</td><td data-label="CloudFormation">インフラリソース</td></tr>
-<tr><td data-label="項目">Blue/Green</td><td data-label="CodeDeploy">○</td><td data-label="ECS">○(CodeDeploy連携時)</td><td data-label="Lambda">○(エイリアス利用)</td><td data-label="CloudFormation">×</td></tr>
-<tr><td data-label="項目">ローリング更新</td><td data-label="CodeDeploy">○</td><td data-label="ECS">○</td><td data-label="Lambda">×</td><td data-label="CloudFormation">×</td></tr>
-<tr><td data-label="項目">自動ロールバック</td><td data-label="CodeDeploy">○</td><td data-label="ECS">○</td><td data-label="Lambda">○</td><td data-label="CloudFormation">○</td></tr>
+<h3 id="codepipeline-c2-2">実行とアクション<a class="anchor" href="#codepipeline-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>変更が1回入るたびに、パイプラインは<strong>実行(execution)</strong>として進みます。ステージの中のアクションは、順番に(直列)実行することも、同時に(並列)実行することもできます。アクションの種類は、<strong>Source・Build・Test・Deploy・Approval・Invoke</strong>の6つです。</p>
+<p>アクションどうしは、ソースコードやビルドの成果物を<strong>アーティファクト</strong>として受け渡します。CodePipelineは、アーティファクトをS3のアーティファクトストアにコピーし、次のアクションが取り出せるようにします。各アクションは、パイプラインのサービスロールの権限で動きます。権限の仕組みは用語ページ「<a href="../terms/iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a>」を参照してください。</p>
+<p>同じステージには、同時に1つの実行しか入れません。前の実行がステージを使っている間、次の実行は待機します。</p>
+
+<h3 id="codepipeline-c2-3">パイプラインの種類と実行モード<a class="anchor" href="#codepipeline-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>パイプラインには<strong>V1</strong>と<strong>V2</strong>の2種類があります。V2は、V1と同じ構造に、リリースの安全性(実行モードやロールバックの条件)とトリガーの設定が加わったものです。QUEUEDとPARALLELの実行モード、トリガーのフィルターはV2だけで使えます。</p>
+<p>待機中の実行の扱いは実行モードで決まります。既定の<strong>SUPERSEDED</strong>では、待機中の古い実行を、より新しい実行が追い越して置き換えます。V2では、待機中の実行を順番に流す<strong>QUEUED</strong>や、複数の実行を同時に流す<strong>PARALLEL</strong>も選べます。PARALLELでは、ステージのロールバックは使えません。</p>
+
+<h3 id="codepipeline-c2-4">手動承認(Manual Approval Action)<a class="anchor" href="#codepipeline-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>承認アクションに着くと、パイプラインは止まって承認を待ちます。承認依頼は、設定したSNSトピックに通知できます。承認されると次のステージへ進みます。却下されるか、7日以内に誰も承認も却下もしなければ、アクションは失敗となり、実行は先へ進みません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 209" style="max-width:752px;min-width:602px" role="img" aria-label="図2 手動承認の流れ。承認アクションでパイプラインが止まり、承認者にSNSで通知される。承認すると次のステージへ進み、却下されるか7日以内に応答がないと実行は失敗する。"><defs><marker id="codepipeline-dgservices-codepipeline-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ap">
+<rect x="34" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="110" text-anchor="middle" class="dg-tb">承認アクション</text>
+<text x="109" y="128" text-anchor="middle" class="dg-s">パイプライン停止</text>
+</g>
+<g data-node="who">
+<rect x="306" y="43" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="381" y="64" text-anchor="middle" class="dg-t">承認者</text>
+<text x="381" y="82" text-anchor="middle" class="dg-s">SNSで通知を受ける</text>
+</g>
+<g data-node="ok">
+<rect x="578" y="43" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="64" text-anchor="middle" class="dg-t">承認</text>
+<text x="653" y="82" text-anchor="middle" class="dg-s">次のステージへ</text>
+</g>
+<g data-node="ng">
+<rect x="578" y="133" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="653" y="154" text-anchor="middle" class="dg-t">却下・7日超過</text>
+<text x="653" y="172" text-anchor="middle" class="dg-s">実行は失敗</text>
+</g>
+<path d="M184.0,101.6 L306.0,81.4" class="dg-line" marker-end="url(#codepipeline-dgservices-codepipeline-2)"/>
+<text x="245" y="96" text-anchor="middle" class="dg-s dg-halo">通知</text>
+<path d="M456.0,69.0 L578.0,69.0" class="dg-line" marker-end="url(#codepipeline-dgservices-codepipeline-2)"/>
+<text x="517" y="73" text-anchor="middle" class="dg-s dg-halo">承認</text>
+<path d="M456.0,93.8 L578.0,134.2" class="dg-line" marker-end="url(#codepipeline-dgservices-codepipeline-2)"/>
+<text x="517" y="118" text-anchor="middle" class="dg-s dg-halo">却下</text>
+</svg>
+</div>
+<figcaption>図2 手動承認の流れ。承認アクションでパイプラインが止まり、承認者にSNSで通知される。承認すると次のステージへ進み、却下されるか7日以内に応答がないと実行は失敗する。</figcaption>
+</figure>
+
+<h3 id="codepipeline-c2-5">トリガーとソースの取得<a class="anchor" href="#codepipeline-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>GitHub・GitLab・Bitbucketなどのリポジトリは<strong>CodeConnections</strong>の接続を使ってソースを取得し、変更をきっかけにパイプラインを開始します。CodeCommitやS3のソースは、<a href="#p-eventbridge">Amazon EventBridge</a>による変更の検出でパイプラインを開始します。V2のトリガーでは、Gitのタグ・ブランチ・ファイルパスによるフィルターを付けられます。特定のブランチやタグへのプッシュだけを本番用のパイプラインに流す、といった使い分けができます。</p>
+
+<h3 id="codepipeline-c2-6">ロールバックと再試行<a class="anchor" href="#codepipeline-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>失敗したステージは<strong>再試行(retry)</strong>できます。また、ステージを以前に成功した実行の状態へ戻す<strong>ステージのロールバック</strong>もあります。ステージには、失敗時や成功時の条件を満たしたときに自動でロールバックする設定もできます。デプロイの方式の違いは用語ページ「<a href="../terms/deploy-strategies.html">デプロイ戦略</a>」を参照してください。</p>
+
+<h3 id="codepipeline-c2-7">制限(クォータ)<a class="anchor" href="#codepipeline-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>次の上限はリージョンごとの既定値です。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>既定の上限</th></tr>
+<tr><td>パイプラインの数</td><td>1,000(引き上げを申請できる)</td></tr>
+<tr><td>1パイプラインのステージ数</td><td>2〜50</td></tr>
+<tr><td>1パイプラインのアクション数</td><td>1,000</td></tr>
+<tr><td>1ステージの直列アクション数・並列アクション数</td><td>それぞれ100</td></tr>
+<tr><td>PARALLELモードでのアクティブな実行数</td><td>50</td></tr>
 </table></div>
 </section>
 
@@ -15423,7 +16384,7 @@ bucket.grantRead(fn);</code></pre>
 
 <section class="chapter">
 <h2 id="codepipeline-c4">4. 料金の考え方<a class="anchor" href="#codepipeline-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>V1タイプはアクティブなパイプラインの数(月額)、V2タイプはアクションの実行時間(分)で課金されます。CodeBuildなど各ステージで使うサービスの料金は別途かかります。</p>
+<p>V1タイプは、1か月の間に変更が流れたアクティブなパイプラインごとに、月額1.00 USDかかります(作成から30日間は無料)。V2タイプは、アクションの実行時間(分単位で切り上げ)に対して、1分あたり0.002 USDかかります。手動承認とカスタムアクションは、実行時間に含まれません。無料利用枠は、V1で1パイプライン、V2で月100分です。CodeBuildなど各ステージで使うサービスの料金は別途かかります。</p>
 </section>
 
 <section class="chapter">
@@ -15433,17 +16394,23 @@ bucket.grantRead(fn);</code></pre>
 <li><a href="#p-codedeploy">AWS CodeDeploy</a>:デプロイ</li>
 <li><a href="#p-cloudformation">AWS CloudFormation</a>:インフラのデプロイ</li>
 <li><a href="#p-ecs">Amazon ECS</a>/<a href="#p-lambda">AWS Lambda</a>:デプロイ先</li>
+<li><a href="#p-elastic-beanstalk">AWS Elastic Beanstalk</a>:デプロイ先</li>
 <li><a href="#p-sns">Amazon SNS</a>:承認依頼・結果の通知</li>
-<li>関連する用語:<a href="../terms/terraform-git.html">TerraformとGit</a></li>
+<li><a href="#p-eventbridge">Amazon EventBridge</a>:S3・CodeCommitなどの変更の検出</li>
+<li>関連する用語:<a href="../terms/terraform-git.html">TerraformとGit</a>、<a href="../terms/deploy-strategies.html">デプロイ戦略</a>、<a href="../terms/iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a></li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="codepipeline-c6">6. 試験・実務でのポイント<a class="anchor" href="#codepipeline-c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
-<li>本番前に人の確認を挟む → <strong>Manual Approval Action</strong>。</li>
+<li>本番前に人の確認を挟む → <strong>Manual Approval Action</strong>(7日以内に応答がないと失敗する)。</li>
 <li>EC2/オンプレミスへのBlue/Green → <strong>CodeDeploy</strong>。インフラ → <strong>CloudFormation</strong>。</li>
 <li>Lambdaの段階的な切り替え → エイリアスを使ったBlue/Green(CodeDeploy)。</li>
+<li>新しい変更を優先し、待機中の古い実行を置き換えたい → 実行モードの<strong>SUPERSEDED</strong>(既定)。</li>
+<li>特定のブランチやタグへのプッシュだけでパイプラインを起動したい → V2のトリガーのフィルター。</li>
+<li>失敗したステージを以前の成功した実行へ戻したい → ステージのロールバック(PARALLELモードでは使えない)。</li>
+<li>料金 → V1はアクティブなパイプライン数、V2はアクションの実行時間(分)で課金される。手動承認は実行時間に含まれない。</li>
 </ul></div>
 </section>
 
@@ -15479,8 +16446,15 @@ bucket.grantRead(fn);</code></pre>
 <li>後処理</li>
 <li>成果物(アーティファクト)の出力</li>
 </ol>
-<p>buildspec.ymlのフェーズ名は <code>install</code> → <code>pre_build</code> → <code>build</code> → <code>post_build</code> で、成果物は <code>artifacts</code>、キャッシュは <code>cache</code> セクションで指定します。ファイルはソースのルートディレクトリに置くのが標準です。</p>
-
+<p>buildspec.ymlはソースのルートディレクトリに置くのが標準です。主な項目は次のとおりです。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>役割</th></tr>
+<tr><td>env</td><td>環境変数。<code>variables</code>(平文)、<code>parameter-store</code>、<code>secrets-manager</code>(機密情報の参照)</td></tr>
+<tr><td>phases</td><td><code>install</code>→<code>pre_build</code>→<code>build</code>→<code>post_build</code>の各フェーズ。<code>install</code>では<code>runtime-versions</code>で言語のバージョンを指定できる。各フェーズに失敗時の動作(<code>on-failure</code>)と<code>finally</code>を書ける</td></tr>
+<tr><td>artifacts</td><td>成果物として出力するファイルの指定</td></tr>
+<tr><td>cache</td><td>キャッシュするフォルダ(<code>paths</code>)の指定</td></tr>
+<tr><td>reports</td><td>テストレポートにするファイルの指定</td></tr>
+</table></div>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 614 252" style="max-width:614px;min-width:520px" role="img" aria-label="図1 CodeBuildの流れ。buildspec.ymlの手順(依存のインストール → ビルド → テスト → 後処理)で実行し、成果物とテストレポートを出力する。キャッシュを使うと依存ファイルを再利用でき、高速になる。"><defs><marker id="codebuild-dgservices-codebuild-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -15517,11 +16491,56 @@ bucket.grantRead(fn);</code></pre>
 </div>
 <figcaption>図1 CodeBuildの流れ。buildspec.ymlの手順(依存のインストール → ビルド → テスト → 後処理)で実行し、成果物とテストレポートを出力する。キャッシュを使うと依存ファイルを再利用でき、高速になる。</figcaption>
 </figure>
-<h3 id="codebuild-c2-2">ローカルキャッシュ<a class="anchor" href="#codebuild-c2-2" aria-label="この見出しへのリンク">#</a></h3>
-<p>前回のビルドの依存ファイルや中間成果物を再利用して<strong>ビルドを高速化</strong>します。buildspec.ymlにキャッシュするフォルダのパスを追加します。</p>
 
-<h3 id="codebuild-c2-3">テストレポート<a class="anchor" href="#codebuild-c2-3" aria-label="この見出しへのリンク">#</a></h3>
-<p>テストの結果を可視化できます。</p>
+<h3 id="codebuild-c2-2">環境変数と機密情報<a class="anchor" href="#codebuild-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>環境変数は、プロジェクトの設定とbuildspec.ymlの<code>env</code>のどちらでも指定できます。buildspec.ymlの値は優先順位が最も低く、ほかの場所で指定した値が優先されます。平文の環境変数はコンソールやCLIで値が見えてしまうため、パスワードやAPIキーは<strong>Secrets Manager</strong>または<strong>Parameter Store</strong>から参照します(<code>secrets-manager</code>・<code>parameter-store</code>)。保存先の選び方は用語ページ「<a href="../terms/secrets-config-comparison.html">機密情報・設定値の保存先の選び方</a>」を参照してください。</p>
+
+<h3 id="codebuild-c2-3">キャッシュ(S3とローカル)<a class="anchor" href="#codebuild-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>前回のビルドの依存ファイルなどを再利用すると、ダウンロードや再ビルドの時間を減らせます。キャッシュは2種類から選びます。</p>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>保存先</th><th>向いている場面</th></tr>
+<tr><td>Amazon S3キャッシュ</td><td>S3バケット。複数のビルドホストで共有できる</td><td>小さめから中くらいのサイズで、作るより取得するほうが速い成果物</td></tr>
+<tr><td>ローカルキャッシュ</td><td>ビルドを実行したホストの上。そのホストだけで使える</td><td>中くらいから大きな成果物。ビルドの頻度が低い場合には向かない</td></tr>
+</table></div>
+<p>ローカルキャッシュには3つのモードがあります。<strong>ソースキャッシュ</strong>はGitのメタデータを保存し、次のビルドでは差分だけを取得します。<strong>Dockerレイヤーキャッシュ</strong>はDockerイメージの層を再利用します(Linuxのみで、特権モードが必要)。<strong>カスタムキャッシュ</strong>は、buildspec.ymlで指定したフォルダを保存します。ローカルキャッシュは、VPC内でビルドする場合には使えません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 173" style="max-width:752px;min-width:602px" role="img" aria-label="図2 S3キャッシュの共有。1回目のビルドが依存ファイルをS3に保存し、別のビルドホストで動く2回目のビルドがそれを取得する。ローカルキャッシュは、保存したホストの中だけで使える。"><defs><marker id="codebuild-dgservices-codebuild-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="h1">
+<rect x="34" y="43" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="64" text-anchor="middle" class="dg-tb">ビルドホストA</text>
+<text x="109" y="82" text-anchor="middle" class="dg-s">1回目のビルド</text>
+</g>
+<g data-node="s3c">
+<rect x="306" y="97" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="118" text-anchor="middle" class="dg-t">S3キャッシュ</text>
+<text x="381" y="136" text-anchor="middle" class="dg-s">依存ファイル</text>
+</g>
+<g data-node="h2">
+<rect x="578" y="43" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="653" y="64" text-anchor="middle" class="dg-tb">ビルドホストB</text>
+<text x="653" y="82" text-anchor="middle" class="dg-s">2回目のビルド</text>
+</g>
+<path d="M184.0,83.9 L306.0,108.1" class="dg-line" marker-end="url(#codebuild-dgservices-codebuild-2)"/>
+<text x="245" y="100" text-anchor="middle" class="dg-s dg-halo">保存</text>
+<path d="M456.0,108.1 L578.0,83.9" class="dg-line" marker-end="url(#codebuild-dgservices-codebuild-2)"/>
+<text x="517" y="100" text-anchor="middle" class="dg-s dg-halo">取得</text>
+</svg>
+</div>
+<figcaption>図2 S3キャッシュの共有。1回目のビルドが依存ファイルをS3に保存し、別のビルドホストで動く2回目のビルドがそれを取得する。ローカルキャッシュは、保存したホストの中だけで使える。</figcaption>
+</figure>
+
+<h3 id="codebuild-c2-4">テストレポート<a class="anchor" href="#codebuild-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>buildspec.ymlの<code>reports</code>で、テスト結果のファイルとレポートグループを指定すると、ビルドの結果でテストの成功・失敗を確認できます。対応する形式は、JUnit XML、Cucumber JSON、NUnit XML、NUnit3 XML、TestNG XML、Visual Studio TRX などです。</p>
+
+<h3 id="codebuild-c2-5">ビルド環境と実行時間<a class="anchor" href="#codebuild-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>コンピュートタイプ</strong>:CPU・メモリ・OSの組み合わせを選ぶ。オンデマンドでは <code>BUILD_GENERAL1_SMALL</code> などの定義済みのタイプから選ぶ</li>
+<li><strong>特権モード</strong>:Dockerイメージをビルドするときに有効にする。Dockerレイヤーキャッシュも特権モードが必要</li>
+<li><strong>タイムアウト</strong>:既定は60分。5分から36時間(2,160分)の範囲で設定し、超えるとビルドは停止する</li>
+<li><strong>サービスロール</strong>:ビルドがS3やECRなどのAWSリソースを操作するための権限。IAMロールで付与する</li>
+</ul>
+<p>サービスロールの仕組みは用語ページ「<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -15535,7 +16554,7 @@ bucket.grantRead(fn);</code></pre>
 
 <section class="chapter">
 <h2 id="codebuild-c4">4. 料金の考え方<a class="anchor" href="#codebuild-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>選んだコンピューティングタイプでビルドを実行した時間(分単位)に応じて課金されます。ビルドしていない時間は料金がかかりません。キャッシュでビルド時間を短くするとコストも下がります。</p>
+<p>選んだコンピュートタイプごとに、ビルドを実行した時間(分単位)に応じて課金されます。ビルドしていない時間は料金がかかりません。キャッシュでビルド時間を短くするとコストも下がります。無料利用枠は、オンデマンドの general1.small または arm1.small で月100分のビルド時間です。</p>
 </section>
 
 <section class="chapter">
@@ -15546,6 +16565,9 @@ bucket.grantRead(fn);</code></pre>
 <li><a href="#p-ecr">Amazon ECR</a>:イメージのプッシュ先</li>
 <li><a href="#p-codeartifact">AWS CodeArtifact</a>:依存パッケージの取得元</li>
 <li><a href="#p-s3">Amazon S3</a>:成果物の保存先</li>
+<li><a href="#p-secrets-manager">AWS Secrets Manager</a>:ビルドで使う機密情報の参照元</li>
+<li><a href="#p-systems-manager">AWS Systems Manager</a>:Parameter Storeのパラメータの参照元</li>
+<li>関連する用語:<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>、<a href="../terms/secrets-config-comparison.html">機密情報・設定値の保存先の選び方</a></li>
 </ul>
 </section>
 
@@ -15553,8 +16575,12 @@ bucket.grantRead(fn);</code></pre>
 <h2 id="codebuild-c6">6. 試験・実務でのポイント<a class="anchor" href="#codebuild-c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>ビルド手順の定義ファイル → <strong>buildspec.yml</strong>(CodeDeployのappspecと混同しない)。</li>
-<li>ビルドが遅い → <strong>ローカルキャッシュ</strong>を設定。</li>
-<li>テスト結果の可視化 → <strong>テストレポート</strong>。</li>
+<li>ビルドが遅い → キャッシュ。複数のビルドホストで共有するなら<strong>S3キャッシュ</strong>、大きなソースなら<strong>ローカルキャッシュ</strong>(VPC内のビルドでは使えない)。</li>
+<li>テスト結果の可視化 → <strong>テストレポート</strong>(JUnit XMLなどの形式で出力)。</li>
+<li>Dockerイメージをビルドする → <strong>特権モード</strong>を有効にして、ECRへプッシュする。</li>
+<li>パスワードやAPIキーをビルドで使う → 平文の環境変数ではなく、Secrets ManagerやParameter Storeから参照する。</li>
+<li>ビルドが終わらず長時間続く → タイムアウト(既定60分)で停止させる。</li>
+<li>料金 → 実行したビルド時間で課金される。キャッシュで時間を短くすると、料金も下がる。</li>
 </ul></div>
 </section>
 
@@ -15703,7 +16729,7 @@ hooks:
 <li><code>ApplicationStart</code>:アプリの起動</li>
 <li><code>ValidateService</code>:動作確認</li>
 </ol>
-<p>デプロイ方式には、既存のインスタンスを更新する<strong>In-Place</strong>と、新しい環境を用意してトラフィックを切り替える<strong>Blue/Green</strong>があります。EC2/オンプレミスで使うには、各インスタンスにCodeDeployエージェントが必要です。CloudWatchアラームと連携した<strong>自動ロールバック</strong>も設定できます。</p>
+<p>デプロイ方式には、既存のインスタンスを更新する<strong>In-Place</strong>と、新しい環境を用意してトラフィックを切り替える<strong>Blue/Green</strong>があります。EC2/オンプレミスで使うには、各インスタンスにCodeDeployエージェントが必要です。CloudWatchアラームと連携した<strong>自動ロールバック</strong>も設定できます。デプロイ方式の違いは用語ページ「<a href="../terms/deploy-strategies.html">デプロイ戦略</a>」を参照してください。アラームが鳴る条件は用語ページ「<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>」を参照してください。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 548 188" style="max-width:548px;min-width:520px" role="img" aria-label="図3 In-Placeデプロイのライフサイクルイベント(フック)の順番。appspec.ymlの hooks で、各タイミングに実行するスクリプトを指定する。"><defs><marker id="codedeploy-dgservices-codedeploy-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -15804,10 +16830,8 @@ hooks:
 <li>Java:Mavenライブラリ</li>
 <li>Node.js:npmパッケージ</li>
 <li>Python:pipパッケージ</li>
-</ul>
-<ul>
 <li>npmjs.comやPyPIなどの公開リポジトリを<strong>上流(アップストリーム)</strong>として接続し、取得したパッケージをキャッシュできる。</li>
-<li>リポジトリは<strong>ドメイン</strong>単位でまとめて管理し、IAMでアクセスを制御する。</li>
+<li>リポジトリは<strong>ドメイン</strong>単位でまとめて管理し、IAMでアクセスを制御する。アクセス許可の判断の仕組みは用語ページ「<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>」を参照してください。</li>
 <li>社内で作った独自パッケージを公開・共有できる。</li>
 </ul>
 <figure class="figure">
@@ -15853,8 +16877,8 @@ hooks:
 <h2 id="codeartifact-c3">3. ユースケース<a class="anchor" href="#codeartifact-c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>社内共通ライブラリをチームで共有</li>
-<li><span>インターネットに出られないビルド環境で、承認済みのパッケージだけを使わせる</span></li>
-<li><span>CodeBuildの依存パッケージ取得元として利用</span></li>
+<li>インターネットに出られないビルド環境で、承認済みのパッケージだけを使わせる。インターネットに出られない環境からの接続方法は用語ページ「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」を参照してください。</li>
+<li>CodeBuildの依存パッケージ取得元として利用</li>
 </ul>
 </section>
 
@@ -16177,7 +17201,7 @@ hooks:
 </div>
 <section class="chapter">
 <h2 id="amplify-c1">1. サービス概要<a class="anchor" href="#amplify-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>AWS Amplify</strong>は、<strong>フロントエンド開発者がAWSのバックエンドを簡単に利用</strong>できるようにするサービス群です。</p>
+<p><strong>AWS Amplify</strong>は、<strong>フロントエンド開発者がAWSのバックエンドを簡単に利用</strong>できるようにするサービス群です。サーバーの管理をどこまでAWSに任せるかの考え方は用語ページ「<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -16235,7 +17259,7 @@ hooks:
 <ul>
 <li>GitHubにプッシュするだけで自動デプロイされるWebサイト</li>
 <li>Webアプリにログイン機能(サインアップ・サインイン)を素早く追加</li>
-<li><span>小規模チームでのフルスタックアプリ開発</span></li>
+<li>小規模チームでのフルスタックアプリ開発</li>
 </ul>
 </section>
 
@@ -16354,7 +17378,7 @@ hooks:
 
 <section class="chapter">
 <h2 id="kiro-c4">4. 料金の考え方<a class="anchor" href="#kiro-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>利用者ごとの月額プラン(無料プランと、複数の有料プラン)で、プランごとに月の<strong>クレジット</strong>が付きます。クレジットはエージェントへの依頼の作業量に応じて消費され、複雑な作業ほど多く使います。有料プランでは追加のクレジットを購入できます。</p>
+<p>利用者ごとの月額プラン(無料プランと、複数の有料プラン)で、プランごとに月の<strong>クレジット</strong>が付きます。クレジットはエージェントへの依頼の作業量に応じて消費され、複雑な作業ほど多く使います。有料プランでは追加のクレジットを購入できます。AWSの料金の仕組み(従量課金など)は用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -16395,7 +17419,7 @@ hooks:
 </div>
 <section class="chapter">
 <h2 id="sam-c1">1. サービス概要<a class="anchor" href="#sam-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>AWS SAM(Serverless Application Model)</strong>は、<strong>サーバーレスアプリケーションの開発・デプロイを支援するフレームワーク</strong>です。CloudFormationのサーバーレス版で、CloudFormationだと長くなる記述を簡単に書けます。<strong>最終的にはCloudFormationに変換</strong>されます。</p>
+<p><strong>AWS SAM(Serverless Application Model)</strong>は、<strong>サーバーレスアプリケーションの開発・デプロイを支援するフレームワーク</strong>です。CloudFormationのサーバーレス版で、CloudFormationだと長くなる記述を簡単に書けます。<strong>最終的にはCloudFormationに変換</strong>されます。サーバーレスの考え方は用語ページ「<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -16418,7 +17442,7 @@ Resources:
           Properties:
             Path: /hello
             Method: get</code></pre>
-<p><code>Transform: AWS::Serverless-2016-10-31</code> がSAMテンプレートの目印です。</p>
+<p><code>Transform: AWS::Serverless-2016-10-31</code> がSAMテンプレートの目印です。テンプレートのYAMLの書き方は用語ページ「<a href="../terms/json-yaml.html">JSONとYAMLの読み方</a>」を参照してください。</p>
 
 <figure class="figure">
 <div class="fig-scroll">
@@ -16515,6 +17539,7 @@ Resources:
 <figcaption>図2 SAM CLIの基本的な流れ。init でひな形を作り、build でビルド、local でローカル実行して確認し、package / deploy でクラウドへ反映する。開発中の変更は sync で素早く反映できる。</figcaption>
 </figure>
 <h3 id="sam-c2-4">段階的デプロイ<a class="anchor" href="#sam-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>段階的なリリースの種類は用語ページ「<a href="../terms/deploy-strategies.html">デプロイ戦略</a>」を参照してください。</p>
 <ol>
 <li>SAMテンプレートに次の2つを記述:<strong class="em"><code>AutoPublishAlias: live</code></strong>、<strong class="em"><code>DeploymentPreference: Type: Canary10Percent5Minutes</code></strong></li>
 <li>初回デプロイ</li>
@@ -16710,7 +17735,7 @@ def lambda_handler(event, context):
 <section class="chapter">
 <h2 id="database-encryption-sdk-c1">1. サービス概要<a class="anchor" href="#database-encryption-sdk-c1" aria-label="この見出しへのリンク">#</a></h2>
 <p><strong>AWS Database Encryption SDK</strong>は、<strong>アプリケーション側でデータベースのデータを暗号化・復号</strong>するライブラリです(クライアント側暗号化)。主に<strong>DynamoDB</strong>用です。</p>
-<p>※サーバー側の暗号化には、KMSキーを使ったDBテーブルの暗号化を使います。</p>
+<p>※サーバー側の暗号化には、KMSキーを使ったDBテーブルの暗号化を使います。保存時と転送時の暗号化の違いは用語ページ「<a href="../terms/encryption.html">保存時の暗号化と転送時の暗号化</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -16763,7 +17788,7 @@ def lambda_handler(event, context):
 <h2 id="database-encryption-sdk-c3">3. ユースケース<a class="anchor" href="#database-encryption-sdk-c3" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>DynamoDBに保存する個人情報やカード番号などを、アプリ側で暗号化してから保存したい</li>
-<li><span>DB管理者やAWS側からも平文が見えないようにしたい(エンドツーエンドの保護)</span></li>
+<li>DB管理者やAWS側からも平文が見えないようにしたい(エンドツーエンドの保護)</li>
 </ul>
 </section>
 
@@ -16813,12 +17838,13 @@ def lambda_handler(event, context):
 <section class="chapter">
 <h2 id="athena-c2">2. 主な機能・特徴<a class="anchor" href="#athena-c2" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
-<li>CSV、JSON、Parquet、ORCなどの形式に対応。</li>
+<li>CSV、JSON、Parquet、ORC、Avroなどの形式に対応。</li>
 <li>テーブル定義(スキーマ)は<strong>AWS Glue データカタログ</strong>で管理する。</li>
 <li>クエリ結果はS3に出力される。</li>
-<li><strong>パーティション</strong>(日付ごとのフォルダ分けなど)や<strong>列指向形式(Parquet/ORC)</strong>・圧縮を使うと、スキャン量が減り高速・低コストになる。</li>
-<li>ワークグループで、チームごとにクエリの実行やスキャン量の上限を管理できる。</li>
 </ul>
+
+<h3 id="athena-c2-1">仕組み<a class="anchor" href="#athena-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>Athenaは、Glueデータカタログに登録したテーブル定義(データの場所・形式・列)をもとに、S3のオブジェクトを読みながらSQLを実行します。サーバーの準備は不要で、クエリは並列に実行されて自動で拡張されます。料金は<strong>スキャンしたデータ量</strong>で決まるため、読むデータを減らすことが費用の削減につながります。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 252" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。"><defs><marker id="athena-dgservices-athena-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -16856,6 +17882,58 @@ def lambda_handler(event, context):
 </div>
 <figcaption>図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。</figcaption>
 </figure>
+<p>SQLのほかに、Apache SparkのPythonコードをノートブックからAthenaで実行できます。S3以外のデータも、フェデレーテッドクエリでLambda関数のコネクタを経由して分析できます。</p>
+
+<h3 id="athena-c2-2">スキャン量を減らす<a class="anchor" href="#athena-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>パーティション</strong>は、日付などの値ごとにS3のフォルダを分けておく仕組みです。<code>WHERE</code>句でパーティションのキーを指定すると、Athenaはその値のフォルダだけを読みます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 463 286" style="max-width:463px;min-width:463px" role="img" aria-label="図2 パーティションによるスキャン量の削減。WHEREでパーティションのキーを指定すると、該当するフォルダ(この例では dt=2026-10-01)だけを読み、ほかのフォルダは読まない。"><defs><marker id="athena-dgservices-athena-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="q">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">クエリ</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">日付で絞り込む</text>
+</g>
+<g data-node="p1">
+<rect x="289" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="364" y="62" text-anchor="middle" class="dg-t">dt=2026-10-01</text>
+<text x="364" y="80" text-anchor="middle" class="dg-s">読む</text>
+</g>
+<g data-node="p2">
+<rect x="289" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="147" text-anchor="middle" class="dg-t">dt=2026-09-30</text>
+<text x="364" y="165" text-anchor="middle" class="dg-s">読まない</text>
+</g>
+<g data-node="p3">
+<rect x="289" y="210" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="232" text-anchor="middle" class="dg-t">dt=2026-10-02</text>
+<text x="364" y="250" text-anchor="middle" class="dg-s">読まない</text>
+</g>
+<path d="M184.0,96.5 L289.0,79.0" class="dg-line" marker-end="url(#athena-dgservices-athena-2)"/>
+<text x="236" y="92" text-anchor="middle" class="dg-s dg-halo">スキャン</text>
+<path d="M184.0,121.5 L289.0,139.0" class="dg-line dg-dash" marker-end="url(#athena-dgservices-athena-2)"/>
+<path d="M161.0,135.0 L312.0,210.5" class="dg-line dg-dash" marker-end="url(#athena-dgservices-athena-2)"/>
+</svg>
+</div>
+<figcaption>図2 パーティションによるスキャン量の削減。WHEREでパーティションのキーを指定すると、該当するフォルダ(この例では dt=2026-10-01)だけを読み、ほかのフォルダは読まない。</figcaption>
+</figure>
+<p>データを<strong>列指向形式(Parquet・ORC)</strong>にすると、クエリに必要な列だけを読めます。<strong>圧縮</strong>(GZIP・SNAPPY・ZSTDなど)をかけると、S3上の容量と読み取る量も減ります。既存のCSVなどは、CTAS(<code>CREATE TABLE AS SELECT</code>)でParquetやORCに変換できます。公式ドキュメントでは、圧縮・パーティション・列指向形式の組み合わせで、クエリあたりのコストを最大90%減らせるとされています。</p>
+
+<h3 id="athena-c2-3">設定の要点<a class="anchor" href="#athena-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>テーブルの作成</strong>:<code>CREATE TABLE</code>で、データの場所(<code>LOCATION</code>・S3のプレフィックス)、形式、パーティションのキー(<code>PARTITIONED BY</code>)を指定する。</li>
+<li><strong>パーティションの追加</strong>:<code>dt=2026-10-01</code>のようなHive形式なら<code>MSCK REPAIR TABLE</code>で登録する。それ以外の形式は<code>ALTER TABLE ... ADD PARTITION</code>で追加する。</li>
+<li><strong>ワークグループ</strong>:チームや用途ごとに、クエリ結果の保存先、暗号化の設定、IAMによるアクセス制御を分けて管理する。暗号化はワークグループ単位で決まるため、暗号化が必要な結果と不要な結果は別のワークグループにする。</li>
+<li><strong>データ使用量の制御</strong>:クエリ単位とワークグループ単位で、スキャンするデータ量のしきい値を設定する。しきい値を超えたときの動作を決められ、CloudWatchアラームで通知もできる。</li>
+</ul>
+
+<h3 id="athena-c2-4">制限<a class="anchor" href="#athena-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>1回のクエリの文字列は256KBまで(変更できない)。長いクエリは分けて実行する。</li>
+<li>1回のスキャンで読めるパーティションは100万個まで。</li>
+<li>DMLクエリ(SELECT・CTAS・INSERT INTO)には、同時に実行できる数の上限(リージョンにより異なる)と実行時間の上限がある。実行時間は申請により最長240分まで延ばせる。</li>
+<li>キャンセルや失敗したクエリの途中までの結果が、S3に残ることがある。S3のライフサイクルルールで削除する。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -16869,7 +17947,7 @@ def lambda_handler(event, context):
 
 <section class="chapter">
 <h2 id="athena-c4">4. 料金の考え方<a class="anchor" href="#athena-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>クエリでスキャンしたデータ量</strong>に応じて課金されます。パーティション分割・列指向形式・圧縮でスキャン量を減らすと、コストを大きく下げられます。</p>
+<p><strong>クエリでスキャンしたデータ量</strong>に応じて課金されます。スキャン量は1MB単位で切り上げられ、1クエリあたり最低10MBで計算されます。CREATE・ALTER・DROPなどのDDLと、失敗したクエリは無料です。キャンセルしたクエリは、キャンセルまでにスキャンした分が課金されます。パーティション分割・列指向形式・圧縮でスキャン量を減らすと、コストを大きく下げられます。料金の考え方は用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -16877,8 +17955,11 @@ def lambda_handler(event, context):
 <ul>
 <li><a href="#p-s3">Amazon S3</a>:分析対象のデータの保存先</li>
 <li><a href="#p-cloudtrail">AWS CloudTrail</a>:S3に出力したログの分析</li>
-<li><a href="#p-kinesis">Amazon Kinesis</a>:Firehose経由でS3にデータを蓄積</li>
+<li><a href="#p-data-firehose">Amazon Data Firehose</a>:ストリーミングデータをS3に配信し、Athenaで分析する</li>
+<li><a href="#p-lambda">AWS Lambda</a>:フェデレーテッドクエリで、S3以外のデータに接続するコネクタの実行</li>
 <li><a href="#p-opensearch">Amazon OpenSearch Service</a>:全文検索・リアルタイム分析</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:スキャン量のアラーム</li>
+<li>関連する用語:<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/pricing-basics.html">料金の基本</a></li>
 </ul>
 </section>
 
@@ -16887,6 +17968,10 @@ def lambda_handler(event, context):
 <div class="point"><ul>
 <li>「S3のデータ」「SQL」「サーバーレス」「アドホック分析」→ <strong>Athena</strong>。</li>
 <li>コスト削減 → <strong>パーティション+Parquet/ORC+圧縮</strong>でスキャン量を減らす。</li>
+<li>特定の期間だけを分析したい → <code>WHERE</code>でパーティションのキーを指定する(読むのはその範囲だけ)。</li>
+<li>Hive形式でないパーティションを追加したい → <code>MSCK REPAIR TABLE</code>は使えず、<code>ALTER TABLE ... ADD PARTITION</code>で追加する。</li>
+<li>誤って大量のデータをスキャンして高額になるのを防ぎたい → クエリ単位・ワークグループ単位の<strong>データ使用量の制御</strong>とCloudWatchアラーム。</li>
+<li>テーブルの定義を一元管理したい → <strong>AWS Glue データカタログ</strong>。</li>
 </ul></div>
 </section>
 
@@ -17236,7 +18321,7 @@ def lambda_handler(event, context):
 <tr><td>集計分析</td><td>△</td><td>◎</td></tr>
 <tr><td>トランザクション</td><td>○</td><td>×</td></tr>
 </table></div>
-<p>OpenSearchはオープンソースの検索エンジン(Elasticsearchから派生)で、可視化ツールの<strong>OpenSearch Dashboards</strong>が付属します。ドメイン(クラスター)を作成して使うほか、サーバー管理が不要な<strong>OpenSearch Serverless</strong>もあります。高可用性のためには複数AZへのノード配置や専用マスターノードを使います。</p>
+<p>OpenSearchはオープンソースの検索エンジン(Elasticsearchから派生)で、可視化ツールの<strong>OpenSearch Dashboards</strong>が付属します。ドメイン(クラスター)を作成して使うほか、サーバー管理が不要な<strong>OpenSearch Serverless</strong>もあります。高可用性のためには複数AZへのノード配置や専用マスターノードを使います。AZの考え方は用語ページ「<a href="../terms/region-az.html">リージョンとアベイラビリティーゾーン</a>」を参照してください。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 OpenSearch Serviceの使われ方。データを取り込んでインデックス化し、全文検索・あいまい検索や、ログ分析・集計に使う。データの保存はDynamoDBなどに任せ、検索用にOpenSearchへ取り込む構成が多い。"><defs><marker id="opensearch-dgservices-opensearch-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -17286,7 +18371,7 @@ def lambda_handler(event, context):
 
 <section class="chapter">
 <h2 id="opensearch-c4">4. 料金の考え方<a class="anchor" href="#opensearch-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>ドメインの場合は、インスタンス(ノード)の稼働時間とストレージ(EBS)容量で課金されます。Serverlessの場合は、使用したコンピューティングユニット(OCU)とストレージ量で課金されます。</p>
+<p>ドメインの場合は、インスタンス(ノード)の稼働時間とストレージ(EBS)容量で課金されます。Serverlessの場合は、使用したコンピューティングユニット(OCU)とストレージ量で課金されます。料金の全体像は用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -17465,7 +18550,7 @@ def lambda_handler(event, context):
 <h2 id="datasync-c2">2. 主な機能・特徴<a class="anchor" href="#datasync-c2" aria-label="この見出しへのリンク">#</a></h2>
 <h3 id="datasync-c2-1">構成要素<a class="anchor" href="#datasync-c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
-<li><strong>エージェント</strong>:オンプレミス/他クラウドのストレージにアクセスするために配置する。<strong>AWSのストレージ間の転送では不要</strong>。</li>
+<li><strong>エージェント</strong>:オンプレミスのストレージに接続するために、VMware ESXi・KVM・Nutanix AHV・Hyper-Vの仮想マシンとして配置する(VPC内のストレージを対象にする場合は、Amazon EC2インスタンスとして配置する)。<strong>AWSのストレージ間の転送では不要</strong>。他クラウドとの転送は、エージェントを使う場合と使わない場合がある</li>
 <li><strong>ロケーション</strong>:転送元と転送先の定義</li>
 <li><strong>タスク</strong>:転送ジョブの定義(転送元・転送先・オプション・スケジュールをまとめる)</li>
 </ul>
@@ -17511,20 +18596,65 @@ def lambda_handler(event, context):
 </div>
 <figcaption>図1 DataSyncの構成。オンプレミスのNFS/SMBからはエージェント経由で、AWSのストレージ間ではエージェントなしで、タスクに従って転送する。</figcaption>
 </figure>
+
 <h3 id="datasync-c2-2">機能<a class="anchor" href="#datasync-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>増分転送</strong>:初回は全データ、2回目以降は変更分だけを転送</li>
-<li><strong>スケジュール実行</strong>:最短1時間単位で定期実行</li>
-<li><strong>整合性の検証</strong>:転送後にチェックサムで検証</li>
-<li><strong>メタデータの保持</strong>:タイムスタンプ・所有者・権限などを引き継ぐ</li>
+<li><strong>スケジュール実行</strong>:最短1時間間隔で、cron式かrate式を使って定期実行(曜日や時刻も指定できる)</li>
+<li><strong>整合性の検証</strong>:転送中は常にチェックし、転送後に「転送したデータだけ」または「転送元と転送先の全体」を検証できる。差があると検証が失敗としてエラーになる</li>
+<li><strong>メタデータの扱い</strong>:メタデータ(権限など)と、転送元で削除されたファイルの扱いを設定で指定できる</li>
 <li><strong>暗号化</strong>:転送中はTLSを使用</li>
 </ul>
 
-<h3 id="datasync-c2-3">ネットワーク接続<a class="anchor" href="#datasync-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="datasync-c2-3">転送の流れ<a class="anchor" href="#datasync-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>タスクを実行すると、DataSyncは<strong>準備・転送・検証</strong>の順に処理します。準備では転送元と転送先を比べ、変更された分だけを転送対象にします。すべてのデータを転送する設定にすると、比べずに全件を転送します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 159" style="max-width:752px;min-width:602px" role="img" aria-label="図2 タスク実行の流れ。準備で転送元と転送先の差分を調べ、差分を転送したあと、検証で両方のデータを比べる。"><defs><marker id="datasync-dgservices-datasync-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="p">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">準備</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">差分を調べる</text>
+</g>
+<g data-node="t">
+<rect x="306" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="104" text-anchor="middle" class="dg-tb">転送</text>
+<text x="381" y="122" text-anchor="middle" class="dg-s">変更分だけ</text>
+</g>
+<g data-node="v">
+<rect x="578" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="104" text-anchor="middle" class="dg-t">検証</text>
+<text x="653" y="122" text-anchor="middle" class="dg-s">チェックサム</text>
+</g>
+<path d="M184.0,109.0 L306.0,109.0" class="dg-line" marker-end="url(#datasync-dgservices-datasync-2)"/>
+<path d="M456.0,109.0 L578.0,109.0" class="dg-line" marker-end="url(#datasync-dgservices-datasync-2)"/>
+</svg>
+</div>
+<figcaption>図2 タスク実行の流れ。準備で転送元と転送先の差分を調べ、差分を転送したあと、検証で両方のデータを比べる。</figcaption>
+</figure>
+
+<h3 id="datasync-c2-4">タスクモード(BasicとEnhanced)<a class="anchor" href="#datasync-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>タスクには、Basicモードと Enhancedモードの2つがあります。Enhancedモードは、一覧の取得・準備・転送・検証を並列に行うため、大量のファイルでも高い性能で扱えます。Basicモードは準備・転送・検証を順番に行い、扱える件数に上限があります。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>Enhancedモード</th><th>Basicモード</th></tr>
+<tr><td>処理の進め方</td><td>一覧の取得・準備・転送・検証を並列に行う</td><td>準備・転送・検証を順番に行う</td></tr>
+<tr><td>扱える件数(1回の実行あたり)</td><td>実質無制限</td><td>オンプレミスなどとの転送は5,000万件、AWSストレージ間は2,500万件まで</td></tr>
+<tr><td>性能</td><td>大半のワークロードで高い</td><td>Enhancedモードより遅い</td></tr>
+</table></div>
+<p>Basicモードの件数の上限に近い場合は、フィルターで対象のフォルダーを分けたタスクを作る方法もあります。NFS・SMB・HDFSとAWSストレージの間の転送には、Enhancedモード用のエージェントが必要です。</p>
+
+<h3 id="datasync-c2-5">フィルターと帯域幅の制限<a class="anchor" href="#datasync-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>フィルター</strong>で、転送するファイルやフォルダーを絞り込めます。含める(include)と除外する(exclude)を組み合わせて指定でき、変更は次回の実行から反映されます。<strong>帯域幅の上限</strong>は、タスクごとに設定できます。</p>
+
+<h3 id="datasync-c2-6">開いているファイルとロックされたファイル<a class="anchor" href="#datasync-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>転送中に書き込まれているファイルは、検証の段階で不整合として検出されます。最新の内容を転送するには、タスクをもう一度実行します。サーバーがロックしていて開けないファイルは、転送の途中でスキップされ、エラーとして記録されます。DataSyncがファイルをロックしたりロックを解除したりすることはありません。</p>
+
+<h3 id="datasync-c2-7">ネットワーク接続<a class="anchor" href="#datasync-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>パブリックエンドポイント</strong>:インターネット経由</li>
 <li><strong>VPCエンドポイント</strong>:Direct ConnectやSite-to-Site VPNと組み合わせ、インターネットを経由せずに転送</li>
 </ul>
+<p>インターネットを通さない接続の組み合わせは用語ページ「<a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -17547,8 +18677,10 @@ def lambda_handler(event, context):
 <ul>
 <li><a href="#p-s3">Amazon S3</a>/<a href="#p-efs">Amazon EFS</a>/<a href="#p-fsx">Amazon FSx</a>:転送先のAWSストレージ</li>
 <li><a href="#p-vpc">Amazon VPC</a>:VPCエンドポイントでのプライベート転送</li>
+<li><a href="#p-direct-connect">AWS Direct Connect</a>/<a href="#p-site-to-site-vpn">AWS Site-to-Site VPN</a>:オンプレミスとAWSをつなぐ回線</li>
 <li><a href="#p-backup">AWS Backup</a>:転送後のバックアップ管理</li>
 <li><a href="#p-storage-gateway">AWS Storage Gateway</a>:オンプレミスからAWSのストレージを使い続ける</li>
+<li>関連する用語:<a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>、<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>、<a href="../terms/encryption.html">保存時の暗号化と転送時の暗号化</a></li>
 </ul>
 </section>
 
@@ -17558,7 +18690,11 @@ def lambda_handler(event, context):
 <li>オンプレミスのNFS/SMBからAWSへ<strong>オンラインでデータ移行・同期</strong> → DataSync。</li>
 <li>オンプレミスから転送するときは<strong>エージェント</strong>が必要。AWSストレージ間は不要。</li>
 <li>インターネットを通さずに転送 → <strong>VPCエンドポイント+Direct Connect/VPN</strong>。</li>
-<li>2回目以降は<strong>増分転送</strong>、転送後は<strong>チェックサムで整合性を検証</strong>。</li>
+<li>2回目以降は<strong>増分転送</strong>。転送中は常に整合性をチェックし、転送後の検証も設定できる。</li>
+<li>一部のファイルだけを移す・除外する → <strong>フィルター</strong>(include/exclude)。</li>
+<li>ネットワークの使用量を抑えたい → タスクに<strong>帯域幅の上限</strong>を設定する。</li>
+<li>定期的に同期したい → <strong>スケジュール実行</strong>(最短1時間間隔)。</li>
+<li>数千万件のファイルを移す → <strong>Enhancedモード</strong>(Basicモードは1回の実行で扱える件数に上限がある)。</li>
 </ul></div>
 </section>
 
