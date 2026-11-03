@@ -470,6 +470,22 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>インターネットに公開されていないエンドポイントは、CanaryをVPC内で実行するように設定する。</li>
 </ul>
 
+<h4>Canaryの設計図(ブループリント)</h4>
+<p><strong>ブループリント</strong>は、Canaryを作るときに選ぶ<strong>ひな形</strong>です。用途に合ったスクリプトの雛形があらかじめ用意されており、URLなどを指定するだけで、自分でコードを書かずに始められます。作成後にスクリプトを編集して、処理を足すこともできます。スクリプトは Node.js(Puppeteer)または Python(Selenium)で書きます。</p>
+<div class="table-wrap"><table>
+<tr><th>ブループリント</th><th>内容</th><th>主な用途</th></tr>
+<tr><td><strong>ハートビートモニタリング</strong></td><td>指定したURLを開き、画面のスクリーンショットとHTTPアーカイブ(HAR)を保存する</td><td>サイトが生きているか(死活監視)、表示できているかの確認</td></tr>
+<tr><td><strong>APIキャナリー</strong></td><td>REST APIにリクエストを送り、応答コードや内容を検証する(読み取り・書き込みを含む)</td><td>APIの可用性・正しい応答の監視</td></tr>
+<tr><td><strong>リンク切れチェッカー</strong></td><td>ページ内のリンクをたどり、リンク先がエラーにならないかを検査する</td><td>サイト内外のリンク切れの検出</td></tr>
+<tr><td><strong>Canary Recorder</strong></td><td>ブラウザの拡張機能で操作を記録し、スクリプトに変換する</td><td>ログインなど、画面の操作手順の再現</td></tr>
+<tr><td><strong>GUIワークフロービルダー</strong></td><td>「入力欄に文字を入れる」「ボタンをクリックする」「文字が表示されるか確認する」といった手順を、画面で組み立てる</td><td>ログインや購入などの一連の操作の監視(コードを書かない)</td></tr>
+<tr><td><strong>ビジュアルモニタリング</strong></td><td>基準となるスクリーンショットと、実行時のスクリーンショットを比較する</td><td>画面の見た目の崩れ・意図しない変更の検出</td></tr>
+</table></div>
+<div class="point"><ul>
+<li>生きているかだけ知りたい → ハートビート。APIの応答を確認したい → APIキャナリー。</li>
+<li>リンク切れ → リンク切れチェッカー。操作手順の再現 → Canary Recorder か GUIワークフロービルダー。見た目の変化 → ビジュアルモニタリング。</li>
+</ul></div>
+
 <h3 id="c2-12">その他の機能<a class="anchor" href="#c2-12" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>Application Signals</strong>:アプリの性能と可用性を自動で計測・可視化。サービス単位・APIパス単位でメトリクスを確認できる。CloudWatchエージェントとADOT(AWS Distro for OpenTelemetry)が必要。</li>
