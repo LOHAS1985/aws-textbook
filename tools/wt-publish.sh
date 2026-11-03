@@ -51,6 +51,7 @@ else
   # 4. push(deploy.sh と同じ。gh-pages は book/ の中身だけの履歴)
   git push origin HEAD:main
   git push origin "$(git subtree split --prefix book HEAD)":refs/heads/gh-pages --force
+  published=1
 fi
 
 # 5. 後始末(Python のジャンクションは rmdir で外してから消す。中身の Python を消さないため)
@@ -59,4 +60,5 @@ if [ -L "$wt/Python" ]; then
 fi
 git worktree remove --force "$wt"
 git branch -D "$name" >/dev/null
-echo "公開しました: $subject"
+rmdir "$primary/../aws-textbook-wt" 2>/dev/null || true
+[ -z "$published" ] || echo "公開しました: $subject"
