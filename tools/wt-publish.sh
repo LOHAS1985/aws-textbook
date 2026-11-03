@@ -55,10 +55,13 @@ else
 fi
 
 # 5. 後始末(Python のジャンクションは rmdir で外してから消す。中身の Python を消さないため)
+# 公開は済んでいるので、後始末に失敗しても止めずに手動の手順を案内する
 if [ -L "$wt/Python" ]; then
-  cmd.exe //c rmdir "$(cygpath -w "$wt/Python")"
+  cmd.exe //c rmdir "$(cygpath -w "$wt/Python")" || true
 fi
-git worktree remove --force "$wt"
-git branch -D "$name" >/dev/null
-rmdir "$primary/../aws-textbook-wt" 2>/dev/null || true
+if git worktree remove --force "$wt" && git branch -D "$name" >/dev/null; then
+  rmdir "$primary/../aws-textbook-wt" 2>/dev/null || true
+else
+  echo "後始末に失敗しました。次を手動で行ってください: git worktree remove --force \"$wt\" ; git branch -D $name" >&2
+fi
 [ -z "$published" ] || echo "公開しました: $subject"
