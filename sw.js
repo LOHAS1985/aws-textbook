@@ -1,6 +1,6 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "edd9e21a9a1f";
+var CACHE = PREFIX + "b0597ae34873";
 var FILES = {
 "css/style.css": "6338492ba513",
 "exercises/access-denied-troubleshooting.html": "3f68c538ac99",
@@ -155,7 +155,7 @@ var FILES = {
 "icons/services/vpc.svg": "7b842e6a64b2",
 "icons/services/waf.svg": "e67f918f21cf",
 "icons/services/xray.svg": "49c3a0c3f4e8",
-"index.html": "773a5d472637",
+"index.html": "b4c9c84691cb",
 "js/glossary.js": "2945d2c4269e",
 "js/sim.js": "3ae9e28cc7a7",
 "js/site.js": "3f6897e97e85",
@@ -242,10 +242,10 @@ var FILES = {
 "services/organizations.html": "b7f527e3fd27",
 "services/private-ca.html": "610df45e553a",
 "services/ram.html": "4b7bddbb30ea",
-"services/rds.html": "925e7a5ece4e",
+"services/rds.html": "8d6b76d1014c",
 "services/resource-groups.html": "2670e1659f1e",
 "services/route53.html": "95ac1fe17b2f",
-"services/s3.html": "0562fe73ffa7",
+"services/s3.html": "ace0b5edbf05",
 "services/sam.html": "a675df447c33",
 "services/savings-plans.html": "e3cff6292471",
 "services/sdk.html": "6964b38de6af",
