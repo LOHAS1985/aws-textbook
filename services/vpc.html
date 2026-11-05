@@ -40,15 +40,15 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
   <h1>Amazon VPC</h1>
   <p class="lead">AWS上に論理的に分離された仮想ネットワークを作るサービス</p>
-  <p class="updated">最終更新:<time datetime="2026-11-01">2026-11-01</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
 <details>
-<summary>このページの内容(17項目)</summary>
+<summary>このページの内容(18項目)</summary>
 <ol>
 <li><a href="#c1">1. サービス概要</a></li>
-<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">サブネットの予約IPと「1サブネット=1AZ」</a></li><li><a href="#c2-3">Elastic IP</a></li><li><a href="#c2-4">VPCピアリング</a></li><li><a href="#c2-5">VPCエンドポイントの2種類</a></li><li><a href="#c2-6">NATゲートウェイはAZごとに作る</a></li><li><a href="#c2-7">セキュリティグループ同士の参照</a></li><li><a href="#c2-8">エフェメラルポート(ネットワークACLの戻り通信)</a></li><li><a href="#c2-9">Reachability Analyzer(到達性の分析)</a></li></ul></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">サブネットの予約IPと「1サブネット=1AZ」</a></li><li><a href="#c2-3">IPアドレスの一元管理(IPAM)</a></li><li><a href="#c2-4">Elastic IP</a></li><li><a href="#c2-5">VPCピアリング</a></li><li><a href="#c2-6">VPCエンドポイントの2種類</a></li><li><a href="#c2-7">NATゲートウェイはAZごとに作る</a></li><li><a href="#c2-8">セキュリティグループ同士の参照</a></li><li><a href="#c2-9">エフェメラルポート(ネットワークACLの戻り通信)</a></li><li><a href="#c2-10">Reachability Analyzer(到達性の分析)</a></li></ul></li>
 <li><a href="#c3">3. ユースケース</a></li>
 <li><a href="#c4">4. 料金の考え方</a></li>
 <li><a href="#c5">5. 関連サービス</a></li>
@@ -178,8 +178,10 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td>10.0.0.255</td><td>ブロードキャストアドレス(VPCはブロードキャストに対応していないが予約される)</td></tr>
 </table></div>
 <p>例えば <code>/24</code>(256個)のサブネットで使えるのは251個、最小の <code>/28</code>(16個)では11個です。必要なIP数を見積もるときは、この5個を差し引いて考えます。CIDRの読み方は用語ページ「<a href="../terms/cidr.html">CIDR</a>」を参照してください。</p>
+<h3 id="c2-3">IPアドレスの一元管理(IPAM)<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>複数のVPCやアカウントでCIDRの重複を防ぎ、割り当てを一元管理するには<a href="ipam.html">Amazon VPC IPAM</a>を使います。プールにCIDRをまとめ、VPC作成時に空き範囲を自動割り当てできます。</p>
 
-<h3 id="c2-3">Elastic IP<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-4">Elastic IP<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2インスタンスに自動で付くパブリックIPv4アドレスは、インスタンスを<strong>停止・起動すると変わります</strong>。固定のパブリックIPが必要な場合は、<strong>Elastic IPアドレス</strong>(アカウントに確保する静的なパブリックIPv4アドレス)を取得してインスタンスやENIに関連付けます。</p>
 <ul>
 <li>関連付け先を別のインスタンスに付け替えられるため、障害時に予備のインスタンスへIPごと切り替える、といった使い方ができる</li>
@@ -189,7 +191,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p>ENIとの関係は用語ページ「<a href="../terms/eni-elastic-ip.html">ENIとElastic IP</a>」を参照してください。</p>
 
-<h3 id="c2-4">VPCピアリング<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-5">VPCピアリング<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>VPCピアリング</strong>は、2つのVPCを1対1でつなぎ、プライベートIPのまま通信できるようにする機能です。別のアカウントや別のリージョンのVPCともつなげます。</p>
 <ul>
 <li>つなぐVPC同士の<strong>CIDRが重なっていてはいけない</strong></li>
@@ -230,7 +232,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </figure>
 <p>詳しくは用語ページ「<a href="../terms/vpc-peering.html">VPCピアリング</a>」を参照してください。</p>
 
-<h3 id="c2-5">VPCエンドポイントの2種類<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-6">VPCエンドポイントの2種類<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table class="stack">
 <tr><th>種類</th><th>対応サービス</th><th>仕組み</th><th>料金</th></tr>
 <tr><td data-label="種類">ゲートウェイ型</td><td data-label="対応サービス"><strong>S3とDynamoDBのみ</strong></td><td data-label="仕組み">ルートテーブルに、サービスへの経路(プレフィックスリスト → エンドポイント)が追加される</td><td data-label="料金">無料</td></tr>
@@ -238,7 +240,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </table></div>
 <p>オンプレミスやピアリング先のVPCから使えるのはインターフェイス型だけです。エンドポイントポリシーなどの詳細は用語ページ「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」を参照してください。</p>
 
-<h3 id="c2-6">NATゲートウェイはAZごとに作る<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-7">NATゲートウェイはAZごとに作る<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>NATゲートウェイは、作成した<strong>1つのAZの中で冗長化</strong>されたサービスです。AZ自体に障害が起きると、そのAZのNATゲートウェイも使えなくなります。1つのNATゲートウェイを全AZのプライベートサブネットで共有していると、そのAZの障害で<strong>全AZのサーバーが外に出られなくなります</strong>。</p>
 <p>そのため、可用性を高めるには<strong>AZごとにNATゲートウェイを作り</strong>、各AZのプライベートサブネットのルートテーブルを、<strong>同じAZのNATゲートウェイ</strong>に向けます。AZをまたぐデータ転送料金がかからなくなる利点もあります。</p>
 <figure class="figure">
@@ -278,7 +280,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </figure>
 <p>NATゲートウェイは自動でスケールし、セキュリティグループは付けられません(通信の制御はネットワークACLとインスタンス側のセキュリティグループで行う)。</p>
 
-<h3 id="c2-7">セキュリティグループ同士の参照<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-8">セキュリティグループ同士の参照<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p>セキュリティグループのルールでは、送信元(または送信先)にIPアドレスの範囲ではなく<strong>別のセキュリティグループのID</strong>を指定できます。「そのセキュリティグループが付いているリソースからの通信を許可する」という意味になります。</p>
 <div class="table-wrap"><table>
 <tr><th>セキュリティグループ</th><th>インバウンドルール</th></tr>
@@ -288,7 +290,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </table></div>
 <p>Auto ScalingでWebサーバーが増減してIPアドレスが変わっても、ルールを書き換える必要がありません。多層構成で「前の層からの通信だけを許可する」ときの定番の書き方です。同じリージョンのピアリング先VPCのセキュリティグループも参照できます。</p>
 
-<h3 id="c2-8">エフェメラルポート(ネットワークACLの戻り通信)<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-9">エフェメラルポート(ネットワークACLの戻り通信)<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p>クライアントがサーバーに接続するとき、送信先ポートは443などの決まった番号ですが、送信元ポート(=戻りの通信の宛先ポート)にはOSが一時的に選ぶ番号が使われます。これを<strong>エフェメラルポート</strong>と呼びます。</p>
 <p>ネットワークACLはステートレスなので、インバウンドで443を許可するだけでは足りず、<strong>アウトバウンドでエフェメラルポート宛ての戻り通信も許可</strong>する必要があります。逆に、サブネット内のサーバーが外部へ接続する場合は、インバウンドでエフェメラルポートを許可します。</p>
 <figure class="figure">
@@ -334,7 +336,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </figure>
 <p>使われる範囲はOSや経路によって異なります(Linuxの多くは 32768〜61000、Windowsは 49152〜65535、NATゲートウェイやELBは 1024〜65535)。どの相手からの通信でも通るように、通常は <strong>1024〜65535</strong> を許可します。セキュリティグループはステートフルなので、この設定は不要です。</p>
 
-<h3 id="c2-9">Reachability Analyzer(到達性の分析)<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-10">Reachability Analyzer(到達性の分析)<a class="anchor" href="#c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>VPC Reachability Analyzer</strong>は、送信元(EC2インスタンス、ENI、インターネットゲートウェイなど)と送信先を指定すると、その間の経路で<strong>通信が届くかどうかを設定から分析</strong>する機能です。実際にパケットは送りません。</p>
 <ul>
 <li>届く場合:通過するルートテーブル・セキュリティグループ・ネットワークACLなどの経路を1つずつ表示する</li>
@@ -394,6 +396,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。S3・DynamoDBだけなら無料のゲートウェイ型、オンプレミスから使うならインターフェイス型。</li>
 <li>NATゲートウェイの可用性を高めたい → <strong>AZごとにNATゲートウェイ</strong>を作り、各AZのルートテーブルで同じAZのものを指定する。</li>
 <li>停止・起動してもパブリックIPを変えたくない → <strong>Elastic IP</strong>。</li>
+<li>複数VPCのCIDRを一元管理し、重複や枯渇を防ぐ → <strong>IPAM</strong>。</li>
 </ul>
 <h4>設計・トラブル調査</h4>
 <ul>
@@ -408,6 +411,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>VPCはAWS上の自分専用ネットワーク。CIDRとサブネットで設計する。</li>
+<li>複数VPCのCIDRの計画・割り当て・監視にはIPAMを使う。</li>
 <li>経路はルートテーブル、出入口はIGW/NAT/エンドポイント。</li>
 <li>アクセス制御はセキュリティグループ(許可のみ)とネットワークACL(許可/拒否)。</li>
 </ul>
