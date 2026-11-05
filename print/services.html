@@ -5523,8 +5523,10 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td>10.0.0.255</td><td>ブロードキャストアドレス(VPCはブロードキャストに対応していないが予約される)</td></tr>
 </table></div>
 <p>例えば <code>/24</code>(256個)のサブネットで使えるのは251個、最小の <code>/28</code>(16個)では11個です。必要なIP数を見積もるときは、この5個を差し引いて考えます。CIDRの読み方は用語ページ「<a href="../terms/cidr.html">CIDR</a>」を参照してください。</p>
+<h3 id="vpc-c2-3">IPアドレスの一元管理(IPAM)<a class="anchor" href="#vpc-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>複数のVPCやアカウントでCIDRの重複を防ぎ、割り当てを一元管理するには<a href="#p-ipam">Amazon VPC IPAM</a>を使います。プールにCIDRをまとめ、VPC作成時に空き範囲を自動割り当てできます。</p>
 
-<h3 id="vpc-c2-3">Elastic IP<a class="anchor" href="#vpc-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="vpc-c2-4">Elastic IP<a class="anchor" href="#vpc-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2インスタンスに自動で付くパブリックIPv4アドレスは、インスタンスを<strong>停止・起動すると変わります</strong>。固定のパブリックIPが必要な場合は、<strong>Elastic IPアドレス</strong>(アカウントに確保する静的なパブリックIPv4アドレス)を取得してインスタンスやENIに関連付けます。</p>
 <ul>
 <li>関連付け先を別のインスタンスに付け替えられるため、障害時に予備のインスタンスへIPごと切り替える、といった使い方ができる</li>
@@ -5534,7 +5536,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </ul>
 <p>ENIとの関係は用語ページ「<a href="../terms/eni-elastic-ip.html">ENIとElastic IP</a>」を参照してください。</p>
 
-<h3 id="vpc-c2-4">VPCピアリング<a class="anchor" href="#vpc-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="vpc-c2-5">VPCピアリング<a class="anchor" href="#vpc-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>VPCピアリング</strong>は、2つのVPCを1対1でつなぎ、プライベートIPのまま通信できるようにする機能です。別のアカウントや別のリージョンのVPCともつなげます。</p>
 <ul>
 <li>つなぐVPC同士の<strong>CIDRが重なっていてはいけない</strong></li>
@@ -5575,7 +5577,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </figure>
 <p>詳しくは用語ページ「<a href="../terms/vpc-peering.html">VPCピアリング</a>」を参照してください。</p>
 
-<h3 id="vpc-c2-5">VPCエンドポイントの2種類<a class="anchor" href="#vpc-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="vpc-c2-6">VPCエンドポイントの2種類<a class="anchor" href="#vpc-c2-6" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table class="stack">
 <tr><th>種類</th><th>対応サービス</th><th>仕組み</th><th>料金</th></tr>
 <tr><td data-label="種類">ゲートウェイ型</td><td data-label="対応サービス"><strong>S3とDynamoDBのみ</strong></td><td data-label="仕組み">ルートテーブルに、サービスへの経路(プレフィックスリスト → エンドポイント)が追加される</td><td data-label="料金">無料</td></tr>
@@ -5583,7 +5585,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </table></div>
 <p>オンプレミスやピアリング先のVPCから使えるのはインターフェイス型だけです。エンドポイントポリシーなどの詳細は用語ページ「<a href="../terms/vpc-endpoint.html">VPCエンドポイント</a>」を参照してください。</p>
 
-<h3 id="vpc-c2-6">NATゲートウェイはAZごとに作る<a class="anchor" href="#vpc-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="vpc-c2-7">NATゲートウェイはAZごとに作る<a class="anchor" href="#vpc-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>NATゲートウェイは、作成した<strong>1つのAZの中で冗長化</strong>されたサービスです。AZ自体に障害が起きると、そのAZのNATゲートウェイも使えなくなります。1つのNATゲートウェイを全AZのプライベートサブネットで共有していると、そのAZの障害で<strong>全AZのサーバーが外に出られなくなります</strong>。</p>
 <p>そのため、可用性を高めるには<strong>AZごとにNATゲートウェイを作り</strong>、各AZのプライベートサブネットのルートテーブルを、<strong>同じAZのNATゲートウェイ</strong>に向けます。AZをまたぐデータ転送料金がかからなくなる利点もあります。</p>
 <figure class="figure">
@@ -5623,7 +5625,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </figure>
 <p>NATゲートウェイは自動でスケールし、セキュリティグループは付けられません(通信の制御はネットワークACLとインスタンス側のセキュリティグループで行う)。</p>
 
-<h3 id="vpc-c2-7">セキュリティグループ同士の参照<a class="anchor" href="#vpc-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="vpc-c2-8">セキュリティグループ同士の参照<a class="anchor" href="#vpc-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <p>セキュリティグループのルールでは、送信元(または送信先)にIPアドレスの範囲ではなく<strong>別のセキュリティグループのID</strong>を指定できます。「そのセキュリティグループが付いているリソースからの通信を許可する」という意味になります。</p>
 <div class="table-wrap"><table>
 <tr><th>セキュリティグループ</th><th>インバウンドルール</th></tr>
@@ -5633,7 +5635,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </table></div>
 <p>Auto ScalingでWebサーバーが増減してIPアドレスが変わっても、ルールを書き換える必要がありません。多層構成で「前の層からの通信だけを許可する」ときの定番の書き方です。同じリージョンのピアリング先VPCのセキュリティグループも参照できます。</p>
 
-<h3 id="vpc-c2-8">エフェメラルポート(ネットワークACLの戻り通信)<a class="anchor" href="#vpc-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="vpc-c2-9">エフェメラルポート(ネットワークACLの戻り通信)<a class="anchor" href="#vpc-c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <p>クライアントがサーバーに接続するとき、送信先ポートは443などの決まった番号ですが、送信元ポート(=戻りの通信の宛先ポート)にはOSが一時的に選ぶ番号が使われます。これを<strong>エフェメラルポート</strong>と呼びます。</p>
 <p>ネットワークACLはステートレスなので、インバウンドで443を許可するだけでは足りず、<strong>アウトバウンドでエフェメラルポート宛ての戻り通信も許可</strong>する必要があります。逆に、サブネット内のサーバーが外部へ接続する場合は、インバウンドでエフェメラルポートを許可します。</p>
 <figure class="figure">
@@ -5679,7 +5681,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </figure>
 <p>使われる範囲はOSや経路によって異なります(Linuxの多くは 32768〜61000、Windowsは 49152〜65535、NATゲートウェイやELBは 1024〜65535)。どの相手からの通信でも通るように、通常は <strong>1024〜65535</strong> を許可します。セキュリティグループはステートフルなので、この設定は不要です。</p>
 
-<h3 id="vpc-c2-9">Reachability Analyzer(到達性の分析)<a class="anchor" href="#vpc-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="vpc-c2-10">Reachability Analyzer(到達性の分析)<a class="anchor" href="#vpc-c2-10" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>VPC Reachability Analyzer</strong>は、送信元(EC2インスタンス、ENI、インターネットゲートウェイなど)と送信先を指定すると、その間の経路で<strong>通信が届くかどうかを設定から分析</strong>する機能です。実際にパケットは送りません。</p>
 <ul>
 <li>届く場合:通過するルートテーブル・セキュリティグループ・ネットワークACLなどの経路を1つずつ表示する</li>
@@ -5739,6 +5741,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>インターネットを経由せずAWSサービスへ → <strong>VPCエンドポイント</strong>。S3・DynamoDBだけなら無料のゲートウェイ型、オンプレミスから使うならインターフェイス型。</li>
 <li>NATゲートウェイの可用性を高めたい → <strong>AZごとにNATゲートウェイ</strong>を作り、各AZのルートテーブルで同じAZのものを指定する。</li>
 <li>停止・起動してもパブリックIPを変えたくない → <strong>Elastic IP</strong>。</li>
+<li>複数VPCのCIDRを一元管理し、重複や枯渇を防ぐ → <strong>IPAM</strong>。</li>
 </ul>
 <h4>設計・トラブル調査</h4>
 <ul>
@@ -5753,6 +5756,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h2 id="vpc-c7">7. まとめ<a class="anchor" href="#vpc-c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>VPCはAWS上の自分専用ネットワーク。CIDRとサブネットで設計する。</li>
+<li>複数VPCのCIDRの計画・割り当て・監視にはIPAMを使う。</li>
 <li>経路はルートテーブル、出入口はIGW/NAT/エンドポイント。</li>
 <li>アクセス制御はセキュリティグループ(許可のみ)とネットワークACL(許可/拒否)。</li>
 </ul>
@@ -11754,14 +11758,19 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>収集方法:Lambda・API GatewayなどはAWSサービスから自動出力。EC2は<strong>CloudWatchエージェント</strong>をインストールして送信。</li>
 <li>分析
   <ul>
-  <li><strong>Logs Insights</strong>:SQLライクなクエリでログを分析</li>
+  <li><strong>Logs Insights</strong>:SQLライクなクエリでログを分析。データ保護ポリシーでマスキングされた値を表示するには、<code>logs:Unmask</code> 権限を持つ利用者がクエリに <code>unmask</code> コマンドを加える</li>
   <li><strong class="em">メトリクスフィルター</strong>:ログからメトリクスを生成(例:"error"が出たらアラーム+SNSで通知)</li>
   <li><strong class="em">サブスクリプションフィルター</strong>:ログを他サービスへリアルタイムにストリーミング</li>
   </ul></li>
-<li><strong>データ保護ポリシー</strong>:ログに含まれる機密情報を検出してマスキング</li>
+<li><strong>データ保護ポリシー</strong>:ログイベントの機密情報を検出・監査し、Logs Insights・メトリクスフィルター・サブスクリプションフィルターなどへの出力時にマスキングする。ポリシー設定前に取り込んだログイベントはマスキングされない</li>
 <li><strong>保持期間</strong>:デフォルトは<strong>無期限</strong>(1日〜10年で指定可能)。短期・頻繁に検索するログはCloudWatch Logs、長期・たまに検索するログはS3(Standard-IA・Glacierなど)へ。</li>
 <li><strong>暗号化</strong>:KMSキーを関連付ける(<code>associate-kms-key</code>)</li>
 </ul>
+<pre class="code"><code>fields @timestamp, @message
+| unmask
+| sort @timestamp desc
+| limit 20</code></pre>
+<p><code>unmask</code> を実行できるのは <code>logs:Unmask</code> 権限を持つ利用者だけです。必要な担当者に限定して権限を付与してください。</p>
 
 <figure class="figure">
 <div class="fig-scroll">
@@ -11814,7 +11823,23 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>開発者へメール通知</li>
 </ol>
 
-<h3 id="cloudwatch-c2-10">CloudWatchエージェント<a class="anchor" href="#cloudwatch-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-10">Contributor Insights<a class="anchor" href="#cloudwatch-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<p>ログやAWSサービスのメトリクスを分析し、影響の大きい<strong>上位の寄与者(トップN)</strong>や寄与者の総数を時系列で表示します。</p>
+<ul>
+<li>ログのフィールド(例:クライアントIPアドレス)を使ってルールを作り、条件に合う寄与者を集計・順位付けする。AWSサービスのメトリクスには組み込みルールも使える。</li>
+<li>特定のIPアドレスからのエラーや、リクエスト数の多い利用者を見つけ、障害や負荷の原因を絞り込む。</li>
+<li>ルールに一致したログイベント数などに応じて料金が発生する。</li>
+</ul>
+
+<h3 id="cloudwatch-c2-11">Application Insights<a class="anchor" href="#cloudwatch-c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>CloudWatch Application Insights</strong>は、アプリケーションとその基盤リソースの監視を支援し、メトリクスやログから問題を検出して、関連する情報をまとめて調査しやすくする機能です。</p>
+<ul>
+<li>アプリケーションのコンポーネントを設定して監視し、異常の検出や関連するメトリクス・ログの確認に使う。</li>
+<li>複数のAWSリソースから成るアプリケーションの問題を、関連する情報とあわせて素早く調査したいときに向く。</li>
+</ul>
+<p><strong>Application Signals</strong>がサービスやリクエストの性能・可用性を計測するのに対し、Application Insightsはアプリケーションと基盤リソースの問題検出・調査を支援します。</p>
+
+<h3 id="cloudwatch-c2-12">CloudWatchエージェント<a class="anchor" href="#cloudwatch-c2-12" aria-label="この見出しへのリンク">#</a></h3>
 <p>EC2やオンプレミスのサーバーから、詳細なメトリクスやログをCloudWatchへ送信します。</p>
 <ol>
 <li>CloudWatchエージェントをインストール</li>
@@ -11846,7 +11871,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </table></div>
 <p>「メモリ使用率のメトリクスは届いているのに、インスタンスごとに見分けられない」「Auto Scalingグループ単位で集計できない」という問題は、<code>append_dimensions</code> と <code>aggregation_dimensions</code> の設定で解決します。なお、ディメンションの組み合わせが違うと、CloudWatchでは<strong>別のメトリクス</strong>として扱われる点に注意してください(カスタムメトリクスの料金も別々にかかります)。</p>
 
-<h3 id="cloudwatch-c2-11">CloudWatch Synthetics<a class="anchor" href="#cloudwatch-c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-13">CloudWatch Synthetics<a class="anchor" href="#cloudwatch-c2-13" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>CloudWatch Synthetics</strong>は、利用者の操作を模擬してWebサイトやAPIを定期的に確認する<strong>外形監視</strong>の機能です。監視用スクリプトを<strong>Canary</strong>と呼び、Lambda関数として実行します。実際のアクセスがない時間帯でも、利用者の経路が正常に動くか確認できます。</p>
 <ul>
 <li>Canaryはスケジュールに従ってURLやAPIにアクセスし、ログインや画面操作などの一連の処理を検証する。</li>
@@ -11871,7 +11896,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>リンク切れ → リンク切れチェッカー。操作手順の再現 → Canary Recorder か GUIワークフロービルダー。見た目の変化 → ビジュアルモニタリング。</li>
 </ul></div>
 
-<h3 id="cloudwatch-c2-12">クロスアカウントオブザーバビリティ<a class="anchor" href="#cloudwatch-c2-12" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-14">クロスアカウントオブザーバビリティ<a class="anchor" href="#cloudwatch-c2-14" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>クロスアカウントオブザーバビリティ</strong>は、複数のAWSアカウントのメトリクス・ログ・トレースを、1つの<strong>モニタリングアカウント</strong>からまとめて見て、検索し、アラームを作れる機能です。各アカウントにサインインし直したり、ログを1か所にコピーしたりする必要がありません。</p>
 <div class="table-wrap"><table>
 <tr><th>用語</th><th>意味</th></tr>
@@ -11889,9 +11914,11 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <p>1つのモニタリングアカウントには最大100,000のソースアカウントを、1つのソースアカウントは最大5つのモニタリングアカウントにリンクできます。データは<strong>コピーされず、ソースアカウントに残ったまま</strong>参照されるため、ログの保管料金が二重にかかることはありません。</p>
 <p>以前からある「CloudWatchのクロスアカウント・クロスリージョンのダッシュボード」(IAMロールで別アカウントのメトリクスを読む方式)よりも、ログやトレースまで横断して検索できる点が違います。<strong>複数アカウントのログを長期保管・分析のために1つにまとめたい</strong>ときは、サブスクリプションフィルターでFirehoseなどに送る集約の仕組みを使います(運用シナリオ「<a href="../usecases/centralized-logging.html">複数アカウントのログを集約して分析する</a>」)。</p>
 
-<h3 id="cloudwatch-c2-13">その他の機能<a class="anchor" href="#cloudwatch-c2-13" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-15">その他の機能<a class="anchor" href="#cloudwatch-c2-15" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
+<li><strong>Application Insights</strong>:アプリケーションと基盤リソースを監視し、異常の検出や関連情報の調査を支援する。</li>
 <li><strong>Application Signals</strong>:アプリの性能と可用性を自動で計測・可視化。サービス単位・APIパス単位でメトリクスを確認できる。CloudWatchエージェントとADOT(AWS Distro for OpenTelemetry)が必要。</li>
+<li><strong>Contributor Insights</strong>:ログやAWSサービスのメトリクスから、影響の大きい寄与者(トップN)を特定する。</li>
 <li><strong class="em">Lambda Insights</strong>:Lambdaの詳細なパフォーマンス監視。有効化には<strong>拡張レイヤーの追加</strong>(収集用エージェントが入っている)と、IAMポリシー <code>CloudWatchLambdaInsightsExecutionRolePolicy</code> の付与が必要。</li>
 <li><strong class="em">Embedded Metric Format(EMF)</strong>:ログにメトリクス情報を埋め込み、CloudWatch Logsからメトリクスを生成する。アプリにEMF形式のログ出力を実装する。</li>
 </ul>
@@ -11903,13 +11930,15 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>CPU使用率が高くなったらAuto Scalingでスケールアウト</li>
 <li>EC2のメモリ使用率をエージェントで収集して監視</li>
 <li>アプリのログに"ERROR"が出たらメール通知</li>
+<li>エラーの多いIPアドレスなど、ログの上位寄与者を調べる(Contributor Insights)</li>
+<li>アプリケーションと基盤リソースの異常をまとめて調査する(Application Insights)</li>
 <li>Canaryでログインなどの操作を定期実行し、利用者のアクセスがない時間帯もWebサイトやAPIの可用性・応答時間を確認</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2 id="cloudwatch-c4">4. 料金の考え方<a class="anchor" href="#cloudwatch-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>基本メトリクス(5分間隔)は無料です。詳細モニタリング、カスタムメトリクス、アラーム、ダッシュボード、ログの取り込み量・保存量、Logs Insightsのスキャン量などに応じて課金されます。SyntheticsはCanaryの実行回数などに応じて課金され、実行に伴うLambdaやS3の利用料も発生します。実行間隔を短くすると監視頻度と費用が増えるため、必要な検知速度に合わせて設定します。古いログはS3へ移すとコストを下げられます。</p>
+<p>基本メトリクス(5分間隔)は無料です。詳細モニタリング、カスタムメトリクス、アラーム、ダッシュボード、ログの取り込み量・保存量、Logs Insightsのスキャン量、Contributor Insightsのルールに一致したログイベント数などに応じて課金されます。SyntheticsはCanaryの実行回数などに応じて課金され、実行に伴うLambdaやS3の利用料も発生します。実行間隔を短くすると監視頻度と費用が増えるため、必要な検知速度に合わせて設定します。古いログはS3へ移すとコストを下げられます。</p>
 </section>
 
 <section class="chapter">
@@ -11947,6 +11976,8 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <ul>
 <li>ログの特定文字列でアラーム → <strong>メトリクスフィルター</strong>。</li>
 <li>ログをリアルタイムに他サービスへ → <strong>サブスクリプションフィルター</strong>。</li>
+<li>ログの機密情報をマスキング → <strong>データ保護ポリシー</strong>。Logs Insightsで表示する → <code>unmask</code>(IAMの <code>logs:Unmask</code> 権限が必要)。</li>
+<li>ログの上位寄与者を分析 → <strong>Contributor Insights</strong>。アプリと基盤リソースの問題を検出・調査 → <strong>Application Insights</strong>。</li>
 <li>ログ保持期間はデフォルト<strong>無期限</strong>。コストに注意。</li>
 </ul>
 </div>
@@ -11958,6 +11989,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>CloudWatchはメトリクス・アラーム・ダッシュボード・ログの統合監視サービス。</li>
 <li>標準にない値はエージェントやPutMetricData、EMFで送る。</li>
 <li>ログはメトリクスフィルターでアラームに、サブスクリプションフィルターで連携に。</li>
+<li>Contributor Insightsはログの上位寄与者を特定し、Application Insightsはアプリケーションと基盤の問題調査を支援する。</li>
 <li>SyntheticsのCanaryは利用者の操作を定期実行し、WebサイトやAPIを外形監視する。</li>
 </ul>
 </section>
@@ -12110,6 +12142,13 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td>CloudWatch Logs Insights</td><td>CloudWatch Logsに送ったログに、クエリで問い合わせる</td></tr>
 <tr><td><strong>CloudTrail Lake</strong></td><td>イベントを<strong>イベントデータストア</strong>に集め、SQLで問い合わせる。S3やAthenaを準備しなくてよく、長期間(最長10年)保存できる。AWS以外のソースのイベントも取り込める</td></tr>
 </table></div>
+<p>イベントデータストアは、高度なイベントセレクターで対象を選ぶイベントのコレクションです。管理・データイベント、Insightsイベント、AWS Config項目、AWS外のイベントなど、種類ごとに作成します(1つのデータストアには1種類のイベントカテゴリを保存)。Organizations全体の複数アカウント・リージョンを対象にすることもできます。</p>
+<ul>
+<li>SQLで複数のイベント項目を検索・集計でき、複数のイベントデータストアを結合した分析も可能。</li>
+<li>保持期間は料金オプションにより最長約7年または約10年。クエリ結果は最大7日間参照でき、S3に保存できる。</li>
+<li>取り込み・保持と、クエリでスキャンしたデータ量に応じて料金がかかる。</li>
+</ul>
+<p><strong>提供状況</strong>:2026年5月31日以降、新規顧客はCloudTrail Lakeを利用開始できません。既存顧客は継続利用できます。新たに長期保存したイベントをSQL分析する場合は、証跡をS3に保存してAthenaで分析します。</p>
 
 <h3 id="cloudtrail-c2-8">ログが届かないときの確認<a class="anchor" href="#cloudtrail-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
@@ -12131,7 +12170,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <section class="chapter">
 <h2 id="cloudtrail-c4">4. 料金の考え方<a class="anchor" href="#cloudtrail-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>過去90日分のイベント履歴の閲覧と、管理イベントの最初の1つの証跡は無料です。データイベント、Insightsイベント、追加の証跡には料金がかかります。保存先のS3やCloudWatch Logsの料金も別途かかります。</p>
+<p>過去90日分のイベント履歴の閲覧と、管理イベントの最初の1つの証跡は無料です。データイベント、Insightsイベント、追加の証跡には料金がかかります。保存先のS3やCloudWatch Logsの料金も別途かかります。CloudTrail Lakeはイベントの取り込み・保持とクエリのスキャン量に応じて課金されます。</p>
 </section>
 
 <section class="chapter">
@@ -12166,6 +12205,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>証跡を止めさせない → <strong>SCP</strong>で <code>StopLogging</code>・<code>DeleteTrail</code> を拒否する。</li>
 <li>リアルタイムに近い通知 → <strong>CloudWatch Logsと統合</strong>し、メトリクスフィルターとアラームで通知。</li>
 <li>S3に保存したログをSQLで調べる → <strong>Athena</strong>。S3を用意せずSQLで長期保存・分析 → <strong>CloudTrail Lake</strong>。</li>
+<li>CloudTrail Lakeは2026年5月31日以降、新規顧客は利用開始できない。新規利用ではS3+Athenaを検討する。</li>
 <li>ログが届かない → 記録の停止、バケットポリシー、KMSのキーポリシーを確認する。</li>
 <li>CloudWatch・CloudTrail・Config・X-Rayの使い分け → <a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>。</li>
 </ul>
@@ -12428,6 +12468,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td>アプリケーション管理</td><td><a href="#systems-manager-f-param">Parameter Store</a>、<a href="#systems-manager-f-appconfig">AppConfig</a></td></tr>
 <tr><td>運用管理</td><td><a href="#systems-manager-f-opscenter">OpsCenter</a>、<a href="#systems-manager-f-explorer">Explorer</a></td></tr>
 </table></div>
+<p>複数の機能をまとめて設定するには、次の<strong>Quick Setup</strong>を使えます。</p>
 </section>
 
 <section class="chapter">
@@ -12531,7 +12572,13 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li><strong>管理対象ノードとして表示されるか確認する</strong>:Fleet Managerのノードの一覧、または <code>aws ssm describe-instance-information</code> で、状態(Ping status)が <code>Online</code> になっていれば準備完了。表示されるまで数分かかることがある。ロールを後から付けたのに表示されないときは、SSM Agentを再起動する。</li>
 <li><strong>使う機能ごとの設定をする</strong>:下の表のとおり、機能によって追加の権限・経路・設定が必要になる。</li>
 </ol>
-<p>1〜3の設定は、<strong>Quick Setup</strong>を使うと、組織やアカウントの複数のインスタンスにまとめて行えます。</p>
+<h3 id="systems-manager-quick-setup">Quick Setup<a class="anchor" href="#systems-manager-quick-setup" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>Quick Setup</strong>は、推奨設定を選んでSystems Managerなどの機能をすばやく構成し、アカウント・リージョンへ展開する機能です。単一アカウントのほか、<a href="#p-organizations">AWS Organizations</a>を使って複数アカウント・リージョンにも一貫した設定を適用できます。</p>
+<ul>
+<li>EC2のホスト管理では、SSM Agentの更新、Inventoryの収集、パッチのスキャンなどをまとめて設定できる。SSM Agentが未導入のインスタンスには、Quick SetupはAgentをインストールしない。</li>
+<li>設定の展開状況を確認でき、設定ドリフトを定期的に検出して修復する。</li>
+<li>Quick Setup自体は無料。構成した機能や利用するAWSサービスの料金は別途発生する。</li>
+</ul>
 <div class="table-wrap"><table>
 <tr><th>使う機能</th><th>管理対象ノードにしたあとに必要なこと</th></tr>
 <tr><td><a href="#systems-manager-f-session">Session Manager</a></td><td>操作する人に <code>ssm:StartSession</code> の権限。ローカルのPCのCLIから使うときは Session Manager plugin を入れる。操作ログをS3・CloudWatch Logsに残すときは、インスタンスのロールに書き込み権限を足し、経路(S3のゲートウェイエンドポイント、<code>logs</code> のエンドポイント)を用意する</td></tr>
@@ -12545,7 +12592,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <p><strong>SSMドキュメント</strong>は、Systems Managerが実行する処理を定義したJSON/YAMLのファイルです。AWSが用意したもの(<code>AWS-</code> で始まる)をそのまま使うことも、自作することもできます。Run Command用の「コマンドドキュメント」、Automation用の「ランブック」などの種類があります。</p>
 
-<h3 id="systems-manager-c2-3">ノード管理の機能<a class="anchor" href="#systems-manager-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="systems-manager-c2-4">ノード管理の機能<a class="anchor" href="#systems-manager-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="systems-manager-f-session">
 <h4>Session Manager</h4>
@@ -12702,7 +12749,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </dl>
 </div>
 
-<h3 id="systems-manager-c2-4">変更管理の機能<a class="anchor" href="#systems-manager-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="systems-manager-c2-5">変更管理の機能<a class="anchor" href="#systems-manager-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="systems-manager-f-automation">
 <h4>Automation</h4>
@@ -12780,7 +12827,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </dl>
 </div>
 
-<h3 id="systems-manager-c2-5">アプリケーション管理の機能<a class="anchor" href="#systems-manager-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="systems-manager-c2-6">アプリケーション管理の機能<a class="anchor" href="#systems-manager-c2-6" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="systems-manager-f-param">
 <h4>Parameter Store</h4>
@@ -12850,7 +12897,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </figure>
 </div>
 
-<h3 id="systems-manager-c2-6">運用管理の機能<a class="anchor" href="#systems-manager-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="systems-manager-c2-7">運用管理の機能<a class="anchor" href="#systems-manager-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 
 <div class="feature" id="systems-manager-f-opscenter">
 <h4>OpsCenter</h4>
@@ -12907,7 +12954,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <section class="chapter">
 <h2 id="systems-manager-c6">6. 試験・実務でのポイント<a class="anchor" href="#systems-manager-c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
-<li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(NATまたはVPCエンドポイント)</strong>を確認。</li>
+<li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(NATまたはVPCエンドポイント)</strong>を確認。複数アカウント・リージョンへの一括設定 → Quick Setup。</li>
 <li>ポート22を開けずに安全にログイン、操作ログも残したい → <strong>Session Manager</strong>。</li>
 <li>複数サーバーへ1回だけ一括でコマンド → <strong>Run Command</strong>。状態を保ち続ける → <strong>State Manager</strong>。</li>
 <li>定期的なパッチ適用 → <strong>Patch Manager+Maintenance Windows</strong>。適用状況の確認 → <strong>Compliance</strong>。</li>
