@@ -279,14 +279,19 @@ edge stat alarm
 <li>収集方法:Lambda・API GatewayなどはAWSサービスから自動出力。EC2は<strong>CloudWatchエージェント</strong>をインストールして送信。</li>
 <li>分析
   <ul>
-  <li><strong>Logs Insights</strong>:SQLライクなクエリでログを分析</li>
+  <li><strong>Logs Insights</strong>:SQLライクなクエリでログを分析。データ保護ポリシーでマスキングされた値を表示するには、<code>logs:Unmask</code> 権限を持つ利用者がクエリに <code>unmask</code> コマンドを加える</li>
   <li><strong class="em">メトリクスフィルター</strong>:ログからメトリクスを生成(例:"error"が出たらアラーム+SNSで通知)</li>
   <li><strong class="em">サブスクリプションフィルター</strong>:ログを他サービスへリアルタイムにストリーミング</li>
   </ul></li>
-<li><strong>データ保護ポリシー</strong>:ログに含まれる機密情報を検出してマスキング</li>
+<li><strong>データ保護ポリシー</strong>:ログイベントの機密情報を検出・監査し、Logs Insights・メトリクスフィルター・サブスクリプションフィルターなどへの出力時にマスキングする。ポリシー設定前に取り込んだログイベントはマスキングされない</li>
 <li><strong>保持期間</strong>:デフォルトは<strong>無期限</strong>(1日〜10年で指定可能)。短期・頻繁に検索するログはCloudWatch Logs、長期・たまに検索するログはS3(Standard-IA・Glacierなど)へ。</li>
 <li><strong>暗号化</strong>:KMSキーを関連付ける(<code>associate-kms-key</code>)</li>
 </ul>
+<pre class="code"><code>fields @timestamp, @message
+| unmask
+| sort @timestamp desc
+| limit 20</code></pre>
+<p><code>unmask</code> を実行できるのは <code>logs:Unmask</code> 権限を持つ利用者だけです。必要な担当者に限定して権限を付与してください。</p>
 
 <figure class="figure" data-diagram>
 grid 175 90
@@ -310,6 +315,22 @@ edge sf dst
 <li>アラーム条件を満たすとSNS通知を送信</li>
 <li>開発者へメール通知</li>
 </ol>
+
+<h3>Contributor Insights</h3>
+<p>ログやAWSサービスのメトリクスを分析し、影響の大きい<strong>上位の寄与者(トップN)</strong>や寄与者の総数を時系列で表示します。</p>
+<ul>
+<li>ログのフィールド(例:クライアントIPアドレス)を使ってルールを作り、条件に合う寄与者を集計・順位付けする。AWSサービスのメトリクスには組み込みルールも使える。</li>
+<li>特定のIPアドレスからのエラーや、リクエスト数の多い利用者を見つけ、障害や負荷の原因を絞り込む。</li>
+<li>ルールに一致したログイベント数などに応じて料金が発生する。</li>
+</ul>
+
+<h3>Application Insights</h3>
+<p><strong>CloudWatch Application Insights</strong>は、アプリケーションとその基盤リソースの監視を支援し、メトリクスやログから問題を検出して、関連する情報をまとめて調査しやすくする機能です。</p>
+<ul>
+<li>アプリケーションのコンポーネントを設定して監視し、異常の検出や関連するメトリクス・ログの確認に使う。</li>
+<li>複数のAWSリソースから成るアプリケーションの問題を、関連する情報とあわせて素早く調査したいときに向く。</li>
+</ul>
+<p><strong>Application Signals</strong>がサービスやリクエストの性能・可用性を計測するのに対し、Application Insightsはアプリケーションと基盤リソースの問題検出・調査を支援します。</p>
 
 <h3>CloudWatchエージェント</h3>
 <p>EC2やオンプレミスのサーバーから、詳細なメトリクスやログをCloudWatchへ送信します。</p>
@@ -388,7 +409,9 @@ edge sf dst
 
 <h3>その他の機能</h3>
 <ul>
+<li><strong>Application Insights</strong>:アプリケーションと基盤リソースを監視し、異常の検出や関連情報の調査を支援する。</li>
 <li><strong>Application Signals</strong>:アプリの性能と可用性を自動で計測・可視化。サービス単位・APIパス単位でメトリクスを確認できる。CloudWatchエージェントとADOT(AWS Distro for OpenTelemetry)が必要。</li>
+<li><strong>Contributor Insights</strong>:ログやAWSサービスのメトリクスから、影響の大きい寄与者(トップN)を特定する。</li>
 <li><strong class="em">Lambda Insights</strong>:Lambdaの詳細なパフォーマンス監視。有効化には<strong>拡張レイヤーの追加</strong>(収集用エージェントが入っている)と、IAMポリシー <code>CloudWatchLambdaInsightsExecutionRolePolicy</code> の付与が必要。</li>
 <li><strong class="em">Embedded Metric Format(EMF)</strong>:ログにメトリクス情報を埋め込み、CloudWatch Logsからメトリクスを生成する。アプリにEMF形式のログ出力を実装する。</li>
 </ul>
@@ -400,13 +423,15 @@ edge sf dst
 <li>CPU使用率が高くなったらAuto Scalingでスケールアウト</li>
 <li>EC2のメモリ使用率をエージェントで収集して監視</li>
 <li>アプリのログに"ERROR"が出たらメール通知</li>
+<li>エラーの多いIPアドレスなど、ログの上位寄与者を調べる(Contributor Insights)</li>
+<li>アプリケーションと基盤リソースの異常をまとめて調査する(Application Insights)</li>
 <li>Canaryでログインなどの操作を定期実行し、利用者のアクセスがない時間帯もWebサイトやAPIの可用性・応答時間を確認</li>
 </ul>
 </section>
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>基本メトリクス(5分間隔)は無料です。詳細モニタリング、カスタムメトリクス、アラーム、ダッシュボード、ログの取り込み量・保存量、Logs Insightsのスキャン量などに応じて課金されます。SyntheticsはCanaryの実行回数などに応じて課金され、実行に伴うLambdaやS3の利用料も発生します。実行間隔を短くすると監視頻度と費用が増えるため、必要な検知速度に合わせて設定します。古いログはS3へ移すとコストを下げられます。</p>
+<p>基本メトリクス(5分間隔)は無料です。詳細モニタリング、カスタムメトリクス、アラーム、ダッシュボード、ログの取り込み量・保存量、Logs Insightsのスキャン量、Contributor Insightsのルールに一致したログイベント数などに応じて課金されます。SyntheticsはCanaryの実行回数などに応じて課金され、実行に伴うLambdaやS3の利用料も発生します。実行間隔を短くすると監視頻度と費用が増えるため、必要な検知速度に合わせて設定します。古いログはS3へ移すとコストを下げられます。</p>
 </section>
 
 <section class="chapter">
@@ -444,6 +469,8 @@ edge sf dst
 <ul>
 <li>ログの特定文字列でアラーム → <strong>メトリクスフィルター</strong>。</li>
 <li>ログをリアルタイムに他サービスへ → <strong>サブスクリプションフィルター</strong>。</li>
+<li>ログの機密情報をマスキング → <strong>データ保護ポリシー</strong>。Logs Insightsで表示する → <code>unmask</code>(IAMの <code>logs:Unmask</code> 権限が必要)。</li>
+<li>ログの上位寄与者を分析 → <strong>Contributor Insights</strong>。アプリと基盤リソースの問題を検出・調査 → <strong>Application Insights</strong>。</li>
 <li>ログ保持期間はデフォルト<strong>無期限</strong>。コストに注意。</li>
 </ul>
 </div>
@@ -455,6 +482,7 @@ edge sf dst
 <li>CloudWatchはメトリクス・アラーム・ダッシュボード・ログの統合監視サービス。</li>
 <li>標準にない値はエージェントやPutMetricData、EMFで送る。</li>
 <li>ログはメトリクスフィルターでアラームに、サブスクリプションフィルターで連携に。</li>
+<li>Contributor Insightsはログの上位寄与者を特定し、Application Insightsはアプリケーションと基盤の問題調査を支援する。</li>
 <li>SyntheticsのCanaryは利用者の操作を定期実行し、WebサイトやAPIを外形監視する。</li>
 </ul>
 </section>

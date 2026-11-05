@@ -93,6 +93,13 @@ edge log cwl dash
 <tr><td>CloudWatch Logs Insights</td><td>CloudWatch Logsに送ったログに、クエリで問い合わせる</td></tr>
 <tr><td><strong>CloudTrail Lake</strong></td><td>イベントを<strong>イベントデータストア</strong>に集め、SQLで問い合わせる。S3やAthenaを準備しなくてよく、長期間(最長10年)保存できる。AWS以外のソースのイベントも取り込める</td></tr>
 </table></div>
+<p>イベントデータストアは、高度なイベントセレクターで対象を選ぶイベントのコレクションです。管理・データイベント、Insightsイベント、AWS Config項目、AWS外のイベントなど、種類ごとに作成します(1つのデータストアには1種類のイベントカテゴリを保存)。Organizations全体の複数アカウント・リージョンを対象にすることもできます。</p>
+<ul>
+<li>SQLで複数のイベント項目を検索・集計でき、複数のイベントデータストアを結合した分析も可能。</li>
+<li>保持期間は料金オプションにより最長約7年または約10年。クエリ結果は最大7日間参照でき、S3に保存できる。</li>
+<li>取り込み・保持と、クエリでスキャンしたデータ量に応じて料金がかかる。</li>
+</ul>
+<p><strong>提供状況</strong>:2026年5月31日以降、新規顧客はCloudTrail Lakeを利用開始できません。既存顧客は継続利用できます。新たに長期保存したイベントをSQL分析する場合は、証跡をS3に保存してAthenaで分析します。</p>
 
 <h3>ログが届かないときの確認</h3>
 <ul>
@@ -114,7 +121,7 @@ edge log cwl dash
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>過去90日分のイベント履歴の閲覧と、管理イベントの最初の1つの証跡は無料です。データイベント、Insightsイベント、追加の証跡には料金がかかります。保存先のS3やCloudWatch Logsの料金も別途かかります。</p>
+<p>過去90日分のイベント履歴の閲覧と、管理イベントの最初の1つの証跡は無料です。データイベント、Insightsイベント、追加の証跡には料金がかかります。保存先のS3やCloudWatch Logsの料金も別途かかります。CloudTrail Lakeはイベントの取り込み・保持とクエリのスキャン量に応じて課金されます。</p>
 </section>
 
 <section class="chapter">
@@ -149,6 +156,7 @@ edge log cwl dash
 <li>証跡を止めさせない → <strong>SCP</strong>で <code>StopLogging</code>・<code>DeleteTrail</code> を拒否する。</li>
 <li>リアルタイムに近い通知 → <strong>CloudWatch Logsと統合</strong>し、メトリクスフィルターとアラームで通知。</li>
 <li>S3に保存したログをSQLで調べる → <strong>Athena</strong>。S3を用意せずSQLで長期保存・分析 → <strong>CloudTrail Lake</strong>。</li>
+<li>CloudTrail Lakeは2026年5月31日以降、新規顧客は利用開始できない。新規利用ではS3+Athenaを検討する。</li>
 <li>ログが届かない → 記録の停止、バケットポリシー、KMSのキーポリシーを確認する。</li>
 <li>CloudWatch・CloudTrail・Config・X-Rayの使い分け → <a href="../terms/monitoring-logging-comparison.html">監視・記録のサービスの選び方</a>。</li>
 </ul>

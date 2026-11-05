@@ -12,6 +12,7 @@
 <tr><td>アプリケーション管理</td><td><a href="#f-param">Parameter Store</a>、<a href="#f-appconfig">AppConfig</a></td></tr>
 <tr><td>運用管理</td><td><a href="#f-opscenter">OpsCenter</a>、<a href="#f-explorer">Explorer</a></td></tr>
 </table></div>
+<p>複数の機能をまとめて設定するには、次の<strong>Quick Setup</strong>を使えます。</p>
 </section>
 
 <section class="chapter">
@@ -65,7 +66,13 @@ edge admin ssm
 <li><strong>管理対象ノードとして表示されるか確認する</strong>:Fleet Managerのノードの一覧、または <code>aws ssm describe-instance-information</code> で、状態(Ping status)が <code>Online</code> になっていれば準備完了。表示されるまで数分かかることがある。ロールを後から付けたのに表示されないときは、SSM Agentを再起動する。</li>
 <li><strong>使う機能ごとの設定をする</strong>:下の表のとおり、機能によって追加の権限・経路・設定が必要になる。</li>
 </ol>
-<p>1〜3の設定は、<strong>Quick Setup</strong>を使うと、組織やアカウントの複数のインスタンスにまとめて行えます。</p>
+<h3 id="quick-setup">Quick Setup</h3>
+<p><strong>Quick Setup</strong>は、推奨設定を選んでSystems Managerなどの機能をすばやく構成し、アカウント・リージョンへ展開する機能です。単一アカウントのほか、<a href="organizations.html">AWS Organizations</a>を使って複数アカウント・リージョンにも一貫した設定を適用できます。</p>
+<ul>
+<li>EC2のホスト管理では、SSM Agentの更新、Inventoryの収集、パッチのスキャンなどをまとめて設定できる。SSM Agentが未導入のインスタンスには、Quick SetupはAgentをインストールしない。</li>
+<li>設定の展開状況を確認でき、設定ドリフトを定期的に検出して修復する。</li>
+<li>Quick Setup自体は無料。構成した機能や利用するAWSサービスの料金は別途発生する。</li>
+</ul>
 <div class="table-wrap"><table>
 <tr><th>使う機能</th><th>管理対象ノードにしたあとに必要なこと</th></tr>
 <tr><td><a href="#f-session">Session Manager</a></td><td>操作する人に <code>ssm:StartSession</code> の権限。ローカルのPCのCLIから使うときは Session Manager plugin を入れる。操作ログをS3・CloudWatch Logsに残すときは、インスタンスのロールに書き込み権限を足し、経路(S3のゲートウェイエンドポイント、<code>logs</code> のエンドポイント)を用意する</td></tr>
@@ -346,7 +353,7 @@ edge mon ng
 <section class="chapter">
 <h2>6. 試験・実務でのポイント</h2>
 <div class="point"><ul>
-<li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(NATまたはVPCエンドポイント)</strong>を確認。</li>
+<li>EC2がSystems Managerに表示されない → <strong>SSM Agent</strong>・<strong>IAMロール</strong>・<strong>アウトバウンド通信(NATまたはVPCエンドポイント)</strong>を確認。複数アカウント・リージョンへの一括設定 → Quick Setup。</li>
 <li>ポート22を開けずに安全にログイン、操作ログも残したい → <strong>Session Manager</strong>。</li>
 <li>複数サーバーへ1回だけ一括でコマンド → <strong>Run Command</strong>。状態を保ち続ける → <strong>State Manager</strong>。</li>
 <li>定期的なパッチ適用 → <strong>Patch Manager+Maintenance Windows</strong>。適用状況の確認 → <strong>Compliance</strong>。</li>
