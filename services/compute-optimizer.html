@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS Compute Optimizer</h1>
   <p class="lead">機械学習でリソースの使用状況を分析し、最適な設定を推奨</p>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -67,6 +67,16 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td>商用ソフトウェアのライセンス</td><td>EC2で動かすSQL Serverのエディションなど</td></tr>
 </table></div>
 <p>EC2の推奨を出すには、一定の期間(少なくとも30時間分)のメトリクスが必要です。作ったばかりのリソースには推奨が出ません。</p>
+<p>対象のサービスは「<strong>EC2・Auto Scalingグループ・EBS・Lambda・ECS on Fargate・RDS/Aurora・ライセンス</strong>」と覚えましょう。逆に、次のようなリソースは<strong>Compute Optimizerの対象外</strong>です。試験では「このリソースのサイズの推奨をCompute Optimizerで出す」という誤った選択肢として出ることがあります。</p>
+<div class="table-wrap"><table>
+<tr><th>対象外の例</th><th>代わりに使うもの</th></tr>
+<tr><td>S3(ストレージクラスの見直し)</td><td>S3 Storage Lens、S3のストレージクラス分析、Intelligent-Tiering</td></tr>
+<tr><td>DynamoDBのキャパシティ</td><td>Auto Scaling、オンデマンドモード、CloudWatchのメトリクス</td></tr>
+<tr><td>ElastiCache・OpenSearch・Redshiftのノード</td><td>各サービスのCloudWatchメトリクス、Trusted Advisor</td></tr>
+<tr><td>ECS on EC2・EKSのコンテナ</td><td>Container Insights(下のEC2インスタンスやAuto Scalingグループは、EC2として推奨が出る)</td></tr>
+<tr><td>購入する割引(RI・Savings Plans)</td><td>Cost Explorerの購入の推奨</td></tr>
+</table></div>
+<p>推奨の内容には、サイズの変更(<strong>過剰・不足・最適</strong>の判定)のほかに、<strong>アイドル状態のリソース</strong>(ほとんど使われていないEC2・EBSなど)の停止や削除の推奨もあります。</p>
 
 <h3 id="c2-2">推奨事項<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
@@ -163,6 +173,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>分析期間はデフォルト<strong>14日</strong>、最大<strong>93日</strong>(拡張インフラストラクチャメトリクス)。</li>
 <li>EC2のメモリを考えた推奨が欲しい → <strong>CloudWatchエージェント</strong>でメモリのメトリクスを送る。</li>
 <li>Lambdaの最適なメモリサイズ → Compute Optimizer。ECS on Fargateのタスクのサイズ、EBSのgp2からgp3への変更も推奨される。</li>
+<li>対象は<strong>EC2・Auto Scalingグループ・EBS・Lambda・ECS on Fargate・RDS/Aurora・商用ライセンス</strong>。S3・DynamoDB・ElastiCacheなどは<strong>対象外</strong>。</li>
 <li>組織全体の推奨をまとめて見る → 管理アカウントか<strong>委任管理者</strong>で有効にする。削減額の大きい順にまとめる → <strong>Cost Optimization Hub</strong>。</li>
 <li>推奨は自動では適用されない。変更は自分で行う。</li>
 <li>Cost Explorer・Budgets・CUR・Compute Optimizerの使い分け → <a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>
@@ -188,18 +199,20 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 13件・リンク元 4件)</summary>
+<summary>つながり図を開く(リンク先 13件・リンク元 5件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 784 426" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Compute Optimizerとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,180 C265.0,180 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="0" y="169" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="184" class="gr-t">AWS Well-Architected フレ…</text></a>
-<path class="gr-line" d="M230,210 C265.0,210 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="0" y="199" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="214" class="gr-t">料金の基本</text></a>
-<path class="gr-line" d="M230,240 C265.0,240 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/ebs-performance.html"><title>運用シナリオ:EC2・EBSの性能不足を見つけて改善する</title><rect x="0" y="229" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="244" class="gr-t">EC2・EBSの性能不足を見つけて…</text></a>
-<path class="gr-line" d="M230,270 C265.0,270 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/auto-scaling-web.html"><title>運用シナリオ:負荷に応じて自動でスケールするWebシステム</title><rect x="0" y="259" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="274" class="gr-t">負荷に応じて自動でスケールする…</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/devops-guru.html"><title>サービス:Amazon DevOps Guru</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Amazon DevOps Guru</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">AWS Well-Architected フレ…</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/pricing-basics.html"><title>用語:料金の基本</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">料金の基本</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ebs-performance.html"><title>運用シナリオ:EC2・EBSの性能不足を見つけて改善する</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">EC2・EBSの性能不足を見つけて…</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,225 300,225" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/auto-scaling-web.html"><title>運用シナリオ:負荷に応じて自動でスケールするWebシステム</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">負荷に応じて自動でスケールする…</text></a>
 <path class="gr-line" d="M480,225 C515.0,225 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/cost-explorer.html"><title>サービス:AWS Cost Explorer</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Cost Explorer</text></a>
 <path class="gr-line" d="M480,225 C515.0,225 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
@@ -227,7 +240,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <path class="gr-line" d="M480,225 C515.0,225 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="410" class="gr-t">コスト管理ツールの選び方</text></a>
 <rect x="300" y="205" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="230" text-anchor="middle" class="gr-tb">AWS Compute Optim…</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(4)</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(5)</text>
 <text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(13)</text>
 </svg>
 </div>

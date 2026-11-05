@@ -39,14 +39,14 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat5">設計・運用</a>
   <h1>デプロイ戦略</h1>
   <p class="lead">新しいバージョンを本番に反映する方法(Rolling・Blue/Green・Canaryなど)</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
 <details>
-<summary>このページの内容(13項目)</summary>
+<summary>このページの内容(14項目)</summary>
 <ol>
-<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">In-place</a></li><li><a href="#c1-2">Recreate</a></li><li><a href="#c1-3">Rolling</a></li><li><a href="#c1-4">Blue/Green</a></li><li><a href="#c1-5">Canary</a></li><li><a href="#c1-6">A/Bテスト</a></li><li><a href="#c1-7">Shadow/Mirroring</a></li><li><a href="#c1-8">Feature Flag</a></li><li><a href="#c1-9">比較</a></li></ul></li>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">In-place</a></li><li><a href="#c1-2">Recreate</a></li><li><a href="#c1-3">Rolling</a></li><li><a href="#c1-4">Blue/Green</a></li><li><a href="#c1-5">Canary</a></li><li><a href="#c1-6">A/Bテスト</a></li><li><a href="#c1-7">Shadow/Mirroring</a></li><li><a href="#c1-8">Feature Flag</a></li><li><a href="#c1-9">比較</a></li><li><a href="#c1-10">AWSのサービスごとのデプロイ設定</a></li></ul></li>
 <li><a href="#c2">2. 関連する用語</a></li>
 <li><a href="#c3">3. 関連サービス</a></li>
 <li><a href="#c4">この用語が出てくるページ</a></li>
@@ -373,6 +373,31 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <tr><td data-label="戦略"><strong>Feature Flag</strong></td><td data-label="概要">アプリはデプロイしておき、機能のON/OFFを設定で制御</td><td data-label="新旧の稼働">同一環境内で複数機能</td><td data-label="切り替え方">フラグの変更</td><td data-label="ダウンタイム">なし</td><td data-label="ロールバック">非常に容易</td><td data-label="主な用途">段階的な機能リリース</td></tr>
 </table></div>
 <p>AWSでは、CodeDeployがIn-place・Blue/Green・Canary・Linear(一定間隔で少しずつ)に、Elastic BeanstalkがRolling・Immutable・Blue/Greenに、Route 53の加重ルーティングがCanaryやA/Bテスト的な振り分けに、AppConfigがFeature Flag的な使い方に対応します。</p>
+
+<h3 id="c1-10">AWSのサービスごとのデプロイ設定<a class="anchor" href="#c1-10" aria-label="この見出しへのリンク">#</a></h3>
+<p>試験では、戦略の名前だけでなく「どのサービスの、どの設定を選ぶか」が問われます。サービスごとに選べる方式を整理します。</p>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>選べる方式・設定</th><th>ポイント</th></tr>
+<tr><td><a href="../services/codedeploy.html">CodeDeploy</a>(EC2・オンプレミス)</td><td><strong>In-place</strong>:<code>AllAtOnce</code>/<code>HalfAtATime</code>/<code>OneAtATime</code>。<strong>Blue/Green</strong>:Auto Scalingグループを複製して、ELBで切り替える</td><td>オンプレミスはIn-placeだけ。ロールバックは「前のリビジョンを再デプロイ」</td></tr>
+<tr><td>CodeDeploy(Lambda)</td><td><strong>Canary</strong>(例:<code>Canary10Percent5Minutes</code>)/<strong>Linear</strong>(例:<code>Linear10PercentEvery1Minute</code>)/<code>AllAtOnce</code></td><td>エイリアスの<strong>加重</strong>で新バージョンへ少しずつ移す。CloudWatchアラームで自動ロールバック</td></tr>
+<tr><td>CodeDeploy(ECS)・ECS</td><td><strong>ローリング更新</strong>(<code>minimumHealthyPercent</code>・<code>maximumPercent</code>)/<strong>Blue/Green</strong>(Canary・Linear・AllAtOnce)</td><td>Blue/GreenはALBの2つのターゲットグループを切り替える。ローリングの失敗検知は<a href="circuit-breaker.html">デプロイサーキットブレーカー</a></td></tr>
+<tr><td><a href="../services/elastic-beanstalk.html">Elastic Beanstalk</a></td><td>All at once/Rolling/<strong>Rolling with additional batch</strong>/<strong>Immutable</strong>/Traffic splitting/Blue/Green(環境のURLの入れ替え=<strong>CNAME swap</strong>)</td><td>容量を減らさない → 追加バッチ付きローリング。失敗時に既存インスタンスへ影響させない → Immutable。一部のトラフィックで試す → Traffic splitting</td></tr>
+<tr><td><a href="../services/auto-scaling.html">EC2 Auto Scaling</a></td><td><strong>インスタンスの更新</strong>(最小正常率・ウォームアップ・チェックポイント・自動ロールバック)</td><td>起動テンプレートを新しくしたあと、インスタンスを少しずつ入れ替える(ローリング)</td></tr>
+<tr><td><a href="../services/cloudformation.html">CloudFormation</a>(Auto Scalingグループ)</td><td><strong>UpdatePolicy</strong>:<code>AutoScalingRollingUpdate</code>(ローリング)/<code>AutoScalingReplacingUpdate</code>(新しいグループを作って置き換え)</td><td>AMIなどを変えたときに、スタックの更新でインスタンスも入れ替える</td></tr>
+<tr><td><a href="../services/api-gateway.html">API Gateway</a></td><td>ステージの<strong>カナリアリリース</strong>の設定</td><td>指定した割合のリクエストだけを新しいデプロイに送る</td></tr>
+<tr><td><a href="../services/route53.html">Route 53</a></td><td><strong>加重ルーティング</strong></td><td>DNSで新旧の環境への割合を変える(Blue/Green・Canary)。DNSのキャッシュ(TTL)のぶん切り替えが遅れる</td></tr>
+<tr><td>AppConfig(<a href="../services/systems-manager.html">Systems Manager</a>)</td><td>設定やフラグの<strong>段階的な展開</strong>(Linear・Exponential・AllAtOnce)</td><td>Feature Flagの配信。CloudWatchアラームで自動ロールバック</td></tr>
+<tr><td><a href="../services/rds.html">RDS</a></td><td><strong>Blue/Green Deployments</strong></td><td>DBのメジャーバージョンアップなどを、ステージング環境で準備してから短時間で切り替える</td></tr>
+</table></div>
+<p>問題文のキーワードから選ぶときの目安です。</p>
+<ul>
+<li>「ダウンタイムなし」「すぐに元に戻したい」→ <strong>Blue/Green</strong>。</li>
+<li>「一部のユーザーだけで先に試す」「問題があれば影響を小さく」→ <strong>Canary</strong>(段階を細かく一定にするなら <strong>Linear</strong>)。</li>
+<li>「追加のコストをかけたくない」「容量の一部が一時的に減ってもよい」→ <strong>Rolling</strong>(容量を減らしたくないなら追加バッチ付き)。</li>
+<li>「失敗しても既存のインスタンスに影響を与えない」→ <strong>Immutable</strong>(新しいインスタンスで作り、成功してから入れ替える)。</li>
+<li>「最も速く、停止してもよい(開発環境)」→ <strong>All at once</strong>(In-place・Recreate)。</li>
+<li>「失敗を自動で検知して戻す」→ CloudWatchアラームと連携した<strong>自動ロールバック</strong>(CodeDeploy・ECSのサーキットブレーカー・Auto Scalingのインスタンスの更新・AppConfig)。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -411,45 +436,53 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 7件・リンク元 9件)</summary>
+<summary>つながり図を開く(リンク先 11件・リンク元 9件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 306" style="max-width:784px;min-width:600px" role="img" aria-label="デプロイ戦略とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,45 C265.0,45 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
-<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS CodePipeline</text></a>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
-<a href="../services/sam.html"><title>サービス:AWS SAM</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS SAM</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
-<a href="../services/image-builder.html"><title>サービス:Amazon EC2 Image Builder</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">Amazon EC2 Image Builder</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
-<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon ECS</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
-<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">TerraformとGit</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
-<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">高可用性とスケーリング</text></a>
-<path class="gr-line" d="M230,225 C265.0,225 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/ec2-blue-green-pipeline.html"><title>運用シナリオ:EC2のアプリをCI/CDでBlue/Greenデプロイする</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="230" class="gr-t">EC2のアプリをCI/CDでBlue/Gr…</text></a>
-<path class="gr-line" d="M230,255 C265.0,255 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/ecs-safe-deploy.html"><title>運用シナリオ:ECSのサービスを止めずに更新し、失敗したら自動で戻す</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">ECSのサービスを止めずに更新し…</text></a>
-<path class="gr-line" d="M230,285 C265.0,285 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/golden-ami-pipeline.html"><title>運用シナリオ:パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">パッチ適用済みのAMIを定期的に…</text></a>
-<path class="gr-line" d="M480,165 C515.0,165 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 366" style="max-width:784px;min-width:600px" role="img" aria-label="デプロイ戦略とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS CodePipeline</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/sam.html"><title>サービス:AWS SAM</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS SAM</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/image-builder.html"><title>サービス:Amazon EC2 Image Builder</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon EC2 Image Builder</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/ecs.html"><title>サービス:Amazon ECS</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Amazon ECS</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">TerraformとGit</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">高可用性とスケーリング</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ec2-blue-green-pipeline.html"><title>運用シナリオ:EC2のアプリをCI/CDでBlue/Greenデプロイする</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">EC2のアプリをCI/CDでBlue/Gr…</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/ecs-safe-deploy.html"><title>運用シナリオ:ECSのサービスを止めずに更新し、失敗したら自動で戻す</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">ECSのサービスを止めずに更新し…</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,195 300,195" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/golden-ami-pipeline.html"><title>運用シナリオ:パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="320" class="gr-t">パッチ適用済みのAMIを定期的に…</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudFormation</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/codedeploy.html"><title>サービス:AWS CodeDeploy</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CodeDeploy</text></a>
-<path class="gr-line" d="M480,165 C515.0,165 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
 <a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Elastic Beanstalk</text></a>
-<path class="gr-line" d="M480,165 C515.0,165 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
 <a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Lambda</text></a>
-<path class="gr-line" d="M480,165 C515.0,165 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
 <a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS Systems Manager</text></a>
-<path class="gr-line" d="M480,165 C515.0,165 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
-<a href="../services/route53.html"><title>サービス:Amazon Route 53</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon Route 53</text></a>
-<path class="gr-line" d="M480,165 C515.0,165 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">DR戦略</text></a>
-<path class="gr-line" d="M480,165 C515.0,165 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/circuit-breaker.html"><title>用語:サーキットブレーカー</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">サーキットブレーカー</text></a>
-<rect x="300" y="145" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="170" text-anchor="middle" class="gr-tb">デプロイ戦略</text>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/api-gateway.html"><title>サービス:Amazon API Gateway</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon API Gateway</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/rds.html"><title>サービス:Amazon RDS</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">Amazon RDS</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
+<a href="../services/route53.html"><title>サービス:Amazon Route 53</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">Amazon Route 53</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M480,195 C515.0,195 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/circuit-breaker.html"><title>用語:サーキットブレーカー</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="350" class="gr-t">サーキットブレーカー</text></a>
+<rect x="300" y="175" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="200" text-anchor="middle" class="gr-tb">デプロイ戦略</text>
 <text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(9)</text>
-<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(11)</text>
 </svg>
 </div>
 <figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
