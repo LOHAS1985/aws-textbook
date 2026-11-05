@@ -40,15 +40,15 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat1">コンピューティング</a>
   <h1>Amazon EC2</h1>
   <p class="lead">AWS上で仮想サーバーを動かすサービス(Elastic Compute Cloud)</p>
-  <p class="updated">最終更新:<time datetime="2026-11-01">2026-11-01</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
 <details>
-<summary>このページの内容(21項目)</summary>
+<summary>このページの内容(22項目)</summary>
 <ol>
 <li><a href="#c1">1. サービス概要</a></li>
-<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">押さえておきたい用語</a></li><li><a href="#c2-2">EBSとインスタンスストアの違い</a></li><li><a href="#c2-3">プレイスメントグループ</a></li><li><a href="#c2-4">インスタンスタイプ</a></li><li><a href="#c2-5">EC2への接続方法(EC2 Instance Connect)</a></li><li><a href="#c2-6">キーペア</a></li><li><a href="#c2-7">ユーザーデータ</a></li><li><a href="#c2-8">インスタンスメタデータとIMDSv2</a></li><li><a href="#c2-9">停止・休止・終了の違い</a></li><li><a href="#c2-10">ステータスチェックと自動復旧</a></li><li><a href="#c2-11">T系インスタンスのCPUクレジット</a></li><li><a href="#c2-12">スポットインスタンスの中断通知</a></li></ul></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">押さえておきたい用語</a></li><li><a href="#c2-2">EBSとインスタンスストアの違い</a></li><li><a href="#c2-3">プレイスメントグループ</a></li><li><a href="#c2-4">インスタンスタイプ</a></li><li><a href="#c2-5">EC2への接続方法(EC2 Instance Connect)</a></li><li><a href="#c2-6">キーペア</a></li><li><a href="#c2-7">ユーザーデータ</a></li><li><a href="#c2-8">インスタンスメタデータとIMDSv2</a></li><li><a href="#c2-9">停止・休止・終了の違い</a></li><li><a href="#c2-10">ステータスチェックと自動復旧</a></li><li><a href="#c2-11">T系インスタンスのCPUクレジット</a></li><li><a href="#c2-12">スポットインスタンスの中断通知</a></li><li><a href="#c2-13">AMIのリージョン間コピーと共有</a></li></ul></li>
 <li><a href="#c3">3. ユースケース</a></li>
 <li><a href="#c4">4. 料金の考え方</a><ul><li><a href="#c4-1">リザーブドインスタンスとSavings Plansの種類</a></li></ul></li>
 <li><a href="#c5">5. 関連サービス</a></li>
@@ -468,6 +468,33 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </div>
 <figcaption>図7 スポットインスタンスの中断。2分前の通知を受けて、処理の状態を保存したりロードバランサーから外したりしてから中断に備える。</figcaption>
 </figure>
+
+<h3 id="c2-13">AMIのリージョン間コピーと共有<a class="anchor" href="#c2-13" aria-label="この見出しへのリンク">#</a></h3>
+<p>AMIは<strong class="em">リージョンごとのリソース</strong>です。東京リージョン(<code>ap-northeast-1</code>)で作ったカスタムAMIは、そのままではほかのリージョンで使えません。例えば、<strong>東京で作ったAMIを、シンガポールとシドニーでもEC2の起動に使いたい</strong>ときは、次のようにします。</p>
+<ol>
+<li>東京のAMIを、<strong>シンガポール(<code>ap-southeast-1</code>)とシドニー(<code>ap-southeast-2</code>)へそれぞれコピー</strong>する(コンソールの「AMIをコピー」、またはCLIの <code>copy-image</code>。<strong>コピー先のリージョンで実行</strong>する)
+<pre class="code"><code>aws ec2 copy-image --region ap-southeast-1 \
+  --source-region ap-northeast-1 --source-image-id ami-0123456789abcdef0 \
+  --name "app-golden-ami"
+aws ec2 copy-image --region ap-southeast-2 \
+  --source-region ap-northeast-1 --source-image-id ami-0123456789abcdef0 \
+  --name "app-golden-ami"</code></pre></li>
+<li>コピーされたAMIには、<strong>リージョンごとに新しいAMI ID</strong>が付く。各リージョンの起動テンプレートやCloudFormationのテンプレート(<code>Mappings</code>)には、そのリージョンのAMI IDを指定する</li>
+<li>コピーしたAMIの状態が <code>available</code> になったら、そのリージョンでEC2を起動できる</li>
+</ol>
+<div class="table-wrap"><table>
+<tr><th>注意点</th><th>内容</th></tr>
+<tr><td>暗号化されたAMI</td><td>コピー先のリージョンの<strong>KMSキー</strong>を指定して再暗号化する(KMSキーもリージョンごと)。暗号化されていないAMIを、コピーのときに暗号化することもできる</td></tr>
+<tr><td>引き継がれないもの</td><td><strong>起動許可(共有の設定)</strong>はコピーされない。タグは <code>--copy-image-tags</code> を指定したときだけコピーされる</td></tr>
+<tr><td>料金</td><td>コピー自体は無料だが、リージョン間のデータ転送料と、コピー先のスナップショットの保存料金がかかる</td></tr>
+<tr><td>自動化</td><td>定期的に作るAMIを複数リージョンへ配るなら、<a href="image-builder.html">EC2 Image Builder</a>の<strong>ディストリビューション設定</strong>で、作成と同時に指定したリージョン・アカウントへコピーする</td></tr>
+</table></div>
+<p>リージョンをまたぐ「コピー」と、アカウントをまたぐ「共有」は別の操作です。</p>
+<ul>
+<li><strong>別のアカウントに使わせる(同じリージョン)</strong>:AMIの<strong>起動許可</strong>にアカウントID・組織・OUを追加して<strong>共有</strong>する。暗号化されたAMIを共有するには、カスタマーマネージドキーのキーポリシーで相手のアカウントにも使用を許可する(AWSマネージドキーで暗号化したAMIは共有できない)。</li>
+<li><strong>別のアカウントの別のリージョンで使う</strong>:共有されたAMIを、相手のアカウントがコピー先のリージョンへ<strong>コピー</strong>する。</li>
+<li>AMIの公開(全員への共有)は、組織の<strong>宣言型ポリシー</strong>や「AMIのパブリックアクセスのブロック」で禁止できる。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -591,6 +618,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li>起動時の初期設定を自動化 → <strong>ユーザーデータ</strong>(既定は初回起動時のみ、rootで実行)。機密情報は書かない。</li>
 <li>インスタンスの中から自分の情報やロールの認証情報を取得 → <strong>インスタンスメタデータ</strong>(169.254.169.254)。SSRF対策で<strong>IMDSv2を必須</strong>(<code>HttpTokens=required</code>)にする。</li>
 <li>SSHの鍵を配らずに、IAMで制御しながら接続したい → <strong>EC2 Instance Connect</strong>(図5)。22番ポートも開けたくない → <strong>Session Manager</strong>。</li>
+<li>東京で作ったカスタムAMIを別のリージョン(シンガポール・シドニーなど)でも使いたい → それぞれのリージョンへ<strong>AMIをコピー</strong>する(AMIはリージョンごと。コピー先では<strong>新しいAMI ID</strong>になる)。別アカウントへは起動許可で<strong>共有</strong>。</li>
 </ul>
 <h4>停止・障害対応</h4>
 <ul>

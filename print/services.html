@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <div class="page-head booklet-cover">
 <p class="booklet-site">AWS教科書</p>
 <h1>サービス</h1>
-<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全96ページ)</p>
+<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全97ページ)</p>
 <p class="booklet-help">このページは、印刷やPDFでの保存のために全ページを1つにまとめたものです。ブラウザーの印刷(Ctrl+P、スマホは共有メニューの「プリント」)から、紙に印刷するかPDFとして保存してください。ページの順番は目次と同じです。</p>
 <p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button> <a href="../services/index.html">目次へ戻る</a></p>
 </div>
@@ -132,6 +132,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-managed-grafana">Amazon Managed Grafana</a></li>
 <li><a href="#p-managed-prometheus">Amazon Managed Service for Prometheus</a></li>
 <li><a href="#p-devops-agent">AWS DevOps Agent</a></li>
+<li><a href="#p-devops-guru">Amazon DevOps Guru</a></li>
 </ol>
 <h3>クラウド財務管理</h3>
 <ol>
@@ -606,6 +607,33 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 </div>
 <figcaption>図7 スポットインスタンスの中断。2分前の通知を受けて、処理の状態を保存したりロードバランサーから外したりしてから中断に備える。</figcaption>
 </figure>
+
+<h3 id="ec2-c2-13">AMIのリージョン間コピーと共有<a class="anchor" href="#ec2-c2-13" aria-label="この見出しへのリンク">#</a></h3>
+<p>AMIは<strong class="em">リージョンごとのリソース</strong>です。東京リージョン(<code>ap-northeast-1</code>)で作ったカスタムAMIは、そのままではほかのリージョンで使えません。例えば、<strong>東京で作ったAMIを、シンガポールとシドニーでもEC2の起動に使いたい</strong>ときは、次のようにします。</p>
+<ol>
+<li>東京のAMIを、<strong>シンガポール(<code>ap-southeast-1</code>)とシドニー(<code>ap-southeast-2</code>)へそれぞれコピー</strong>する(コンソールの「AMIをコピー」、またはCLIの <code>copy-image</code>。<strong>コピー先のリージョンで実行</strong>する)
+<pre class="code"><code>aws ec2 copy-image --region ap-southeast-1 \
+  --source-region ap-northeast-1 --source-image-id ami-0123456789abcdef0 \
+  --name "app-golden-ami"
+aws ec2 copy-image --region ap-southeast-2 \
+  --source-region ap-northeast-1 --source-image-id ami-0123456789abcdef0 \
+  --name "app-golden-ami"</code></pre></li>
+<li>コピーされたAMIには、<strong>リージョンごとに新しいAMI ID</strong>が付く。各リージョンの起動テンプレートやCloudFormationのテンプレート(<code>Mappings</code>)には、そのリージョンのAMI IDを指定する</li>
+<li>コピーしたAMIの状態が <code>available</code> になったら、そのリージョンでEC2を起動できる</li>
+</ol>
+<div class="table-wrap"><table>
+<tr><th>注意点</th><th>内容</th></tr>
+<tr><td>暗号化されたAMI</td><td>コピー先のリージョンの<strong>KMSキー</strong>を指定して再暗号化する(KMSキーもリージョンごと)。暗号化されていないAMIを、コピーのときに暗号化することもできる</td></tr>
+<tr><td>引き継がれないもの</td><td><strong>起動許可(共有の設定)</strong>はコピーされない。タグは <code>--copy-image-tags</code> を指定したときだけコピーされる</td></tr>
+<tr><td>料金</td><td>コピー自体は無料だが、リージョン間のデータ転送料と、コピー先のスナップショットの保存料金がかかる</td></tr>
+<tr><td>自動化</td><td>定期的に作るAMIを複数リージョンへ配るなら、<a href="#p-image-builder">EC2 Image Builder</a>の<strong>ディストリビューション設定</strong>で、作成と同時に指定したリージョン・アカウントへコピーする</td></tr>
+</table></div>
+<p>リージョンをまたぐ「コピー」と、アカウントをまたぐ「共有」は別の操作です。</p>
+<ul>
+<li><strong>別のアカウントに使わせる(同じリージョン)</strong>:AMIの<strong>起動許可</strong>にアカウントID・組織・OUを追加して<strong>共有</strong>する。暗号化されたAMIを共有するには、カスタマーマネージドキーのキーポリシーで相手のアカウントにも使用を許可する(AWSマネージドキーで暗号化したAMIは共有できない)。</li>
+<li><strong>別のアカウントの別のリージョンで使う</strong>:共有されたAMIを、相手のアカウントがコピー先のリージョンへ<strong>コピー</strong>する。</li>
+<li>AMIの公開(全員への共有)は、組織の<strong>宣言型ポリシー</strong>や「AMIのパブリックアクセスのブロック」で禁止できる。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -729,6 +757,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li>起動時の初期設定を自動化 → <strong>ユーザーデータ</strong>(既定は初回起動時のみ、rootで実行)。機密情報は書かない。</li>
 <li>インスタンスの中から自分の情報やロールの認証情報を取得 → <strong>インスタンスメタデータ</strong>(169.254.169.254)。SSRF対策で<strong>IMDSv2を必須</strong>(<code>HttpTokens=required</code>)にする。</li>
 <li>SSHの鍵を配らずに、IAMで制御しながら接続したい → <strong>EC2 Instance Connect</strong>(図5)。22番ポートも開けたくない → <strong>Session Manager</strong>。</li>
+<li>東京で作ったカスタムAMIを別のリージョン(シンガポール・シドニーなど)でも使いたい → それぞれのリージョンへ<strong>AMIをコピー</strong>する(AMIはリージョンごと。コピー先では<strong>新しいAMI ID</strong>になる)。別アカウントへは起動許可で<strong>共有</strong>。</li>
 </ul>
 <h4>停止・障害対応</h4>
 <ul>
@@ -950,6 +979,22 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li><strong>Application Auto Scaling</strong>:EC2以外(ECSのタスク数、DynamoDBの読み書き容量、Auroraのレプリカ数、Lambdaのプロビジョニング済み同時実行数など)をスケーリングする仕組み。</li>
 <li><strong>AWS Auto Scaling(スケーリングプラン)</strong>:複数のリソースのスケーリングをまとめて設定する仕組み。</li>
 </ul>
+
+<h3 id="auto-scaling-c2-9">Auto Scalingグループの範囲は1つのリージョン<a class="anchor" href="#auto-scaling-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>Auto Scalingグループは<strong class="em">1つのリージョンの中だけ</strong>で動きます。同じリージョンの<strong>複数のAZ</strong>にまたがることはできますが、<strong>複数のリージョンにまたがるグループは作れません</strong>。</p>
+<div class="table-wrap"><table>
+<tr><th>範囲</th><th>できること</th></tr>
+<tr><td>1つのAZ</td><td>できるが、AZの障害で全台が止まるため本番には向かない</td></tr>
+<tr><td><strong>複数のAZ(同じリージョン)</strong></td><td><strong>推奨</strong>。AZ間で台数のバランスをとり、AZに障害が起きると残りのAZで台数を補う</td></tr>
+<tr><td>複数のリージョン</td><td><strong>1つのグループではできない</strong>。リージョンごとにAuto Scalingグループ(とELB)を作る</td></tr>
+</table></div>
+<p>複数リージョンで動かしたいときは、次のように組み立てます。</p>
+<ul>
+<li>リージョンごとに、Auto Scalingグループ・起動テンプレート・ELBを作る(CloudFormationの<strong>StackSets</strong>で同じ構成を展開すると楽)。</li>
+<li><strong>AMIもリージョンごとのリソース</strong>なので、使うリージョンへAMIを<strong>コピー</strong>し、そのリージョンのAMI IDを起動テンプレートに指定する(<a href="#p-ec2">Amazon EC2</a>の「AMIのリージョン間コピーと共有」を参照)。起動テンプレート・キーペア・セキュリティグループもリージョンごとに必要。</li>
+<li>リージョン間の振り分けとフェイルオーバーは、<strong>Route 53</strong>(フェイルオーバー・レイテンシー・加重ルーティング)や<strong>Global Accelerator</strong>で行う。</li>
+</ul>
+<p>同じように、ELB(ALB・NLB)も1つのリージョンの中だけで動くサービスです。リージョンの範囲で動くサービスとグローバルなサービスの違いは、用語ページ「<a href="../terms/region-az.html">リージョンとアベイラビリティーゾーン</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -991,6 +1036,7 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li>インスタンスが起動できない → AMI・キーペア・セキュリティグループの存在、vCPUのクォータ、AZの容量不足を確認する(アクティビティ履歴に理由が出る)。</li>
 <li>起動テンプレートを変えたあと既存インスタンスを入れ替えたい → <strong>インスタンスの更新</strong>。</li>
 <li>高可用性のため、ASGは<strong>複数AZ</strong>のサブネットにまたがるように設定する。</li>
+<li>ASGは<strong class="em">1つのリージョンの中だけ</strong>(複数AZは可、複数リージョンは不可)。別リージョンにも置く → リージョンごとにASGを作り、AMIをコピーし、<strong>Route 53</strong>などで振り分ける。</li>
 </ul></div>
 </section>
 
@@ -1213,6 +1259,17 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li><strong class="em">予約(Reserved)</strong>:同時に実行できる上限数。上限を超えると<strong>スロットリング</strong>が発生する。</li>
 <li><strong class="em">プロビジョニング(Provisioned)</strong>:設定した数だけ実行環境をあらかじめ作成しておく(ウォームスタート)。超えた分はコールドスタートで作成される。</li>
 </ul>
+<p>どちらも「同時実行」の設定ですが、目的がまったく違います。名前が似ているので、違いを表で押さえておきましょう。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th></th><th>予約された同時実行(Reserved)</th><th>プロビジョニングされた同時実行(Provisioned)</th></tr>
+<tr><td data-label="">目的</td><td data-label="予約">同時実行数の<strong>確保と上限</strong>(ほかの関数に枠を取られない/この関数が使いすぎない)</td><td data-label="プロビジョニング"><strong>コールドスタートをなくす</strong>(実行環境を事前に初期化しておく)</td></tr>
+<tr><td data-label="">設定する単位</td><td data-label="予約"><strong>関数</strong>単位</td><td data-label="プロビジョニング"><strong>バージョンかエイリアス</strong>単位(<code>$LATEST</code> には設定できない)</td></tr>
+<tr><td data-label="">料金</td><td data-label="予約"><strong>追加料金なし</strong></td><td data-label="プロビジョニング"><strong>有料</strong>(呼び出しがなくても、設定した数と時間に応じて課金)</td></tr>
+<tr><td data-label="">設定した数を超えたとき</td><td data-label="予約"><strong>スロットリング</strong>(同期呼び出しなら429エラー)</td><td data-label="プロビジョニング">超えた分は通常どおり(コールドスタートで)実行される。予約の上限までは動く</td></tr>
+<tr><td data-label="">アカウント全体の枠との関係</td><td data-label="予約">アカウントの同時実行数(既定で<strong>リージョンあたり1,000</strong>)から差し引かれ、ほかの関数は使えなくなる。予約されていない枠を<strong>最低100</strong>残す必要がある</td><td data-label="プロビジョニング">これもアカウントの枠を使う。予約された同時実行を設定している関数では、その数を超えて設定できない</td></tr>
+<tr><td data-label="">よくある使い方</td><td data-label="予約">下流のDBを守るために上限をかける。<strong>0にすると関数を止められる</strong>(緊急停止)</td><td data-label="プロビジョニング">レイテンシーが重要なAPI。<strong>Application Auto Scaling</strong>で、時間帯や使用率に合わせて数を増減する</td></tr>
+</table></div>
+<p>アカウント全体の同時実行数の上限(1,000)は、Service Quotasで引き上げを申請できます。プロビジョニングされた同時実行の使用状況は、CloudWatchの <code>ProvisionedConcurrencyUtilization</code>、足りずに通常の実行に回った回数は <code>ProvisionedConcurrencySpilloverInvocations</code> で確認できます。</p>
 
 <h3 id="lambda-c2-5">実行環境のライフサイクル<a class="anchor" href="#lambda-c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
@@ -1525,6 +1582,8 @@ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
 <li>15分を超える処理はLambdaに向かない(ECS/Fargateなどを検討)。</li>
 <li>デプロイパッケージが250MBを超える → <strong>コンテナイメージ(ECR)</strong>でデプロイ。</li>
 <li>コールドスタート対策 → <strong>プロビジョニングされた同時実行</strong>。同時実行の上限制御 → <strong>予約された同時実行</strong>。</li>
+<li>予約は<strong>無料・関数単位</strong>で、上限を超えるとスロットリング。プロビジョニングは<strong>有料・バージョン/エイリアス単位</strong>で、超えた分はコールドスタートで動く。関数を緊急停止 → 予約された同時実行を<strong>0</strong>。</li>
+<li>ある関数が同時実行を使い切って、ほかの関数がスロットリングされる → 重要な関数に<strong>予約された同時実行</strong>を設定する。</li>
 </ul>
 <h4>呼び出しとエラー処理</h4>
 <ul>
@@ -3437,6 +3496,14 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図1 EFSの構成。AZごとに1つマウントターゲット(サブネット内のENI)を作り、各AZのEC2・ECS・LambdaからNFSで同じファイルシステムを共有する。オンプレミスからも接続できる。</figcaption>
 </figure>
+<p>マウントターゲットは<strong class="em">AZ単位</strong>で作る、という点が試験で問われます。</p>
+<ul>
+<li>マウントターゲットは<strong>1つのAZに1つ</strong>。そのAZの中のどれか1つのサブネットに作る(同じAZの別のサブネットのEC2も、そのマウントターゲットを使う)。</li>
+<li>EC2から使うときは、<strong>同じAZのマウントターゲット</strong>に接続する。ファイルシステムのDNS名(<code>fs-xxxx.efs.ap-northeast-1.amazonaws.com</code>)を使うと、自動で同じAZのマウントターゲットのIPに解決される。別のAZのマウントターゲットを使うと、レイテンシーが上がり、<strong>AZ間のデータ転送料</strong>もかかる。</li>
+<li>EC2を置くAZには、必ずマウントターゲットを作る。<strong>マウントターゲットがないAZ</strong>のEC2から「DNS名が解決できない」「マウントがタイムアウトする」ときは、そのAZにマウントターゲットを追加する。</li>
+<li>マウントターゲットのセキュリティグループで、EC2のセキュリティグループからの<strong>NFS(TCP 2049)</strong>を許可する。</li>
+<li><strong>One Zone</strong>のファイルシステムは1つのAZにしかデータを置かないため、マウントターゲットも<strong>そのAZに1つだけ</strong>。ほかのAZから使うと、AZ間の通信になる。</li>
+</ul>
 <h3 id="efs-c2-2">パフォーマンスモード(作成後に変更不可)<a class="anchor" href="#efs-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>最大I/Oは旧世代のモードで、操作ごとのレイテンシーが高くなります。IOPSやレイテンシーの見方は用語ページ「<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>」を参照してください。AWSは<strong>すべてのファイルシステムで汎用モードを推奨</strong>しており、高い性能が必要な場合は汎用モード+Elasticスループットを使います。</p>
 <div class="table-wrap"><table>
@@ -3455,6 +3522,21 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td data-label="">課金</td><td data-label="Elastic">実際に転送したデータ量</td><td data-label="Provisioned">プロビジョニングしたスループット</td><td data-label="Bursting">ストレージ料金に含まれる</td></tr>
 <tr><td data-label="">用途</td><td data-label="Elastic">負荷が不規則、スパイクがある</td><td data-label="Provisioned">容量は小さいが高いスループットが必要</td><td data-label="Bursting">負荷が緩やかで容量が大きい</td></tr>
 </table></div>
+
+<h3 id="efs-c2-4">暗号化(保存時の暗号化は作成後に変更不可)<a class="anchor" href="#efs-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>EFSの<strong>保存時の暗号化</strong>は、<strong class="em">ファイルシステムを作成するときにしか有効にできません</strong>。作成後に、暗号化されていないファイルシステムを暗号化に変えたり、暗号化をやめたりすることはできません。使うKMSキー(AWSマネージドキー <code>aws/elasticfilesystem</code> かカスタマーマネージドキー)も作成時に決めます。</p>
+<div class="table-wrap"><table>
+<tr><th>暗号化</th><th>設定するタイミング</th><th>方法</th></tr>
+<tr><td><strong>保存時</strong>(データ・メタデータ)</td><td><strong>作成時のみ</strong>(後から変更不可)</td><td>作成時に暗号化を有効にし、KMSキーを選ぶ(コンソールでは既定で有効)</td></tr>
+<tr><td><strong>転送中</strong>(EC2〜EFS間)</td><td><strong>マウントするとき</strong>(いつでも可)</td><td>EFSマウントヘルパー(<code>amazon-efs-utils</code>)で <code>mount -t efs -o tls fs-xxxx:/ /mnt/efs</code> のように <strong>TLS</strong> を指定する</td></tr>
+</table></div>
+<p>暗号化されていない既存のファイルシステムを暗号化したいときは、次の手順で<strong>移行</strong>します。</p>
+<ol>
+<li>暗号化を有効にした<strong>新しいファイルシステム</strong>を作る</li>
+<li><strong><a href="#p-datasync">AWS DataSync</a></strong>(またはAWS Backupの復元)で、古いファイルシステムのデータをコピーする</li>
+<li>アプリのマウント先を新しいファイルシステムに切り替え、古いものを削除する</li>
+</ol>
+<p>組織のルールとして暗号化を強制したいときは、IAMポリシーやSCPで、条件キー <code>elasticfilesystem:Encrypted</code> が <code>false</code> の <code>CreateFileSystem</code> を拒否します。既存のファイルシステムの状態は、AWS Configのマネージドルール <code>efs-encrypted-check</code> で確認できます。転送中の暗号化を必須にするには、<strong>ファイルシステムポリシー</strong>で <code>aws:SecureTransport</code> が <code>false</code> の接続を拒否します。RDSやEBSでも同じく「暗号化は作成時に決める」ので、用語ページ「<a href="../terms/encryption.html">保存時の暗号化と転送時の暗号化</a>」もあわせて確認してください。</p>
 </section>
 
 <section class="chapter">
@@ -3495,7 +3577,8 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h2 id="efs-c6">6. 試験・実務でのポイント<a class="anchor" href="#efs-c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>Linuxで複数インスタンス・複数AZから共有 → <strong>EFS</strong>。Windows → <strong>FSx for Windows</strong>。</li>
-<li>マウントターゲットは<strong>AZごとに1つ</strong>。</li>
+<li>マウントターゲットは<strong>AZ単位</strong>(1つのAZに1つ)。EC2は<strong>同じAZのマウントターゲット</strong>に接続し、EC2を置くAZには必ずマウントターゲットを作る。NFS(TCP 2049)をセキュリティグループで許可する。</li>
+<li>保存時の暗号化は<strong class="em">作成後に有効にできない</strong> → 暗号化した新しいファイルシステムを作り、<strong>DataSync</strong>でデータを移す。転送中の暗号化はマウント時に <code>-o tls</code>。</li>
 <li>パフォーマンスモードは<strong>作成後に変更不可</strong>、スループットモードは<strong>変更可能</strong>。</li>
 <li>最大I/OモードではOne Zone・Elasticスループットが使えない。AWSの推奨は<strong>汎用モード</strong>。</li>
 <li>スパイクがある負荷 → Elastic、小容量で高スループット → Provisioned。</li>
@@ -3507,7 +3590,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <ul>
 <li>EFSはLinux向けの共有ファイルストレージ(NFS)。</li>
 <li>接続口はAZごとのマウントターゲット。</li>
-<li>パフォーマンスモードは後から変えられないので作成時に決める。</li>
+<li>パフォーマンスモードと保存時の暗号化は後から変えられないので作成時に決める。</li>
 </ul>
 </section>
 </article>
@@ -4276,6 +4359,19 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 </div>
 <figcaption>図1 Multi-AZとリードレプリカの違い。スタンバイは障害時に引き継ぐための待機系(同期・読み取りには使えない)、リードレプリカは読み取りを分散するためのコピー(非同期・わずかに遅延)。</figcaption>
 </figure>
+<p>試験では「どちらを選ぶか」と「障害時に何が起きるか」がよく問われます。次の表で違いを整理しておきましょう。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th></th><th>Multi-AZ(スタンバイ)</th><th>リードレプリカ</th></tr>
+<tr><td data-label="">目的</td><td data-label="Multi-AZ(スタンバイ)"><strong>可用性</strong>(障害時の引き継ぎ)</td><td data-label="リードレプリカ"><strong>読み取り性能</strong>(読み取りの分散)</td></tr>
+<tr><td data-label="">レプリケーション</td><td data-label="Multi-AZ(スタンバイ)"><strong>同期</strong>(データの損失がない)</td><td data-label="リードレプリカ"><strong>非同期</strong>(わずかに遅れる=レプリカラグ)</td></tr>
+<tr><td data-label="">読み取りに使えるか</td><td data-label="Multi-AZ(スタンバイ)">使えない(Multi-AZ DBクラスターのスタンバイは読める)</td><td data-label="リードレプリカ">使える(レプリカごとのエンドポイントに接続)</td></tr>
+<tr><td data-label="">置ける場所</td><td data-label="Multi-AZ(スタンバイ)">同じリージョンの別AZ</td><td data-label="リードレプリカ">同じAZ・別AZ・<strong>別リージョン</strong>(クロスリージョンリードレプリカ)</td></tr>
+<tr><td data-label="">障害時の切り替え</td><td data-label="Multi-AZ(スタンバイ)"><strong>自動</strong>でスタンバイが昇格し、エンドポイントのDNSが切り替わる</td><td data-label="リードレプリカ"><strong class="em">自動では昇格しない</strong>。手動で「昇格」すると独立したDBになる</td></tr>
+<tr><td data-label="">接続先の変更</td><td data-label="Multi-AZ(スタンバイ)">不要(エンドポイント名は同じ)</td><td data-label="リードレプリカ">必要(昇格したDBのエンドポイントへ切り替える)</td></tr>
+<tr><td data-label="">バックアップ・メンテナンス</td><td data-label="Multi-AZ(スタンバイ)">バックアップはスタンバイから取るため、プライマリのI/Oが止まらない</td><td data-label="リードレプリカ">レプリカの作成にはソースDBの<strong>自動バックアップの有効化</strong>が必要</td></tr>
+</table></div>
+<p>RDS(MySQL・PostgreSQLなど)のリードレプリカを手動で昇格すると、レプリケーションが切れて<strong>書き込みできる独立したDB</strong>になります。元に戻すことはできず、ほかのレプリカも新しいDBには付いてきません。別リージョンのリードレプリカを昇格させるのは、リージョン障害に備えたDRの定番の手順です。</p>
+<p>これに対して<a href="#p-aurora">Aurora</a>は、プライマリに障害が起きると<strong class="em">リードレプリカ(Auroraレプリカ)が自動でプライマリに昇格</strong>します。Auroraのレプリカはプライマリと同じストレージを共有しているため、スタンバイと読み取り用のレプリカを兼ねられるのです。「リードレプリカが自動でプライマリに昇格する」のは<strong>Auroraだけ</strong>と覚えておきましょう。</p>
 <h3 id="rds-c2-2">RDS Proxy<a class="anchor" href="#rds-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>大量のクライアントからのアクセスを、<strong>少数のDB接続に集約・再利用</strong>する仕組みです。</p>
 <ul>
@@ -4542,6 +4638,8 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h4>可用性・性能</h4>
 <ul>
 <li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
+<li>RDSのリードレプリカは障害時に<strong>自動で昇格しない</strong>(手動で昇格すると独立したDBになり、接続先の変更が必要)。レプリカが<strong>自動で昇格</strong>するのは<strong>Aurora</strong>だけ。</li>
+<li>リージョン障害に備えて別リージョンにコピーを持つ → <strong>クロスリージョンリードレプリカ</strong>(障害時に手動で昇格)。Auroraなら<strong>グローバルデータベース</strong>。</li>
 <li>Multi-AZのフェイルオーバーでは<strong>エンドポイント名は変わらず</strong>、DNSがスタンバイに切り替わる。アプリは再接続できるようにする。</li>
 <li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。フェイルオーバーを速くしたい場合も、DNSのキャッシュを使わないProxyが向く(進行中のトランザクションは失敗するので再試行を実装する)。</li>
 <li>遅いSQLや待機イベントの特定 → <strong>Performance Insights</strong>。OSのプロセス単位のメトリクス → <strong>拡張モニタリング</strong>。</li>
@@ -4676,6 +4774,9 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>プライマリに障害が起きると、<strong>レプリカが自動で昇格</strong>する。</li>
 <li>レプリカがない場合は新しいインスタンスを作成するため、復旧に時間がかかる。可用性を重視するなら<strong>別AZにレプリカを置く</strong>。高可用性の考え方は用語ページ「<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>」を参照してください。</li>
 <li>通常のRDS Multi-AZと違い、スタンバイ専用インスタンスはなく、<strong>レプリカが読み取りとフェイルオーバーを兼ねる</strong>。</li>
+<li><strong class="em">リードレプリカが自動でプライマリに昇格するのはAuroraだけ</strong>。RDS(MySQL・PostgreSQLなど)のリードレプリカは自動では昇格せず、手動で昇格すると独立したDBになる(違いは<a href="#p-rds">Amazon RDS</a>のページの表を参照)。</li>
+<li>どのレプリカを昇格させるかは<strong>フェイルオーバー優先度(ティア0〜15)</strong>で決める。数字が小さいほど優先され、同じ優先度ならサイズが大きいレプリカが選ばれる。プライマリと同じインスタンスクラスのレプリカを優先度の高いティアに置くと、昇格後に性能が落ちない。</li>
+<li>フェイルオーバーは通常30秒〜1分程度。<strong>クラスターエンドポイント</strong>は新しいプライマリを自動で指すため、アプリはクラスターエンドポイントに接続しておけば接続先を変えなくてよい。</li>
 </ul>
 
 <h3 id="aurora-c2-4">主な機能<a class="anchor" href="#aurora-c2-4" aria-label="この見出しへのリンク">#</a></h3>
@@ -4729,6 +4830,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>データは<strong>3AZに6コピー</strong>。レプリカは<strong>最大15</strong>。</li>
 <li>書き込み → <strong>クラスターエンドポイント</strong>、読み取り → <strong>リーダーエンドポイント</strong>。</li>
 <li>フェイルオーバーを速くしたい → <strong>別AZにレプリカ</strong>を置く。</li>
+<li>リードレプリカがプライマリに<strong>自動で昇格</strong>する → <strong>Aurora</strong>(RDSのリードレプリカは手動で昇格)。昇格の順番は<strong>フェイルオーバー優先度(ティア)</strong>で決める。</li>
 <li>誤操作をすばやく戻したい(MySQL)→ <strong>バックトラック</strong>。</li>
 <li>本番データでテスト環境を素早く作る → <strong>クローン</strong>。</li>
 <li>リージョン障害対策 → <strong>グローバルデータベース</strong>。</li>
@@ -6216,6 +6318,18 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 
 <h3 id="client-vpn-c2-3">スプリットトンネル<a class="anchor" href="#client-vpn-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>既定では、PCの<strong>すべての通信</strong>がVPNを通ります。<strong>スプリットトンネル</strong>を有効にすると、エンドポイントのルートにある宛先(VPCなど)だけをVPNに通し、それ以外のインターネットの通信はPCから直接出ます。VPNの通信量とデータ転送料を減らせます。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th></th><th>スプリットトンネル無効(既定・フルトンネル)</th><th>スプリットトンネル有効</th></tr>
+<tr><td data-label="">VPNを通る通信</td><td data-label="無効(既定)"><strong>すべて</strong>(インターネット向けを含む)</td><td data-label="有効">エンドポイントの<strong>ルートテーブルにある宛先だけ</strong>(VPCのCIDR、オンプレミスなど)</td></tr>
+<tr><td data-label="">インターネット向けの通信</td><td data-label="無効(既定)">VPN経由でVPCから出る。エンドポイントに <code>0.0.0.0/0</code> のルートと認可ルール、VPC側にNATゲートウェイなどの出口が必要</td><td data-label="有効">PCのネットワークから直接出る</td></tr>
+<tr><td data-label="">メリット</td><td data-label="無効(既定)">すべての通信をVPC側で検査・記録・制限できる</td><td data-label="有効">VPNの帯域を圧迫しない。<strong>データ転送料が減り</strong>、Web会議などの通信が速い</td></tr>
+<tr><td data-label="">向いている場面</td><td data-label="無効(既定)">社内のプロキシやファイアウォールを必ず通したい</td><td data-label="有効">AWS上の社内システムにだけVPNでつなげばよい</td></tr>
+</table></div>
+<ul>
+<li>スプリットトンネルは、<strong>既存のエンドポイントでもオン・オフを切り替えられる</strong>(作り直す必要はない)。設定はクライアントが<strong>再接続したときに反映</strong>される。</li>
+<li>有効にすると、エンドポイントのルートテーブルのルートが、クライアントのPCのルートとして配られる。VPN経由にしたい宛先は、エンドポイントの<strong>ルートを追加</strong>する。</li>
+<li>有効にしても、VPN経由でつながる先は<strong>認可ルール</strong>で許可された範囲だけ。</li>
+</ul>
 
 <h3 id="client-vpn-c2-4">運用<a class="anchor" href="#client-vpn-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
@@ -6256,6 +6370,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <div class="point"><ul>
 <li>「個々の社員のPCからVPCに接続」「リモートアクセスVPN」→ <strong class="em">Client VPN</strong>。拠点間は Site-to-Site VPN。</li>
 <li>VPC以外の通信までVPN経由になって遅い・費用が高い → <strong class="em">スプリットトンネル</strong>を有効にする。</li>
+<li>社員のインターネット向けの通信もすべてVPC側で検査したい → スプリットトンネルは<strong>無効</strong>のまま(<code>0.0.0.0/0</code> のルートと認可ルール、VPCの出口を用意する)。</li>
 <li>接続できても目的のネットワークに届かない → <strong>認可ルール</strong>とエンドポイントのルートテーブルの両方を確認する。</li>
 <li>可用性を上げるには、複数AZのサブネットをターゲットネットワークに関連付ける。</li>
 <li>Site-to-Site VPN・Direct Connect・Client VPNの使い分け → <a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>。</li>
@@ -7418,6 +7533,22 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <tr><td>レスポンスヘッダーポリシー</td><td>ユーザーへの応答に付けるヘッダー</td><td>セキュリティヘッダー、CORSヘッダーの追加</td></tr>
 </table></div>
 <p>キャッシュキーに含める値が多いほどキャッシュが細かく分かれ、<strong>キャッシュヒット率が下がります</strong>。表示内容を変える値だけをキャッシュキーに含め、オリジンが必要なだけの値はオリジンリクエストポリシーで渡すのが基本です。キャッシュヒット率はCloudWatchのメトリクスやレポートで確認できます。</p>
+<p>2つのポリシーの関係を整理すると、次のようになります。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th></th><th>キャッシュポリシー</th><th>オリジンリクエストポリシー</th></tr>
+<tr><td data-label="">役割</td><td data-label="キャッシュポリシー">何で<strong>キャッシュを分けるか</strong>(キャッシュキー)と、<strong>どれだけ保持するか</strong>(TTL)</td><td data-label="オリジンリクエストポリシー">キャッシュがないときに、<strong>オリジンへ何を渡すか</strong></td></tr>
+<tr><td data-label="">オリジンへの転送</td><td data-label="キャッシュポリシー">キャッシュキーに含めた値は、<strong>自動でオリジンにも転送</strong>される</td><td data-label="オリジンリクエストポリシー">キャッシュキーに<strong>含めずに</strong>転送できる(キャッシュヒット率を下げない)</td></tr>
+<tr><td data-label="">TTL</td><td data-label="キャッシュポリシー">設定する(最小・既定・最大)</td><td data-label="オリジンリクエストポリシー">関係しない</td></tr>
+<tr><td data-label="">付ける場所</td><td data-label="キャッシュポリシー" colspan="2">どちらも<strong>ビヘイビアごと</strong>に1つずつ付ける。マネージドポリシーを使うか、自分で作る</td></tr>
+</table></div>
+<p>よくある組み合わせの例です。</p>
+<ul>
+<li><strong>静的ファイル(画像・CSS)</strong>:キャッシュポリシー「CachingOptimized」。オリジンリクエストポリシーは不要か「CORS-S3Origin」。</li>
+<li><strong>言語ごとに内容が変わるページ</strong>:キャッシュポリシーで <code>Accept-Language</code> ヘッダーや <code>lang</code> クエリ文字列をキャッシュキーに含める。</li>
+<li><strong>ログイン後のAPIなど、キャッシュしない動的な処理</strong>:キャッシュポリシー「<strong>CachingDisabled</strong>」+オリジンリクエストポリシー「<strong>AllViewer</strong>」(ビューワーのヘッダー・Cookie・クエリ文字列をすべてオリジンに渡す)。</li>
+<li><strong>オリジンでの集計用に、利用者の国やデバイスの情報が欲しい</strong>:オリジンリクエストポリシーで <code>CloudFront-Viewer-Country</code> などのヘッダーを転送する(キャッシュキーには入れない)。</li>
+</ul>
+<p>なお、<code>Authorization</code> ヘッダーをオリジンに渡したいときは、オリジンリクエストポリシーでは転送できず、<strong>キャッシュポリシーのキャッシュキーに含める</strong>必要があります(利用者ごとに違う応答が別の人に返らないようにするため)。以前の「レガシーキャッシュ設定」では、キャッシュキーと転送する値を1つの設定でまとめて決めていましたが、今はこの2つのポリシーに分けて設定するのが推奨です。</p>
 
 <h3 id="cloudfront-c2-4">無効化(Invalidation)<a class="anchor" href="#cloudfront-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>オリジンのファイルを更新しても、エッジのキャッシュはTTLが切れるまで古いままです。すぐに反映したい場合は<strong>無効化(Invalidation)</strong>で、指定したパスのキャッシュを全エッジから削除します。</p>
@@ -7649,6 +7780,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>POST/PUTなどはキャッシュされない(キャッシュはGET/HEAD/OPTIONSのみ)。</li>
 <li>パスごとにオリジンやキャッシュの設定を変える → <strong>ビヘイビア</strong>(どれにも一致しなければ既定の <code>*</code>)。</li>
 <li>キャッシュヒット率が低い → キャッシュポリシーで<strong>キャッシュキー</strong>に含めるヘッダー・Cookie・クエリ文字列を減らす。オリジンに渡すだけなら<strong>オリジンリクエストポリシー</strong>。</li>
+<li>キャッシュキーに含めた値は<strong>自動でオリジンにも転送</strong>される。キャッシュしない動的なパス → 「CachingDisabled」+「AllViewer」。<code>Authorization</code> ヘッダーを渡す → キャッシュポリシー側に含める。</li>
 <li>更新したファイルをすぐ反映 → <strong>無効化</strong>(月1,000パスまで無料)。頻繁な更新ならファイル名にバージョンを付ける。</li>
 </ul>
 <h4>可用性・エッジでの処理</h4>
@@ -8920,10 +9052,35 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>メンバーアカウントの<strong>ルートユーザーには効く</strong>。ルートユーザーでもSCPで拒否された操作はできない。</li>
 </ul>
 
-<h3 id="organizations-c2-6">RCPとデータ境界<a class="anchor" href="#organizations-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="organizations-c2-6">SCPの要点と、よく使う書き方<a class="anchor" href="#organizations-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>SCP(サービスコントロールポリシー)は、<strong>アカウントの中で使える権限の「上限(ガードレール)」</strong>を決めるポリシーです。IAMポリシーの書き方(JSON)で書きますが、<strong>SCPだけでは何の権限も与えません</strong>。実際に操作できるのは「SCPで許されていて、かつIAMポリシーでも許可されている」範囲だけです。評価の流れは用語ページ「<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>」を参照してください。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>適用先</td><td>ルート・OU・アカウント。上の階層のSCPは<strong>配下のすべてのOU・アカウントに継承</strong>される</td></tr>
+<tr><td>効く相手</td><td>メンバーアカウントのIAMユーザー・IAMロール・<strong>ルートユーザー</strong></td></tr>
+<tr><td>効かない相手</td><td><strong>管理アカウント</strong>、<strong>サービスリンクロール</strong>、組織の外のアカウントのプリンシパル(リソースベースのポリシーで許可された外部アカウントからのアクセスは、SCPでは止められない → RCPを使う)</td></tr>
+<tr><td>有効にする条件</td><td>組織で「<strong>すべての機能</strong>」を有効にし、ルートでSCPのポリシータイプを有効にする(一括請求の機能だけの組織では使えない)</td></tr>
+<tr><td>反映</td><td>付けたり外したりすると、すぐに効く。既存のリソースが消えることはなく、<strong>これからの操作</strong>が制限される</td></tr>
+</table></div>
+<p>試験によく出る、典型的なSCPの使い方です。どれも<strong>Denyで書く</strong>のが基本です。</p>
+<div class="table-wrap"><table>
+<tr><th>やりたいこと</th><th>SCPで拒否するアクション・条件</th></tr>
+<tr><td>許可したリージョン以外を使わせない</td><td>すべてのアクションを、<code>aws:RequestedRegion</code> が許可リストに<strong>ない</strong>ときに拒否(グローバルサービスは <code>NotAction</code> で除外)</td></tr>
+<tr><td>CloudTrailの証跡を止めさせない</td><td><code>cloudtrail:StopLogging</code>、<code>cloudtrail:DeleteTrail</code></td></tr>
+<tr><td>GuardDuty・Config・Security Hubを無効にさせない</td><td><code>guardduty:DeleteDetector</code>、<code>config:StopConfigurationRecorder</code>、<code>securityhub:DisableSecurityHub</code> など</td></tr>
+<tr><td>組織から勝手に抜けさせない</td><td><code>organizations:LeaveOrganization</code></td></tr>
+<tr><td>メンバーアカウントのルートユーザーを使わせない</td><td>すべてのアクションを、<code>aws:PrincipalArn</code> が <code>arn:aws:iam::*:root</code> のときに拒否</td></tr>
+<tr><td>使ってよいインスタンスタイプを限定する</td><td><code>ec2:RunInstances</code> を、<code>ec2:InstanceType</code> が許可リストに<strong>ない</strong>ときに拒否</td></tr>
+<tr><td>暗号化されていないボリューム・バケットを作らせない</td><td><code>ec2:CreateVolume</code> を <code>ec2:Encrypted</code> が <code>false</code> のときに拒否、など</td></tr>
+<tr><td>タグのないリソースを作らせない</td><td>作成のアクションを、<code>aws:RequestTag/CostCenter</code> が<strong>ない</strong>(<code>Null</code> 条件)ときに拒否</td></tr>
+<tr><td>セキュリティ用のロールを変更させない</td><td><code>iam:*</code> の変更系アクションを、対象が管理用のロールのときに拒否(管理者は <code>aws:PrincipalArn</code> で除外)</td></tr>
+</table></div>
+<p>SCPのサイズは1つあたり<strong>5,120文字まで</strong>、1つの対象(ルート・OU・アカウント)に付けられるSCPは<strong>5つまで</strong>です。複数のガードレールは1つのSCPにまとめるか、OUの階層を分けて付けます。SCPを本番のOUに付ける前に、テスト用のOUで動作を確かめると安全です。</p>
+
+<h3 id="organizations-c2-7">RCPとデータ境界<a class="anchor" href="#organizations-c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>SCPは「自分のアカウントの人が何をできるか」を制限しますが、バケットポリシーで外部のアカウントに公開してしまうと、外部の人のアクセスは止められません。RCPは<strong>リソースの側</strong>に上限をかけるため、「組織のプリンシパル以外は、このバケットにアクセスできない」を、各アカウントのリソースポリシーに関係なく強制できます。条件キー <code>aws:PrincipalOrgID</code> で組織のIDを指定するのが基本です。</p>
 
-<h3 id="organizations-c2-7">委任管理者と信頼されたアクセス<a class="anchor" href="#organizations-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="organizations-c2-8">委任管理者と信頼されたアクセス<a class="anchor" href="#organizations-c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>信頼されたアクセス</strong>:GuardDuty・Security Hub・Config・CloudTrail・Backup・IAM Identity Center・CloudFormation StackSetsなどのサービスに、組織全体での操作を許可する設定。</li>
 <li><strong class="em">委任管理者</strong>:そのサービスの組織全体の管理を、管理アカウントではなく特定のメンバーアカウント(例:セキュリティ用のアカウント)に任せる。管理アカウントに入る人を減らせる。</li>
@@ -8962,7 +9119,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <figcaption>図4 委任管理者。管理アカウントからセキュリティ用のアカウントに管理を任せ、そこから全アカウントのGuardDutyなどを有効にして結果を集める。</figcaption>
 </figure>
 
-<h3 id="organizations-c2-8">アカウントの作成・招待と管理<a class="anchor" href="#organizations-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="organizations-c2-9">アカウントの作成・招待と管理<a class="anchor" href="#organizations-c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>組織から新しく<strong>作成</strong>したアカウントには、管理アカウントから引き受けられる管理者ロール <code>OrganizationAccountAccessRole</code> が自動で作られる。</li>
 <li>既存のアカウントを<strong>招待</strong>した場合、このロールは作られない。管理アカウントから操作したいときは、招待したアカウント側で同じ名前のロールを作る。</li>
@@ -9014,6 +9171,8 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>全アカウントで特定の操作・リージョンを禁止 → <strong>SCP</strong>をOUやルートに適用。リージョン制限は <code>aws:RequestedRegion</code>。</li>
 <li>SCPは<strong>管理アカウントとサービスリンクロールには効かない</strong>。メンバーアカウントのルートユーザーには効く。</li>
 <li>許可リスト方式で「許可したのに使えない」→ ルートからアカウントまでの<strong>途中の階層</strong>で許可されているか確認する。</li>
+<li>CloudTrailの停止・GuardDutyの無効化・組織からの離脱を全アカウントで禁止 → <strong>SCPでDeny</strong>(<code>cloudtrail:StopLogging</code>、<code>organizations:LeaveOrganization</code> など)。</li>
+<li>SCPを使うには組織の<strong>すべての機能</strong>が必要。1つの対象に付けられるのは<strong>5つまで</strong>。</li>
 <li>組織外からのリソースへのアクセスを一律に禁止したい → <strong class="em">RCP</strong>(<code>aws:PrincipalOrgID</code>)。</li>
 </ul>
 <h4>管理ポリシーと組織の運用</h4>
@@ -11663,6 +11822,29 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>EC2にIAMロール(<code>CloudWatchAgentServerPolicy</code>)をアタッチ</li>
 <li>エージェントを起動し、メトリクスがCloudWatchに送信される</li>
 </ol>
+<p>設定ファイルの <code>metrics</code> の中で、送るメトリクスに<strong>付けるディメンション</strong>(メトリクスを見分けるための名前と値の組)を指定します。特に試験で問われるのが <strong class="em"><code>append_dimensions</code></strong> です。</p>
+<pre class="code"><code>{
+  "metrics": {
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}",
+      "InstanceType": "${aws:InstanceType}",
+      "ImageId": "${aws:ImageId}",
+      "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
+    },
+    "aggregation_dimensions": [["AutoScalingGroupName"], ["InstanceId"]],
+    "metrics_collected": {
+      "mem": { "measurement": ["mem_used_percent"] },
+      "disk": { "measurement": ["used_percent"], "resources": ["/"] }
+    }
+  }
+}</code></pre>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>役割</th></tr>
+<tr><td><code>append_dimensions</code></td><td>エージェントが送る<strong>すべてのメトリクスに、EC2の情報をディメンションとして追加</strong>する。使える値は <code>${aws:InstanceId}</code>・<code>${aws:InstanceType}</code>・<code>${aws:ImageId}</code>・<code>${aws:AutoScalingGroupName}</code> の4つ。これがないと、どのインスタンスのメモリ使用率なのか見分けられない</td></tr>
+<tr><td><code>aggregation_dimensions</code></td><td>指定したディメンション単位に<strong>まとめたメトリクス</strong>も作る。<code>[["AutoScalingGroupName"]]</code> なら、Auto Scalingグループ全体のメモリ使用率でアラームやスケーリングができる</td></tr>
+<tr><td><code>append_dimensions</code>(各メトリクスの中)</td><td>メトリクスごとに、独自のディメンション(例:<code>"Environment": "prod"</code>)を追加する</td></tr>
+</table></div>
+<p>「メモリ使用率のメトリクスは届いているのに、インスタンスごとに見分けられない」「Auto Scalingグループ単位で集計できない」という問題は、<code>append_dimensions</code> と <code>aggregation_dimensions</code> の設定で解決します。なお、ディメンションの組み合わせが違うと、CloudWatchでは<strong>別のメトリクス</strong>として扱われる点に注意してください(カスタムメトリクスの料金も別々にかかります)。</p>
 
 <h3 id="cloudwatch-c2-11">CloudWatch Synthetics<a class="anchor" href="#cloudwatch-c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>CloudWatch Synthetics</strong>は、利用者の操作を模擬してWebサイトやAPIを定期的に確認する<strong>外形監視</strong>の機能です。監視用スクリプトを<strong>Canary</strong>と呼び、Lambda関数として実行します。実際のアクセスがない時間帯でも、利用者の経路が正常に動くか確認できます。</p>
@@ -11689,7 +11871,25 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>リンク切れ → リンク切れチェッカー。操作手順の再現 → Canary Recorder か GUIワークフロービルダー。見た目の変化 → ビジュアルモニタリング。</li>
 </ul></div>
 
-<h3 id="cloudwatch-c2-12">その他の機能<a class="anchor" href="#cloudwatch-c2-12" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="cloudwatch-c2-12">クロスアカウントオブザーバビリティ<a class="anchor" href="#cloudwatch-c2-12" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>クロスアカウントオブザーバビリティ</strong>は、複数のAWSアカウントのメトリクス・ログ・トレースを、1つの<strong>モニタリングアカウント</strong>からまとめて見て、検索し、アラームを作れる機能です。各アカウントにサインインし直したり、ログを1か所にコピーしたりする必要がありません。</p>
+<div class="table-wrap"><table>
+<tr><th>用語</th><th>意味</th></tr>
+<tr><td><strong>モニタリングアカウント</strong></td><td>データを見る側のアカウント(運用・監視チームのアカウント)。ここで<strong>シンク</strong>(受け口)を作る</td></tr>
+<tr><td><strong>ソースアカウント</strong></td><td>データを見せる側のアカウント(各アプリのアカウント)。シンクへの<strong>リンク</strong>を作り、共有するデータの種類を選ぶ</td></tr>
+<tr><td>共有できるデータ</td><td>CloudWatchのメトリクス、CloudWatch Logsのロググループ、X-Ray・Application Signalsのトレースなど</td></tr>
+<tr><td>仕組み</td><td>CloudWatchの<strong>Observability Access Manager(OAM)</strong>がシンクとリンクを管理する。<strong>リージョンごと</strong>に設定する</td></tr>
+</table></div>
+<p>設定の流れは次のとおりです。</p>
+<ol>
+<li>モニタリングアカウントのCloudWatchの設定で、モニタリングアカウントとして有効にする(シンクを作り、どのアカウント・組織からのリンクを受け付けるかを決める)</li>
+<li>ソースアカウントをリンクする。Organizationsを使っている場合は、コンソールが作る<strong>CloudFormationテンプレートやStackSets</strong>で、組織やOUの全アカウントをまとめてリンクできる</li>
+<li>モニタリングアカウントで、ソースアカウントのメトリクスやロググループを選んでダッシュボード・Logs Insights・アラームに使う</li>
+</ol>
+<p>1つのモニタリングアカウントには最大100,000のソースアカウントを、1つのソースアカウントは最大5つのモニタリングアカウントにリンクできます。データは<strong>コピーされず、ソースアカウントに残ったまま</strong>参照されるため、ログの保管料金が二重にかかることはありません。</p>
+<p>以前からある「CloudWatchのクロスアカウント・クロスリージョンのダッシュボード」(IAMロールで別アカウントのメトリクスを読む方式)よりも、ログやトレースまで横断して検索できる点が違います。<strong>複数アカウントのログを長期保管・分析のために1つにまとめたい</strong>ときは、サブスクリプションフィルターでFirehoseなどに送る集約の仕組みを使います(運用シナリオ「<a href="../usecases/centralized-logging.html">複数アカウントのログを集約して分析する</a>」)。</p>
+
+<h3 id="cloudwatch-c2-13">その他の機能<a class="anchor" href="#cloudwatch-c2-13" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>Application Signals</strong>:アプリの性能と可用性を自動で計測・可視化。サービス単位・APIパス単位でメトリクスを確認できる。CloudWatchエージェントとADOT(AWS Distro for OpenTelemetry)が必要。</li>
 <li><strong class="em">Lambda Insights</strong>:Lambdaの詳細なパフォーマンス監視。有効化には<strong>拡張レイヤーの追加</strong>(収集用エージェントが入っている)と、IAMポリシー <code>CloudWatchLambdaInsightsExecutionRolePolicy</code> の付与が必要。</li>
@@ -11721,6 +11921,7 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li><a href="#p-cloudtrail">AWS CloudTrail</a>:CloudWatch Logsへの配信</li>
 <li><a href="#p-xray">AWS X-Ray</a>:分散トレース</li>
 <li><a href="#p-managed-grafana">Amazon Managed Grafana</a>:可視化</li>
+<li><a href="#p-devops-guru">Amazon DevOps Guru</a>:機械学習で多数のメトリクス・ログの異常をまとめて検知</li>
 <li>関連する用語:<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>、<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>、<a href="../terms/http-status-codes.html">HTTPステータスコードと切り分け</a>、<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a></li>
 </ul>
 </section>
@@ -11731,6 +11932,8 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <h4>メトリクス</h4>
 <ul>
 <li>EC2のメモリ・ディスク使用率 → <strong>CloudWatchエージェント</strong>でカスタムメトリクス。</li>
+<li>エージェントのメトリクスにインスタンスIDやAuto Scalingグループ名を付けたい → <strong><code>append_dimensions</code></strong>。グループ全体で集計 → <code>aggregation_dimensions</code>。</li>
+<li>複数アカウントのメトリクス・ログ・トレースを1つのアカウントで見る → <strong>クロスアカウントオブザーバビリティ</strong>(モニタリングアカウントにソースアカウントをリンク。リージョンごと)。</li>
 <li>1分間隔の監視 → <strong>詳細モニタリング</strong>。1秒間隔 → <strong>高解像度カスタムメトリクス</strong>。</li>
 <li>統計は「回数はSum、使用率はAverage、残量はMinimum、遅延はp99」。</li>
 <li>ハードウェア障害 → <code>StatusCheckFailed_System</code> で「復旧」、OSの問題 → <code>StatusCheckFailed_Instance</code> で「再起動」。</li>
@@ -13129,6 +13332,76 @@ Resources:
 <tr><td>DeletionPolicy</td><td>スタックの削除時やリソースを外したときに、リソースが消えること(Retain/Snapshot)</td><td>リソース</td></tr>
 <tr><td>スタックポリシー</td><td>スタックの更新による特定リソースの変更・置き換え</td><td>リソース(更新時)</td></tr>
 </table></div>
+
+<h3 id="cloudformation-c2-12">DeletionPolicyとSnapshot<a class="anchor" href="#cloudformation-c2-12" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>DeletionPolicy</strong>はリソースごとに書く属性で、<strong>スタックを削除したとき</strong>や<strong>テンプレートからそのリソースを消して更新したとき</strong>に、実際のリソースをどう扱うかを決めます。</p>
+<pre class="code"><code>Resources:
+  AppDB:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot          # 削除の前に最終スナップショットを取る
+    UpdateReplacePolicy: Snapshot     # 更新で置き換えになるときも、古いDBのスナップショットを取る
+    Properties:
+      Engine: mysql
+      DBInstanceClass: db.t4g.medium
+      AllocatedStorage: "20"</code></pre>
+<div class="table-wrap"><table>
+<tr><th>値</th><th>動き</th><th>向いている場面</th></tr>
+<tr><td><code>Delete</code></td><td>リソースを削除する(<strong>既定</strong>)</td><td>作り直せる一時的なリソース</td></tr>
+<tr><td><code>Retain</code></td><td>リソースを<strong>残したまま</strong>、スタックの管理から外す</td><td>消したくないS3バケット・DynamoDBテーブル・ログ。残ったリソースの料金はかかり続ける</td></tr>
+<tr><td><code>Snapshot</code></td><td><strong>スナップショットを取ってから</strong>リソースを削除する</td><td>データは残したいが、リソース自体は止めて費用を抑えたいDB・ボリューム</td></tr>
+<tr><td><code>RetainExceptOnCreate</code></td><td>作成に失敗してロールバックするときは削除し、それ以外は残す</td><td>作成失敗で中途半端なリソースが残るのを避けたいとき</td></tr>
+</table></div>
+<p><code>Snapshot</code> を指定できるのは、スナップショットの機能があるリソースだけです。</p>
+<ul>
+<li><code>AWS::EC2::Volume</code>(EBSボリューム)</li>
+<li><code>AWS::RDS::DBInstance</code>・<code>AWS::RDS::DBCluster</code>(Auroraを含む)</li>
+<li><code>AWS::ElastiCache::CacheCluster</code>・<code>AWS::ElastiCache::ReplicationGroup</code></li>
+<li><code>AWS::Redshift::Cluster</code>、<code>AWS::Neptune::DBCluster</code>、<code>AWS::DocDB::DBCluster</code></li>
+</ul>
+<p>EC2インスタンスやS3バケットには <code>Snapshot</code> は使えません(S3バケットを残したいなら <code>Retain</code>)。また、DeletionPolicyで残したスナップショットはスタックの管理外になるため、不要になったら自分で削除します。なお、<code>AWS::RDS::DBCluster</code> と、クラスターに属さない <code>AWS::RDS::DBInstance</code> では、DeletionPolicyを書かないときの既定が <code>Snapshot</code> になります。</p>
+<p><code>UpdateReplacePolicy</code> は、更新で<strong>リソースが置き換え(新しく作り直し)</strong>になるときに、古いリソースをどう扱うかを決める属性です。値はDeletionPolicyと同じです。DBのように置き換えでデータが消えると困るリソースには、両方を書いておくと安全です。</p>
+
+<h3 id="cloudformation-c2-13">カスタムリソース(Custom::)<a class="anchor" href="#cloudformation-c2-13" aria-label="この見出しへのリンク">#</a></h3>
+<p>CloudFormationが対応していない処理や、外部のシステムへの登録を、スタックの作成・更新・削除に合わせて実行したいときは、<strong>カスタムリソース</strong>を使います。リソースのタイプを <strong><code>Custom::</code> で始まる任意の名前</strong>(例:<code>Custom::DBUser</code>)、または <code>AWS::CloudFormation::CustomResource</code> にします。</p>
+<pre class="code"><code>Resources:
+  CreateDBUser:
+    Type: Custom::DBUser
+    Properties:
+      ServiceToken: !GetAtt DBUserFunction.Arn   # 処理を行うLambda関数(またはSNSトピック)のARN
+      UserName: app_user                         # Lambdaに渡す値(自由に決める)
+Outputs:
+  UserArn:
+    Value: !GetAtt CreateDBUser.UserArn            # Lambdaが返した値を使える</code></pre>
+<ol>
+<li>スタックの作成・更新・削除のとき、CloudFormationが <code>ServiceToken</code> で指定した<strong>Lambda関数(またはSNSトピック)</strong>にリクエストを送る。<code>RequestType</code> は <code>Create</code>・<code>Update</code>・<code>Delete</code> のどれか</li>
+<li>Lambda関数が処理を行い、<strong>結果(SUCCESS/FAILED)を、リクエストに含まれる署名付きURL(<code>ResponseURL</code>)に返す</strong>。Pythonなら <code>cfn-response</code> モジュールが使える</li>
+<li>CloudFormationは応答を受け取ってから次のリソースに進む。返した <code>Data</code> の値は <code>!GetAtt</code> で参照できる</li>
+</ol>
+<p>よくある失敗は、<strong>Lambdaが応答を返さないまま終わる</strong>ことです。例外で落ちたり、<code>Delete</code> の処理を書き忘れたりすると、CloudFormationは応答を待ち続け、<strong>最大1時間</strong>(既定のタイムアウト)スタックが <code>CREATE_IN_PROGRESS</code> や <code>DELETE_IN_PROGRESS</code> のまま止まります。<code>ServiceTimeout</code> プロパティで待つ時間を短くでき、関数ではエラー時も必ずFAILEDを返すように実装します。</p>
+<p>代表的な使い方は、DBのユーザー作成、AMIのIDの検索、S3バケットを削除する前の中身の削除、外部のSaaSへの登録などです。CloudFormationのレジストリに登録して自分のリソースタイプとして使う「<strong>リソースタイプ(拡張機能)</strong>」もありますが、手軽に処理を足すならカスタムリソースが定番です。</p>
+
+<h3 id="cloudformation-c2-14">StackSetsとスタックインスタンスの状態(OUTDATEDなど)<a class="anchor" href="#cloudformation-c2-14" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>StackSets</strong>は、1つのテンプレートから複数のアカウント・リージョンにスタックを展開します。展開先の1つ1つ(アカウント×リージョン)を<strong>スタックインスタンス</strong>と呼び、それぞれに状態があります。</p>
+<div class="table-wrap"><table>
+<tr><th>状態</th><th>意味</th></tr>
+<tr><td><code>CURRENT</code></td><td>スタックセットの最新の内容で、正常に作成・更新できている</td></tr>
+<tr><td><strong class="em"><code>OUTDATED</code></strong></td><td>スタックセットの最新の内容が<strong>まだ反映されていない</strong>。最後の操作でそのスタックの作成・更新に<strong>失敗した</strong>か、操作が途中で止まった</td></tr>
+<tr><td><code>INOPERABLE</code></td><td>スタックの削除に失敗し、スタックセットから外れた状態。手動で削除してから、スタックインスタンスを外す(<code>RetainStacks</code>)</td></tr>
+</table></div>
+<p><code>OUTDATED</code> になる主な原因は次のとおりです。</p>
+<ul>
+<li>展開先のアカウントに、必要な<strong>IAMロールがない・信頼関係が正しくない</strong>(セルフマネージドの権限では、管理者アカウントに <code>AWSCloudFormationStackSetAdministrationRole</code>、展開先に <code>AWSCloudFormationStackSetExecutionRole</code> が必要)</li>
+<li>展開先のリージョンが<strong>有効になっていない</strong>(オプトインが必要なリージョン)</li>
+<li>テンプレートの中の<strong>リソース名の重複</strong>(S3バケット名など、グローバルに一意の名前を固定している)や、<strong>サービスクォータ</strong>の上限</li>
+<li>SCPで、そのアカウント・リージョンでの操作が拒否されている</li>
+</ul>
+<p>原因はスタックインスタンスの<strong>状態の理由(StatusReason)</strong>と、展開先のアカウントのスタックイベントで確認します。原因を直したら、スタックセットの操作(更新やスタックインスタンスの更新)をやり直すと <code>CURRENT</code> に戻ります。</p>
+<div class="table-wrap"><table>
+<tr><th>権限モデル</th><th>内容</th></tr>
+<tr><td>セルフマネージド</td><td>IAMロール(上記の2つ)を自分で各アカウントに作る。Organizationsを使わない場合</td></tr>
+<tr><td>サービスマネージド</td><td><strong>Organizations</strong>と連携し、ロールは自動で作られる。OUを指定でき、<strong>自動デプロイ</strong>を有効にすると、OUに新しく入ったアカウントにも自動で展開される</td></tr>
+</table></div>
+<p>展開の速さと安全性は、<strong>同時アカウント数</strong>(一度にいくつのアカウントに展開するか)と<strong>障害耐性</strong>(何アカウントの失敗まで続行するか)で調整します。障害耐性を超えて失敗すると、その操作は止まり、残りのアカウントは古い内容のままになります。</p>
 </section>
 
 <section class="chapter">
@@ -13181,6 +13454,10 @@ Resources:
 <li>スタック削除時にリソースを残す → <strong>DeletionPolicy: Retain</strong>(デフォルトはDelete)。</li>
 <li>スタックの誤削除を防ぐ → <strong>終了保護</strong>。リソースを残す → DeletionPolicy。更新から守る → スタックポリシー。</li>
 <li>複数アカウント・リージョンへ展開 → <strong>StackSets</strong>。</li>
+<li>StackSetsのスタックインスタンスが <strong><code>OUTDATED</code></strong> → そのアカウント・リージョンへの展開に失敗している。<strong>実行ロールの有無</strong>・リージョンの有効化・名前の重複・クォータを確認し、操作をやり直す。</li>
+<li>OUに追加したアカウントにも自動で展開 → <strong>サービスマネージドの権限</strong>+<strong>自動デプロイ</strong>。</li>
+<li>スタック削除時にDBやEBSのデータを<strong>スナップショットで残して</strong>リソースは削除 → <strong>DeletionPolicy: Snapshot</strong>(EC2インスタンスやS3バケットには使えない)。置き換え時にも残す → <strong>UpdateReplacePolicy</strong>。</li>
+<li>CloudFormationが対応していない処理をスタックに組み込む → <strong>カスタムリソース</strong>(<code>Custom::</code>+<code>ServiceToken</code> にLambda)。スタックが <code>IN_PROGRESS</code> のまま止まる → Lambdaが<strong>応答URLに結果を返していない</strong>。</li>
 </ul>
 </div>
 </section>
@@ -13867,6 +14144,16 @@ bucket.grantRead(fn);</code></pre>
 <tr><td>商用ソフトウェアのライセンス</td><td>EC2で動かすSQL Serverのエディションなど</td></tr>
 </table></div>
 <p>EC2の推奨を出すには、一定の期間(少なくとも30時間分)のメトリクスが必要です。作ったばかりのリソースには推奨が出ません。</p>
+<p>対象のサービスは「<strong>EC2・Auto Scalingグループ・EBS・Lambda・ECS on Fargate・RDS/Aurora・ライセンス</strong>」と覚えましょう。逆に、次のようなリソースは<strong>Compute Optimizerの対象外</strong>です。試験では「このリソースのサイズの推奨をCompute Optimizerで出す」という誤った選択肢として出ることがあります。</p>
+<div class="table-wrap"><table>
+<tr><th>対象外の例</th><th>代わりに使うもの</th></tr>
+<tr><td>S3(ストレージクラスの見直し)</td><td>S3 Storage Lens、S3のストレージクラス分析、Intelligent-Tiering</td></tr>
+<tr><td>DynamoDBのキャパシティ</td><td>Auto Scaling、オンデマンドモード、CloudWatchのメトリクス</td></tr>
+<tr><td>ElastiCache・OpenSearch・Redshiftのノード</td><td>各サービスのCloudWatchメトリクス、Trusted Advisor</td></tr>
+<tr><td>ECS on EC2・EKSのコンテナ</td><td>Container Insights(下のEC2インスタンスやAuto Scalingグループは、EC2として推奨が出る)</td></tr>
+<tr><td>購入する割引(RI・Savings Plans)</td><td>Cost Explorerの購入の推奨</td></tr>
+</table></div>
+<p>推奨の内容には、サイズの変更(<strong>過剰・不足・最適</strong>の判定)のほかに、<strong>アイドル状態のリソース</strong>(ほとんど使われていないEC2・EBSなど)の停止や削除の推奨もあります。</p>
 
 <h3 id="compute-optimizer-c2-2">推奨事項<a class="anchor" href="#compute-optimizer-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
@@ -13963,6 +14250,7 @@ bucket.grantRead(fn);</code></pre>
 <li>分析期間はデフォルト<strong>14日</strong>、最大<strong>93日</strong>(拡張インフラストラクチャメトリクス)。</li>
 <li>EC2のメモリを考えた推奨が欲しい → <strong>CloudWatchエージェント</strong>でメモリのメトリクスを送る。</li>
 <li>Lambdaの最適なメモリサイズ → Compute Optimizer。ECS on Fargateのタスクのサイズ、EBSのgp2からgp3への変更も推奨される。</li>
+<li>対象は<strong>EC2・Auto Scalingグループ・EBS・Lambda・ECS on Fargate・RDS/Aurora・商用ライセンス</strong>。S3・DynamoDB・ElastiCacheなどは<strong>対象外</strong>。</li>
 <li>組織全体の推奨をまとめて見る → 管理アカウントか<strong>委任管理者</strong>で有効にする。削減額の大きい順にまとめる → <strong>Cost Optimization Hub</strong>。</li>
 <li>推奨は自動では適用されない。変更は自分で行う。</li>
 <li>Cost Explorer・Budgets・CUR・Compute Optimizerの使い分け → <a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>
@@ -14148,13 +14436,47 @@ bucket.grantRead(fn);</code></pre>
 
 <section class="chapter">
 <h2 id="ram-c2">2. 主な機能・特徴<a class="anchor" href="#ram-c2" aria-label="この見出しへのリンク">#</a></h2>
-<h3 id="ram-c2-1">共有できる主なリソース<a class="anchor" href="#ram-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="ram-c2-1">共有の仕組み<a class="anchor" href="#ram-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>RAMでは、<strong>リソース共有(Resource Share)</strong>という単位で、次の3つを決めます。</p>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>リソース</td><td>共有したいもの(サブネット、Transit Gatewayなど)</td></tr>
+<tr><td>プリンシパル</td><td>共有する相手。<strong>AWSアカウント</strong>、Organizationsの<strong>組織全体</strong>や<strong>OU</strong>、一部のリソースではIAMロール・ユーザー</td></tr>
+<tr><td>マネージド型アクセス許可</td><td>共有先が、そのリソースに<strong>何をしてよいか</strong>(AWSが用意したものか、自分で作ったもの)</td></tr>
+</table></div>
+<ul>
+<li><strong>組織内での共有</strong>:管理アカウントで「AWS Organizationsとの共有を有効化」しておくと、組織やOUを相手に指定でき、相手は<strong>招待を承認しなくても</strong>すぐに使える。OUに後から入ったアカウントにも自動で共有される。</li>
+<li><strong>組織外のアカウントとの共有</strong>:相手に<strong>招待</strong>が送られ、相手が<strong>承認</strong>すると使えるようになる(承認しないと使えない)。リソース共有の設定で「外部のプリンシパルを許可する」が必要。</li>
+<li>共有されたリソースは、相手のアカウントでも<strong>同じリージョン</strong>で見える。RAMの共有は<strong>リージョンごと</strong>(グローバルなリソースを除く)。</li>
+<li>共有元がリソースを削除したり、共有をやめたりすると、相手は使えなくなる。</li>
+</ul>
+
+<h3 id="ram-c2-2">共有できる主なリソース<a class="anchor" href="#ram-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>VPCサブネット</li>
 <li>Transit Gateway</li>
 <li>Route 53 Resolverルール</li>
 </ul>
 <p>VPCサブネットを共有すると、共有先のアカウントはそのサブネットにEC2やRDSなどを起動できます(VPCの共有)。ただし、VPCやサブネット自体の変更は共有元(所有者)しかできません。この他にもLicense Managerの設定、Aurora DBクラスター、プレフィックスリストなど多くのリソースを共有できます。</p>
+<div class="table-wrap"><table>
+<tr><th>リソース</th><th>共有するとできること</th></tr>
+<tr><td><strong>VPCのサブネット</strong></td><td>共有先が、そのサブネットにEC2・RDS・Lambdaなどを起動する(VPCの共有)</td></tr>
+<tr><td><strong>Transit Gateway</strong></td><td>共有先が、自分のVPCをTransit Gatewayにアタッチする</td></tr>
+<tr><td><strong>Route 53 Resolverのルール</strong></td><td>共有先のVPCでも、オンプレミスのドメインを同じ転送ルールで名前解決する</td></tr>
+<tr><td>マネージドプレフィックスリスト</td><td>共有先のセキュリティグループやルートテーブルで、同じIPアドレスの一覧を参照する</td></tr>
+<tr><td>IPAMのプール</td><td>共有先がVPCを作るときに、重ならないCIDRを払い出してもらう</td></tr>
+<tr><td>License Managerのライセンス設定</td><td>組織全体で商用ソフトウェアのライセンス数を管理する</td></tr>
+<tr><td>Aurora DBクラスター</td><td>共有先がクラスターの<strong>クローン</strong>を作る</td></tr>
+<tr><td>EC2のキャパシティ予約・Dedicated Hosts</td><td>予約した容量や専有ホストを、ほかのアカウントでも使う</td></tr>
+<tr><td>Network Firewallのポリシー、Image Builderのコンポーネント・レシピなど</td><td>共通の設定やビルド部品を各アカウントで再利用する</td></tr>
+</table></div>
+<p><strong>RAMでは共有しないもの</strong>も、試験ではひっかけとして出ます。</p>
+<ul>
+<li><strong>AMI</strong>・<strong>EBSスナップショット</strong>:それぞれの<strong>起動許可・作成ボリューム許可</strong>でアカウントを指定して共有する(RAMは使わない)。</li>
+<li><strong>S3バケット・KMSキー・SQSキュー</strong>など:<strong>リソースベースのポリシー</strong>で別アカウントを許可する。</li>
+<li>VPCそのもの・<strong>セキュリティグループ</strong>:VPCは共有できず、共有するのはサブネット。共有先は自分のセキュリティグループを作る(所有者のセキュリティグループは参照できる)。</li>
+</ul>
+<p>VPCの共有では、共有先(参加者)は自分が作ったリソースだけを管理でき、<strong>ほかの参加者や所有者のリソースは変更できません</strong>。また、AZの名前(<code>ap-northeast-1a</code> など)はアカウントごとに実際のAZとの対応が違うため、アカウントをまたいで同じAZを指すときは<strong>AZ ID</strong>(<code>apne1-az1</code> など)を使います。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 696 221" style="max-width:696px;min-width:557px" role="img" aria-label="図1 RAMによるVPCサブネットの共有。ネットワーク管理用のアカウントがVPCを一元管理し、各アカウントは共有されたサブネットにリソースを起動する。サブネット自体の管理は共有元が行う。"><defs><marker id="ram-dgservices-ram-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -14220,6 +14542,9 @@ bucket.grantRead(fn);</code></pre>
 <li>「他アカウントとサブネット・Transit Gatewayを共有」→ <strong>RAM</strong>。</li>
 <li>共有したリソースの<strong>管理は共有元</strong>。</li>
 <li>Organizations内で共有すると、招待の承認なしで共有できる(組織での共有を有効化した場合)。</li>
+<li>組織外のアカウントと共有 → 相手が<strong>招待を承認</strong>すると使える。RAMの共有は<strong>リージョンごと</strong>。</li>
+<li>AMI・EBSスナップショットの共有は<strong>RAMではなく</strong>起動許可・作成ボリューム許可。S3・KMSはリソースベースのポリシー。</li>
+<li>共有したサブネットのAZをアカウント間で正しく合わせる → AZ名ではなく<strong>AZ ID</strong>で確認する。</li>
 <li>VPCピアリング・Transit Gateway・PrivateLinkの使い分け → <a href="../terms/vpc-connectivity.html">VPC同士をつなぐ方法の選び方</a>。</li>
 </ul></div>
 </section>
@@ -14228,6 +14553,7 @@ bucket.grantRead(fn);</code></pre>
 <h2 id="ram-c7">7. まとめ<a class="anchor" href="#ram-c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>RAMはリソースをアカウント間・組織内で共有するサービス。管理は共有元が行う。</li>
+<li>共有は「リソース+相手(プリンシパル)+アクセス許可」のリソース共有で設定する。組織内なら承認不要、組織外は招待の承認が必要。</li>
 </ul>
 </section>
 </article>
@@ -14769,6 +15095,7 @@ bucket.grantRead(fn);</code></pre>
 <li><a href="#p-health-dashboard">AWS Health Dashboard</a>:AWS側の障害情報</li>
 <li><a href="#p-kiro">Kiro</a>:提案されたコードの改善の実装</li>
 <li><a href="#p-security-agent">AWS Security Agent</a>:セキュリティのためのAIエージェント</li>
+<li><a href="#p-devops-guru">Amazon DevOps Guru</a>:機械学習による運用上の異常の検知(異常の検知はDevOps Guru、原因の調査はDevOps Agent)</li>
 </ul>
 </section>
 
@@ -14787,6 +15114,113 @@ bucket.grantRead(fn);</code></pre>
 <ul>
 <li>DevOps Agentは、障害の調査・対応策の提示・再発防止の提案を行うAIエージェント。</li>
 <li>監視データ・コード・デプロイを突き合わせて、原因の特定を速くする。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-devops-guru">
+<div class="page-head hero" style="--cat:#E7157B">
+<div class="hero-text">
+<span class="category">マネジメントとガバナンス</span>
+<h1>Amazon DevOps Guru</h1>
+<p class="lead">機械学習で運用データの異常を自動で検知し、原因の候補と対策をインサイトとして知らせる</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="devops-guru-c1">1. サービス概要<a class="anchor" href="#devops-guru-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon DevOps Guru</strong>は、<strong>機械学習</strong>でアプリケーションの運用データ(メトリクス・ログ・イベント)を分析し、<strong>いつもと違う動き(異常)を自動で見つけて、原因の候補と対策を知らせる</strong>サービスです。</p>
+<p>CloudWatchのアラームでは、監視するメトリクスとしきい値を自分で決める必要があります。DevOps Guruは、有効にするだけで対象のリソースの「普段の状態」を学習し、<strong>しきい値を設定しなくても</strong>異常を検知します。関連する複数の異常やデプロイなどのイベントをまとめて、1つの<strong>インサイト</strong>として示します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="devops-guru-c2">2. 主な機能・特徴<a class="anchor" href="#devops-guru-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="devops-guru-c2-1">インサイトの種類<a class="anchor" href="#devops-guru-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>インサイト</th><th>内容</th><th>例</th></tr>
+<tr><td><strong>リアクティブインサイト</strong></td><td><strong>いま起きている</strong>問題。関連する異常なメトリクス・ログ・イベントと、推奨される対策を示す</td><td>デプロイの直後からLambdaのエラーとAPI Gatewayのレイテンシーが同時に増えた</td></tr>
+<tr><td><strong>プロアクティブインサイト</strong></td><td><strong>これから起きそうな</strong>問題を、影響が出る前に知らせる</td><td>DynamoDBの消費キャパシティやディスクの使用量が増え続け、近いうちに上限に達しそう</td></tr>
+</table></div>
+<p>インサイトには、異常なメトリクスのグラフ、同じ時間帯の<strong>関連イベント</strong>(CloudTrailに記録されたデプロイや設定変更など)、<strong>ログの異常</strong>(CloudWatch Logsの急なエラーの増加など)、そして<strong>推奨事項</strong>(何を確認・変更すればよいか)がまとめて表示されます。</p>
+
+<h3 id="devops-guru-c2-2">分析の範囲(カバレッジ)<a class="anchor" href="#devops-guru-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>どのリソースを分析するかは、次の3つから選びます。分析するリソースの数で料金が決まるため、範囲を絞ることもできます。</p>
+<div class="table-wrap"><table>
+<tr><th>範囲の決め方</th><th>内容</th></tr>
+<tr><td>アカウント全体</td><td>そのアカウント・リージョンの、対応しているすべてのリソースを分析する</td></tr>
+<tr><td><strong>CloudFormationスタック</strong></td><td>指定したスタックに含まれるリソースだけを分析する。スタックが1つのアプリとして扱われる</td></tr>
+<tr><td><strong>タグ</strong></td><td>キーが <code>devops-guru-</code> で始まるタグ(例:<code>devops-guru-app = shop</code>)を付けたリソースを、値ごとに1つのアプリとして分析する</td></tr>
+</table></div>
+<p>Lambda・API Gateway・DynamoDB・RDS/Aurora・ECS・EKS・SQS・SNS・Kinesis・ELB・Auto Scalingグループ・Step Functionsなど、多くのサービスに対応しています。分析に使うのは、主にCloudWatchのメトリクス、CloudTrailのイベント、CloudWatch Logsのログです。</p>
+
+<h3 id="devops-guru-c2-3">通知と連携<a class="anchor" href="#devops-guru-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>Amazon SNS</strong>:インサイトの作成・終了などを通知する(通知先のトピックを1つ指定する)。</li>
+<li><strong>Amazon EventBridge</strong>:インサイトをイベントとして受け取り、Lambdaや<a href="#p-systems-manager">Systems Manager</a>のAutomationで自動対応する。</li>
+<li><strong>Systems Manager OpsCenter</strong>:インサイトごとに<strong>OpsItem</strong>を自動で作り、運用チームの対応を管理する。</li>
+<li>PagerDutyなどの外部の運用ツールとも連携できる。</li>
+<li><strong>Organizations</strong>と連携し、<strong>委任管理者</strong>のアカウントから組織全体のインサイトをまとめて見られる。</li>
+</ul>
+
+<h3 id="devops-guru-c2-4">DevOps Guru for RDS<a class="anchor" href="#devops-guru-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>RDS・Auroraのデータベースの性能の問題に特化した機能です。<strong>Performance Insights</strong>のデータを使い、DBの負荷の急な増加などの異常を見つけて、<strong>原因になったSQLや待機イベント</strong>と、対策(インデックスの追加、パラメータの見直しなど)を示します。利用するには、DBインスタンスで<strong>Performance Insightsを有効</strong>にしておく必要があります。</p>
+
+<h3 id="devops-guru-c2-5">似た機能との違い<a class="anchor" href="#devops-guru-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>何をするか</th></tr>
+<tr><td><strong>DevOps Guru</strong></td><td>アプリ全体の多数のメトリクス・ログ・イベントを機械学習でまとめて分析し、<strong>関連する異常をインサイトにまとめ、原因の候補と推奨</strong>を示す</td></tr>
+<tr><td>CloudWatchの異常検出(アラーム)</td><td><strong>1つのメトリクス</strong>ごとに、過去の傾向から「正常な範囲(バンド)」を作り、外れたらアラームにする</td></tr>
+<tr><td>CloudWatch Logsの異常検出</td><td>ロググループのログのパターンの変化を見つける</td></tr>
+<tr><td><a href="#p-devops-agent">AWS DevOps Agent</a></td><td>アラームやチケットをきっかけに、AIエージェントが監視データ・コード・デプロイ履歴を調べて<strong>原因の調査と対応策の提示</strong>を行う</td></tr>
+<tr><td><a href="#p-compute-optimizer">AWS Compute Optimizer</a></td><td>異常ではなく、使用状況から<strong>適切なサイズ</strong>を推奨する(コストと性能の最適化)</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="devops-guru-c3">3. ユースケース<a class="anchor" href="#devops-guru-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>サーバーレスアプリ(API Gateway+Lambda+DynamoDB)の異常を、アラームを1つずつ作らずに検知する</li>
+<li>デプロイの直後に起きた性能の悪化を、原因になったデプロイのイベントと一緒に把握する</li>
+<li>容量の不足やクォータの上限に達しそうなことを、障害になる前に知る(プロアクティブインサイト)</li>
+<li>Auroraの遅いSQLや負荷の急増の原因を、DevOps Guru for RDSで特定する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="devops-guru-c4">4. 料金の考え方<a class="anchor" href="#devops-guru-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>分析したリソースの数×時間</strong>(リソース時間)で課金されます。料金はリソースの種類によって異なり、DevOps Guru for RDSはDBの<strong>vCPUの数×時間</strong>で課金されます。このほか、DevOps GuruのAPIの呼び出しにも料金がかかります。分析の範囲をCloudFormationスタックやタグで絞ると、費用を抑えられます。従量課金の仕組みは用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
+</section>
+
+<section class="chapter">
+<h2 id="devops-guru-c5">5. 関連サービス<a class="anchor" href="#devops-guru-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:分析に使うメトリクス・ログ</li>
+<li><a href="#p-cloudtrail">AWS CloudTrail</a>:デプロイや設定変更などのイベント</li>
+<li><a href="#p-cloudformation">AWS CloudFormation</a>:分析の範囲をスタックで指定する</li>
+<li><a href="#p-sns">Amazon SNS</a>・<a href="#p-eventbridge">Amazon EventBridge</a>:インサイトの通知と自動対応</li>
+<li><a href="#p-systems-manager">AWS Systems Manager</a>:OpsCenterのOpsItemの作成</li>
+<li><a href="#p-rds">Amazon RDS</a>・<a href="#p-aurora">Amazon Aurora</a>:DevOps Guru for RDSの対象</li>
+<li><a href="#p-organizations">AWS Organizations</a>:複数アカウントのまとめての管理</li>
+<li><a href="#p-devops-agent">AWS DevOps Agent</a>:AIエージェントによる障害の原因調査</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="devops-guru-c6">6. 試験・実務でのポイント<a class="anchor" href="#devops-guru-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「<strong>機械学習</strong>で運用上の<strong>異常を自動で検知</strong>」「しきい値を設定せずに」「原因の候補と推奨を提示」→ <strong class="em">DevOps Guru</strong>。</li>
+<li>いま起きている問題 → <strong>リアクティブインサイト</strong>。これから起きそうな問題 → <strong>プロアクティブインサイト</strong>。</li>
+<li>分析の範囲は、アカウント全体・<strong>CloudFormationスタック</strong>・<strong>タグ</strong>(<code>devops-guru-</code> で始まるキー)から選ぶ。</li>
+<li>インサイトを通知 → <strong>SNS</strong>。自動で対応 → <strong>EventBridge</strong>。運用の課題として管理 → <strong>OpsCenter</strong>のOpsItem。</li>
+<li>RDS・Auroraの性能の異常と原因のSQL → <strong>DevOps Guru for RDS</strong>(<strong>Performance Insights</strong>の有効化が必要)。</li>
+<li>1つのメトリクスの正常な範囲から外れたら通知 → <strong>CloudWatchの異常検出</strong>。サイズの最適化 → <strong>Compute Optimizer</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="devops-guru-c7">7. まとめ<a class="anchor" href="#devops-guru-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>DevOps Guruは、機械学習で運用データの異常を見つけ、原因の候補と推奨をインサイトとして示すサービス。</li>
+<li>インサイトはリアクティブ(いまの問題)とプロアクティブ(これからの問題)の2種類。</li>
+<li>範囲はアカウント・スタック・タグで決め、通知はSNS・EventBridge、RDSにはDevOps Guru for RDSがある。</li>
 </ul>
 </section>
 </article>

@@ -40,15 +40,15 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS CloudFormation</h1>
   <p class="lead">AWSリソースをテンプレート(コード)で定義し、自動構築・管理</p>
-  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
 <details>
-<summary>このページの内容(19項目)</summary>
+<summary>このページの内容(22項目)</summary>
 <ol>
 <li><a href="#c1">1. サービス概要</a></li>
-<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">主な機能</a></li><li><a href="#c2-3">AWS CLIのコマンドとオプション</a></li><li><a href="#c2-4">テンプレートの例(S3バケットの作成)</a></li><li><a href="#c2-5">組み込み関数</a></li><li><a href="#c2-6">Export/ImportValue(スタック間の参照)</a></li><li><a href="#c2-7">ロールバックとスタックの状態</a></li><li><a href="#c2-8">cfn-init・cfn-signal・CreationPolicy</a></li><li><a href="#c2-9">DependsOn属性とWaitCondition</a></li><li><a href="#c2-10">UpdatePolicy(Auto Scalingグループの更新)</a></li><li><a href="#c2-11">終了保護</a></li></ul></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">構成要素</a></li><li><a href="#c2-2">主な機能</a></li><li><a href="#c2-3">AWS CLIのコマンドとオプション</a></li><li><a href="#c2-4">テンプレートの例(S3バケットの作成)</a></li><li><a href="#c2-5">組み込み関数</a></li><li><a href="#c2-6">Export/ImportValue(スタック間の参照)</a></li><li><a href="#c2-7">ロールバックとスタックの状態</a></li><li><a href="#c2-8">cfn-init・cfn-signal・CreationPolicy</a></li><li><a href="#c2-9">DependsOn属性とWaitCondition</a></li><li><a href="#c2-10">UpdatePolicy(Auto Scalingグループの更新)</a></li><li><a href="#c2-11">終了保護</a></li><li><a href="#c2-12">DeletionPolicyとSnapshot</a></li><li><a href="#c2-13">カスタムリソース(Custom::)</a></li><li><a href="#c2-14">StackSetsとスタックインスタンスの状態(OUTDATEDなど)</a></li></ul></li>
 <li><a href="#c3">3. ユースケース</a></li>
 <li><a href="#c4">4. 料金の考え方</a></li>
 <li><a href="#c5">5. 関連サービス</a></li>
@@ -452,6 +452,76 @@ Resources:
 <tr><td>DeletionPolicy</td><td>スタックの削除時やリソースを外したときに、リソースが消えること(Retain/Snapshot)</td><td>リソース</td></tr>
 <tr><td>スタックポリシー</td><td>スタックの更新による特定リソースの変更・置き換え</td><td>リソース(更新時)</td></tr>
 </table></div>
+
+<h3 id="c2-12">DeletionPolicyとSnapshot<a class="anchor" href="#c2-12" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>DeletionPolicy</strong>はリソースごとに書く属性で、<strong>スタックを削除したとき</strong>や<strong>テンプレートからそのリソースを消して更新したとき</strong>に、実際のリソースをどう扱うかを決めます。</p>
+<pre class="code"><code>Resources:
+  AppDB:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot          # 削除の前に最終スナップショットを取る
+    UpdateReplacePolicy: Snapshot     # 更新で置き換えになるときも、古いDBのスナップショットを取る
+    Properties:
+      Engine: mysql
+      DBInstanceClass: db.t4g.medium
+      AllocatedStorage: "20"</code></pre>
+<div class="table-wrap"><table>
+<tr><th>値</th><th>動き</th><th>向いている場面</th></tr>
+<tr><td><code>Delete</code></td><td>リソースを削除する(<strong>既定</strong>)</td><td>作り直せる一時的なリソース</td></tr>
+<tr><td><code>Retain</code></td><td>リソースを<strong>残したまま</strong>、スタックの管理から外す</td><td>消したくないS3バケット・DynamoDBテーブル・ログ。残ったリソースの料金はかかり続ける</td></tr>
+<tr><td><code>Snapshot</code></td><td><strong>スナップショットを取ってから</strong>リソースを削除する</td><td>データは残したいが、リソース自体は止めて費用を抑えたいDB・ボリューム</td></tr>
+<tr><td><code>RetainExceptOnCreate</code></td><td>作成に失敗してロールバックするときは削除し、それ以外は残す</td><td>作成失敗で中途半端なリソースが残るのを避けたいとき</td></tr>
+</table></div>
+<p><code>Snapshot</code> を指定できるのは、スナップショットの機能があるリソースだけです。</p>
+<ul>
+<li><code>AWS::EC2::Volume</code>(EBSボリューム)</li>
+<li><code>AWS::RDS::DBInstance</code>・<code>AWS::RDS::DBCluster</code>(Auroraを含む)</li>
+<li><code>AWS::ElastiCache::CacheCluster</code>・<code>AWS::ElastiCache::ReplicationGroup</code></li>
+<li><code>AWS::Redshift::Cluster</code>、<code>AWS::Neptune::DBCluster</code>、<code>AWS::DocDB::DBCluster</code></li>
+</ul>
+<p>EC2インスタンスやS3バケットには <code>Snapshot</code> は使えません(S3バケットを残したいなら <code>Retain</code>)。また、DeletionPolicyで残したスナップショットはスタックの管理外になるため、不要になったら自分で削除します。なお、<code>AWS::RDS::DBCluster</code> と、クラスターに属さない <code>AWS::RDS::DBInstance</code> では、DeletionPolicyを書かないときの既定が <code>Snapshot</code> になります。</p>
+<p><code>UpdateReplacePolicy</code> は、更新で<strong>リソースが置き換え(新しく作り直し)</strong>になるときに、古いリソースをどう扱うかを決める属性です。値はDeletionPolicyと同じです。DBのように置き換えでデータが消えると困るリソースには、両方を書いておくと安全です。</p>
+
+<h3 id="c2-13">カスタムリソース(Custom::)<a class="anchor" href="#c2-13" aria-label="この見出しへのリンク">#</a></h3>
+<p>CloudFormationが対応していない処理や、外部のシステムへの登録を、スタックの作成・更新・削除に合わせて実行したいときは、<strong>カスタムリソース</strong>を使います。リソースのタイプを <strong><code>Custom::</code> で始まる任意の名前</strong>(例:<code>Custom::DBUser</code>)、または <code>AWS::CloudFormation::CustomResource</code> にします。</p>
+<pre class="code"><code>Resources:
+  CreateDBUser:
+    Type: Custom::DBUser
+    Properties:
+      ServiceToken: !GetAtt DBUserFunction.Arn   # 処理を行うLambda関数(またはSNSトピック)のARN
+      UserName: app_user                         # Lambdaに渡す値(自由に決める)
+Outputs:
+  UserArn:
+    Value: !GetAtt CreateDBUser.UserArn            # Lambdaが返した値を使える</code></pre>
+<ol>
+<li>スタックの作成・更新・削除のとき、CloudFormationが <code>ServiceToken</code> で指定した<strong>Lambda関数(またはSNSトピック)</strong>にリクエストを送る。<code>RequestType</code> は <code>Create</code>・<code>Update</code>・<code>Delete</code> のどれか</li>
+<li>Lambda関数が処理を行い、<strong>結果(SUCCESS/FAILED)を、リクエストに含まれる署名付きURL(<code>ResponseURL</code>)に返す</strong>。Pythonなら <code>cfn-response</code> モジュールが使える</li>
+<li>CloudFormationは応答を受け取ってから次のリソースに進む。返した <code>Data</code> の値は <code>!GetAtt</code> で参照できる</li>
+</ol>
+<p>よくある失敗は、<strong>Lambdaが応答を返さないまま終わる</strong>ことです。例外で落ちたり、<code>Delete</code> の処理を書き忘れたりすると、CloudFormationは応答を待ち続け、<strong>最大1時間</strong>(既定のタイムアウト)スタックが <code>CREATE_IN_PROGRESS</code> や <code>DELETE_IN_PROGRESS</code> のまま止まります。<code>ServiceTimeout</code> プロパティで待つ時間を短くでき、関数ではエラー時も必ずFAILEDを返すように実装します。</p>
+<p>代表的な使い方は、DBのユーザー作成、AMIのIDの検索、S3バケットを削除する前の中身の削除、外部のSaaSへの登録などです。CloudFormationのレジストリに登録して自分のリソースタイプとして使う「<strong>リソースタイプ(拡張機能)</strong>」もありますが、手軽に処理を足すならカスタムリソースが定番です。</p>
+
+<h3 id="c2-14">StackSetsとスタックインスタンスの状態(OUTDATEDなど)<a class="anchor" href="#c2-14" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>StackSets</strong>は、1つのテンプレートから複数のアカウント・リージョンにスタックを展開します。展開先の1つ1つ(アカウント×リージョン)を<strong>スタックインスタンス</strong>と呼び、それぞれに状態があります。</p>
+<div class="table-wrap"><table>
+<tr><th>状態</th><th>意味</th></tr>
+<tr><td><code>CURRENT</code></td><td>スタックセットの最新の内容で、正常に作成・更新できている</td></tr>
+<tr><td><strong class="em"><code>OUTDATED</code></strong></td><td>スタックセットの最新の内容が<strong>まだ反映されていない</strong>。最後の操作でそのスタックの作成・更新に<strong>失敗した</strong>か、操作が途中で止まった</td></tr>
+<tr><td><code>INOPERABLE</code></td><td>スタックの削除に失敗し、スタックセットから外れた状態。手動で削除してから、スタックインスタンスを外す(<code>RetainStacks</code>)</td></tr>
+</table></div>
+<p><code>OUTDATED</code> になる主な原因は次のとおりです。</p>
+<ul>
+<li>展開先のアカウントに、必要な<strong>IAMロールがない・信頼関係が正しくない</strong>(セルフマネージドの権限では、管理者アカウントに <code>AWSCloudFormationStackSetAdministrationRole</code>、展開先に <code>AWSCloudFormationStackSetExecutionRole</code> が必要)</li>
+<li>展開先のリージョンが<strong>有効になっていない</strong>(オプトインが必要なリージョン)</li>
+<li>テンプレートの中の<strong>リソース名の重複</strong>(S3バケット名など、グローバルに一意の名前を固定している)や、<strong>サービスクォータ</strong>の上限</li>
+<li>SCPで、そのアカウント・リージョンでの操作が拒否されている</li>
+</ul>
+<p>原因はスタックインスタンスの<strong>状態の理由(StatusReason)</strong>と、展開先のアカウントのスタックイベントで確認します。原因を直したら、スタックセットの操作(更新やスタックインスタンスの更新)をやり直すと <code>CURRENT</code> に戻ります。</p>
+<div class="table-wrap"><table>
+<tr><th>権限モデル</th><th>内容</th></tr>
+<tr><td>セルフマネージド</td><td>IAMロール(上記の2つ)を自分で各アカウントに作る。Organizationsを使わない場合</td></tr>
+<tr><td>サービスマネージド</td><td><strong>Organizations</strong>と連携し、ロールは自動で作られる。OUを指定でき、<strong>自動デプロイ</strong>を有効にすると、OUに新しく入ったアカウントにも自動で展開される</td></tr>
+</table></div>
+<p>展開の速さと安全性は、<strong>同時アカウント数</strong>(一度にいくつのアカウントに展開するか)と<strong>障害耐性</strong>(何アカウントの失敗まで続行するか)で調整します。障害耐性を超えて失敗すると、その操作は止まり、残りのアカウントは古い内容のままになります。</p>
 </section>
 
 <section class="chapter">
@@ -504,6 +574,10 @@ Resources:
 <li>スタック削除時にリソースを残す → <strong>DeletionPolicy: Retain</strong>(デフォルトはDelete)。</li>
 <li>スタックの誤削除を防ぐ → <strong>終了保護</strong>。リソースを残す → DeletionPolicy。更新から守る → スタックポリシー。</li>
 <li>複数アカウント・リージョンへ展開 → <strong>StackSets</strong>。</li>
+<li>StackSetsのスタックインスタンスが <strong><code>OUTDATED</code></strong> → そのアカウント・リージョンへの展開に失敗している。<strong>実行ロールの有無</strong>・リージョンの有効化・名前の重複・クォータを確認し、操作をやり直す。</li>
+<li>OUに追加したアカウントにも自動で展開 → <strong>サービスマネージドの権限</strong>+<strong>自動デプロイ</strong>。</li>
+<li>スタック削除時にDBやEBSのデータを<strong>スナップショットで残して</strong>リソースは削除 → <strong>DeletionPolicy: Snapshot</strong>(EC2インスタンスやS3バケットには使えない)。置き換え時にも残す → <strong>UpdateReplacePolicy</strong>。</li>
+<li>CloudFormationが対応していない処理をスタックに組み込む → <strong>カスタムリソース</strong>(<code>Custom::</code>+<code>ServiceToken</code> にLambda)。スタックが <code>IN_PROGRESS</code> のまま止まる → Lambdaが<strong>応答URLに結果を返していない</strong>。</li>
 </ul>
 </div>
 </section>
@@ -530,68 +604,72 @@ Resources:
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 10件・リンク元 18件)</summary>
+<summary>つながり図を開く(リンク先 10件・リンク元 20件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 576" style="max-width:784px;min-width:600px" role="img" aria-label="AWS CloudFormationとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,45 C265.0,45 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 636" style="max-width:784px;min-width:600px" role="img" aria-label="AWS CloudFormationとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
 <a href="../services/config.html"><title>サービス:AWS Config</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Config</text></a>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
 <a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Control Tower</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
 <a href="../services/copilot.html"><title>サービス:AWS Copilot</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Copilot</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
 <a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS Elastic Beanstalk</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
 <a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS Organizations</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
 <a href="../services/resource-groups.html"><title>サービス:AWS Resource Groups と Tag Editor</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">AWS Resource Groups と Ta…</text></a>
-<path class="gr-line" d="M230,225 C265.0,225 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../services/kiro.html"><title>サービス:Kiro</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">Kiro</text></a>
-<path class="gr-line" d="M230,255 C265.0,255 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../terms/arn.html"><title>用語:ARN</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">ARN</text></a>
-<path class="gr-line" d="M230,285 C265.0,285 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="290" class="gr-t">AWS Well-Architected フレ…</text></a>
-<path class="gr-line" d="M230,315 C265.0,315 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../terms/access-methods.html"><title>用語:AWSの操作方法(コンソール・CLI・SDK・API)</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="320" class="gr-t">AWSの操作方法(コンソール・CL…</text></a>
-<path class="gr-line" d="M230,345 C265.0,345 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="350" class="gr-t">DR戦略</text></a>
-<path class="gr-line" d="M230,375 C265.0,375 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../terms/instance-profile.html"><title>用語:インスタンスプロファイル</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="380" class="gr-t">インスタンスプロファイル</text></a>
-<path class="gr-line" d="M230,405 C265.0,405 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../terms/secrets-config-comparison.html"><title>用語:機密情報・設定値の保存先の選び方</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="410" class="gr-t">機密情報・設定値の保存先の選び方</text></a>
-<path class="gr-line" d="M230,435 C265.0,435 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/cloudformation-safe-update.html"><title>運用シナリオ:CloudFormationで本番環境を安全に更新する</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="440" class="gr-t">CloudFormationで本番環境を…</text></a>
-<path class="gr-line" d="M230,465 C265.0,465 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/multi-region-failover.html"><title>運用シナリオ:リージョン障害に備えて別リージョンへ切り替える</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="470" class="gr-t">リージョン障害に備えて別リージ…</text></a>
-<path class="gr-line" d="M230,495 C265.0,495 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/cloudformation-drift.html"><title>運用シナリオ:手作業による設定変更(ドリフト)を見つけて戻す</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="500" class="gr-t">手作業による設定変更(ドリフト…</text></a>
-<path class="gr-line" d="M230,525 C265.0,525 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/vpc-ip-planning.html"><title>運用シナリオ:組織全体のVPCのIPアドレスを重ならないように払い出す</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="530" class="gr-t">組織全体のVPCのIPアドレスを重…</text></a>
-<path class="gr-line" d="M230,555 C265.0,555 265.0,300 300,300" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/multi-account-stacksets.html"><title>運用シナリオ:複数アカウント・リージョンに共通設定を展開する</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="560" class="gr-t">複数アカウント・リージョンに共…</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/cdk.html"><title>サービス:AWS CDK</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">AWS CDK</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">AWS CodePipeline</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
-<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">AWS Lambda</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/sam.html"><title>サービス:AWS SAM</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">AWS SAM</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,285 550,285" marker-end="url(#gr-arrow)"/>
-<a href="../services/secrets-manager.html"><title>サービス:AWS Secrets Manager</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">AWS Secrets Manager</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/service-catalog.html"><title>サービス:AWS Service Catalog</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="320" class="gr-t">AWS Service Catalog</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,345 550,345" marker-end="url(#gr-arrow)"/>
-<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="350" class="gr-t">AWS Systems Manager</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/json-yaml.html"><title>用語:JSONとYAMLの読み方</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="380" class="gr-t">JSONとYAMLの読み方</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="410" class="gr-t">TerraformとGit</text></a>
-<path class="gr-line" d="M480,300 C515.0,300 515.0,435 550,435" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/iam-passrole.html"><title>用語:iam:PassRoleとサービスにリンクされたロール</title><rect x="550" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="440" class="gr-t">iam:PassRoleとサービスにリ…</text></a>
-<rect x="300" y="280" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="305" text-anchor="middle" class="gr-tb">AWS CloudFormation</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(18)</text>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/devops-guru.html"><title>サービス:Amazon DevOps Guru</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">Amazon DevOps Guru</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../services/kiro.html"><title>サービス:Kiro</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">Kiro</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/arn.html"><title>用語:ARN</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="290" class="gr-t">ARN</text></a>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="320" class="gr-t">AWS Well-Architected フレ…</text></a>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/access-methods.html"><title>用語:AWSの操作方法(コンソール・CLI・SDK・API)</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="350" class="gr-t">AWSの操作方法(コンソール・CL…</text></a>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="380" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/instance-profile.html"><title>用語:インスタンスプロファイル</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="410" class="gr-t">インスタンスプロファイル</text></a>
+<path class="gr-line" d="M230,435 C265.0,435 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/deploy-strategies.html"><title>用語:デプロイ戦略</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="440" class="gr-t">デプロイ戦略</text></a>
+<path class="gr-line" d="M230,465 C265.0,465 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../terms/secrets-config-comparison.html"><title>用語:機密情報・設定値の保存先の選び方</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="470" class="gr-t">機密情報・設定値の保存先の選び方</text></a>
+<path class="gr-line" d="M230,495 C265.0,495 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cloudformation-safe-update.html"><title>運用シナリオ:CloudFormationで本番環境を安全に更新する</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="500" class="gr-t">CloudFormationで本番環境を…</text></a>
+<path class="gr-line" d="M230,525 C265.0,525 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/multi-region-failover.html"><title>運用シナリオ:リージョン障害に備えて別リージョンへ切り替える</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="530" class="gr-t">リージョン障害に備えて別リージ…</text></a>
+<path class="gr-line" d="M230,555 C265.0,555 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cloudformation-drift.html"><title>運用シナリオ:手作業による設定変更(ドリフト)を見つけて戻す</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="560" class="gr-t">手作業による設定変更(ドリフト…</text></a>
+<path class="gr-line" d="M230,585 C265.0,585 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/vpc-ip-planning.html"><title>運用シナリオ:組織全体のVPCのIPアドレスを重ならないように払い出す</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="590" class="gr-t">組織全体のVPCのIPアドレスを重…</text></a>
+<path class="gr-line" d="M230,615 C265.0,615 265.0,330 300,330" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/multi-account-stacksets.html"><title>運用シナリオ:複数アカウント・リージョンに共通設定を展開する</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="620" class="gr-t">複数アカウント・リージョンに共…</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cdk.html"><title>サービス:AWS CDK</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">AWS CDK</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">AWS CodePipeline</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/sam.html"><title>サービス:AWS SAM</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">AWS SAM</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,315 550,315" marker-end="url(#gr-arrow)"/>
+<a href="../services/secrets-manager.html"><title>サービス:AWS Secrets Manager</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="320" class="gr-t">AWS Secrets Manager</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/service-catalog.html"><title>サービス:AWS Service Catalog</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="350" class="gr-t">AWS Service Catalog</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,375 550,375" marker-end="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="380" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/json-yaml.html"><title>用語:JSONとYAMLの読み方</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="410" class="gr-t">JSONとYAMLの読み方</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,435 550,435" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="550" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="440" class="gr-t">TerraformとGit</text></a>
+<path class="gr-line" d="M480,330 C515.0,330 515.0,465 550,465" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/iam-passrole.html"><title>用語:iam:PassRoleとサービスにリンクされたロール</title><rect x="550" y="454" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="470" class="gr-t">iam:PassRoleとサービスにリ…</text></a>
+<rect x="300" y="310" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="335" text-anchor="middle" class="gr-tb">AWS CloudFormation</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(20)</text>
 <text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(10)</text>
 </svg>
 </div>
