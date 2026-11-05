@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat4">データベース</a>
   <h1>Amazon Aurora</h1>
   <p class="lead">MySQL/PostgreSQL互換の高性能リレーショナルデータベース</p>
-  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
@@ -156,6 +156,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>プライマリに障害が起きると、<strong>レプリカが自動で昇格</strong>する。</li>
 <li>レプリカがない場合は新しいインスタンスを作成するため、復旧に時間がかかる。可用性を重視するなら<strong>別AZにレプリカを置く</strong>。高可用性の考え方は用語ページ「<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a>」を参照してください。</li>
 <li>通常のRDS Multi-AZと違い、スタンバイ専用インスタンスはなく、<strong>レプリカが読み取りとフェイルオーバーを兼ねる</strong>。</li>
+<li><strong class="em">リードレプリカが自動でプライマリに昇格するのはAuroraだけ</strong>。RDS(MySQL・PostgreSQLなど)のリードレプリカは自動では昇格せず、手動で昇格すると独立したDBになる(違いは<a href="rds.html">Amazon RDS</a>のページの表を参照)。</li>
+<li>どのレプリカを昇格させるかは<strong>フェイルオーバー優先度(ティア0〜15)</strong>で決める。数字が小さいほど優先され、同じ優先度ならサイズが大きいレプリカが選ばれる。プライマリと同じインスタンスクラスのレプリカを優先度の高いティアに置くと、昇格後に性能が落ちない。</li>
+<li>フェイルオーバーは通常30秒〜1分程度。<strong>クラスターエンドポイント</strong>は新しいプライマリを自動で指すため、アプリはクラスターエンドポイントに接続しておけば接続先を変えなくてよい。</li>
 </ul>
 
 <h3 id="c2-4">主な機能<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
@@ -209,6 +212,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>データは<strong>3AZに6コピー</strong>。レプリカは<strong>最大15</strong>。</li>
 <li>書き込み → <strong>クラスターエンドポイント</strong>、読み取り → <strong>リーダーエンドポイント</strong>。</li>
 <li>フェイルオーバーを速くしたい → <strong>別AZにレプリカ</strong>を置く。</li>
+<li>リードレプリカがプライマリに<strong>自動で昇格</strong>する → <strong>Aurora</strong>(RDSのリードレプリカは手動で昇格)。昇格の順番は<strong>フェイルオーバー優先度(ティア)</strong>で決める。</li>
 <li>誤操作をすばやく戻したい(MySQL)→ <strong>バックトラック</strong>。</li>
 <li>本番データでテスト環境を素早く作る → <strong>クローン</strong>。</li>
 <li>リージョン障害対策 → <strong>グローバルデータベース</strong>。</li>

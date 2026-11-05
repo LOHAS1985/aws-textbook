@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat4">データベース</a>
   <h1>Amazon RDS</h1>
   <p class="lead">リレーショナルデータベースの構築・運用を任せられるマネージドDB</p>
-  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   <p class="updated">内容の確認:2026年11月3日</p>
   </div>
 </div>
@@ -116,6 +116,19 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Multi-AZとリードレプリカの違い。スタンバイは障害時に引き継ぐための待機系(同期・読み取りには使えない)、リードレプリカは読み取りを分散するためのコピー(非同期・わずかに遅延)。</figcaption>
 </figure>
+<p>試験では「どちらを選ぶか」と「障害時に何が起きるか」がよく問われます。次の表で違いを整理しておきましょう。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th></th><th>Multi-AZ(スタンバイ)</th><th>リードレプリカ</th></tr>
+<tr><td data-label="">目的</td><td data-label="Multi-AZ(スタンバイ)"><strong>可用性</strong>(障害時の引き継ぎ)</td><td data-label="リードレプリカ"><strong>読み取り性能</strong>(読み取りの分散)</td></tr>
+<tr><td data-label="">レプリケーション</td><td data-label="Multi-AZ(スタンバイ)"><strong>同期</strong>(データの損失がない)</td><td data-label="リードレプリカ"><strong>非同期</strong>(わずかに遅れる=レプリカラグ)</td></tr>
+<tr><td data-label="">読み取りに使えるか</td><td data-label="Multi-AZ(スタンバイ)">使えない(Multi-AZ DBクラスターのスタンバイは読める)</td><td data-label="リードレプリカ">使える(レプリカごとのエンドポイントに接続)</td></tr>
+<tr><td data-label="">置ける場所</td><td data-label="Multi-AZ(スタンバイ)">同じリージョンの別AZ</td><td data-label="リードレプリカ">同じAZ・別AZ・<strong>別リージョン</strong>(クロスリージョンリードレプリカ)</td></tr>
+<tr><td data-label="">障害時の切り替え</td><td data-label="Multi-AZ(スタンバイ)"><strong>自動</strong>でスタンバイが昇格し、エンドポイントのDNSが切り替わる</td><td data-label="リードレプリカ"><strong class="em">自動では昇格しない</strong>。手動で「昇格」すると独立したDBになる</td></tr>
+<tr><td data-label="">接続先の変更</td><td data-label="Multi-AZ(スタンバイ)">不要(エンドポイント名は同じ)</td><td data-label="リードレプリカ">必要(昇格したDBのエンドポイントへ切り替える)</td></tr>
+<tr><td data-label="">バックアップ・メンテナンス</td><td data-label="Multi-AZ(スタンバイ)">バックアップはスタンバイから取るため、プライマリのI/Oが止まらない</td><td data-label="リードレプリカ">レプリカの作成にはソースDBの<strong>自動バックアップの有効化</strong>が必要</td></tr>
+</table></div>
+<p>RDS(MySQL・PostgreSQLなど)のリードレプリカを手動で昇格すると、レプリケーションが切れて<strong>書き込みできる独立したDB</strong>になります。元に戻すことはできず、ほかのレプリカも新しいDBには付いてきません。別リージョンのリードレプリカを昇格させるのは、リージョン障害に備えたDRの定番の手順です。</p>
+<p>これに対して<a href="aurora.html">Aurora</a>は、プライマリに障害が起きると<strong class="em">リードレプリカ(Auroraレプリカ)が自動でプライマリに昇格</strong>します。Auroraのレプリカはプライマリと同じストレージを共有しているため、スタンバイと読み取り用のレプリカを兼ねられるのです。「リードレプリカが自動でプライマリに昇格する」のは<strong>Auroraだけ</strong>と覚えておきましょう。</p>
 <h3 id="c2-2">RDS Proxy<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>大量のクライアントからのアクセスを、<strong>少数のDB接続に集約・再利用</strong>する仕組みです。</p>
 <ul>
@@ -382,6 +395,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h4>可用性・性能</h4>
 <ul>
 <li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
+<li>RDSのリードレプリカは障害時に<strong>自動で昇格しない</strong>(手動で昇格すると独立したDBになり、接続先の変更が必要)。レプリカが<strong>自動で昇格</strong>するのは<strong>Aurora</strong>だけ。</li>
+<li>リージョン障害に備えて別リージョンにコピーを持つ → <strong>クロスリージョンリードレプリカ</strong>(障害時に手動で昇格)。Auroraなら<strong>グローバルデータベース</strong>。</li>
 <li>Multi-AZのフェイルオーバーでは<strong>エンドポイント名は変わらず</strong>、DNSがスタンバイに切り替わる。アプリは再接続できるようにする。</li>
 <li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。フェイルオーバーを速くしたい場合も、DNSのキャッシュを使わないProxyが向く(進行中のトランザクションは失敗するので再試行を実装する)。</li>
 <li>遅いSQLや待機イベントの特定 → <strong>Performance Insights</strong>。OSのプロセス単位のメトリクス → <strong>拡張モニタリング</strong>。</li>

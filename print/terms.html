@@ -4855,6 +4855,31 @@ aws ec2 associate-iam-instance-profile --instance-id i-0123456789abcdef0 \
 <tr><td data-label="戦略"><strong>Feature Flag</strong></td><td data-label="概要">アプリはデプロイしておき、機能のON/OFFを設定で制御</td><td data-label="新旧の稼働">同一環境内で複数機能</td><td data-label="切り替え方">フラグの変更</td><td data-label="ダウンタイム">なし</td><td data-label="ロールバック">非常に容易</td><td data-label="主な用途">段階的な機能リリース</td></tr>
 </table></div>
 <p>AWSでは、CodeDeployがIn-place・Blue/Green・Canary・Linear(一定間隔で少しずつ)に、Elastic BeanstalkがRolling・Immutable・Blue/Greenに、Route 53の加重ルーティングがCanaryやA/Bテスト的な振り分けに、AppConfigがFeature Flag的な使い方に対応します。</p>
+
+<h3 id="deploy-strategies-c1-10">AWSのサービスごとのデプロイ設定<a class="anchor" href="#deploy-strategies-c1-10" aria-label="この見出しへのリンク">#</a></h3>
+<p>試験では、戦略の名前だけでなく「どのサービスの、どの設定を選ぶか」が問われます。サービスごとに選べる方式を整理します。</p>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>選べる方式・設定</th><th>ポイント</th></tr>
+<tr><td><a href="../services/codedeploy.html">CodeDeploy</a>(EC2・オンプレミス)</td><td><strong>In-place</strong>:<code>AllAtOnce</code>/<code>HalfAtATime</code>/<code>OneAtATime</code>。<strong>Blue/Green</strong>:Auto Scalingグループを複製して、ELBで切り替える</td><td>オンプレミスはIn-placeだけ。ロールバックは「前のリビジョンを再デプロイ」</td></tr>
+<tr><td>CodeDeploy(Lambda)</td><td><strong>Canary</strong>(例:<code>Canary10Percent5Minutes</code>)/<strong>Linear</strong>(例:<code>Linear10PercentEvery1Minute</code>)/<code>AllAtOnce</code></td><td>エイリアスの<strong>加重</strong>で新バージョンへ少しずつ移す。CloudWatchアラームで自動ロールバック</td></tr>
+<tr><td>CodeDeploy(ECS)・ECS</td><td><strong>ローリング更新</strong>(<code>minimumHealthyPercent</code>・<code>maximumPercent</code>)/<strong>Blue/Green</strong>(Canary・Linear・AllAtOnce)</td><td>Blue/GreenはALBの2つのターゲットグループを切り替える。ローリングの失敗検知は<a href="#p-circuit-breaker">デプロイサーキットブレーカー</a></td></tr>
+<tr><td><a href="../services/elastic-beanstalk.html">Elastic Beanstalk</a></td><td><strong>All at once</strong>/<strong>Rolling</strong>/<strong>Rolling with additional batch</strong>/<strong>Immutable</strong>/<strong>Traffic splitting</strong>/<strong>Blue/Green</strong>(環境のURLの入れ替え=CNAME swap)</td><td>容量を減らさない → 追加バッチ付きローリング。失敗時に既存インスタンスへ影響させない → Immutable。一部のトラフィックで試す → Traffic splitting</td></tr>
+<tr><td><a href="../services/auto-scaling.html">EC2 Auto Scaling</a></td><td><strong>インスタンスの更新</strong>(最小正常率・ウォームアップ・チェックポイント・自動ロールバック)</td><td>起動テンプレートを新しくしたあと、インスタンスを少しずつ入れ替える(ローリング)</td></tr>
+<tr><td><a href="../services/cloudformation.html">CloudFormation</a>(Auto Scalingグループ)</td><td><strong>UpdatePolicy</strong>:<code>AutoScalingRollingUpdate</code>(ローリング)/<code>AutoScalingReplacingUpdate</code>(新しいグループを作って置き換え)</td><td>AMIなどを変えたときに、スタックの更新でインスタンスも入れ替える</td></tr>
+<tr><td><a href="../services/api-gateway.html">API Gateway</a></td><td>ステージの<strong>カナリアリリース</strong>の設定</td><td>指定した割合のリクエストだけを新しいデプロイに送る</td></tr>
+<tr><td><a href="../services/route53.html">Route 53</a></td><td><strong>加重ルーティング</strong></td><td>DNSで新旧の環境への割合を変える(Blue/Green・Canary)。DNSのキャッシュ(TTL)のぶん切り替えが遅れる</td></tr>
+<tr><td>AppConfig(<a href="../services/systems-manager.html">Systems Manager</a>)</td><td>設定やフラグの<strong>段階的な展開</strong>(Linear・Exponential・AllAtOnce)</td><td>Feature Flagの配信。CloudWatchアラームで自動ロールバック</td></tr>
+<tr><td><a href="../services/rds.html">RDS</a></td><td><strong>Blue/Green Deployments</strong></td><td>DBのメジャーバージョンアップなどを、ステージング環境で準備してから短時間で切り替える</td></tr>
+</table></div>
+<p>問題文のキーワードから選ぶときの目安です。</p>
+<ul>
+<li>「ダウンタイムなし」「すぐに元に戻したい」→ <strong>Blue/Green</strong>。</li>
+<li>「一部のユーザーだけで先に試す」「問題があれば影響を小さく」→ <strong>Canary</strong>(段階を細かく一定にするなら <strong>Linear</strong>)。</li>
+<li>「追加のコストをかけたくない」「容量の一部が一時的に減ってもよい」→ <strong>Rolling</strong>(容量を減らしたくないなら追加バッチ付き)。</li>
+<li>「失敗しても既存のインスタンスに影響を与えない」→ <strong>Immutable</strong>(新しいインスタンスで作り、成功してから入れ替える)。</li>
+<li>「最も速く、停止してもよい(開発環境)」→ <strong>All at once</strong>(In-place・Recreate)。</li>
+<li>「失敗を自動で検知して戻す」→ CloudWatchアラームと連携した<strong>自動ロールバック</strong>(CodeDeploy・ECSのサーキットブレーカー・Auto Scalingのインスタンスの更新・AppConfig)。</li>
+</ul>
 </section>
 
 <section class="chapter">

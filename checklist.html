@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>直前に確認する項目 | AWS教科書</title>
+<meta name="description" content="試験の直前に見直しておきたい項目と、その要点のまとめ">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("sw.js").catch(function () {});
+}
+</script>
+<script src="js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="services/index.html">サービス</a><a href="terms/index.html">用語</a><a href="usecases/index.html">運用シナリオ</a><a href="news/index.html">ニュース</a><a href="links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head">
+  <h1>直前に確認する項目</h1>
+  <p class="lead">試験の直前に見直しておきたい項目と、その要点のまとめ。詳しい説明は各項目のリンク先で確認してください。</p>
+</div>
+<section class="chapter">
+<h2 id="c1">確認する項目の一覧<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li><a href="#deploy">デプロイ戦略</a></li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="deploy">1. デプロイ戦略<a class="anchor" href="#deploy" aria-label="この見出しへのリンク">#</a></h2>
+<p>詳しくは用語ページ「<a href="terms/deploy-strategies.html">デプロイ戦略</a>」(特に「<a href="terms/deploy-strategies.html#c1-9">比較</a>」と「<a href="terms/deploy-strategies.html#c1-10">AWSのサービスごとのデプロイ設定</a>」)を参照してください。</p>
+<h3 id="deploy-1">問題文のキーワードから選ぶ<a class="anchor" href="#deploy-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>問題文のキーワード</th><th>選ぶ戦略</th></tr>
+<tr><td>ダウンタイムなし・すぐに元に戻したい</td><td><strong>Blue/Green</strong></td></tr>
+<tr><td>一部のユーザー・トラフィックで先に試す</td><td><strong>Canary</strong>(一定の割合ずつ増やすなら<strong>Linear</strong>)</td></tr>
+<tr><td>追加のコストをかけない・容量が一時的に減ってもよい</td><td><strong>Rolling</strong></td></tr>
+<tr><td>更新中も容量を減らしたくない</td><td><strong>Rolling with additional batch</strong>(Elastic Beanstalk)</td></tr>
+<tr><td>失敗しても既存のインスタンスに影響させない</td><td><strong>Immutable</strong>(Elastic Beanstalk)</td></tr>
+<tr><td>最も速い・停止してよい(開発環境)</td><td><strong>All at once</strong>(In-place)</td></tr>
+<tr><td>機能のON/OFFをデプロイせずに切り替える</td><td><strong>Feature Flag</strong>(AppConfig)</td></tr>
+</table></div>
+<h3 id="deploy-2">サービスごとの設定名<a class="anchor" href="#deploy-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>サービス</th><th>覚えておく設定</th></tr>
+<tr><td><a href="services/codedeploy.html">CodeDeploy</a>(EC2・オンプレミス)</td><td>In-place:<code>AllAtOnce</code>/<code>HalfAtATime</code>/<code>OneAtATime</code>、Blue/Green。オンプレミスはIn-placeのみ</td></tr>
+<tr><td>CodeDeploy(Lambda・ECS)</td><td><code>Canary10Percent5Minutes</code>/<code>Linear10PercentEvery1Minute</code>/<code>AllAtOnce</code>。CloudWatchアラームで自動ロールバック</td></tr>
+<tr><td><a href="services/ecs.html">ECS</a></td><td>ローリング更新(<code>minimumHealthyPercent</code>・<code>maximumPercent</code>)+<strong>デプロイサーキットブレーカー</strong>、またはBlue/Green</td></tr>
+<tr><td><a href="services/elastic-beanstalk.html">Elastic Beanstalk</a></td><td>All at once/Rolling/Rolling with additional batch/Immutable/Traffic splitting/Blue/Green(<strong>CNAME swap</strong>)</td></tr>
+<tr><td><a href="services/auto-scaling.html">EC2 Auto Scaling</a></td><td><strong>インスタンスの更新</strong>(最小正常率・チェックポイント・自動ロールバック)</td></tr>
+<tr><td><a href="services/cloudformation.html">CloudFormation</a></td><td><strong>UpdatePolicy</strong>(<code>AutoScalingRollingUpdate</code>/<code>AutoScalingReplacingUpdate</code>)</td></tr>
+<tr><td><a href="services/api-gateway.html">API Gateway</a></td><td>ステージの<strong>カナリアリリース</strong></td></tr>
+<tr><td><a href="services/route53.html">Route 53</a></td><td><strong>加重ルーティング</strong>で新旧の割合を変える(TTLのぶん切り替えが遅れる)</td></tr>
+<tr><td><a href="services/rds.html">RDS</a></td><td><strong>Blue/Green Deployments</strong>(メジャーバージョンアップなど)</td></tr>
+</table></div>
+<div class="point"><ul>
+<li>Blue/GreenとCanaryの違い:Blue/Greenは<strong>一括で切り替え</strong>、Canaryは<strong>少量から段階的に</strong>。</li>
+<li>CanaryとLinearの違い:Canaryは<strong>2段階</strong>(例:10%→100%)、Linearは<strong>一定の割合ずつ</strong>(例:1分ごとに10%)。</li>
+<li>RollingとImmutableの違い:Rollingは<strong>既存のインスタンスを更新</strong>、Immutableは<strong>新しいインスタンスを作ってから入れ替え</strong>。</li>
+<li>失敗を自動で検知して戻す → CloudWatchアラームと連携した<strong>自動ロールバック</strong>(CodeDeploy・ECSのサーキットブレーカー・インスタンスの更新・AppConfig)。</li>
+</ul></div>
+</section>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

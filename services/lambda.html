@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat1">コンピューティング</a>
   <h1>AWS Lambda</h1>
   <p class="lead">サーバーレスでプログラムを実行するサービス</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
@@ -147,6 +147,17 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><strong class="em">予約(Reserved)</strong>:同時に実行できる上限数。上限を超えると<strong>スロットリング</strong>が発生する。</li>
 <li><strong class="em">プロビジョニング(Provisioned)</strong>:設定した数だけ実行環境をあらかじめ作成しておく(ウォームスタート)。超えた分はコールドスタートで作成される。</li>
 </ul>
+<p>どちらも「同時実行」の設定ですが、目的がまったく違います。名前が似ているので、違いを表で押さえておきましょう。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th></th><th>予約された同時実行(Reserved)</th><th>プロビジョニングされた同時実行(Provisioned)</th></tr>
+<tr><td data-label="">目的</td><td data-label="予約">同時実行数の<strong>確保と上限</strong>(ほかの関数に枠を取られない/この関数が使いすぎない)</td><td data-label="プロビジョニング"><strong>コールドスタートをなくす</strong>(実行環境を事前に初期化しておく)</td></tr>
+<tr><td data-label="">設定する単位</td><td data-label="予約"><strong>関数</strong>単位</td><td data-label="プロビジョニング"><strong>バージョンかエイリアス</strong>単位(<code>$LATEST</code> には設定できない)</td></tr>
+<tr><td data-label="">料金</td><td data-label="予約"><strong>追加料金なし</strong></td><td data-label="プロビジョニング"><strong>有料</strong>(呼び出しがなくても、設定した数と時間に応じて課金)</td></tr>
+<tr><td data-label="">設定した数を超えたとき</td><td data-label="予約"><strong>スロットリング</strong>(同期呼び出しなら429エラー)</td><td data-label="プロビジョニング">超えた分は通常どおり(コールドスタートで)実行される。予約の上限までは動く</td></tr>
+<tr><td data-label="">アカウント全体の枠との関係</td><td data-label="予約">アカウントの同時実行数(既定で<strong>リージョンあたり1,000</strong>)から差し引かれ、ほかの関数は使えなくなる。予約されていない枠を<strong>最低100</strong>残す必要がある</td><td data-label="プロビジョニング">これもアカウントの枠を使う。予約された同時実行を設定している関数では、その数を超えて設定できない</td></tr>
+<tr><td data-label="">よくある使い方</td><td data-label="予約">下流のDBを守るために上限をかける。<strong>0にすると関数を止められる</strong>(緊急停止)</td><td data-label="プロビジョニング">レイテンシーが重要なAPI。<strong>Application Auto Scaling</strong>で、時間帯や使用率に合わせて数を増減する</td></tr>
+</table></div>
+<p>アカウント全体の同時実行数の上限(1,000)は、Service Quotasで引き上げを申請できます。プロビジョニングされた同時実行の使用状況は、CloudWatchの <code>ProvisionedConcurrencyUtilization</code>、足りずに通常の実行に回った回数は <code>ProvisionedConcurrencySpilloverInvocations</code> で確認できます。</p>
 
 <h3 id="c2-5">実行環境のライフサイクル<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
@@ -459,6 +470,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>15分を超える処理はLambdaに向かない(ECS/Fargateなどを検討)。</li>
 <li>デプロイパッケージが250MBを超える → <strong>コンテナイメージ(ECR)</strong>でデプロイ。</li>
 <li>コールドスタート対策 → <strong>プロビジョニングされた同時実行</strong>。同時実行の上限制御 → <strong>予約された同時実行</strong>。</li>
+<li>予約は<strong>無料・関数単位</strong>で、上限を超えると<strong>スロットリング</strong>。プロビジョニングは<strong>有料・バージョン/エイリアス単位</strong>で、超えた分はコールドスタートで動く。関数を緊急停止 → 予約された同時実行を<strong>0</strong>。</li>
+<li>ある関数が同時実行を使い切って、ほかの関数がスロットリングされる → 重要な関数に<strong>予約された同時実行</strong>を設定する。</li>
 </ul>
 <h4>呼び出しとエラー処理</h4>
 <ul>

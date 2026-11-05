@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>Amazon CloudWatch</h1>
   <p class="lead">システムの状態を記録・監視・通知する統合監視サービス</p>
-  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
@@ -48,7 +48,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <summary>このページの内容(20項目)</summary>
 <ol>
 <li><a href="#c1">1. サービス概要</a></li>
-<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">メトリクス・アラーム・ダッシュボード</a></li><li><a href="#c2-2">ダッシュボードの共有と定義の再利用</a></li><li><a href="#metrics">メトリクスの基本</a></li><li><a href="#c2-4">統計の選び方</a></li><li><a href="#c2-5">標準では取れないメトリクス</a></li><li><a href="#metrics-list">サービス別メトリクス一覧</a></li><li><a href="#c2-7">メトリクスを活用する機能</a></li><li><a href="#c2-8">CloudWatch Logs</a></li><li><a href="#c2-9">メトリクスフィルターの流れ(ERROR通知)</a></li><li><a href="#c2-10">CloudWatchエージェント</a></li><li><a href="#c2-11">CloudWatch Synthetics</a></li><li><a href="#c2-12">その他の機能</a></li></ul></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">メトリクス・アラーム・ダッシュボード</a></li><li><a href="#c2-2">ダッシュボードの共有と定義の再利用</a></li><li><a href="#metrics">メトリクスの基本</a></li><li><a href="#c2-4">統計の選び方</a></li><li><a href="#c2-5">標準では取れないメトリクス</a></li><li><a href="#metrics-list">サービス別メトリクス一覧</a></li><li><a href="#c2-7">メトリクスを活用する機能</a></li><li><a href="#c2-8">CloudWatch Logs</a></li><li><a href="#c2-9">メトリクスフィルターの流れ(ERROR通知)</a></li><li><a href="#c2-10">CloudWatchエージェント</a></li><li><a href="#c2-11">CloudWatch Synthetics</a></li><li><a href="#cross-account">クロスアカウントオブザーバビリティ</a></li><li><a href="#c2-12">その他の機能</a></li></ul></li>
 <li><a href="#c3">3. ユースケース</a></li>
 <li><a href="#c4">4. 料金の考え方</a></li>
 <li><a href="#c5">5. 関連サービス</a></li>
@@ -460,6 +460,29 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>EC2にIAMロール(<code>CloudWatchAgentServerPolicy</code>)をアタッチ</li>
 <li>エージェントを起動し、メトリクスがCloudWatchに送信される</li>
 </ol>
+<p>設定ファイルの <code>metrics</code> の中で、送るメトリクスに<strong>付けるディメンション</strong>(メトリクスを見分けるための名前と値の組)を指定します。特に試験で問われるのが <strong class="em"><code>append_dimensions</code></strong> です。</p>
+<pre class="code"><code>{
+  "metrics": {
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}",
+      "InstanceType": "${aws:InstanceType}",
+      "ImageId": "${aws:ImageId}",
+      "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
+    },
+    "aggregation_dimensions": [["AutoScalingGroupName"], ["InstanceId"]],
+    "metrics_collected": {
+      "mem": { "measurement": ["mem_used_percent"] },
+      "disk": { "measurement": ["used_percent"], "resources": ["/"] }
+    }
+  }
+}</code></pre>
+<div class="table-wrap"><table>
+<tr><th>設定</th><th>役割</th></tr>
+<tr><td><code>append_dimensions</code></td><td>エージェントが送る<strong>すべてのメトリクスに、EC2の情報をディメンションとして追加</strong>する。使える値は <code>${aws:InstanceId}</code>・<code>${aws:InstanceType}</code>・<code>${aws:ImageId}</code>・<code>${aws:AutoScalingGroupName}</code> の4つ。これがないと、どのインスタンスのメモリ使用率なのか見分けられない</td></tr>
+<tr><td><code>aggregation_dimensions</code></td><td>指定したディメンション単位に<strong>まとめたメトリクス</strong>も作る。<code>[["AutoScalingGroupName"]]</code> なら、Auto Scalingグループ全体のメモリ使用率でアラームやスケーリングができる</td></tr>
+<tr><td><code>append_dimensions</code>(各メトリクスの中)</td><td>メトリクスごとに、独自のディメンション(例:<code>"Environment": "prod"</code>)を追加する</td></tr>
+</table></div>
+<p>「メモリ使用率のメトリクスは届いているのに、インスタンスごとに見分けられない」「Auto Scalingグループ単位で集計できない」という問題は、<code>append_dimensions</code> と <code>aggregation_dimensions</code> の設定で解決します。なお、ディメンションの組み合わせが違うと、CloudWatchでは<strong>別のメトリクス</strong>として扱われる点に注意してください(カスタムメトリクスの料金も別々にかかります)。</p>
 
 <h3 id="c2-11">CloudWatch Synthetics<a class="anchor" href="#c2-11" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>CloudWatch Synthetics</strong>は、利用者の操作を模擬してWebサイトやAPIを定期的に確認する<strong>外形監視</strong>の機能です。監視用スクリプトを<strong>Canary</strong>と呼び、Lambda関数として実行します。実際のアクセスがない時間帯でも、利用者の経路が正常に動くか確認できます。</p>
@@ -485,6 +508,24 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>生きているかだけ知りたい → ハートビート。APIの応答を確認したい → APIキャナリー。</li>
 <li>リンク切れ → リンク切れチェッカー。操作手順の再現 → Canary Recorder か GUIワークフロービルダー。見た目の変化 → ビジュアルモニタリング。</li>
 </ul></div>
+
+<h3 id="cross-account">クロスアカウントオブザーバビリティ<a class="anchor" href="#cross-account" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>クロスアカウントオブザーバビリティ</strong>は、複数のAWSアカウントのメトリクス・ログ・トレースを、1つの<strong>モニタリングアカウント</strong>からまとめて見て、検索し、アラームを作れる機能です。各アカウントにサインインし直したり、ログを1か所にコピーしたりする必要がありません。</p>
+<div class="table-wrap"><table>
+<tr><th>用語</th><th>意味</th></tr>
+<tr><td><strong>モニタリングアカウント</strong></td><td>データを見る側のアカウント(運用・監視チームのアカウント)。ここで<strong>シンク</strong>(受け口)を作る</td></tr>
+<tr><td><strong>ソースアカウント</strong></td><td>データを見せる側のアカウント(各アプリのアカウント)。シンクへの<strong>リンク</strong>を作り、共有するデータの種類を選ぶ</td></tr>
+<tr><td>共有できるデータ</td><td>CloudWatchのメトリクス、CloudWatch Logsのロググループ、X-Ray・Application Signalsのトレースなど</td></tr>
+<tr><td>仕組み</td><td>CloudWatchの<strong>Observability Access Manager(OAM)</strong>がシンクとリンクを管理する。<strong>リージョンごと</strong>に設定する</td></tr>
+</table></div>
+<p>設定の流れは次のとおりです。</p>
+<ol>
+<li>モニタリングアカウントのCloudWatchの設定で、モニタリングアカウントとして有効にする(シンクを作り、どのアカウント・組織からのリンクを受け付けるかを決める)</li>
+<li>ソースアカウントをリンクする。Organizationsを使っている場合は、コンソールが作る<strong>CloudFormationテンプレートやStackSets</strong>で、組織やOUの全アカウントをまとめてリンクできる</li>
+<li>モニタリングアカウントで、ソースアカウントのメトリクスやロググループを選んでダッシュボード・Logs Insights・アラームに使う</li>
+</ol>
+<p>1つのモニタリングアカウントには最大100,000のソースアカウントを、1つのソースアカウントは最大5つのモニタリングアカウントにリンクできます。データは<strong>コピーされず、ソースアカウントに残ったまま</strong>参照されるため、ログの保管料金が二重にかかることはありません。</p>
+<p>以前からある「CloudWatchのクロスアカウント・クロスリージョンのダッシュボード」(IAMロールで別アカウントのメトリクスを読む方式)よりも、ログやトレースまで横断して検索できる点が違います。<strong>複数アカウントのログを長期保管・分析のために1つにまとめたい</strong>ときは、サブスクリプションフィルターでFirehoseなどに送る集約の仕組みを使います(運用シナリオ「<a href="../usecases/centralized-logging.html">複数アカウントのログを集約して分析する</a>」)。</p>
 
 <h3 id="c2-12">その他の機能<a class="anchor" href="#c2-12" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
@@ -518,6 +559,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="cloudtrail.html">AWS CloudTrail</a>:CloudWatch Logsへの配信</li>
 <li><a href="xray.html">AWS X-Ray</a>:分散トレース</li>
 <li><a href="managed-grafana.html">Amazon Managed Grafana</a>:可視化</li>
+<li><a href="devops-guru.html">Amazon DevOps Guru</a>:機械学習で多数のメトリクス・ログの異常をまとめて検知</li>
 <li>関連する用語:<a href="../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態と評価</a>、<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>、<a href="../terms/http-status-codes.html">HTTPステータスコードと切り分け</a>、<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a></li>
 </ul>
 </section>
@@ -528,6 +570,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h4>メトリクス</h4>
 <ul>
 <li>EC2のメモリ・ディスク使用率 → <strong>CloudWatchエージェント</strong>でカスタムメトリクス。</li>
+<li>エージェントのメトリクスにインスタンスIDやAuto Scalingグループ名を付けたい → <strong><code>append_dimensions</code></strong>。グループ全体で集計 → <code>aggregation_dimensions</code>。</li>
+<li>複数アカウントのメトリクス・ログ・トレースを1つのアカウントで見る → <strong>クロスアカウントオブザーバビリティ</strong>(モニタリングアカウントにソースアカウントをリンク。リージョンごと)。</li>
 <li>1分間隔の監視 → <strong>詳細モニタリング</strong>。1秒間隔 → <strong>高解像度カスタムメトリクス</strong>。</li>
 <li>統計は「回数はSum、使用率はAverage、残量はMinimum、遅延はp99」。</li>
 <li>ハードウェア障害 → <code>StatusCheckFailed_System</code> で「復旧」、OSの問題 → <code>StatusCheckFailed_Instance</code> で「再起動」。</li>
