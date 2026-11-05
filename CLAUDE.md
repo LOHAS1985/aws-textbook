@@ -21,6 +21,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/index.html … トップ(サービス・用語・運用シナリオ・公式リンクへの入口)
 - book/icons/services/{slug}.svg … サービスのアイコン(AWS公式の Architecture Icons 2026年7月版の48px SVGを、改変せずファイル名だけ slug にしたもの)。サービス一覧・各サービスページの見出し・公式リンク・トップの検索結果に build.py が表示する。サービスを追加したら公式パッケージ(https://aws.amazon.com/jp/architecture/icons/)から同じ形でコピーする。専用アイコンがないサービス(Copilot・Database Encryption SDK・STS・SAM・Kiro・IPAM・DNS Firewall)は所属カテゴリの公式カテゴリアイコンを使っている
 - src/links.html・src/links.json … 公式リンク(book/links.html)の本文と、サービスごとの公式ページ(製品ページ・ドキュメント)のパス。サービスを追加したら links.json にも追加する(URLは実際にアクセスして確認する)
+- 試験前チェックリスト.md … 試験の直前に見直す項目(利用者が直接編集する)。build.py が book/checklist.html(トップページの入口から開くページ)に変換する。書けるのは `#`(1行目のページ名。括弧内は一言説明)・`##`(項目)・`- `(箇条書き)・段落・`**太字**`・`` `コード` ``・`[名前](URL)`。公開サイトの完全なURL(https://lohas1985.github.io/aws-textbook/…)は相対パスに直して出力する
 - book/{services,terms,usecases}/index.html … 各コレクションの目次(カテゴリ別)
 - book/{services,terms,usecases}/{slug}.html … 各ページ(生成物。直接編集しない)
 - book/css/style.css … 共通スタイル(全ページで共有。これは直接編集する)
