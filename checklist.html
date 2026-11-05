@@ -46,6 +46,11 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#c3">3. EC2 Instance Connect</a></li>
 <li><a href="#c4">4. Amazon Inspector</a></li>
 <li><a href="#c5">5. AWS Trusted Advisor</a></li>
+<li><a href="#c6">6. ネットワークACLとセキュリティグループの違い</a></li>
+<li><a href="#c7">7. バックトラックとポイントインタイムリカバリの違い</a></li>
+<li><a href="#c8">8. Lambda関数はプライベートIPアドレスで動作する</a></li>
+<li><a href="#c9">9. RedisとMemcachedの違い(ElastiCache)</a></li>
+<li><a href="#c10">10. Route 53 Resolver DNS Firewall Advanced</a></li>
 </ol>
 </section>
 
@@ -95,6 +100,60 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ul>
 <li>コスト・性能・セキュリティ・耐障害性・サービスクォータ・運用の6観点から改善を提案</li>
 <li>詳しくは <a href="services/trusted-advisor.html">AWS Trusted Advisor</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. ネットワークACLとセキュリティグループの違い<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><strong>セキュリティグループ</strong>:インスタンス(ENI)単位。<strong>ステートフル</strong>(戻りの通信は自動で許可)。<strong>許可ルールだけ</strong>を書き、すべてのルールを評価する</li>
+<li><strong>ネットワークACL</strong>:サブネット単位。<strong>ステートレス</strong>(戻りの通信も許可が必要。エフェメラルポート1024〜65535に注意)。<strong>許可と拒否</strong>を書け、ルール番号の小さい順に評価して最初に一致したルールを使う</li>
+<li>既定:デフォルトのネットワークACLはすべて許可、新しく作ったネットワークACLはすべて拒否。セキュリティグループは送信だけすべて許可</li>
+<li>見分け方:特定のIPアドレスを<strong>拒否</strong>したい → ネットワークACL / 「行きは通るのに戻りが届かない」 → ネットワークACLの戻りの許可漏れ</li>
+<li>詳しくは <a href="terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. バックトラックとポイントインタイムリカバリの違い<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><strong>バックトラック</strong>:<strong>Aurora MySQLのみ</strong>。<strong>同じクラスター</strong>を過去の時点へ巻き戻す(新しいクラスターは作らない・接続先はそのまま)。数分で終わり、戻す時点を前後に何度も変えられる。巻き戻せる期間は最大72時間で、クラスターの作成時などに有効にしておく必要がある</li>
+<li><strong>ポイントインタイムリカバリ(PITR)</strong>:RDSとAuroraの全エンジンで使える。自動バックアップの保持期間(<strong>最大35日</strong>)内の任意の時点を、<strong>新しいDBインスタンス・クラスターとして復元</strong>する(接続先の切り替えが必要)</li>
+<li>見分け方:誤操作を<strong>すばやく・接続先を変えずに</strong>戻したい(Aurora MySQL) → バックトラック / 数日前に戻したい・Aurora MySQL以外 → PITR</li>
+<li>詳しくは <a href="services/aurora.html">Amazon Aurora</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c8">8. Lambda関数はプライベートIPアドレスで動作する<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>VPCに接続したLambdaのENIには<strong>プライベートIPアドレスだけ</strong>が付く。<strong>パブリックサブネットに置いてもパブリックIPは付かない</strong>ので、インターネットに出られない</li>
+<li>インターネットに出るには、Lambdaを<strong>プライベートサブネット</strong>に置き、パブリックサブネットの<strong>NATゲートウェイ</strong>を経由する。S3やDynamoDBなどAWSのサービスだけなら<strong>VPCエンドポイント</strong></li>
+<li>VPCに接続しないLambdaはインターネットには出られるが、VPC内のRDSなどのプライベートなリソースには届かない</li>
+<li>VPC接続には実行ロールにENIの作成・参照・削除の権限が必要。通信の制限はLambdaに付けたセキュリティグループで行う</li>
+<li>詳しくは <a href="services/lambda.html">AWS Lambda</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c9">9. RedisとMemcachedの違い(ElastiCache)<a class="anchor" href="#c9" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><strong>Valkey / Redis OSS</strong>:<strong>レプリケーション・マルチAZの自動フェイルオーバー</strong>、<strong>バックアップ(スナップショット)</strong>、データの永続化、ソート済みセットなどのデータ構造(ランキング)、Pub/Sub、クラスターモードでのシャーディング</li>
+<li><strong>Memcached</strong>:シンプル。<strong>マルチスレッド</strong>で並列に処理し、ノードを足して横に広げる。レプリケーション・バックアップはなく、ノードの障害でデータが消える</li>
+<li>見分け方:可用性・永続化・高機能なデータ構造が必要 → Redis(Valkey) / 単純なキャッシュをマルチスレッドで速く → Memcached</li>
+<li>詳しくは <a href="services/elasticache.html">Amazon ElastiCache</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c10">10. Route 53 Resolver DNS Firewall Advanced<a class="anchor" href="#c10" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ドメインのリストにまだ載っていない新しい不正ドメインを、問い合わせのパターンから検出してブロックする</li>
+<li>検出する脅威:<strong>DGA</strong>(マルウェアがランダムな名前のドメインを大量に作って指令サーバーを探す)、<strong>DNSトンネリング</strong>(DNSの問い合わせにデータを埋め込んで外部へ持ち出す)</li>
+<li>ルールには<strong>検出の信頼度のしきい値</strong>(低・中・高)と、ブロック・アラートなどのアクションを指定する</li>
+<li>通常のDNS Firewall:<strong>ドメインリスト</strong>(自分で作るリストやAWSのマネージドリスト)で許可・ブロック</li>
+<li>注意:対象はRoute 53 Resolverへの問い合わせだけ。外部のDNSサーバー(8.8.8.8など)を直接使われると防げない</li>
+<li>詳しくは <a href="services/dns-firewall.html">Route 53 Resolver DNS Firewall</a></li>
 </ul>
 </section>
 </main>
