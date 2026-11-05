@@ -34,6 +34,14 @@ edge mt2 efs
 edge onp efs
 <figcaption>図1 EFSの構成。AZごとに1つマウントターゲット(サブネット内のENI)を作り、各AZのEC2・ECS・LambdaからNFSで同じファイルシステムを共有する。オンプレミスからも接続できる。</figcaption>
 </figure>
+<p>マウントターゲットは<strong class="em">AZ単位</strong>で作る、という点が試験で問われます。</p>
+<ul>
+<li>マウントターゲットは<strong>1つのAZに1つ</strong>。そのAZの中のどれか1つのサブネットに作る(同じAZの別のサブネットのEC2も、そのマウントターゲットを使う)。</li>
+<li>EC2から使うときは、<strong>同じAZのマウントターゲット</strong>に接続する。ファイルシステムのDNS名(<code>fs-xxxx.efs.ap-northeast-1.amazonaws.com</code>)を使うと、自動で同じAZのマウントターゲットのIPに解決される。別のAZのマウントターゲットを使うと、レイテンシーが上がり、<strong>AZ間のデータ転送料</strong>もかかる。</li>
+<li>EC2を置くAZには、必ずマウントターゲットを作る。<strong>マウントターゲットがないAZ</strong>のEC2から「DNS名が解決できない」「マウントがタイムアウトする」ときは、そのAZにマウントターゲットを追加する。</li>
+<li>マウントターゲットのセキュリティグループで、EC2のセキュリティグループからの<strong>NFS(TCP 2049)</strong>を許可する。</li>
+<li><strong>One Zone</strong>のファイルシステムは1つのAZにしかデータを置かないため、マウントターゲットも<strong>そのAZに1つだけ</strong>。ほかのAZから使うと、AZ間の通信になる。</li>
+</ul>
 <h3>パフォーマンスモード(作成後に変更不可)</h3>
 <p>最大I/Oは旧世代のモードで、操作ごとのレイテンシーが高くなります。IOPSやレイテンシーの見方は用語ページ「<a href="../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>」を参照してください。AWSは<strong>すべてのファイルシステムで汎用モードを推奨</strong>しており、高い性能が必要な場合は汎用モード+Elasticスループットを使います。</p>
 <div class="table-wrap"><table>
@@ -52,6 +60,21 @@ edge onp efs
 <tr><td>課金</td><td>実際に転送したデータ量</td><td>プロビジョニングしたスループット</td><td>ストレージ料金に含まれる</td></tr>
 <tr><td>用途</td><td>負荷が不規則、スパイクがある</td><td>容量は小さいが高いスループットが必要</td><td>負荷が緩やかで容量が大きい</td></tr>
 </table></div>
+
+<h3>暗号化(保存時の暗号化は作成後に変更不可)</h3>
+<p>EFSの<strong>保存時の暗号化</strong>は、<strong class="em">ファイルシステムを作成するときにしか有効にできません</strong>。作成後に、暗号化されていないファイルシステムを暗号化に変えたり、暗号化をやめたりすることはできません。使うKMSキー(AWSマネージドキー <code>aws/elasticfilesystem</code> かカスタマーマネージドキー)も作成時に決めます。</p>
+<div class="table-wrap"><table>
+<tr><th>暗号化</th><th>設定するタイミング</th><th>方法</th></tr>
+<tr><td><strong>保存時</strong>(データ・メタデータ)</td><td><strong>作成時のみ</strong>(後から変更不可)</td><td>作成時に暗号化を有効にし、KMSキーを選ぶ(コンソールでは既定で有効)</td></tr>
+<tr><td><strong>転送中</strong>(EC2〜EFS間)</td><td><strong>マウントするとき</strong>(いつでも可)</td><td>EFSマウントヘルパー(<code>amazon-efs-utils</code>)で <code>mount -t efs -o tls fs-xxxx:/ /mnt/efs</code> のように <strong>TLS</strong> を指定する</td></tr>
+</table></div>
+<p>暗号化されていない既存のファイルシステムを暗号化したいときは、次の手順で<strong>移行</strong>します。</p>
+<ol>
+<li>暗号化を有効にした<strong>新しいファイルシステム</strong>を作る</li>
+<li><strong><a href="datasync.html">AWS DataSync</a></strong>(またはAWS Backupの復元)で、古いファイルシステムのデータをコピーする</li>
+<li>アプリのマウント先を新しいファイルシステムに切り替え、古いものを削除する</li>
+</ol>
+<p>組織のルールとして暗号化を強制したいときは、IAMポリシーやSCPで、条件キー <code>elasticfilesystem:Encrypted</code> が <code>false</code> の <code>CreateFileSystem</code> を拒否します。既存のファイルシステムの状態は、AWS Configのマネージドルール <code>efs-encrypted-check</code> で確認できます。転送中の暗号化を必須にするには、<strong>ファイルシステムポリシー</strong>で <code>aws:SecureTransport</code> が <code>false</code> の接続を拒否します。RDSやEBSでも同じく「暗号化は作成時に決める」ので、用語ページ「<a href="../terms/encryption.html">保存時の暗号化と転送時の暗号化</a>」もあわせて確認してください。</p>
 </section>
 
 <section class="chapter">
@@ -92,7 +115,8 @@ edge onp efs
 <h2>6. 試験・実務でのポイント</h2>
 <div class="point"><ul>
 <li>Linuxで複数インスタンス・複数AZから共有 → <strong>EFS</strong>。Windows → <strong>FSx for Windows</strong>。</li>
-<li>マウントターゲットは<strong>AZごとに1つ</strong>。</li>
+<li>マウントターゲットは<strong>AZ単位</strong>(1つのAZに1つ)。EC2は<strong>同じAZのマウントターゲット</strong>に接続し、EC2を置くAZには必ずマウントターゲットを作る。NFS(TCP 2049)をセキュリティグループで許可する。</li>
+<li>保存時の暗号化は<strong class="em">作成後に有効にできない</strong> → 暗号化した新しいファイルシステムを作り、<strong>DataSync</strong>でデータを移す。転送中の暗号化はマウント時に <code>-o tls</code>。</li>
 <li>パフォーマンスモードは<strong>作成後に変更不可</strong>、スループットモードは<strong>変更可能</strong>。</li>
 <li>最大I/OモードではOne Zone・Elasticスループットが使えない。AWSの推奨は<strong>汎用モード</strong>。</li>
 <li>スパイクがある負荷 → Elastic、小容量で高スループット → Provisioned。</li>
@@ -104,6 +128,6 @@ edge onp efs
 <ul>
 <li>EFSはLinux向けの共有ファイルストレージ(NFS)。</li>
 <li>接続口はAZごとのマウントターゲット。</li>
-<li>パフォーマンスモードは後から変えられないので作成時に決める。</li>
+<li>パフォーマンスモードと保存時の暗号化は後から変えられないので作成時に決める。</li>
 </ul>
 </section>

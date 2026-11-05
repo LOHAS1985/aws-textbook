@@ -86,7 +86,7 @@ COLLECTIONS = [
             "waf", "shield", "network-firewall", "security-agent", "artifact",
             "cloudwatch", "cloudtrail", "config", "systems-manager", "cloudformation", "cdk",
             "control-tower", "trusted-advisor", "health-dashboard", "compute-optimizer", "service-catalog", "ram", "resource-groups",
-            "managed-grafana", "managed-prometheus", "devops-agent",
+            "managed-grafana", "managed-prometheus", "devops-agent", "devops-guru",
             "cost-explorer", "budgets", "cost-and-usage-reports", "savings-plans",
             "sqs", "sns", "eventbridge", "step-functions", "appsync",
             "codepipeline", "codebuild", "codedeploy", "codeartifact", "xray", "cloudshell", "amplify", "kiro",
@@ -627,6 +627,7 @@ def search_keys(p, category, extra=""):
 # 検索で同じものとして扱う言い換え(略称・英語名・日本語の言い方)。
 # 入力した語がどれかと一致すると、同じグループの語のどれかを含むページも見つかる。小文字・半角で書く
 SYNONYMS = [
+    ["devops guru", "devops-guru", "devopsguru", "異常検知", "インサイト"],
     ["ec2", "仮想サーバー", "仮想マシン", "vm", "elastic compute cloud"],
     ["elb", "alb", "nlb", "gwlb", "ロードバランサー", "ロードバランサ", "負荷分散", "load balancer", "elastic load balancing"],
     ["s3", "オブジェクトストレージ", "simple storage service"],

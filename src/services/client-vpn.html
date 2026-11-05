@@ -40,6 +40,18 @@ edge ep onp
 
 <h3>スプリットトンネル</h3>
 <p>既定では、PCの<strong>すべての通信</strong>がVPNを通ります。<strong>スプリットトンネル</strong>を有効にすると、エンドポイントのルートにある宛先(VPCなど)だけをVPNに通し、それ以外のインターネットの通信はPCから直接出ます。VPNの通信量とデータ転送料を減らせます。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th></th><th>スプリットトンネル無効(既定・フルトンネル)</th><th>スプリットトンネル有効</th></tr>
+<tr><td data-label="">VPNを通る通信</td><td data-label="無効(既定)"><strong>すべて</strong>(インターネット向けを含む)</td><td data-label="有効">エンドポイントの<strong>ルートテーブルにある宛先だけ</strong>(VPCのCIDR、オンプレミスなど)</td></tr>
+<tr><td data-label="">インターネット向けの通信</td><td data-label="無効(既定)">VPN経由でVPCから出る。エンドポイントに <code>0.0.0.0/0</code> のルートと認可ルール、VPC側にNATゲートウェイなどの出口が必要</td><td data-label="有効">PCのネットワークから直接出る</td></tr>
+<tr><td data-label="">メリット</td><td data-label="無効(既定)">すべての通信をVPC側で検査・記録・制限できる</td><td data-label="有効">VPNの帯域を圧迫しない。<strong>データ転送料が減り</strong>、Web会議などの通信が速い</td></tr>
+<tr><td data-label="">向いている場面</td><td data-label="無効(既定)">社内のプロキシやファイアウォールを必ず通したい</td><td data-label="有効">AWS上の社内システムにだけVPNでつなげばよい</td></tr>
+</table></div>
+<ul>
+<li>スプリットトンネルは、<strong>既存のエンドポイントでもオン・オフを切り替えられる</strong>(作り直す必要はない)。設定はクライアントが<strong>再接続したときに反映</strong>される。</li>
+<li>有効にすると、エンドポイントのルートテーブルのルートが、クライアントのPCのルートとして配られる。VPN経由にしたい宛先は、エンドポイントの<strong>ルートを追加</strong>する。</li>
+<li>有効にしても、VPN経由でつながる先は<strong>認可ルール</strong>で許可された範囲だけ。</li>
+</ul>
 
 <h3>運用</h3>
 <ul>
@@ -80,6 +92,7 @@ edge ep onp
 <div class="point"><ul>
 <li>「個々の社員のPCからVPCに接続」「リモートアクセスVPN」→ <strong class="em">Client VPN</strong>。拠点間は Site-to-Site VPN。</li>
 <li>VPC以外の通信までVPN経由になって遅い・費用が高い → <strong class="em">スプリットトンネル</strong>を有効にする。</li>
+<li>社員のインターネット向けの通信もすべてVPC側で検査したい → スプリットトンネルは<strong>無効</strong>のまま(<code>0.0.0.0/0</code> のルートと認可ルール、VPCの出口を用意する)。</li>
 <li>接続できても目的のネットワークに届かない → <strong>認可ルール</strong>とエンドポイントのルートテーブルの両方を確認する。</li>
 <li>可用性を上げるには、複数AZのサブネットをターゲットネットワークに関連付ける。</li>
 <li>Site-to-Site VPN・Direct Connect・Client VPNの使い分け → <a href="../terms/hybrid-connectivity.html">オンプレミスとAWSをつなぐ方法の選び方</a>。</li>

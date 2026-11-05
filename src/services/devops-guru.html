@@ -1,0 +1,101 @@
+<!-- title: Amazon DevOps Guru -->
+<!-- category: マネジメントとガバナンス -->
+<!-- lead: 機械学習で運用データの異常を自動で検知し、原因の候補と対策をインサイトとして知らせる -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon DevOps Guru</strong>は、<strong>機械学習</strong>でアプリケーションの運用データ(メトリクス・ログ・イベント)を分析し、<strong>いつもと違う動き(異常)を自動で見つけて、原因の候補と対策を知らせる</strong>サービスです。</p>
+<p>CloudWatchのアラームでは、監視するメトリクスとしきい値を自分で決める必要があります。DevOps Guruは、有効にするだけで対象のリソースの「普段の状態」を学習し、<strong>しきい値を設定しなくても</strong>異常を検知します。関連する複数の異常やデプロイなどのイベントをまとめて、1つの<strong>インサイト</strong>として示します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>インサイトの種類</h3>
+<div class="table-wrap"><table>
+<tr><th>インサイト</th><th>内容</th><th>例</th></tr>
+<tr><td><strong>リアクティブインサイト</strong></td><td><strong>いま起きている</strong>問題。関連する異常なメトリクス・ログ・イベントと、推奨される対策を示す</td><td>デプロイの直後からLambdaのエラーとAPI Gatewayのレイテンシーが同時に増えた</td></tr>
+<tr><td><strong>プロアクティブインサイト</strong></td><td><strong>これから起きそうな</strong>問題を、影響が出る前に知らせる</td><td>DynamoDBの消費キャパシティやディスクの使用量が増え続け、近いうちに上限に達しそう</td></tr>
+</table></div>
+<p>インサイトには、異常なメトリクスのグラフ、同じ時間帯の<strong>関連イベント</strong>(CloudTrailに記録されたデプロイや設定変更など)、<strong>ログの異常</strong>(CloudWatch Logsの急なエラーの増加など)、そして<strong>推奨事項</strong>(何を確認・変更すればよいか)がまとめて表示されます。</p>
+
+<h3>分析の範囲(カバレッジ)</h3>
+<p>どのリソースを分析するかは、次の3つから選びます。分析するリソースの数で料金が決まるため、範囲を絞ることもできます。</p>
+<div class="table-wrap"><table>
+<tr><th>範囲の決め方</th><th>内容</th></tr>
+<tr><td>アカウント全体</td><td>そのアカウント・リージョンの、対応しているすべてのリソースを分析する</td></tr>
+<tr><td><strong>CloudFormationスタック</strong></td><td>指定したスタックに含まれるリソースだけを分析する。スタックが1つのアプリとして扱われる</td></tr>
+<tr><td><strong>タグ</strong></td><td>キーが <code>devops-guru-</code> で始まるタグ(例:<code>devops-guru-app = shop</code>)を付けたリソースを、値ごとに1つのアプリとして分析する</td></tr>
+</table></div>
+<p>Lambda・API Gateway・DynamoDB・RDS/Aurora・ECS・EKS・SQS・SNS・Kinesis・ELB・Auto Scalingグループ・Step Functionsなど、多くのサービスに対応しています。分析に使うのは、主にCloudWatchのメトリクス、CloudTrailのイベント、CloudWatch Logsのログです。</p>
+
+<h3>通知と連携</h3>
+<ul>
+<li><strong>Amazon SNS</strong>:インサイトの作成・終了などを通知する(通知先のトピックを1つ指定する)。</li>
+<li><strong>Amazon EventBridge</strong>:インサイトをイベントとして受け取り、Lambdaや<a href="systems-manager.html">Systems Manager</a>のAutomationで自動対応する。</li>
+<li><strong>Systems Manager OpsCenter</strong>:インサイトごとに<strong>OpsItem</strong>を自動で作り、運用チームの対応を管理する。</li>
+<li>PagerDutyなどの外部の運用ツールとも連携できる。</li>
+<li><strong>Organizations</strong>と連携し、<strong>委任管理者</strong>のアカウントから組織全体のインサイトをまとめて見られる。</li>
+</ul>
+
+<h3>DevOps Guru for RDS</h3>
+<p>RDS・Auroraのデータベースの性能の問題に特化した機能です。<strong>Performance Insights</strong>のデータを使い、DBの負荷の急な増加などの異常を見つけて、<strong>原因になったSQLや待機イベント</strong>と、対策(インデックスの追加、パラメータの見直しなど)を示します。利用するには、DBインスタンスで<strong>Performance Insightsを有効</strong>にしておく必要があります。</p>
+
+<h3>似た機能との違い</h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>何をするか</th></tr>
+<tr><td><strong>DevOps Guru</strong></td><td>アプリ全体の多数のメトリクス・ログ・イベントを機械学習でまとめて分析し、<strong>関連する異常をインサイトにまとめ、原因の候補と推奨</strong>を示す</td></tr>
+<tr><td>CloudWatchの異常検出(アラーム)</td><td><strong>1つのメトリクス</strong>ごとに、過去の傾向から「正常な範囲(バンド)」を作り、外れたらアラームにする</td></tr>
+<tr><td>CloudWatch Logsの異常検出</td><td>ロググループのログのパターンの変化を見つける</td></tr>
+<tr><td><a href="devops-agent.html">AWS DevOps Agent</a></td><td>アラームやチケットをきっかけに、AIエージェントが監視データ・コード・デプロイ履歴を調べて<strong>原因の調査と対応策の提示</strong>を行う</td></tr>
+<tr><td><a href="compute-optimizer.html">AWS Compute Optimizer</a></td><td>異常ではなく、使用状況から<strong>適切なサイズ</strong>を推奨する(コストと性能の最適化)</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>サーバーレスアプリ(API Gateway+Lambda+DynamoDB)の異常を、アラームを1つずつ作らずに検知する</li>
+<li>デプロイの直後に起きた性能の悪化を、原因になったデプロイのイベントと一緒に把握する</li>
+<li>容量の不足やクォータの上限に達しそうなことを、障害になる前に知る(プロアクティブインサイト)</li>
+<li>Auroraの遅いSQLや負荷の急増の原因を、DevOps Guru for RDSで特定する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p><strong>分析したリソースの数×時間</strong>(リソース時間)で課金されます。料金はリソースの種類によって異なり、DevOps Guru for RDSはDBの<strong>vCPUの数×時間</strong>で課金されます。このほか、DevOps GuruのAPIの呼び出しにも料金がかかります。分析の範囲をCloudFormationスタックやタグで絞ると、費用を抑えられます。従量課金の仕組みは用語ページ「<a href="../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:分析に使うメトリクス・ログ</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:デプロイや設定変更などのイベント</li>
+<li><a href="cloudformation.html">AWS CloudFormation</a>:分析の範囲をスタックで指定する</li>
+<li><a href="sns.html">Amazon SNS</a>・<a href="eventbridge.html">Amazon EventBridge</a>:インサイトの通知と自動対応</li>
+<li><a href="systems-manager.html">AWS Systems Manager</a>:OpsCenterのOpsItemの作成</li>
+<li><a href="rds.html">Amazon RDS</a>・<a href="aurora.html">Amazon Aurora</a>:DevOps Guru for RDSの対象</li>
+<li><a href="organizations.html">AWS Organizations</a>:複数アカウントのまとめての管理</li>
+<li><a href="devops-agent.html">AWS DevOps Agent</a>:AIエージェントによる障害の原因調査</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>「<strong>機械学習</strong>で運用上の<strong>異常を自動で検知</strong>」「しきい値を設定せずに」「原因の候補と推奨を提示」→ <strong class="em">DevOps Guru</strong>。</li>
+<li>いま起きている問題 → <strong>リアクティブインサイト</strong>。これから起きそうな問題 → <strong>プロアクティブインサイト</strong>。</li>
+<li>分析の範囲は、アカウント全体・<strong>CloudFormationスタック</strong>・<strong>タグ</strong>(<code>devops-guru-</code> で始まるキー)から選ぶ。</li>
+<li>インサイトを通知 → <strong>SNS</strong>。自動で対応 → <strong>EventBridge</strong>。運用の課題として管理 → <strong>OpsCenter</strong>のOpsItem。</li>
+<li>RDS・Auroraの性能の異常と原因のSQL → <strong>DevOps Guru for RDS</strong>(<strong>Performance Insights</strong>の有効化が必要)。</li>
+<li>1つのメトリクスの正常な範囲から外れたら通知 → <strong>CloudWatchの異常検出</strong>。サイズの最適化 → <strong>Compute Optimizer</strong>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>DevOps Guruは、機械学習で運用データの異常を見つけ、原因の候補と推奨をインサイトとして示すサービス。</li>
+<li>インサイトはリアクティブ(いまの問題)とプロアクティブ(これからの問題)の2種類。</li>
+<li>範囲はアカウント・スタック・タグで決め、通知はSNS・EventBridge、RDSにはDevOps Guru for RDSがある。</li>
+</ul>
+</section>

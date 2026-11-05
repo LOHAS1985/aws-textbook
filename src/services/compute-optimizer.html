@@ -25,6 +25,16 @@
 <tr><td>商用ソフトウェアのライセンス</td><td>EC2で動かすSQL Serverのエディションなど</td></tr>
 </table></div>
 <p>EC2の推奨を出すには、一定の期間(少なくとも30時間分)のメトリクスが必要です。作ったばかりのリソースには推奨が出ません。</p>
+<p>対象のサービスは「<strong>EC2・Auto Scalingグループ・EBS・Lambda・ECS on Fargate・RDS/Aurora・ライセンス</strong>」と覚えましょう。逆に、次のようなリソースは<strong>Compute Optimizerの対象外</strong>です。試験では「このリソースのサイズの推奨をCompute Optimizerで出す」という誤った選択肢として出ることがあります。</p>
+<div class="table-wrap"><table>
+<tr><th>対象外の例</th><th>代わりに使うもの</th></tr>
+<tr><td>S3(ストレージクラスの見直し)</td><td>S3 Storage Lens、S3のストレージクラス分析、Intelligent-Tiering</td></tr>
+<tr><td>DynamoDBのキャパシティ</td><td>Auto Scaling、オンデマンドモード、CloudWatchのメトリクス</td></tr>
+<tr><td>ElastiCache・OpenSearch・Redshiftのノード</td><td>各サービスのCloudWatchメトリクス、Trusted Advisor</td></tr>
+<tr><td>ECS on EC2・EKSのコンテナ</td><td>Container Insights(下のEC2インスタンスやAuto Scalingグループは、EC2として推奨が出る)</td></tr>
+<tr><td>購入する割引(RI・Savings Plans)</td><td>Cost Explorerの購入の推奨</td></tr>
+</table></div>
+<p>推奨の内容には、サイズの変更(<strong>過剰・不足・最適</strong>の判定)のほかに、<strong>アイドル状態のリソース</strong>(ほとんど使われていないEC2・EBSなど)の停止や削除の推奨もあります。</p>
 
 <h3>推奨事項</h3>
 <ul>
@@ -100,6 +110,7 @@ edge co under
 <li>分析期間はデフォルト<strong>14日</strong>、最大<strong>93日</strong>(拡張インフラストラクチャメトリクス)。</li>
 <li>EC2のメモリを考えた推奨が欲しい → <strong>CloudWatchエージェント</strong>でメモリのメトリクスを送る。</li>
 <li>Lambdaの最適なメモリサイズ → Compute Optimizer。ECS on Fargateのタスクのサイズ、EBSのgp2からgp3への変更も推奨される。</li>
+<li>対象は<strong>EC2・Auto Scalingグループ・EBS・Lambda・ECS on Fargate・RDS/Aurora・商用ライセンス</strong>。S3・DynamoDB・ElastiCacheなどは<strong>対象外</strong>。</li>
 <li>組織全体の推奨をまとめて見る → 管理アカウントか<strong>委任管理者</strong>で有効にする。削減額の大きい順にまとめる → <strong>Cost Optimization Hub</strong>。</li>
 <li>推奨は自動では適用されない。変更は自分で行う。</li>
 <li>Cost Explorer・Budgets・CUR・Compute Optimizerの使い分け → <a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>

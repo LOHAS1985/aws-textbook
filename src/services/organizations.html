@@ -123,6 +123,31 @@ edge acc res
 <li>メンバーアカウントの<strong>ルートユーザーには効く</strong>。ルートユーザーでもSCPで拒否された操作はできない。</li>
 </ul>
 
+<h3>SCPの要点と、よく使う書き方</h3>
+<p>SCP(サービスコントロールポリシー)は、<strong>アカウントの中で使える権限の「上限(ガードレール)」</strong>を決めるポリシーです。IAMポリシーの書き方(JSON)で書きますが、<strong>SCPだけでは何の権限も与えません</strong>。実際に操作できるのは「SCPで許されていて、かつIAMポリシーでも許可されている」範囲だけです。評価の流れは用語ページ「<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>」を参照してください。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>適用先</td><td>ルート・OU・アカウント。上の階層のSCPは<strong>配下のすべてのOU・アカウントに継承</strong>される</td></tr>
+<tr><td>効く相手</td><td>メンバーアカウントのIAMユーザー・IAMロール・<strong>ルートユーザー</strong></td></tr>
+<tr><td>効かない相手</td><td><strong>管理アカウント</strong>、<strong>サービスリンクロール</strong>、組織の外のアカウントのプリンシパル(リソースベースのポリシーで許可された外部アカウントからのアクセスは、SCPでは止められない → RCPを使う)</td></tr>
+<tr><td>有効にする条件</td><td>組織で「<strong>すべての機能</strong>」を有効にし、ルートでSCPのポリシータイプを有効にする(一括請求の機能だけの組織では使えない)</td></tr>
+<tr><td>反映</td><td>付けたり外したりすると、すぐに効く。既存のリソースが消えることはなく、<strong>これからの操作</strong>が制限される</td></tr>
+</table></div>
+<p>試験によく出る、典型的なSCPの使い方です。どれも<strong>Denyで書く</strong>のが基本です。</p>
+<div class="table-wrap"><table>
+<tr><th>やりたいこと</th><th>SCPで拒否するアクション・条件</th></tr>
+<tr><td>許可したリージョン以外を使わせない</td><td>すべてのアクションを、<code>aws:RequestedRegion</code> が許可リストに<strong>ない</strong>ときに拒否(グローバルサービスは <code>NotAction</code> で除外)</td></tr>
+<tr><td>CloudTrailの証跡を止めさせない</td><td><code>cloudtrail:StopLogging</code>、<code>cloudtrail:DeleteTrail</code></td></tr>
+<tr><td>GuardDuty・Config・Security Hubを無効にさせない</td><td><code>guardduty:DeleteDetector</code>、<code>config:StopConfigurationRecorder</code>、<code>securityhub:DisableSecurityHub</code> など</td></tr>
+<tr><td>組織から勝手に抜けさせない</td><td><code>organizations:LeaveOrganization</code></td></tr>
+<tr><td>メンバーアカウントのルートユーザーを使わせない</td><td>すべてのアクションを、<code>aws:PrincipalArn</code> が <code>arn:aws:iam::*:root</code> のときに拒否</td></tr>
+<tr><td>使ってよいインスタンスタイプを限定する</td><td><code>ec2:RunInstances</code> を、<code>ec2:InstanceType</code> が許可リストに<strong>ない</strong>ときに拒否</td></tr>
+<tr><td>暗号化されていないボリューム・バケットを作らせない</td><td><code>ec2:CreateVolume</code> を <code>ec2:Encrypted</code> が <code>false</code> のときに拒否、など</td></tr>
+<tr><td>タグのないリソースを作らせない</td><td>作成のアクションを、<code>aws:RequestTag/CostCenter</code> が<strong>ない</strong>(<code>Null</code> 条件)ときに拒否</td></tr>
+<tr><td>セキュリティ用のロールを変更させない</td><td><code>iam:*</code> の変更系アクションを、対象が管理用のロールのときに拒否(管理者は <code>aws:PrincipalArn</code> で除外)</td></tr>
+</table></div>
+<p>SCPのサイズは1つあたり<strong>5,120文字まで</strong>、1つの対象(ルート・OU・アカウント)に付けられるSCPは<strong>5つまで</strong>です。複数のガードレールは1つのSCPにまとめるか、OUの階層を分けて付けます。SCPを本番のOUに付ける前に、テスト用のOUで動作を確かめると安全です。</p>
+
 <h3>RCPとデータ境界</h3>
 <p>SCPは「自分のアカウントの人が何をできるか」を制限しますが、バケットポリシーで外部のアカウントに公開してしまうと、外部の人のアクセスは止められません。RCPは<strong>リソースの側</strong>に上限をかけるため、「組織のプリンシパル以外は、このバケットにアクセスできない」を、各アカウントのリソースポリシーに関係なく強制できます。条件キー <code>aws:PrincipalOrgID</code> で組織のIDを指定するのが基本です。</p>
 
@@ -195,6 +220,8 @@ edge sec a2 "一括で有効化"
 <li>全アカウントで特定の操作・リージョンを禁止 → <strong>SCP</strong>をOUやルートに適用。リージョン制限は <code>aws:RequestedRegion</code>。</li>
 <li>SCPは<strong>管理アカウントとサービスリンクロールには効かない</strong>。メンバーアカウントのルートユーザーには効く。</li>
 <li>許可リスト方式で「許可したのに使えない」→ ルートからアカウントまでの<strong>途中の階層</strong>で許可されているか確認する。</li>
+<li>CloudTrailの停止・GuardDutyの無効化・組織からの離脱を全アカウントで禁止 → <strong>SCPでDeny</strong>(<code>cloudtrail:StopLogging</code>、<code>organizations:LeaveOrganization</code> など)。</li>
+<li>SCPを使うには組織の<strong>すべての機能</strong>が必要。1つの対象に付けられるのは<strong>5つまで</strong>。</li>
 <li>組織外からのリソースへのアクセスを一律に禁止したい → <strong class="em">RCP</strong>(<code>aws:PrincipalOrgID</code>)。</li>
 </ul>
 <h4>管理ポリシーと組織の運用</h4>

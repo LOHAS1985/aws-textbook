@@ -338,6 +338,33 @@ edge ev fn
 edge fn end
 <figcaption>図7 スポットインスタンスの中断。2分前の通知を受けて、処理の状態を保存したりロードバランサーから外したりしてから中断に備える。</figcaption>
 </figure>
+
+<h3>AMIのリージョン間コピーと共有</h3>
+<p>AMIは<strong class="em">リージョンごとのリソース</strong>です。東京リージョン(<code>ap-northeast-1</code>)で作ったカスタムAMIは、そのままではほかのリージョンで使えません。例えば、<strong>東京で作ったAMIを、シンガポールとシドニーでもEC2の起動に使いたい</strong>ときは、次のようにします。</p>
+<ol>
+<li>東京のAMIを、<strong>シンガポール(<code>ap-southeast-1</code>)とシドニー(<code>ap-southeast-2</code>)へそれぞれコピー</strong>する(コンソールの「AMIをコピー」、またはCLIの <code>copy-image</code>。<strong>コピー先のリージョンで実行</strong>する)
+<pre class="code"><code>aws ec2 copy-image --region ap-southeast-1 \
+  --source-region ap-northeast-1 --source-image-id ami-0123456789abcdef0 \
+  --name "app-golden-ami"
+aws ec2 copy-image --region ap-southeast-2 \
+  --source-region ap-northeast-1 --source-image-id ami-0123456789abcdef0 \
+  --name "app-golden-ami"</code></pre></li>
+<li>コピーされたAMIには、<strong>リージョンごとに新しいAMI ID</strong>が付く。各リージョンの起動テンプレートやCloudFormationのテンプレート(<code>Mappings</code>)には、そのリージョンのAMI IDを指定する</li>
+<li>コピーしたAMIの状態が <code>available</code> になったら、そのリージョンでEC2を起動できる</li>
+</ol>
+<div class="table-wrap"><table>
+<tr><th>注意点</th><th>内容</th></tr>
+<tr><td>暗号化されたAMI</td><td>コピー先のリージョンの<strong>KMSキー</strong>を指定して再暗号化する(KMSキーもリージョンごと)。暗号化されていないAMIを、コピーのときに暗号化することもできる</td></tr>
+<tr><td>引き継がれないもの</td><td><strong>起動許可(共有の設定)</strong>はコピーされない。タグは <code>--copy-image-tags</code> を指定したときだけコピーされる</td></tr>
+<tr><td>料金</td><td>コピー自体は無料だが、リージョン間のデータ転送料と、コピー先のスナップショットの保存料金がかかる</td></tr>
+<tr><td>自動化</td><td>定期的に作るAMIを複数リージョンへ配るなら、<a href="image-builder.html">EC2 Image Builder</a>の<strong>ディストリビューション設定</strong>で、作成と同時に指定したリージョン・アカウントへコピーする</td></tr>
+</table></div>
+<p>リージョンをまたぐ「コピー」と、アカウントをまたぐ「共有」は別の操作です。</p>
+<ul>
+<li><strong>別のアカウントに使わせる(同じリージョン)</strong>:AMIの<strong>起動許可</strong>にアカウントID・組織・OUを追加して<strong>共有</strong>する。暗号化されたAMIを共有するには、カスタマーマネージドキーのキーポリシーで相手のアカウントにも使用を許可する(AWSマネージドキーで暗号化したAMIは共有できない)。</li>
+<li><strong>別のアカウントの別のリージョンで使う</strong>:共有されたAMIを、相手のアカウントがコピー先のリージョンへ<strong>コピー</strong>する。</li>
+<li>AMIの公開(全員への共有)は、組織の<strong>宣言型ポリシー</strong>や「AMIのパブリックアクセスのブロック」で禁止できる。</li>
+</ul>
 </section>
 
 <section class="chapter">
@@ -461,6 +488,7 @@ edge fn end
 <li>起動時の初期設定を自動化 → <strong>ユーザーデータ</strong>(既定は初回起動時のみ、rootで実行)。機密情報は書かない。</li>
 <li>インスタンスの中から自分の情報やロールの認証情報を取得 → <strong>インスタンスメタデータ</strong>(169.254.169.254)。SSRF対策で<strong>IMDSv2を必須</strong>(<code>HttpTokens=required</code>)にする。</li>
 <li>SSHの鍵を配らずに、IAMで制御しながら接続したい → <strong>EC2 Instance Connect</strong>(図5)。22番ポートも開けたくない → <strong>Session Manager</strong>。</li>
+<li>東京で作ったカスタムAMIを別のリージョン(シンガポール・シドニーなど)でも使いたい → それぞれのリージョンへ<strong>AMIをコピー</strong>する(AMIはリージョンごと。コピー先では<strong>新しいAMI ID</strong>になる)。別アカウントへは起動許可で<strong>共有</strong>。</li>
 </ul>
 <h4>停止・障害対応</h4>
 <ul>

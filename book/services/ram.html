@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
   <h1>AWS Resource Access Manager</h1>
   <p class="lead">自アカウントのリソースを他アカウントや組織と共有</p>
-  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -50,13 +50,47 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="chapter">
 <h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
-<h3 id="c2-1">共有できる主なリソース<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-1">共有の仕組み<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>RAMでは、<strong>リソース共有(Resource Share)</strong>という単位で、次の3つを決めます。</p>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>リソース</td><td>共有したいもの(サブネット、Transit Gatewayなど)</td></tr>
+<tr><td>プリンシパル</td><td>共有する相手。<strong>AWSアカウント</strong>、Organizationsの<strong>組織全体</strong>や<strong>OU</strong>、一部のリソースではIAMロール・ユーザー</td></tr>
+<tr><td>マネージド型アクセス許可</td><td>共有先が、そのリソースに<strong>何をしてよいか</strong>(AWSが用意したものか、自分で作ったもの)</td></tr>
+</table></div>
+<ul>
+<li><strong>組織内での共有</strong>:管理アカウントで「AWS Organizationsとの共有を有効化」しておくと、組織やOUを相手に指定でき、相手は<strong>招待を承認しなくても</strong>すぐに使える。OUに後から入ったアカウントにも自動で共有される。</li>
+<li><strong>組織外のアカウントとの共有</strong>:相手に<strong>招待</strong>が送られ、相手が<strong>承認</strong>すると使えるようになる(承認しないと使えない)。リソース共有の設定で「外部のプリンシパルを許可する」が必要。</li>
+<li>共有されたリソースは、相手のアカウントでも<strong>同じリージョン</strong>で見える。RAMの共有は<strong>リージョンごと</strong>(グローバルなリソースを除く)。</li>
+<li>共有元がリソースを削除したり、共有をやめたりすると、相手は使えなくなる。</li>
+</ul>
+
+<h3 id="c2-2">共有できる主なリソース<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>VPCサブネット</li>
 <li>Transit Gateway</li>
 <li>Route 53 Resolverルール</li>
 </ul>
 <p>VPCサブネットを共有すると、共有先のアカウントはそのサブネットにEC2やRDSなどを起動できます(VPCの共有)。ただし、VPCやサブネット自体の変更は共有元(所有者)しかできません。この他にもLicense Managerの設定、Aurora DBクラスター、プレフィックスリストなど多くのリソースを共有できます。</p>
+<div class="table-wrap"><table>
+<tr><th>リソース</th><th>共有するとできること</th></tr>
+<tr><td><strong>VPCのサブネット</strong></td><td>共有先が、そのサブネットにEC2・RDS・Lambdaなどを起動する(VPCの共有)</td></tr>
+<tr><td><strong>Transit Gateway</strong></td><td>共有先が、自分のVPCをTransit Gatewayにアタッチする</td></tr>
+<tr><td><strong>Route 53 Resolverのルール</strong></td><td>共有先のVPCでも、オンプレミスのドメインを同じ転送ルールで名前解決する</td></tr>
+<tr><td>マネージドプレフィックスリスト</td><td>共有先のセキュリティグループやルートテーブルで、同じIPアドレスの一覧を参照する</td></tr>
+<tr><td>IPAMのプール</td><td>共有先がVPCを作るときに、重ならないCIDRを払い出してもらう</td></tr>
+<tr><td>License Managerのライセンス設定</td><td>組織全体で商用ソフトウェアのライセンス数を管理する</td></tr>
+<tr><td>Aurora DBクラスター</td><td>共有先がクラスターの<strong>クローン</strong>を作る</td></tr>
+<tr><td>EC2のキャパシティ予約・Dedicated Hosts</td><td>予約した容量や専有ホストを、ほかのアカウントでも使う</td></tr>
+<tr><td>Network Firewallのポリシー、Image Builderのコンポーネント・レシピなど</td><td>共通の設定やビルド部品を各アカウントで再利用する</td></tr>
+</table></div>
+<p><strong>RAMでは共有しないもの</strong>も、試験ではひっかけとして出ます。</p>
+<ul>
+<li><strong>AMI</strong>・<strong>EBSスナップショット</strong>:それぞれの<strong>起動許可・作成ボリューム許可</strong>でアカウントを指定して共有する(RAMは使わない)。</li>
+<li><strong>S3バケット・KMSキー・SQSキュー</strong>など:<strong>リソースベースのポリシー</strong>で別アカウントを許可する。</li>
+<li>VPCそのもの・<strong>セキュリティグループ</strong>:VPCは共有できず、共有するのはサブネット。共有先は自分のセキュリティグループを作る(所有者のセキュリティグループは参照できる)。</li>
+</ul>
+<p>VPCの共有では、共有先(参加者)は自分が作ったリソースだけを管理でき、<strong>ほかの参加者や所有者のリソースは変更できません</strong>。また、AZの名前(<code>ap-northeast-1a</code> など)はアカウントごとに実際のAZとの対応が違うため、アカウントをまたいで同じAZを指すときは<strong>AZ ID</strong>(<code>apne1-az1</code> など)を使います。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 696 221" style="max-width:696px;min-width:557px" role="img" aria-label="図1 RAMによるVPCサブネットの共有。ネットワーク管理用のアカウントがVPCを一元管理し、各アカウントは共有されたサブネットにリソースを起動する。サブネット自体の管理は共有元が行う。"><defs><marker id="dgservices-ram-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -122,6 +156,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>「他アカウントとサブネット・Transit Gatewayを共有」→ <strong>RAM</strong>。</li>
 <li>共有したリソースの<strong>管理は共有元</strong>。</li>
 <li>Organizations内で共有すると、招待の承認なしで共有できる(組織での共有を有効化した場合)。</li>
+<li>組織外のアカウントと共有 → 相手が<strong>招待を承認</strong>すると使える。RAMの共有は<strong>リージョンごと</strong>。</li>
+<li>AMI・EBSスナップショットの共有は<strong>RAMではなく</strong>起動許可・作成ボリューム許可。S3・KMSはリソースベースのポリシー。</li>
+<li>共有したサブネットのAZをアカウント間で正しく合わせる → AZ名ではなく<strong>AZ ID</strong>で確認する。</li>
 <li>VPCピアリング・Transit Gateway・PrivateLinkの使い分け → <a href="../terms/vpc-connectivity.html">VPC同士をつなぐ方法の選び方</a>。</li>
 </ul></div>
 </section>
@@ -130,6 +167,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li>RAMはリソースをアカウント間・組織内で共有するサービス。管理は共有元が行う。</li>
+<li>共有は「リソース+相手(プリンシパル)+アクセス許可」のリソース共有で設定する。組織内なら承認不要、組織外は招待の承認が必要。</li>
 </ul>
 </section>
 <section class="chapter backlinks">

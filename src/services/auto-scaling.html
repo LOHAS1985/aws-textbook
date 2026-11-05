@@ -117,6 +117,22 @@ edge tw t
 <li><strong>Application Auto Scaling</strong>:EC2以外(ECSのタスク数、DynamoDBの読み書き容量、Auroraのレプリカ数、Lambdaのプロビジョニング済み同時実行数など)をスケーリングする仕組み。</li>
 <li><strong>AWS Auto Scaling(スケーリングプラン)</strong>:複数のリソースのスケーリングをまとめて設定する仕組み。</li>
 </ul>
+
+<h3>Auto Scalingグループの範囲は1つのリージョン</h3>
+<p>Auto Scalingグループは<strong class="em">1つのリージョンの中だけ</strong>で動きます。同じリージョンの<strong>複数のAZ</strong>にまたがることはできますが、<strong>複数のリージョンにまたがるグループは作れません</strong>。</p>
+<div class="table-wrap"><table>
+<tr><th>範囲</th><th>できること</th></tr>
+<tr><td>1つのAZ</td><td>できるが、AZの障害で全台が止まるため本番には向かない</td></tr>
+<tr><td><strong>複数のAZ(同じリージョン)</strong></td><td><strong>推奨</strong>。AZ間で台数のバランスをとり、AZに障害が起きると残りのAZで台数を補う</td></tr>
+<tr><td>複数のリージョン</td><td><strong>1つのグループではできない</strong>。リージョンごとにAuto Scalingグループ(とELB)を作る</td></tr>
+</table></div>
+<p>複数リージョンで動かしたいときは、次のように組み立てます。</p>
+<ul>
+<li>リージョンごとに、Auto Scalingグループ・起動テンプレート・ELBを作る(CloudFormationの<strong>StackSets</strong>で同じ構成を展開すると楽)。</li>
+<li><strong>AMIもリージョンごとのリソース</strong>なので、使うリージョンへAMIを<strong>コピー</strong>し、そのリージョンのAMI IDを起動テンプレートに指定する(<a href="ec2.html">Amazon EC2</a>の「AMIのリージョン間コピーと共有」を参照)。起動テンプレート・キーペア・セキュリティグループもリージョンごとに必要。</li>
+<li>リージョン間の振り分けとフェイルオーバーは、<strong>Route 53</strong>(フェイルオーバー・レイテンシー・加重ルーティング)や<strong>Global Accelerator</strong>で行う。</li>
+</ul>
+<p>同じように、ELB(ALB・NLB)も1つのリージョンの中だけで動くサービスです。リージョンの範囲で動くサービスとグローバルなサービスの違いは、用語ページ「<a href="../terms/region-az.html">リージョンとアベイラビリティーゾーン</a>」を参照してください。</p>
 </section>
 
 <section class="chapter">
@@ -158,6 +174,7 @@ edge tw t
 <li>インスタンスが起動できない → AMI・キーペア・セキュリティグループの存在、vCPUのクォータ、AZの容量不足を確認する(アクティビティ履歴に理由が出る)。</li>
 <li>起動テンプレートを変えたあと既存インスタンスを入れ替えたい → <strong>インスタンスの更新</strong>。</li>
 <li>高可用性のため、ASGは<strong>複数AZ</strong>のサブネットにまたがるように設定する。</li>
+<li>ASGは<strong class="em">1つのリージョンの中だけ</strong>(複数AZは可、複数リージョンは不可)。別リージョンにも置く → リージョンごとにASGを作り、AMIをコピーし、<strong>Route 53</strong>などで振り分ける。</li>
 </ul></div>
 </section>
 

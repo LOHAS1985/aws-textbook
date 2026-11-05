@@ -40,15 +40,15 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat6">セキュリティ、アイデンティティ、コンプライアンス</a>
   <h1>AWS Organizations</h1>
   <p class="lead">複数のAWSアカウントをまとめて管理し、組織全体にポリシーで統制をかけるサービス</p>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-05">2026-11-05</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
 <details>
-<summary>このページの内容(16項目)</summary>
+<summary>このページの内容(17項目)</summary>
 <ol>
 <li><a href="#c1">1. サービス概要</a></li>
-<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">用語</a></li><li><a href="#c2-2">ポリシーの種類</a></li><li><a href="#c2-3">SCPの利用イメージ</a></li><li><a href="#c2-4">SCPの書き方と継承</a></li><li><a href="#c2-5">SCPが効かないもの</a></li><li><a href="#c2-6">RCPとデータ境界</a></li><li><a href="#c2-7">委任管理者と信頼されたアクセス</a></li><li><a href="#c2-8">アカウントの作成・招待と管理</a></li></ul></li>
+<li><a href="#c2">2. 主な機能・特徴</a><ul><li><a href="#c2-1">用語</a></li><li><a href="#c2-2">ポリシーの種類</a></li><li><a href="#c2-3">SCPの利用イメージ</a></li><li><a href="#c2-4">SCPの書き方と継承</a></li><li><a href="#c2-5">SCPが効かないもの</a></li><li><a href="#c2-6">SCPの要点と、よく使う書き方</a></li><li><a href="#c2-7">RCPとデータ境界</a></li><li><a href="#c2-8">委任管理者と信頼されたアクセス</a></li><li><a href="#c2-9">アカウントの作成・招待と管理</a></li></ul></li>
 <li><a href="#c3">3. ユースケース</a></li>
 <li><a href="#c4">4. 料金の考え方</a></li>
 <li><a href="#c5">5. 関連サービス</a></li>
@@ -246,10 +246,35 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>メンバーアカウントの<strong>ルートユーザーには効く</strong>。ルートユーザーでもSCPで拒否された操作はできない。</li>
 </ul>
 
-<h3 id="c2-6">RCPとデータ境界<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-6">SCPの要点と、よく使う書き方<a class="anchor" href="#c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>SCP(サービスコントロールポリシー)は、<strong>アカウントの中で使える権限の「上限(ガードレール)」</strong>を決めるポリシーです。IAMポリシーの書き方(JSON)で書きますが、<strong>SCPだけでは何の権限も与えません</strong>。実際に操作できるのは「SCPで許されていて、かつIAMポリシーでも許可されている」範囲だけです。評価の流れは用語ページ「<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>」を参照してください。</p>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>適用先</td><td>ルート・OU・アカウント。上の階層のSCPは<strong>配下のすべてのOU・アカウントに継承</strong>される</td></tr>
+<tr><td>効く相手</td><td>メンバーアカウントのIAMユーザー・IAMロール・<strong>ルートユーザー</strong></td></tr>
+<tr><td>効かない相手</td><td><strong>管理アカウント</strong>、<strong>サービスリンクロール</strong>、組織の外のアカウントのプリンシパル(リソースベースのポリシーで許可された外部アカウントからのアクセスは、SCPでは止められない → RCPを使う)</td></tr>
+<tr><td>有効にする条件</td><td>組織で「<strong>すべての機能</strong>」を有効にし、ルートでSCPのポリシータイプを有効にする(一括請求の機能だけの組織では使えない)</td></tr>
+<tr><td>反映</td><td>付けたり外したりすると、すぐに効く。既存のリソースが消えることはなく、<strong>これからの操作</strong>が制限される</td></tr>
+</table></div>
+<p>試験によく出る、典型的なSCPの使い方です。どれも<strong>Denyで書く</strong>のが基本です。</p>
+<div class="table-wrap"><table>
+<tr><th>やりたいこと</th><th>SCPで拒否するアクション・条件</th></tr>
+<tr><td>許可したリージョン以外を使わせない</td><td>すべてのアクションを、<code>aws:RequestedRegion</code> が許可リストに<strong>ない</strong>ときに拒否(グローバルサービスは <code>NotAction</code> で除外)</td></tr>
+<tr><td>CloudTrailの証跡を止めさせない</td><td><code>cloudtrail:StopLogging</code>、<code>cloudtrail:DeleteTrail</code></td></tr>
+<tr><td>GuardDuty・Config・Security Hubを無効にさせない</td><td><code>guardduty:DeleteDetector</code>、<code>config:StopConfigurationRecorder</code>、<code>securityhub:DisableSecurityHub</code> など</td></tr>
+<tr><td>組織から勝手に抜けさせない</td><td><code>organizations:LeaveOrganization</code></td></tr>
+<tr><td>メンバーアカウントのルートユーザーを使わせない</td><td>すべてのアクションを、<code>aws:PrincipalArn</code> が <code>arn:aws:iam::*:root</code> のときに拒否</td></tr>
+<tr><td>使ってよいインスタンスタイプを限定する</td><td><code>ec2:RunInstances</code> を、<code>ec2:InstanceType</code> が許可リストに<strong>ない</strong>ときに拒否</td></tr>
+<tr><td>暗号化されていないボリューム・バケットを作らせない</td><td><code>ec2:CreateVolume</code> を <code>ec2:Encrypted</code> が <code>false</code> のときに拒否、など</td></tr>
+<tr><td>タグのないリソースを作らせない</td><td>作成のアクションを、<code>aws:RequestTag/CostCenter</code> が<strong>ない</strong>(<code>Null</code> 条件)ときに拒否</td></tr>
+<tr><td>セキュリティ用のロールを変更させない</td><td><code>iam:*</code> の変更系アクションを、対象が管理用のロールのときに拒否(管理者は <code>aws:PrincipalArn</code> で除外)</td></tr>
+</table></div>
+<p>SCPのサイズは1つあたり<strong>5,120文字まで</strong>、1つの対象(ルート・OU・アカウント)に付けられるSCPは<strong>5つまで</strong>です。複数のガードレールは1つのSCPにまとめるか、OUの階層を分けて付けます。SCPを本番のOUに付ける前に、テスト用のOUで動作を確かめると安全です。</p>
+
+<h3 id="c2-7">RCPとデータ境界<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>SCPは「自分のアカウントの人が何をできるか」を制限しますが、バケットポリシーで外部のアカウントに公開してしまうと、外部の人のアクセスは止められません。RCPは<strong>リソースの側</strong>に上限をかけるため、「組織のプリンシパル以外は、このバケットにアクセスできない」を、各アカウントのリソースポリシーに関係なく強制できます。条件キー <code>aws:PrincipalOrgID</code> で組織のIDを指定するのが基本です。</p>
 
-<h3 id="c2-7">委任管理者と信頼されたアクセス<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-8">委任管理者と信頼されたアクセス<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>信頼されたアクセス</strong>:GuardDuty・Security Hub・Config・CloudTrail・Backup・IAM Identity Center・CloudFormation StackSetsなどのサービスに、組織全体での操作を許可する設定。</li>
 <li><strong class="em">委任管理者</strong>:そのサービスの組織全体の管理を、管理アカウントではなく特定のメンバーアカウント(例:セキュリティ用のアカウント)に任せる。管理アカウントに入る人を減らせる。</li>
@@ -288,7 +313,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <figcaption>図4 委任管理者。管理アカウントからセキュリティ用のアカウントに管理を任せ、そこから全アカウントのGuardDutyなどを有効にして結果を集める。</figcaption>
 </figure>
 
-<h3 id="c2-8">アカウントの作成・招待と管理<a class="anchor" href="#c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="c2-9">アカウントの作成・招待と管理<a class="anchor" href="#c2-9" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>組織から新しく<strong>作成</strong>したアカウントには、管理アカウントから引き受けられる管理者ロール <code>OrganizationAccountAccessRole</code> が自動で作られる。</li>
 <li>既存のアカウントを<strong>招待</strong>した場合、このロールは作られない。管理アカウントから操作したいときは、招待したアカウント側で同じ名前のロールを作る。</li>
@@ -340,6 +365,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li>全アカウントで特定の操作・リージョンを禁止 → <strong>SCP</strong>をOUやルートに適用。リージョン制限は <code>aws:RequestedRegion</code>。</li>
 <li>SCPは<strong>管理アカウントとサービスリンクロールには効かない</strong>。メンバーアカウントのルートユーザーには効く。</li>
 <li>許可リスト方式で「許可したのに使えない」→ ルートからアカウントまでの<strong>途中の階層</strong>で許可されているか確認する。</li>
+<li>CloudTrailの停止・GuardDutyの無効化・組織からの離脱を全アカウントで禁止 → <strong>SCPでDeny</strong>(<code>cloudtrail:StopLogging</code>、<code>organizations:LeaveOrganization</code> など)。</li>
+<li>SCPを使うには組織の<strong>すべての機能</strong>が必要。1つの対象に付けられるのは<strong>5つまで</strong>。</li>
 <li>組織外からのリソースへのアクセスを一律に禁止したい → <strong class="em">RCP</strong>(<code>aws:PrincipalOrgID</code>)。</li>
 </ul>
 <h4>管理ポリシーと組織の運用</h4>
@@ -379,90 +406,92 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter graph-chapter">
 <h2>このページのつながり</h2>
 <details class="graph">
-<summary>つながり図を開く(リンク先 14件・リンク元 25件)</summary>
+<summary>つながり図を開く(リンク先 14件・リンク元 26件)</summary>
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 784 786" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Organizationsとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<path class="gr-line" d="M230,45 C265.0,45 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<svg viewBox="0 0 784 816" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Organizationsとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/artifact.html"><title>サービス:AWS Artifact</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Artifact</text></a>
-<path class="gr-line" d="M230,75 C265.0,75 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/budgets.html"><title>サービス:AWS Budgets</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Budgets</text></a>
-<path class="gr-line" d="M230,105 C265.0,105 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/compute-optimizer.html"><title>サービス:AWS Compute Optimizer</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Compute Optimizer</text></a>
-<path class="gr-line" d="M230,135 C265.0,135 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/cost-explorer.html"><title>サービス:AWS Cost Explorer</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS Cost Explorer</text></a>
-<path class="gr-line" d="M230,165 C265.0,165 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/cost-and-usage-reports.html"><title>サービス:AWS Cost and Usage Reports</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS Cost and Usage Reports</text></a>
-<path class="gr-line" d="M230,195 C265.0,195 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/health-dashboard.html"><title>サービス:AWS Health Dashboard</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="200" class="gr-t">AWS Health Dashboard</text></a>
-<path class="gr-line" d="M230,225 C265.0,225 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/resource-groups.html"><title>サービス:AWS Resource Groups と Tag Editor</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="230" class="gr-t">AWS Resource Groups と Ta…</text></a>
-<path class="gr-line" d="M230,255 C265.0,255 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/sts.html"><title>サービス:AWS STS</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="260" class="gr-t">AWS STS</text></a>
-<path class="gr-line" d="M230,285 C265.0,285 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/service-catalog.html"><title>サービス:AWS Service Catalog</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="290" class="gr-t">AWS Service Catalog</text></a>
-<path class="gr-line" d="M230,315 C265.0,315 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,315 C265.0,315 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/trusted-advisor.html"><title>サービス:AWS Trusted Advisor</title><rect x="0" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="320" class="gr-t">AWS Trusted Advisor</text></a>
-<path class="gr-line" d="M230,345 C265.0,345 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
+<path class="gr-line" d="M230,345 C265.0,345 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
 <a href="../services/waf.html"><title>サービス:AWS WAF</title><rect x="0" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="350" class="gr-t">AWS WAF</text></a>
-<path class="gr-line" d="M230,375 C265.0,375 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../services/macie.html"><title>サービス:Amazon Macie</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="380" class="gr-t">Amazon Macie</text></a>
-<path class="gr-line" d="M230,405 C265.0,405 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../services/ipam.html"><title>サービス:Amazon VPC IP Address Manager (IPAM)</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="410" class="gr-t">Amazon VPC IP Address Man…</text></a>
-<path class="gr-line" d="M230,435 C265.0,435 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="440" class="gr-t">コスト管理ツールの選び方</text></a>
-<path class="gr-line" d="M230,465 C265.0,465 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../terms/compliance-artifact.html"><title>用語:コンプライアンスとAWS Artifact</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="470" class="gr-t">コンプライアンスとAWS Artifa…</text></a>
-<path class="gr-line" d="M230,495 C265.0,495 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../terms/service-quotas.html"><title>用語:サービスクォータ</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="500" class="gr-t">サービスクォータ</text></a>
-<path class="gr-line" d="M230,525 C265.0,525 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/health-event-response.html"><title>運用シナリオ:AWSの予定メンテナンスや障害の通知に自動で対応する</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="530" class="gr-t">AWSの予定メンテナンスや障害の…</text></a>
-<path class="gr-line" d="M230,555 C265.0,555 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/access-denied-troubleshooting.html"><title>運用シナリオ:「AccessDenied」の原因を調べ、最小権限に直す</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="560" class="gr-t">「AccessDenied」の原因を調…</text></a>
-<path class="gr-line" d="M230,585 C265.0,585 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/backup-cross-region.html"><title>運用シナリオ:バックアップを一元管理して別リージョンに保管する</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="590" class="gr-t">バックアップを一元管理して別リ…</text></a>
-<path class="gr-line" d="M230,615 C265.0,615 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/cloudformation-drift.html"><title>運用シナリオ:手作業による設定変更(ドリフト)を見つけて戻す</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="620" class="gr-t">手作業による設定変更(ドリフト…</text></a>
-<path class="gr-line" d="M230,645 C265.0,645 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/org-guardrails.html"><title>運用シナリオ:組織全体にセキュリティのガードレールを設ける</title><rect x="0" y="634" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="650" class="gr-t">組織全体にセキュリティのガード…</text></a>
-<path class="gr-line" d="M230,675 C265.0,675 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/vpc-ip-planning.html"><title>運用シナリオ:組織全体のVPCのIPアドレスを重ならないように払い出す</title><rect x="0" y="664" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="680" class="gr-t">組織全体のVPCのIPアドレスを重…</text></a>
-<path class="gr-line" d="M230,705 C265.0,705 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/centralized-logging.html"><title>運用シナリオ:複数アカウントのログを集約して分析する</title><rect x="0" y="694" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="710" class="gr-t">複数アカウントのログを集約して…</text></a>
-<path class="gr-line" d="M230,735 C265.0,735 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/identity-center-sso.html"><title>運用シナリオ:複数アカウントへのログインをシングルサインオンにまとめる</title><rect x="0" y="724" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="740" class="gr-t">複数アカウントへのログインをシ…</text></a>
-<path class="gr-line" d="M230,765 C265.0,765 265.0,405 300,405" marker-end="url(#gr-arrow)"/>
-<a href="../usecases/multi-account-stacksets.html"><title>運用シナリオ:複数アカウント・リージョンに共通設定を展開する</title><rect x="0" y="754" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="770" class="gr-t">複数アカウント・リージョンに共…</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,210 550,210" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="199" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="214" class="gr-t">AWS Backup</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,240 550,240" marker-end="url(#gr-arrow)"/>
-<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="229" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="244" class="gr-t">AWS CloudFormation</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,270 550,270" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="259" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="274" class="gr-t">AWS CloudTrail</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,300 550,300" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="550" y="289" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="304" class="gr-t">AWS Config</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,330 550,330" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="550" y="319" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="334" class="gr-t">AWS Control Tower</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,360 550,360" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="349" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="364" class="gr-t">AWS IAM</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,390 550,390" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/identity-center.html"><title>サービス:AWS IAM Identity Center</title><rect x="550" y="379" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="394" class="gr-t">AWS IAM Identity Center</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,420 550,420" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/ram.html"><title>サービス:AWS Resource Access Manager</title><rect x="550" y="409" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="424" class="gr-t">AWS Resource Access Manag…</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,450 550,450" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="550" y="439" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="454" class="gr-t">AWS Security Hub</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,480 550,480" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="550" y="469" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="484" class="gr-t">Amazon GuardDuty</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,510 550,510" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../services/savings-plans.html"><title>サービス:Savings Plans</title><rect x="550" y="499" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="514" class="gr-t">Savings Plans</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,540 550,540" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/iam-policy-evaluation.html"><title>用語:IAMポリシーと評価ロジック</title><rect x="550" y="529" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="544" class="gr-t">IAMポリシーと評価ロジック</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,570 550,570" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="559" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="574" class="gr-t">タグ</text></a>
-<path class="gr-line" d="M480,405 C515.0,405 515.0,600 550,600" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
-<a href="../terms/root-user.html"><title>用語:ルートユーザーとアカウントの保護</title><rect x="550" y="589" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="604" class="gr-t">ルートユーザーとアカウントの保護</text></a>
-<rect x="300" y="385" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="410" text-anchor="middle" class="gr-tb">AWS Organizations</text>
-<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(25)</text>
+<path class="gr-line" d="M230,375 C265.0,375 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../services/devops-guru.html"><title>サービス:Amazon DevOps Guru</title><rect x="0" y="364" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="380" class="gr-t">Amazon DevOps Guru</text></a>
+<path class="gr-line" d="M230,405 C265.0,405 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../services/macie.html"><title>サービス:Amazon Macie</title><rect x="0" y="394" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="410" class="gr-t">Amazon Macie</text></a>
+<path class="gr-line" d="M230,435 C265.0,435 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../services/ipam.html"><title>サービス:Amazon VPC IP Address Manager (IPAM)</title><rect x="0" y="424" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="440" class="gr-t">Amazon VPC IP Address Man…</text></a>
+<path class="gr-line" d="M230,465 C265.0,465 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="0" y="454" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="470" class="gr-t">コスト管理ツールの選び方</text></a>
+<path class="gr-line" d="M230,495 C265.0,495 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../terms/compliance-artifact.html"><title>用語:コンプライアンスとAWS Artifact</title><rect x="0" y="484" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="500" class="gr-t">コンプライアンスとAWS Artifa…</text></a>
+<path class="gr-line" d="M230,525 C265.0,525 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../terms/service-quotas.html"><title>用語:サービスクォータ</title><rect x="0" y="514" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="530" class="gr-t">サービスクォータ</text></a>
+<path class="gr-line" d="M230,555 C265.0,555 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/health-event-response.html"><title>運用シナリオ:AWSの予定メンテナンスや障害の通知に自動で対応する</title><rect x="0" y="544" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="560" class="gr-t">AWSの予定メンテナンスや障害の…</text></a>
+<path class="gr-line" d="M230,585 C265.0,585 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/access-denied-troubleshooting.html"><title>運用シナリオ:「AccessDenied」の原因を調べ、最小権限に直す</title><rect x="0" y="574" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="590" class="gr-t">「AccessDenied」の原因を調…</text></a>
+<path class="gr-line" d="M230,615 C265.0,615 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/backup-cross-region.html"><title>運用シナリオ:バックアップを一元管理して別リージョンに保管する</title><rect x="0" y="604" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="620" class="gr-t">バックアップを一元管理して別リ…</text></a>
+<path class="gr-line" d="M230,645 C265.0,645 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cloudformation-drift.html"><title>運用シナリオ:手作業による設定変更(ドリフト)を見つけて戻す</title><rect x="0" y="634" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="650" class="gr-t">手作業による設定変更(ドリフト…</text></a>
+<path class="gr-line" d="M230,675 C265.0,675 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/org-guardrails.html"><title>運用シナリオ:組織全体にセキュリティのガードレールを設ける</title><rect x="0" y="664" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="680" class="gr-t">組織全体にセキュリティのガード…</text></a>
+<path class="gr-line" d="M230,705 C265.0,705 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/vpc-ip-planning.html"><title>運用シナリオ:組織全体のVPCのIPアドレスを重ならないように払い出す</title><rect x="0" y="694" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="710" class="gr-t">組織全体のVPCのIPアドレスを重…</text></a>
+<path class="gr-line" d="M230,735 C265.0,735 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/centralized-logging.html"><title>運用シナリオ:複数アカウントのログを集約して分析する</title><rect x="0" y="724" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="740" class="gr-t">複数アカウントのログを集約して…</text></a>
+<path class="gr-line" d="M230,765 C265.0,765 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/identity-center-sso.html"><title>運用シナリオ:複数アカウントへのログインをシングルサインオンにまとめる</title><rect x="0" y="754" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="770" class="gr-t">複数アカウントへのログインをシ…</text></a>
+<path class="gr-line" d="M230,795 C265.0,795 265.0,420 300,420" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/multi-account-stacksets.html"><title>運用シナリオ:複数アカウント・リージョンに共通設定を展開する</title><rect x="0" y="784" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="800" class="gr-t">複数アカウント・リージョンに共…</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/backup.html"><title>サービス:AWS Backup</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">AWS Backup</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="260" class="gr-t">AWS CloudFormation</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="290" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/config.html"><title>サービス:AWS Config</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="320" class="gr-t">AWS Config</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,345 550,345" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/control-tower.html"><title>サービス:AWS Control Tower</title><rect x="550" y="334" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="350" class="gr-t">AWS Control Tower</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,375 550,375" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="364" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="380" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,405 550,405" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/identity-center.html"><title>サービス:AWS IAM Identity Center</title><rect x="550" y="394" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="410" class="gr-t">AWS IAM Identity Center</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,435 550,435" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ram.html"><title>サービス:AWS Resource Access Manager</title><rect x="550" y="424" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="440" class="gr-t">AWS Resource Access Manag…</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,465 550,465" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/security-hub.html"><title>サービス:AWS Security Hub</title><rect x="550" y="454" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="470" class="gr-t">AWS Security Hub</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,495 550,495" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/guardduty.html"><title>サービス:Amazon GuardDuty</title><rect x="550" y="484" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="500" class="gr-t">Amazon GuardDuty</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,525 550,525" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/savings-plans.html"><title>サービス:Savings Plans</title><rect x="550" y="514" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="530" class="gr-t">Savings Plans</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,555 550,555" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/iam-policy-evaluation.html"><title>用語:IAMポリシーと評価ロジック</title><rect x="550" y="544" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="560" class="gr-t">IAMポリシーと評価ロジック</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,585 550,585" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/tags.html"><title>用語:タグ</title><rect x="550" y="574" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="590" class="gr-t">タグ</text></a>
+<path class="gr-line" d="M480,420 C515.0,420 515.0,615 550,615" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/root-user.html"><title>用語:ルートユーザーとアカウントの保護</title><rect x="550" y="604" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="620" class="gr-t">ルートユーザーとアカウントの保護</text></a>
+<rect x="300" y="400" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="425" text-anchor="middle" class="gr-tb">AWS Organizations</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(26)</text>
 <text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(14)</text>
 </svg>
 </div>
