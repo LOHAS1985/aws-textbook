@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <div class="page-head booklet-cover">
 <p class="booklet-site">AWS教科書</p>
 <h1>用語</h1>
-<p class="lead">AWSを学ぶうえで押さえておきたい用語の解説(全57ページ)</p>
+<p class="lead">AWSを学ぶうえで押さえておきたい用語の解説(全64ページ)</p>
 <p class="booklet-help">このページは、印刷やPDFでの保存のために全ページを1つにまとめたものです。ブラウザーの印刷(Ctrl+P、スマホは共有メニューの「プリント」)から、紙に印刷するかPDFとして保存してください。ページの順番は目次と同じです。</p>
 <p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button> <a href="../terms/index.html">目次へ戻る</a></p>
 </div>
@@ -60,6 +60,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-well-architected">AWS Well-Architected フレームワーク</a></li>
 <li><a href="#p-compliance-artifact">コンプライアンスとAWS Artifact</a></li>
 <li><a href="#p-json-yaml">JSONとYAMLの読み方</a></li>
+<li><a href="#p-data-engineer-exam-map">DEA-C01の学習範囲</a></li>
 </ol>
 <h3>ネットワーク</h3>
 <ol>
@@ -89,11 +90,13 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-tls-termination">TLS終端と証明書の配置</a></li>
 <li><a href="#p-oidc">OIDC(OpenID Connect)</a></li>
 <li><a href="#p-spf">SPF(Sender Policy Framework)</a></li>
+<li><a href="#p-data-governance">データガバナンス</a></li>
 </ol>
 <h3>ストレージ</h3>
 <ol>
 <li><a href="#p-storage-types">ブロック・ファイル・オブジェクトストレージ</a></li>
 <li><a href="#p-performance-metrics">IOPS・スループット・レイテンシー</a></li>
+<li><a href="#p-open-table-formats">オープンテーブル形式</a></li>
 </ol>
 <h3>設計・運用</h3>
 <ol>
@@ -106,12 +109,16 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-cron-rate-expressions">cron式とrate式</a></li>
 <li><a href="#p-throttling-retry">スロットリングとリトライ</a></li>
 <li><a href="#p-terraform-git">TerraformとGit</a></li>
+<li><a href="#p-data-engineering-basics">データパイプラインの基礎</a></li>
+<li><a href="#p-data-quality">データ品質</a></li>
 </ol>
 <h3>サービスの選び方</h3>
 <ol>
 <li><a href="#p-monitoring-logging-comparison">監視・記録のサービスの選び方</a></li>
 <li><a href="#p-messaging-comparison">メッセージングサービスの選び方</a></li>
 <li><a href="#p-caching-comparison">キャッシュの選び方</a></li>
+<li><a href="#p-data-store-selection">データストアの選び方</a></li>
+<li><a href="#p-vector-search">ベクトル検索</a></li>
 <li><a href="#p-hybrid-connectivity">オンプレミスとAWSをつなぐ方法の選び方</a></li>
 <li><a href="#p-vpc-connectivity">VPC同士をつなぐ方法の選び方</a></li>
 <li><a href="#p-security-detection-comparison">セキュリティ検出のサービスの選び方</a></li>
@@ -6269,6 +6276,536 @@ resource "aws_s3_bucket" "logs" {
 </ul>
 </section>
 </article>
+<article class="booklet-page" id="p-data-engineer-exam-map">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">AWSの基礎</span>
+<h1>DEA-C01の学習範囲</h1>
+<p class="lead">AWS Certified Data Engineer - Associateの出題分野と教科書の学習ページを結び付ける</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="data-engineer-exam-map-c1">1. 詳しい説明<a class="anchor" href="#data-engineer-exam-map-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS Certified Data Engineer - Associate (DEA-C01)は、データパイプラインの実装に加え、運用・トラブルシューティング・コストと性能の最適化を問う試験です。AWS公式試験ガイドの4分野を軸に、関連するサービスや用語を学びます。出題範囲や配点は改訂されることがあるため、受験前に<a href="https://docs.aws.amazon.com/aws-certification/latest/data-engineer-associate-01/data-engineer-associate-01.html" target="_blank" rel="noopener">公式試験ガイド</a>も確認してください。</p>
+<div class="table-wrap"><table>
+<tr><th>分野</th><th>比率</th><th>主な学習内容</th></tr>
+<tr><td>データ取り込み・変換</td><td>34%</td><td>バッチ・ストリーム取り込み、変換、オーケストレーション、プログラミング</td></tr>
+<tr><td>データストア管理</td><td>26%</td><td>保存先の選択、カタログ、ライフサイクル、データモデル・スキーマ進化</td></tr>
+<tr><td>データ運用・サポート</td><td>22%</td><td>自動化、分析、監視・トラブルシューティング、データ品質</td></tr>
+<tr><td>データセキュリティ・ガバナンス</td><td>18%</td><td>認証・認可、暗号化・マスキング、監査、プライバシー・共有</td></tr>
+</table></div>
+<p>試験では、個別サービスの機能だけでなく、データ量・速度・形式、鮮度、再処理、アクセス制御、コストなどの要件から構成を選ぶ力が必要です。実装コードの細かな構文や機械学習モデルの学習・推論そのものは中心範囲ではありません。</p>
+</section>
+
+<section class="chapter">
+<h2 id="data-engineer-exam-map-c2">2. 関連する用語<a class="anchor" href="#data-engineer-exam-map-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-data-engineering-basics">データパイプラインの基礎</a>:分野1の取り込み・再実行・状態管理</li>
+<li><a href="#p-data-store-selection">データストアの選び方</a>:分野2の保存先選択</li>
+<li><a href="#p-open-table-formats">オープンテーブル形式</a>:分野2のIcebergとスキーマ進化</li>
+<li><a href="#p-data-quality">データ品質</a>:分野3の検証・サンプリング・偏り</li>
+<li><a href="#p-vector-search">ベクトル検索</a>:分野2のベクトル・インデックス</li>
+<li><a href="#p-data-governance">データガバナンス</a>:分野4のプライバシー・共有・来歴</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="data-engineer-exam-map-c3">3. 関連サービス<a class="anchor" href="#data-engineer-exam-map-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/glue.html">AWS Glue</a>:カタログ・クローラー・ETL・データ品質</li>
+<li><a href="../services/batch.html">AWS Batch</a>:コンテナ化されたデータ処理ジョブ</li>
+<li><a href="../services/redshift.html">Amazon Redshift</a>:データウェアハウス・分析・データ共有</li>
+<li><a href="../services/lake-formation.html">AWS Lake Formation</a>:データレイクの権限管理</li>
+<li><a href="../services/s3.html">Amazon S3</a>:データレイクとマネージドApache Icebergテーブル</li>
+<li><a href="../services/emr.html">Amazon EMR</a>:Sparkなどの分散処理</li>
+<li><a href="../services/msk.html">Amazon MSK</a>:Kafkaストリーミング</li>
+<li><a href="../services/managed-flink.html">Amazon Managed Service for Apache Flink</a>:ストリーミングデータ処理</li>
+<li><a href="../services/appflow.html">Amazon AppFlow</a>:SaaS連携</li>
+<li><a href="../services/data-exchange.html">AWS Data Exchange</a>:外部データセットの購読・共有</li>
+<li><a href="../services/mwaa.html">Amazon MWAA</a>:Airflowによるオーケストレーション</li>
+<li><a href="../services/dms.html">AWS DMS</a>:データベース移行・継続レプリケーション</li>
+<li><a href="../services/transfer-family.html">AWS Transfer Family</a>:ファイル転送</li>
+<li><a href="../services/databrew.html">AWS Glue DataBrew</a>:ビジュアルなデータ準備</li>
+<li><a href="../services/kendra.html">Amazon Kendra</a>:既存環境の企業文書検索と移行時の検討</li>
+<li><a href="../services/sagemaker-ai.html">Amazon SageMaker AI</a>:データ準備・品質・特徴量管理</li>
+<li><a href="../services/sagemaker-unified-studio.html">Amazon SageMaker Unified Studio</a>:プロジェクト・ビジネスカタログ・データ来歴</li>
+<li><a href="../services/athena.html">Amazon Athena</a>:SQLとSpark notebooksでの分析</li>
+<li><a href="../services/quick.html">Amazon Quick</a>:BI・可視化</li>
+<li><a href="../services/step-functions.html">AWS Step Functions</a>/<a href="../services/lambda.html">AWS Lambda</a>:サーバーレスの処理・オーケストレーション</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>/<a href="../services/cloudwatch.html">Amazon CloudWatch</a>:監査・ログ・監視</li>
+<li><a href="../services/macie.html">Amazon Macie</a>/<a href="../services/kms.html">AWS KMS</a>:機密データ・暗号化</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-data-engineering-basics">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">設計・運用</span>
+<h1>データパイプラインの基礎</h1>
+<p class="lead">データを取り込み・変換・保存・提供する処理の設計用語</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="data-engineering-basics-c1">1. 詳しい説明<a class="anchor" href="#data-engineering-basics-c1" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="data-engineering-basics-c1-1">ETLとELT<a class="anchor" href="#data-engineering-basics-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>ETL</strong>はデータを抽出(Extract)し、変換(Transform)してから保存先へロード(Load)する方式です。<strong>ELT</strong>は先に保存先へロードし、その基盤の計算能力で変換します。前処理が必要か、保存先のSQL基盤で加工できるかで選びます。</p>
+
+<h3 id="data-engineering-basics-c1-2">バッチとストリーミング<a class="anchor" href="#data-engineering-basics-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>バッチ</strong>:一定量または一定時刻にまとめて処理する。日次集計など、低頻度でよい処理に向く。</li>
+<li><strong>ストリーミング</strong>:イベント到着に合わせて継続的に処理する。低遅延が必要だが、順序・重複・遅延到着・状態管理が複雑になる。</li>
+</ul>
+
+<h3 id="data-engineering-basics-c1-3">取り込みと再処理<a class="anchor" href="#data-engineering-basics-c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>ファンイン</strong>は複数の送り元を1つの処理先へ集約すること、<strong>ファンアウト</strong>は1つのストリームを複数の利用者へ配信することです。リプレイは保持データを再び読み込んで処理することです。メッセージやレコードの保持期間、処理位置、重複時の挙動を設計し、障害後の再実行に備えます。</p>
+
+<h3 id="data-engineering-basics-c1-4">状態・冪等性・配信保証<a class="anchor" href="#data-engineering-basics-c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ステートレス処理</strong>:各レコードを他のレコードや過去の実行状態に依存せず処理する。</li>
+<li><strong>ステートフル処理</strong>:ウィンドウ集計や重複排除など、過去のイベントやチェックポイントを保持して処理する。</li>
+<li><strong>冪等性</strong>:同じ入力を複数回処理しても、最終結果が重複・二重計上にならない性質。</li>
+<li>再試行は同じ処理を複数回実行する可能性があるため、冪等な書き込みや重複排除キーを用いる。</li>
+</ul>
+<p>「少なくとも1回」は欠落を避ける代わりに重複があり得ます。「最大1回」は重複を避ける代わりに欠落の可能性があります。「厳密に1回」は単一サービスの設定だけで保証されるとは限らず、取り込みから保存までの境界と副作用を含めて確認します。</p>
+
+<h3 id="data-engineering-basics-c1-5">データの種類と処理の実装<a class="anchor" href="#data-engineering-basics-c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>データ量・速度・種類(構造化、半構造化、非構造化)は、保存形式と処理方式の選択に影響します。APIのページネーション、認証、レート制限、応答形式を処理し、入力サイズや再試行を制御します。データ処理では、SDK、SQL、言語に依存しないプログラミング概念を使い、Gitによるバージョン管理、テスト、ログ、IaC、CI/CDで変更を安全に展開します。</p>
+<p>LLMを使うデータ処理では、分類・要約などの処理結果を検証し、プロンプトへの機密情報の混入、出力の不確実性、再実行時の一貫性を考慮します。AI処理を利用しても、データ品質やプライバシーの確認は省略できません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1024 154" style="max-width:1024px;min-width:819px" role="img" aria-label="図1 データパイプラインの基本。障害時に入力を再処理できるようにし、重複が発生しても結果が壊れない設計にする。"><defs><marker id="data-engineering-basics-dgterms-data-engineering-basics-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">バッチ・ストリーム</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">複数の送り元</text>
+</g>
+<g data-node="ingest">
+<rect x="306" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="100" text-anchor="middle" class="dg-tb">取り込み</text>
+<text x="381" y="118" text-anchor="middle" class="dg-s">再試行・保持</text>
+</g>
+<g data-node="transform">
+<rect x="578" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="653" y="100" text-anchor="middle" class="dg-t">変換</text>
+<text x="653" y="118" text-anchor="middle" class="dg-s">状態・品質</text>
+</g>
+<g data-node="store">
+<rect x="850" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="925" y="100" text-anchor="middle" class="dg-t">保存・提供</text>
+<text x="925" y="118" text-anchor="middle" class="dg-s">冪等な書き込み</text>
+</g>
+<path d="M184.0,104.0 L306.0,104.0" class="dg-line" marker-end="url(#data-engineering-basics-dgterms-data-engineering-basics-1)"/>
+<path d="M456.0,104.0 L578.0,104.0" class="dg-line" marker-end="url(#data-engineering-basics-dgterms-data-engineering-basics-1)"/>
+<path d="M728.0,104.0 L850.0,104.0" class="dg-line" marker-end="url(#data-engineering-basics-dgterms-data-engineering-basics-1)"/>
+<path d="M850.0,104.0 L456.0,104.0" class="dg-line dg-dash" marker-end="url(#data-engineering-basics-dgterms-data-engineering-basics-1)"/>
+<text x="653" y="108" text-anchor="middle" class="dg-s dg-halo">再処理</text>
+</svg>
+</div>
+<figcaption>図1 データパイプラインの基本。障害時に入力を再処理できるようにし、重複が発生しても結果が壊れない設計にする。</figcaption>
+</figure>
+
+<h3 id="data-engineering-basics-c1-6">スループットとレート制限<a class="anchor" href="#data-engineering-basics-c1-6" aria-label="この見出しへのリンク">#</a></h3>
+<p>APIやデータベースの処理上限に対し、同時実行数を制御し、指数的に待ち時間を延ばすリトライやキューを利用します。供給速度が処理速度を上回ると遅延やバックログが増えるため、スロットリング、並列度、パーティション、再試行を合わせて調整します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="data-engineering-basics-c2">2. 関連する用語<a class="anchor" href="#data-engineering-basics-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-throttling-retry">スロットリングとリトライ</a>:レート制限と再試行の設計</li>
+<li><a href="#p-data-quality">データ品質</a>:パイプライン内のデータ検証</li>
+<li><a href="#p-storage-types">ストレージの種類</a>:ファイル・ブロック・オブジェクトの基本</li>
+<li><a href="#p-high-availability-scaling">高可用性とスケーリング</a>:障害耐性と処理能力の拡張</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="data-engineering-basics-c3">3. 関連サービス<a class="anchor" href="#data-engineering-basics-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/kinesis.html">Amazon Kinesis</a>/<a href="../services/msk.html">Amazon MSK</a>:イベントストリーム</li>
+<li><a href="../services/data-firehose.html">Amazon Data Firehose</a>:ストリームの配送</li>
+<li><a href="../services/glue.html">AWS Glue</a>:バッチ・ストリームETL</li>
+<li><a href="../services/appflow.html">Amazon AppFlow</a>:SaaSデータ取り込み</li>
+<li><a href="../services/step-functions.html">AWS Step Functions</a>/<a href="../services/mwaa.html">Amazon MWAA</a>:処理のオーケストレーション</li>
+<li><a href="../services/bedrock.html">Amazon Bedrock</a>:LLMを用いたデータ処理</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-data-store-selection">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">サービスの選び方</span>
+<h1>データストアの選び方</h1>
+<p class="lead">アクセスパターン・データ形式・鮮度・規模から保存先を選ぶ</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="data-store-selection-c1">1. 詳しい説明<a class="anchor" href="#data-store-selection-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>最適な保存先は、データの形だけでなく、書き込み頻度、読み取り方法、応答時間、同時実行数、データ量、共有・保持要件で決まります。処理基盤と保存先は同じサービスである必要はありません。</p>
+<div class="table-wrap"><table>
+<tr><th>要件</th><th>候補</th><th>選ぶ理由</th></tr>
+<tr><td>オブジェクトの長期保存・データレイク</td><td>Amazon S3</td><td>多様な形式を低コストで保存し、複数の分析サービスから使う</td></tr>
+<tr><td>マネージド保守付きのIcebergテーブル</td><td><a href="../services/s3.html">Amazon S3 Tables</a></td><td>テーブルバケットでテーブルの最適化やメンテナンスを任せる</td></tr>
+<tr><td>大規模なSQL集計・BI</td><td>Amazon Redshift</td><td>データウェアハウスとして分析クエリを実行する</td></tr>
+<tr><td>S3上のデータをSQLでアドホック分析</td><td>Amazon Athena</td><td>データをロードせず、サーバーレスで検索する</td></tr>
+<tr><td>柔軟なOSS分散処理・複雑な変換</td><td>Amazon EMR</td><td>Sparkなどの実行環境とクラスター構成を制御する</td></tr>
+<tr><td>サーバーレスETL・カタログ</td><td>AWS Glue</td><td>データ統合・変換とメタデータ管理を行う</td></tr>
+<tr><td>低遅延のキー指定読み書き</td><td>Amazon DynamoDB</td><td>キー・アクセスパターンを先に設計したNoSQLデータベース</td></tr>
+<tr><td>SQL・トランザクション・行更新</td><td>Amazon RDS/Aurora</td><td>リレーショナルモデルとトランザクションを使う</td></tr>
+<tr><td>イベントの保持・複数コンシューマー処理</td><td>Kinesis Data Streams / Amazon MSK</td><td>ストリームを一定期間保持し、読み取り位置から処理する</td></tr>
+</table></div>
+
+<h3 id="data-store-selection-c1-1">データレイクとデータウェアハウス<a class="anchor" href="#data-store-selection-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>データレイクは多様な形式の生データや加工済みデータを保存し、用途に応じた複数のエンジンで利用します。データウェアハウスは分析向けに整形・統合したデータをSQLで集計します。AthenaはS3データレイクのクエリ、Redshiftはウェアハウス分析が中心ですが、Spectrumなどで連携できます。</p>
+
+<h3 id="data-store-selection-c1-2">移行・リモート参照・ロック<a class="anchor" href="#data-store-selection-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>データを複製して取り込むか、フェデレーテッドクエリなどで外部データを参照するかを、鮮度・負荷・遅延・権限で選びます。RDSなどから継続的に移行する場合はAWS DMS、スキーマ変換にはAWS Schema Conversion ToolやDMS Schema Conversionが候補です。分析データベースのロックや同時更新は競合を避けるために必要ですが、長時間トランザクションは待ちや遅延を起こすことがあります。</p>
+<p>リレーショナルデータベースでは正規化や制約で更新の一貫性を保ち、分析用テーブルではクエリに合わせて集計済みデータやマテリアライズドビューを検討します。DynamoDBでは、主キー・複合ソートキー・セカンダリインデックスをアクセスパターンに合わせて設計します。これらのモデルは、検索・更新パターンやロックの特性が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="data-store-selection-c2">2. 関連する用語<a class="anchor" href="#data-store-selection-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-storage-types">ストレージの種類</a>:オブジェクト・ブロック・ファイル</li>
+<li><a href="#p-open-table-formats">オープンテーブル形式</a>:データレイクのテーブル管理</li>
+<li><a href="#p-vector-search">ベクトル検索</a>:類似度検索とインデックス</li>
+<li><a href="#p-performance-metrics">性能指標</a>:待ち時間やスループットの見方</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="data-store-selection-c3">3. 関連サービス<a class="anchor" href="#data-store-selection-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/athena.html">Amazon Athena</a>:データレイクとSQL分析</li>
+<li><a href="../services/redshift.html">Amazon Redshift</a>:分析データウェアハウス</li>
+<li><a href="../services/emr.html">Amazon EMR</a>/<a href="../services/glue.html">AWS Glue</a>:データ処理</li>
+<li><a href="../services/rds.html">Amazon RDS</a>/<a href="../services/dynamodb.html">Amazon DynamoDB</a>:業務データベース</li>
+<li><a href="../services/kinesis.html">Amazon Kinesis</a>/<a href="../services/msk.html">Amazon MSK</a>:イベントストリーム</li>
+<li><a href="../services/dms.html">AWS DMS</a>:データベース移行とCDC</li>
+<li><a href="../services/transfer-family.html">AWS Transfer Family</a>:SFTPなどによるファイル取り込み</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-data-quality">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">設計・運用</span>
+<h1>データ品質</h1>
+<p class="lead">分析や業務処理に使えるデータかをルールと測定値で確かめる考え方</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="data-quality-c1">1. 詳しい説明<a class="anchor" href="#data-quality-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>データ品質は、データが利用目的に対して正しく、完全で、一貫しているかを継続的に確認することです。取り込み時や変換後にルールを評価し、失敗したデータを特定して修正・隔離します。</p>
+<h3 id="data-quality-c1-1">品質の観点<a class="anchor" href="#data-quality-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>完全性</strong>:必須項目が欠損していないか。</li>
+<li><strong>一意性</strong>:同じ業務キーの重複がないか。</li>
+<li><strong>妥当性</strong>:値が型・範囲・形式などのルールに合うか。</li>
+<li><strong>正確性・一貫性</strong>:参照元と一致し、複数項目やテーブル間で矛盾しないか。</li>
+<li><strong>適時性</strong>:必要な時間までにデータが届き、十分に新しいか。</li>
+</ul>
+
+<h3 id="data-quality-c1-2">ルール・プロファイル・サンプリング<a class="anchor" href="#data-quality-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>AWS Glue Data Qualityは、ルールに基づいてカタログテーブルやETL結果を評価し、結果を記録できます。AWS Glue DataBrewではデータのプロファイルを確認し、変換レシピを作れます。サンプリングは全件処理を避けて傾向を素早く確認できますが、稀な異常や偏りを見落とす可能性があります。全件検証と代表サンプルの目的を分けます。</p>
+
+<h3 id="data-quality-c1-3">データスキューと集計<a class="anchor" href="#data-quality-c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>データスキュー</strong>は、キーの値によりレコード数や処理負荷が一部のパーティションに偏る状態です。ホットキーがあると、他のワーカーが空いていても特定タスクが遅れます。キー分布、パーティション、処理時間を調べ、必要に応じてキー設計や処理方法を変えます。</p>
+<p>集計ではグループ化・合計・件数・移動平均・ピボットなどを利用します。集計の粒度、タイムゾーン、重複排除、NULLの扱いを決め、結果の合計値や件数を既知の値と照合します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 806 216" style="max-width:806px;min-width:645px" role="img" aria-label="図1 データ品質チェック。品質ルールで正常データと異常データを分け、異常の記録・隔離・通知を行う。"><defs><marker id="data-quality-dgterms-data-quality-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="input">
+<rect x="34" y="73" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="94" text-anchor="middle" class="dg-t">取り込んだデータ</text>
+<text x="104" y="112" text-anchor="middle" class="dg-s">重複・欠損を含む</text>
+</g>
+<g data-node="rules">
+<rect x="322" y="73" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="392" y="94" text-anchor="middle" class="dg-tb">品質ルール</text>
+<text x="392" y="112" text-anchor="middle" class="dg-s">必須・範囲・一意性</text>
+</g>
+<g data-node="good">
+<rect x="642" y="36" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="712" y="57" text-anchor="middle" class="dg-t">正常データ</text>
+<text x="712" y="75" text-anchor="middle" class="dg-s">分析へ</text>
+</g>
+<g data-node="bad">
+<rect x="642" y="140" width="140" height="52" rx="8" class="dg-ng"/>
+<text x="712" y="162" text-anchor="middle" class="dg-t">異常データ</text>
+<text x="712" y="180" text-anchor="middle" class="dg-s">隔離・通知</text>
+</g>
+<path d="M174.0,99.0 L322.0,99.0" class="dg-line" marker-end="url(#data-quality-dgterms-data-quality-1)"/>
+<path d="M462.0,90.8 L642.0,69.7" class="dg-line" marker-end="url(#data-quality-dgterms-data-quality-1)"/>
+<text x="552" y="84" text-anchor="middle" class="dg-s dg-halo">合格</text>
+<path d="M462.0,113.8 L642.0,151.7" class="dg-line" marker-end="url(#data-quality-dgterms-data-quality-1)"/>
+<text x="552" y="137" text-anchor="middle" class="dg-s dg-halo">失敗</text>
+</svg>
+</div>
+<figcaption>図1 データ品質チェック。品質ルールで正常データと異常データを分け、異常の記録・隔離・通知を行う。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="data-quality-c2">2. 関連する用語<a class="anchor" href="#data-quality-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-data-engineering-basics">データパイプラインの基礎</a>:再試行・重複・状態管理</li>
+<li><a href="#p-performance-metrics">性能指標</a>:処理時間・スループット・遅延</li>
+<li><a href="#p-open-table-formats">オープンテーブル形式</a>:スキーマ変更の管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="data-quality-c3">3. 関連サービス<a class="anchor" href="#data-quality-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/glue.html">AWS Glue</a>:Data Quality・DataBrew・ETL</li>
+<li><a href="../services/athena.html">Amazon Athena</a>:SQLによる検査・集計</li>
+<li><a href="../services/redshift.html">Amazon Redshift</a>:SQL分析・ビュー・集計</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:品質メトリクスとアラーム</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-open-table-formats">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">ストレージ</span>
+<h1>オープンテーブル形式</h1>
+<p class="lead">データレイク上の複数ファイルをテーブルとして一貫して管理する形式</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="open-table-formats-c1">1. 詳しい説明<a class="anchor" href="#open-table-formats-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>CSVやParquetは個々のファイルのデータ形式です。Apache Icebergなどの<strong>オープンテーブル形式</strong>は、データレイク上の複数ファイルをテーブルとして管理するメタデータやトランザクションの仕組みを定めます。データ形式とテーブル形式は異なる層です。</p>
+<h3 id="open-table-formats-c1-1">Apache Iceberg<a class="anchor" href="#open-table-formats-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>スナップショットとメタデータでテーブルの状態を管理し、一貫した読み取りや変更を支援する。</li>
+<li>列の追加・変更などのスキーマ進化や、パーティション仕様の変更をデータファイルの再配置を抑えて行える。</li>
+<li>対応する複数の処理エンジンから同じテーブルを扱いやすくする。</li>
+<li>スナップショットによる過去状態の参照や、変更データの追跡を利用できる機能がある。</li>
+</ul>
+<p>実際に使える書き込み・更新・削除・タイムトラベルの機能は、エンジン、カタログ、テーブル形式のバージョンに依存します。利用予定の組み合わせで公式の対応表を確認します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 838 216" style="max-width:838px;min-width:670px" role="img" aria-label="図1 Icebergテーブル。複数のエンジンが共有メタデータを介してS3上のデータファイルをテーブルとして扱う。"><defs><marker id="open-table-formats-dgterms-open-table-formats-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="engine1">
+<rect x="34" y="36" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="57" text-anchor="middle" class="dg-t">Athena</text>
+<text x="104" y="75" text-anchor="middle" class="dg-s">クエリ</text>
+</g>
+<g data-node="engine2">
+<rect x="34" y="140" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="162" text-anchor="middle" class="dg-t">Glue・Spark</text>
+<text x="104" y="180" text-anchor="middle" class="dg-s">ETL</text>
+</g>
+<g data-node="table">
+<rect x="354" y="88" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="424" y="110" text-anchor="middle" class="dg-tb">Iceberg</text>
+<text x="424" y="128" text-anchor="middle" class="dg-s">table metadata</text>
+</g>
+<g data-node="files">
+<rect x="674" y="88" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="744" y="110" text-anchor="middle" class="dg-t">S3データファイル</text>
+<text x="744" y="128" text-anchor="middle" class="dg-s">Parquetなど</text>
+</g>
+<path d="M174.0,73.0 L354.0,102.5" class="dg-line" marker-end="url(#open-table-formats-dgterms-open-table-formats-1)"/>
+<path d="M174.0,155.0 L354.0,125.5" class="dg-line" marker-end="url(#open-table-formats-dgterms-open-table-formats-1)"/>
+<path d="M494.0,114.0 L674.0,114.0" class="dg-line" marker-end="url(#open-table-formats-dgterms-open-table-formats-1)"/>
+</svg>
+</div>
+<figcaption>図1 Icebergテーブル。複数のエンジンが共有メタデータを介してS3上のデータファイルをテーブルとして扱う。</figcaption>
+</figure>
+
+<h3 id="open-table-formats-c1-2">ファイル形式との組み合わせ<a class="anchor" href="#open-table-formats-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>ParquetやORCのような列指向ファイル形式は、必要な列だけを読み、圧縮してスキャン量を減らすのに有効です。Icebergはこれらのデータファイルを管理するテーブル層です。パーティション設計、圧縮、スナップショットの期限切れや古いファイルの削除も運用に含めます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="open-table-formats-c2">2. 関連する用語<a class="anchor" href="#open-table-formats-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-data-store-selection">データストアの選び方</a>:データレイクと分析基盤の選択</li>
+<li><a href="#p-data-quality">データ品質</a>:スキーマと内容の検証</li>
+<li><a href="#p-storage-types">ストレージの種類</a>:オブジェクトストレージの特徴</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="open-table-formats-c3">3. 関連サービス<a class="anchor" href="#open-table-formats-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/s3.html">Amazon S3</a>:テーブルデータファイルの保存先</li>
+<li><a href="../services/glue.html">AWS Glue</a>:カタログ、ETL、Iceberg読み書き</li>
+<li><a href="../services/athena.html">Amazon Athena</a>:データレイクのSQLクエリ</li>
+<li><a href="../services/data-firehose.html">Amazon Data Firehose</a>:S3上のIcebergテーブルへの配送</li>
+<li><a href="../services/lake-formation.html">AWS Lake Formation</a>:カタログ・データへの権限管理</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-vector-search">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">サービスの選び方</span>
+<h1>ベクトル検索</h1>
+<p class="lead">意味的な類似度を基に関連データを探す検索方式</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="vector-search-c1">1. 詳しい説明<a class="anchor" href="#vector-search-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>埋め込み(embedding)</strong>は、文章や画像などの特徴を数値の配列(ベクトル)で表現したものです。<strong>ベクトル検索</strong>は、検索語のベクトルと近いベクトルを探し、文字列が完全一致しなくても意味の近いデータを取得します。</p>
+<h3 id="vector-search-c1-1">ベクトルインデックス<a class="anchor" href="#vector-search-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>HNSW</strong>:階層的な近傍グラフを作り、高速な近似近傍検索を行う。検索速度・再現率・メモリ使用量の調整が必要。</li>
+<li><strong>IVF</strong>:ベクトルを複数のクラスタに分け、候補クラスタを絞って検索する。クラスタ数や探索範囲が検索精度・速度に影響する。</li>
+</ul>
+<p>近似検索は全件を厳密比較する方法より高速になりやすい一方、最も近い結果が必ず含まれるとは限りません。検索精度、応答時間、メモリ、更新頻度、フィルター条件を評価して選びます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1109 232" style="max-width:1109px;min-width:887px" role="img" aria-label="図1 ベクトル検索の流れ。元データと検索語をベクトル化し、近傍インデックスから意味的に近いデータを探す。"><defs><marker id="vector-search-dgterms-vector-search-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="data">
+<rect x="34" y="73" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="94" text-anchor="middle" class="dg-t">文書・画像</text>
+<text x="109" y="112" text-anchor="middle" class="dg-s">元データ</text>
+</g>
+<g data-node="embed">
+<rect x="323" y="73" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="398" y="94" text-anchor="middle" class="dg-tb">埋め込みモデル</text>
+<text x="398" y="112" text-anchor="middle" class="dg-s">ベクトル化</text>
+</g>
+<g data-node="index">
+<rect x="629" y="73" width="150" height="52" rx="8" class="dg-box"/>
+<text x="704" y="94" text-anchor="middle" class="dg-t">Vector Index</text>
+<text x="704" y="112" text-anchor="middle" class="dg-s">HNSW・IVF</text>
+</g>
+<g data-node="query">
+<rect x="323" y="156" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="398" y="177" text-anchor="middle" class="dg-t">検索語</text>
+<text x="398" y="195" text-anchor="middle" class="dg-s">同じモデルで変換</text>
+</g>
+<g data-node="result">
+<rect x="935" y="73" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1010" y="94" text-anchor="middle" class="dg-t">類似データ</text>
+<text x="1010" y="112" text-anchor="middle" class="dg-s">関連順に返す</text>
+</g>
+<path d="M184.0,99.0 L323.0,99.0" class="dg-line" marker-end="url(#vector-search-dgterms-vector-search-1)"/>
+<path d="M473.0,99.0 L629.0,99.0" class="dg-line" marker-end="url(#vector-search-dgterms-vector-search-1)"/>
+<path d="M473.0,161.3 L629.0,119.2" class="dg-line" marker-end="url(#vector-search-dgterms-vector-search-1)"/>
+<path d="M779.0,99.0 L935.0,99.0" class="dg-line" marker-end="url(#vector-search-dgterms-vector-search-1)"/>
+</svg>
+</div>
+<figcaption>図1 ベクトル検索の流れ。元データと検索語をベクトル化し、近傍インデックスから意味的に近いデータを探す。</figcaption>
+</figure>
+
+<h3 id="vector-search-c1-2">検索拡張生成との関係<a class="anchor" href="#vector-search-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>検索拡張生成(RAG)では、文書を分割して埋め込みを作り、質問に近い断片を検索して生成モデルへ渡します。Bedrock Knowledge Basesなどのマネージド機能が、取り込み・ベクトル化・検索の一部を支援します。生成モデルの出力と、検索インデックスの品質は別々に評価します。</p>
+<p>「ベクトル化」は文書をベクトル表現に変換することです。CPUのSIMD演算などを指す「ベクトル化処理」とは意味が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="vector-search-c2">2. 関連する用語<a class="anchor" href="#vector-search-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-data-store-selection">データストアの選び方</a>:検索パターンに合った保存先</li>
+<li><a href="#p-open-table-formats">オープンテーブル形式</a>:ベクトルの元となる文書データの管理</li>
+<li><a href="#p-data-governance">データガバナンス</a>:検索対象の権限とプライバシー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="vector-search-c3">3. 関連サービス<a class="anchor" href="#vector-search-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/bedrock.html">Amazon Bedrock</a>:Knowledge BasesなどRAG構成</li>
+<li><a href="../services/opensearch.html">Amazon OpenSearch Service</a>:ベクトル検索と全文検索</li>
+<li><a href="../services/aurora.html">Amazon Aurora</a>:pgvectorによるベクトル検索</li>
+<li><a href="../services/memorydb.html">Amazon MemoryDB</a>:低遅延なベクトル検索の選択肢</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-data-governance">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">セキュリティ・認証</span>
+<h1>データガバナンス</h1>
+<p class="lead">データの所有者・意味・利用権限・保護・ライフサイクルを組織的に管理する枠組み</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="data-governance-c1">1. 詳しい説明<a class="anchor" href="#data-governance-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>データガバナンスは、組織がデータを安全かつ適切に発見・共有・利用するための役割、規則、管理方法です。所有者、用途、機密区分、品質、保持期間、アクセス条件を明らかにし、ルールをシステムに反映します。</p>
+<h3 id="data-governance-c1-1">カタログ・分類・来歴<a class="anchor" href="#data-governance-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>技術カタログ</strong>:データベース、列、型、場所など、機械処理に必要なメタデータ。</li>
+<li><strong>ビジネスカタログ</strong>:意味、所有者、機密区分、利用条件など、利用者の判断を助ける情報。</li>
+<li><strong>データリネージ</strong>:データの取得元、変換、出力先、利用先のつながり。</li>
+<li><strong>データ品質</strong>:完全性や妥当性など、利用目的を満たすかの評価。</li>
+</ul>
+
+<h3 id="data-governance-c1-2">アクセス制御と共有<a class="anchor" href="#data-governance-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>IAMのロールベース制御(RBAC)は利用者の役割で権限を決め、タグベース制御(TBAC)は資産や主体に付けたタグで権限を管理します。属性ベース制御(ABAC)は利用者・資産・環境の属性を組み合わせて判断します。いずれも最小権限、明確な所有者、アクセスの定期レビューが重要です。</p>
+<p>データ共有では、共有先の用途・期間・利用可能な列や行を定めます。Redshiftのデータ共有やLake Formationの共有を使う場合も、共有の設定だけでなく、IAM・データベース権限・基盤側のアクセス制御を合わせて確認します。</p>
+
+<h3 id="data-governance-c1-3">プライバシー・暗号化・データ主権<a class="anchor" href="#data-governance-c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>個人情報や機密情報を検出し、マスキング・匿名化・削除などの扱いを定める。</li>
+<li>保存時と転送時の暗号化、キー管理、職務分離を構成する。</li>
+<li>法令や契約で許可されたリージョンにデータを保存・処理し、複製・バックアップ先も制御する。</li>
+<li>保持期限、S3 Lifecycle、バージョニング、DynamoDB TTL、法的削除要件を組み合わせる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1109 252" style="max-width:1109px;min-width:887px" role="img" aria-label="図1 データガバナンスの要素。資産の意味と所有者を記録し、権限・保護・保持のルールを適用して監査する。"><defs><marker id="data-governance-dgterms-data-governance-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="owner">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">所有者・利用者</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">目的・責任</text>
+</g>
+<g data-node="catalog">
+<rect x="323" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="398" y="100" text-anchor="middle" class="dg-tb">カタログ</text>
+<text x="398" y="118" text-anchor="middle" class="dg-s">意味・分類・来歴</text>
+</g>
+<g data-node="policy">
+<rect x="629" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="704" y="100" text-anchor="middle" class="dg-t">ポリシー</text>
+<text x="704" y="118" text-anchor="middle" class="dg-s">IAM・Lake Formation</text>
+</g>
+<g data-node="data">
+<rect x="935" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1010" y="100" text-anchor="middle" class="dg-t">データ</text>
+<text x="1010" y="118" text-anchor="middle" class="dg-s">暗号化・保持</text>
+</g>
+<g data-node="audit">
+<rect x="629" y="188" width="150" height="40" rx="8" class="dg-box"/>
+<text x="704" y="212" text-anchor="middle" class="dg-t">監査・品質確認</text>
+</g>
+<path d="M184.0,104.0 L323.0,104.0" class="dg-line" marker-end="url(#data-governance-dgterms-data-governance-1)"/>
+<path d="M473.0,104.0 L629.0,104.0" class="dg-line" marker-end="url(#data-governance-dgterms-data-governance-1)"/>
+<path d="M779.0,104.0 L935.0,104.0" class="dg-line" marker-end="url(#data-governance-dgterms-data-governance-1)"/>
+<path d="M704.0,130.0 L704.0,188.0" class="dg-line dg-dash" marker-end="url(#data-governance-dgterms-data-governance-1)"/>
+<path d="M935.0,129.5 L762.8,188.0" class="dg-line dg-dash" marker-end="url(#data-governance-dgterms-data-governance-1)"/>
+</svg>
+</div>
+<figcaption>図1 データガバナンスの要素。資産の意味と所有者を記録し、権限・保護・保持のルールを適用して監査する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="data-governance-c2">2. 関連する用語<a class="anchor" href="#data-governance-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-encryption">暗号化</a>:保存時・転送時のデータ保護</li>
+<li><a href="#p-iam-policy-evaluation">IAMポリシーの評価</a>:権限の許可・明示的な拒否</li>
+<li><a href="#p-open-table-formats">オープンテーブル形式</a>:スキーマ変更とデータ管理</li>
+<li><a href="#p-data-quality">データ品質</a>:データの信頼性を評価する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="data-governance-c3">3. 関連サービス<a class="anchor" href="#data-governance-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/lake-formation.html">AWS Lake Formation</a>:データレイクの権限・共有</li>
+<li><a href="../services/glue.html">AWS Glue</a>:技術メタデータとETL</li>
+<li><a href="../services/sagemaker-unified-studio.html">Amazon SageMaker Unified Studio</a>:プロジェクト・ビジネスカタログ・来歴</li>
+<li><a href="../services/macie.html">Amazon Macie</a>:S3内の機密データ検出</li>
+<li><a href="../services/kms.html">AWS Key Management Service (AWS KMS)</a>:暗号化キーの管理</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>/<a href="../services/config.html">AWS Config</a>:監査と構成変更の記録</li>
+</ul>
+</section>
+</article>
 <article class="booklet-page" id="p-hybrid-connectivity">
 <div class="page-head hero">
 <div class="hero-text">
@@ -6879,7 +7416,7 @@ resource "aws_s3_bucket" "logs" {
 <div class="table-wrap"><table class="stack">
 <tr><th>ツール</th><th>目的</th><th>できること</th><th>データの細かさ</th></tr>
 <tr><td data-label="ツール">Cost Explorer</td><td data-label="目的">見える化</td><td data-label="できること">サービス・アカウント・タグ別の費用をグラフで見る。今後の費用の予測、Savings Plans・RIの購入の推奨</td><td data-label="データの細かさ">日単位・月単位(時間単位も有効にできる)</td></tr>
-<tr><td data-label="ツール">Cost and Usage Reports(CUR 2.0)</td><td data-label="目的">見える化</td><td data-label="できること">最も詳しい請求データをS3に出力し、AthenaやQuickSightで分析する</td><td data-label="データの細かさ">時間単位・リソース単位</td></tr>
+<tr><td data-label="ツール">Cost and Usage Reports(CUR 2.0)</td><td data-label="目的">見える化</td><td data-label="できること">最も詳しい請求データをS3に出力し、AthenaやAmazon QuickのQuick Sightで分析する</td><td data-label="データの細かさ">時間単位・リソース単位</td></tr>
 <tr><td data-label="ツール">AWS Budgets</td><td data-label="目的">異常に気づく</td><td data-label="できること">予算を決め、実績や予測がしきい値を超えたら通知する。超えたときにIAMポリシーの適用やEC2の停止などのアクションも実行できる</td><td data-label="データの細かさ">月・四半期・年の予算</td></tr>
 <tr><td data-label="ツール">Cost Anomaly Detection</td><td data-label="目的">異常に気づく</td><td data-label="できること">機械学習で普段と違う費用の増え方を見つけて通知する</td><td data-label="データの細かさ">日単位</td></tr>
 <tr><td data-label="ツール">Compute Optimizer</td><td data-label="目的">無駄を減らす</td><td data-label="できること">EC2・Auto Scalingグループ・EBS・Lambdaなどの使用状況から、適切なサイズを推奨する</td><td data-label="データの細かさ">リソース単位</td></tr>

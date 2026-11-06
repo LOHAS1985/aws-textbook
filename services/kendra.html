@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Kendra | AWS教科書</title>
+<meta name="description" content="企業内の文書を自然言語や意味的な関連性で検索するサービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#01A88D">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/kendra.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat14">機械学習と人工知能</a>
+  <h1>Amazon Kendra</h1>
+  <p class="lead">企業内の文書を自然言語や意味的な関連性で検索するサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  <p class="updated">内容の確認:2026年11月7日</p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Kendra</strong>は、企業内の文書をインデックス化し、自然言語や意味的な関連性を使って検索するマネージドサービスです。FAQや文書リポジトリなど複数のデータソースから情報を取り込み、質問に関連する回答や文書を返します。</p>
+<p><strong>新規顧客は利用を開始できません。</strong>既存利用の機能や移行を学ぶ場合はKendraの仕組みを理解し、新しい生成AI検索を構築する場合はAmazon Bedrock Knowledge Basesなどの現行サービスを検討します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">インデックスとデータソース<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>データソースコネクターなどから文書を取得し、Kendraインデックスへ登録する。</li>
+<li>インデックス同期で元データの追加・変更を取り込む。</li>
+<li>自然言語の質問やキーワードに対し、関連文書や抜粋を検索結果として返す。</li>
+<li>文書の属性で絞り込み、ユーザーやグループごとのアクセス制御を検索結果に反映する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1028 144" style="max-width:1028px;min-width:822px" role="img" aria-label="図1 Amazon Kendraの検索。文書をインデックス化し、自然言語の質問に対して権限を考慮した関連結果を返す。"><defs><marker id="dgservices-kendra-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="source">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">文書ソース</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">S3・業務システム</text>
+</g>
+<g data-node="sync">
+<rect x="289" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="90" text-anchor="middle" class="dg-tb">Kendra</text>
+<text x="354" y="108" text-anchor="middle" class="dg-s">同期・インデックス</text>
+</g>
+<g data-node="query">
+<rect x="589" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="654" y="90" text-anchor="middle" class="dg-t">質問</text>
+<text x="654" y="108" text-anchor="middle" class="dg-s">自然言語</text>
+</g>
+<g data-node="result">
+<rect x="874" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="939" y="90" text-anchor="middle" class="dg-t">検索結果</text>
+<text x="939" y="108" text-anchor="middle" class="dg-s">権限を反映</text>
+</g>
+<path d="M164.0,94.0 L289.0,94.0" class="dg-line" marker-end="url(#dgservices-kendra-1)"/>
+<path d="M589.0,94.0 L419.0,94.0" class="dg-line" marker-end="url(#dgservices-kendra-1)"/>
+<path d="M419.0,94.0 L874.0,94.0" class="dg-line" marker-end="url(#dgservices-kendra-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon Kendraの検索。文書をインデックス化し、自然言語の質問に対して権限を考慮した関連結果を返す。</figcaption>
+</figure>
+
+<h3 id="c2-2">生成AIとの連携<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Kendraの検索結果を検索拡張生成(RAG)のコンテキストとして使う構成があります。Kendra GenAI indexはAmazon Q BusinessやAmazon Bedrock Knowledge Basesとの統合に利用できます。現在新規に構築する場合は、利用可能な現行サービスと機能を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>従業員向けに社内文書・FAQを横断検索する。</li>
+<li>既存のKendra利用環境で自然言語検索を継続する。</li>
+<li>既存のRAG構成で、権限に応じた文書検索を行う。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>インデックスのエディションや容量、データソース同期、利用機能などに応じて料金が発生します。提供状況に制限があるため、既存利用の費用確認や代替サービスへの移行計画では、最新の公式情報を確認してください。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="bedrock.html">Amazon Bedrock</a>:Knowledge Basesなど新規RAG構成の候補</li>
+<li><a href="s3.html">Amazon S3</a>:文書データの保存</li>
+<li><a href="sagemaker-unified-studio.html">Amazon SageMaker Unified Studio</a>:データ・AI資産の発見と共有</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:全文・ベクトル検索の構成</li>
+<li>関連する用語:<a href="../terms/vector-search.html">ベクトル検索</a>、<a href="../terms/data-governance.html">データガバナンス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>企業文書の自然言語・意味検索 → <strong>Amazon Kendra</strong>の役割を理解する。</li>
+<li>Kendraは新規顧客の受付を終了しているため、新規構成では現行の代替サービスを選ぶ。</li>
+<li>検索インデックスが結果を返すことと、利用者に文書の閲覧権限があることを別々に確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Kendraは企業文書をインデックス化して自然言語で検索するサービス。</li>
+<li>新規顧客は利用を開始できないため、既存環境の理解と現行代替の選定を区別する。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 6件・リンク元 1件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon Kendraとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,120 C265.0,120 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-engineer-exam-map.html"><title>用語:DEA-C01の学習範囲</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="124" class="gr-t">DEA-C01の学習範囲</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/bedrock.html"><title>サービス:Amazon Bedrock</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">Amazon Bedrock</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/opensearch.html"><title>サービス:Amazon OpenSearch Service</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon OpenSearch Service</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/sagemaker-unified-studio.html"><title>サービス:Amazon SageMaker Unified Studio</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon SageMaker Unified …</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-governance.html"><title>用語:データガバナンス</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">データガバナンス</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vector-search.html"><title>用語:ベクトル検索</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">ベクトル検索</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">Amazon Kendra</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="bedrock.html"><span class="label">← 前へ</span>Amazon Bedrock</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="sagemaker-ai.html"><span class="label">次へ →</span>Amazon SageMaker AI</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
