@@ -1,0 +1,75 @@
+<!-- title: AWS Application Discovery Service -->
+<!-- category: 移行と転送 -->
+<!-- lead: オンプレミスのサーバー構成や依存関係を収集してクラウド移行を計画するサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Application Discovery Service</strong>は、オンプレミス環境のサーバーやデータベースの使用状況・構成・ネットワーク依存関係を収集し、AWSへの移行計画を支援するサービスです。AWS Migration Hubと連携し、検出したサーバーをアプリケーション単位にまとめて移行状況を追跡できます。</p>
+<p><strong>新規顧客は利用を開始できません。</strong>2025年11月7日以降、新規の利用開始は終了しています。既存顧客は継続して利用できます。新しい移行調査には、後継の<a href="https://aws.amazon.com/transform/" target="_blank" rel="noopener">AWS Transform</a>を検討します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>サーバーの検出方法</h3>
+<ul>
+<li><strong>Agentless Collector</strong>:VMware vCenterに仮想アプライアンスを配置し、対象サーバーの構成・使用状況を収集する。</li>
+<li><strong>Discovery Agent</strong>:個々のサーバーにエージェントを導入して、詳細な構成やネットワーク接続を収集する。</li>
+<li>収集したデータはMigration Hubのホームリージョンに保存される。</li>
+<li>エクスポートしたデータをAmazon AthenaやAmazon Quickで分析できる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 70
+node servers 0 0.5 blue "オンプレミス" "サーバー"
+node discovery 2 0.5 accent "ADS" "構成・依存関係"
+node hub 4.3 0.5 box "Migration Hub" "ホームリージョン"
+node assess 6.4 0.5 ok "分析・計画" "移行候補"
+edge servers discovery
+edge discovery hub
+edge hub assess
+<figcaption>図1 Application Discovery Serviceによる移行前調査。収集した構成・依存関係をMigration Hubに集約し、計画に使う。</figcaption>
+</figure>
+<h3>検出と移行の違い</h3>
+<p>Application Discovery Serviceは、移行元の把握と計画のためのデータ収集を担います。サーバーの複製・起動は行いません。実際のサーバー移行にはAWS Transform MGN、データベース移行には<a href="dms.html">AWS DMS</a>などを要件に応じて使います。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>移行対象のサーバー台数・構成・リソース使用量を把握する。</li>
+<li>サーバー間の通信を分析して、同時に移行するアプリケーション群を決める。</li>
+<li>収集データをコスト見積もりや移行先の設計に使う。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>提供状況や利用できる機能が変更されているため、既存環境の料金と継続利用条件は公式情報で確認します。新規の調査ではAWS Transformなど現行の代替サービスと、その利用料金を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="application-migration.html">AWS Transform MGN</a>:検出後のサーバー複製・移行</li>
+<li><a href="dms.html">AWS DMS</a>:データベースの移行と継続レプリケーション</li>
+<li><a href="datasync.html">AWS DataSync</a>:ファイル・オブジェクトの転送</li>
+<li><a href="athena.html">Amazon Athena</a>/<a href="quick.html">Amazon Quick</a>:収集データの分析</li>
+<li>関連する用語:<a href="../terms/data-engineer-exam-map.html">DEA-C01の学習範囲</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>オンプレミス環境を検出して移行を計画 → <strong>Application Discovery Service</strong>。</li>
+<li>新規顧客は利用を開始できず、後継のAWS Transformが案内されている。</li>
+<li>検出・計画、サーバー移行、データベース移行はそれぞれ別の役割として整理する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Application Discovery Serviceは移行前のサーバー構成・依存関係を集める。</li>
+<li>新規利用は終了しているため、移行計画ではAWS Transformなどの現行サービスを検討する。</li>
+</ul>
+</section>

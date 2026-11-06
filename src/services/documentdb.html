@@ -1,0 +1,75 @@
+<!-- title: Amazon DocumentDB -->
+<!-- category: データベース -->
+<!-- lead: MongoDB互換のドキュメントデータベースをマネージドで利用するサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon DocumentDB</strong>は、JSON形式のドキュメントを保存・検索するMongoDB互換のマネージドデータベースです。MongoDB用のドライバーやAPIを使うアプリケーションをAWS上で実行できます。</p>
+<p>DocumentDBはMongoDBそのものではありません。APIの互換性や利用できる機能はエンジンのバージョンによって異なるため、移行前にアプリケーションが使うコマンド・集計機能・ドライバーを検証します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>ドキュメントモデルとクラスター</h3>
+<ul>
+<li>データを柔軟なJSON形式のドキュメントとして保存し、フィールドや配列を条件に検索する。</li>
+<li>インスタンスベースのクラスターでは、書き込みを処理するインスタンスと読み取りレプリカを組み合わせる。</li>
+<li>Elastic Clustersは、シャーディングによって水平にスケールするワークロード向けの選択肢。</li>
+<li>ストレージはデータ量に応じて拡張され、バックアップや複数AZ構成を利用できる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 70
+node app 0 0.5 blue "アプリ" "MongoDB互換API"
+node writer 1.8 0.5 accent "書き込み" "プライマリ"
+node store 3.8 0.5 box "文書データ" "JSON"
+node reader 5.8 0.5 ok "読み取り" "レプリカ"
+edge app writer
+edge writer store
+edge store reader
+<figcaption>図1 Amazon DocumentDBの概念。アプリケーションは互換APIを使い、読み書きの負荷に合わせてクラスターを構成する。</figcaption>
+</figure>
+<h3>データモデルの選択</h3>
+<p>ドキュメント内のフィールドを柔軟に扱いたいときや、MongoDB互換アプリを移行するときに候補になります。関係データやトランザクションをSQLで扱う場合は<a href="rds.html">Amazon RDS</a>、キーを指定した低遅延アクセスは<a href="dynamodb.html">Amazon DynamoDB</a>と比較します。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>MongoDB互換のアプリケーションをAWSへ移行する。</li>
+<li>商品カタログやユーザープロファイルなど、属性が異なるドキュメントを保存する。</li>
+<li>JSON形式のデータをアプリケーションの読み書きに合わせて検索する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>クラスターのインスタンスやElastic Clustersの処理能力、データストレージ、バックアップ、データ転送などが料金に影響します。必要な読み取り性能、冗長性、保持期間を見積もり、クラスター構成を調整します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="rds.html">Amazon RDS</a>/<a href="dynamodb.html">Amazon DynamoDB</a>:リレーショナル・キー値データとの使い分け</li>
+<li><a href="dms.html">AWS DMS</a>:データベース移行と継続レプリケーション</li>
+<li><a href="backup.html">AWS Backup</a>:データベースのバックアップ管理</li>
+<li><a href="kms.html">AWS KMS</a>:暗号化キーの管理</li>
+<li>関連する用語:<a href="../terms/data-store-selection.html">データストアの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>MongoDB互換のドキュメントデータベース → <strong>Amazon DocumentDB</strong>。</li>
+<li>MongoDBとの機能互換性を前提にせず、アプリが使うAPI・ドライバー・クエリーを移行前に確認する。</li>
+<li>関係データのSQLクエリーやトランザクションが必要なら、RDS・Auroraとの要件を比較する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>DocumentDBはMongoDB互換のドキュメントデータベース。</li>
+<li>データモデルとAPI互換性を確かめて、適切なクラスター方式を選ぶ。</li>
+</ul>
+</section>

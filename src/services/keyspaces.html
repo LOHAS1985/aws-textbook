@@ -1,0 +1,73 @@
+<!-- title: Amazon Keyspaces -->
+<!-- category: データベース -->
+<!-- lead: Apache Cassandra互換のワイドカラムデータベースをサーバーレスで利用するサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Keyspaces (for Apache Cassandra)</strong>は、Apache Cassandra互換のマネージドなワイドカラムデータベースです。Cassandra Query Language (CQL) と既存のCassandraアプリケーション用ツールを使って、サーバーを管理せずにデータを読み書きできます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>サーバーレスのテーブル</h3>
+<ul>
+<li>テーブルの保存容量や処理能力をサービス側が管理し、需要に応じてスケールする。</li>
+<li>オンデマンド容量モードとプロビジョンド容量モードから、トラフィックの予測可能性に合わせて選ぶ。</li>
+<li>CQLでテーブルを定義し、アプリケーションから読み書きする。</li>
+<li>マルチリージョン構成では、複数リージョン間のレプリケーションを設定できる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 70
+node app 0 0.5 blue "アプリ" "CQL"
+node keyspaces 2 0.5 accent "Keyspaces" "サーバーレス"
+node table 4.2 0.5 box "テーブル" "パーティション"
+node region 6.3 0.5 ok "リージョン" "レプリカ"
+edge app keyspaces
+edge keyspaces table
+edge table region dash
+<figcaption>図1 Amazon Keyspacesの概念。アプリケーションがCQLでアクセスし、キー設計に基づいてデータを分散する。</figcaption>
+</figure>
+<h3>アクセスパターンに合わせた設計</h3>
+<p>パーティションキーはデータの分散と検索範囲に影響します。Cassandra互換のワイドカラム設計では、実行するクエリーを先に定め、その検索条件に合う主キーとテーブルを設計します。任意の列を自由に検索する用途には向きません。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>既存のApache Cassandraアプリケーションをマネージド環境へ移行する。</li>
+<li>大量の時系列データやイベントを、キーに基づいて継続的に読み書きする。</li>
+<li>サーバー運用を避けながら、CQL互換のアプリケーションを構築する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>書き込み・読み取り容量、データストレージ、バックアップ、データ転送などが料金に影響します。オンデマンドとプロビジョンドの容量モード、アクセスパターン、保持期間を合わせて見積もります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="dynamodb.html">Amazon DynamoDB</a>:キー値・ドキュメント型のサーバーレスデータベース</li>
+<li><a href="msk.html">Amazon MSK</a>/<a href="kinesis.html">Amazon Kinesis</a>:ストリームの取り込み</li>
+<li><a href="dms.html">AWS DMS</a>:データベース移行とレプリケーション</li>
+<li>関連する用語:<a href="../terms/data-store-selection.html">データストアの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>Apache Cassandra互換のワイドカラムデータベース → <strong>Amazon Keyspaces</strong>。</li>
+<li>パーティションキーとアクセスパターンを先に設計する。任意の条件での検索を前提にしない。</li>
+<li>CQL互換が必要か、DynamoDBなど別のNoSQLデータベースが適するかを要件で比べる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>KeyspacesはCassandra互換のサーバーレスなワイドカラムデータベース。</li>
+<li>クエリーとパーティションキーに合わせてデータモデルを設計する。</li>
+</ul>
+</section>

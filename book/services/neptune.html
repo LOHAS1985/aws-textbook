@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Neptune | AWS教科書</title>
+<meta name="description" content="ノードと関係で表すデータをクエリーするマネージドグラフデータベース">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#C925D1">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/neptune.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat4">データベース</a>
+  <h1>Amazon Neptune</h1>
+  <p class="lead">ノードと関係で表すデータをクエリーするマネージドグラフデータベース</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  <p class="updated">内容の確認:2026年11月7日</p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Neptune</strong>は、エンティティ間の関係をグラフとして保存・検索するマネージドデータベースです。人物・商品・端末などのノードと、その関係を表すエッジをたどるクエリーに適しています。</p>
+<p>Neptune Databaseは運用データを保持してクエリーするエンジンです。大規模なグラフをメモリ内で分析するAmazon Neptune Analyticsとは、用途と実行方法が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">グラフモデルとクエリー言語<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>プロパティグラフではノード・エッジ・属性でデータを表し、GremlinやopenCypherで検索する。</li>
+<li>RDFグラフでは主語・述語・目的語のトリプルでデータを表し、SPARQLで検索する。</li>
+<li>クエリー言語はデータモデルやアプリケーションの要件に合わせて選ぶ。</li>
+<li>リードレプリカ、複数AZ、バックアップなど、運用データベース向けの機能を利用できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 818 179" style="max-width:818px;min-width:654px" role="img" aria-label="図1 グラフデータの概念。利用者と商品をノード、購入をエッジとして表し、関係をたどって検索する。"><defs><marker id="dgservices-neptune-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">利用者</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">ノード</text>
+</g>
+<g data-node="item">
+<rect x="334" y="33" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="54" text-anchor="middle" class="dg-tb">商品</text>
+<text x="399" y="72" text-anchor="middle" class="dg-s">ノード</text>
+</g>
+<g data-node="buys">
+<rect x="334" y="103" width="130" height="52" rx="8" class="dg-box"/>
+<text x="399" y="124" text-anchor="middle" class="dg-t">購入</text>
+<text x="399" y="142" text-anchor="middle" class="dg-s">エッジ</text>
+</g>
+<g data-node="graph">
+<rect x="664" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="729" y="90" text-anchor="middle" class="dg-t">Neptune</text>
+<text x="729" y="108" text-anchor="middle" class="dg-s">関係を探索</text>
+</g>
+<path d="M164.0,101.6 L334.0,121.4" class="dg-line" marker-end="url(#dgservices-neptune-1)"/>
+<path d="M399.0,103.0 L399.0,85.0" class="dg-line" marker-end="url(#dgservices-neptune-1)"/>
+<path d="M164.0,94.0 L664.0,94.0" class="dg-line dg-dash" marker-end="url(#dgservices-neptune-1)"/>
+</svg>
+</div>
+<figcaption>図1 グラフデータの概念。利用者と商品をノード、購入をエッジとして表し、関係をたどって検索する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>不正検知や推薦で、複数段階の関係をたどる。</li>
+<li>顧客・商品・取引の関係をナレッジグラフとして管理する。</li>
+<li>ネットワークや依存関係をグラフとして分析する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Neptune Databaseでは、データベースインスタンス、ストレージ、I/O、バックアップ、転送などが料金に影響します。Neptune Analyticsは別の分析用エンジンで、料金の単位や構成が異なるため、用途に合うサービスを選びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="documentdb.html">Amazon DocumentDB</a>:ドキュメントモデルとの使い分け</li>
+<li><a href="opensearch.html">Amazon OpenSearch Service</a>:全文検索やベクトル検索</li>
+<li><a href="s3.html">Amazon S3</a>:グラフデータセットの保存</li>
+<li>関連する用語:<a href="../terms/data-store-selection.html">データストアの選び方</a>、<a href="../terms/vector-search.html">ベクトル検索</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>複雑な関係をたどるグラフクエリー → <strong>Amazon Neptune</strong>。</li>
+<li>Gremlin・openCypherはプロパティグラフ、SPARQLはRDFグラフのクエリー言語。</li>
+<li>SQLの表形式分析や全文検索とは異なるデータモデルを選ぶ。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Neptuneはノードと関係を扱うマネージドグラフデータベース。</li>
+<li>データモデルに合わせてGremlin・openCypher・SPARQLを使い分ける。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 5件・リンク元 1件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon Neptuneとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-engineer-exam-map.html"><title>用語:DEA-C01の学習範囲</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">DEA-C01の学習範囲</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/documentdb.html"><title>サービス:Amazon DocumentDB</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">Amazon DocumentDB</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/opensearch.html"><title>サービス:Amazon OpenSearch Service</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon OpenSearch Service</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/data-store-selection.html"><title>用語:データストアの選び方</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="140" class="gr-t">データストアの選び方</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vector-search.html"><title>用語:ベクトル検索</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">ベクトル検索</text></a>
+<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">Amazon Neptune</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="keyspaces.html"><span class="label">← 前へ</span>Amazon Keyspaces</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="elasticache.html"><span class="label">次へ →</span>Amazon ElastiCache</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

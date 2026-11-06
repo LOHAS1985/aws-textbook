@@ -1,0 +1,75 @@
+<!-- title: AWS Snow Family -->
+<!-- category: 移行と転送 -->
+<!-- lead: ネットワーク転送が難しい環境でデータを物理デバイスに移すサービス群 -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Snow Family</strong>は、AWS Snowball Edgeなどの物理デバイスを使い、大容量データのオフライン転送やエッジ環境での処理を行うサービス群です。ネットワーク帯域が限られる、接続が不安定、現地でデータを処理する必要がある場合に検討します。</p>
+<p><strong>新規顧客はSnowball Edgeを利用できません。</strong>2025年11月7日以降は既存顧客向けの提供に限られます。Snowconeは2024年11月12日に提供終了し、既存利用のサポート期間も終了しています。最新の提供状況は<a href="https://aws.amazon.com/blogs/storage/aws-snow-device-updates/" target="_blank" rel="noopener">AWS Snowデバイスの公式更新情報</a>を確認してください。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>データ移行とエッジ処理</h3>
+<ul>
+<li>Snowball Edge Storage Optimizedは、大容量データの物理転送を行う。</li>
+<li>Snowball Edge Compute Optimizedは、ネットワーク接続が限られた現場でコンピューティング処理を行う。</li>
+<li>デバイスを注文し、現地でデータをコピーしてAWSへ返送する。AWS側で取り込み後、ジョブの状態を確認する。</li>
+<li>既存顧客でデバイスを利用できるかは、アカウント・リージョン・デバイスモデルの提供条件を確認する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 70
+node source 0 0.5 blue "現地データ" "オンプレミス"
+node device 2 0.5 accent "Snowball Edge" "物理転送"
+node ship 4 0.5 box "輸送" "オフライン"
+node s3 6 0.5 ok "Amazon S3" "取り込み"
+edge source device
+edge device ship
+edge ship s3
+<figcaption>図1 Snowball Edgeによる物理データ転送。デバイスにデータをコピーし、AWSへ返送して取り込む。</figcaption>
+</figure>
+<h3>新規構成での代替</h3>
+<p>ネットワーク経由のファイル転送には<a href="datasync.html">AWS DataSync</a>、物理メディアを使うデータ転送にはAWS Data Transfer Terminal、現場でAWS基盤を動かす場合はAWS Outpostsを検討します。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ネットワーク帯域が限られた拠点から、大量のデータをAWSへ移す。</li>
+<li>接続が断続的な現場でデータを収集・処理する。</li>
+<li>既存のSnowball Edge利用環境を把握し、移行計画を立てる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ジョブの種類・期間、デバイスの配送、データ転送、AWS側の保存先などが料金に影響します。新規顧客は利用を開始できないため、新規移行ではDataSyncやData Transfer Terminalなどの現行代替の料金を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="datasync.html">AWS DataSync</a>:オンラインのファイル・オブジェクト転送</li>
+<li><a href="s3.html">Amazon S3</a>:データ移行先のオブジェクトストレージ</li>
+<li><a href="direct-connect.html">AWS Direct Connect</a>:専用ネットワーク接続</li>
+<li><a href="application-discovery.html">AWS Application Discovery Service</a>:移行前の環境調査</li>
+<li>関連する用語:<a href="../terms/data-engineering-basics.html">データパイプラインの基礎</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>ネットワークが制約される環境でのオフライン転送 → <strong>Snowball Edge</strong>の用途を理解する。</li>
+<li>Snowball Edgeは新規顧客向けに提供されないため、新規構成では現行の代替を選ぶ。</li>
+<li>Snow Familyの名称があっても、Snowconeなど提供終了済みのデバイスを新規構成に含めない。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Snow Familyは物理デバイスを使うオフライン転送・エッジ処理の選択肢。</li>
+<li>新規顧客はSnowball Edgeを利用できないため、AWSの最新案内に沿って代替を選ぶ。</li>
+</ul>
+</section>
