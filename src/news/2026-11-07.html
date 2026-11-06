@@ -1,0 +1,94 @@
+<!-- title: Security HubのSBOMインベントリ・EC2のImdsV1Enabledメトリクス・Lambda耐久関数の既定の上限引き上げ -->
+<!-- category: 2026年11月 -->
+<!-- lead: Security Hubで、組織全体のEC2・コンテナイメージ・Lambdaに入っているソフトウェアの一覧(SBOM)を確認できるようになりました。 -->
+<section class="chapter">
+<h2>1. 今日のまとめ</h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">Security Hub:SBOMインベントリ</a></td><td>Inspectorが作るSBOMをもとに、組織全体のソフトウェアの一覧を画面とAPIで確認できる</td><td><a href="../services/security-hub.html">Security Hub</a>、<a href="../services/inspector.html">Inspector</a></td></tr>
+<tr><td><a href="#n2">EC2:ImdsV1EnabledメトリクスでIMDSv2への移行を追跡</a></td><td>IMDSv1がまだ有効なインスタンスを、CloudWatchのメトリクスとアラームで把握できる</td><td><a href="../services/ec2.html">EC2</a>、<a href="../services/cloudwatch.html">CloudWatch</a></td></tr>
+<tr><td><a href="#n3">Lambda耐久関数:既定の上限を引き上げ</a></td><td>実行中の耐久実行数やAPIの上限が、多くのリージョンで5〜10倍になった</td><td><a href="../services/lambda.html">Lambda</a></td></tr>
+<tr><td><a href="#n4">AWS assistant:Amazon Q Developerの名称変更</a></td><td>コンソールのAmazon Q Developerが「AWS assistant」という名前になった</td><td><a href="../services/systems-manager.html">Systems Manager</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2>2. 注目の発表</h2>
+<h3 id="n1">Security Hub:SBOMインベントリ</h3>
+<p>SBOM(Software Bill of Materials)は、あるシステムにどんなソフトウェア部品(パッケージ)がどのバージョンで入っているかを書き出した「部品表」です。脆弱性が見つかったとき、「その部品を使っているのはどこか」をすぐ調べるために使います。Security Hubは、Inspectorが EC2インスタンス・ECRのコンテナイメージ・Lambda関数 について作るSBOMを集め、組織全体のパッケージ一覧として表示します。パッケージごとにバージョン・種類・入っているリソースの数が分かり、アカウントやリージョンで絞り込めます。リソースの詳細画面では、そのリソースに入っているソフトウェアを一覧でき、検出結果の優先度を判断する材料になります。APIでも取得できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node src 0 0 blue "EC2・ECR・Lambda" "入っている" "パッケージ"
+node insp 1.6 0 box "Inspector" "SBOMを作る"
+node hub 3.2 0 accent "Security Hub" "組織全体の" "SBOMインベントリ"
+edge src insp "スキャン"
+edge insp hub "自動で集約"
+<figcaption>図1 InspectorのSBOMがSecurity Hubに集まる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>新しい脆弱性が公表されたとき、該当のパッケージを使っているリソースを、アカウントをまたいで1か所で探せます。</dd>
+<dt>試験・実務への影響</dt><dd>Security Hub Essentialsに追加料金なしで含まれ、新しい有効化の操作は要りません。Inspectorが有効なところで自動的に表示されます。「脆弱性のスキャンはInspector、結果の集約はSecurity Hub」という役割分担を押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/security-hub.html">Security Hub</a>、<a href="../services/inspector.html">Inspector</a>、<a href="../services/ecr.html">ECR</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/security-hub-sbom-inventory/">AWS Security Hub now provides an SBOM inventory for your compute resources</a>(2026-11-06)</dd>
+</dl>
+
+<h3 id="n2">EC2:ImdsV1EnabledメトリクスでIMDSv2への移行を追跡</h3>
+<p>EC2のインスタンスメタデータサービス(IMDS)は、インスタンスが自分の情報や一時的な認証情報を取得する窓口です。IMDSv1は単純なリクエストだけで取得でき、アプリの脆弱性を突かれると認証情報を盗まれるおそれがあるため、トークンを使うIMDSv2への移行が推奨されています。今回、IMDSv1がまだ有効なインスタンスを示す ImdsV1Enabled というCloudWatchメトリクスが追加されました。ダッシュボードやアラームで、移行が済んでいないインスタンスを追跡できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "自分で全インスタンスの" "設定を調べる"
+node after 1.6 0 ok "これから" "メトリクスと" "アラームで追跡"
+node done 3.2 0 accent "IMDSv2" "への移行を完了"
+edge before after "今回の発表"
+edge after done
+<figcaption>図2 移行状況の確認が自動化される</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アカウントやリージョンをまたいで、独自のツールを作らずに移行の漏れを見つけ、優先順位を付けられます。</dd>
+<dt>試験・実務への影響</dt><dd>すべてのリージョンで追加料金なしで使えます。「IMDSv2を必須にする」設定とあわせて、セキュリティ対策の定番として覚えておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ec2.html">EC2</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/ec2-imdsv1enabled-cloudwatch-metric/">Amazon EC2 now publishes ImdsV1Enabled CloudWatch metric</a>(2026-11-05)</dd>
+</dl>
+
+<h3 id="n3">Lambda耐久関数:既定の上限を引き上げ</h3>
+<p>Lambdaの耐久関数(durable functions)は、最長1年かかる複数ステップの処理を、途中経過の保存(チェックポイント)や自動リトライを使って確実に進める機能です。待っている間は計算料金がかかりません。今回、既定のクォータ(上限)が引き上げられました。米国東部(バージニア北部)・米国西部(オレゴン)・欧州(アイルランド)以外のリージョンでの新しい値は次のとおりで、この3リージョンはその2倍です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "実行中 100万" "開始 300回/秒"
+node after 1.6 0 ok "これから" "実行中 500万" "開始 3,000回/秒"
+node req 3.2 0 blue "上限の" "引き上げ申請" "が不要に"
+edge before after "今回の発表"
+edge after req
+<figcaption>図3 既定の上限が上がった(上限は代表的な2項目)</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>注文処理や文書処理などで、申請なしにより多くの実行を並行して進められます。状態の確認・一覧・履歴取得・停止のAPIも10倍の頻度で呼べるので、ダッシュボードやスクリプトでの監視がしやすくなります。</dd>
+<dt>試験・実務への影響</dt><dd>実行中の数は100万から500万、チェックポイントの取得などは毎秒1,000から10,000、コールバック関連は毎秒300から3,000に上がりました。クォータが原因のスロットリングは、Service Quotasで確認して調整するのが基本です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/lambda.html">Lambda</a>、<a href="../services/step-functions.html">Step Functions</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/lambda-durable-functions-default-quotas/">AWS Lambda durable functions increases default execution and API quotas</a>(2026-11-05)</dd>
+</dl>
+
+<h3 id="n4">AWS assistant:Amazon Q Developerの名称変更</h3>
+<p>AWSマネジメントコンソールとコンソールのモバイルアプリで使えた Amazon Q Developer が、AWS assistant という名前になりました。アカウントの状況に合わせた案内や操作の支援といった機能は同じで、名前だけを分かりやすくしたものです。現在は無料で提供され、すでにPro階層を契約している人は、そのままPro階層の機能が使えます。世界中で利用できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "Amazon Q Developer" "(コンソール内)"
+node after 1.6 0 ok "これから" "AWS assistant" "機能は同じ"
+edge before after "名称の変更"
+<figcaption>図4 コンソールの支援機能の名前が変わった</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>コンソールの中の「AWSの運用を手伝ってくれる機能」だと、名前から分かるようになります。</dd>
+<dt>試験・実務への影響</dt><dd>古い教材や設問の「Amazon Q Developer」は、コンソール内ではこのAWS assistantを指します。サービス名の変更は出題文の読み替えで迷いやすいので、覚えておくと安心です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/systems-manager.html">Systems Manager</a>、<a href="../services/trusted-advisor.html">Trusted Advisor</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/q-developer-renamed-aws-assistant/">Amazon Q Developer in console is now the AWS assistant</a>(2026-11-05)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2>3. その他の発表</h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/rds-oracle-kerberos-self-managed-ad/">RDS for Oracle:自社運用のActive DirectoryでKerberos認証</a>:AWS Managed Microsoft ADとの信頼関係を作らなくても、オンプレミスなどの既存のADに直接参加させて認証できるようになりました(<a href="../services/rds.html">RDS</a>、<a href="../services/directory-service.html">Directory Service</a>)。</li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-fsx-for-lustre-intelligent-tiering-16x-higher-metadata-iops">FSx for Lustre:メタデータIOPSが16倍に</a>:Intelligent-Tieringの新しいファイルシステムで、メタデータのIOPSの上限が12,000から192,000になりました(<a href="../services/fsx.html">FSx</a>)。</li>
+</ul>
+</section>
