@@ -4,7 +4,8 @@
 # 流れ: 1. main を origin に合わせる 2. worktree の変更を commit し main にリベース
 #       3. main に squash でまとめ、ビルドして book/ を含めて commit 4. push(main と gh-pages)
 #       5. worktree とブランチを削除
-# 作業ブランチには book/(生成物)を含めない。コミットメッセージは「YYYY-MM-DD 修正内容」(日付は自動)
+# 作業ブランチには book/(生成物)を含めない。直接編集するCSS・JS・アイコン等は保持する。
+# コミットメッセージは「YYYY-MM-DD 修正内容」(日付は自動)
 set -e
 name="$1"
 msg="$2"
@@ -13,15 +14,21 @@ primary="$(cd "$(dirname "$0")/.." && cd "$(git rev-parse --git-common-dir)/.." 
 wt="$primary/../aws-textbook-wt/$name"
 [ -d "$wt" ] || { echo "worktree がありません: $wt" >&2; exit 1; }
 subject="$(date +%Y-%m-%d) $msg"
-trailer="Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>"
+trailer="Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
 if ! python -c "" 2>/dev/null; then
   echo "Python が見つからないためビルドできません(公開を中止します)" >&2
   exit 1
 fi
 
+# build.py が生成するページだけを戻し、手作業で編集するアセットは残す
+restore_generated_book() {
+  git checkout -- book/checklist.html book/exercises book/index.html book/links.html book/news book/print \
+    book/services book/terms book/usecases book/js/glossary.js book/sw.js
+}
+
 # 1. main を origin に合わせる(main 側に未コミットの変更があれば中止する)
 cd "$primary"
-git checkout -- book
+restore_generated_book
 if [ -n "$(git status --porcelain)" ]; then
   echo "main に未コミットの変更があります。先にコミットか退避をしてください" >&2
   git status --short >&2
@@ -31,8 +38,9 @@ git pull --ff-only origin main
 
 # 2. worktree の変更を commit し、最新の main にリベースする
 cd "$wt"
-git checkout -- book
+restore_generated_book
 git add -A -- . ':!book'
+git add -A -- book/css/style.css book/icons book/js/quiz.js book/js/sim.js book/js/site.js book/manifest.webmanifest
 git diff --cached --quiet || git commit -q -m "$subject" -m "$trailer"
 if ! git rebase main; then
   echo "リベースで衝突しました。$wt で解消して git rebase --continue を実行してから、もう一度このスクリプトを実行してください" >&2

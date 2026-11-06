@@ -6,27 +6,28 @@
 - 返答を送る前に、日本語になっているかを確認する
 
 ## 目的
-AWS(SOA-C03を中心とした認定資格)の学習用に、HTMLの教科書を作る。
-「サービス」「用語」「運用シナリオ」の3種類のページで構成する。運用シナリオは、構成を自分で組み立てる演習と、答えの解説を1ページにまとめたもの(フォルダ名・slugは usecases のまま。統合前の構成演習のURL book/exercises/ は build.py が転送ページを作る)。
+AWS認定資格(SOA-C03・DEA-C01を中心)の学習用に、HTMLの教科書を作る。
+「サービス」「用語」「運用シナリオ」「問題集」の4種類のページで構成する。運用シナリオは、構成を自分で組み立てる演習と答えの解説を1ページにまとめたもの(フォルダ名・slugは usecases のまま。統合前の構成演習のURL book/exercises/ は build.py が転送ページを作る)。問題集は試験ごとに作り、シナリオ型の選択問題と解説を掲載する。
 
 ## 対象読者
 AWS初学者〜AWS認定資格(SAA程度)の学習者
 
 ## フォルダ構成
-- src/{services,terms,usecases}/{slug}.html … 各ページの本文(編集するのはこちら)
+- src/{services,terms,usecases,questions}/{slug}.html … 各ページの本文(編集するのはこちら)
 - src/{terms,usecases}/_template.html … 新規ページのひな形(`_` で始まるファイルはビルド対象外)
 - build.py … `python build.py` で src/ から book/ を生成する(コレクションの並び順・カテゴリ順もここで定義)
 - diagrams.py … 本文中の図の記法をSVGに変換する
 - checks.py … ビルド時に本文を検査し、WARNING を出す(メタ情報・章立て・リンク切れ・太字の数・6章の項目数・図の番号・表記ゆれ・古い名称・書かない表示)。WARNING はすべて解消してから公開する。表記の決まりや古い名称を増やすときは、checks.py の NOTATION・STALE に追加する
-- book/index.html … トップ(サービス・用語・運用シナリオ・公式リンクへの入口)
+- book/index.html … トップ(サービス・用語・運用シナリオ・問題集・公式リンクへの入口)
 - book/icons/services/{slug}.svg … サービスのアイコン(AWS公式の Architecture Icons 2026年7月版の48px SVGを、改変せずファイル名だけ slug にしたもの)。サービス一覧・各サービスページの見出し・公式リンク・トップの検索結果に build.py が表示する。サービスを追加したら公式パッケージ(https://aws.amazon.com/jp/architecture/icons/)から同じ形でコピーする。専用アイコンがないサービス(Copilot・Database Encryption SDK・STS・SAM・Kiro・IPAM・DNS Firewall)は所属カテゴリの公式カテゴリアイコンを使っている
 - src/links.html・src/links.json … 公式リンク(book/links.html)の本文と、サービスごとの公式ページ(製品ページ・ドキュメント)のパス。サービスを追加したら links.json にも追加する(URLは実際にアクセスして確認する)
 - 試験前チェックリスト.md … 試験の直前に見直す項目(利用者が直接編集する)。build.py が book/checklist.html(トップページの入口から開くページ)に変換する。書けるのは `#`(1行目のページ名。括弧内は一言説明)・`##`(項目)・`- `(箇条書き)・段落・`**太字**`・`` `コード` ``・`[名前](URL)`。公開サイトの完全なURL(https://lohas1985.github.io/aws-textbook/…)は相対パスに直して出力する
-- book/{services,terms,usecases}/index.html … 各コレクションの目次(カテゴリ別)
-- book/{services,terms,usecases}/{slug}.html … 各ページ(生成物。直接編集しない)
+- book/{services,terms,usecases,questions}/index.html … 各コレクションの目次(カテゴリ別)
+- book/{services,terms,usecases,questions}/{slug}.html … 各ページ(生成物。直接編集しない)
 - book/css/style.css … 共通スタイル(全ページで共有。これは直接編集する)
 - book/icons/・book/manifest.webmanifest … ホーム画面用アイコンとWebアプリ設定(アイコンは `python tools/make_icons.py book/icons` で再生成)
 - book/js/sim.js … 運用シナリオの構成演習(タブ・答え合わせ・自由構成)と、一覧への演習の結果の表示(直接編集する)
+- book/js/quiz.js … 問題集の採点と、試験一覧への最高得点・挑戦回数の表示(直接編集する)
 - book/sw.js … オフラインで読むための Service Worker(生成物。直接編集しない)。build.py が book/ の全ファイルとその内容のハッシュを書き込み、利用者のブラウザは初回に全ファイル(約2.8MB)を保存し、更新時は変わったファイルだけを取り直す。book/ に置くファイルを増やすと自動で保存対象になる(大きいまとめ冊子 book/print/ は除く)
 - book/js/site.js … 全ページ共通の読みやすさ・使いやすさの機能(直接編集する)。ヘッダーの検索ボタンと表示設定(テーマ・文字サイズ・読み上げの速さ。localStorage に保存)、ページ見出しの下の「読み上げ」「印刷」ボタン(読み上げは表示中の内容だけを読む。運用シナリオの解説は「解説を読む」を開いたときだけ読む)、本文中のサービス・用語へのリンクのポップアップ(マウスを重ねる/スマホは1回タップで説明、2回目で移動)
 - book/js/glossary.js … ポップアップの内容(サービス・用語の title と lead。build.py が作る生成物)
@@ -91,7 +92,15 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - 選択肢の表示順は表示のたびに並べ替わり、結果は閲覧者のブラウザ(localStorage)にだけ保存される
 - まとめ冊子(印刷用)には2章(問いと答え)を載せない
 
-(運用シナリオの構成演習のほかに、単独の確認問題・クイズは載せない)
+### 問題集(questions)
+1. 問題集の使い方 2. 問題(試験分野ごと) 3. 採点結果
+- 試験ごとに1ページを作り、カテゴリ名・slug・タイトルに試験IDを使う(例: `questions/dea-c01.html`)
+- DEA-C01の問題は公式試験ガイドの分野・配点に沿って配置する。分野名・比率は build.py の `DEA_EXAM_DOMAINS` で定義する
+- 問題文は実務の状況・制約・目標を示すシナリオ型にし、サービスの暗記だけで解けないよう要件から選ばせる。出題形式・難易度・文章量は [問題集の作成方針.md](問題集の作成方針.md) を参照する
+- 1問あたり選択肢は4つを基本とし、単一選択または「2つ選択」を明記する。正解だけでなく不正解の各選択肢も、要件を満たさない理由を解説する
+- 選択式の問いは `<section class="quiz-q" data-answer="a" data-type="single">` で記述する。複数選択では正解値をカンマで区切り、`data-type="multiple"` とする。各問いにラジオボタンまたはチェックボックス、`<details class="quiz-answer">` の答えと解説を置く
+- JavaScript(book/js/quiz.js)で一括採点し、得点・挑戦回数を閲覧者のブラウザー(localStorage)に保存する。JavaScriptが無効でも選択肢と各問題の答え・解説を確認できるようにする
+- `checks.py` で選択肢数・正解数・解説の有無を検査する。問題数の変更時は試験ガイドと配分を確認する
 
 ## 図解
 - 仕組み・構成・比較・判断フローなど、文章だけでは分かりにくい箇所には必ず図を入れる
@@ -120,7 +129,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
   `git grep -n -E "^(<<<<<<< |>>>>>>> |=======$)" -- src book`
   と、ビルドの WARNING が新しく増えていないこと(checks.py の FORBIDDEN が、競合マーカー・コードブロックの囲み・作業の痕跡・仮の文言を WARNING にする。出たら必ず直す)
 - 手元に未コミットの変更があるまま `git pull --autostash` を使うと、変更が衝突してマーカーが残ることがある。pull 後は `git status` で `UU`(未解決)が無いことを確認する。deploy.sh を使えない環境では、先に変更をコミットしてから `git pull --rebase origin refs/heads/main` を行い、book/ はビルドし直す
-- HTMLは素のHTML+CSSのみ(外部ライブラリなし)。JavaScriptは build.py が出力する一覧の絞り込み、トップページの全ページ検索、オフライン用の Service Worker(sw.js と各ページでの登録)、運用シナリオの構成演習(book/js/sim.js)、共通の読みやすさ・使いやすさの機能(book/js/site.js)だけに使う。site.js の機能は JavaScript が動くときだけボタンを出し、動かなくても本文はそのまま読めるようにする。JavaScriptが動かない環境でも、運用シナリオは選択肢と解説を含む全章が表示されて読めるようにする
+- HTMLは素のHTML+CSSのみ(外部ライブラリなし)。JavaScriptは build.py が出力する一覧の絞り込み、トップページの全ページ検索、オフライン用の Service Worker(sw.js と各ページでの登録)、運用シナリオの構成演習(book/js/sim.js)、問題集の採点(book/js/quiz.js)、共通の読みやすさ・使いやすさの機能(book/js/site.js)に使う。site.js の機能は JavaScript が動くときだけボタンを出し、動かなくても本文はそのまま読めるようにする。JavaScriptが動かない環境でも、運用シナリオは全章を読め、問題集は選択肢と答え・解説を確認できるようにする
 - サービスの一覧はサービス名だけのコンパクトな表示(lead は表示しないが、絞り込みの検索対象には含める)
 - 全ページに「目次へ戻る」「前へ/次へ」のリンクを付ける(build.py が自動で付ける)
 - コレクション間のリンクは相対パス(例: 用語ページから `../services/vpc.html`)

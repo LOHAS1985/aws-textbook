@@ -165,6 +165,15 @@ COLLECTIONS = [
         ],
     },
     {
+        "key": "questions",
+        "label": "問題集",
+        "desc": "試験別のシナリオ型問題で、AWSの知識と選択理由を確認",
+        "categories": ["DEA-C01", "SOA-C03"],
+        "search": "試験名・サービス・分野で絞り込み",
+        "script": "quiz.js",
+        "order": ["dea-c01"],
+    },
+    {
         # src/news/YYYY-MM-DD.html を毎日1件、クラウドの定期エージェントが追加する。
         # category は「YYYY年M月」。新しい日付から順に並べる
         "key": "news",
@@ -185,6 +194,13 @@ EXAM_DOMAINS = [
     ("デプロイ、プロビジョニング、オートメーション", 22),
     ("セキュリティとコンプライアンス", 16),
     ("ネットワークとコンテンツ配信", 18),
+]
+
+DEA_EXAM_DOMAINS = [
+    ("データ取り込み・変換", 34),
+    ("データストア管理", 26),
+    ("データ運用・サポート", 22),
+    ("データセキュリティ・ガバナンス", 18),
 ]
 
 TOC_MIN_H3 = 5  # 小見出し(h3)がこの数以上あるページにだけページ内目次を付ける
@@ -546,6 +562,8 @@ def cat_style(col, category):
 def render_collection_index(col, pages, loaded):
     parts = [head(f"{col['label']} | {SITE_TITLE}", "../", col["desc"]), header("../", col["key"]), "<main>\n",
              f'<div class="page-head"><h1>{col["label"]}</h1><p class="lead">{col["desc"]}</p></div>\n']
+    if col["key"] == "questions":
+        parts.append('<p class="cat-desc" id="quiz-storage-note" hidden>このブラウザーでは保存済みの成績を読み込めません。</p>\n')
     if col["key"] in BOOKLET_KEYS and pages:
         parts.append(f'<p class="booklet-link"><a href="../print/{col["key"]}.html">まとめて印刷・PDFに保存'
                      f'(全{len(pages)}ページを1つに)</a></p>\n')
@@ -580,7 +598,8 @@ def render_collection_index(col, pages, loaded):
             parts.append('<ul class="card-list">\n')
         for p in items:
             # 一覧には表示しない lead・カテゴリも検索対象に含める
-            keys = search_keys(p, category)
+            extra = question_search_text(p) if col["key"] == "questions" else ""
+            keys = search_keys(p, category, extra)
             if compact:
                 tip = html.escape(p["title"] + (":" + plain(p["lead"]) if p["lead"] else ""))
                 inner = (f'{service_icon(p["slug"], "../", 28)}'
@@ -629,6 +648,11 @@ def search_keys(p, category, extra=""):
     """一覧の絞り込み・全ページ検索の対象。表示しない lead・カテゴリ・本文からリンクしているサービス名も含める
     (運用シナリオは lead がないので、使うサービスの名前で探せるようにする)。"""
     return norm(" ".join([p["title"], p["slug"], p.get("date", ""), category, plain(p["lead"]), " ".join(p.get("uses", [])), extra]))
+
+
+def question_search_text(p):
+    """問題集では、問題文・選択肢・解説の語句でも試験ページを検索できるようにする。"""
+    return plain(p["body"])
 
 
 # 検索で同じものとして扱う言い換え(略称・英語名・日本語の言い方)。
@@ -813,7 +837,7 @@ __HELPERS__
 
 
 def render_top(loaded):
-    desc = "AWS認定(SOA-C03を中心)の学習用に、サービス・用語・運用シナリオを図解でまとめた教科書"
+    desc = "AWS認定(SOA-C03・DEA-C01)の学習用に、サービス・用語・運用シナリオ・問題集をまとめた教科書"
     parts = [head(SITE_TITLE, "", desc), header(""), "<main>\n",
              f'<div class="page-head"><h1>{SITE_TITLE}</h1><p class="lead">{desc}</p></div>\n']
 
@@ -822,6 +846,8 @@ def render_top(loaded):
     for c in COLLECTIONS:
         for p in loaded[c["key"]]:
             h3 = " ".join(plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S))
+            if c["key"] == "questions":
+                h3 += " " + question_search_text(p)
             icon = c["key"] == "services" and (ICON_DIR / f'{p["slug"]}.svg').exists()
             index.append({"t": p["title"], "c": c["label"], "u": f'{c["key"]}/{p["slug"]}.html',
                           "i": f'icons/services/{p["slug"]}.svg' if icon else "",
@@ -857,6 +883,15 @@ def render_top(loaded):
         parts.append(f'  <li><a href="usecases/index.html#cat{i}"><span class="name">{html.escape(name)}</span>'
                      f'<span class="badge">{weight}%</span></a></li>\n')
     parts.append("</ol>\n</section>\n")
+
+    if loaded.get("questions"):
+        parts.append('<section class="top-section">\n<h2>試験分野から学ぶ(DEA-C01)</h2>\n'
+                     '<p class="cat-desc">出題分野ごとの問題を解き、選択肢の解説から関連するサービスや用語を確認できます。</p>\n'
+                     '<ol class="domain-list">\n')
+        for i, (name, weight) in enumerate(DEA_EXAM_DOMAINS, 1):
+            parts.append(f'  <li><a href="questions/dea-c01.html#domain{i}"><span class="name">'
+                         f'{html.escape(name)}</span><span class="badge">{weight}%</span></a></li>\n')
+        parts.append("</ol>\n</section>\n")
 
     # 最新のニュース(新しい日付から5件)
     if loaded["news"]:

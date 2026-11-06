@@ -22,6 +22,7 @@ CHAPTERS = {
     "terms": ["1. 詳しい説明", "2. 関連する用語", "3. 関連サービス"],
     "usecases": ["1. やりたいこと", "2. 構成を組み立てる", "3. 構成図", "4. 使うサービスと役割", "5. 構築の流れ",
                  "6. ポイント・注意点"],
+    "questions": ["1. 問題集の使い方", "2. 問題", "3. 採点結果"],
 }
 
 # 表記の統一:(使わない表記の正規表現, 使う表記)
@@ -135,6 +136,8 @@ def check_pages(collections, loaded, extra_pages, out_dir, warnings):
         _check_style(raw, where, warnings)
         if key == "usecases":
             _check_exercise(raw, where, warnings)
+        elif key == "questions":
+            _check_question_paper(raw, where, warnings)
     for path, raw in extra_pages.items():
         _check_links(path, raw, targets, out_dir, path, warnings)
         _check_style(raw, path, warnings)
@@ -208,6 +211,35 @@ def _check_exercise(raw, where, warnings):
                 warnings.append(f"{where}: {n}問目の data-short「{short}」が図の枠からはみ出します")
     for nid in blanks.keys() - used:
         warnings.append(f"{where}: 図の空欄「{nid}」に対応する問いがありません")
+
+
+def _check_question_paper(raw, where, warnings):
+    """問題集の問い数・選択肢・正解数・解説を確認する。"""
+    questions = re.findall(r'<section class="quiz-q"([^>]*)>(.*?)</section>', raw, re.S)
+    if not questions:
+        warnings.append(f"{where}: 問題(quiz-q)がありません")
+        return
+    if where == "questions/dea-c01" and len(questions) != 10:
+        warnings.append(f"{where}: DEA-C01の問題は10問にしてください(現在{len(questions)}問)")
+    for n, (attrs, inner) in enumerate(questions, 1):
+        answer = re.search(r'data-answer="([^"]+)"', attrs)
+        kind = re.search(r'data-type="(single|multiple)"', attrs)
+        choices = re.findall(r'<input\b[^>]*type="(radio|checkbox)"[^>]*value="([^"]+)"', inner)
+        values = [value for _, value in choices]
+        if not answer or not kind:
+            warnings.append(f"{where}: {n}問目に data-answer または data-type がありません")
+            continue
+        correct = answer.group(1).split(",")
+        expected_type = "radio" if kind.group(1) == "single" else "checkbox"
+        if (len(choices) < 3 or len(choices) > 5 or len(values) != len(set(values))
+                or any(input_type != expected_type for input_type, _ in choices)):
+            warnings.append(f"{where}: {n}問目は選択肢を3〜5個にし、選択方式を統一してください")
+        if (len(correct) != len(set(correct)) or not set(correct) <= set(values)
+                or (kind.group(1) == "single" and len(correct) != 1)
+                or (kind.group(1) == "multiple" and len(correct) < 2)):
+            warnings.append(f"{where}: {n}問目の正解(data-answer)が選択肢と一致しません")
+        if len(re.findall(r'<details class="quiz-answer">', inner)) != 1:
+            warnings.append(f"{where}: {n}問目に答えと解説(quiz-answer)を1つ付けてください")
 
 
 def _check_style(raw, where, warnings):

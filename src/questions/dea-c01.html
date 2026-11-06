@@ -1,0 +1,296 @@
+<!-- title: DEA-C01 問題集 -->
+<!-- category: DEA-C01 -->
+<!-- lead: データエンジニアの実務シナリオから、要件に合うAWSの構成や機能を選ぶ10問 -->
+<section class="chapter">
+<h2>1. 問題集の使い方</h2>
+<p>各問題の要件を読み、最も適切な方法を選んでください。「2つ選択」とある問題は、要件を満たす選択肢を2つ選びます。採点すると正解と解説が表示され、最高得点と挑戦回数はこのブラウザーに保存されます。</p>
+<p>出題分野は<a href="https://docs.aws.amazon.com/aws-certification/latest/data-engineer-associate-01/data-engineer-associate-01.html" target="_blank" rel="noopener">AWS公式のDEA-C01試験ガイド</a>に基づいています。JavaScriptが無効な場合は、各問題の「答えと解説を確認」を開いて答え合わせができます。</p>
+<p class="quiz-best" id="quiz-best" hidden></p>
+<nav class="quiz-domains" aria-label="出題分野">
+<a href="#domain1">データ取り込み・変換 34%</a>
+<a href="#domain2">データストア管理 26%</a>
+<a href="#domain3">データ運用・サポート 22%</a>
+<a href="#domain4">データセキュリティ・ガバナンス 18%</a>
+</nav>
+</section>
+
+<section class="chapter">
+<h2>2. 問題</h2>
+<form class="quiz-paper" id="quiz-form" data-quiz="dea-c01">
+<div class="quiz-domain">
+<h3 id="domain1">分野1 データ取り込み・変換 (34%)</h3>
+
+<section class="quiz-q" data-answer="a" data-type="single">
+<h4>問1</h4>
+<p class="quiz-stem">オンプレミスの販売データベースをAWSへ移行し、移行後も発生する更新をデータレイクへ継続的に反映します。アプリケーションの改修を避け、初期データの全件ロードと以降の変更の取り込みを行う方法はどれですか。</p>
+<fieldset class="quiz-options">
+<legend>最も適切な方法を1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q1" value="a"> AWS DMSでフルロードと変更データキャプチャ(CDC)を実行し、Amazon S3をターゲットにする</label></li>
+<li><label><input type="radio" name="q1" value="b"> AWS Glueクローラーを定期実行し、データベースの変更をS3へコピーする</label></li>
+<li><label><input type="radio" name="q1" value="c"> AWS DataSyncでデータベースのトランザクションログをS3へ同期する</label></li>
+<li><label><input type="radio" name="q1" value="d"> AWS DMSのフルロードだけを実行し、移行後の更新は対象にしない</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>AWS DMSのフルロードとCDCを組み合わせると、既存データを転送した後もデータベースの変更を継続して複製できます。S3ターゲットにすれば、後続の分析パイプラインへデータを渡せます。</p>
+<ul>
+<li><strong>B:</strong> Glueクローラーはスキーマの検出とカタログ登録に使う機能で、データベースの変更を複製しません。</li>
+<li><strong>C:</strong> DataSyncはファイル転送向けであり、データベースのトランザクションログをCDCとして処理しません。</li>
+<li><strong>D:</strong> フルロードだけでは、その後に発生する更新がデータレイクへ反映されません。</li>
+</ul>
+<p><a href="../services/dms.html">AWS DMS</a> / <a href="../services/glue.html">AWS Glue</a> / <a href="../services/datasync.html">AWS DataSync</a></p>
+</details>
+</section>
+
+<section class="quiz-q" data-answer="b" data-type="single">
+<h4>問2</h4>
+<p class="quiz-stem">注文イベントを複数の分析アプリケーションへ低レイテンシーで配信します。各アプリケーションは同じイベントを独立して読み取り、障害時には直近48時間のデータを再処理する必要があります。適切な構成はどれですか。</p>
+<fieldset class="quiz-options">
+<legend>最も適切な方法を1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q2" value="a"> Amazon Data Firehoseから各アプリケーションへ直接配信し、読み取り位置を個別に指定する</label></li>
+<li><label><input type="radio" name="q2" value="b"> Amazon Kinesis Data Streamsの保持期間を48時間以上に設定し、コンシューマーに拡張ファンアウトを使う</label></li>
+<li><label><input type="radio" name="q2" value="c"> Amazon SQSキューを1つ作り、すべてのアプリケーションでメッセージを共有して読み取る</label></li>
+<li><label><input type="radio" name="q2" value="d"> Amazon EventBridgeルールでイベントを振り分け、過去48時間の任意の位置から再生する</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>Kinesis Data Streamsは複数のコンシューマーが同じストリームを読み取れるため、各アプリケーションが独立して処理できます。保持期間を要件以上に設定すれば、保持中のレコードを再処理できます。拡張ファンアウトはコンシューマーごとに読み取りスループットを分けます。</p>
+<ul>
+<li><strong>A:</strong> Data Firehoseはバッファリングして送信先へデータを配信するサービスで、各アプリケーションが読み取り位置を管理するストリームではありません。</li>
+<li><strong>C:</strong> SQSの1つのキューは、通常、複数のコンシューマーにメッセージを分配します。同じ全メッセージを各アプリケーションへ独立して配る要件には合いません。</li>
+<li><strong>D:</strong> EventBridgeはイベントのルーティングに適していますが、ストリームの保持期間と読み取り位置を使った再処理の要件には合いません。</li>
+</ul>
+<p><a href="../services/kinesis.html">Amazon Kinesis</a> / <a href="../services/data-firehose.html">Amazon Data Firehose</a> / <a href="../services/sqs.html">Amazon SQS</a> / <a href="../services/eventbridge.html">Amazon EventBridge</a></p>
+</details>
+</section>
+
+<section class="quiz-q" data-answer="c" data-type="single">
+<h4>問3</h4>
+<p class="quiz-stem">Amazon S3に毎日追加されるParquet形式のファイルをAWS Glueジョブで処理しています。正常終了したジョブが次回実行時に処理済みファイルを再読込しないようにし、処理の進行状態をジョブ単位で管理したいと考えています。使う機能はどれですか。</p>
+<fieldset class="quiz-options">
+<legend>最も適切な方法を1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q3" value="a"> Glueクローラーのスケジュールを設定し、検出したファイル名を処理済みとして管理する</label></li>
+<li><label><input type="radio" name="q3" value="b"> Amazon Athenaのパーティション射影を有効にし、Glueジョブの実行履歴を保存する</label></li>
+<li><label><input type="radio" name="q3" value="c"> Glueジョブのジョブブックマークを有効にし、データソースの処理状態を追跡する</label></li>
+<li><label><input type="radio" name="q3" value="d"> AWS DMSのCDCタスクを作成し、S3オブジェクトの更新順を記録する</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>Glueのジョブブックマークは、ジョブのデータソースで処理したデータの状態を保持し、次回実行時に新しいデータを識別するために使います。状態を正しく保存するには、ジョブをブックマーク対応で実装し、正常終了時に状態をコミットします。</p>
+<ul>
+<li><strong>A:</strong> クローラーはスキーマやパーティションの検出に使います。ETLジョブの処理済み状態を管理する機能ではありません。</li>
+<li><strong>B:</strong> パーティション射影はAthenaがパーティション情報を組み立てる方法であり、Glueジョブの処理状態を記録しません。</li>
+<li><strong>D:</strong> DMSのCDCはデータベース変更の複製に使います。S3ファイルを処理した状態の管理には使いません。</li>
+</ul>
+<p><a href="../services/glue.html">AWS Glue</a> / <a href="../services/athena.html">Amazon Athena</a> / <a href="../services/dms.html">AWS DMS</a></p>
+</details>
+</section>
+</div>
+
+<div class="quiz-domain">
+<h3 id="domain2">分野2 データストア管理 (26%)</h3>
+
+<section class="quiz-q" data-answer="a" data-type="single">
+<h4>問4</h4>
+<p class="quiz-stem">あるテナントのイベント書き込みが全体の大半を占め、DynamoDBの同一パーティションキーにリクエストが集中しています。書き込みを分散しつつ、そのテナントの一定期間のイベントを取得したい場合に適した設計はどれですか。</p>
+<fieldset class="quiz-options">
+<legend>最も適切な設計を1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q4" value="a"> パーティションキーにテナントIDと計算可能なシャード番号を含め、ソートキーにイベント時刻を使う</label></li>
+<li><label><input type="radio" name="q4" value="b"> パーティションキーをテナントIDだけにし、全テナントで共通のソートキーを使う</label></li>
+<li><label><input type="radio" name="q4" value="c"> パーティションキーにイベント時刻だけを使い、テナントIDを属性として保存する</label></li>
+<li><label><input type="radio" name="q4" value="d"> 各項目にランダムなUUIDを割り当て、テナントIDでテーブル全体をスキャンする</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>テナントIDにシャード番号を組み合わせる書き込みシャーディングで、同じテナントの高い書き込み負荷を複数のパーティションキーへ分散できます。ソートキーに時刻を置くと、各シャードで期間を指定したクエリができます。対象テナントの全件を集める場合は、該当シャードへのクエリを並行して実行します。</p>
+<ul>
+<li><strong>B:</strong> テナントIDだけでは負荷の高いテナントの書き込みが同じパーティションキーに集中します。</li>
+<li><strong>C:</strong> 時刻だけでは同じ時間帯の書き込みが集中しやすく、テナント単位の取得にも効率的ではありません。</li>
+<li><strong>D:</strong> UUIDは項目を分散しますが、テナント単位で検索するにはテーブル全体のスキャンが必要になります。</li>
+</ul>
+<p><a href="../services/dynamodb.html">Amazon DynamoDB</a></p>
+</details>
+</section>
+
+<section class="quiz-q" data-answer="b" data-type="single">
+<h4>問5</h4>
+<p class="quiz-stem">企業の分析チームが、複数年分の売上データを使ってディメンション表とファクト表を結合するSQLを頻繁に実行します。複数のBI利用者が同時にダッシュボードを更新し、データウェアハウスとして運用したい場合、適切な保存先はどれですか。</p>
+<fieldset class="quiz-options">
+<legend>最も適切なサービスを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q5" value="a"> Amazon DynamoDBに各行を保存し、結合処理をアプリケーション側で実装する</label></li>
+<li><label><input type="radio" name="q5" value="b"> Amazon Redshiftをデータウェアハウスとして使い、SQL分析とBI接続を行う</label></li>
+<li><label><input type="radio" name="q5" value="c"> Amazon S3にCSVを置き、すべての分析でファイルをダウンロードして結合する</label></li>
+<li><label><input type="radio" name="q5" value="d"> Amazon SQSに売上レコードを保存し、分析のたびにキューから取得する</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>Redshiftは、SQLによる集計や複数表の結合を行うデータウェアハウスです。BIツールから接続し、分析向けにモデル化したデータへ繰り返しクエリを実行できます。</p>
+<ul>
+<li><strong>A:</strong> DynamoDBはキーを使った高速な項目アクセスに適したNoSQLデータベースで、多数の表を結合する分析基盤ではありません。</li>
+<li><strong>C:</strong> S3はデータレイクに適した保存先ですが、ファイルを毎回ダウンロードして利用者ごとに結合する方法は、共有データウェアハウスの要件に合いません。</li>
+<li><strong>D:</strong> SQSはメッセージのキューイングと処理の分離に使うサービスで、分析データを長期保存してSQL検索する用途ではありません。</li>
+</ul>
+<p><a href="../services/redshift.html">Amazon Redshift</a> / <a href="../services/dynamodb.html">Amazon DynamoDB</a> / <a href="../services/s3.html">Amazon S3</a> / <a href="../services/sqs.html">Amazon SQS</a></p>
+</details>
+</section>
+
+<section class="quiz-q" data-answer="c" data-type="single">
+<h4>問6</h4>
+<p class="quiz-stem">Amazon S3上の分析テーブルを複数のエンジンから参照します。データの追加・更新と並行クエリを行い、テーブルのスキーマ進化や一貫性のあるスナップショットを利用したい場合、適した方法はどれですか。</p>
+<fieldset class="quiz-options">
+<legend>最も適切な方法を1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q6" value="a"> S3のCSVファイルを直接更新し、ファイル名をGlue Data Catalogのテーブル名にする</label></li>
+<li><label><input type="radio" name="q6" value="b"> Amazon DynamoDBの項目をS3へ定期エクスポートし、単一のParquetファイルとして共有する</label></li>
+<li><label><input type="radio" name="q6" value="c"> Apache Iceberg形式のテーブルをS3に作成し、対応するカタログとクエリエンジンで管理する</label></li>
+<li><label><input type="radio" name="q6" value="d"> S3オブジェクトのタグを表のトランザクションログとして使い、更新履歴を管理する</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>Apache Icebergは、スナップショットやスキーマ進化を扱うオープンテーブル形式です。S3上のテーブルを対応するカタログとクエリエンジンから利用することで、ファイル単位の管理より一貫性のあるテーブル操作ができます。</p>
+<ul>
+<li><strong>A:</strong> CSVファイル自体には、並行更新を調整するテーブルのトランザクション管理やスナップショット機能がありません。</li>
+<li><strong>B:</strong> 定期エクスポートはデータ複製の方法ですが、単一ファイルにするだけではスキーマ進化やテーブルのスナップショット管理を実現しません。</li>
+<li><strong>D:</strong> S3オブジェクトタグは分類や属性付与に使うもので、テーブルの更新履歴やトランザクションログにはなりません。</li>
+</ul>
+<p><a href="../terms/open-table-formats.html">オープンテーブル形式</a> / <a href="../services/s3.html">Amazon S3</a> / <a href="../services/glue.html">AWS Glue</a></p>
+</details>
+</section>
+</div>
+
+<div class="quiz-domain">
+<h3 id="domain3">分野3 データ運用・サポート (22%)</h3>
+
+<section class="quiz-q" data-answer="a" data-type="single">
+<h4>問7</h4>
+<p class="quiz-stem">AWS GlueのETL処理で、出力前に顧客IDの欠損と金額の範囲外データを検出したいと考えています。ルールに基づいてデータ品質を評価し、結果を確認できるようにする機能はどれですか。</p>
+<fieldset class="quiz-options">
+<legend>最も適切な機能を1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q7" value="a"> AWS Glue Data Qualityで品質ルールを定義し、ETLデータを評価する</label></li>
+<li><label><input type="radio" name="q7" value="b"> Amazon MacieでS3オブジェクトの機密情報を検出し、金額を検証する</label></li>
+<li><label><input type="radio" name="q7" value="c"> AWS CloudTrailでGlueジョブのAPI呼び出しを記録し、出力値の範囲を検査する</label></li>
+<li><label><input type="radio" name="q7" value="d"> AWS Glueクローラーで列の型を推定し、欠損行と範囲外行を自動で除外する</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>Glue Data Qualityでは、データ品質ルールを定義し、Glueジョブ内のデータを評価できます。欠損や値の条件をルールとして表現し、実行結果を確認できます。</p>
+<ul>
+<li><strong>B:</strong> MacieはS3の機密データ検出に使います。業務データの欠損や数値範囲を検査する機能ではありません。</li>
+<li><strong>C:</strong> CloudTrailはAWS APIの操作履歴を記録します。ETL出力の各行を品質ルールで評価しません。</li>
+<li><strong>D:</strong> クローラーはスキーマやパーティションを推定します。品質ルールを評価して該当行を除外する機能ではありません。</li>
+</ul>
+<p><a href="../services/glue.html">AWS Glue</a> / <a href="../services/macie.html">Amazon Macie</a> / <a href="../services/cloudtrail.html">AWS CloudTrail</a></p>
+</details>
+</section>
+
+<section class="quiz-q" data-answer="d" data-type="single">
+<h4>問8</h4>
+<p class="quiz-stem">毎晩実行するAWS Glueジョブが失敗したとき、ジョブの実行状態を定期的に問い合わせるコードを用意せず、運用チームへ通知したいと考えています。適切な方法はどれですか。</p>
+<fieldset class="quiz-options">
+<legend>最も適切な方法を1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q8" value="a"> EventBridgeで毎分Glueの実行APIを呼び出し、応答をログに保存する</label></li>
+<li><label><input type="radio" name="q8" value="b"> CloudTrailの管理イベントから、Glueジョブの失敗を表すログ行を検索する</label></li>
+<li><label><input type="radio" name="q8" value="c"> Glueジョブの出力テーブルをクローラーで確認し、行数が変わらなければ通知する</label></li>
+<li><label><input type="radio" name="q8" value="d"> Glueジョブ状態変更イベントがFAILEDになった場合に一致するEventBridgeルールを作り、通知先へ送る</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>Glueはジョブ実行状態の変更イベントをEventBridgeへ送ります。失敗状態に一致するルールを作成し、通知先へルーティングすれば、定期的な状態確認コードを実装せずに失敗を検知できます。</p>
+<ul>
+<li><strong>A:</strong> 定期実行によるポーリングが必要で、状態確認コードも追加するため、要件に合いません。</li>
+<li><strong>B:</strong> CloudTrailはAPI操作の監査に使います。ジョブ状態変更のイベントを直接ルーティングする方法ではありません。</li>
+<li><strong>C:</strong> 出力テーブルの行数だけでは、ジョブの失敗と正常終了を区別できません。クローラーも実行状態の通知機能ではありません。</li>
+</ul>
+<p><a href="../services/eventbridge.html">Amazon EventBridge</a> / <a href="../services/glue.html">AWS Glue</a> / <a href="../services/cloudtrail.html">AWS CloudTrail</a></p>
+</details>
+</section>
+</div>
+
+<div class="quiz-domain">
+<h3 id="domain4">分野4 データセキュリティ・ガバナンス (18%)</h3>
+
+<section class="quiz-q" data-answer="a,b" data-type="multiple">
+<h4>問9</h4>
+<p class="quiz-stem">AWS Glueジョブが、カスタマーマネージドKMSキーで暗号化されたS3オブジェクトを読み取ります。ジョブには専用IAMロールを使い、必要なデータとキーにだけアクセスさせます。必要な権限を2つ選んでください。</p>
+<fieldset class="quiz-options">
+<legend>要件を満たす選択肢を2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q9" value="a"> IAMロールに、対象のS3プレフィックスへのs3:GetObjectを許可する</label></li>
+<li><label><input type="checkbox" name="q9" value="b"> IAMロールのkms:Decryptを許可し、KMSキーのキーポリシーでもそのロールの使用を許可する</label></li>
+<li><label><input type="checkbox" name="q9" value="c"> IAMロールに、すべてのS3バケットへのs3:*と、すべてのKMSキーへのkms:*を許可する</label></li>
+<li><label><input type="checkbox" name="q9" value="d"> Glueスクリプトにアクセスキーを保存し、ジョブの実行ロールを使わない</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: A、B</strong></p>
+<p>S3オブジェクトの読み取りには対象オブジェクトへのs3:GetObjectが必要です。SSE-KMSで暗号化されたオブジェクトを復号するにはkms:Decryptも必要で、IAMポリシーとKMSキーポリシーの両方でロールの利用が許可されている必要があります。</p>
+<ul>
+<li><strong>C:</strong> 全バケット・全キーへのワイルドカード権限は最小権限の要件に反します。</li>
+<li><strong>D:</strong> 長期アクセスキーをスクリプトに保存する方法は避け、Glueジョブに割り当てたIAMロールから一時的な認証情報を使います。</li>
+</ul>
+<p><a href="../services/iam.html">AWS Identity and Access Management</a> / <a href="../services/s3.html">Amazon S3</a> / <a href="../services/kms.html">AWS KMS</a></p>
+</details>
+</section>
+
+<section class="quiz-q" data-answer="c" data-type="single">
+<h4>問10</h4>
+<p class="quiz-stem">複数のS3バケットに保存されたデータから、個人情報や認証情報などの機密データを検出し、調査対象となるオブジェクトを把握したいと考えています。適切なサービスはどれですか。</p>
+<fieldset class="quiz-options">
+<legend>最も適切なサービスを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q10" value="a"> AWS Lake Formationでテーブルへのアクセス権を設定し、S3オブジェクト内の文字列を分類する</label></li>
+<li><label><input type="radio" name="q10" value="b"> Amazon GuardDutyで脅威を検出し、S3の全オブジェクトから個人情報を検索する</label></li>
+<li><label><input type="radio" name="q10" value="c"> Amazon MacieでS3の機密データ検出を行い、検出結果を確認する</label></li>
+<li><label><input type="radio" name="q10" value="d"> AWS CloudTrailでS3のAPI操作を記録し、オブジェクト内容を解析する</label></li>
+</ol>
+</fieldset>
+<details class="quiz-answer">
+<summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>Amazon MacieはS3に保存された機密データを検出し、機密データ検出結果を提供します。個人情報や認証情報を含む可能性があるオブジェクトを特定する用途に適しています。</p>
+<ul>
+<li><strong>A:</strong> Lake Formationはデータレイクのカタログ化やアクセス制御に使います。オブジェクトの内容を調べて機密データを検出するサービスではありません。</li>
+<li><strong>B:</strong> GuardDutyは脅威検出サービスです。S3オブジェクト内の機密データを分類する機能とは異なります。</li>
+<li><strong>D:</strong> CloudTrailはS3の操作履歴を記録できますが、オブジェクトの内容を解析しません。</li>
+</ul>
+<p><a href="../services/macie.html">Amazon Macie</a> / <a href="../services/lake-formation.html">AWS Lake Formation</a> / <a href="../services/guardduty.html">Amazon GuardDuty</a> / <a href="../services/cloudtrail.html">AWS CloudTrail</a></p>
+</details>
+</section>
+</div>
+
+<div class="quiz-actions">
+<button type="submit" id="quiz-submit" hidden>採点する</button>
+<button type="reset" id="quiz-reset" hidden>選択をリセット</button>
+</div>
+</form>
+<noscript><p>JavaScriptが無効な場合は、各問題の「答えと解説を確認」を開いて答え合わせをしてください。</p></noscript>
+</section>
+
+<section class="chapter">
+<h2>3. 採点結果</h2>
+<p class="quiz-result" id="quiz-result" role="status" aria-live="polite">採点後に結果が表示されます。</p>
+</section>
