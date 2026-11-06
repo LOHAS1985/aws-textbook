@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Transfer Family | AWS教科書</title>
+<meta name="description" content="SFTP・FTPS・AS2などでファイルをS3やEFSへ転送するマネージドサービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#01A88D">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat15">移行と転送</a>
+  <h1>AWS Transfer Family</h1>
+  <p class="lead">SFTP・FTPS・AS2などでファイルをS3やEFSへ転送するマネージドサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  <p class="updated">内容の確認:2026年11月7日</p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Transfer Family</strong>は、SFTP・FTPS・FTP・AS2やブラウザを使ったファイル転送をマネージドで提供するサービスです。転送先にAmazon S3またはAmazon EFSを使い、既存の利用者や取引先の転送手順を大きく変えずにAWSストレージと連携できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">プロトコルと保存先<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>SFTP・FTPS・FTPで既存のファイル転送クライアントと接続する。</li>
+<li>AS2で企業間のファイル連携を行う。</li>
+<li>S3バケットまたはEFSファイルシステムへ直接転送する。</li>
+<li>ユーザーごとにIAMロールやアクセス範囲を設定し、保存先のパスを制限する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 968 200" style="max-width:968px;min-width:774px" role="img" aria-label="図1 Transfer Familyのファイル連携。既存の転送プロトコルからS3やEFSにファイルを保存し、AWSサービスで後続処理する。"><defs><marker id="dgservices-transfer-family-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="client">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">取引先・利用者</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">SFTP・AS2</text>
+</g>
+<g data-node="transfer">
+<rect x="289" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="90" text-anchor="middle" class="dg-tb">AWS Transfer</text>
+<text x="354" y="108" text-anchor="middle" class="dg-s">認証・転送</text>
+</g>
+<g data-node="s3">
+<rect x="559" y="33" width="130" height="52" rx="8" class="dg-box"/>
+<text x="624" y="54" text-anchor="middle" class="dg-t">Amazon S3</text>
+<text x="624" y="72" text-anchor="middle" class="dg-s">データレイク</text>
+</g>
+<g data-node="efs">
+<rect x="559" y="124" width="130" height="52" rx="8" class="dg-box"/>
+<text x="624" y="146" text-anchor="middle" class="dg-t">Amazon EFS</text>
+<text x="624" y="164" text-anchor="middle" class="dg-s">ファイル共有</text>
+</g>
+<g data-node="process">
+<rect x="814" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="879" y="90" text-anchor="middle" class="dg-t">分析・処理</text>
+<text x="879" y="108" text-anchor="middle" class="dg-s">Glue・Athena</text>
+</g>
+<path d="M164.0,94.0 L289.0,94.0" class="dg-line" marker-end="url(#dgservices-transfer-family-1)"/>
+<path d="M419.0,85.6 L559.0,67.4" class="dg-line" marker-end="url(#dgservices-transfer-family-1)"/>
+<path d="M419.0,107.5 L559.0,136.5" class="dg-line" marker-end="url(#dgservices-transfer-family-1)"/>
+<path d="M689.0,67.9 L814.0,85.1" class="dg-line" marker-end="url(#dgservices-transfer-family-1)"/>
+</svg>
+</div>
+<figcaption>図1 Transfer Familyのファイル連携。既存の転送プロトコルからS3やEFSにファイルを保存し、AWSサービスで後続処理する。</figcaption>
+</figure>
+
+<h3 id="c2-2">後続処理との連携<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>S3に届いたファイルは、S3イベント通知やEventBridgeを起点にLambda・Step Functions・Glueなどで処理できます。アップロード後のスキーマ確認、ウイルス検査、重複排除、隔離先への振り分けなどをパイプラインに含めます。</p>
+
+<h3 id="c2-3">セキュリティと監視<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>認証方式、ユーザーごとのIAMロール、VPC内外のエンドポイント、暗号化、アクセスログを構成します。転送プロトコルによってネットワークポートや接続条件が異なるため、取引先のファイアウォールと合わせて確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>取引先からSFTPやAS2で受け取るファイルをS3へ集約する。</li>
+<li>既存のファイル転送ワークフローを保ったまま保存先をAWSに移行する。</li>
+<li>顧客や社内ユーザーへS3内のファイルを安全に配布する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>サーバーエンドポイントの稼働時間、転送量、プロトコル・機能の利用などに応じて料金が発生します。S3・EFSの保存とリクエスト、データ転送、後続処理の料金も考慮します。利用量や必要なプロトコル、公開範囲に応じて構成を選びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:ファイル転送先・データレイク</li>
+<li><a href="efs.html">Amazon EFS</a>:ファイルシステムの転送先</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:アップロード後のイベント処理</li>
+<li><a href="lambda.html">AWS Lambda</a>/<a href="glue.html">AWS Glue</a>:後続の変換・処理</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:API操作の監査</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>既存のSFTP・FTPS・AS2ファイル連携をマネージド化 → <strong>AWS Transfer Family</strong>。</li>
+<li>ファイル転送とデータベース移行は別の要件。データベース間の移行・CDCにはAWS DMSを検討する。</li>
+<li>ユーザー単位のIAMロールとS3/EFSのアクセス範囲を最小権限にする。</li>
+<li>ファイルが届いた後の検証・変換・分析は、イベント連携やETLサービスで構成する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Transfer Familyは既存のファイル転送プロトコルをAWSストレージへ接続する。</li>
+<li>S3/EFSへの保存、ユーザーごとのアクセス制御、後続処理を組み合わせる。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 6件・リンク元 2件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Transfer Familyとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-engineer-exam-map.html"><title>用語:DEA-C01の学習範囲</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">DEA-C01の学習範囲</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-store-selection.html"><title>用語:データストアの選び方</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">データストアの選び方</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/glue.html"><title>サービス:AWS Glue</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Glue</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/efs.html"><title>サービス:Amazon EFS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon EFS</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/eventbridge.html"><title>サービス:Amazon EventBridge</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EventBridge</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon S3</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">AWS Transfer Family</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(2)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="dms.html"><span class="label">← 前へ</span>AWS Database Migration Service</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="ses.html"><span class="label">次へ →</span>Amazon Simple Email Service(SES)</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
