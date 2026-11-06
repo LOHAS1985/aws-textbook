@@ -1,0 +1,75 @@
+<!-- title: AWS Glue DataBrew -->
+<!-- category: 分析 -->
+<!-- lead: コードを書かずにデータを調査・整形するビジュアルなデータ準備ツール -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Glue DataBrew</strong>は、データを画面上で調査・プロファイルし、コードを書かずに整形・標準化するデータ準備ツールです。操作をレシピとして保存し、データセットに繰り返し適用できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>プロファイルと変換レシピ</h3>
+<ul>
+<li>データの値の分布や欠損、型の不整合をプロファイルで確認する。</li>
+<li>画面で選んだ変換をレシピとして記録し、プレビューを見ながら順序を調整する。</li>
+<li>欠損値・異常値の処理、形式統一、列の分割・結合などの変換を行う。</li>
+<li>作成したレシピをジョブとして実行し、処理済みデータをS3などへ出力する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 70
+node src 0 0.5 blue "入力データ" "S3など"
+node profile 1.6 0.5 accent "プロファイル" "分布・欠損を確認"
+node recipe 3.2 0.5 box "レシピ" "変換手順"
+node out 4.8 0.5 ok "出力データ" "S3・分析へ"
+edge src profile
+edge profile recipe
+edge recipe out
+<figcaption>図1 DataBrewのデータ準備。プロファイルでデータを把握し、変換レシピを作成して処理済みデータを出力する。</figcaption>
+</figure>
+
+<h3>Glueとの連携</h3>
+<p>DataBrewはビジュアルな探索・準備を行うAWS Glueの機能です。複雑な分岐や大規模な処理をコードで管理する場合はAWS Glue ETLジョブを使い、品質評価ルールを自動実行する場合はGlue Data Qualityを組み合わせます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>分析担当者がCSVやデータレイクの値を調査して、欠損・不正値を見つける。</li>
+<li>異なる形式の日付やカテゴリ値を統一し、分析用データを作る。</li>
+<li>レシピを定期ジョブとして実行し、同じ変換を再利用する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>プロジェクトやレシピジョブの実行など、利用する機能と処理量に応じて課金されます。S3の保存料金や、出力先の分析サービスの料金も考慮します。プロファイルの対象データ量やジョブの実行頻度を調整します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="glue.html">AWS Glue</a>:Data Catalog、ETLジョブ、Data Quality</li>
+<li><a href="s3.html">Amazon S3</a>:入力・出力データの保存</li>
+<li><a href="athena.html">Amazon Athena</a>:準備済みデータのSQL分析</li>
+<li><a href="redshift.html">Amazon Redshift</a>:準備済みデータの分析</li>
+<li>関連する用語:<a href="../terms/data-quality.html">データ品質</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>コードを書かずにデータを可視化・整形し、レシピを再利用 → <strong>AWS Glue DataBrew</strong>。</li>
+<li>プロファイルはデータの傾向を理解するもの、品質ルールは合否基準を継続的に検査するもの。</li>
+<li>変換のプレビューだけでなく、ジョブ出力のスキーマ・件数・品質を確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>DataBrewは画面操作でデータを探索・整形するAWS Glueのツール。</li>
+<li>変換手順をレシピに保存し、ジョブで繰り返し実行できる。</li>
+</ul>
+</section>

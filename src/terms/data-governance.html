@@ -1,0 +1,62 @@
+<!-- title: データガバナンス -->
+<!-- category: セキュリティ・認証 -->
+<!-- lead: データの所有者・意味・利用権限・保護・ライフサイクルを組織的に管理する枠組み -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>データガバナンスは、組織がデータを安全かつ適切に発見・共有・利用するための役割、規則、管理方法です。所有者、用途、機密区分、品質、保持期間、アクセス条件を明らかにし、ルールをシステムに反映します。</p>
+<h3>カタログ・分類・来歴</h3>
+<ul>
+<li><strong>技術カタログ</strong>:データベース、列、型、場所など、機械処理に必要なメタデータ。</li>
+<li><strong>ビジネスカタログ</strong>:意味、所有者、機密区分、利用条件など、利用者の判断を助ける情報。</li>
+<li><strong>データリネージ</strong>:データの取得元、変換、出力先、利用先のつながり。</li>
+<li><strong>データ品質</strong>:完全性や妥当性など、利用目的を満たすかの評価。</li>
+</ul>
+
+<h3>アクセス制御と共有</h3>
+<p>IAMのロールベース制御(RBAC)は利用者の役割で権限を決め、タグベース制御(TBAC)は資産や主体に付けたタグで権限を管理します。属性ベース制御(ABAC)は利用者・資産・環境の属性を組み合わせて判断します。いずれも最小権限、明確な所有者、アクセスの定期レビューが重要です。</p>
+<p>データ共有では、共有先の用途・期間・利用可能な列や行を定めます。Redshiftのデータ共有やLake Formationの共有を使う場合も、共有の設定だけでなく、IAM・データベース権限・基盤側のアクセス制御を合わせて確認します。</p>
+
+<h3>プライバシー・暗号化・データ主権</h3>
+<ul>
+<li>個人情報や機密情報を検出し、マスキング・匿名化・削除などの扱いを定める。</li>
+<li>保存時と転送時の暗号化、キー管理、職務分離を構成する。</li>
+<li>法令や契約で許可されたリージョンにデータを保存・処理し、複製・バックアップ先も制御する。</li>
+<li>保持期限、S3 Lifecycle、バージョニング、DynamoDB TTL、法的削除要件を組み合わせる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 80
+node owner 0 0.5 blue "所有者・利用者" "目的・責任"
+node catalog 1.7 0.5 accent "カタログ" "意味・分類・来歴"
+node policy 3.5 0.5 box "ポリシー" "IAM・Lake Formation"
+node data 5.3 0.5 ok "データ" "暗号化・保持"
+edge owner catalog
+edge catalog policy
+edge policy data
+node audit 3.5 1.8 box "監査・品質確認"
+edge policy audit dash
+edge data audit dash
+<figcaption>図1 データガバナンスの要素。資産の意味と所有者を記録し、権限・保護・保持のルールを適用して監査する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="encryption.html">暗号化</a>:保存時・転送時のデータ保護</li>
+<li><a href="iam-policy-evaluation.html">IAMポリシーの評価</a>:権限の許可・明示的な拒否</li>
+<li><a href="open-table-formats.html">オープンテーブル形式</a>:スキーマ変更とデータ管理</li>
+<li><a href="data-quality.html">データ品質</a>:データの信頼性を評価する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/lake-formation.html">AWS Lake Formation</a>:データレイクの権限・共有</li>
+<li><a href="../services/glue.html">AWS Glue</a>:技術メタデータとETL</li>
+<li><a href="../services/sagemaker-unified-studio.html">Amazon SageMaker Unified Studio</a>:プロジェクト・ビジネスカタログ・来歴</li>
+<li><a href="../services/macie.html">Amazon Macie</a>:S3内の機密データ検出</li>
+<li><a href="../services/kms.html">AWS Key Management Service (AWS KMS)</a>:暗号化キーの管理</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>/<a href="../services/config.html">AWS Config</a>:監査と構成変更の記録</li>
+</ul>
+</section>

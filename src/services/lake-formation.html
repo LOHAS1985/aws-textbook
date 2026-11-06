@@ -1,0 +1,86 @@
+<!-- title: AWS Lake Formation -->
+<!-- category: 分析 -->
+<!-- lead: データレイクとカタログのアクセス権を一元管理するサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Lake Formation</strong>は、Amazon S3上のデータレイクとAWS Glue Data Catalogのメタデータへのアクセスを一元的に管理するサービスです。データベース・テーブルだけでなく、列・行・セル単位のアクセス制御や、アカウントをまたぐデータ共有に対応します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>権限の仕組み</h3>
+<p>Lake Formationの権限はIAMやS3バケットポリシーを置き換えるものではなく、それらに加えてデータレイク内の細かいアクセスを制御します。利用者には、サービスAPIを呼ぶIAM権限と、テーブルデータを読むLake Formation権限の両方が必要です。実際にアクセスできる範囲は、関係する権限の組み合わせで決まります。</p>
+<ul>
+<li>データベース・テーブル単位の権限に加え、列・行・セルを絞るデータフィルターを設定できる。</li>
+<li>Lake Formationのタグをデータベースやテーブルに付け、タグに基づいて権限を付与できる。</li>
+<li>ハイブリッドアクセスモードでは、対象のデータベースやテーブルごとにLake Formation権限を段階的に導入できる。</li>
+</ul>
+
+<h3>データ共有</h3>
+<p>Data Catalogと基盤データを、AWSアカウント・組織をまたいで共有できます。共有先はAWS Resource Access Managerなどを介してカタログ資産を利用します。共有設定だけでなく、共有先のIAM権限やデータ側の権限も適切に整えます。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node roles 0 0.5 blue "IAMロール" "サービスの呼び出し"
+node lf 1.5 0.5 accent "Lake Formation" "テーブル権限"
+node cat 3 0 box "Data Catalog" "メタデータ"
+node data 3 1.5 ok "Amazon S3" "実データ"
+node query 4.5 0.5 blue "Athena・EMR" "許可範囲を読む"
+edge roles lf
+edge lf cat
+edge lf data
+edge cat query
+edge data query
+<figcaption>図1 データレイクのアクセス。IAMでサービス操作を許可し、Lake Formationでカタログとデータに対する細粒度の権限を管理する。</figcaption>
+</figure>
+
+<h3>監査と統合</h3>
+<p>Athena、AWS Glue、Amazon EMR、Redshift Spectrumなどの分析サービスと連携します。AWS CloudTrailでAPI操作やデータアクセスに関するイベントを記録し、アクセス状況の監査に利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>部門ごとに異なるS3上のデータを一元管理し、分析サービスから安全に利用させる。</li>
+<li>個人情報の列を隠す、または行条件で閲覧データを制限する。</li>
+<li>タグを用いてデータ分類とアクセス権をまとめて管理する。</li>
+<li>他アカウントの分析チームに、元データを複製せずにデータを共有する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Lake Formationの機能料金のほか、基盤となるAmazon S3、AWS Glue Data Catalog、AWS RAM、クエリ・処理サービスなどの料金が発生する場合があります。共有やクエリの利用料がどのアカウントに発生するかを構成ごとに確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="glue.html">AWS Glue</a>:カタログ、クローラー、ETLジョブ</li>
+<li><a href="s3.html">Amazon S3</a>:データレイクの実データ</li>
+<li><a href="athena.html">Amazon Athena</a>:データレイクのクエリ</li>
+<li><a href="redshift.html">Amazon Redshift</a>:Spectrumやデータ共有との連携</li>
+<li><a href="macie.html">Amazon Macie</a>:S3内の機密データ・個人情報の検出</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:操作やアクセスの監査</li>
+<li>関連する用語:<a href="../terms/data-governance.html">データガバナンス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>データレイクのカタログとデータに対する細粒度の権限管理 → <strong class="em">Lake Formation</strong>。</li>
+<li>IAM権限はサービスAPIへのアクセス、Lake Formation権限はデータ資産へのアクセスを制御する。</li>
+<li>列・行単位の制限やタグベースの権限を使い、最小権限にする。</li>
+<li>データ共有では、共有元・共有先の設定と各アカウントの権限を確認する。</li>
+<li>既存のIAM・S3権限を保ちながら段階導入する選択肢 → ハイブリッドアクセスモード。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Lake FormationはデータレイクとGlue Data Catalogへのアクセスを一元管理する。</li>
+<li>IAMと連携し、列・行・タグ単位の制御やアカウント間共有を提供する。</li>
+</ul>
+</section>

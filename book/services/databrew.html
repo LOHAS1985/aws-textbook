@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Glue DataBrew | AWS教科書</title>
+<meta name="description" content="コードを書かずにデータを調査・整形するビジュアルなデータ準備ツール">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat13">分析</a>
+  <h1>AWS Glue DataBrew</h1>
+  <p class="lead">コードを書かずにデータを調査・整形するビジュアルなデータ準備ツール</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  <p class="updated">内容の確認:2026年11月7日</p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Glue DataBrew</strong>は、データを画面上で調査・プロファイルし、コードを書かずに整形・標準化するデータ準備ツールです。操作をレシピとして保存し、データセットに繰り返し適用できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">プロファイルと変換レシピ<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>データの値の分布や欠損、型の不整合をプロファイルで確認する。</li>
+<li>画面で選んだ変換をレシピとして記録し、プレビューを見ながら順序を調整する。</li>
+<li>欠損値・異常値の処理、形式統一、列の分割・結合などの変換を行う。</li>
+<li>作成したレシピをジョブとして実行し、処理済みデータをS3などへ出力する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 908 144" style="max-width:908px;min-width:726px" role="img" aria-label="図1 DataBrewのデータ準備。プロファイルでデータを把握し、変換レシピを作成して処理済みデータを出力する。"><defs><marker id="dgservices-databrew-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">入力データ</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">S3など</text>
+</g>
+<g data-node="profile">
+<rect x="274" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="339" y="90" text-anchor="middle" class="dg-tb">プロファイル</text>
+<text x="339" y="108" text-anchor="middle" class="dg-s">分布・欠損を確認</text>
+</g>
+<g data-node="recipe">
+<rect x="514" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="579" y="90" text-anchor="middle" class="dg-t">レシピ</text>
+<text x="579" y="108" text-anchor="middle" class="dg-s">変換手順</text>
+</g>
+<g data-node="out">
+<rect x="754" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="819" y="90" text-anchor="middle" class="dg-t">出力データ</text>
+<text x="819" y="108" text-anchor="middle" class="dg-s">S3・分析へ</text>
+</g>
+<path d="M164.0,94.0 L274.0,94.0" class="dg-line" marker-end="url(#dgservices-databrew-1)"/>
+<path d="M404.0,94.0 L514.0,94.0" class="dg-line" marker-end="url(#dgservices-databrew-1)"/>
+<path d="M644.0,94.0 L754.0,94.0" class="dg-line" marker-end="url(#dgservices-databrew-1)"/>
+</svg>
+</div>
+<figcaption>図1 DataBrewのデータ準備。プロファイルでデータを把握し、変換レシピを作成して処理済みデータを出力する。</figcaption>
+</figure>
+
+<h3 id="c2-2">Glueとの連携<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>DataBrewはビジュアルな探索・準備を行うAWS Glueの機能です。複雑な分岐や大規模な処理をコードで管理する場合はAWS Glue ETLジョブを使い、品質評価ルールを自動実行する場合はGlue Data Qualityを組み合わせます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>分析担当者がCSVやデータレイクの値を調査して、欠損・不正値を見つける。</li>
+<li>異なる形式の日付やカテゴリ値を統一し、分析用データを作る。</li>
+<li>レシピを定期ジョブとして実行し、同じ変換を再利用する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>プロジェクトやレシピジョブの実行など、利用する機能と処理量に応じて課金されます。S3の保存料金や、出力先の分析サービスの料金も考慮します。プロファイルの対象データ量やジョブの実行頻度を調整します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="glue.html">AWS Glue</a>:Data Catalog、ETLジョブ、Data Quality</li>
+<li><a href="s3.html">Amazon S3</a>:入力・出力データの保存</li>
+<li><a href="athena.html">Amazon Athena</a>:準備済みデータのSQL分析</li>
+<li><a href="redshift.html">Amazon Redshift</a>:準備済みデータの分析</li>
+<li>関連する用語:<a href="../terms/data-quality.html">データ品質</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>コードを書かずにデータを可視化・整形し、レシピを再利用 → <strong>AWS Glue DataBrew</strong>。</li>
+<li>プロファイルはデータの傾向を理解するもの、品質ルールは合否基準を継続的に検査するもの。</li>
+<li>変換のプレビューだけでなく、ジョブ出力のスキーマ・件数・品質を確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>DataBrewは画面操作でデータを探索・整形するAWS Glueのツール。</li>
+<li>変換手順をレシピに保存し、ジョブで繰り返し実行できる。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 5件・リンク元 1件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Glue DataBrewとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-engineer-exam-map.html"><title>用語:DEA-C01の学習範囲</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">DEA-C01の学習範囲</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/glue.html"><title>サービス:AWS Glue</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Glue</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon Athena</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/redshift.html"><title>サービス:Amazon Redshift</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon Redshift</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-quality.html"><title>用語:データ品質</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">データ品質</text></a>
+<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">AWS Glue DataBrew</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="glue.html"><span class="label">← 前へ</span>AWS Glue</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="lake-formation.html"><span class="label">次へ →</span>AWS Lake Formation</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

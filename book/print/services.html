@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <div class="page-head booklet-cover">
 <p class="booklet-site">AWS教科書</p>
 <h1>サービス</h1>
-<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全97ページ)</p>
+<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全114ページ)</p>
 <p class="booklet-help">このページは、印刷やPDFでの保存のために全ページを1つにまとめたものです。ブラウザーの印刷(Ctrl+P、スマホは共有メニューの「プリント」)から、紙に印刷するかPDFとして保存してください。ページの順番は目次と同じです。</p>
 <p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button> <a href="../services/index.html">目次へ戻る</a></p>
 </div>
@@ -49,6 +49,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-auto-scaling">Amazon EC2 Auto Scaling</a></li>
 <li><a href="#p-image-builder">Amazon EC2 Image Builder</a></li>
 <li><a href="#p-lambda">AWS Lambda</a></li>
+<li><a href="#p-batch">AWS Batch</a></li>
 <li><a href="#p-elastic-beanstalk">AWS Elastic Beanstalk</a></li>
 </ol>
 <h3>コンテナ</h3>
@@ -148,6 +149,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-eventbridge">Amazon EventBridge</a></li>
 <li><a href="#p-step-functions">AWS Step Functions</a></li>
 <li><a href="#p-appsync">AWS AppSync</a></li>
+<li><a href="#p-appflow">Amazon AppFlow</a></li>
+<li><a href="#p-mwaa">Amazon MWAA</a></li>
 </ol>
 <h3>デベロッパーツール</h3>
 <ol>
@@ -172,6 +175,16 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h3>分析</h3>
 <ol>
 <li><a href="#p-athena">Amazon Athena</a></li>
+<li><a href="#p-glue">AWS Glue</a></li>
+<li><a href="#p-databrew">AWS Glue DataBrew</a></li>
+<li><a href="#p-lake-formation">AWS Lake Formation</a></li>
+<li><a href="#p-redshift">Amazon Redshift</a></li>
+<li><a href="#p-emr">Amazon EMR</a></li>
+<li><a href="#p-msk">Amazon MSK</a></li>
+<li><a href="#p-managed-flink">Amazon Managed Service for Apache Flink</a></li>
+<li><a href="#p-quick">Amazon Quick</a></li>
+<li><a href="#p-data-exchange">AWS Data Exchange</a></li>
+<li><a href="#p-sagemaker-unified-studio">Amazon SageMaker Unified Studio</a></li>
 <li><a href="#p-kinesis">Amazon Kinesis</a></li>
 <li><a href="#p-data-firehose">Amazon Data Firehose</a></li>
 <li><a href="#p-opensearch">Amazon OpenSearch Service</a></li>
@@ -179,10 +192,14 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <h3>機械学習と人工知能</h3>
 <ol>
 <li><a href="#p-bedrock">Amazon Bedrock</a></li>
+<li><a href="#p-kendra">Amazon Kendra</a></li>
+<li><a href="#p-sagemaker-ai">Amazon SageMaker AI</a></li>
 </ol>
 <h3>移行と転送</h3>
 <ol>
 <li><a href="#p-datasync">AWS DataSync</a></li>
+<li><a href="#p-dms">AWS Database Migration Service</a></li>
+<li><a href="#p-transfer-family">AWS Transfer Family</a></li>
 </ol>
 <h3>ビジネスアプリケーション</h3>
 <ol>
@@ -1611,6 +1628,105 @@ aws ec2 copy-image --region ap-southeast-2 \
 </ul>
 </section>
 </article>
+<article class="booklet-page" id="p-batch">
+<div class="page-head hero" style="--cat:#ED7100">
+<div class="hero-text">
+<span class="category">コンピューティング</span>
+<h1>AWS Batch</h1>
+<p class="lead">必要なコンピューティング容量を自動調整してバッチジョブを実行するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="batch-c1">1. サービス概要<a class="anchor" href="#batch-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Batch</strong>は、コンテナ化されたバッチ処理を登録・スケジュールし、必要な計算資源を自動的に用意して実行するサービスです。ジョブの量や要求リソースに応じて容量を調整し、EC2、Fargate、ECS、EKSなどの実行基盤を利用します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="batch-c2">2. 主な機能・特徴<a class="anchor" href="#batch-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="batch-c2-1">ジョブ実行の構成要素<a class="anchor" href="#batch-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ジョブ定義</strong>:コンテナイメージ、vCPU・メモリ、環境変数、再試行などを定義する。</li>
+<li><strong>ジョブキュー</strong>:投入されたジョブの優先度や実行順序を管理する。</li>
+<li><strong>コンピューティング環境</strong>:ジョブを実行するEC2やFargateなどの容量を指定する。</li>
+<li>ジョブ間の依存関係や配列ジョブを使い、大量の独立した処理をまとめて実行する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 149" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 AWS Batchのジョブ実行。キューに登録されたジョブに応じて計算容量を用意し、コンテナ処理を実行する。"><defs><marker id="batch-dgservices-batch-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="submit">
+<rect x="34" y="73" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="94" text-anchor="middle" class="dg-t">ジョブ送信</text>
+<text x="104" y="112" text-anchor="middle" class="dg-s">データ処理</text>
+</g>
+<g data-node="queue">
+<rect x="322" y="73" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="392" y="94" text-anchor="middle" class="dg-tb">ジョブキュー</text>
+<text x="392" y="112" text-anchor="middle" class="dg-s">優先度・依存関係</text>
+</g>
+<g data-node="batch">
+<rect x="642" y="73" width="140" height="52" rx="8" class="dg-box"/>
+<text x="712" y="94" text-anchor="middle" class="dg-t">AWS Batch</text>
+<text x="712" y="112" text-anchor="middle" class="dg-s">容量を調整</text>
+</g>
+<g data-node="compute">
+<rect x="962" y="73" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="1032" y="94" text-anchor="middle" class="dg-t">EC2・Fargate</text>
+<text x="1032" y="112" text-anchor="middle" class="dg-s">コンテナを実行</text>
+</g>
+<path d="M174.0,99.0 L322.0,99.0" class="dg-line" marker-end="url(#batch-dgservices-batch-1)"/>
+<path d="M462.0,99.0 L642.0,99.0" class="dg-line" marker-end="url(#batch-dgservices-batch-1)"/>
+<path d="M782.0,99.0 L962.0,99.0" class="dg-line" marker-end="url(#batch-dgservices-batch-1)"/>
+</svg>
+</div>
+<figcaption>図1 AWS Batchのジョブ実行。キューに登録されたジョブに応じて計算容量を用意し、コンテナ処理を実行する。</figcaption>
+</figure>
+
+<h3 id="batch-c2-2">パイプラインとの使い分け<a class="anchor" href="#batch-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Batchはコンテナ化された計算ジョブのスケジューリングと実行を担います。複数サービスをまたぐ処理の順序・分岐・エラー制御はStep FunctionsやMWAAなどで管理できます。ジョブのスケジュールをEventBridgeから起動する構成もあります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="batch-c3">3. ユースケース<a class="anchor" href="#batch-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>大量のファイル変換や定期的な集計を並列に実行する。</li>
+<li>必要なCPU・メモリに応じたコンテナジョブを優先度付きで処理する。</li>
+<li>ピーク時だけ計算容量を増やし、処理終了後に容量を減らす。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="batch-c4">4. 料金の考え方<a class="anchor" href="#batch-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS Batch自体に追加料金がない場合でも、ジョブを実行するEC2、Fargate、EKSなどの計算資源、ストレージ、ログ、データ転送に料金が発生します。実行時間、リソース要求、再試行、Spot利用の可否を見積もります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="batch-c5">5. 関連サービス<a class="anchor" href="#batch-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-ecs">Amazon ECS</a>/<a href="#p-eks">Amazon EKS</a>:コンテナ実行基盤</li>
+<li><a href="#p-lambda">AWS Lambda</a>:短時間のイベント駆動処理</li>
+<li><a href="#p-step-functions">AWS Step Functions</a>:処理ステップの制御</li>
+<li><a href="#p-mwaa">Amazon MWAA</a>:Airflowによるデータパイプライン管理</li>
+<li><a href="#p-eventbridge">Amazon EventBridge</a>:スケジュール起動</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="batch-c6">6. 試験・実務でのポイント<a class="anchor" href="#batch-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>コンテナ化されたバッチジョブをキューで管理し、実行容量を自動調整 → <strong>AWS Batch</strong>。</li>
+<li>ジョブのコンテナ・リソース定義はジョブ定義、投入順序はジョブキュー、計算資源はコンピューティング環境で設定する。</li>
+<li>処理フローの分岐・状態管理はワークフローサービス、計算処理の実行はBatchと役割を分ける。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="batch-c7">7. まとめ<a class="anchor" href="#batch-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS Batchはバッチジョブをキューイングし、実行に必要な容量を調整する。</li>
+<li>ジョブ定義・キュー・コンピューティング環境を組み合わせる。</li>
+</ul>
+</section>
+</article>
 <article class="booklet-page" id="p-elastic-beanstalk">
 <div class="page-head hero" style="--cat:#ED7100">
 <div class="hero-text">
@@ -3009,7 +3125,14 @@ aws ec2 copy-image --region ap-southeast-2 \
 ]</code></pre>
 <p>ブラウザのコンソールに「CORS policy によりブロックされた」というエラーが出る場合は、S3側のCORS設定(許可するオリジン・メソッド)を確認します。CORSはブラウザが行うチェックなので、CLIやサーバーからのアクセスには関係しません。</p>
 
-<h3 id="s3-c2-15">その他の機能<a class="anchor" href="#s3-c2-15" aria-label="この見出しへのリンク">#</a></h3>
+<h3 id="s3-c2-15">S3 Tables<a class="anchor" href="#s3-c2-15" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>Amazon S3 Tables</strong>は、テーブルバケットにApache Iceberg形式のテーブルとメタデータを保存する機能です。通常の汎用バケットとは異なるバケット種別で、テーブルの保守をS3が自動化します。AWS Glue Data Catalogを通じてAthenaなどの分析サービスと連携できます。</p>
+<p>テーブルバケットとテーブルは非公開で、パブリックアクセスにはできません。アクセスにはIAMのアイデンティティポリシーとリソースポリシーを設定します。Lake Formationと統合する場合は、利用する分析サービスの権限モデルも確認します。詳細は<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables-buckets.html" target="_blank" rel="noopener">S3テーブルバケットの公式ドキュメント</a>を参照してください。</p>
+<ul>
+<li>一般的なオブジェクト保存 → 汎用バケット。分析向けIcebergテーブルをマネージド保守 → テーブルバケット。</li>
+<li>テーブルのストレージ・リクエスト・自動メンテナンス処理と、Athenaなどのクエリ実行料金を分けて見積もる。</li>
+</ul>
+<h3 id="s3-c2-16">その他の機能<a class="anchor" href="#s3-c2-16" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>S3 Select</strong>:オブジェクト(CSV・JSON)からSQLで必要なデータだけを抽出する機能。<strong>2024年に新規の利用受付を終了</strong>しており、これから使う場合は<a href="#p-athena">Amazon Athena</a>などでS3のデータをSQLで分析する。</li>
 <li><strong class="em">S3 インベントリ</strong>:バケット内のオブジェクトの一覧と属性(サイズ、最終更新日時、ストレージクラス、暗号化の状態、バージョンID、レプリケーションの状態など)を、<strong>日次または週次でレポートファイルとして出力</strong>する。出力先は別のバケットで、形式はCSV・Apache ORC・Parquet。Athenaで検索・集計したり、Batch Operationsの対象一覧(マニフェスト)に使ったりできる。大量のオブジェクトを <code>ListObjects</code> で数えるより、低コストで効率が良い。</li>
@@ -3056,6 +3179,8 @@ aws ec2 copy-image --region ap-southeast-2 \
 <li><a href="#p-cognito">Amazon Cognito</a>:ユーザーごとのプレフィックス制御</li>
 <li><a href="#p-cloudfront">Amazon CloudFront</a>:配信、Transfer Acceleration</li>
 <li><a href="#p-athena">Amazon Athena</a>:S3上のデータをSQLで分析</li>
+<li><a href="#p-glue">AWS Glue</a>:S3データのカタログ化・ETL</li>
+<li>関連する用語:<a href="../terms/open-table-formats.html">オープンテーブル形式</a>、<a href="../terms/data-governance.html">データガバナンス</a></li>
 <li><a href="#p-vpc">Amazon VPC</a>:VPCエンドポイント</li>
 <li><a href="#p-macie">Amazon Macie</a>:S3内の機密データ検出</li>
 <li><a href="#p-eventbridge">Amazon EventBridge</a>:S3のイベントを多数の送信先へルーティング</li>
@@ -15632,7 +15757,7 @@ bucket.grantRead(fn);</code></pre>
 <tr><td>FOCUS</td><td>クラウドの請求データの共通仕様(FOCUS)に沿った形式。他のクラウドの請求と合わせて分析しやすい</td></tr>
 <tr><td>コスト最適化の推奨事項</td><td>Cost Optimization Hub の推奨事項</td></tr>
 <tr><td>炭素排出量</td><td>AWSの利用による炭素排出量の推定値</td></tr>
-<tr><td>Cost and usage dashboard</td><td>Amazon QuickSight に、用意されたダッシュボードを作る</td></tr>
+<tr><td>Cost and usage dashboard</td><td>Amazon Quick のQuick Sightに、用意されたダッシュボードを作る</td></tr>
 <tr><td>従来のCUR</td><td>以前の形式のCUR</td></tr>
 </table></div>
 
@@ -15646,7 +15771,7 @@ bucket.grantRead(fn);</code></pre>
 
 <figure class="figure">
 <div class="fig-scroll">
-<svg viewBox="0 0 905 194" style="max-width:905px;min-width:724px" role="img" aria-label="図1 CURの使い方。Data ExportsでS3バケットに定期的に出力し、AthenaでSQLを使って集計したり、QuickSightで可視化したりする。"><defs><marker id="cost-and-usage-reports-dgservices-cost-and-usage-reports-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<svg viewBox="0 0 905 194" style="max-width:905px;min-width:724px" role="img" aria-label="図1 CURの使い方。Data ExportsでS3バケットに定期的に出力し、AthenaでSQLを使って集計したり、Quick Sightで可視化したりする。"><defs><marker id="cost-and-usage-reports-dgservices-cost-and-usage-reports-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
 <g data-node="bill">
 <rect x="34" y="84" width="150" height="40" rx="8" class="dg-blue"/>
 <text x="109" y="108" text-anchor="middle" class="dg-t">請求データ</text>
@@ -15668,7 +15793,7 @@ bucket.grantRead(fn);</code></pre>
 </g>
 <g data-node="qs">
 <rect x="731" y="118" width="150" height="52" rx="8" class="dg-ok"/>
-<text x="806" y="140" text-anchor="middle" class="dg-t">QuickSight</text>
+<text x="806" y="140" text-anchor="middle" class="dg-t">Quick Sight</text>
 <text x="806" y="158" text-anchor="middle" class="dg-s">ダッシュボード</text>
 </g>
 <path d="M184.0,104.0 L272.0,104.0" class="dg-line" marker-end="url(#cost-and-usage-reports-dgservices-cost-and-usage-reports-1)"/>
@@ -15678,13 +15803,13 @@ bucket.grantRead(fn);</code></pre>
 <path d="M660.0,117.6 L731.0,130.4" class="dg-line" marker-end="url(#cost-and-usage-reports-dgservices-cost-and-usage-reports-1)"/>
 </svg>
 </div>
-<figcaption>図1 CURの使い方。Data ExportsでS3バケットに定期的に出力し、AthenaでSQLを使って集計したり、QuickSightで可視化したりする。</figcaption>
+<figcaption>図1 CURの使い方。Data ExportsでS3バケットに定期的に出力し、AthenaでSQLを使って集計したり、Quick Sightで可視化したりする。</figcaption>
 </figure>
 
 <h3 id="cost-and-usage-reports-c2-3">分析の方法<a class="anchor" href="#cost-and-usage-reports-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li><strong>Athena</strong>:S3のCURをテーブルとして登録し、SQLで集計する(Parquet形式がおすすめ)。</li>
-<li><strong>QuickSight</strong>:ダッシュボードで可視化する。</li>
+<li><strong>Quick Sight</strong>:ダッシュボードで可視化する。</li>
 <li>Redshiftに読み込んで、他の業務データと合わせて分析する。</li>
 </ul>
 
@@ -15715,7 +15840,7 @@ bucket.grantRead(fn);</code></pre>
 
 <section class="chapter">
 <h2 id="cost-and-usage-reports-c4">4. 料金の考え方<a class="anchor" href="#cost-and-usage-reports-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>CURの作成・出力そのものは無料です。保存先のS3の料金と、分析に使うAthena・QuickSightなどの料金がかかります。</p>
+<p>CURの作成・出力そのものは無料です。保存先のS3の料金と、分析に使うAthena・Quick Sightなどの料金がかかります。</p>
 </section>
 
 <section class="chapter">
@@ -15734,7 +15859,7 @@ bucket.grantRead(fn);</code></pre>
 <h2 id="cost-and-usage-reports-c6">6. 試験・実務でのポイント<a class="anchor" href="#cost-and-usage-reports-c6" aria-label="この見出しへのリンク">#</a></h2>
 <div class="point"><ul>
 <li>「最も詳細な請求データ」「時間単位・リソース単位の費用をS3に出力」→ <strong class="em">CUR</strong>(Data ExportsのCUR 2.0)。</li>
-<li>分析は <strong>S3+Athena</strong>(+QuickSight)が定番。</li>
+<li>分析は <strong>S3+Athena</strong>(+Quick Sight)が定番。</li>
 <li>リアルタイムではなく、<strong>1日に1回以上</strong>の更新。</li>
 <li>画面で手軽に見るならCost Explorer、細かく自分で集計するならCUR。</li>
 <li>Cost Explorer・Budgets・CUR・Compute Optimizerの使い分け → <a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>
@@ -18437,7 +18562,7 @@ def lambda_handler(event, context):
 <ul>
 <li>S3に出力されたCloudTrail・ALB・VPCフローログのアドホックな分析</li>
 <li>データレイク(S3)に対する集計クエリ</li>
-<li>BIツール(QuickSightなど)のデータソース</li>
+<li>BIツール(Amazon QuickのQuick Sightなど)のデータソース</li>
 </ul>
 </section>
 
@@ -18455,6 +18580,10 @@ def lambda_handler(event, context):
 <li><a href="#p-lambda">AWS Lambda</a>:フェデレーテッドクエリで、S3以外のデータに接続するコネクタの実行</li>
 <li><a href="#p-opensearch">Amazon OpenSearch Service</a>:全文検索・リアルタイム分析</li>
 <li><a href="#p-cloudwatch">Amazon CloudWatch</a>:スキャン量のアラーム</li>
+<li><a href="#p-glue">AWS Glue</a>:テーブル定義・クローラー・ETL</li>
+<li><a href="#p-lake-formation">AWS Lake Formation</a>:データレイクの細粒度アクセス制御</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:データウェアハウス・Spectrum</li>
+<li><a href="#p-quick">Amazon Quick</a>:分析結果の可視化</li>
 <li>関連する用語:<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../terms/pricing-basics.html">料金の基本</a></li>
 </ul>
 </section>
@@ -18478,6 +18607,1090 @@ def lambda_handler(event, context):
 </ul>
 </section>
 </article>
+<article class="booklet-page" id="p-glue">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>AWS Glue</h1>
+<p class="lead">データの発見・カタログ化・ETLをサーバーレスで行うデータ統合サービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="glue-c1">1. サービス概要<a class="anchor" href="#glue-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Glue</strong>は、複数のデータソースを発見・接続し、データカタログに登録して、分析用に抽出・変換・ロード(ETL)するマネージドサービスです。サーバーを管理せずに、バッチとストリーミングのデータ統合を行えます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="glue-c2">2. 主な機能・特徴<a class="anchor" href="#glue-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="glue-c2-1">AWS Glue Data Catalog<a class="anchor" href="#glue-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>データベース、テーブル、列、形式、S3上の場所などのメタデータを一元管理します。<strong>データそのものを保存する場所ではなく、データをどう読むかを記録するカタログ</strong>です。Athena、Redshift Spectrum、EMRなどが同じテーブル定義を参照できます。</p>
+
+<h3 id="glue-c2-2">クローラーと接続<a class="anchor" href="#glue-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>クローラー</strong>はS3やJDBC接続先などのデータを調べ、形式やスキーマを推測してData Catalogにテーブルを作成・更新します。スキーマ変更の検出にも使えます。既知のスキーマを厳密に管理したいときは、クローラー任せにせずテーブル定義を明示します。</p>
+
+<h3 id="glue-c2-3">ETLジョブ<a class="anchor" href="#glue-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>AWS Glue Studioのビジュアルエディター、ノートブック、スクリプトでジョブを作成する。</li>
+<li>Apache SparkまたはRayを実行エンジンとして、データの結合・整形・形式変換などを行う。</li>
+<li>ジョブブックマークで処理済みデータを追跡し、再実行時に新しいデータだけを処理できる。ソースや変換の種類によって対応範囲が異なる。</li>
+<li>トリガーやワークフローでジョブ・クローラーの順序や依存関係を管理する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 218" style="max-width:684px;min-width:547px" role="img" aria-label="図1 AWS Glueによるデータ統合。クローラーがスキーマをカタログ化し、ジョブがデータを変換して保存先へ出力する。"><defs><marker id="glue-dgservices-glue-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">データソース</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">S3・DB・SaaS</text>
+</g>
+<g data-node="crawl">
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="60" text-anchor="middle" class="dg-tb">クローラー</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">スキーマを検出</text>
+</g>
+<g data-node="cat">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">Data Catalog</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">メタデータ</text>
+</g>
+<g data-node="job">
+<rect x="272" y="142" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="164" text-anchor="middle" class="dg-tb">Glueジョブ</text>
+<text x="347" y="182" text-anchor="middle" class="dg-s">抽出・変換</text>
+</g>
+<g data-node="dest">
+<rect x="510" y="142" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="164" text-anchor="middle" class="dg-t">保存先</text>
+<text x="585" y="182" text-anchor="middle" class="dg-s">S3・Redshift</text>
+</g>
+<path d="M184.0,91.4 L272.0,76.6" class="dg-line" marker-end="url(#glue-dgservices-glue-1)"/>
+<path d="M422.0,64.0 L510.0,64.0" class="dg-line" marker-end="url(#glue-dgservices-glue-1)"/>
+<path d="M525.5,90.0 L406.5,142.0" class="dg-line dg-dash" marker-end="url(#glue-dgservices-glue-1)"/>
+<path d="M184.0,124.2 L272.0,147.8" class="dg-line" marker-end="url(#glue-dgservices-glue-1)"/>
+<path d="M422.0,168.0 L510.0,168.0" class="dg-line" marker-end="url(#glue-dgservices-glue-1)"/>
+</svg>
+</div>
+<figcaption>図1 AWS Glueによるデータ統合。クローラーがスキーマをカタログ化し、ジョブがデータを変換して保存先へ出力する。</figcaption>
+</figure>
+
+<h3 id="glue-c2-4">データ品質と準備<a class="anchor" href="#glue-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>AWS Glue Data Quality</strong>では、ルールを定義して欠損・重複・値の範囲などを評価し、結果を確認できます。AWS Glue DataBrewはビジュアル操作でデータのプロファイル確認や変換レシピ作成を行うデータ準備機能です。詳細は<a href="../terms/data-quality.html">データ品質</a>を参照してください。</p>
+
+<h3 id="glue-c2-5">ストリーミングETL<a class="anchor" href="#glue-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>Kinesis Data StreamsやAmazon MSKなどのストリームを継続的に読み取り、変換して保存先へ書き込めます。リアルタイム処理にはチェックポイントや重複処理への考慮が必要です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="glue-c3">3. ユースケース<a class="anchor" href="#glue-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>複数形式のデータをS3に集め、Parquetに変換して分析しやすくする。</li>
+<li>データカタログとクローラーで、Athenaから検索できるテーブルを作る。</li>
+<li>データ品質ルールをETLパイプラインに組み込み、不正なデータを検出する。</li>
+<li>ストリーミングデータを変換してデータレイクへ取り込む。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="glue-c4">4. 料金の考え方<a class="anchor" href="#glue-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>ジョブやクローラーの実行に使う処理能力と実行時間などに応じて課金されます。実行エンジンや機能によって料金体系が異なるため、ジョブの規模・頻度・ワーカー設定を見直します。S3、CloudWatch Logs、データ転送などの利用料は別途発生します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="glue-c5">5. 関連サービス<a class="anchor" href="#glue-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-s3">Amazon S3</a>:データレイクの保存先</li>
+<li><a href="#p-athena">Amazon Athena</a>:Data Catalogを参照してS3をSQL分析</li>
+<li><a href="#p-lake-formation">AWS Lake Formation</a>:Data Catalogとデータレイクのアクセス制御</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:データウェアハウスへのロード・分析</li>
+<li><a href="#p-kinesis">Amazon Kinesis</a>/<a href="#p-msk">Amazon MSK</a>:ストリーミングデータの取り込み</li>
+<li><a href="#p-mwaa">Amazon MWAA</a>:複数ジョブを含むパイプラインのオーケストレーション</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="glue-c6">6. 試験・実務でのポイント<a class="anchor" href="#glue-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>データの場所・形式・スキーマを共有するメタデータの保管先 → <strong>AWS Glue Data Catalog</strong>。</li>
+<li>S3上のデータを調べてスキーマを推測し、カタログ登録 → <strong>クローラー</strong>。</li>
+<li>大規模なデータ変換 → GlueのSparkジョブ。画面上で変換処理を作る → Glue Studio。</li>
+<li>ルールに基づく品質評価 → Glue Data Quality。対話的なプロファイル・レシピ作成 → Glue DataBrew。</li>
+<li>データカタログはメタデータであり、実データはS3やデータベースに存在する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="glue-c7">7. まとめ<a class="anchor" href="#glue-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS Glueは、データのカタログ化・ETL・品質評価を統合するマネージドサービス。</li>
+<li>Data Catalogがテーブル定義を保持し、クローラーがスキーマを検出する。</li>
+<li>ジョブ・トリガー・ワークフローでバッチやストリーミングの処理を構成できる。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-databrew">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>AWS Glue DataBrew</h1>
+<p class="lead">コードを書かずにデータを調査・整形するビジュアルなデータ準備ツール</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="databrew-c1">1. サービス概要<a class="anchor" href="#databrew-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Glue DataBrew</strong>は、データを画面上で調査・プロファイルし、コードを書かずに整形・標準化するデータ準備ツールです。操作をレシピとして保存し、データセットに繰り返し適用できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="databrew-c2">2. 主な機能・特徴<a class="anchor" href="#databrew-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="databrew-c2-1">プロファイルと変換レシピ<a class="anchor" href="#databrew-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>データの値の分布や欠損、型の不整合をプロファイルで確認する。</li>
+<li>画面で選んだ変換をレシピとして記録し、プレビューを見ながら順序を調整する。</li>
+<li>欠損値・異常値の処理、形式統一、列の分割・結合などの変換を行う。</li>
+<li>作成したレシピをジョブとして実行し、処理済みデータをS3などへ出力する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 908 144" style="max-width:908px;min-width:726px" role="img" aria-label="図1 DataBrewのデータ準備。プロファイルでデータを把握し、変換レシピを作成して処理済みデータを出力する。"><defs><marker id="databrew-dgservices-databrew-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">入力データ</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">S3など</text>
+</g>
+<g data-node="profile">
+<rect x="274" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="339" y="90" text-anchor="middle" class="dg-tb">プロファイル</text>
+<text x="339" y="108" text-anchor="middle" class="dg-s">分布・欠損を確認</text>
+</g>
+<g data-node="recipe">
+<rect x="514" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="579" y="90" text-anchor="middle" class="dg-t">レシピ</text>
+<text x="579" y="108" text-anchor="middle" class="dg-s">変換手順</text>
+</g>
+<g data-node="out">
+<rect x="754" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="819" y="90" text-anchor="middle" class="dg-t">出力データ</text>
+<text x="819" y="108" text-anchor="middle" class="dg-s">S3・分析へ</text>
+</g>
+<path d="M164.0,94.0 L274.0,94.0" class="dg-line" marker-end="url(#databrew-dgservices-databrew-1)"/>
+<path d="M404.0,94.0 L514.0,94.0" class="dg-line" marker-end="url(#databrew-dgservices-databrew-1)"/>
+<path d="M644.0,94.0 L754.0,94.0" class="dg-line" marker-end="url(#databrew-dgservices-databrew-1)"/>
+</svg>
+</div>
+<figcaption>図1 DataBrewのデータ準備。プロファイルでデータを把握し、変換レシピを作成して処理済みデータを出力する。</figcaption>
+</figure>
+
+<h3 id="databrew-c2-2">Glueとの連携<a class="anchor" href="#databrew-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>DataBrewはビジュアルな探索・準備を行うAWS Glueの機能です。複雑な分岐や大規模な処理をコードで管理する場合はAWS Glue ETLジョブを使い、品質評価ルールを自動実行する場合はGlue Data Qualityを組み合わせます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="databrew-c3">3. ユースケース<a class="anchor" href="#databrew-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>分析担当者がCSVやデータレイクの値を調査して、欠損・不正値を見つける。</li>
+<li>異なる形式の日付やカテゴリ値を統一し、分析用データを作る。</li>
+<li>レシピを定期ジョブとして実行し、同じ変換を再利用する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="databrew-c4">4. 料金の考え方<a class="anchor" href="#databrew-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>プロジェクトやレシピジョブの実行など、利用する機能と処理量に応じて課金されます。S3の保存料金や、出力先の分析サービスの料金も考慮します。プロファイルの対象データ量やジョブの実行頻度を調整します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="databrew-c5">5. 関連サービス<a class="anchor" href="#databrew-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-glue">AWS Glue</a>:Data Catalog、ETLジョブ、Data Quality</li>
+<li><a href="#p-s3">Amazon S3</a>:入力・出力データの保存</li>
+<li><a href="#p-athena">Amazon Athena</a>:準備済みデータのSQL分析</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:準備済みデータの分析</li>
+<li>関連する用語:<a href="../terms/data-quality.html">データ品質</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="databrew-c6">6. 試験・実務でのポイント<a class="anchor" href="#databrew-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>コードを書かずにデータを可視化・整形し、レシピを再利用 → <strong>AWS Glue DataBrew</strong>。</li>
+<li>プロファイルはデータの傾向を理解するもの、品質ルールは合否基準を継続的に検査するもの。</li>
+<li>変換のプレビューだけでなく、ジョブ出力のスキーマ・件数・品質を確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="databrew-c7">7. まとめ<a class="anchor" href="#databrew-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>DataBrewは画面操作でデータを探索・整形するAWS Glueのツール。</li>
+<li>変換手順をレシピに保存し、ジョブで繰り返し実行できる。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-lake-formation">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>AWS Lake Formation</h1>
+<p class="lead">データレイクとカタログのアクセス権を一元管理するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="lake-formation-c1">1. サービス概要<a class="anchor" href="#lake-formation-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Lake Formation</strong>は、Amazon S3上のデータレイクとAWS Glue Data Catalogのメタデータへのアクセスを一元的に管理するサービスです。データベース・テーブルだけでなく、列・行・セル単位のアクセス制御や、アカウントをまたぐデータ共有に対応します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c2">2. 主な機能・特徴<a class="anchor" href="#lake-formation-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="lake-formation-c2-1">権限の仕組み<a class="anchor" href="#lake-formation-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>Lake Formationの権限はIAMやS3バケットポリシーを置き換えるものではなく、それらに加えてデータレイク内の細かいアクセスを制御します。利用者には、サービスAPIを呼ぶIAM権限と、テーブルデータを読むLake Formation権限の両方が必要です。実際にアクセスできる範囲は、関係する権限の組み合わせで決まります。</p>
+<ul>
+<li>データベース・テーブル単位の権限に加え、列・行・セルを絞るデータフィルターを設定できる。</li>
+<li>Lake Formationのタグをデータベースやテーブルに付け、タグに基づいて権限を付与できる。</li>
+<li>ハイブリッドアクセスモードでは、対象のデータベースやテーブルごとにLake Formation権限を段階的に導入できる。</li>
+</ul>
+
+<h3 id="lake-formation-c2-2">データ共有<a class="anchor" href="#lake-formation-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Data Catalogと基盤データを、AWSアカウント・組織をまたいで共有できます。共有先はAWS Resource Access Managerなどを介してカタログ資産を利用します。共有設定だけでなく、共有先のIAM権限やデータ側の権限も適切に整えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 973 234" style="max-width:973px;min-width:778px" role="img" aria-label="図1 データレイクのアクセス。IAMでサービス操作を許可し、Lake Formationでカタログとデータに対する細粒度の権限を管理する。"><defs><marker id="lake-formation-dgservices-lake-formation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="roles">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">IAMロール</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">サービスの呼び出し</text>
+</g>
+<g data-node="lf">
+<rect x="289" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="100" text-anchor="middle" class="dg-tb">Lake Formation</text>
+<text x="364" y="118" text-anchor="middle" class="dg-s">テーブル権限</text>
+</g>
+<g data-node="cat">
+<rect x="544" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="60" text-anchor="middle" class="dg-t">Data Catalog</text>
+<text x="619" y="78" text-anchor="middle" class="dg-s">メタデータ</text>
+</g>
+<g data-node="data">
+<rect x="544" y="158" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="180" text-anchor="middle" class="dg-t">Amazon S3</text>
+<text x="619" y="198" text-anchor="middle" class="dg-s">実データ</text>
+</g>
+<g data-node="query">
+<rect x="799" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="874" y="100" text-anchor="middle" class="dg-t">Athena・EMR</text>
+<text x="874" y="118" text-anchor="middle" class="dg-s">許可範囲を読む</text>
+</g>
+<path d="M184.0,104.0 L289.0,104.0" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+<path d="M439.0,92.2 L544.0,75.8" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+<path d="M439.0,127.5 L544.0,160.5" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+<path d="M694.0,75.8 L799.0,92.2" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+<path d="M694.0,160.5 L799.0,127.5" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+</svg>
+</div>
+<figcaption>図1 データレイクのアクセス。IAMでサービス操作を許可し、Lake Formationでカタログとデータに対する細粒度の権限を管理する。</figcaption>
+</figure>
+
+<h3 id="lake-formation-c2-3">監査と統合<a class="anchor" href="#lake-formation-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Athena、AWS Glue、Amazon EMR、Redshift Spectrumなどの分析サービスと連携します。AWS CloudTrailでAPI操作やデータアクセスに関するイベントを記録し、アクセス状況の監査に利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c3">3. ユースケース<a class="anchor" href="#lake-formation-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>部門ごとに異なるS3上のデータを一元管理し、分析サービスから安全に利用させる。</li>
+<li>個人情報の列を隠す、または行条件で閲覧データを制限する。</li>
+<li>タグを用いてデータ分類とアクセス権をまとめて管理する。</li>
+<li>他アカウントの分析チームに、元データを複製せずにデータを共有する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c4">4. 料金の考え方<a class="anchor" href="#lake-formation-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Lake Formationの機能料金のほか、基盤となるAmazon S3、AWS Glue Data Catalog、AWS RAM、クエリ・処理サービスなどの料金が発生する場合があります。共有やクエリの利用料がどのアカウントに発生するかを構成ごとに確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c5">5. 関連サービス<a class="anchor" href="#lake-formation-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-glue">AWS Glue</a>:カタログ、クローラー、ETLジョブ</li>
+<li><a href="#p-s3">Amazon S3</a>:データレイクの実データ</li>
+<li><a href="#p-athena">Amazon Athena</a>:データレイクのクエリ</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:Spectrumやデータ共有との連携</li>
+<li><a href="#p-macie">Amazon Macie</a>:S3内の機密データ・個人情報の検出</li>
+<li><a href="#p-cloudtrail">AWS CloudTrail</a>:操作やアクセスの監査</li>
+<li>関連する用語:<a href="../terms/data-governance.html">データガバナンス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c6">6. 試験・実務でのポイント<a class="anchor" href="#lake-formation-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>データレイクのカタログとデータに対する細粒度の権限管理 → <strong class="em">Lake Formation</strong>。</li>
+<li>IAM権限はサービスAPIへのアクセス、Lake Formation権限はデータ資産へのアクセスを制御する。</li>
+<li>列・行単位の制限やタグベースの権限を使い、最小権限にする。</li>
+<li>データ共有では、共有元・共有先の設定と各アカウントの権限を確認する。</li>
+<li>既存のIAM・S3権限を保ちながら段階導入する選択肢 → ハイブリッドアクセスモード。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c7">7. まとめ<a class="anchor" href="#lake-formation-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Lake FormationはデータレイクとGlue Data Catalogへのアクセスを一元管理する。</li>
+<li>IAMと連携し、列・行・タグ単位の制御やアカウント間共有を提供する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-redshift">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>Amazon Redshift</h1>
+<p class="lead">大規模な分析クエリを実行するマネージドデータウェアハウス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="redshift-c1">1. サービス概要<a class="anchor" href="#redshift-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Redshift</strong>は、大量の構造化データをSQLで集計・分析するデータウェアハウスです。列指向の保存と並列処理で分析クエリを実行し、S3のデータレイクやBIツールとも連携します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c2">2. 主な機能・特徴<a class="anchor" href="#redshift-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="redshift-c2-1">プロビジョンドとServerless<a class="anchor" href="#redshift-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>プロビジョンド</strong>:クラスターのノード構成を選び、継続的なワークロードの容量を管理する。</li>
+<li><strong>Redshift Serverless</strong>:データウェアハウスの容量を個別に管理せず、ワークロードに応じて処理能力を利用する。</li>
+</ul>
+<p>どちらもSQLで分析できます。継続的で予測しやすい処理か、変動が大きく管理負荷を下げたい処理かで選びます。</p>
+
+<h3 id="redshift-c2-2">データの取り込みと連携<a class="anchor" href="#redshift-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><code>COPY</code>でS3などからデータをロードし、<code>UNLOAD</code>でクエリ結果をS3へ出力する。</li>
+<li><strong>Redshift Spectrum</strong>で、S3上のデータをクラスターのテーブルにロードせずにクエリする。外部テーブルの定義にGlue Data Catalogを利用できる。</li>
+<li>フェデレーテッドクエリでRDSやAuroraなどの外部データソースを参照する。</li>
+<li>データ共有で別のRedshiftデータウェアハウスへデータを共有し、複製を抑えた分析を行う。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 234" style="max-width:718px;min-width:574px" role="img" aria-label="図1 Amazon Redshiftの分析。S3からロードするほか、SpectrumでS3上のデータを直接参照し、クエリ結果をBIや別のRedshiftへ共有できる。"><defs><marker id="redshift-dgservices-redshift-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">S3</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">COPYでロード</text>
+</g>
+<g data-node="wh">
+<rect x="289" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="100" text-anchor="middle" class="dg-tb">Redshift</text>
+<text x="364" y="118" text-anchor="middle" class="dg-s">SQL・集計</text>
+</g>
+<g data-node="bi">
+<rect x="544" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="619" y="100" text-anchor="middle" class="dg-t">BIツール</text>
+<text x="619" y="118" text-anchor="middle" class="dg-s">ダッシュボード</text>
+</g>
+<g data-node="lake">
+<rect x="289" y="158" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="180" text-anchor="middle" class="dg-t">S3データレイク</text>
+<text x="364" y="198" text-anchor="middle" class="dg-s">Spectrumで参照</text>
+</g>
+<g data-node="share">
+<rect x="544" y="158" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="180" text-anchor="middle" class="dg-t">別クラスター</text>
+<text x="619" y="198" text-anchor="middle" class="dg-s">データ共有</text>
+</g>
+<path d="M184.0,104.0 L289.0,104.0" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
+<text x="236" y="108" text-anchor="middle" class="dg-s dg-halo">COPY</text>
+<path d="M439.0,104.0 L544.0,104.0" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
+<path d="M364.0,158.0 L364.0,130.0" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
+<text x="364" y="148" text-anchor="middle" class="dg-s dg-halo">Spectrum</text>
+<path d="M439.0,127.5 L544.0,160.5" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
+<text x="492" y="148" text-anchor="middle" class="dg-s dg-halo">共有</text>
+</svg>
+</div>
+<figcaption>図1 Amazon Redshiftの分析。S3からロードするほか、SpectrumでS3上のデータを直接参照し、クエリ結果をBIや別のRedshiftへ共有できる。</figcaption>
+</figure>
+
+<h3 id="redshift-c2-3">テーブル設計と同時実行<a class="anchor" href="#redshift-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>クエリのアクセスパターンに応じて、列のデータ型、ソートキー、分散方法を設計します。列指向形式や圧縮はスキャン量を抑えます。テーブルや行のロック、トランザクションの競合が発生した場合は、長時間トランザクションや同時更新を調査します。分析性能はクエリプラン、スキャン量、分散キーのデータ偏りも確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c3">3. ユースケース<a class="anchor" href="#redshift-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>業務システムやS3のデータを統合した大規模なSQL分析。</li>
+<li>BIダッシュボード向けの集計テーブルやマテリアライズドビュー。</li>
+<li>S3データレイクとデータウェアハウスを組み合わせた分析。</li>
+<li>別のRedshift利用者への管理されたデータ共有。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c4">4. 料金の考え方<a class="anchor" href="#redshift-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>プロビジョンドでは主に利用するノードの容量と稼働時間、Serverlessでは処理容量の利用量などが課金要因です。ストレージ、バックアップ、データ転送、Spectrumのスキャンなども確認します。アイドル時間が長いか、負荷が一定か変動するかを踏まえて方式を選びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c5">5. 関連サービス<a class="anchor" href="#redshift-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-s3">Amazon S3</a>:ロード元、UNLOAD先、Spectrumのデータレイク</li>
+<li><a href="#p-glue">AWS Glue</a>:カタログとETL</li>
+<li><a href="#p-lake-formation">AWS Lake Formation</a>:データレイクのアクセス制御</li>
+<li><a href="#p-athena">Amazon Athena</a>:サーバーレスSQLでのデータレイク分析</li>
+<li><a href="#p-quick">Amazon Quick</a>:Quick SightのBIダッシュボード</li>
+<li><a href="#p-appflow">Amazon AppFlow</a>:SaaSデータの取り込み</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c6">6. 試験・実務でのポイント<a class="anchor" href="#redshift-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>大規模な分析用SQLデータウェアハウス → <strong class="em">Amazon Redshift</strong>。</li>
+<li>データをS3からロードする → <code>COPY</code>。クエリ結果をS3へ出力する → <code>UNLOAD</code>。</li>
+<li>S3のデータをロードせずに分析 → <strong>Redshift Spectrum</strong>。</li>
+<li>負荷変動が大きく容量管理を減らしたい → Serverless。一定負荷で容量を管理したい → プロビジョンドを比較する。</li>
+<li>他のデータウェアハウスへ読み取り用データを渡す → データ共有。データベース間の移送方法と区別する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c7">7. まとめ<a class="anchor" href="#redshift-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Redshiftは、SQLによる大規模分析向けのデータウェアハウス。</li>
+<li>COPY/UNLOAD、Spectrum、フェデレーテッドクエリ、データ共有で複数のデータソースと連携する。</li>
+<li>ノード容量・クエリ・ストレージなど、方式別の料金要因を比較する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-emr">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>Amazon EMR</h1>
+<p class="lead">Apache SparkやHadoopなどの分散処理フレームワークを実行するマネージドサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="emr-c1">1. サービス概要<a class="anchor" href="#emr-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon EMR</strong>は、Apache Spark、Hadoop、HiveなどのビッグデータフレームワークをAWS上で実行するマネージドサービスです。大規模なデータ処理や分析に必要なクラスターを作成し、S3などのデータを並列に処理します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="emr-c2">2. 主な機能・特徴<a class="anchor" href="#emr-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="emr-c2-1">実行方式<a class="anchor" href="#emr-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>EMR on EC2</strong>:クラスターのEC2インスタンスとソフトウェア構成を管理し、柔軟なカスタマイズを行う。</li>
+<li><strong>EMR Serverless</strong>:クラスターを常時管理せず、SparkやHiveのジョブ実行に必要なリソースを利用する。</li>
+<li><strong>EMR on EKS</strong>:Amazon EKS上でEMRの処理を実行し、既存のKubernetes基盤と共存させる。</li>
+</ul>
+
+<h3 id="emr-c2-2">分散処理<a class="anchor" href="#emr-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>処理対象を複数のノードに分け、並列に読み込み・変換・集計します。S3をデータレイクとして使う処理では、クラスターディスクにすべてのデータを置かずに済みます。HDFSを使う構成では、クラスター内の一時・分散ストレージの容量と耐障害性を考慮します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 973 210" style="max-width:973px;min-width:778px" role="img" aria-label="図1 EMRの分散処理。入力データを複数の処理ノードへ分配し、結果をS3やデータウェアハウスへ出力する。"><defs><marker id="emr-dgservices-emr-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="s3">
+<rect x="34" y="86" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="108" text-anchor="middle" class="dg-t">Amazon S3</text>
+<text x="109" y="126" text-anchor="middle" class="dg-s">入力データ</text>
+</g>
+<g data-node="emr">
+<rect x="289" y="86" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="108" text-anchor="middle" class="dg-tb">Amazon EMR</text>
+<text x="364" y="126" text-anchor="middle" class="dg-s">Spark・Hadoop</text>
+</g>
+<g data-node="n1">
+<rect x="544" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="60" text-anchor="middle" class="dg-t">処理ノード</text>
+<text x="619" y="78" text-anchor="middle" class="dg-s">分割して並列処理</text>
+</g>
+<g data-node="n2">
+<rect x="544" y="134" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="156" text-anchor="middle" class="dg-t">処理ノード</text>
+<text x="619" y="174" text-anchor="middle" class="dg-s">分割して並列処理</text>
+</g>
+<g data-node="out">
+<rect x="799" y="86" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="874" y="108" text-anchor="middle" class="dg-t">出力データ</text>
+<text x="874" y="126" text-anchor="middle" class="dg-s">S3・Redshift</text>
+</g>
+<path d="M184.0,112.0 L289.0,112.0" class="dg-line" marker-end="url(#emr-dgservices-emr-1)"/>
+<path d="M439.0,97.9 L544.0,78.1" class="dg-line" marker-end="url(#emr-dgservices-emr-1)"/>
+<path d="M439.0,126.1 L544.0,145.9" class="dg-line" marker-end="url(#emr-dgservices-emr-1)"/>
+<path d="M694.0,78.1 L799.0,97.9" class="dg-line" marker-end="url(#emr-dgservices-emr-1)"/>
+<path d="M694.0,145.9 L799.0,126.1" class="dg-line" marker-end="url(#emr-dgservices-emr-1)"/>
+</svg>
+</div>
+<figcaption>図1 EMRの分散処理。入力データを複数の処理ノードへ分配し、結果をS3やデータウェアハウスへ出力する。</figcaption>
+</figure>
+
+<h3 id="emr-c2-3">Glueとの使い分け<a class="anchor" href="#emr-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>AWS Glueはサーバーレスなデータ統合・ETLを簡潔に実行したい場合に向きます。EMRはフレームワークや実行環境の選択、クラスター構成、ライブラリなどを細かく制御したい大規模処理に向きます。どちらもSparkを使えるため、既存コード・運用負荷・処理時間・コストで選びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="emr-c3">3. ユースケース<a class="anchor" href="#emr-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>大量のログやイベントをSparkで集計・変換する。</li>
+<li>複雑なデータ処理や機械学習向け前処理を分散実行する。</li>
+<li>既存のHadoop/SparkアプリケーションをAWS上で実行する。</li>
+<li>データレイクのデータを変換し、分析用の保存先へ出力する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="emr-c4">4. 料金の考え方<a class="anchor" href="#emr-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>実行方式により、EC2インスタンスの稼働、EMRの利用、ジョブ処理に使うリソースなどが主な課金要因です。EMR on EC2では未使用ノードを停止し、ジョブに適したインスタンスタイプとクラスターサイズを選びます。S3、EKS、データ転送などの料金は別に確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="emr-c5">5. 関連サービス<a class="anchor" href="#emr-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-s3">Amazon S3</a>:データレイクと処理結果の保存</li>
+<li><a href="#p-glue">AWS Glue</a>:サーバーレスETLとData Catalog</li>
+<li><a href="#p-lake-formation">AWS Lake Formation</a>:データレイクの細粒度アクセス制御</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:分析データウェアハウス</li>
+<li><a href="#p-eks">Amazon EKS</a>:EMR on EKSの実行基盤</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="emr-c6">6. 試験・実務でのポイント<a class="anchor" href="#emr-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>SparkやHadoopなどのOSSフレームワークを大規模分散実行 → <strong>Amazon EMR</strong>。</li>
+<li>インフラ管理を避けてジョブ単位で処理する → EMR Serverless。</li>
+<li>ノードやソフトウェアを柔軟に制御する → EMR on EC2。</li>
+<li>既存のKubernetes基盤を使う → EMR on EKS。</li>
+<li>GlueはサーバーレスETL、EMRはOSS処理基盤の柔軟な実行を軸に比較する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="emr-c7">7. まとめ<a class="anchor" href="#emr-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>EMRは、SparkやHadoopなどをマネージドなクラスター環境で実行する。</li>
+<li>EC2、Serverless、EKSの実行方式から、制御性と管理負荷に合わせて選ぶ。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-msk">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>Amazon MSK</h1>
+<p class="lead">Apache Kafka互換のストリーミング基盤をマネージドで利用するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="msk-c1">1. サービス概要<a class="anchor" href="#msk-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Managed Streaming for Apache Kafka (Amazon MSK)</strong>は、Apache Kafkaを使ったストリーミングアプリケーションのためのマネージドサービスです。AWSがクラスターの作成・管理を担い、既存のKafkaプロデューサーやコンシューマーを利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="msk-c2">2. 主な機能・特徴<a class="anchor" href="#msk-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="msk-c2-1">Kafkaの基本構成<a class="anchor" href="#msk-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>プロデューサー</strong>がイベントをトピックへ書き込む。</li>
+<li>トピックは複数の<strong>パーティション</strong>に分かれ、ブローカーに分散して保存される。</li>
+<li><strong>コンシューマーグループ</strong>の各コンシューマーがパーティションを分担して読み取る。</li>
+<li>オフセットで読み取り位置を管理し、保持期間内のレコードを再読込できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 973 210" style="max-width:973px;min-width:778px" role="img" aria-label="図1 Amazon MSKのイベント処理。トピックのパーティションをコンシューマーグループで分担し、オフセットに基づいて読み取る。"><defs><marker id="msk-dgservices-msk-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="prod">
+<rect x="34" y="86" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="108" text-anchor="middle" class="dg-t">プロデューサー</text>
+<text x="109" y="126" text-anchor="middle" class="dg-s">イベントを送る</text>
+</g>
+<g data-node="topic">
+<rect x="289" y="86" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="108" text-anchor="middle" class="dg-tb">Kafkaトピック</text>
+<text x="364" y="126" text-anchor="middle" class="dg-s">複数パーティション</text>
+</g>
+<g data-node="c1">
+<rect x="544" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="60" text-anchor="middle" class="dg-t">コンシューマー1</text>
+<text x="619" y="78" text-anchor="middle" class="dg-s">担当パーティション</text>
+</g>
+<g data-node="c2">
+<rect x="544" y="134" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="156" text-anchor="middle" class="dg-t">コンシューマー2</text>
+<text x="619" y="174" text-anchor="middle" class="dg-s">担当パーティション</text>
+</g>
+<g data-node="out">
+<rect x="799" y="86" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="874" y="108" text-anchor="middle" class="dg-t">処理・保存先</text>
+<text x="874" y="126" text-anchor="middle" class="dg-s">再読込も可能</text>
+</g>
+<path d="M184.0,112.0 L289.0,112.0" class="dg-line" marker-end="url(#msk-dgservices-msk-1)"/>
+<path d="M439.0,97.9 L544.0,78.1" class="dg-line" marker-end="url(#msk-dgservices-msk-1)"/>
+<path d="M439.0,126.1 L544.0,145.9" class="dg-line" marker-end="url(#msk-dgservices-msk-1)"/>
+<path d="M694.0,78.1 L799.0,97.9" class="dg-line" marker-end="url(#msk-dgservices-msk-1)"/>
+<path d="M694.0,145.9 L799.0,126.1" class="dg-line" marker-end="url(#msk-dgservices-msk-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon MSKのイベント処理。トピックのパーティションをコンシューマーグループで分担し、オフセットに基づいて読み取る。</figcaption>
+</figure>
+
+<h3 id="msk-c2-2">利用形態と連携<a class="anchor" href="#msk-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>MSK Provisioned</strong>はブローカーの種類や数を選びます。<strong>MSK Serverless</strong>はブローカーの容量管理をAWSに任せます。MSK ConnectでKafka Connectコネクターを実行し、外部システムとのデータ連携もできます。MSK Replicatorはクラスター間のレプリケーションに使います。</p>
+
+<h3 id="msk-c2-3">ストリーム処理サービスとの違い<a class="anchor" href="#msk-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>MSKはKafka互換のイベントストリームを提供します。Kinesis Data StreamsはAWSネイティブなストリーム基盤で、Data Firehoseは処理済みデータを保存先へ配送するサービスです。Apache Flinkなどの処理エンジンは、ストリーム上のイベントを変換・集計する役割を担います。</p>
+</section>
+
+<section class="chapter">
+<h2 id="msk-c3">3. ユースケース<a class="anchor" href="#msk-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Kafkaを利用する既存アプリケーションのストリーミング処理。</li>
+<li>イベントを複数のコンシューマーへ配信し、それぞれで独立して処理する。</li>
+<li>Kafka Connectを使ったデータソース・保存先との連携。</li>
+<li>保持期間内のイベントを再生して、障害後の処理をやり直す。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="msk-c4">4. 料金の考え方<a class="anchor" href="#msk-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Provisionedはブローカーとストレージなどの稼働、Serverlessは利用量などが課金要因です。データ転送、MSK ConnectやReplicator、連携先サービスの料金も考慮します。保持期間・パーティション数・複製数がストレージ量や処理能力に影響します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="msk-c5">5. 関連サービス<a class="anchor" href="#msk-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-kinesis">Amazon Kinesis</a>:AWSネイティブなストリーミングデータ処理</li>
+<li><a href="#p-data-firehose">Amazon Data Firehose</a>:ストリームを保存先へ管理不要で配送</li>
+<li><a href="#p-glue">AWS Glue</a>:ストリームETLとData Catalog</li>
+<li><a href="#p-emr">Amazon EMR</a>:Sparkなどによる大規模分散処理</li>
+<li><a href="#p-mwaa">Amazon MWAA</a>:データパイプラインのオーケストレーション</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="msk-c6">6. 試験・実務でのポイント<a class="anchor" href="#msk-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>Apache Kafka互換性を保ったマネージドストリーミング → <strong>Amazon MSK</strong>。</li>
+<li>保持期間内にオフセットを戻して再読込できる。再処理時の重複や冪等性も設計する。</li>
+<li>スループットを高めるにはパーティション数とコンシューマー並列度を検討する。</li>
+<li>運用するKafkaクラスター → Provisioned。ブローカー管理を任せる → Serverless。</li>
+<li>MSKはストリーム基盤、Data Firehoseは配送、Glue/Flinkは変換処理という役割を区別する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="msk-c7">7. まとめ<a class="anchor" href="#msk-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>MSKはApache Kafka互換のストリーミングサービス。</li>
+<li>トピック・パーティション・オフセットでイベントを保持し、複数のコンシューマーが処理する。</li>
+<li>ProvisionedとServerless、Kafka Connect、Replicatorを要件に合わせて使う。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-managed-flink">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>Amazon Managed Service for Apache Flink</h1>
+<p class="lead">Apache Flinkでストリーミングデータを継続処理するマネージドサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="managed-flink-c1">1. サービス概要<a class="anchor" href="#managed-flink-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Managed Service for Apache Flink</strong>は、Apache Flinkを使ってストリーミングデータを継続的に処理・分析するサービスです。AWSが実行基盤を管理し、利用者はJava、Scala、Python、SQLなどで処理ロジックを作成します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="managed-flink-c2">2. 主な機能・特徴<a class="anchor" href="#managed-flink-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="managed-flink-c2-1">ステートフルなストリーム処理<a class="anchor" href="#managed-flink-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>Flinkアプリケーションはイベントを継続的に読み取り、時間窓集計、イベント結合、異常検知などを行います。チェックポイントやスナップショットは、状態を復旧して処理を再開するために使います。イベント時刻、遅延到着、重複、状態の保持期間を設計します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 758 202" style="max-width:758px;min-width:606px" role="img" aria-label="図1 Managed Service for Apache Flink。ストリームを継続処理し、チェックポイントで状態を保存して復旧に備える。"><defs><marker id="managed-flink-dgservices-managed-flink-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="source">
+<rect x="34" y="73" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="94" text-anchor="middle" class="dg-t">Kinesis・MSK</text>
+<text x="99" y="112" text-anchor="middle" class="dg-s">ストリーム</text>
+</g>
+<g data-node="flink">
+<rect x="304" y="73" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="369" y="94" text-anchor="middle" class="dg-tb">Managed Flink</text>
+<text x="369" y="112" text-anchor="middle" class="dg-s">継続処理・状態</text>
+</g>
+<g data-node="state">
+<rect x="604" y="36" width="130" height="52" rx="8" class="dg-box"/>
+<text x="669" y="57" text-anchor="middle" class="dg-t">Checkpoint</text>
+<text x="669" y="75" text-anchor="middle" class="dg-s">障害復旧</text>
+</g>
+<g data-node="sink">
+<rect x="604" y="126" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="669" y="147" text-anchor="middle" class="dg-t">S3・分析先</text>
+<text x="669" y="165" text-anchor="middle" class="dg-s">集計結果</text>
+</g>
+<path d="M164.0,99.0 L304.0,99.0" class="dg-line" marker-end="url(#managed-flink-dgservices-managed-flink-1)"/>
+<path d="M434.0,90.9 L604.0,69.6" class="dg-line dg-dash" marker-end="url(#managed-flink-dgservices-managed-flink-1)"/>
+<path d="M434.0,110.4 L604.0,140.1" class="dg-line" marker-end="url(#managed-flink-dgservices-managed-flink-1)"/>
+</svg>
+</div>
+<figcaption>図1 Managed Service for Apache Flink。ストリームを継続処理し、チェックポイントで状態を保存して復旧に備える。</figcaption>
+</figure>
+
+<h3 id="managed-flink-c2-2">アプリケーションとStudio<a class="anchor" href="#managed-flink-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>長時間稼働するアプリケーションは、IDEとFlink APIを使って作成し、バージョン管理・テスト・CI/CDに組み込めます。StudioノートブックはSQLなどでストリームを対話的に探索する用途に向きます。運用に移すアプリケーションでは、コードの変更管理と状態の互換性を確認します。</p>
+
+<h3 id="managed-flink-c2-3">他のストリーミングサービスとの違い<a class="anchor" href="#managed-flink-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Kinesis Data StreamsやAmazon MSKはデータを保持・配信するストリーム基盤です。Managed Service for Apache Flinkは、そこからレコードを読み取って継続的な変換・集計を行います。Data Firehoseは処理済みデータを保存先へ配送する役割です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="managed-flink-c3">3. ユースケース<a class="anchor" href="#managed-flink-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ストリームのイベントを時間窓で集計し、リアルタイムダッシュボードへ出力する。</li>
+<li>イベントの結合や状態管理が必要なストリームETLを実行する。</li>
+<li>ストリーミングデータの異常や傾向を検出する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="managed-flink-c4">4. 料金の考え方<a class="anchor" href="#managed-flink-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>アプリケーションに割り当てる処理能力と実行時間などが課金要因です。ソース・出力先、チェックポイント用ストレージ、CloudWatchログ、データ転送などの料金も考慮します。必要な並列度と状態サイズを監視し、過剰な処理能力を避けます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="managed-flink-c5">5. 関連サービス<a class="anchor" href="#managed-flink-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-kinesis">Amazon Kinesis</a>:Kinesis Data Streams</li>
+<li><a href="#p-msk">Amazon MSK</a>:Kafka互換ストリーム</li>
+<li><a href="#p-data-firehose">Amazon Data Firehose</a>:ストリームの配送</li>
+<li><a href="#p-glue">AWS Glue</a>:ETLとData Catalog</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:アプリケーション監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="managed-flink-c6">6. 試験・実務でのポイント<a class="anchor" href="#managed-flink-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>継続的なストリーミング変換・状態管理 → <strong>Managed Service for Apache Flink</strong>。</li>
+<li>イベントを保持する基盤(Kinesis/MSK)と、イベントを処理するエンジン(Flink)を区別する。</li>
+<li>障害後の復旧にはチェックポイントを使い、状態・イベント時刻・再処理を設計する。</li>
+<li>対話的な探索にはStudio、長時間稼働しCI/CDで管理する処理にはFlinkアプリケーションを比較する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="managed-flink-c7">7. まとめ<a class="anchor" href="#managed-flink-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Managed Service for Apache FlinkはFlinkアプリケーションの実行基盤をマネージドで提供する。</li>
+<li>状態を持つストリーミング処理と、Kinesis/MSKなどのデータ基盤を組み合わせる。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-quick">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>Amazon Quick</h1>
+<p class="lead">データを可視化してダッシュボードや分析結果を共有するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="quick-c1">1. サービス概要<a class="anchor" href="#quick-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Quick</strong>は、自然言語による分析や業務自動化などを含むAIサービスです。その中の<strong>Quick Sight</strong>機能が、データソースへの接続、可視化、BIダッシュボード作成を担います。Quick Sightは以前のAmazon QuickSightを引き継ぐ機能で、既存のAPIや統合は継続して利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="quick-c2">2. 主な機能・特徴<a class="anchor" href="#quick-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="quick-c2-1">Quick SightによるBI<a class="anchor" href="#quick-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>Athena、Redshift、S3などのデータソースを使って分析し、グラフやダッシュボードを作る。</li>
+<li>SPICEインメモリエンジンにデータを取り込む方式と、対応データソースに直接クエリする方式を使い分ける。</li>
+<li>ダッシュボードを組織内で共有し、ユーザー・グループごとに閲覧権限を管理する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 788 209" style="max-width:788px;min-width:630px" role="img" aria-label="図1 Quick SightによるBI。AthenaやRedshiftの分析結果を可視化し、ダッシュボードとして利用者に共有する。"><defs><marker id="quick-dgservices-quick-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ath">
+<rect x="34" y="36" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="57" text-anchor="middle" class="dg-t">Athena</text>
+<text x="99" y="75" text-anchor="middle" class="dg-s">S3のSQL分析</text>
+</g>
+<g data-node="rs">
+<rect x="34" y="133" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="154" text-anchor="middle" class="dg-t">Redshift</text>
+<text x="99" y="172" text-anchor="middle" class="dg-s">集計データ</text>
+</g>
+<g data-node="quick">
+<rect x="334" y="80" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="102" text-anchor="middle" class="dg-tb">Quick Sight</text>
+<text x="399" y="120" text-anchor="middle" class="dg-s">可視化・分析</text>
+</g>
+<g data-node="user">
+<rect x="634" y="80" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="699" y="102" text-anchor="middle" class="dg-t">利用者</text>
+<text x="699" y="120" text-anchor="middle" class="dg-s">共有ダッシュボード</text>
+</g>
+<path d="M164.0,71.2 L334.0,96.8" class="dg-line" marker-end="url(#quick-dgservices-quick-1)"/>
+<path d="M164.0,147.6 L334.0,117.9" class="dg-line" marker-end="url(#quick-dgservices-quick-1)"/>
+<path d="M464.0,106.5 L634.0,106.5" class="dg-line" marker-end="url(#quick-dgservices-quick-1)"/>
+</svg>
+</div>
+<figcaption>図1 Quick SightによるBI。AthenaやRedshiftの分析結果を可視化し、ダッシュボードとして利用者に共有する。</figcaption>
+</figure>
+
+<h3 id="quick-c2-2">データ更新と権限<a class="anchor" href="#quick-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>SPICEを使う場合はデータセットの更新を設定し、更新失敗や容量を監視します。直接クエリは基盤側のクエリ性能と同時実行の影響を受けます。利用者に必要な閲覧権限を付与し、データセットやダッシュボードの共有範囲を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="quick-c3">3. ユースケース<a class="anchor" href="#quick-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>分析者が作成したレポートを部署や経営層に共有する。</li>
+<li>AthenaやRedshiftのデータをグラフ・ダッシュボードで可視化する。</li>
+<li>SPICEを使ってダッシュボードの応答性を高める。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="quick-c4">4. 料金の考え方<a class="anchor" href="#quick-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>契約するユーザー機能・プラン、利用者数、容量、セッションなどに応じて料金が異なります。SPICE容量やデータソース側のクエリ料金も別途考慮します。組織向けの契約条件と最新の料金表を確認してください。</p>
+</section>
+
+<section class="chapter">
+<h2 id="quick-c5">5. 関連サービス<a class="anchor" href="#quick-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-athena">Amazon Athena</a>:S3データのSQLクエリ</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:分析用データウェアハウス</li>
+<li><a href="#p-glue">AWS Glue</a>:データカタログとETL</li>
+<li><a href="#p-s3">Amazon S3</a>:データレイク</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="quick-c6">6. 試験・実務でのポイント<a class="anchor" href="#quick-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>データをグラフやダッシュボードで可視化し、共有する → <strong>Quick Sight</strong>。</li>
+<li>応答性を優先してデータをインメモリに取り込む → SPICE。最新データを基盤から直接読む → 直接クエリを比較する。</li>
+<li>データ分析や可視化サービスと、データ変換・保存サービスの役割を区別する。</li>
+<li>名称はAmazon Quick、BI機能はQuick Sight。旧称や既存APIに関する記述と混同しない。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="quick-c7">7. まとめ<a class="anchor" href="#quick-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Amazon QuickのQuick Sight機能は、データ可視化とBIダッシュボードを提供する。</li>
+<li>SPICEへの取り込みと直接クエリを、鮮度・性能・料金で使い分ける。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-data-exchange">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>AWS Data Exchange</h1>
+<p class="lead">外部組織とのデータセットの検索・共有・利用権限を管理するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="data-exchange-c1">1. サービス概要<a class="anchor" href="#data-exchange-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Data Exchange</strong>は、AWS上でデータセットの提供・共有・利用権限を管理するサービスです。利用者はサードパーティーや社内提供者のデータ製品を検索・購読し、提供者はデータの配布基盤を個別に構築せずにデータを共有できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="data-exchange-c2">2. 主な機能・特徴<a class="anchor" href="#data-exchange-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="data-exchange-c2-1">提供者と利用者<a class="anchor" href="#data-exchange-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>提供者はデータ製品にデータセットと利用条件を設定し、AWS Marketplaceで公開する。</li>
+<li>利用者は利用条件に同意して購読し、許可されたデータ資産を利用する。</li>
+<li>データ共有の単位には、データセット、データ資産、データグラント、製品の購読などがある。</li>
+</ul>
+<h3 id="data-exchange-c2-2">データの種類と更新<a class="anchor" href="#data-exchange-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>データセットはファイル、API、Redshiftデータ共有、S3データアクセスなど複数の形を取れます。提供者はデータの更新をリビジョンとして公開し、利用者の権利に応じて過去・将来の版を提供します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 149" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 AWS Data Exchangeの共有。提供者がデータセットと利用条件を公開し、利用者は権利を取得して対応する分析サービスで利用する。"><defs><marker id="data-exchange-dgservices-data-exchange-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="provider">
+<rect x="34" y="73" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="94" text-anchor="middle" class="dg-t">データ提供者</text>
+<text x="104" y="112" text-anchor="middle" class="dg-s">製品・利用条件</text>
+</g>
+<g data-node="exchange">
+<rect x="322" y="73" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="392" y="94" text-anchor="middle" class="dg-tb">Data Exchange</text>
+<text x="392" y="112" text-anchor="middle" class="dg-s">データセット・権利</text>
+</g>
+<g data-node="subscriber">
+<rect x="642" y="73" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="712" y="94" text-anchor="middle" class="dg-t">利用者</text>
+<text x="712" y="112" text-anchor="middle" class="dg-s">購読・アクセス</text>
+</g>
+<g data-node="data">
+<rect x="962" y="73" width="140" height="52" rx="8" class="dg-box"/>
+<text x="1032" y="94" text-anchor="middle" class="dg-t">分析サービス</text>
+<text x="1032" y="112" text-anchor="middle" class="dg-s">S3・Redshiftなど</text>
+</g>
+<path d="M174.0,99.0 L322.0,99.0" class="dg-line" marker-end="url(#data-exchange-dgservices-data-exchange-1)"/>
+<path d="M462.0,99.0 L642.0,99.0" class="dg-line" marker-end="url(#data-exchange-dgservices-data-exchange-1)"/>
+<path d="M782.0,99.0 L962.0,99.0" class="dg-line" marker-end="url(#data-exchange-dgservices-data-exchange-1)"/>
+</svg>
+</div>
+<figcaption>図1 AWS Data Exchangeの共有。提供者がデータセットと利用条件を公開し、利用者は権利を取得して対応する分析サービスで利用する。</figcaption>
+</figure>
+<p>利用権限はデータの利用方法や期間を規定します。購読やグラントを取得しても、データの内容や品質が保証されるわけではないため、利用条件・更新頻度・ライセンス・地域制約を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="data-exchange-c3">3. ユースケース<a class="anchor" href="#data-exchange-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>市場・気象・位置情報などの外部データを分析に取り込む。</li>
+<li>提供者が新しいデータリビジョンを公開し、購読者が更新分を利用する。</li>
+<li>組織内外で共有するデータの権利や利用期間を管理する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="data-exchange-c4">4. 料金の考え方<a class="anchor" href="#data-exchange-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>公開製品や購読データには、提供者が定めた価格・契約条件が適用される場合があります。データ転送、S3・Redshiftなどの保存・分析サービスの料金も別途発生します。購読費用とAWS上での利用料金を分けて確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="data-exchange-c5">5. 関連サービス<a class="anchor" href="#data-exchange-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-s3">Amazon S3</a>:ファイルデータセットの保存・利用</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:データ共有形式のデータセット利用</li>
+<li><a href="#p-lake-formation">AWS Lake Formation</a>:データレイク内のアクセス権</li>
+<li><a href="#p-athena">Amazon Athena</a>:共有されたS3データのSQL分析</li>
+<li><a href="#p-sagemaker-unified-studio">Amazon SageMaker Unified Studio</a>:データの検索・分析・共同利用</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="data-exchange-c6">6. 試験・実務でのポイント<a class="anchor" href="#data-exchange-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>外部データセットを発見・購読し、提供者と利用者の権利を管理 → <strong>AWS Data Exchange</strong>。</li>
+<li>購読・データグラントは利用権限であり、データの品質や正確性の保証とは異なる。</li>
+<li>データ製品の契約条件と、S3・Redshiftなどの保存・分析料金を分けて見積もる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="data-exchange-c7">7. まとめ<a class="anchor" href="#data-exchange-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS Data Exchangeはデータ製品の共有・購読とアクセス権を管理する。</li>
+<li>データセットの形式・更新・利用条件を確認して、分析サービスと連携する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-sagemaker-unified-studio">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>Amazon SageMaker Unified Studio</h1>
+<p class="lead">データ・分析・AIの作業をプロジェクト単位でまとめる統合開発環境</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="sagemaker-unified-studio-c1">1. サービス概要<a class="anchor" href="#sagemaker-unified-studio-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon SageMaker Unified Studio</strong>は、データ、分析、AI・機械学習の作業を共通の環境にまとめる開発体験です。管理者が設定するドメインの中で、チームはプロジェクトを作成し、データの発見・準備・分析・共有を行います。</p>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-unified-studio-c2">2. 主な機能・特徴<a class="anchor" href="#sagemaker-unified-studio-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="sagemaker-unified-studio-c2-1">ドメイン・ドメインユニット・プロジェクト<a class="anchor" href="#sagemaker-unified-studio-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ドメイン</strong>:組織のユーザー、認証、共有環境などをまとめる管理境界。</li>
+<li><strong>ドメインユニット</strong>:ドメイン内を部門やチームに分け、委任管理や設定の適用範囲を整理する単位。</li>
+<li><strong>プロジェクト</strong>:データ、メンバー、処理資源、アクセス権をユースケースごとにまとめる作業領域。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 713 234" style="max-width:713px;min-width:570px" role="img" aria-label="図1 SageMaker Unified Studioの構成。ドメイン内のドメインユニットで組織を分け、プロジェクト単位でメンバー・データ・作業を管理する。"><defs><marker id="sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="domain">
+<rect x="34" y="78" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="99" y="100" text-anchor="middle" class="dg-tb">ドメイン</text>
+<text x="99" y="118" text-anchor="middle" class="dg-s">組織の境界</text>
+</g>
+<g data-node="unit1">
+<rect x="274" y="38" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="339" y="60" text-anchor="middle" class="dg-t">ドメインユニット</text>
+<text x="339" y="78" text-anchor="middle" class="dg-s">分析部門</text>
+</g>
+<g data-node="unit2">
+<rect x="274" y="158" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="339" y="180" text-anchor="middle" class="dg-t">ドメインユニット</text>
+<text x="339" y="198" text-anchor="middle" class="dg-s">データ部門</text>
+</g>
+<g data-node="p1">
+<rect x="559" y="38" width="130" height="52" rx="8" class="dg-box"/>
+<text x="624" y="60" text-anchor="middle" class="dg-t">プロジェクト</text>
+<text x="624" y="78" text-anchor="middle" class="dg-s">共有データ・処理</text>
+</g>
+<g data-node="p2">
+<rect x="559" y="158" width="130" height="52" rx="8" class="dg-box"/>
+<text x="624" y="180" text-anchor="middle" class="dg-t">プロジェクト</text>
+<text x="624" y="198" text-anchor="middle" class="dg-s">権限・資産</text>
+</g>
+<path d="M164.0,93.2 L274.0,74.8" class="dg-line" marker-end="url(#sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1)"/>
+<path d="M164.0,125.7 L274.0,162.3" class="dg-line" marker-end="url(#sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1)"/>
+<path d="M404.0,64.0 L559.0,64.0" class="dg-line" marker-end="url(#sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1)"/>
+<path d="M404.0,184.0 L559.0,184.0" class="dg-line" marker-end="url(#sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1)"/>
+</svg>
+</div>
+<figcaption>図1 SageMaker Unified Studioの構成。ドメイン内のドメインユニットで組織を分け、プロジェクト単位でメンバー・データ・作業を管理する。</figcaption>
+</figure>
+
+<h3 id="sagemaker-unified-studio-c2-2">カタログとデータ準備<a class="anchor" href="#sagemaker-unified-studio-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>カタログを使ってデータ資産を発見し、アクセスを申請・共有できます。ビジネス向けカタログは、データの意味や所有者などの情報を利用者が理解しやすい形で示します。データ準備にはビジュアルな操作やノートブックなどを使い、データの来歴を追跡する機能と組み合わせます。</p>
+<p>データ準備機能にはAmazon SageMaker Data Wranglerがあります。現在のData Wrangler体験はSageMaker Canvasに統合されており、視覚的な変換やデータ品質の確認、フローの出力を行います。試験ガイドにある名称と、現行の提供形態を区別して押さえます。</p>
+<p>プロジェクトがデータを発見できることと、実データを読み取れることは別です。カタログ上の共有・承認と、Lake Formation、IAM、基盤サービス側の権限を確認します。</p>
+
+<h3 id="sagemaker-unified-studio-c2-3">データリネージ<a class="anchor" href="#sagemaker-unified-studio-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>データリネージ</strong>は、データがどのソースから取り込まれ、どの処理を経て、どの出力や利用者につながるかを追跡する考え方です。変更の影響調査、品質問題の原因特定、監査に役立ちます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-unified-studio-c3">3. ユースケース<a class="anchor" href="#sagemaker-unified-studio-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>部門ごとにプロジェクトとデータアクセスを分けた共同分析。</li>
+<li>カタログから必要なデータを発見し、所有者にアクセスを申請する。</li>
+<li>データの加工履歴や依存関係を追跡して、変更の影響を調べる。</li>
+<li>データ準備、SQL分析、AI開発を共通の作業環境から行う。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-unified-studio-c4">4. 料金の考え方<a class="anchor" href="#sagemaker-unified-studio-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Unified Studioの利用に加え、プロジェクトから利用する計算資源、ストレージ、データカタログ、分析・AIサービスなどに料金が発生します。ドメインやプロジェクトの数そのものだけでなく、実行した処理と保存データの料金を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-unified-studio-c5">5. 関連サービス<a class="anchor" href="#sagemaker-unified-studio-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-glue">AWS Glue</a>:技術メタデータとETL</li>
+<li><a href="#p-lake-formation">AWS Lake Formation</a>:データレイクの権限・共有</li>
+<li><a href="#p-s3">Amazon S3</a>:データレイクの保存先</li>
+<li><a href="#p-athena">Amazon Athena</a>:SQLでの探索・分析</li>
+<li><a href="#p-macie">Amazon Macie</a>:個人情報を含む機密データの検出</li>
+<li>関連する用語:<a href="../terms/data-governance.html">データガバナンス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-unified-studio-c6">6. 試験・実務でのポイント<a class="anchor" href="#sagemaker-unified-studio-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>組織の作業環境を構成する順序は、ドメイン → ドメインユニット → プロジェクト。</li>
+<li>プロジェクトは作業と共有の境界であり、基盤データの権限も別途必要。</li>
+<li>カタログはデータを見つける入口、Lake FormationやIAMは実データへのアクセス制御を担う。</li>
+<li>ソース・処理・出力のつながりを調査する → データリネージ。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-unified-studio-c7">7. まとめ<a class="anchor" href="#sagemaker-unified-studio-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>SageMaker Unified Studioは、データ・分析・AIの共同作業環境。</li>
+<li>ドメイン、ドメインユニット、プロジェクトで組織と作業を分ける。</li>
+<li>カタログでの発見・共有と、実データのアクセス権を区別する。</li>
+</ul>
+</section>
+</article>
 <article class="booklet-page" id="p-kinesis">
 <div class="page-head hero" style="--cat:#8C4FFF">
 <div class="hero-text">
@@ -18494,7 +19707,7 @@ def lambda_handler(event, context):
 <li>S3などのデータストアへのデータの配送:<strong>Amazon Data Firehose</strong>(旧称 Kinesis Data Firehose)</li>
 <li>動画ストリームの取り込み・保存:<strong>Kinesis Video Streams</strong></li>
 </ul>
-<p>ストリームデータの分析には、かつて「Kinesis Data Analytics」と呼ばれていた <strong>Amazon Managed Service for Apache Flink</strong> を使います。</p>
+<p>ストリームデータの分析・変換には、かつて「Kinesis Data Analytics」と呼ばれていた <strong><a href="#p-managed-flink">Amazon Managed Service for Apache Flink</a></strong> を使います。Kafka互換のストリーム基盤は <a href="#p-msk">Amazon MSK</a> を参照してください。</p>
 <figure class="figure">
 <div class="fig-scroll">
 <svg viewBox="0 0 614 252" style="max-width:614px;min-width:520px" role="img" aria-label="図1 Kinesisの主なサービス。Data Streamsはシャードで並列に受け取り、Lambdaなど自作の処理でリアルタイムに処理する。Data Firehoseはコードをほぼ書かずに、S3やOpenSearchなどへ配送・保存する。"><defs><marker id="kinesis-dgservices-kinesis-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
@@ -18616,6 +19829,9 @@ def lambda_handler(event, context):
 <li><a href="#p-eventbridge">Amazon EventBridge</a>:Pipesのソースとして利用</li>
 <li><a href="#p-dynamodb">Amazon DynamoDB</a>:DynamoDB Streamsとの違いに注意</li>
 <li><a href="#p-data-firehose">Amazon Data Firehose</a>:保存先への配送(詳しい説明)</li>
+<li><a href="#p-msk">Amazon MSK</a>:Apache Kafka互換のストリーム基盤</li>
+<li><a href="#p-managed-flink">Amazon Managed Service for Apache Flink</a>:ストリーミングデータの継続処理</li>
+<li>関連する用語:<a href="../terms/data-engineering-basics.html">データパイプラインの基礎</a></li>
 </ul>
 </section>
 
@@ -18657,7 +19873,7 @@ def lambda_handler(event, context):
 <h3 id="data-firehose-c2-1">データの送り元(ソース)<a class="anchor" href="#data-firehose-c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>アプリやエージェントからの直接の送信(<code>PutRecord</code>/<code>PutRecordBatch</code>)</li>
-<li>Kinesis Data Streams・Amazon MSK(Kafka)からの読み取り</li>
+<li><a href="#p-kinesis">Kinesis Data Streams</a>・<a href="#p-msk">Amazon MSK(Kafka)</a>からの読み取り</li>
 <li><strong>CloudWatch Logs のサブスクリプションフィルター</strong>、CloudWatch メトリクスストリーム</li>
 <li>VPCフローログ・WAFのログ・IoT Coreのルールなど</li>
 </ul>
@@ -18761,6 +19977,8 @@ def lambda_handler(event, context):
 <h2 id="data-firehose-c5">5. 関連サービス<a class="anchor" href="#data-firehose-c5" aria-label="この見出しへのリンク">#</a></h2>
 <ul>
 <li><a href="#p-kinesis">Amazon Kinesis</a>:Data Streams(リアルタイム処理)</li>
+<li><a href="#p-msk">Amazon MSK</a>:Kafkaストリームの配送元</li>
+<li><a href="#p-managed-flink">Amazon Managed Service for Apache Flink</a>:ストリームデータの継続的な変換・分析</li>
 <li><a href="#p-cloudwatch">Amazon CloudWatch</a>:サブスクリプションフィルター・メトリクスストリーム・監視</li>
 <li><a href="#p-s3">Amazon S3</a>/<a href="#p-athena">Amazon Athena</a>:保存と分析</li>
 <li><a href="#p-opensearch">Amazon OpenSearch Service</a>:ログの検索・可視化</li>
@@ -19023,6 +20241,210 @@ def lambda_handler(event, context):
 </ul>
 </section>
 </article>
+<article class="booklet-page" id="p-kendra">
+<div class="page-head hero" style="--cat:#01A88D">
+<div class="hero-text">
+<span class="category">機械学習と人工知能</span>
+<h1>Amazon Kendra</h1>
+<p class="lead">企業内の文書を自然言語や意味的な関連性で検索するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="kendra-c1">1. サービス概要<a class="anchor" href="#kendra-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Kendra</strong>は、企業内の文書をインデックス化し、自然言語や意味的な関連性を使って検索するマネージドサービスです。FAQや文書リポジトリなど複数のデータソースから情報を取り込み、質問に関連する回答や文書を返します。</p>
+<p><strong>新規顧客は利用を開始できません。</strong>既存利用の機能や移行を学ぶ場合はKendraの仕組みを理解し、新しい生成AI検索を構築する場合はAmazon Bedrock Knowledge Basesなどの現行サービスを検討します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="kendra-c2">2. 主な機能・特徴<a class="anchor" href="#kendra-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="kendra-c2-1">インデックスとデータソース<a class="anchor" href="#kendra-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>データソースコネクターなどから文書を取得し、Kendraインデックスへ登録する。</li>
+<li>インデックス同期で元データの追加・変更を取り込む。</li>
+<li>自然言語の質問やキーワードに対し、関連文書や抜粋を検索結果として返す。</li>
+<li>文書の属性で絞り込み、ユーザーやグループごとのアクセス制御を検索結果に反映する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1028 144" style="max-width:1028px;min-width:822px" role="img" aria-label="図1 Amazon Kendraの検索。文書をインデックス化し、自然言語の質問に対して権限を考慮した関連結果を返す。"><defs><marker id="kendra-dgservices-kendra-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="source">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">文書ソース</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">S3・業務システム</text>
+</g>
+<g data-node="sync">
+<rect x="289" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="90" text-anchor="middle" class="dg-tb">Kendra</text>
+<text x="354" y="108" text-anchor="middle" class="dg-s">同期・インデックス</text>
+</g>
+<g data-node="query">
+<rect x="589" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="654" y="90" text-anchor="middle" class="dg-t">質問</text>
+<text x="654" y="108" text-anchor="middle" class="dg-s">自然言語</text>
+</g>
+<g data-node="result">
+<rect x="874" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="939" y="90" text-anchor="middle" class="dg-t">検索結果</text>
+<text x="939" y="108" text-anchor="middle" class="dg-s">権限を反映</text>
+</g>
+<path d="M164.0,94.0 L289.0,94.0" class="dg-line" marker-end="url(#kendra-dgservices-kendra-1)"/>
+<path d="M589.0,94.0 L419.0,94.0" class="dg-line" marker-end="url(#kendra-dgservices-kendra-1)"/>
+<path d="M419.0,94.0 L874.0,94.0" class="dg-line" marker-end="url(#kendra-dgservices-kendra-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon Kendraの検索。文書をインデックス化し、自然言語の質問に対して権限を考慮した関連結果を返す。</figcaption>
+</figure>
+
+<h3 id="kendra-c2-2">生成AIとの連携<a class="anchor" href="#kendra-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Kendraの検索結果を検索拡張生成(RAG)のコンテキストとして使う構成があります。Kendra GenAI indexはAmazon Q BusinessやAmazon Bedrock Knowledge Basesとの統合に利用できます。現在新規に構築する場合は、利用可能な現行サービスと機能を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="kendra-c3">3. ユースケース<a class="anchor" href="#kendra-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>従業員向けに社内文書・FAQを横断検索する。</li>
+<li>既存のKendra利用環境で自然言語検索を継続する。</li>
+<li>既存のRAG構成で、権限に応じた文書検索を行う。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="kendra-c4">4. 料金の考え方<a class="anchor" href="#kendra-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>インデックスのエディションや容量、データソース同期、利用機能などに応じて料金が発生します。提供状況に制限があるため、既存利用の費用確認や代替サービスへの移行計画では、最新の公式情報を確認してください。</p>
+</section>
+
+<section class="chapter">
+<h2 id="kendra-c5">5. 関連サービス<a class="anchor" href="#kendra-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-bedrock">Amazon Bedrock</a>:Knowledge Basesなど新規RAG構成の候補</li>
+<li><a href="#p-s3">Amazon S3</a>:文書データの保存</li>
+<li><a href="#p-sagemaker-unified-studio">Amazon SageMaker Unified Studio</a>:データ・AI資産の発見と共有</li>
+<li><a href="#p-opensearch">Amazon OpenSearch Service</a>:全文・ベクトル検索の構成</li>
+<li>関連する用語:<a href="../terms/vector-search.html">ベクトル検索</a>、<a href="../terms/data-governance.html">データガバナンス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="kendra-c6">6. 試験・実務でのポイント<a class="anchor" href="#kendra-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>企業文書の自然言語・意味検索 → <strong>Amazon Kendra</strong>の役割を理解する。</li>
+<li>Kendraは新規顧客の受付を終了しているため、新規構成では現行の代替サービスを選ぶ。</li>
+<li>検索インデックスが結果を返すことと、利用者に文書の閲覧権限があることを別々に確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="kendra-c7">7. まとめ<a class="anchor" href="#kendra-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Kendraは企業文書をインデックス化して自然言語で検索するサービス。</li>
+<li>新規顧客は利用を開始できないため、既存環境の理解と現行代替の選定を区別する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-sagemaker-ai">
+<div class="page-head hero" style="--cat:#01A88D">
+<div class="hero-text">
+<span class="category">機械学習と人工知能</span>
+<h1>Amazon SageMaker AI</h1>
+<p class="lead">機械学習用データの準備・特徴量管理からモデル開発までを支援するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="sagemaker-ai-c1">1. サービス概要<a class="anchor" href="#sagemaker-ai-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon SageMaker AI</strong>(旧Amazon SageMaker)は、機械学習モデルを構築・学習・デプロイするマネージドサービスです。データエンジニアの学習では、データ準備、データ品質の確認、特徴量の管理、機械学習パイプラインへのデータ提供を中心に押さえます。</p>
+<p>Amazon SageMaker AIとAmazon SageMaker Unified Studioは同じものではありません。SageMaker AIはモデル開発を担うサービス、Unified Studioはデータ・分析・AIサービスをまとめる統合環境です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-ai-c2">2. 主な機能・特徴<a class="anchor" href="#sagemaker-ai-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="sagemaker-ai-c2-1">データ準備と特徴量<a class="anchor" href="#sagemaker-ai-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>Data Wrangler</strong>:データの取り込み・プロファイル・変換・品質レポートを支援する。現在のData Wrangler体験はSageMaker Canvasに統合されている。</li>
+<li><strong>Processing</strong>:データの前処理や評価をコンテナジョブとして実行する。</li>
+<li><strong>Feature Store</strong>:機械学習で再利用する特徴量を保存・共有する。</li>
+<li><strong>Pipelines</strong>:データ処理からモデル関連タスクまでのワークフローを定義する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1228 154" style="max-width:1228px;min-width:982px" role="img" aria-label="図1 SageMaker AIのデータ関連機能。各種ソースからデータを準備・検証し、機械学習用の処理や特徴量ストアへつなぐ。"><defs><marker id="sagemaker-ai-dgservices-sagemaker-ai-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="source">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">データソース</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">S3・DB</text>
+</g>
+<g data-node="prep">
+<rect x="374" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="449" y="100" text-anchor="middle" class="dg-tb">Data Wrangler</text>
+<text x="449" y="118" text-anchor="middle" class="dg-s">準備・品質確認</text>
+</g>
+<g data-node="process">
+<rect x="714" y="78" width="150" height="52" rx="8" class="dg-box"/>
+<text x="789" y="100" text-anchor="middle" class="dg-t">Processing</text>
+<text x="789" y="118" text-anchor="middle" class="dg-s">再現可能な処理</text>
+</g>
+<g data-node="feature">
+<rect x="1054" y="78" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1129" y="100" text-anchor="middle" class="dg-t">Feature Store</text>
+<text x="1129" y="118" text-anchor="middle" class="dg-s">特徴量を共有</text>
+</g>
+<path d="M184.0,104.0 L374.0,104.0" class="dg-line" marker-end="url(#sagemaker-ai-dgservices-sagemaker-ai-1)"/>
+<path d="M524.0,104.0 L714.0,104.0" class="dg-line" marker-end="url(#sagemaker-ai-dgservices-sagemaker-ai-1)"/>
+<path d="M864.0,104.0 L1054.0,104.0" class="dg-line" marker-end="url(#sagemaker-ai-dgservices-sagemaker-ai-1)"/>
+</svg>
+</div>
+<figcaption>図1 SageMaker AIのデータ関連機能。各種ソースからデータを準備・検証し、機械学習用の処理や特徴量ストアへつなぐ。</figcaption>
+</figure>
+
+<h3 id="sagemaker-ai-c2-2">試験範囲との関係<a class="anchor" href="#sagemaker-ai-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>DEA-C01ではデータ準備やパイプライン統合、機械学習用データの品質・特徴量に関する考え方が関連します。モデルの学習や推論を実装すること自体は試験ガイドの対象外タスクとして示されています。データ処理の入力・出力・権限・コストを中心に学びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-ai-c3">3. ユースケース<a class="anchor" href="#sagemaker-ai-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>分析や機械学習の前にデータをプロファイル・変換する。</li>
+<li>前処理を再実行できるProcessingジョブとして実装する。</li>
+<li>複数のモデル開発者やジョブで共通の特徴量を利用する。</li>
+<li>データ準備からML関連処理までをパイプライン化する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-ai-c4">4. 料金の考え方<a class="anchor" href="#sagemaker-ai-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>データ準備・処理・特徴量保存・ノートブック・モデル開発で使う計算資源やストレージなどに応じて料金が発生します。処理ジョブの実行時間、インスタンス、データ量、保存期間を見積もります。学習や推論の料金はデータ処理の料金と分けて確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-ai-c5">5. 関連サービス<a class="anchor" href="#sagemaker-ai-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-sagemaker-unified-studio">Amazon SageMaker Unified Studio</a>:分析・AI開発の統合環境とプロジェクト</li>
+<li><a href="#p-glue">AWS Glue</a>:ETLとData Catalog</li>
+<li><a href="#p-athena">Amazon Athena</a>:SQLでのデータ準備・探索</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:分析データソース</li>
+<li><a href="#p-batch">AWS Batch</a>:コンテナ化されたバッチ処理</li>
+<li>関連する用語:<a href="../terms/data-quality.html">データ品質</a>、<a href="../terms/data-governance.html">データガバナンス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-ai-c6">6. 試験・実務でのポイント<a class="anchor" href="#sagemaker-ai-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>機械学習向けデータのビジュアルな探索・変換・品質確認 → Data Wranglerの機能を押さえる。</li>
+<li>現在のData Wrangler体験はSageMaker Canvasに統合されている。</li>
+<li>再利用する特徴量の保存・共有 → Feature Store。</li>
+<li>DEA-C01ではデータ処理・品質・統合を中心にし、モデル学習や推論の実装は対象外として区別する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="sagemaker-ai-c7">7. まとめ<a class="anchor" href="#sagemaker-ai-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>SageMaker AIは機械学習のライフサイクルを支援する。</li>
+<li>試験ではData Wrangler、Processing、Feature Storeなどデータ関連機能を中心に理解する。</li>
+<li>Unified Studioは複数のデータ・分析・AIサービスをつなぐ別の統合環境。</li>
+</ul>
+</section>
+</article>
 <article class="booklet-page" id="p-datasync">
 <div class="page-head hero" style="--cat:#01A88D">
 <div class="hero-text">
@@ -19202,6 +20624,216 @@ def lambda_handler(event, context):
 </ul>
 </section>
 </article>
+<article class="booklet-page" id="p-dms">
+<div class="page-head hero" style="--cat:#01A88D">
+<div class="hero-text">
+<span class="category">移行と転送</span>
+<h1>AWS Database Migration Service</h1>
+<p class="lead">データベース間の移行や継続的な変更レプリケーションを行うサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="dms-c1">1. サービス概要<a class="anchor" href="#dms-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Database Migration Service (AWS DMS)</strong>は、リレーショナル・NoSQLデータベースやデータウェアハウスなどのデータ移行とレプリケーションを支援するサービスです。AWS内外のソースとターゲットを接続し、1回限りの移行や継続的な変更データキャプチャ(CDC)を実行します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="dms-c2">2. 主な機能・特徴<a class="anchor" href="#dms-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="dms-c2-1">移行タスク<a class="anchor" href="#dms-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>ソースとターゲットのエンドポイント、ネットワーク接続、認証情報を設定する。</li>
+<li>全件ロードを行い、その後に変更を継続複製して、切り替えまでデータを同期する。</li>
+<li>移行タスクの状態、遅延、エラーを監視して、再試行やリソース調整を行う。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 221" style="max-width:698px;min-width:558px" role="img" aria-label="図1 AWS DMSによる移行。全件データをロードした後、変更データを継続レプリケーションして切り替えまで同期できる。"><defs><marker id="dms-dgservices-dms-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">ソースDB</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">全件・変更</text>
+</g>
+<g data-node="dms">
+<rect x="289" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="90" text-anchor="middle" class="dg-tb">AWS DMS</text>
+<text x="354" y="108" text-anchor="middle" class="dg-s">ロード・CDC</text>
+</g>
+<g data-node="dst">
+<rect x="544" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="609" y="90" text-anchor="middle" class="dg-t">ターゲットDB</text>
+<text x="609" y="108" text-anchor="middle" class="dg-s">AWS内外</text>
+</g>
+<g data-node="conv">
+<rect x="289" y="145" width="130" height="52" rx="8" class="dg-box"/>
+<text x="354" y="166" text-anchor="middle" class="dg-t">スキーマ変換</text>
+<text x="354" y="184" text-anchor="middle" class="dg-s">必要に応じて</text>
+</g>
+<path d="M164.0,94.0 L289.0,94.0" class="dg-line" marker-end="url(#dms-dgservices-dms-1)"/>
+<path d="M419.0,94.0 L544.0,94.0" class="dg-line" marker-end="url(#dms-dgservices-dms-1)"/>
+<path d="M419.0,151.4 L544.0,113.6" class="dg-line dg-dash" marker-end="url(#dms-dgservices-dms-1)"/>
+</svg>
+</div>
+<figcaption>図1 AWS DMSによる移行。全件データをロードした後、変更データを継続レプリケーションして切り替えまで同期できる。</figcaption>
+</figure>
+
+<h3 id="dms-c2-2">データ移行とスキーマ変換<a class="anchor" href="#dms-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>DMSはデータの移行・レプリケーションを担います。異なるデータベースエンジンへ移行する場合、AWS DMS Schema ConversionやAWS Schema Conversion Toolでスキーマやコードの互換性を評価・変換します。移行元と移行先の型・関数・制約が完全に一致するとは限らないため、変換結果を確認してテストします。</p>
+
+<h3 id="dms-c2-3">接続と整合性<a class="anchor" href="#dms-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>ソース・ターゲットのセキュリティグループ、ルーティング、認証情報、ネットワーク到達性を確認します。移行中の更新量が大きい場合は、レプリケーション遅延を監視します。切り替え前には件数・チェックサム・業務上の重要な値を比較します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="dms-c3">3. ユースケース<a class="anchor" href="#dms-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>オンプレミスや別クラウドのデータベースをAWSへ移行する。</li>
+<li>移行中も業務を続けるために、初期ロード後の変更を継続同期する。</li>
+<li>分析用データベースへ業務DBの変更をレプリケーションする。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="dms-c4">4. 料金の考え方<a class="anchor" href="#dms-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>レプリケーションに使うインスタンスやサーバーレスの処理能力、ストレージ、ログ、データ転送などが課金要因です。移行作業に必要な期間・容量を見積もり、完了後に不要なレプリケーション資源を停止・削除します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="dms-c5">5. 関連サービス<a class="anchor" href="#dms-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-rds">Amazon RDS</a>/<a href="#p-aurora">Amazon Aurora</a>:移行先データベース</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:分析用ウェアハウス</li>
+<li><a href="#p-glue">AWS Glue</a>:移行後のETLとData Catalog</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:タスクのログ・メトリクス監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="dms-c6">6. 試験・実務でのポイント<a class="anchor" href="#dms-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>異なるデータベース間のデータ移行や継続同期 → <strong>AWS DMS</strong>。</li>
+<li>全件ロード後も変更を追従させる → CDCタスク。</li>
+<li>データの移行とスキーマ・コードの変換は別の作業として計画する。</li>
+<li>レプリケーション遅延、エラー、データ整合性を切り替え前に確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="dms-c7">7. まとめ<a class="anchor" href="#dms-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS DMSはデータベースなどの移行と継続レプリケーションを行う。</li>
+<li>スキーマ変換、ネットワーク、データ整合性の確認は移行計画に含める。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-transfer-family">
+<div class="page-head hero" style="--cat:#01A88D">
+<div class="hero-text">
+<span class="category">移行と転送</span>
+<h1>AWS Transfer Family</h1>
+<p class="lead">SFTP・FTPS・AS2などでファイルをS3やEFSへ転送するマネージドサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="transfer-family-c1">1. サービス概要<a class="anchor" href="#transfer-family-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Transfer Family</strong>は、SFTP・FTPS・FTP・AS2やブラウザを使ったファイル転送をマネージドで提供するサービスです。転送先にAmazon S3またはAmazon EFSを使い、既存の利用者や取引先の転送手順を大きく変えずにAWSストレージと連携できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="transfer-family-c2">2. 主な機能・特徴<a class="anchor" href="#transfer-family-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="transfer-family-c2-1">プロトコルと保存先<a class="anchor" href="#transfer-family-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>SFTP・FTPS・FTPで既存のファイル転送クライアントと接続する。</li>
+<li>AS2で企業間のファイル連携を行う。</li>
+<li>S3バケットまたはEFSファイルシステムへ直接転送する。</li>
+<li>ユーザーごとにIAMロールやアクセス範囲を設定し、保存先のパスを制限する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 968 200" style="max-width:968px;min-width:774px" role="img" aria-label="図1 Transfer Familyのファイル連携。既存の転送プロトコルからS3やEFSにファイルを保存し、AWSサービスで後続処理する。"><defs><marker id="transfer-family-dgservices-transfer-family-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="client">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">取引先・利用者</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">SFTP・AS2</text>
+</g>
+<g data-node="transfer">
+<rect x="289" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="354" y="90" text-anchor="middle" class="dg-tb">AWS Transfer</text>
+<text x="354" y="108" text-anchor="middle" class="dg-s">認証・転送</text>
+</g>
+<g data-node="s3">
+<rect x="559" y="33" width="130" height="52" rx="8" class="dg-box"/>
+<text x="624" y="54" text-anchor="middle" class="dg-t">Amazon S3</text>
+<text x="624" y="72" text-anchor="middle" class="dg-s">データレイク</text>
+</g>
+<g data-node="efs">
+<rect x="559" y="124" width="130" height="52" rx="8" class="dg-box"/>
+<text x="624" y="146" text-anchor="middle" class="dg-t">Amazon EFS</text>
+<text x="624" y="164" text-anchor="middle" class="dg-s">ファイル共有</text>
+</g>
+<g data-node="process">
+<rect x="814" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="879" y="90" text-anchor="middle" class="dg-t">分析・処理</text>
+<text x="879" y="108" text-anchor="middle" class="dg-s">Glue・Athena</text>
+</g>
+<path d="M164.0,94.0 L289.0,94.0" class="dg-line" marker-end="url(#transfer-family-dgservices-transfer-family-1)"/>
+<path d="M419.0,85.6 L559.0,67.4" class="dg-line" marker-end="url(#transfer-family-dgservices-transfer-family-1)"/>
+<path d="M419.0,107.5 L559.0,136.5" class="dg-line" marker-end="url(#transfer-family-dgservices-transfer-family-1)"/>
+<path d="M689.0,67.9 L814.0,85.1" class="dg-line" marker-end="url(#transfer-family-dgservices-transfer-family-1)"/>
+</svg>
+</div>
+<figcaption>図1 Transfer Familyのファイル連携。既存の転送プロトコルからS3やEFSにファイルを保存し、AWSサービスで後続処理する。</figcaption>
+</figure>
+
+<h3 id="transfer-family-c2-2">後続処理との連携<a class="anchor" href="#transfer-family-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>S3に届いたファイルは、S3イベント通知やEventBridgeを起点にLambda・Step Functions・Glueなどで処理できます。アップロード後のスキーマ確認、ウイルス検査、重複排除、隔離先への振り分けなどをパイプラインに含めます。</p>
+
+<h3 id="transfer-family-c2-3">セキュリティと監視<a class="anchor" href="#transfer-family-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>認証方式、ユーザーごとのIAMロール、VPC内外のエンドポイント、暗号化、アクセスログを構成します。転送プロトコルによってネットワークポートや接続条件が異なるため、取引先のファイアウォールと合わせて確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="transfer-family-c3">3. ユースケース<a class="anchor" href="#transfer-family-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>取引先からSFTPやAS2で受け取るファイルをS3へ集約する。</li>
+<li>既存のファイル転送ワークフローを保ったまま保存先をAWSに移行する。</li>
+<li>顧客や社内ユーザーへS3内のファイルを安全に配布する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="transfer-family-c4">4. 料金の考え方<a class="anchor" href="#transfer-family-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>サーバーエンドポイントの稼働時間、転送量、プロトコル・機能の利用などに応じて料金が発生します。S3・EFSの保存とリクエスト、データ転送、後続処理の料金も考慮します。利用量や必要なプロトコル、公開範囲に応じて構成を選びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="transfer-family-c5">5. 関連サービス<a class="anchor" href="#transfer-family-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-s3">Amazon S3</a>:ファイル転送先・データレイク</li>
+<li><a href="#p-efs">Amazon EFS</a>:ファイルシステムの転送先</li>
+<li><a href="#p-eventbridge">Amazon EventBridge</a>:アップロード後のイベント処理</li>
+<li><a href="#p-lambda">AWS Lambda</a>/<a href="#p-glue">AWS Glue</a>:後続の変換・処理</li>
+<li><a href="#p-cloudtrail">AWS CloudTrail</a>:API操作の監査</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="transfer-family-c6">6. 試験・実務でのポイント<a class="anchor" href="#transfer-family-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>既存のSFTP・FTPS・AS2ファイル連携をマネージド化 → <strong>AWS Transfer Family</strong>。</li>
+<li>ファイル転送とデータベース移行は別の要件。データベース間の移行・CDCにはAWS DMSを検討する。</li>
+<li>ユーザー単位のIAMロールとS3/EFSのアクセス範囲を最小権限にする。</li>
+<li>ファイルが届いた後の検証・変換・分析は、イベント連携やETLサービスで構成する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="transfer-family-c7">7. まとめ<a class="anchor" href="#transfer-family-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Transfer Familyは既存のファイル転送プロトコルをAWSストレージへ接続する。</li>
+<li>S3/EFSへの保存、ユーザーごとのアクセス制御、後続処理を組み合わせる。</li>
+</ul>
+</section>
+</article>
 <article class="booklet-page" id="p-ses">
 <div class="page-head hero" style="--cat:#DD344C">
 <div class="hero-text">
@@ -19357,6 +20989,222 @@ def lambda_handler(event, context):
 <li>送信元のIDを検証し、最初はサンドボックスの制限がある。</li>
 <li>SPF・DKIM・DMARCと、バウンス・苦情の管理で到達率を保つ。</li>
 <li>料金は送信通数とデータ量の従量課金。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-appflow">
+<div class="page-head hero" style="--cat:#E7157B">
+<div class="hero-text">
+<span class="category">アプリケーション統合</span>
+<h1>Amazon AppFlow</h1>
+<p class="lead">SaaSアプリケーションとAWSの間でデータを転送するマネージド連携サービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="appflow-c1">1. サービス概要<a class="anchor" href="#appflow-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon AppFlow</strong>は、SalesforceなどのSaaSアプリケーションとAmazon S3・Amazon Redshiftなどの間でデータを安全に転送するマネージドサービスです。コードを書かずにフローを定義し、手動・スケジュール・イベントを契機に実行できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="appflow-c2">2. 主な機能・特徴<a class="anchor" href="#appflow-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="appflow-c2-1">フローの設定<a class="anchor" href="#appflow-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>ソースと宛先、対象オブジェクト・項目、実行条件を指定する。</li>
+<li>フィールドの対応付け、フィルター、簡単な変換を設定する。</li>
+<li>一括転送だけでなく、変更されたレコードを定期的に同期する構成も選べる。</li>
+<li>S3への出力をパーティション分割し、Glue Data Catalogに登録して分析サービスから検索しやすくできる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 863 200" style="max-width:863px;min-width:690px" role="img" aria-label="図1 Amazon AppFlowによるSaaSデータの取り込み。転送先にS3やRedshiftを選び、必要に応じてカタログ化して分析する。"><defs><marker id="appflow-dgservices-appflow-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="saas">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">SaaS</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">Salesforceなど</text>
+</g>
+<g data-node="flow">
+<rect x="259" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="324" y="90" text-anchor="middle" class="dg-tb">AppFlow</text>
+<text x="324" y="108" text-anchor="middle" class="dg-s">項目変換・転送</text>
+</g>
+<g data-node="s3">
+<rect x="484" y="33" width="130" height="52" rx="8" class="dg-box"/>
+<text x="549" y="54" text-anchor="middle" class="dg-t">Amazon S3</text>
+<text x="549" y="72" text-anchor="middle" class="dg-s">データレイク</text>
+</g>
+<g data-node="rs">
+<rect x="484" y="124" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="549" y="146" text-anchor="middle" class="dg-t">Redshift</text>
+<text x="549" y="164" text-anchor="middle" class="dg-s">分析</text>
+</g>
+<g data-node="glue">
+<rect x="709" y="33" width="130" height="52" rx="8" class="dg-box"/>
+<text x="774" y="54" text-anchor="middle" class="dg-t">Glue Catalog</text>
+<text x="774" y="72" text-anchor="middle" class="dg-s">S3をカタログ化</text>
+</g>
+<path d="M164.0,94.0 L259.0,94.0" class="dg-line" marker-end="url(#appflow-dgservices-appflow-1)"/>
+<path d="M389.0,83.9 L484.0,69.1" class="dg-line" marker-end="url(#appflow-dgservices-appflow-1)"/>
+<path d="M389.0,110.2 L484.0,133.8" class="dg-line" marker-end="url(#appflow-dgservices-appflow-1)"/>
+<path d="M614.0,59.0 L709.0,59.0" class="dg-line" marker-end="url(#appflow-dgservices-appflow-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon AppFlowによるSaaSデータの取り込み。転送先にS3やRedshiftを選び、必要に応じてカタログ化して分析する。</figcaption>
+</figure>
+
+<h3 id="appflow-c2-2">セキュリティと監視<a class="anchor" href="#appflow-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>転送中と保存時のデータ暗号化に対応し、AWS PrivateLinkを使ってプライベートに転送できる接続先もあります。すべてのコネクターや転送先で同じ接続方式が使えるわけではないため、要件とコネクターの対応状況を確認します。API操作はCloudTrailで監査できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="appflow-c3">3. ユースケース<a class="anchor" href="#appflow-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Salesforceの顧客・商談情報を定期的にS3へ集めて分析する。</li>
+<li>業務SaaSのレコードをRedshiftへ取り込み、BIレポートに使う。</li>
+<li>複数のSaaSアプリケーションからデータを集約し、データレイクを作る。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="appflow-c4">4. 料金の考え方<a class="anchor" href="#appflow-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>フローの実行回数や処理したデータ量などに応じて料金が発生します。接続先SaaSのAPI利用制限や契約条件、S3・Redshiftの保存・処理料金も考慮します。頻繁な同期が必要か、定期的な一括取り込みでよいかを見極めます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="appflow-c5">5. 関連サービス<a class="anchor" href="#appflow-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-s3">Amazon S3</a>:転送データの保存とデータレイク</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:分析用データウェアハウス</li>
+<li><a href="#p-glue">AWS Glue</a>:カタログ化と複雑なETL</li>
+<li><a href="#p-cloudtrail">AWS CloudTrail</a>:フローの操作履歴の監査</li>
+<li><a href="#p-vpc">Amazon VPC</a>:PrivateLinkを使う接続の基盤</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="appflow-c6">6. 試験・実務でのポイント<a class="anchor" href="#appflow-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>SaaSアプリケーションからAWSへコードを書かずに転送 → <strong>Amazon AppFlow</strong>。</li>
+<li>複雑な変換・大規模な統合処理にはGlueなどを組み合わせる。</li>
+<li>スケジュール実行かイベント駆動かを、データの鮮度とSaaS側API制限に合わせて選ぶ。</li>
+<li>外部SaaSへの接続と、AWS内の転送先権限の両方を確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="appflow-c7">7. まとめ<a class="anchor" href="#appflow-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AppFlowはSaaSとAWSのデータ連携をフローとして設定する。</li>
+<li>S3やRedshiftを宛先にでき、スケジュール・イベントによる転送が可能。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-mwaa">
+<div class="page-head hero" style="--cat:#E7157B">
+<div class="hero-text">
+<span class="category">アプリケーション統合</span>
+<h1>Amazon MWAA</h1>
+<p class="lead">Apache Airflowでデータパイプラインを管理するマネージドサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="mwaa-c1">1. サービス概要<a class="anchor" href="#mwaa-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Managed Workflows for Apache Airflow (Amazon MWAA)</strong>は、Apache Airflowを使ってデータパイプラインを作成・スケジュール・監視するマネージドサービスです。AirflowのDAGとPythonコードでタスクや依存関係を定義し、実際の処理はGlueやEMRなどのサービスに実行させます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="mwaa-c2">2. 主な機能・特徴<a class="anchor" href="#mwaa-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="mwaa-c2-1">DAGとタスク<a class="anchor" href="#mwaa-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>DAG</strong>(有向非巡回グラフ)に、処理単位のタスクと実行順序を定義します。スケジューラーが実行タイミングを管理し、ワーカーがタスクを実行します。成功・失敗・再試行の状態をAirflowの画面で確認できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1158 149" style="max-width:1158px;min-width:926px" role="img" aria-label="図1 MWAAで管理するデータパイプライン。Airflowはタスクの順序・実行時刻・再試行を管理し、各サービスがデータ処理を行う。"><defs><marker id="mwaa-dgservices-mwaa-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="start">
+<rect x="34" y="73" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="94" text-anchor="middle" class="dg-t">開始</text>
+<text x="104" y="112" text-anchor="middle" class="dg-s">スケジュール</text>
+</g>
+<g data-node="ingest">
+<rect x="274" y="73" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="344" y="94" text-anchor="middle" class="dg-tb">取り込み</text>
+<text x="344" y="112" text-anchor="middle" class="dg-s">AppFlow・S3</text>
+</g>
+<g data-node="transform">
+<rect x="514" y="73" width="140" height="52" rx="8" class="dg-box"/>
+<text x="584" y="94" text-anchor="middle" class="dg-t">変換</text>
+<text x="584" y="112" text-anchor="middle" class="dg-s">Glue・EMR</text>
+</g>
+<g data-node="check">
+<rect x="754" y="73" width="140" height="52" rx="8" class="dg-box"/>
+<text x="824" y="94" text-anchor="middle" class="dg-t">品質確認</text>
+<text x="824" y="112" text-anchor="middle" class="dg-s">ルール評価</text>
+</g>
+<g data-node="report">
+<rect x="994" y="73" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="1064" y="94" text-anchor="middle" class="dg-t">分析用データ</text>
+<text x="1064" y="112" text-anchor="middle" class="dg-s">Athena・Redshift</text>
+</g>
+<path d="M174.0,99.0 L274.0,99.0" class="dg-line" marker-end="url(#mwaa-dgservices-mwaa-1)"/>
+<path d="M414.0,99.0 L514.0,99.0" class="dg-line" marker-end="url(#mwaa-dgservices-mwaa-1)"/>
+<path d="M654.0,99.0 L754.0,99.0" class="dg-line" marker-end="url(#mwaa-dgservices-mwaa-1)"/>
+<path d="M894.0,99.0 L994.0,99.0" class="dg-line" marker-end="url(#mwaa-dgservices-mwaa-1)"/>
+</svg>
+</div>
+<figcaption>図1 MWAAで管理するデータパイプライン。Airflowはタスクの順序・実行時刻・再試行を管理し、各サービスがデータ処理を行う。</figcaption>
+</figure>
+
+<h3 id="mwaa-c2-2">管理と運用<a class="anchor" href="#mwaa-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>環境の最小・最大ワーカー数を設定し、タスク数に応じてワーカーをスケールする。</li>
+<li>DAGやプラグインなどをS3に配置し、IAMロールでタスクからAWSサービスへアクセスする。</li>
+<li>Webサーバーをパブリックまたはプライベートに公開し、VPC・IAM・暗号化を設定する。</li>
+<li>AirflowのログやメトリクスをCloudWatchに出力して、失敗・遅延・リソース不足を調べる。</li>
+</ul>
+
+<h3 id="mwaa-c2-3">Step Functionsとの使い分け<a class="anchor" href="#mwaa-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Apache AirflowのDAG・Python・豊富な演算子を活用し、複雑なデータワークフローを管理する場合はMWAAが候補です。AWSサービスを中心とした状態遷移や分岐・リトライをサーバーレスに実装する場合はStep Functionsが候補です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="mwaa-c3">3. ユースケース<a class="anchor" href="#mwaa-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>日次のデータ取り込み・変換・品質確認・集計を依存関係に沿って実行する。</li>
+<li>複数のAWSサービスや外部システムにまたがるワークフローを管理する。</li>
+<li>失敗したタスクの再試行や、完了・失敗の通知を実装する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="mwaa-c4">4. 料金の考え方<a class="anchor" href="#mwaa-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>MWAA環境の稼働時間や環境クラス、ワーカー・スケジューラーなどのリソースが主な課金要因です。CloudWatch、S3、VPCエンドポイント、タスクが呼び出す各サービスの料金も発生します。常時稼働する環境が必要か、より軽量なサーバーレスワークフローで代替できるかを検討します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="mwaa-c5">5. 関連サービス<a class="anchor" href="#mwaa-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-glue">AWS Glue</a>:ETLジョブとデータカタログ</li>
+<li><a href="#p-emr">Amazon EMR</a>:大規模な分散処理</li>
+<li><a href="#p-step-functions">AWS Step Functions</a>:サーバーレスの状態遷移ワークフロー</li>
+<li><a href="#p-eventbridge">Amazon EventBridge</a>:イベントやスケジュールによる起動</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:ログ・メトリクスの監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="mwaa-c6">6. 試験・実務でのポイント<a class="anchor" href="#mwaa-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>Apache AirflowでDAGを管理するマネージドサービス → <strong>Amazon MWAA</strong>。</li>
+<li>MWAAはオーケストレーションを担い、データ変換そのものはGlueやEMRなどが行う。</li>
+<li>タスクの依存関係・スケジュール・再試行・実行履歴をDAG単位で確認する。</li>
+<li>CloudWatchログ、ワーカーのスケーリング、VPC接続、IAMロールをトラブル調査で確認する。</li>
+<li>Airflowを必要としないAWS中心の状態遷移ならStep Functionsと比較する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="mwaa-c7">7. まとめ<a class="anchor" href="#mwaa-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>MWAAはApache Airflowによるデータパイプラインのオーケストレーションをマネージドで提供する。</li>
+<li>DAGがタスク順序を定義し、各タスクはGlue・EMRなどの処理を呼び出す。</li>
 </ul>
 </section>
 </article>

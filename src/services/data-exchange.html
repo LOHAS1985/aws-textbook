@@ -1,0 +1,74 @@
+<!-- title: AWS Data Exchange -->
+<!-- category: 分析 -->
+<!-- lead: 外部組織とのデータセットの検索・共有・利用権限を管理するサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Data Exchange</strong>は、AWS上でデータセットの提供・共有・利用権限を管理するサービスです。利用者はサードパーティーや社内提供者のデータ製品を検索・購読し、提供者はデータの配布基盤を個別に構築せずにデータを共有できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>提供者と利用者</h3>
+<ul>
+<li>提供者はデータ製品にデータセットと利用条件を設定し、AWS Marketplaceで公開する。</li>
+<li>利用者は利用条件に同意して購読し、許可されたデータ資産を利用する。</li>
+<li>データ共有の単位には、データセット、データ資産、データグラント、製品の購読などがある。</li>
+</ul>
+<h3>データの種類と更新</h3>
+<p>データセットはファイル、API、Redshiftデータ共有、S3データアクセスなど複数の形を取れます。提供者はデータの更新をリビジョンとして公開し、利用者の権利に応じて過去・将来の版を提供します。</p>
+<figure class="figure" data-diagram>
+grid 160 75
+node provider 0 0.5 blue "データ提供者" "製品・利用条件"
+node exchange 1.8 0.5 accent "Data Exchange" "データセット・権利"
+node subscriber 3.8 0.5 ok "利用者" "購読・アクセス"
+node data 5.8 0.5 box "分析サービス" "S3・Redshiftなど"
+edge provider exchange
+edge exchange subscriber
+edge subscriber data
+<figcaption>図1 AWS Data Exchangeの共有。提供者がデータセットと利用条件を公開し、利用者は権利を取得して対応する分析サービスで利用する。</figcaption>
+</figure>
+<p>利用権限はデータの利用方法や期間を規定します。購読やグラントを取得しても、データの内容や品質が保証されるわけではないため、利用条件・更新頻度・ライセンス・地域制約を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>市場・気象・位置情報などの外部データを分析に取り込む。</li>
+<li>提供者が新しいデータリビジョンを公開し、購読者が更新分を利用する。</li>
+<li>組織内外で共有するデータの権利や利用期間を管理する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>公開製品や購読データには、提供者が定めた価格・契約条件が適用される場合があります。データ転送、S3・Redshiftなどの保存・分析サービスの料金も別途発生します。購読費用とAWS上での利用料金を分けて確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:ファイルデータセットの保存・利用</li>
+<li><a href="redshift.html">Amazon Redshift</a>:データ共有形式のデータセット利用</li>
+<li><a href="lake-formation.html">AWS Lake Formation</a>:データレイク内のアクセス権</li>
+<li><a href="athena.html">Amazon Athena</a>:共有されたS3データのSQL分析</li>
+<li><a href="sagemaker-unified-studio.html">Amazon SageMaker Unified Studio</a>:データの検索・分析・共同利用</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>外部データセットを発見・購読し、提供者と利用者の権利を管理 → <strong>AWS Data Exchange</strong>。</li>
+<li>購読・データグラントは利用権限であり、データの品質や正確性の保証とは異なる。</li>
+<li>データ製品の契約条件と、S3・Redshiftなどの保存・分析料金を分けて見積もる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS Data Exchangeはデータ製品の共有・購読とアクセス権を管理する。</li>
+<li>データセットの形式・更新・利用条件を確認して、分析サービスと連携する。</li>
+</ul>
+</section>

@@ -1,0 +1,78 @@
+<!-- title: Amazon AppFlow -->
+<!-- category: アプリケーション統合 -->
+<!-- lead: SaaSアプリケーションとAWSの間でデータを転送するマネージド連携サービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon AppFlow</strong>は、SalesforceなどのSaaSアプリケーションとAmazon S3・Amazon Redshiftなどの間でデータを安全に転送するマネージドサービスです。コードを書かずにフローを定義し、手動・スケジュール・イベントを契機に実行できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>フローの設定</h3>
+<ul>
+<li>ソースと宛先、対象オブジェクト・項目、実行条件を指定する。</li>
+<li>フィールドの対応付け、フィルター、簡単な変換を設定する。</li>
+<li>一括転送だけでなく、変更されたレコードを定期的に同期する構成も選べる。</li>
+<li>S3への出力をパーティション分割し、Glue Data Catalogに登録して分析サービスから検索しやすくできる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 70
+node saas 0 0.5 blue "SaaS" "Salesforceなど"
+node flow 1.5 0.5 accent "AppFlow" "項目変換・転送"
+node s3 3 0 box "Amazon S3" "データレイク"
+node rs 3 1.3 ok "Redshift" "分析"
+node glue 4.5 0 box "Glue Catalog" "S3をカタログ化"
+edge saas flow
+edge flow s3
+edge flow rs
+edge s3 glue
+<figcaption>図1 Amazon AppFlowによるSaaSデータの取り込み。転送先にS3やRedshiftを選び、必要に応じてカタログ化して分析する。</figcaption>
+</figure>
+
+<h3>セキュリティと監視</h3>
+<p>転送中と保存時のデータ暗号化に対応し、AWS PrivateLinkを使ってプライベートに転送できる接続先もあります。すべてのコネクターや転送先で同じ接続方式が使えるわけではないため、要件とコネクターの対応状況を確認します。API操作はCloudTrailで監査できます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Salesforceの顧客・商談情報を定期的にS3へ集めて分析する。</li>
+<li>業務SaaSのレコードをRedshiftへ取り込み、BIレポートに使う。</li>
+<li>複数のSaaSアプリケーションからデータを集約し、データレイクを作る。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>フローの実行回数や処理したデータ量などに応じて料金が発生します。接続先SaaSのAPI利用制限や契約条件、S3・Redshiftの保存・処理料金も考慮します。頻繁な同期が必要か、定期的な一括取り込みでよいかを見極めます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:転送データの保存とデータレイク</li>
+<li><a href="redshift.html">Amazon Redshift</a>:分析用データウェアハウス</li>
+<li><a href="glue.html">AWS Glue</a>:カタログ化と複雑なETL</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:フローの操作履歴の監査</li>
+<li><a href="vpc.html">Amazon VPC</a>:PrivateLinkを使う接続の基盤</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>SaaSアプリケーションからAWSへコードを書かずに転送 → <strong>Amazon AppFlow</strong>。</li>
+<li>複雑な変換・大規模な統合処理にはGlueなどを組み合わせる。</li>
+<li>スケジュール実行かイベント駆動かを、データの鮮度とSaaS側API制限に合わせて選ぶ。</li>
+<li>外部SaaSへの接続と、AWS内の転送先権限の両方を確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AppFlowはSaaSとAWSのデータ連携をフローとして設定する。</li>
+<li>S3やRedshiftを宛先にでき、スケジュール・イベントによる転送が可能。</li>
+</ul>
+</section>

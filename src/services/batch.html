@@ -1,0 +1,75 @@
+<!-- title: AWS Batch -->
+<!-- category: コンピューティング -->
+<!-- lead: 必要なコンピューティング容量を自動調整してバッチジョブを実行するサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Batch</strong>は、コンテナ化されたバッチ処理を登録・スケジュールし、必要な計算資源を自動的に用意して実行するサービスです。ジョブの量や要求リソースに応じて容量を調整し、EC2、Fargate、ECS、EKSなどの実行基盤を利用します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>ジョブ実行の構成要素</h3>
+<ul>
+<li><strong>ジョブ定義</strong>:コンテナイメージ、vCPU・メモリ、環境変数、再試行などを定義する。</li>
+<li><strong>ジョブキュー</strong>:投入されたジョブの優先度や実行順序を管理する。</li>
+<li><strong>コンピューティング環境</strong>:ジョブを実行するEC2やFargateなどの容量を指定する。</li>
+<li>ジョブ間の依存関係や配列ジョブを使い、大量の独立した処理をまとめて実行する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 160 75
+node submit 0 0.5 blue "ジョブ送信" "データ処理"
+node queue 1.8 0.5 accent "ジョブキュー" "優先度・依存関係"
+node batch 3.8 0.5 box "AWS Batch" "容量を調整"
+node compute 5.8 0.5 ok "EC2・Fargate" "コンテナを実行"
+edge submit queue
+edge queue batch
+edge batch compute
+<figcaption>図1 AWS Batchのジョブ実行。キューに登録されたジョブに応じて計算容量を用意し、コンテナ処理を実行する。</figcaption>
+</figure>
+
+<h3>パイプラインとの使い分け</h3>
+<p>Batchはコンテナ化された計算ジョブのスケジューリングと実行を担います。複数サービスをまたぐ処理の順序・分岐・エラー制御はStep FunctionsやMWAAなどで管理できます。ジョブのスケジュールをEventBridgeから起動する構成もあります。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>大量のファイル変換や定期的な集計を並列に実行する。</li>
+<li>必要なCPU・メモリに応じたコンテナジョブを優先度付きで処理する。</li>
+<li>ピーク時だけ計算容量を増やし、処理終了後に容量を減らす。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>AWS Batch自体に追加料金がない場合でも、ジョブを実行するEC2、Fargate、EKSなどの計算資源、ストレージ、ログ、データ転送に料金が発生します。実行時間、リソース要求、再試行、Spot利用の可否を見積もります。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="ecs.html">Amazon ECS</a>/<a href="eks.html">Amazon EKS</a>:コンテナ実行基盤</li>
+<li><a href="lambda.html">AWS Lambda</a>:短時間のイベント駆動処理</li>
+<li><a href="step-functions.html">AWS Step Functions</a>:処理ステップの制御</li>
+<li><a href="mwaa.html">Amazon MWAA</a>:Airflowによるデータパイプライン管理</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:スケジュール起動</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>コンテナ化されたバッチジョブをキューで管理し、実行容量を自動調整 → <strong>AWS Batch</strong>。</li>
+<li>ジョブのコンテナ・リソース定義はジョブ定義、投入順序はジョブキュー、計算資源はコンピューティング環境で設定する。</li>
+<li>処理フローの分岐・状態管理はワークフローサービス、計算処理の実行はBatchと役割を分ける。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS Batchはバッチジョブをキューイングし、実行に必要な容量を調整する。</li>
+<li>ジョブ定義・キュー・コンピューティング環境を組み合わせる。</li>
+</ul>
+</section>

@@ -1,0 +1,74 @@
+<!-- title: Amazon Quick -->
+<!-- category: 分析 -->
+<!-- lead: データを可視化してダッシュボードや分析結果を共有するサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Quick</strong>は、自然言語による分析や業務自動化などを含むAIサービスです。その中の<strong>Quick Sight</strong>機能が、データソースへの接続、可視化、BIダッシュボード作成を担います。Quick Sightは以前のAmazon QuickSightを引き継ぐ機能で、既存のAPIや統合は継続して利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>Quick SightによるBI</h3>
+<ul>
+<li>Athena、Redshift、S3などのデータソースを使って分析し、グラフやダッシュボードを作る。</li>
+<li>SPICEインメモリエンジンにデータを取り込む方式と、対応データソースに直接クエリする方式を使い分ける。</li>
+<li>ダッシュボードを組織内で共有し、ユーザー・グループごとに閲覧権限を管理する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 75
+node ath 0 0 blue "Athena" "S3のSQL分析"
+node rs 0 1.3 blue "Redshift" "集計データ"
+node quick 2 0.6 accent "Quick Sight" "可視化・分析"
+node user 4 0.6 ok "利用者" "共有ダッシュボード"
+edge ath quick
+edge rs quick
+edge quick user
+<figcaption>図1 Quick SightによるBI。AthenaやRedshiftの分析結果を可視化し、ダッシュボードとして利用者に共有する。</figcaption>
+</figure>
+
+<h3>データ更新と権限</h3>
+<p>SPICEを使う場合はデータセットの更新を設定し、更新失敗や容量を監視します。直接クエリは基盤側のクエリ性能と同時実行の影響を受けます。利用者に必要な閲覧権限を付与し、データセットやダッシュボードの共有範囲を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>分析者が作成したレポートを部署や経営層に共有する。</li>
+<li>AthenaやRedshiftのデータをグラフ・ダッシュボードで可視化する。</li>
+<li>SPICEを使ってダッシュボードの応答性を高める。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>契約するユーザー機能・プラン、利用者数、容量、セッションなどに応じて料金が異なります。SPICE容量やデータソース側のクエリ料金も別途考慮します。組織向けの契約条件と最新の料金表を確認してください。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="athena.html">Amazon Athena</a>:S3データのSQLクエリ</li>
+<li><a href="redshift.html">Amazon Redshift</a>:分析用データウェアハウス</li>
+<li><a href="glue.html">AWS Glue</a>:データカタログとETL</li>
+<li><a href="s3.html">Amazon S3</a>:データレイク</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>データをグラフやダッシュボードで可視化し、共有する → <strong>Quick Sight</strong>。</li>
+<li>応答性を優先してデータをインメモリに取り込む → SPICE。最新データを基盤から直接読む → 直接クエリを比較する。</li>
+<li>データ分析や可視化サービスと、データ変換・保存サービスの役割を区別する。</li>
+<li>名称はAmazon Quick、BI機能はQuick Sight。旧称や既存APIに関する記述と混同しない。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Amazon QuickのQuick Sight機能は、データ可視化とBIダッシュボードを提供する。</li>
+<li>SPICEへの取り込みと直接クエリを、鮮度・性能・料金で使い分ける。</li>
+</ul>
+</section>

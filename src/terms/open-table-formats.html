@@ -1,0 +1,49 @@
+<!-- title: オープンテーブル形式 -->
+<!-- category: ストレージ -->
+<!-- lead: データレイク上の複数ファイルをテーブルとして一貫して管理する形式 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>CSVやParquetは個々のファイルのデータ形式です。Apache Icebergなどの<strong>オープンテーブル形式</strong>は、データレイク上の複数ファイルをテーブルとして管理するメタデータやトランザクションの仕組みを定めます。データ形式とテーブル形式は異なる層です。</p>
+<h3>Apache Iceberg</h3>
+<ul>
+<li>スナップショットとメタデータでテーブルの状態を管理し、一貫した読み取りや変更を支援する。</li>
+<li>列の追加・変更などのスキーマ進化や、パーティション仕様の変更をデータファイルの再配置を抑えて行える。</li>
+<li>対応する複数の処理エンジンから同じテーブルを扱いやすくする。</li>
+<li>スナップショットによる過去状態の参照や、変更データの追跡を利用できる機能がある。</li>
+</ul>
+<p>実際に使える書き込み・更新・削除・タイムトラベルの機能は、エンジン、カタログ、テーブル形式のバージョンに依存します。利用予定の組み合わせで公式の対応表を確認します。</p>
+<figure class="figure" data-diagram>
+grid 160 75
+node engine1 0 0 blue "Athena" "クエリ"
+node engine2 0 1.4 blue "Glue・Spark" "ETL"
+node table 2 0.7 accent "Iceberg" "table metadata"
+node files 4 0.7 ok "S3データファイル" "Parquetなど"
+edge engine1 table
+edge engine2 table
+edge table files
+<figcaption>図1 Icebergテーブル。複数のエンジンが共有メタデータを介してS3上のデータファイルをテーブルとして扱う。</figcaption>
+</figure>
+
+<h3>ファイル形式との組み合わせ</h3>
+<p>ParquetやORCのような列指向ファイル形式は、必要な列だけを読み、圧縮してスキャン量を減らすのに有効です。Icebergはこれらのデータファイルを管理するテーブル層です。パーティション設計、圧縮、スナップショットの期限切れや古いファイルの削除も運用に含めます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="data-store-selection.html">データストアの選び方</a>:データレイクと分析基盤の選択</li>
+<li><a href="data-quality.html">データ品質</a>:スキーマと内容の検証</li>
+<li><a href="storage-types.html">ストレージの種類</a>:オブジェクトストレージの特徴</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/s3.html">Amazon S3</a>:テーブルデータファイルの保存先</li>
+<li><a href="../services/glue.html">AWS Glue</a>:カタログ、ETL、Iceberg読み書き</li>
+<li><a href="../services/athena.html">Amazon Athena</a>:データレイクのSQLクエリ</li>
+<li><a href="../services/data-firehose.html">Amazon Data Firehose</a>:S3上のIcebergテーブルへの配送</li>
+<li><a href="../services/lake-formation.html">AWS Lake Formation</a>:カタログ・データへの権限管理</li>
+</ul>
+</section>

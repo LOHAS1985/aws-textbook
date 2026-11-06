@@ -1,0 +1,81 @@
+<!-- title: AWS Transfer Family -->
+<!-- category: 移行と転送 -->
+<!-- lead: SFTP・FTPS・AS2などでファイルをS3やEFSへ転送するマネージドサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Transfer Family</strong>は、SFTP・FTPS・FTP・AS2やブラウザを使ったファイル転送をマネージドで提供するサービスです。転送先にAmazon S3またはAmazon EFSを使い、既存の利用者や取引先の転送手順を大きく変えずにAWSストレージと連携できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>プロトコルと保存先</h3>
+<ul>
+<li>SFTP・FTPS・FTPで既存のファイル転送クライアントと接続する。</li>
+<li>AS2で企業間のファイル連携を行う。</li>
+<li>S3バケットまたはEFSファイルシステムへ直接転送する。</li>
+<li>ユーザーごとにIAMロールやアクセス範囲を設定し、保存先のパスを制限する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 70
+node client 0 0.5 blue "取引先・利用者" "SFTP・AS2"
+node transfer 1.7 0.5 accent "AWS Transfer" "認証・転送"
+node s3 3.5 0 box "Amazon S3" "データレイク"
+node efs 3.5 1.3 box "Amazon EFS" "ファイル共有"
+node process 5.2 0.5 ok "分析・処理" "Glue・Athena"
+edge client transfer
+edge transfer s3
+edge transfer efs
+edge s3 process
+<figcaption>図1 Transfer Familyのファイル連携。既存の転送プロトコルからS3やEFSにファイルを保存し、AWSサービスで後続処理する。</figcaption>
+</figure>
+
+<h3>後続処理との連携</h3>
+<p>S3に届いたファイルは、S3イベント通知やEventBridgeを起点にLambda・Step Functions・Glueなどで処理できます。アップロード後のスキーマ確認、ウイルス検査、重複排除、隔離先への振り分けなどをパイプラインに含めます。</p>
+
+<h3>セキュリティと監視</h3>
+<p>認証方式、ユーザーごとのIAMロール、VPC内外のエンドポイント、暗号化、アクセスログを構成します。転送プロトコルによってネットワークポートや接続条件が異なるため、取引先のファイアウォールと合わせて確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>取引先からSFTPやAS2で受け取るファイルをS3へ集約する。</li>
+<li>既存のファイル転送ワークフローを保ったまま保存先をAWSに移行する。</li>
+<li>顧客や社内ユーザーへS3内のファイルを安全に配布する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>サーバーエンドポイントの稼働時間、転送量、プロトコル・機能の利用などに応じて料金が発生します。S3・EFSの保存とリクエスト、データ転送、後続処理の料金も考慮します。利用量や必要なプロトコル、公開範囲に応じて構成を選びます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:ファイル転送先・データレイク</li>
+<li><a href="efs.html">Amazon EFS</a>:ファイルシステムの転送先</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:アップロード後のイベント処理</li>
+<li><a href="lambda.html">AWS Lambda</a>/<a href="glue.html">AWS Glue</a>:後続の変換・処理</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:API操作の監査</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>既存のSFTP・FTPS・AS2ファイル連携をマネージド化 → <strong>AWS Transfer Family</strong>。</li>
+<li>ファイル転送とデータベース移行は別の要件。データベース間の移行・CDCにはAWS DMSを検討する。</li>
+<li>ユーザー単位のIAMロールとS3/EFSのアクセス範囲を最小権限にする。</li>
+<li>ファイルが届いた後の検証・変換・分析は、イベント連携やETLサービスで構成する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Transfer Familyは既存のファイル転送プロトコルをAWSストレージへ接続する。</li>
+<li>S3/EFSへの保存、ユーザーごとのアクセス制御、後続処理を組み合わせる。</li>
+</ul>
+</section>

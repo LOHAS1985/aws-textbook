@@ -1,7 +1,7 @@
 <!-- title: Amazon S3 -->
 <!-- category: ストレージ -->
 <!-- lead: 容量無制限で使えるオブジェクトストレージ -->
-<!-- verified: 2026-11-03 -->
+<!-- verified: 2026-11-07 -->
 <section class="chapter">
 <h2>1. サービス概要</h2>
 <p><strong>Amazon S3(Simple Storage Service)</strong>は、ファイルを「オブジェクト」として保存する<strong>オブジェクトストレージサービス</strong>です。データは「バケット」に格納し、アクセス頻度に応じてストレージクラスを選んでコストを最適化します。</p>
@@ -269,6 +269,13 @@ edge g x
 ]</code></pre>
 <p>ブラウザのコンソールに「CORS policy によりブロックされた」というエラーが出る場合は、S3側のCORS設定(許可するオリジン・メソッド)を確認します。CORSはブラウザが行うチェックなので、CLIやサーバーからのアクセスには関係しません。</p>
 
+<h3>S3 Tables</h3>
+<p><strong>Amazon S3 Tables</strong>は、テーブルバケットにApache Iceberg形式のテーブルとメタデータを保存する機能です。通常の汎用バケットとは異なるバケット種別で、テーブルの保守をS3が自動化します。AWS Glue Data Catalogを通じてAthenaなどの分析サービスと連携できます。</p>
+<p>テーブルバケットとテーブルは非公開で、パブリックアクセスにはできません。アクセスにはIAMのアイデンティティポリシーとリソースポリシーを設定します。Lake Formationと統合する場合は、利用する分析サービスの権限モデルも確認します。詳細は<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables-buckets.html" target="_blank" rel="noopener">S3テーブルバケットの公式ドキュメント</a>を参照してください。</p>
+<ul>
+<li>一般的なオブジェクト保存 → 汎用バケット。分析向けIcebergテーブルをマネージド保守 → テーブルバケット。</li>
+<li>テーブルのストレージ・リクエスト・自動メンテナンス処理と、Athenaなどのクエリ実行料金を分けて見積もる。</li>
+</ul>
 <h3>その他の機能</h3>
 <ul>
 <li><strong>S3 Select</strong>:オブジェクト(CSV・JSON)からSQLで必要なデータだけを抽出する機能。<strong>2024年に新規の利用受付を終了</strong>しており、これから使う場合は<a href="athena.html">Amazon Athena</a>などでS3のデータをSQLで分析する。</li>
@@ -316,6 +323,8 @@ edge g x
 <li><a href="cognito.html">Amazon Cognito</a>:ユーザーごとのプレフィックス制御</li>
 <li><a href="cloudfront.html">Amazon CloudFront</a>:配信、Transfer Acceleration</li>
 <li><a href="athena.html">Amazon Athena</a>:S3上のデータをSQLで分析</li>
+<li><a href="glue.html">AWS Glue</a>:S3データのカタログ化・ETL</li>
+<li>関連する用語:<a href="../terms/open-table-formats.html">オープンテーブル形式</a>、<a href="../terms/data-governance.html">データガバナンス</a></li>
 <li><a href="vpc.html">Amazon VPC</a>:VPCエンドポイント</li>
 <li><a href="macie.html">Amazon Macie</a>:S3内の機密データ検出</li>
 <li><a href="eventbridge.html">Amazon EventBridge</a>:S3のイベントを多数の送信先へルーティング</li>

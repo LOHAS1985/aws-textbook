@@ -1,0 +1,67 @@
+<!-- title: データパイプラインの基礎 -->
+<!-- category: 設計・運用 -->
+<!-- lead: データを取り込み・変換・保存・提供する処理の設計用語 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<h3>ETLとELT</h3>
+<p><strong>ETL</strong>はデータを抽出(Extract)し、変換(Transform)してから保存先へロード(Load)する方式です。<strong>ELT</strong>は先に保存先へロードし、その基盤の計算能力で変換します。前処理が必要か、保存先のSQL基盤で加工できるかで選びます。</p>
+
+<h3>バッチとストリーミング</h3>
+<ul>
+<li><strong>バッチ</strong>:一定量または一定時刻にまとめて処理する。日次集計など、低頻度でよい処理に向く。</li>
+<li><strong>ストリーミング</strong>:イベント到着に合わせて継続的に処理する。低遅延が必要だが、順序・重複・遅延到着・状態管理が複雑になる。</li>
+</ul>
+
+<h3>取り込みと再処理</h3>
+<p><strong>ファンイン</strong>は複数の送り元を1つの処理先へ集約すること、<strong>ファンアウト</strong>は1つのストリームを複数の利用者へ配信することです。リプレイは保持データを再び読み込んで処理することです。メッセージやレコードの保持期間、処理位置、重複時の挙動を設計し、障害後の再実行に備えます。</p>
+
+<h3>状態・冪等性・配信保証</h3>
+<ul>
+<li><strong>ステートレス処理</strong>:各レコードを他のレコードや過去の実行状態に依存せず処理する。</li>
+<li><strong>ステートフル処理</strong>:ウィンドウ集計や重複排除など、過去のイベントやチェックポイントを保持して処理する。</li>
+<li><strong>冪等性</strong>:同じ入力を複数回処理しても、最終結果が重複・二重計上にならない性質。</li>
+<li>再試行は同じ処理を複数回実行する可能性があるため、冪等な書き込みや重複排除キーを用いる。</li>
+</ul>
+<p>「少なくとも1回」は欠落を避ける代わりに重複があり得ます。「最大1回」は重複を避ける代わりに欠落の可能性があります。「厳密に1回」は単一サービスの設定だけで保証されるとは限らず、取り込みから保存までの境界と副作用を含めて確認します。</p>
+
+<h3>データの種類と処理の実装</h3>
+<p>データ量・速度・種類(構造化、半構造化、非構造化)は、保存形式と処理方式の選択に影響します。APIのページネーション、認証、レート制限、応答形式を処理し、入力サイズや再試行を制御します。データ処理では、SDK、SQL、言語に依存しないプログラミング概念を使い、Gitによるバージョン管理、テスト、ログ、IaC、CI/CDで変更を安全に展開します。</p>
+<p>LLMを使うデータ処理では、分類・要約などの処理結果を検証し、プロンプトへの機密情報の混入、出力の不確実性、再実行時の一貫性を考慮します。AI処理を利用しても、データ品質やプライバシーの確認は省略できません。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node src 0 0.5 blue "バッチ・ストリーム" "複数の送り元"
+node ingest 1.6 0.5 accent "取り込み" "再試行・保持"
+node transform 3.2 0.5 box "変換" "状態・品質"
+node store 4.8 0.5 ok "保存・提供" "冪等な書き込み"
+edge src ingest
+edge ingest transform
+edge transform store
+edge store ingest dash "再処理"
+<figcaption>図1 データパイプラインの基本。障害時に入力を再処理できるようにし、重複が発生しても結果が壊れない設計にする。</figcaption>
+</figure>
+
+<h3>スループットとレート制限</h3>
+<p>APIやデータベースの処理上限に対し、同時実行数を制御し、指数的に待ち時間を延ばすリトライやキューを利用します。供給速度が処理速度を上回ると遅延やバックログが増えるため、スロットリング、並列度、パーティション、再試行を合わせて調整します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="throttling-retry.html">スロットリングとリトライ</a>:レート制限と再試行の設計</li>
+<li><a href="data-quality.html">データ品質</a>:パイプライン内のデータ検証</li>
+<li><a href="storage-types.html">ストレージの種類</a>:ファイル・ブロック・オブジェクトの基本</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:障害耐性と処理能力の拡張</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/kinesis.html">Amazon Kinesis</a>/<a href="../services/msk.html">Amazon MSK</a>:イベントストリーム</li>
+<li><a href="../services/data-firehose.html">Amazon Data Firehose</a>:ストリームの配送</li>
+<li><a href="../services/glue.html">AWS Glue</a>:バッチ・ストリームETL</li>
+<li><a href="../services/appflow.html">Amazon AppFlow</a>:SaaSデータ取り込み</li>
+<li><a href="../services/step-functions.html">AWS Step Functions</a>/<a href="../services/mwaa.html">Amazon MWAA</a>:処理のオーケストレーション</li>
+<li><a href="../services/bedrock.html">Amazon Bedrock</a>:LLMを用いたデータ処理</li>
+</ul>
+</section>

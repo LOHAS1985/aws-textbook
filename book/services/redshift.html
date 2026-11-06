@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Redshift | AWS教科書</title>
+<meta name="description" content="大規模な分析クエリを実行するマネージドデータウェアハウス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat13">分析</a>
+  <h1>Amazon Redshift</h1>
+  <p class="lead">大規模な分析クエリを実行するマネージドデータウェアハウス</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  <p class="updated">内容の確認:2026年11月7日</p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Redshift</strong>は、大量の構造化データをSQLで集計・分析するデータウェアハウスです。列指向の保存と並列処理で分析クエリを実行し、S3のデータレイクやBIツールとも連携します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">プロビジョンドとServerless<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>プロビジョンド</strong>:クラスターのノード構成を選び、継続的なワークロードの容量を管理する。</li>
+<li><strong>Redshift Serverless</strong>:データウェアハウスの容量を個別に管理せず、ワークロードに応じて処理能力を利用する。</li>
+</ul>
+<p>どちらもSQLで分析できます。継続的で予測しやすい処理か、変動が大きく管理負荷を下げたい処理かで選びます。</p>
+
+<h3 id="c2-2">データの取り込みと連携<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><code>COPY</code>でS3などからデータをロードし、<code>UNLOAD</code>でクエリ結果をS3へ出力する。</li>
+<li><strong>Redshift Spectrum</strong>で、S3上のデータをクラスターのテーブルにロードせずにクエリする。外部テーブルの定義にGlue Data Catalogを利用できる。</li>
+<li>フェデレーテッドクエリでRDSやAuroraなどの外部データソースを参照する。</li>
+<li>データ共有で別のRedshiftデータウェアハウスへデータを共有し、複製を抑えた分析を行う。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 234" style="max-width:718px;min-width:574px" role="img" aria-label="図1 Amazon Redshiftの分析。S3からロードするほか、SpectrumでS3上のデータを直接参照し、クエリ結果をBIや別のRedshiftへ共有できる。"><defs><marker id="dgservices-redshift-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">S3</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">COPYでロード</text>
+</g>
+<g data-node="wh">
+<rect x="289" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="100" text-anchor="middle" class="dg-tb">Redshift</text>
+<text x="364" y="118" text-anchor="middle" class="dg-s">SQL・集計</text>
+</g>
+<g data-node="bi">
+<rect x="544" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="619" y="100" text-anchor="middle" class="dg-t">BIツール</text>
+<text x="619" y="118" text-anchor="middle" class="dg-s">ダッシュボード</text>
+</g>
+<g data-node="lake">
+<rect x="289" y="158" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="180" text-anchor="middle" class="dg-t">S3データレイク</text>
+<text x="364" y="198" text-anchor="middle" class="dg-s">Spectrumで参照</text>
+</g>
+<g data-node="share">
+<rect x="544" y="158" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="180" text-anchor="middle" class="dg-t">別クラスター</text>
+<text x="619" y="198" text-anchor="middle" class="dg-s">データ共有</text>
+</g>
+<path d="M184.0,104.0 L289.0,104.0" class="dg-line" marker-end="url(#dgservices-redshift-1)"/>
+<text x="236" y="108" text-anchor="middle" class="dg-s dg-halo">COPY</text>
+<path d="M439.0,104.0 L544.0,104.0" class="dg-line" marker-end="url(#dgservices-redshift-1)"/>
+<path d="M364.0,158.0 L364.0,130.0" class="dg-line" marker-end="url(#dgservices-redshift-1)"/>
+<text x="364" y="148" text-anchor="middle" class="dg-s dg-halo">Spectrum</text>
+<path d="M439.0,127.5 L544.0,160.5" class="dg-line" marker-end="url(#dgservices-redshift-1)"/>
+<text x="492" y="148" text-anchor="middle" class="dg-s dg-halo">共有</text>
+</svg>
+</div>
+<figcaption>図1 Amazon Redshiftの分析。S3からロードするほか、SpectrumでS3上のデータを直接参照し、クエリ結果をBIや別のRedshiftへ共有できる。</figcaption>
+</figure>
+
+<h3 id="c2-3">テーブル設計と同時実行<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>クエリのアクセスパターンに応じて、列のデータ型、ソートキー、分散方法を設計します。列指向形式や圧縮はスキャン量を抑えます。テーブルや行のロック、トランザクションの競合が発生した場合は、長時間トランザクションや同時更新を調査します。分析性能はクエリプラン、スキャン量、分散キーのデータ偏りも確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>業務システムやS3のデータを統合した大規模なSQL分析。</li>
+<li>BIダッシュボード向けの集計テーブルやマテリアライズドビュー。</li>
+<li>S3データレイクとデータウェアハウスを組み合わせた分析。</li>
+<li>別のRedshift利用者への管理されたデータ共有。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>プロビジョンドでは主に利用するノードの容量と稼働時間、Serverlessでは処理容量の利用量などが課金要因です。ストレージ、バックアップ、データ転送、Spectrumのスキャンなども確認します。アイドル時間が長いか、負荷が一定か変動するかを踏まえて方式を選びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:ロード元、UNLOAD先、Spectrumのデータレイク</li>
+<li><a href="glue.html">AWS Glue</a>:カタログとETL</li>
+<li><a href="lake-formation.html">AWS Lake Formation</a>:データレイクのアクセス制御</li>
+<li><a href="athena.html">Amazon Athena</a>:サーバーレスSQLでのデータレイク分析</li>
+<li><a href="quick.html">Amazon Quick</a>:Quick SightのBIダッシュボード</li>
+<li><a href="appflow.html">Amazon AppFlow</a>:SaaSデータの取り込み</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>大規模な分析用SQLデータウェアハウス → <strong class="em">Amazon Redshift</strong>。</li>
+<li>データをS3からロードする → <code>COPY</code>。クエリ結果をS3へ出力する → <code>UNLOAD</code>。</li>
+<li>S3のデータをロードせずに分析 → <strong>Redshift Spectrum</strong>。</li>
+<li>負荷変動が大きく容量管理を減らしたい → Serverless。一定負荷で容量を管理したい → プロビジョンドを比較する。</li>
+<li>他のデータウェアハウスへ読み取り用データを渡す → データ共有。データベース間の移送方法と区別する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Redshiftは、SQLによる大規模分析向けのデータウェアハウス。</li>
+<li>COPY/UNLOAD、Spectrum、フェデレーテッドクエリ、データ共有で複数のデータソースと連携する。</li>
+<li>ノード容量・クエリ・ストレージなど、方式別の料金要因を比較する。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 6件・リンク元 8件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon Redshiftとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/data-exchange.html"><title>サービス:AWS Data Exchange</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Data Exchange</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/dms.html"><title>サービス:AWS Database Migration Service</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Database Migration Se…</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/databrew.html"><title>サービス:AWS Glue DataBrew</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">AWS Glue DataBrew</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/emr.html"><title>サービス:Amazon EMR</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon EMR</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/sagemaker-ai.html"><title>サービス:Amazon SageMaker AI</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">Amazon SageMaker AI</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-engineer-exam-map.html"><title>用語:DEA-C01の学習範囲</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">DEA-C01の学習範囲</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-store-selection.html"><title>用語:データストアの選び方</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">データストアの選び方</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-quality.html"><title>用語:データ品質</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">データ品質</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/glue.html"><title>サービス:AWS Glue</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Glue</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/lake-formation.html"><title>サービス:AWS Lake Formation</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Lake Formation</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/appflow.html"><title>サービス:Amazon AppFlow</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon AppFlow</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon Athena</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/quick.html"><title>サービス:Amazon Quick</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon Quick</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="230" class="gr-t">Amazon S3</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">Amazon Redshift</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(8)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="lake-formation.html"><span class="label">← 前へ</span>AWS Lake Formation</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="emr.html"><span class="label">次へ →</span>Amazon EMR</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

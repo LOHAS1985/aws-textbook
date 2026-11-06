@@ -1,0 +1,85 @@
+<!-- title: Amazon MSK -->
+<!-- category: 分析 -->
+<!-- lead: Apache Kafka互換のストリーミング基盤をマネージドで利用するサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Managed Streaming for Apache Kafka (Amazon MSK)</strong>は、Apache Kafkaを使ったストリーミングアプリケーションのためのマネージドサービスです。AWSがクラスターの作成・管理を担い、既存のKafkaプロデューサーやコンシューマーを利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>Kafkaの基本構成</h3>
+<ul>
+<li><strong>プロデューサー</strong>がイベントをトピックへ書き込む。</li>
+<li>トピックは複数の<strong>パーティション</strong>に分かれ、ブローカーに分散して保存される。</li>
+<li><strong>コンシューマーグループ</strong>の各コンシューマーがパーティションを分担して読み取る。</li>
+<li>オフセットで読み取り位置を管理し、保持期間内のレコードを再読込できる。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 80
+node prod 0 0.6 blue "プロデューサー" "イベントを送る"
+node topic 1.5 0.6 accent "Kafkaトピック" "複数パーティション"
+node c1 3 0 box "コンシューマー1" "担当パーティション"
+node c2 3 1.2 box "コンシューマー2" "担当パーティション"
+node out 4.5 0.6 ok "処理・保存先" "再読込も可能"
+edge prod topic
+edge topic c1
+edge topic c2
+edge c1 out
+edge c2 out
+<figcaption>図1 Amazon MSKのイベント処理。トピックのパーティションをコンシューマーグループで分担し、オフセットに基づいて読み取る。</figcaption>
+</figure>
+
+<h3>利用形態と連携</h3>
+<p><strong>MSK Provisioned</strong>はブローカーの種類や数を選びます。<strong>MSK Serverless</strong>はブローカーの容量管理をAWSに任せます。MSK ConnectでKafka Connectコネクターを実行し、外部システムとのデータ連携もできます。MSK Replicatorはクラスター間のレプリケーションに使います。</p>
+
+<h3>ストリーム処理サービスとの違い</h3>
+<p>MSKはKafka互換のイベントストリームを提供します。Kinesis Data StreamsはAWSネイティブなストリーム基盤で、Data Firehoseは処理済みデータを保存先へ配送するサービスです。Apache Flinkなどの処理エンジンは、ストリーム上のイベントを変換・集計する役割を担います。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>Kafkaを利用する既存アプリケーションのストリーミング処理。</li>
+<li>イベントを複数のコンシューマーへ配信し、それぞれで独立して処理する。</li>
+<li>Kafka Connectを使ったデータソース・保存先との連携。</li>
+<li>保持期間内のイベントを再生して、障害後の処理をやり直す。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Provisionedはブローカーとストレージなどの稼働、Serverlessは利用量などが課金要因です。データ転送、MSK ConnectやReplicator、連携先サービスの料金も考慮します。保持期間・パーティション数・複製数がストレージ量や処理能力に影響します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="kinesis.html">Amazon Kinesis</a>:AWSネイティブなストリーミングデータ処理</li>
+<li><a href="data-firehose.html">Amazon Data Firehose</a>:ストリームを保存先へ管理不要で配送</li>
+<li><a href="glue.html">AWS Glue</a>:ストリームETLとData Catalog</li>
+<li><a href="emr.html">Amazon EMR</a>:Sparkなどによる大規模分散処理</li>
+<li><a href="mwaa.html">Amazon MWAA</a>:データパイプラインのオーケストレーション</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>Apache Kafka互換性を保ったマネージドストリーミング → <strong>Amazon MSK</strong>。</li>
+<li>保持期間内にオフセットを戻して再読込できる。再処理時の重複や冪等性も設計する。</li>
+<li>スループットを高めるにはパーティション数とコンシューマー並列度を検討する。</li>
+<li>運用するKafkaクラスター → Provisioned。ブローカー管理を任せる → Serverless。</li>
+<li>MSKはストリーム基盤、Data Firehoseは配送、Glue/Flinkは変換処理という役割を区別する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>MSKはApache Kafka互換のストリーミングサービス。</li>
+<li>トピック・パーティション・オフセットでイベントを保持し、複数のコンシューマーが処理する。</li>
+<li>ProvisionedとServerless、Kafka Connect、Replicatorを要件に合わせて使う。</li>
+</ul>
+</section>

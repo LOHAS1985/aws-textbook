@@ -16,7 +16,7 @@
 <tr><td>FOCUS</td><td>クラウドの請求データの共通仕様(FOCUS)に沿った形式。他のクラウドの請求と合わせて分析しやすい</td></tr>
 <tr><td>コスト最適化の推奨事項</td><td>Cost Optimization Hub の推奨事項</td></tr>
 <tr><td>炭素排出量</td><td>AWSの利用による炭素排出量の推定値</td></tr>
-<tr><td>Cost and usage dashboard</td><td>Amazon QuickSight に、用意されたダッシュボードを作る</td></tr>
+<tr><td>Cost and usage dashboard</td><td>Amazon Quick のQuick Sightに、用意されたダッシュボードを作る</td></tr>
 <tr><td>従来のCUR</td><td>以前の形式のCUR</td></tr>
 </table></div>
 
@@ -34,18 +34,18 @@ node bill 0 0.5 blue "請求データ"
 node de 1.4 0.5 accent "Data Exports" "CUR 2.0"
 node s3 2.8 0.5 box "S3バケット" "CSV / Parquet"
 node ath 4.1 0 ok "Athena" "SQLで分析"
-node qs 4.1 1 ok "QuickSight" "ダッシュボード"
+node qs 4.1 1 ok "Quick Sight" "ダッシュボード"
 edge bill de
 edge de s3 "1日1回以上"
 edge s3 ath
 edge s3 qs
-<figcaption>図1 CURの使い方。Data ExportsでS3バケットに定期的に出力し、AthenaでSQLを使って集計したり、QuickSightで可視化したりする。</figcaption>
+<figcaption>図1 CURの使い方。Data ExportsでS3バケットに定期的に出力し、AthenaでSQLを使って集計したり、Quick Sightで可視化したりする。</figcaption>
 </figure>
 
 <h3>分析の方法</h3>
 <ul>
 <li><strong>Athena</strong>:S3のCURをテーブルとして登録し、SQLで集計する(Parquet形式がおすすめ)。</li>
-<li><strong>QuickSight</strong>:ダッシュボードで可視化する。</li>
+<li><strong>Quick Sight</strong>:ダッシュボードで可視化する。</li>
 <li>Redshiftに読み込んで、他の業務データと合わせて分析する。</li>
 </ul>
 
@@ -76,7 +76,7 @@ edge s3 qs
 
 <section class="chapter">
 <h2>4. 料金の考え方</h2>
-<p>CURの作成・出力そのものは無料です。保存先のS3の料金と、分析に使うAthena・QuickSightなどの料金がかかります。</p>
+<p>CURの作成・出力そのものは無料です。保存先のS3の料金と、分析に使うAthena・Quick Sightなどの料金がかかります。</p>
 </section>
 
 <section class="chapter">
@@ -95,7 +95,7 @@ edge s3 qs
 <h2>6. 試験・実務でのポイント</h2>
 <div class="point"><ul>
 <li>「最も詳細な請求データ」「時間単位・リソース単位の費用をS3に出力」→ <strong class="em">CUR</strong>(Data ExportsのCUR 2.0)。</li>
-<li>分析は <strong>S3+Athena</strong>(+QuickSight)が定番。</li>
+<li>分析は <strong>S3+Athena</strong>(+Quick Sight)が定番。</li>
 <li>リアルタイムではなく、<strong>1日に1回以上</strong>の更新。</li>
 <li>画面で手軽に見るならCost Explorer、細かく自分で集計するならCUR。</li>
 <li>Cost Explorer・Budgets・CUR・Compute Optimizerの使い分け → <a href="../terms/cost-management-comparison.html">コスト管理ツールの選び方</a>。</li>

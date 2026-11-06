@@ -1,0 +1,77 @@
+<!-- title: AWS Database Migration Service -->
+<!-- category: 移行と転送 -->
+<!-- lead: データベース間の移行や継続的な変更レプリケーションを行うサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Database Migration Service (AWS DMS)</strong>は、リレーショナル・NoSQLデータベースやデータウェアハウスなどのデータ移行とレプリケーションを支援するサービスです。AWS内外のソースとターゲットを接続し、1回限りの移行や継続的な変更データキャプチャ(CDC)を実行します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>移行タスク</h3>
+<ul>
+<li>ソースとターゲットのエンドポイント、ネットワーク接続、認証情報を設定する。</li>
+<li>全件ロードを行い、その後に変更を継続複製して、切り替えまでデータを同期する。</li>
+<li>移行タスクの状態、遅延、エラーを監視して、再試行やリソース調整を行う。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 70
+node src 0 0.5 blue "ソースDB" "全件・変更"
+node dms 1.7 0.5 accent "AWS DMS" "ロード・CDC"
+node dst 3.4 0.5 ok "ターゲットDB" "AWS内外"
+node conv 1.7 1.6 box "スキーマ変換" "必要に応じて"
+edge src dms
+edge dms dst
+edge conv dst dash
+<figcaption>図1 AWS DMSによる移行。全件データをロードした後、変更データを継続レプリケーションして切り替えまで同期できる。</figcaption>
+</figure>
+
+<h3>データ移行とスキーマ変換</h3>
+<p>DMSはデータの移行・レプリケーションを担います。異なるデータベースエンジンへ移行する場合、AWS DMS Schema ConversionやAWS Schema Conversion Toolでスキーマやコードの互換性を評価・変換します。移行元と移行先の型・関数・制約が完全に一致するとは限らないため、変換結果を確認してテストします。</p>
+
+<h3>接続と整合性</h3>
+<p>ソース・ターゲットのセキュリティグループ、ルーティング、認証情報、ネットワーク到達性を確認します。移行中の更新量が大きい場合は、レプリケーション遅延を監視します。切り替え前には件数・チェックサム・業務上の重要な値を比較します。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>オンプレミスや別クラウドのデータベースをAWSへ移行する。</li>
+<li>移行中も業務を続けるために、初期ロード後の変更を継続同期する。</li>
+<li>分析用データベースへ業務DBの変更をレプリケーションする。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>レプリケーションに使うインスタンスやサーバーレスの処理能力、ストレージ、ログ、データ転送などが課金要因です。移行作業に必要な期間・容量を見積もり、完了後に不要なレプリケーション資源を停止・削除します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="rds.html">Amazon RDS</a>/<a href="aurora.html">Amazon Aurora</a>:移行先データベース</li>
+<li><a href="redshift.html">Amazon Redshift</a>:分析用ウェアハウス</li>
+<li><a href="glue.html">AWS Glue</a>:移行後のETLとData Catalog</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:タスクのログ・メトリクス監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>異なるデータベース間のデータ移行や継続同期 → <strong>AWS DMS</strong>。</li>
+<li>全件ロード後も変更を追従させる → CDCタスク。</li>
+<li>データの移行とスキーマ・コードの変換は別の作業として計画する。</li>
+<li>レプリケーション遅延、エラー、データ整合性を切り替え前に確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS DMSはデータベースなどの移行と継続レプリケーションを行う。</li>
+<li>スキーマ変換、ネットワーク、データ整合性の確認は移行計画に含める。</li>
+</ul>
+</section>

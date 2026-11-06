@@ -1,0 +1,49 @@
+<!-- title: ベクトル検索 -->
+<!-- category: サービスの選び方 -->
+<!-- lead: 意味的な類似度を基に関連データを探す検索方式 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p><strong>埋め込み(embedding)</strong>は、文章や画像などの特徴を数値の配列(ベクトル)で表現したものです。<strong>ベクトル検索</strong>は、検索語のベクトルと近いベクトルを探し、文字列が完全一致しなくても意味の近いデータを取得します。</p>
+<h3>ベクトルインデックス</h3>
+<ul>
+<li><strong>HNSW</strong>:階層的な近傍グラフを作り、高速な近似近傍検索を行う。検索速度・再現率・メモリ使用量の調整が必要。</li>
+<li><strong>IVF</strong>:ベクトルを複数のクラスタに分け、候補クラスタを絞って検索する。クラスタ数や探索範囲が検索精度・速度に影響する。</li>
+</ul>
+<p>近似検索は全件を厳密比較する方法より高速になりやすい一方、最も近い結果が必ず含まれるとは限りません。検索精度、応答時間、メモリ、更新頻度、フィルター条件を評価して選びます。</p>
+<figure class="figure" data-diagram>
+grid 170 75
+node data 0 0.5 blue "文書・画像" "元データ"
+node embed 1.7 0.5 accent "埋め込みモデル" "ベクトル化"
+node index 3.5 0.5 box "Vector Index" "HNSW・IVF"
+node query 1.7 1.6 blue "検索語" "同じモデルで変換"
+node result 5.3 0.5 ok "類似データ" "関連順に返す"
+edge data embed
+edge embed index
+edge query index
+edge index result
+<figcaption>図1 ベクトル検索の流れ。元データと検索語をベクトル化し、近傍インデックスから意味的に近いデータを探す。</figcaption>
+</figure>
+
+<h3>検索拡張生成との関係</h3>
+<p>検索拡張生成(RAG)では、文書を分割して埋め込みを作り、質問に近い断片を検索して生成モデルへ渡します。Bedrock Knowledge Basesなどのマネージド機能が、取り込み・ベクトル化・検索の一部を支援します。生成モデルの出力と、検索インデックスの品質は別々に評価します。</p>
+<p>「ベクトル化」は文書をベクトル表現に変換することです。CPUのSIMD演算などを指す「ベクトル化処理」とは意味が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="data-store-selection.html">データストアの選び方</a>:検索パターンに合った保存先</li>
+<li><a href="open-table-formats.html">オープンテーブル形式</a>:ベクトルの元となる文書データの管理</li>
+<li><a href="data-governance.html">データガバナンス</a>:検索対象の権限とプライバシー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/bedrock.html">Amazon Bedrock</a>:Knowledge BasesなどRAG構成</li>
+<li><a href="../services/opensearch.html">Amazon OpenSearch Service</a>:ベクトル検索と全文検索</li>
+<li><a href="../services/aurora.html">Amazon Aurora</a>:pgvectorによるベクトル検索</li>
+<li><a href="../services/memorydb.html">Amazon MemoryDB</a>:低遅延なベクトル検索の選択肢</li>
+</ul>
+</section>

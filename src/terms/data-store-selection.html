@@ -1,0 +1,49 @@
+<!-- title: データストアの選び方 -->
+<!-- category: サービスの選び方 -->
+<!-- lead: アクセスパターン・データ形式・鮮度・規模から保存先を選ぶ -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>最適な保存先は、データの形だけでなく、書き込み頻度、読み取り方法、応答時間、同時実行数、データ量、共有・保持要件で決まります。処理基盤と保存先は同じサービスである必要はありません。</p>
+<div class="table-wrap"><table>
+<tr><th>要件</th><th>候補</th><th>選ぶ理由</th></tr>
+<tr><td>オブジェクトの長期保存・データレイク</td><td>Amazon S3</td><td>多様な形式を低コストで保存し、複数の分析サービスから使う</td></tr>
+<tr><td>マネージド保守付きのIcebergテーブル</td><td><a href="../services/s3.html">Amazon S3 Tables</a></td><td>テーブルバケットでテーブルの最適化やメンテナンスを任せる</td></tr>
+<tr><td>大規模なSQL集計・BI</td><td>Amazon Redshift</td><td>データウェアハウスとして分析クエリを実行する</td></tr>
+<tr><td>S3上のデータをSQLでアドホック分析</td><td>Amazon Athena</td><td>データをロードせず、サーバーレスで検索する</td></tr>
+<tr><td>柔軟なOSS分散処理・複雑な変換</td><td>Amazon EMR</td><td>Sparkなどの実行環境とクラスター構成を制御する</td></tr>
+<tr><td>サーバーレスETL・カタログ</td><td>AWS Glue</td><td>データ統合・変換とメタデータ管理を行う</td></tr>
+<tr><td>低遅延のキー指定読み書き</td><td>Amazon DynamoDB</td><td>キー・アクセスパターンを先に設計したNoSQLデータベース</td></tr>
+<tr><td>SQL・トランザクション・行更新</td><td>Amazon RDS/Aurora</td><td>リレーショナルモデルとトランザクションを使う</td></tr>
+<tr><td>イベントの保持・複数コンシューマー処理</td><td>Kinesis Data Streams / Amazon MSK</td><td>ストリームを一定期間保持し、読み取り位置から処理する</td></tr>
+</table></div>
+
+<h3>データレイクとデータウェアハウス</h3>
+<p>データレイクは多様な形式の生データや加工済みデータを保存し、用途に応じた複数のエンジンで利用します。データウェアハウスは分析向けに整形・統合したデータをSQLで集計します。AthenaはS3データレイクのクエリ、Redshiftはウェアハウス分析が中心ですが、Spectrumなどで連携できます。</p>
+
+<h3>移行・リモート参照・ロック</h3>
+<p>データを複製して取り込むか、フェデレーテッドクエリなどで外部データを参照するかを、鮮度・負荷・遅延・権限で選びます。RDSなどから継続的に移行する場合はAWS DMS、スキーマ変換にはAWS Schema Conversion ToolやDMS Schema Conversionが候補です。分析データベースのロックや同時更新は競合を避けるために必要ですが、長時間トランザクションは待ちや遅延を起こすことがあります。</p>
+<p>リレーショナルデータベースでは正規化や制約で更新の一貫性を保ち、分析用テーブルではクエリに合わせて集計済みデータやマテリアライズドビューを検討します。DynamoDBでは、主キー・複合ソートキー・セカンダリインデックスをアクセスパターンに合わせて設計します。これらのモデルは、検索・更新パターンやロックの特性が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="storage-types.html">ストレージの種類</a>:オブジェクト・ブロック・ファイル</li>
+<li><a href="open-table-formats.html">オープンテーブル形式</a>:データレイクのテーブル管理</li>
+<li><a href="vector-search.html">ベクトル検索</a>:類似度検索とインデックス</li>
+<li><a href="performance-metrics.html">性能指標</a>:待ち時間やスループットの見方</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/s3.html">Amazon S3</a>/<a href="../services/athena.html">Amazon Athena</a>:データレイクとSQL分析</li>
+<li><a href="../services/redshift.html">Amazon Redshift</a>:分析データウェアハウス</li>
+<li><a href="../services/emr.html">Amazon EMR</a>/<a href="../services/glue.html">AWS Glue</a>:データ処理</li>
+<li><a href="../services/rds.html">Amazon RDS</a>/<a href="../services/dynamodb.html">Amazon DynamoDB</a>:業務データベース</li>
+<li><a href="../services/kinesis.html">Amazon Kinesis</a>/<a href="../services/msk.html">Amazon MSK</a>:イベントストリーム</li>
+<li><a href="../services/dms.html">AWS DMS</a>:データベース移行とCDC</li>
+<li><a href="../services/transfer-family.html">AWS Transfer Family</a>:SFTPなどによるファイル取り込み</li>
+</ul>
+</section>

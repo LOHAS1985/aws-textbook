@@ -1,0 +1,52 @@
+<!-- title: データ品質 -->
+<!-- category: 設計・運用 -->
+<!-- lead: 分析や業務処理に使えるデータかをルールと測定値で確かめる考え方 -->
+<section class="chapter">
+<h2>1. 詳しい説明</h2>
+<p>データ品質は、データが利用目的に対して正しく、完全で、一貫しているかを継続的に確認することです。取り込み時や変換後にルールを評価し、失敗したデータを特定して修正・隔離します。</p>
+<h3>品質の観点</h3>
+<ul>
+<li><strong>完全性</strong>:必須項目が欠損していないか。</li>
+<li><strong>一意性</strong>:同じ業務キーの重複がないか。</li>
+<li><strong>妥当性</strong>:値が型・範囲・形式などのルールに合うか。</li>
+<li><strong>正確性・一貫性</strong>:参照元と一致し、複数項目やテーブル間で矛盾しないか。</li>
+<li><strong>適時性</strong>:必要な時間までにデータが届き、十分に新しいか。</li>
+</ul>
+
+<h3>ルール・プロファイル・サンプリング</h3>
+<p>AWS Glue Data Qualityは、ルールに基づいてカタログテーブルやETL結果を評価し、結果を記録できます。AWS Glue DataBrewではデータのプロファイルを確認し、変換レシピを作れます。サンプリングは全件処理を避けて傾向を素早く確認できますが、稀な異常や偏りを見落とす可能性があります。全件検証と代表サンプルの目的を分けます。</p>
+
+<h3>データスキューと集計</h3>
+<p><strong>データスキュー</strong>は、キーの値によりレコード数や処理負荷が一部のパーティションに偏る状態です。ホットキーがあると、他のワーカーが空いていても特定タスクが遅れます。キー分布、パーティション、処理時間を調べ、必要に応じてキー設計や処理方法を変えます。</p>
+<p>集計ではグループ化・合計・件数・移動平均・ピボットなどを利用します。集計の粒度、タイムゾーン、重複排除、NULLの扱いを決め、結果の合計値や件数を既知の値と照合します。</p>
+<figure class="figure" data-diagram>
+grid 160 75
+node input 0 0.5 blue "取り込んだデータ" "重複・欠損を含む"
+node rules 1.8 0.5 accent "品質ルール" "必須・範囲・一意性"
+node good 3.8 0 ok "正常データ" "分析へ"
+node bad 3.8 1.4 ng "異常データ" "隔離・通知"
+edge input rules
+edge rules good "合格"
+edge rules bad "失敗"
+<figcaption>図1 データ品質チェック。品質ルールで正常データと異常データを分け、異常の記録・隔離・通知を行う。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2>2. 関連する用語</h2>
+<ul>
+<li><a href="data-engineering-basics.html">データパイプラインの基礎</a>:再試行・重複・状態管理</li>
+<li><a href="performance-metrics.html">性能指標</a>:処理時間・スループット・遅延</li>
+<li><a href="open-table-formats.html">オープンテーブル形式</a>:スキーマ変更の管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>3. 関連サービス</h2>
+<ul>
+<li><a href="../services/glue.html">AWS Glue</a>:Data Quality・DataBrew・ETL</li>
+<li><a href="../services/athena.html">Amazon Athena</a>:SQLによる検査・集計</li>
+<li><a href="../services/redshift.html">Amazon Redshift</a>:SQL分析・ビュー・集計</li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:品質メトリクスとアラーム</li>
+</ul>
+</section>

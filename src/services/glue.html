@@ -1,0 +1,92 @@
+<!-- title: AWS Glue -->
+<!-- category: 分析 -->
+<!-- lead: データの発見・カタログ化・ETLをサーバーレスで行うデータ統合サービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>AWS Glue</strong>は、複数のデータソースを発見・接続し、データカタログに登録して、分析用に抽出・変換・ロード(ETL)するマネージドサービスです。サーバーを管理せずに、バッチとストリーミングのデータ統合を行えます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>AWS Glue Data Catalog</h3>
+<p>データベース、テーブル、列、形式、S3上の場所などのメタデータを一元管理します。<strong>データそのものを保存する場所ではなく、データをどう読むかを記録するカタログ</strong>です。Athena、Redshift Spectrum、EMRなどが同じテーブル定義を参照できます。</p>
+
+<h3>クローラーと接続</h3>
+<p><strong>クローラー</strong>はS3やJDBC接続先などのデータを調べ、形式やスキーマを推測してData Catalogにテーブルを作成・更新します。スキーマ変更の検出にも使えます。既知のスキーマを厳密に管理したいときは、クローラー任せにせずテーブル定義を明示します。</p>
+
+<h3>ETLジョブ</h3>
+<ul>
+<li>AWS Glue Studioのビジュアルエディター、ノートブック、スクリプトでジョブを作成する。</li>
+<li>Apache SparkまたはRayを実行エンジンとして、データの結合・整形・形式変換などを行う。</li>
+<li>ジョブブックマークで処理済みデータを追跡し、再実行時に新しいデータだけを処理できる。ソースや変換の種類によって対応範囲が異なる。</li>
+<li>トリガーやワークフローでジョブ・クローラーの順序や依存関係を管理する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 80
+node src 0 0.5 blue "データソース" "S3・DB・SaaS"
+node crawl 1.4 0 accent "クローラー" "スキーマを検出"
+node cat 2.8 0 box "Data Catalog" "メタデータ"
+node job 1.4 1.3 accent "Glueジョブ" "抽出・変換"
+node dest 2.8 1.3 ok "保存先" "S3・Redshift"
+edge src crawl
+edge crawl cat
+edge cat job dash
+edge src job
+edge job dest
+<figcaption>図1 AWS Glueによるデータ統合。クローラーがスキーマをカタログ化し、ジョブがデータを変換して保存先へ出力する。</figcaption>
+</figure>
+
+<h3>データ品質と準備</h3>
+<p><strong>AWS Glue Data Quality</strong>では、ルールを定義して欠損・重複・値の範囲などを評価し、結果を確認できます。AWS Glue DataBrewはビジュアル操作でデータのプロファイル確認や変換レシピ作成を行うデータ準備機能です。詳細は<a href="../terms/data-quality.html">データ品質</a>を参照してください。</p>
+
+<h3>ストリーミングETL</h3>
+<p>Kinesis Data StreamsやAmazon MSKなどのストリームを継続的に読み取り、変換して保存先へ書き込めます。リアルタイム処理にはチェックポイントや重複処理への考慮が必要です。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>複数形式のデータをS3に集め、Parquetに変換して分析しやすくする。</li>
+<li>データカタログとクローラーで、Athenaから検索できるテーブルを作る。</li>
+<li>データ品質ルールをETLパイプラインに組み込み、不正なデータを検出する。</li>
+<li>ストリーミングデータを変換してデータレイクへ取り込む。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>ジョブやクローラーの実行に使う処理能力と実行時間などに応じて課金されます。実行エンジンや機能によって料金体系が異なるため、ジョブの規模・頻度・ワーカー設定を見直します。S3、CloudWatch Logs、データ転送などの利用料は別途発生します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:データレイクの保存先</li>
+<li><a href="athena.html">Amazon Athena</a>:Data Catalogを参照してS3をSQL分析</li>
+<li><a href="lake-formation.html">AWS Lake Formation</a>:Data Catalogとデータレイクのアクセス制御</li>
+<li><a href="redshift.html">Amazon Redshift</a>:データウェアハウスへのロード・分析</li>
+<li><a href="kinesis.html">Amazon Kinesis</a>/<a href="msk.html">Amazon MSK</a>:ストリーミングデータの取り込み</li>
+<li><a href="mwaa.html">Amazon MWAA</a>:複数ジョブを含むパイプラインのオーケストレーション</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>データの場所・形式・スキーマを共有するメタデータの保管先 → <strong>AWS Glue Data Catalog</strong>。</li>
+<li>S3上のデータを調べてスキーマを推測し、カタログ登録 → <strong>クローラー</strong>。</li>
+<li>大規模なデータ変換 → GlueのSparkジョブ。画面上で変換処理を作る → Glue Studio。</li>
+<li>ルールに基づく品質評価 → Glue Data Quality。対話的なプロファイル・レシピ作成 → Glue DataBrew。</li>
+<li>データカタログはメタデータであり、実データはS3やデータベースに存在する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>AWS Glueは、データのカタログ化・ETL・品質評価を統合するマネージドサービス。</li>
+<li>Data Catalogがテーブル定義を保持し、クローラーがスキーマを検出する。</li>
+<li>ジョブ・トリガー・ワークフローでバッチやストリーミングの処理を構成できる。</li>
+</ul>
+</section>

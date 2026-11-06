@@ -1,0 +1,82 @@
+<!-- title: Amazon MWAA -->
+<!-- category: アプリケーション統合 -->
+<!-- lead: Apache Airflowでデータパイプラインを管理するマネージドサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Managed Workflows for Apache Airflow (Amazon MWAA)</strong>は、Apache Airflowを使ってデータパイプラインを作成・スケジュール・監視するマネージドサービスです。AirflowのDAGとPythonコードでタスクや依存関係を定義し、実際の処理はGlueやEMRなどのサービスに実行させます。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>DAGとタスク</h3>
+<p><strong>DAG</strong>(有向非巡回グラフ)に、処理単位のタスクと実行順序を定義します。スケジューラーが実行タイミングを管理し、ワーカーがタスクを実行します。成功・失敗・再試行の状態をAirflowの画面で確認できます。</p>
+<figure class="figure" data-diagram>
+grid 160 75
+node start 0 0.5 blue "開始" "スケジュール"
+node ingest 1.5 0.5 accent "取り込み" "AppFlow・S3"
+node transform 3 0.5 box "変換" "Glue・EMR"
+node check 4.5 0.5 box "品質確認" "ルール評価"
+node report 6 0.5 ok "分析用データ" "Athena・Redshift"
+edge start ingest
+edge ingest transform
+edge transform check
+edge check report
+<figcaption>図1 MWAAで管理するデータパイプライン。Airflowはタスクの順序・実行時刻・再試行を管理し、各サービスがデータ処理を行う。</figcaption>
+</figure>
+
+<h3>管理と運用</h3>
+<ul>
+<li>環境の最小・最大ワーカー数を設定し、タスク数に応じてワーカーをスケールする。</li>
+<li>DAGやプラグインなどをS3に配置し、IAMロールでタスクからAWSサービスへアクセスする。</li>
+<li>Webサーバーをパブリックまたはプライベートに公開し、VPC・IAM・暗号化を設定する。</li>
+<li>AirflowのログやメトリクスをCloudWatchに出力して、失敗・遅延・リソース不足を調べる。</li>
+</ul>
+
+<h3>Step Functionsとの使い分け</h3>
+<p>Apache AirflowのDAG・Python・豊富な演算子を活用し、複雑なデータワークフローを管理する場合はMWAAが候補です。AWSサービスを中心とした状態遷移や分岐・リトライをサーバーレスに実装する場合はStep Functionsが候補です。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>日次のデータ取り込み・変換・品質確認・集計を依存関係に沿って実行する。</li>
+<li>複数のAWSサービスや外部システムにまたがるワークフローを管理する。</li>
+<li>失敗したタスクの再試行や、完了・失敗の通知を実装する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>MWAA環境の稼働時間や環境クラス、ワーカー・スケジューラーなどのリソースが主な課金要因です。CloudWatch、S3、VPCエンドポイント、タスクが呼び出す各サービスの料金も発生します。常時稼働する環境が必要か、より軽量なサーバーレスワークフローで代替できるかを検討します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="glue.html">AWS Glue</a>:ETLジョブとデータカタログ</li>
+<li><a href="emr.html">Amazon EMR</a>:大規模な分散処理</li>
+<li><a href="step-functions.html">AWS Step Functions</a>:サーバーレスの状態遷移ワークフロー</li>
+<li><a href="eventbridge.html">Amazon EventBridge</a>:イベントやスケジュールによる起動</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:ログ・メトリクスの監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>Apache AirflowでDAGを管理するマネージドサービス → <strong>Amazon MWAA</strong>。</li>
+<li>MWAAはオーケストレーションを担い、データ変換そのものはGlueやEMRなどが行う。</li>
+<li>タスクの依存関係・スケジュール・再試行・実行履歴をDAG単位で確認する。</li>
+<li>CloudWatchログ、ワーカーのスケーリング、VPC接続、IAMロールをトラブル調査で確認する。</li>
+<li>Airflowを必要としないAWS中心の状態遷移ならStep Functionsと比較する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>MWAAはApache Airflowによるデータパイプラインのオーケストレーションをマネージドで提供する。</li>
+<li>DAGがタスク順序を定義し、各タスクはGlue・EMRなどの処理を呼び出す。</li>
+</ul>
+</section>

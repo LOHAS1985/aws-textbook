@@ -1,0 +1,80 @@
+<!-- title: Amazon SageMaker AI -->
+<!-- category: 機械学習と人工知能 -->
+<!-- lead: 機械学習用データの準備・特徴量管理からモデル開発までを支援するサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon SageMaker AI</strong>(旧Amazon SageMaker)は、機械学習モデルを構築・学習・デプロイするマネージドサービスです。データエンジニアの学習では、データ準備、データ品質の確認、特徴量の管理、機械学習パイプラインへのデータ提供を中心に押さえます。</p>
+<p>Amazon SageMaker AIとAmazon SageMaker Unified Studioは同じものではありません。SageMaker AIはモデル開発を担うサービス、Unified Studioはデータ・分析・AIサービスをまとめる統合環境です。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>データ準備と特徴量</h3>
+<ul>
+<li><strong>Data Wrangler</strong>:データの取り込み・プロファイル・変換・品質レポートを支援する。現在のData Wrangler体験はSageMaker Canvasに統合されている。</li>
+<li><strong>Processing</strong>:データの前処理や評価をコンテナジョブとして実行する。</li>
+<li><strong>Feature Store</strong>:機械学習で再利用する特徴量を保存・共有する。</li>
+<li><strong>Pipelines</strong>:データ処理からモデル関連タスクまでのワークフローを定義する。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 80
+node source 0 0.5 blue "データソース" "S3・DB"
+node prep 2 0.5 accent "Data Wrangler" "準備・品質確認"
+node process 4 0.5 box "Processing" "再現可能な処理"
+node feature 6 0.5 ok "Feature Store" "特徴量を共有"
+edge source prep
+edge prep process
+edge process feature
+<figcaption>図1 SageMaker AIのデータ関連機能。各種ソースからデータを準備・検証し、機械学習用の処理や特徴量ストアへつなぐ。</figcaption>
+</figure>
+
+<h3>試験範囲との関係</h3>
+<p>DEA-C01ではデータ準備やパイプライン統合、機械学習用データの品質・特徴量に関する考え方が関連します。モデルの学習や推論を実装すること自体は試験ガイドの対象外タスクとして示されています。データ処理の入力・出力・権限・コストを中心に学びます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>分析や機械学習の前にデータをプロファイル・変換する。</li>
+<li>前処理を再実行できるProcessingジョブとして実装する。</li>
+<li>複数のモデル開発者やジョブで共通の特徴量を利用する。</li>
+<li>データ準備からML関連処理までをパイプライン化する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>データ準備・処理・特徴量保存・ノートブック・モデル開発で使う計算資源やストレージなどに応じて料金が発生します。処理ジョブの実行時間、インスタンス、データ量、保存期間を見積もります。学習や推論の料金はデータ処理の料金と分けて確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="sagemaker-unified-studio.html">Amazon SageMaker Unified Studio</a>:分析・AI開発の統合環境とプロジェクト</li>
+<li><a href="glue.html">AWS Glue</a>:ETLとData Catalog</li>
+<li><a href="athena.html">Amazon Athena</a>:SQLでのデータ準備・探索</li>
+<li><a href="redshift.html">Amazon Redshift</a>:分析データソース</li>
+<li><a href="batch.html">AWS Batch</a>:コンテナ化されたバッチ処理</li>
+<li>関連する用語:<a href="../terms/data-quality.html">データ品質</a>、<a href="../terms/data-governance.html">データガバナンス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>機械学習向けデータのビジュアルな探索・変換・品質確認 → Data Wranglerの機能を押さえる。</li>
+<li>現在のData Wrangler体験はSageMaker Canvasに統合されている。</li>
+<li>再利用する特徴量の保存・共有 → Feature Store。</li>
+<li>DEA-C01ではデータ処理・品質・統合を中心にし、モデル学習や推論の実装は対象外として区別する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>SageMaker AIは機械学習のライフサイクルを支援する。</li>
+<li>試験ではData Wrangler、Processing、Feature Storeなどデータ関連機能を中心に理解する。</li>
+<li>Unified Studioは複数のデータ・分析・AIサービスをつなぐ別の統合環境。</li>
+</ul>
+</section>

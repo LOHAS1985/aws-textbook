@@ -1,0 +1,74 @@
+<!-- title: Amazon Managed Service for Apache Flink -->
+<!-- category: 分析 -->
+<!-- lead: Apache Flinkでストリーミングデータを継続処理するマネージドサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Managed Service for Apache Flink</strong>は、Apache Flinkを使ってストリーミングデータを継続的に処理・分析するサービスです。AWSが実行基盤を管理し、利用者はJava、Scala、Python、SQLなどで処理ロジックを作成します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>ステートフルなストリーム処理</h3>
+<p>Flinkアプリケーションはイベントを継続的に読み取り、時間窓集計、イベント結合、異常検知などを行います。チェックポイントやスナップショットは、状態を復旧して処理を再開するために使います。イベント時刻、遅延到着、重複、状態の保持期間を設計します。</p>
+<figure class="figure" data-diagram>
+grid 150 75
+node source 0 0.5 blue "Kinesis・MSK" "ストリーム"
+node flink 1.8 0.5 accent "Managed Flink" "継続処理・状態"
+node state 3.8 0 box "Checkpoint" "障害復旧"
+node sink 3.8 1.2 ok "S3・分析先" "集計結果"
+edge source flink
+edge flink state dash
+edge flink sink
+<figcaption>図1 Managed Service for Apache Flink。ストリームを継続処理し、チェックポイントで状態を保存して復旧に備える。</figcaption>
+</figure>
+
+<h3>アプリケーションとStudio</h3>
+<p>長時間稼働するアプリケーションは、IDEとFlink APIを使って作成し、バージョン管理・テスト・CI/CDに組み込めます。StudioノートブックはSQLなどでストリームを対話的に探索する用途に向きます。運用に移すアプリケーションでは、コードの変更管理と状態の互換性を確認します。</p>
+
+<h3>他のストリーミングサービスとの違い</h3>
+<p>Kinesis Data StreamsやAmazon MSKはデータを保持・配信するストリーム基盤です。Managed Service for Apache Flinkは、そこからレコードを読み取って継続的な変換・集計を行います。Data Firehoseは処理済みデータを保存先へ配送する役割です。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>ストリームのイベントを時間窓で集計し、リアルタイムダッシュボードへ出力する。</li>
+<li>イベントの結合や状態管理が必要なストリームETLを実行する。</li>
+<li>ストリーミングデータの異常や傾向を検出する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>アプリケーションに割り当てる処理能力と実行時間などが課金要因です。ソース・出力先、チェックポイント用ストレージ、CloudWatchログ、データ転送などの料金も考慮します。必要な並列度と状態サイズを監視し、過剰な処理能力を避けます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="kinesis.html">Amazon Kinesis</a>:Kinesis Data Streams</li>
+<li><a href="msk.html">Amazon MSK</a>:Kafka互換ストリーム</li>
+<li><a href="data-firehose.html">Amazon Data Firehose</a>:ストリームの配送</li>
+<li><a href="glue.html">AWS Glue</a>:ETLとData Catalog</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:アプリケーション監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>継続的なストリーミング変換・状態管理 → <strong>Managed Service for Apache Flink</strong>。</li>
+<li>イベントを保持する基盤(Kinesis/MSK)と、イベントを処理するエンジン(Flink)を区別する。</li>
+<li>障害後の復旧にはチェックポイントを使い、状態・イベント時刻・再処理を設計する。</li>
+<li>対話的な探索にはStudio、長時間稼働しCI/CDで管理する処理にはFlinkアプリケーションを比較する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Managed Service for Apache FlinkはFlinkアプリケーションの実行基盤をマネージドで提供する。</li>
+<li>状態を持つストリーミング処理と、Kinesis/MSKなどのデータ基盤を組み合わせる。</li>
+</ul>
+</section>

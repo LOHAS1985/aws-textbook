@@ -1,0 +1,83 @@
+<!-- title: Amazon EMR -->
+<!-- category: 分析 -->
+<!-- lead: Apache SparkやHadoopなどの分散処理フレームワークを実行するマネージドサービス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon EMR</strong>は、Apache Spark、Hadoop、HiveなどのビッグデータフレームワークをAWS上で実行するマネージドサービスです。大規模なデータ処理や分析に必要なクラスターを作成し、S3などのデータを並列に処理します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>実行方式</h3>
+<ul>
+<li><strong>EMR on EC2</strong>:クラスターのEC2インスタンスとソフトウェア構成を管理し、柔軟なカスタマイズを行う。</li>
+<li><strong>EMR Serverless</strong>:クラスターを常時管理せず、SparkやHiveのジョブ実行に必要なリソースを利用する。</li>
+<li><strong>EMR on EKS</strong>:Amazon EKS上でEMRの処理を実行し、既存のKubernetes基盤と共存させる。</li>
+</ul>
+
+<h3>分散処理</h3>
+<p>処理対象を複数のノードに分け、並列に読み込み・変換・集計します。S3をデータレイクとして使う処理では、クラスターディスクにすべてのデータを置かずに済みます。HDFSを使う構成では、クラスター内の一時・分散ストレージの容量と耐障害性を考慮します。</p>
+<figure class="figure" data-diagram>
+grid 170 80
+node s3 0 0.6 blue "Amazon S3" "入力データ"
+node emr 1.5 0.6 accent "Amazon EMR" "Spark・Hadoop"
+node n1 3 0 box "処理ノード" "分割して並列処理"
+node n2 3 1.2 box "処理ノード" "分割して並列処理"
+node out 4.5 0.6 ok "出力データ" "S3・Redshift"
+edge s3 emr
+edge emr n1
+edge emr n2
+edge n1 out
+edge n2 out
+<figcaption>図1 EMRの分散処理。入力データを複数の処理ノードへ分配し、結果をS3やデータウェアハウスへ出力する。</figcaption>
+</figure>
+
+<h3>Glueとの使い分け</h3>
+<p>AWS Glueはサーバーレスなデータ統合・ETLを簡潔に実行したい場合に向きます。EMRはフレームワークや実行環境の選択、クラスター構成、ライブラリなどを細かく制御したい大規模処理に向きます。どちらもSparkを使えるため、既存コード・運用負荷・処理時間・コストで選びます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>大量のログやイベントをSparkで集計・変換する。</li>
+<li>複雑なデータ処理や機械学習向け前処理を分散実行する。</li>
+<li>既存のHadoop/SparkアプリケーションをAWS上で実行する。</li>
+<li>データレイクのデータを変換し、分析用の保存先へ出力する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>実行方式により、EC2インスタンスの稼働、EMRの利用、ジョブ処理に使うリソースなどが主な課金要因です。EMR on EC2では未使用ノードを停止し、ジョブに適したインスタンスタイプとクラスターサイズを選びます。S3、EKS、データ転送などの料金は別に確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:データレイクと処理結果の保存</li>
+<li><a href="glue.html">AWS Glue</a>:サーバーレスETLとData Catalog</li>
+<li><a href="lake-formation.html">AWS Lake Formation</a>:データレイクの細粒度アクセス制御</li>
+<li><a href="redshift.html">Amazon Redshift</a>:分析データウェアハウス</li>
+<li><a href="eks.html">Amazon EKS</a>:EMR on EKSの実行基盤</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>SparkやHadoopなどのOSSフレームワークを大規模分散実行 → <strong>Amazon EMR</strong>。</li>
+<li>インフラ管理を避けてジョブ単位で処理する → EMR Serverless。</li>
+<li>ノードやソフトウェアを柔軟に制御する → EMR on EC2。</li>
+<li>既存のKubernetes基盤を使う → EMR on EKS。</li>
+<li>GlueはサーバーレスETL、EMRはOSS処理基盤の柔軟な実行を軸に比較する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>EMRは、SparkやHadoopなどをマネージドなクラスター環境で実行する。</li>
+<li>EC2、Serverless、EKSの実行方式から、制御性と管理負荷に合わせて選ぶ。</li>
+</ul>
+</section>

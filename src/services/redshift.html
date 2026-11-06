@@ -1,0 +1,89 @@
+<!-- title: Amazon Redshift -->
+<!-- category: 分析 -->
+<!-- lead: 大規模な分析クエリを実行するマネージドデータウェアハウス -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon Redshift</strong>は、大量の構造化データをSQLで集計・分析するデータウェアハウスです。列指向の保存と並列処理で分析クエリを実行し、S3のデータレイクやBIツールとも連携します。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>プロビジョンドとServerless</h3>
+<ul>
+<li><strong>プロビジョンド</strong>:クラスターのノード構成を選び、継続的なワークロードの容量を管理する。</li>
+<li><strong>Redshift Serverless</strong>:データウェアハウスの容量を個別に管理せず、ワークロードに応じて処理能力を利用する。</li>
+</ul>
+<p>どちらもSQLで分析できます。継続的で予測しやすい処理か、変動が大きく管理負荷を下げたい処理かで選びます。</p>
+
+<h3>データの取り込みと連携</h3>
+<ul>
+<li><code>COPY</code>でS3などからデータをロードし、<code>UNLOAD</code>でクエリ結果をS3へ出力する。</li>
+<li><strong>Redshift Spectrum</strong>で、S3上のデータをクラスターのテーブルにロードせずにクエリする。外部テーブルの定義にGlue Data Catalogを利用できる。</li>
+<li>フェデレーテッドクエリでRDSやAuroraなどの外部データソースを参照する。</li>
+<li>データ共有で別のRedshiftデータウェアハウスへデータを共有し、複製を抑えた分析を行う。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 80
+node src 0 0.5 blue "S3" "COPYでロード"
+node wh 1.5 0.5 accent "Redshift" "SQL・集計"
+node bi 3 0.5 blue "BIツール" "ダッシュボード"
+node lake 1.5 1.5 box "S3データレイク" "Spectrumで参照"
+node share 3 1.5 ok "別クラスター" "データ共有"
+edge src wh "COPY"
+edge wh bi
+edge lake wh "Spectrum"
+edge wh share "共有"
+<figcaption>図1 Amazon Redshiftの分析。S3からロードするほか、SpectrumでS3上のデータを直接参照し、クエリ結果をBIや別のRedshiftへ共有できる。</figcaption>
+</figure>
+
+<h3>テーブル設計と同時実行</h3>
+<p>クエリのアクセスパターンに応じて、列のデータ型、ソートキー、分散方法を設計します。列指向形式や圧縮はスキャン量を抑えます。テーブルや行のロック、トランザクションの競合が発生した場合は、長時間トランザクションや同時更新を調査します。分析性能はクエリプラン、スキャン量、分散キーのデータ偏りも確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>業務システムやS3のデータを統合した大規模なSQL分析。</li>
+<li>BIダッシュボード向けの集計テーブルやマテリアライズドビュー。</li>
+<li>S3データレイクとデータウェアハウスを組み合わせた分析。</li>
+<li>別のRedshift利用者への管理されたデータ共有。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>プロビジョンドでは主に利用するノードの容量と稼働時間、Serverlessでは処理容量の利用量などが課金要因です。ストレージ、バックアップ、データ転送、Spectrumのスキャンなども確認します。アイドル時間が長いか、負荷が一定か変動するかを踏まえて方式を選びます。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:ロード元、UNLOAD先、Spectrumのデータレイク</li>
+<li><a href="glue.html">AWS Glue</a>:カタログとETL</li>
+<li><a href="lake-formation.html">AWS Lake Formation</a>:データレイクのアクセス制御</li>
+<li><a href="athena.html">Amazon Athena</a>:サーバーレスSQLでのデータレイク分析</li>
+<li><a href="quick.html">Amazon Quick</a>:Quick SightのBIダッシュボード</li>
+<li><a href="appflow.html">Amazon AppFlow</a>:SaaSデータの取り込み</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>大規模な分析用SQLデータウェアハウス → <strong class="em">Amazon Redshift</strong>。</li>
+<li>データをS3からロードする → <code>COPY</code>。クエリ結果をS3へ出力する → <code>UNLOAD</code>。</li>
+<li>S3のデータをロードせずに分析 → <strong>Redshift Spectrum</strong>。</li>
+<li>負荷変動が大きく容量管理を減らしたい → Serverless。一定負荷で容量を管理したい → プロビジョンドを比較する。</li>
+<li>他のデータウェアハウスへ読み取り用データを渡す → データ共有。データベース間の移送方法と区別する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>Redshiftは、SQLによる大規模分析向けのデータウェアハウス。</li>
+<li>COPY/UNLOAD、Spectrum、フェデレーテッドクエリ、データ共有で複数のデータソースと連携する。</li>
+<li>ノード容量・クエリ・ストレージなど、方式別の料金要因を比較する。</li>
+</ul>
+</section>

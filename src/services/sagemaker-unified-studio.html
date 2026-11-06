@@ -1,0 +1,85 @@
+<!-- title: Amazon SageMaker Unified Studio -->
+<!-- category: 分析 -->
+<!-- lead: データ・分析・AIの作業をプロジェクト単位でまとめる統合開発環境 -->
+<!-- verified: 2026-11-07 -->
+<section class="chapter">
+<h2>1. サービス概要</h2>
+<p><strong>Amazon SageMaker Unified Studio</strong>は、データ、分析、AI・機械学習の作業を共通の環境にまとめる開発体験です。管理者が設定するドメインの中で、チームはプロジェクトを作成し、データの発見・準備・分析・共有を行います。</p>
+</section>
+
+<section class="chapter">
+<h2>2. 主な機能・特徴</h2>
+<h3>ドメイン・ドメインユニット・プロジェクト</h3>
+<ul>
+<li><strong>ドメイン</strong>:組織のユーザー、認証、共有環境などをまとめる管理境界。</li>
+<li><strong>ドメインユニット</strong>:ドメイン内を部門やチームに分け、委任管理や設定の適用範囲を整理する単位。</li>
+<li><strong>プロジェクト</strong>:データ、メンバー、処理資源、アクセス権をユースケースごとにまとめる作業領域。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 150 80
+node domain 0 0.5 accent "ドメイン" "組織の境界"
+node unit1 1.6 0 blue "ドメインユニット" "分析部門"
+node unit2 1.6 1.5 blue "ドメインユニット" "データ部門"
+node p1 3.5 0 box "プロジェクト" "共有データ・処理"
+node p2 3.5 1.5 box "プロジェクト" "権限・資産"
+edge domain unit1
+edge domain unit2
+edge unit1 p1
+edge unit2 p2
+<figcaption>図1 SageMaker Unified Studioの構成。ドメイン内のドメインユニットで組織を分け、プロジェクト単位でメンバー・データ・作業を管理する。</figcaption>
+</figure>
+
+<h3>カタログとデータ準備</h3>
+<p>カタログを使ってデータ資産を発見し、アクセスを申請・共有できます。ビジネス向けカタログは、データの意味や所有者などの情報を利用者が理解しやすい形で示します。データ準備にはビジュアルな操作やノートブックなどを使い、データの来歴を追跡する機能と組み合わせます。</p>
+<p>データ準備機能にはAmazon SageMaker Data Wranglerがあります。現在のData Wrangler体験はSageMaker Canvasに統合されており、視覚的な変換やデータ品質の確認、フローの出力を行います。試験ガイドにある名称と、現行の提供形態を区別して押さえます。</p>
+<p>プロジェクトがデータを発見できることと、実データを読み取れることは別です。カタログ上の共有・承認と、Lake Formation、IAM、基盤サービス側の権限を確認します。</p>
+
+<h3>データリネージ</h3>
+<p><strong>データリネージ</strong>は、データがどのソースから取り込まれ、どの処理を経て、どの出力や利用者につながるかを追跡する考え方です。変更の影響調査、品質問題の原因特定、監査に役立ちます。</p>
+</section>
+
+<section class="chapter">
+<h2>3. ユースケース</h2>
+<ul>
+<li>部門ごとにプロジェクトとデータアクセスを分けた共同分析。</li>
+<li>カタログから必要なデータを発見し、所有者にアクセスを申請する。</li>
+<li>データの加工履歴や依存関係を追跡して、変更の影響を調べる。</li>
+<li>データ準備、SQL分析、AI開発を共通の作業環境から行う。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>4. 料金の考え方</h2>
+<p>Unified Studioの利用に加え、プロジェクトから利用する計算資源、ストレージ、データカタログ、分析・AIサービスなどに料金が発生します。ドメインやプロジェクトの数そのものだけでなく、実行した処理と保存データの料金を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2>5. 関連サービス</h2>
+<ul>
+<li><a href="glue.html">AWS Glue</a>:技術メタデータとETL</li>
+<li><a href="lake-formation.html">AWS Lake Formation</a>:データレイクの権限・共有</li>
+<li><a href="s3.html">Amazon S3</a>:データレイクの保存先</li>
+<li><a href="athena.html">Amazon Athena</a>:SQLでの探索・分析</li>
+<li><a href="macie.html">Amazon Macie</a>:個人情報を含む機密データの検出</li>
+<li>関連する用語:<a href="../terms/data-governance.html">データガバナンス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>6. 試験・実務でのポイント</h2>
+<div class="point"><ul>
+<li>組織の作業環境を構成する順序は、ドメイン → ドメインユニット → プロジェクト。</li>
+<li>プロジェクトは作業と共有の境界であり、基盤データの権限も別途必要。</li>
+<li>カタログはデータを見つける入口、Lake FormationやIAMは実データへのアクセス制御を担う。</li>
+<li>ソース・処理・出力のつながりを調査する → データリネージ。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2>7. まとめ</h2>
+<ul>
+<li>SageMaker Unified Studioは、データ・分析・AIの共同作業環境。</li>
+<li>ドメイン、ドメインユニット、プロジェクトで組織と作業を分ける。</li>
+<li>カタログでの発見・共有と、実データのアクセス権を区別する。</li>
+</ul>
+</section>
