@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon AppFlow | AWS教科書</title>
+<meta name="description" content="SaaSアプリケーションとAWSの間でデータを転送するマネージド連携サービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#E7157B">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat9">アプリケーション統合</a>
+  <h1>Amazon AppFlow</h1>
+  <p class="lead">SaaSアプリケーションとAWSの間でデータを転送するマネージド連携サービス</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  <p class="updated">内容の確認:2026年11月7日</p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon AppFlow</strong>は、SalesforceなどのSaaSアプリケーションとAmazon S3・Amazon Redshiftなどの間でデータを安全に転送するマネージドサービスです。コードを書かずにフローを定義し、手動・スケジュール・イベントを契機に実行できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">フローの設定<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>ソースと宛先、対象オブジェクト・項目、実行条件を指定する。</li>
+<li>フィールドの対応付け、フィルター、簡単な変換を設定する。</li>
+<li>一括転送だけでなく、変更されたレコードを定期的に同期する構成も選べる。</li>
+<li>S3への出力をパーティション分割し、Glue Data Catalogに登録して分析サービスから検索しやすくできる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 863 200" style="max-width:863px;min-width:690px" role="img" aria-label="図1 Amazon AppFlowによるSaaSデータの取り込み。転送先にS3やRedshiftを選び、必要に応じてカタログ化して分析する。"><defs><marker id="dgservices-appflow-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="saas">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">SaaS</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">Salesforceなど</text>
+</g>
+<g data-node="flow">
+<rect x="259" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="324" y="90" text-anchor="middle" class="dg-tb">AppFlow</text>
+<text x="324" y="108" text-anchor="middle" class="dg-s">項目変換・転送</text>
+</g>
+<g data-node="s3">
+<rect x="484" y="33" width="130" height="52" rx="8" class="dg-box"/>
+<text x="549" y="54" text-anchor="middle" class="dg-t">Amazon S3</text>
+<text x="549" y="72" text-anchor="middle" class="dg-s">データレイク</text>
+</g>
+<g data-node="rs">
+<rect x="484" y="124" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="549" y="146" text-anchor="middle" class="dg-t">Redshift</text>
+<text x="549" y="164" text-anchor="middle" class="dg-s">分析</text>
+</g>
+<g data-node="glue">
+<rect x="709" y="33" width="130" height="52" rx="8" class="dg-box"/>
+<text x="774" y="54" text-anchor="middle" class="dg-t">Glue Catalog</text>
+<text x="774" y="72" text-anchor="middle" class="dg-s">S3をカタログ化</text>
+</g>
+<path d="M164.0,94.0 L259.0,94.0" class="dg-line" marker-end="url(#dgservices-appflow-1)"/>
+<path d="M389.0,83.9 L484.0,69.1" class="dg-line" marker-end="url(#dgservices-appflow-1)"/>
+<path d="M389.0,110.2 L484.0,133.8" class="dg-line" marker-end="url(#dgservices-appflow-1)"/>
+<path d="M614.0,59.0 L709.0,59.0" class="dg-line" marker-end="url(#dgservices-appflow-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon AppFlowによるSaaSデータの取り込み。転送先にS3やRedshiftを選び、必要に応じてカタログ化して分析する。</figcaption>
+</figure>
+
+<h3 id="c2-2">セキュリティと監視<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>転送中と保存時のデータ暗号化に対応し、AWS PrivateLinkを使ってプライベートに転送できる接続先もあります。すべてのコネクターや転送先で同じ接続方式が使えるわけではないため、要件とコネクターの対応状況を確認します。API操作はCloudTrailで監査できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Salesforceの顧客・商談情報を定期的にS3へ集めて分析する。</li>
+<li>業務SaaSのレコードをRedshiftへ取り込み、BIレポートに使う。</li>
+<li>複数のSaaSアプリケーションからデータを集約し、データレイクを作る。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>フローの実行回数や処理したデータ量などに応じて料金が発生します。接続先SaaSのAPI利用制限や契約条件、S3・Redshiftの保存・処理料金も考慮します。頻繁な同期が必要か、定期的な一括取り込みでよいかを見極めます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="s3.html">Amazon S3</a>:転送データの保存とデータレイク</li>
+<li><a href="redshift.html">Amazon Redshift</a>:分析用データウェアハウス</li>
+<li><a href="glue.html">AWS Glue</a>:カタログ化と複雑なETL</li>
+<li><a href="cloudtrail.html">AWS CloudTrail</a>:フローの操作履歴の監査</li>
+<li><a href="vpc.html">Amazon VPC</a>:PrivateLinkを使う接続の基盤</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>SaaSアプリケーションからAWSへコードを書かずに転送 → <strong>Amazon AppFlow</strong>。</li>
+<li>複雑な変換・大規模な統合処理にはGlueなどを組み合わせる。</li>
+<li>スケジュール実行かイベント駆動かを、データの鮮度とSaaS側API制限に合わせて選ぶ。</li>
+<li>外部SaaSへの接続と、AWS内の転送先権限の両方を確認する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AppFlowはSaaSとAWSのデータ連携をフローとして設定する。</li>
+<li>S3やRedshiftを宛先にでき、スケジュール・イベントによる転送が可能。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 5件・リンク元 2件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon AppFlowとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,90 C265.0,90 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-engineer-exam-map.html"><title>用語:DEA-C01の学習範囲</title><rect x="0" y="79" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="94" class="gr-t">DEA-C01の学習範囲</text></a>
+<path class="gr-line" d="M230,120 C265.0,120 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-engineering-basics.html"><title>用語:データパイプラインの基礎</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="124" class="gr-t">データパイプラインの基礎</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/glue.html"><title>サービス:AWS Glue</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Glue</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/redshift.html"><title>サービス:Amazon Redshift</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon Redshift</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon VPC</text></a>
+<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">Amazon AppFlow</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(2)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="ses.html"><span class="label">← 前へ</span>Amazon Simple Email Service(SES)</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="mwaa.html"><span class="label">次へ →</span>Amazon MWAA</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

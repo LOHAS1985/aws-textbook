@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS SDK | AWS教科書</title>
+<meta name="description" content="アプリからAWSサービスを操作するための公式ライブラリ群">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#C925D1">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/sdk.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat11">フレームワーク</a>
+  <h1>AWS SDK</h1>
+  <p class="lead">アプリからAWSサービスを操作するための公式ライブラリ群</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS SDK(Software Development Kit)</strong>は、<strong>アプリケーションからAWSサービスを操作するための公式ライブラリ群</strong>です。REST APIを直接呼ぶ代わりに、SDKのメソッドを使います。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>プログラムからAWSを操作するには認証情報(IAMユーザーのアクセスキーなど)が必要。</li>
+</ul>
+<p>実務では、アクセスキーをコードに書くのではなく、EC2のインスタンスプロファイルやLambdaの実行ロールなど<strong>IAMロール</strong>の一時認証情報を使うのが推奨です。SDKは決められた優先順位で認証情報を自動的に探します(<a href="iam.html">AWS IAM</a>の「認証情報の優先順位」を参照)。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 252" style="max-width:684px;min-width:547px" role="img" aria-label="図1 SDKの役割。アプリはSDKのメソッドを呼ぶだけでよく、SDKが認証情報を探して署名付きのAPIリクエストを送る。"><defs><marker id="dgservices-sdk-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="code">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">アプリのコード</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">s3.put_object()</text>
+</g>
+<g data-node="sdk">
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">AWS SDK</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">Boto3 など</text>
+</g>
+<g data-node="cred">
+<rect x="272" y="176" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="198" text-anchor="middle" class="dg-t">認証情報</text>
+<text x="347" y="216" text-anchor="middle" class="dg-s">IAMロールなど</text>
+</g>
+<g data-node="api">
+<rect x="510" y="83" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="104" text-anchor="middle" class="dg-t">AWSのAPI</text>
+<text x="585" y="122" text-anchor="middle" class="dg-s">S3・DynamoDBなど</text>
+</g>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgservices-sdk-1)"/>
+<path d="M422.0,109.0 L510.0,109.0" class="dg-line" marker-end="url(#dgservices-sdk-1)"/>
+<text x="466" y="113" text-anchor="middle" class="dg-s dg-halo">HTTPS</text>
+<path d="M347.0,176.5 L347.0,135.0" class="dg-line dg-dash" marker-end="url(#dgservices-sdk-1)"/>
+</svg>
+</div>
+<figcaption>図1 SDKの役割。アプリはSDKのメソッドを呼ぶだけでよく、SDKが認証情報を探して署名付きのAPIリクエストを送る。</figcaption>
+</figure>
+<h3 id="c2-1">対応言語<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>Java:AWS SDK for Java</li>
+<li>JavaScript:AWS SDK for JavaScript</li>
+<li>Python:<strong>Boto3</strong>(Python用の公式SDK)</li>
+<li>.NET、Go(AWS SDK for Go)、Ruby、PHPなど</li>
+</ul>
+
+<h3 id="c2-2">メソッドの例(Python)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<pre class="code"><code># S3:オブジェクトのアップロード
+s3.put_object(Bucket="my-bucket", Key="sample.txt", Body="hello")
+
+# DynamoDB:アイテムの登録
+table.put_item(Item={"userId": "u001", "name": "Taro"})</code></pre>
+
+<h3 id="c2-3">クライアントの初期化<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>AWSサービスへアクセスするためのオブジェクトを生成・設定します。Lambdaでは<strong>ハンドラーの外で初期化</strong>すると、実行環境が再利用されたときに毎回初期化しなくて済みます。</p>
+<pre class="code"><code>import boto3
+
+# ハンドラー外で初期化
+s3 = boto3.client('s3')
+
+def lambda_handler(event, context):
+    response = s3.list_buckets()
+    return response</code></pre>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>アプリからS3へのファイルアップロード、DynamoDBへの読み書き</li>
+<li>Lambda関数内から他のAWSサービスを呼び出す</li>
+<li>運用スクリプトでのリソース操作の自動化</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>SDK自体は無料です。SDKから呼び出したAWSサービスの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="iam.html">AWS IAM</a>:認証情報と優先順位</li>
+<li><a href="lambda.html">AWS Lambda</a>:ハンドラー外での初期化</li>
+<li><a href="s3.html">Amazon S3</a>/<a href="dynamodb.html">Amazon DynamoDB</a>:よく操作されるサービス</li>
+<li><a href="xray.html">AWS X-Ray</a>:SDKの呼び出しのトレース</li>
+<li>関連する用語:<a href="../terms/throttling-retry.html">スロットリングとリトライ</a>、<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>、<a href="../terms/access-methods.html">AWSの操作方法</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>PythonのSDK → <strong>Boto3</strong>。</li>
+<li>Lambdaでは、SDKクライアントやDB接続を<strong>ハンドラーの外</strong>で初期化して再利用する。</li>
+<li>認証情報はコードに書かず、<strong>IAMロール</strong>を使う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS SDKは各言語向けのAWS操作ライブラリ。Lambdaではクライアントをハンドラー外で初期化する。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 8件・リンク元 2件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="AWS SDKとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudshell.html"><title>サービス:AWS CloudShell</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS CloudShell</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/database-encryption-sdk.html"><title>サービス:AWS Database Encryption SDK</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="170" class="gr-t">AWS Database Encryption S…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/xray.html"><title>サービス:AWS X-Ray</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS X-Ray</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/dynamodb.html"><title>サービス:Amazon DynamoDB</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon DynamoDB</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/access-methods.html"><title>用語:AWSの操作方法(コンソール・CLI・SDK・API)</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">AWSの操作方法(コンソール・CL…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/throttling-retry.html"><title>用語:スロットリングとリトライ</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">スロットリングとリトライ</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">AWS SDK</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(2)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="sam.html"><span class="label">← 前へ</span>AWS SAM</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="database-encryption-sdk.html"><span class="label">次へ →</span>AWS Database Encryption SDK</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

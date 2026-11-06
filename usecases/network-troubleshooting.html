@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC2に接続できない原因を調査する | AWS教科書</title>
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワーク・コンテンツ配信</a>
+  <h1>EC2に接続できない原因を調査する</h1>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>インターネットからEC2のWebサーバーにアクセスできない。</li>
+<li>どこで通信が止まっているかを、<strong>記録と解析で</strong>特定したい。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 210" style="max-width:684px;min-width:547px" role="img" aria-label="図1 通信の経路と調査の構成。"><defs><marker id="dgusecases-network-troubleshooting-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="u">
+<rect x="34" y="44" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="68" text-anchor="middle" class="dg-t">利用者</text>
+</g>
+<g data-node="igw">
+<rect x="272" y="38" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="347" y="60" text-anchor="middle" class="dg-t">①</text>
+<text x="347" y="78" text-anchor="middle" class="dg-s">VPCの出入り口</text>
+</g>
+<g data-node="ec2">
+<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="60" text-anchor="middle" class="dg-t">EC2</text>
+<text x="585" y="78" text-anchor="middle" class="dg-s">Webサーバー</text>
+</g>
+<g data-node="fl">
+<rect x="510" y="134" width="150" height="52" rx="8" class="dg-blank"/>
+<text x="585" y="156" text-anchor="middle" class="dg-t">②</text>
+<text x="585" y="174" text-anchor="middle" class="dg-s">通信を記録</text>
+</g>
+<g data-node="li">
+<rect x="272" y="134" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="347" y="156" text-anchor="middle" class="dg-t">Logs Insights</text>
+<text x="347" y="174" text-anchor="middle" class="dg-s">REJECTを検索</text>
+</g>
+<path d="M184.0,64.0 L272.0,64.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M422.0,64.0 L510.0,64.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M585.0,90.0 L585.0,134.0" class="dg-line dg-dash" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+<path d="M510.0,160.0 L422.0,160.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-1)"/>
+</svg>
+</div>
+<figcaption>図1 通信の経路と調査の構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="igw">
+<p class="ex-q">① インターネットとVPCの間の出入り口は?</p>
+<ul class="ex-choices">
+<li data-ok data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">VPCにアタッチし、サブネットのルートテーブルに <code>0.0.0.0/0</code> への経路を作ります。EC2にはパブリックIPも必要です。</span></li>
+<li data-short="NATゲートウェイ">NATゲートウェイ<span class="ex-why">内から外への通信のためのもので、外から内へのアクセスは受け付けません(<a href="../terms/inbound-traffic.html">インバウンド通信</a>)。</span></li>
+<li data-short="VPCエンドポイント">VPCエンドポイント<span class="ex-why">AWSのサービスへのプライベートな経路で、インターネットの出入り口ではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item" data-node="fl">
+<p class="ex-q">② 通信が許可・拒否されたかを記録するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="VPCフローログ">VPCフローログ<span class="ex-why">ENIごとの通信を ACCEPT・REJECT とともに記録します(<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>)。</span></li>
+<li data-short="CloudTrail">AWS CloudTrail<span class="ex-why">APIの操作の記録で、パケットの通信は記録しません。設定を変えた人を調べるのには使えます。</span></li>
+<li data-short="X-Ray">AWS X-Ray<span class="ex-why">アプリの処理の流れを追うもので、ネットワークの拒否は記録しません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ 受信はACCEPTなのに、戻りの通信がREJECTのときの原因は?</p>
+<ul class="ex-choices">
+<li data-ok>ネットワークACLのアウトバウンドでエフェメラルポートを許可していない<span class="ex-why">ネットワークACLはステートレスなので、戻りの通信(1024〜65535)も許可が必要です(<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>)。</span></li>
+<li>セキュリティグループのアウトバウンドが空<span class="ex-why">セキュリティグループはステートフルで、戻りの通信は自動で許可されます。</span></li>
+<li>ルートテーブルが拒否している<span class="ex-why">ルートテーブルは経路を決めるだけで、許可・拒否はしません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">④ 実際に通信せずに、設定上の経路を自動で解析するものは?</p>
+<ul class="ex-choices">
+<li data-ok>VPC Reachability Analyzer<span class="ex-why">送信元と宛先を指定すると、どの設定で止まるかを解析して示します。</span></li>
+<li>VPCフローログ<span class="ex-why">実際に流れた通信の記録で、設定の解析はしません。</span></li>
+<li>Trusted Advisor<span class="ex-why">ベストプラクティスのチェックで、2点間の経路は解析しません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>ルートテーブル → <strong>インターネットゲートウェイ</strong> → セキュリティグループ → ネットワークACL → パブリックIPの順に確認し、<strong>VPCフローログ</strong>のREJECTをLogs Insightsで検索して止まっている場所を絞り込みます。設定上の経路は<strong>Reachability Analyzer</strong>で自動で解析できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 818 227" style="max-width:818px;min-width:654px" role="img" aria-label="図2 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。"><defs><marker id="dgusecases-network-troubleshooting-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="rt">
+<rect x="34" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="102" y="62" text-anchor="middle" class="dg-t">① ルートテーブル</text>
+<text x="102" y="80" text-anchor="middle" class="dg-s">経路はあるか</text>
+</g>
+<g data-node="igw">
+<rect x="190" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="258" y="62" text-anchor="middle" class="dg-t">② IGW / NAT</text>
+<text x="258" y="80" text-anchor="middle" class="dg-s">アタッチ状態</text>
+</g>
+<g data-node="sg">
+<rect x="346" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="414" y="62" text-anchor="middle" class="dg-t">③ SG</text>
+<text x="414" y="80" text-anchor="middle" class="dg-s">許可されているか</text>
+</g>
+<g data-node="nacl">
+<rect x="502" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="570" y="62" text-anchor="middle" class="dg-t">④ NACL</text>
+<text x="570" y="80" text-anchor="middle" class="dg-s">戻りも許可?</text>
+</g>
+<g data-node="ip">
+<rect x="658" y="40" width="136" height="52" rx="8" class="dg-box"/>
+<text x="726" y="62" text-anchor="middle" class="dg-t">⑤ パブリックIP</text>
+<text x="726" y="80" text-anchor="middle" class="dg-s">割り当てはあるか</text>
+</g>
+<g data-node="fl">
+<rect x="190" y="151" width="136" height="52" rx="8" class="dg-accent"/>
+<text x="258" y="172" text-anchor="middle" class="dg-tb">VPCフローログ</text>
+<text x="258" y="190" text-anchor="middle" class="dg-s">ACCEPT / REJECT</text>
+</g>
+<g data-node="li">
+<rect x="424" y="151" width="136" height="52" rx="8" class="dg-ok"/>
+<text x="492" y="172" text-anchor="middle" class="dg-t">Logs Insights</text>
+<text x="492" y="190" text-anchor="middle" class="dg-s">REJECTを検索</text>
+</g>
+<path d="M170.0,66.5 L190.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
+<path d="M326.0,66.5 L346.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
+<path d="M482.0,66.5 L502.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
+<path d="M638.0,66.5 L658.0,66.5" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
+<path d="M326.0,177.0 L424.0,177.0" class="dg-line" marker-end="url(#dgusecases-network-troubleshooting-2)"/>
+</svg>
+</div>
+<figcaption>図2 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:ルートテーブル、IGW、セキュリティグループ、ネットワークACL、<a href="../terms/vpc-flow-logs.html">VPCフローログ</a></li>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:フローログの保存とLogs Insightsでの検索</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:ステータスチェック、パブリックIPの確認</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:最近SGやルートテーブルを変更した人を調べる</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 構築の流れ(調査手順)<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ol>
+<li><strong>ルートテーブル</strong>:サブネットに <code>0.0.0.0/0 → IGW</code> の経路があるか(<a href="../terms/route-table.html">ルートテーブル</a>)</li>
+<li><strong>IGW/NAT</strong>:IGWがVPCにアタッチされているか、NATゲートウェイが正常か</li>
+<li><strong>セキュリティグループ</strong>:80/443番のインバウンドが許可されているか</li>
+<li><strong>ネットワークACL</strong>:インバウンドに加えて、戻りのアウトバウンド(エフェメラルポート)も許可されているか</li>
+<li><strong>パブリックIP</strong>:EC2にパブリックIPまたはElastic IPが割り当てられているか</li>
+<li>VPCフローログを有効にし、Logs Insightsで <code>REJECT</code> の記録を確認する</li>
+</ol>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>SGは<strong>ステートフル</strong>で戻りの通信は自動で許可。NACLは<strong>ステートレス</strong>で戻りの通信も許可が必要(<a href="../terms/nacl-security-group.html">NACLとSG</a>)。</li>
+<li>ルートテーブルは経路を決めるだけで、許可・拒否はしない。</li>
+<li>フローログで、インバウンドがACCEPTなのにアウトバウンドがREJECTなら、NACLのアウトバウンド(戻り)ルールが原因であることが多い。</li>
+<li>設定上の経路を自動で解析するには、VPC Reachability Analyzerも使える。</li>
+</ul></div>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 7件・リンク元 1件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 246" style="max-width:784px;min-width:600px" role="img" aria-label="EC2に接続できない原因を調査するとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../terms/monitoring-logging-comparison.html"><title>用語:監視・記録のサービスの選び方</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">監視・記録のサービスの選び方</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-flow-logs.html"><title>用語:VPCフローログ</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">VPCフローログ</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/nacl-security-group.html"><title>用語:ネットワークACLとセキュリティグループ</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">ネットワークACLとセキュリティ…</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/route-table.html"><title>用語:ルートテーブル</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">ルートテーブル</text></a>
+<rect x="300" y="115" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="140" text-anchor="middle" class="gr-tb">EC2に接続できない原…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="static-site-cloudfront.html"><span class="label">← 前へ</span>静的サイトを独自ドメイン・HTTPSで安全に配信する</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <span class="next empty"></span>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 170.0, "rowh": 80.0, "nodes": [{"id": "u", "label": "利用者", "sub": "", "x": 0.0, "y": 0.0}, {"id": "igw", "label": "インターネットGW", "sub": "", "x": 1.4, "y": 0.0}, {"id": "ec2", "label": "EC2", "sub": "Webサーバー", "x": 2.8, "y": 0.0}, {"id": "fl", "label": "VPCフローログ", "sub": "", "x": 2.8, "y": 1.2}, {"id": "li", "label": "Logs Insights", "sub": "REJECTを検索", "x": 1.4, "y": 1.2}], "edges": [["u", "igw", false, false], ["igw", "ec2", false, false], ["ec2", "fl", true, false], ["fl", "li", false, false]], "distractors": ["CloudTrail", "NATゲートウェイ", "VPCエンドポイント", "X-Ray"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ベクトル検索 | AWS教科書</title>
+<meta name="description" content="意味的な類似度を基に関連データを探す検索方式">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat6">サービスの選び方</a>
+  <h1>ベクトル検索</h1>
+  <p class="lead">意味的な類似度を基に関連データを探す検索方式</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>埋め込み(embedding)</strong>は、文章や画像などの特徴を数値の配列(ベクトル)で表現したものです。<strong>ベクトル検索</strong>は、検索語のベクトルと近いベクトルを探し、文字列が完全一致しなくても意味の近いデータを取得します。</p>
+<h3 id="c1-1">ベクトルインデックス<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>HNSW</strong>:階層的な近傍グラフを作り、高速な近似近傍検索を行う。検索速度・再現率・メモリ使用量の調整が必要。</li>
+<li><strong>IVF</strong>:ベクトルを複数のクラスタに分け、候補クラスタを絞って検索する。クラスタ数や探索範囲が検索精度・速度に影響する。</li>
+</ul>
+<p>近似検索は全件を厳密比較する方法より高速になりやすい一方、最も近い結果が必ず含まれるとは限りません。検索精度、応答時間、メモリ、更新頻度、フィルター条件を評価して選びます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1109 232" style="max-width:1109px;min-width:887px" role="img" aria-label="図1 ベクトル検索の流れ。元データと検索語をベクトル化し、近傍インデックスから意味的に近いデータを探す。"><defs><marker id="dgterms-vector-search-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="data">
+<rect x="34" y="73" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="94" text-anchor="middle" class="dg-t">文書・画像</text>
+<text x="109" y="112" text-anchor="middle" class="dg-s">元データ</text>
+</g>
+<g data-node="embed">
+<rect x="323" y="73" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="398" y="94" text-anchor="middle" class="dg-tb">埋め込みモデル</text>
+<text x="398" y="112" text-anchor="middle" class="dg-s">ベクトル化</text>
+</g>
+<g data-node="index">
+<rect x="629" y="73" width="150" height="52" rx="8" class="dg-box"/>
+<text x="704" y="94" text-anchor="middle" class="dg-t">Vector Index</text>
+<text x="704" y="112" text-anchor="middle" class="dg-s">HNSW・IVF</text>
+</g>
+<g data-node="query">
+<rect x="323" y="156" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="398" y="177" text-anchor="middle" class="dg-t">検索語</text>
+<text x="398" y="195" text-anchor="middle" class="dg-s">同じモデルで変換</text>
+</g>
+<g data-node="result">
+<rect x="935" y="73" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1010" y="94" text-anchor="middle" class="dg-t">類似データ</text>
+<text x="1010" y="112" text-anchor="middle" class="dg-s">関連順に返す</text>
+</g>
+<path d="M184.0,99.0 L323.0,99.0" class="dg-line" marker-end="url(#dgterms-vector-search-1)"/>
+<path d="M473.0,99.0 L629.0,99.0" class="dg-line" marker-end="url(#dgterms-vector-search-1)"/>
+<path d="M473.0,161.3 L629.0,119.2" class="dg-line" marker-end="url(#dgterms-vector-search-1)"/>
+<path d="M779.0,99.0 L935.0,99.0" class="dg-line" marker-end="url(#dgterms-vector-search-1)"/>
+</svg>
+</div>
+<figcaption>図1 ベクトル検索の流れ。元データと検索語をベクトル化し、近傍インデックスから意味的に近いデータを探す。</figcaption>
+</figure>
+
+<h3 id="c1-2">検索拡張生成との関係<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>検索拡張生成(RAG)では、文書を分割して埋め込みを作り、質問に近い断片を検索して生成モデルへ渡します。Bedrock Knowledge Basesなどのマネージド機能が、取り込み・ベクトル化・検索の一部を支援します。生成モデルの出力と、検索インデックスの品質は別々に評価します。</p>
+<p>「ベクトル化」は文書をベクトル表現に変換することです。CPUのSIMD演算などを指す「ベクトル化処理」とは意味が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="data-store-selection.html">データストアの選び方</a>:検索パターンに合った保存先</li>
+<li><a href="open-table-formats.html">オープンテーブル形式</a>:ベクトルの元となる文書データの管理</li>
+<li><a href="data-governance.html">データガバナンス</a>:検索対象の権限とプライバシー</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/bedrock.html">Amazon Bedrock</a>:Knowledge BasesなどRAG構成</li>
+<li><a href="../services/opensearch.html">Amazon OpenSearch Service</a>:ベクトル検索と全文検索</li>
+<li><a href="../services/aurora.html">Amazon Aurora</a>:pgvectorによるベクトル検索</li>
+<li><a href="../services/memorydb.html">Amazon MemoryDB</a>:低遅延なベクトル検索の選択肢</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/kendra.html"><span class="title">Amazon Kendra</span><span class="kind">サービス</span><span class="desc">企業内の文書を自然言語や意味的な関連性で検索するサービス</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 7件・リンク元 2件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 246" style="max-width:784px;min-width:600px" role="img" aria-label="ベクトル検索とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,120 C265.0,120 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/kendra.html"><title>サービス:Amazon Kendra</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="124" class="gr-t">Amazon Kendra</text></a>
+<path class="gr-line" d="M230,150 C265.0,150 265.0,135 300,135" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-engineer-exam-map.html"><title>用語:DEA-C01の学習範囲</title><rect x="0" y="139" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="154" class="gr-t">DEA-C01の学習範囲</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/aurora.html"><title>サービス:Amazon Aurora</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">Amazon Aurora</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/bedrock.html"><title>サービス:Amazon Bedrock</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">Amazon Bedrock</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/memorydb.html"><title>サービス:Amazon MemoryDB</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon MemoryDB</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/opensearch.html"><title>サービス:Amazon OpenSearch Service</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon OpenSearch Service</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/open-table-formats.html"><title>用語:オープンテーブル形式</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">オープンテーブル形式</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/data-governance.html"><title>用語:データガバナンス</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">データガバナンス</text></a>
+<path class="gr-line" d="M480,135 C515.0,135 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/data-store-selection.html"><title>用語:データストアの選び方</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">データストアの選び方</text></a>
+<rect x="300" y="115" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="140" text-anchor="middle" class="gr-tb">ベクトル検索</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(2)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="open-table-formats.html"><span class="label">← 前へ</span>オープンテーブル形式</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="data-governance.html"><span class="label">次へ →</span>データガバナンス</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

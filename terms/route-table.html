@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルートテーブル | AWS教科書</title>
+<meta name="description" content="宛先ごとに通信の転送先を決めるルール表">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">ネットワーク</a>
+  <h1>ルートテーブル</h1>
+  <p class="lead">宛先ごとに通信の転送先を決めるルール表</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
+  </div>
+</div>
+<nav class="page-toc" aria-label="ページ内目次">
+<details>
+<summary>このページの内容(10項目)</summary>
+<ol>
+<li><a href="#c1">1. 詳しい説明</a><ul><li><a href="#c1-1">基本構造</a></li><li><a href="#c1-2">Destination(宛先)</a></li><li><a href="#c1-3">Target(ターゲット)</a></li><li><a href="#c1-4">ルートの選び方(ロンゲストマッチ)</a></li><li><a href="#c1-5">デフォルトルート</a></li><li><a href="#c1-6">セキュリティグループ・NACLとの違い</a></li></ul></li>
+<li><a href="#c2">2. 関連する用語</a></li>
+<li><a href="#c3">3. 関連サービス</a></li>
+<li><a href="#c4">この用語が出てくるページ</a></li>
+</ol>
+</details>
+</nav>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>ルートテーブル(Route Table)</strong>は、<strong>通信をどこへ転送するかを決めるルール表</strong>です。AWSでは主にVPC内のサブネットに関連付けて使います。「この宛先IPアドレスなら、このターゲットへ送る」という対応表だと考えると分かりやすいです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 703 262" style="max-width:703px;min-width:562px" role="img" aria-label="図1 ルートテーブルの働き。宛先IPアドレスに一致するルートのうち、最も具体的なもの(ロンゲストマッチ)を選び、そのターゲットへ通信を送る。0.0.0.0/0 は、ほかのどれにも当てはまらない宛先を受け止めるデフォルトルート。"><defs><marker id="dgterms-route-table-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ec2">
+<rect x="34" y="116" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="112" y="140" text-anchor="middle" class="dg-t">サブネット内のEC2</text>
+</g>
+<g data-node="rt">
+<rect x="279" y="110" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="356" y="132" text-anchor="middle" class="dg-tb">ルートテーブル</text>
+<text x="356" y="150" text-anchor="middle" class="dg-s">ロンゲストマッチ</text>
+</g>
+<g data-node="l">
+<rect x="524" y="36" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="57" text-anchor="middle" class="dg-t">Local</text>
+<text x="602" y="75" text-anchor="middle" class="dg-s">10.0.0.0/16</text>
+</g>
+<g data-node="pcx">
+<rect x="524" y="110" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="132" text-anchor="middle" class="dg-t">VPC Peering</text>
+<text x="602" y="150" text-anchor="middle" class="dg-s">172.16.0.0/16</text>
+</g>
+<g data-node="igw">
+<rect x="524" y="186" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="207" text-anchor="middle" class="dg-t">Internet Gateway</text>
+<text x="602" y="225" text-anchor="middle" class="dg-s">0.0.0.0/0</text>
+</g>
+<path d="M189.0,136.5 L279.0,136.5" class="dg-line" marker-end="url(#dgterms-route-table-1)"/>
+<path d="M434.0,112.8 L524.0,85.2" class="dg-line" marker-end="url(#dgterms-route-table-1)"/>
+<path d="M434.0,136.5 L524.0,136.5" class="dg-line" marker-end="url(#dgterms-route-table-1)"/>
+<path d="M434.0,160.2 L524.0,187.8" class="dg-line" marker-end="url(#dgterms-route-table-1)"/>
+</svg>
+</div>
+<figcaption>図1 ルートテーブルの働き。宛先IPアドレスに一致するルートのうち、最も具体的なもの(ロンゲストマッチ)を選び、そのターゲットへ通信を送る。0.0.0.0/0 は、ほかのどれにも当てはまらない宛先を受け止めるデフォルトルート。</figcaption>
+</figure>
+
+<h3 id="c1-1">基本構造<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>意味</th></tr>
+<tr><td>Destination(宛先)</td><td>通信の宛先となるIPアドレス範囲(CIDR)</td></tr>
+<tr><td>Target(ターゲット)</td><td>その宛先へ通信を転送する先</td></tr>
+</table></div>
+<div class="table-wrap"><table>
+<tr><th>Destination</th><th>Target</th><th>意味</th></tr>
+<tr><td><code>10.0.0.0/16</code></td><td>Local</td><td>VPC内の <code>10.0.0.0/16</code> 宛てはVPC内で通信</td></tr>
+<tr><td><code>172.16.0.0/16</code></td><td>VPC Peering</td><td><code>172.16.0.0/16</code> 宛てはVPCピアリング経由</td></tr>
+<tr><td><code>0.0.0.0/0</code></td><td>Internet Gateway</td><td>上記以外の宛先はインターネットゲートウェイ経由</td></tr>
+</table></div>
+
+<h3 id="c1-2">Destination(宛先)<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>どのIPアドレス範囲への通信かをCIDR形式で指定します。例えば <code>172.16.0.0/16</code> なら <code>172.16.0.0</code>〜<code>172.16.255.255</code> が対象です。宛先がプライベートかグローバルかに関係なく、CIDRで範囲を指定します。</p>
+<div class="table-wrap"><table>
+<tr><th>CIDR</th><th>意味</th></tr>
+<tr><td><code>10.0.0.0/8</code></td><td>プライベートIPv4アドレス範囲</td></tr>
+<tr><td><code>172.16.0.0/12</code></td><td>プライベートIPv4アドレス範囲</td></tr>
+<tr><td><code>192.168.0.0/16</code></td><td>プライベートIPv4アドレス範囲</td></tr>
+<tr><td><code>0.0.0.0/0</code></td><td>すべてのIPv4アドレス</td></tr>
+</table></div>
+
+<h3 id="c1-3">Target(ターゲット)<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>Local</strong>:同じVPC内</li>
+<li><strong>Internet Gateway</strong>:インターネットとの通信</li>
+<li><strong>NAT Gateway</strong>:プライベートサブネットからインターネットへの通信</li>
+<li><strong>VPC Peering</strong>:別のVPCとの通信</li>
+<li><strong>Transit Gateway</strong>:複数のVPC・オンプレミスなどを接続</li>
+<li><strong>Virtual Private Gateway</strong>:VPN経由の通信</li>
+</ul>
+
+<h3 id="c1-4">ルートの選び方(ロンゲストマッチ)<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>複数のルートに当てはまる場合、AWSは<strong>宛先IPに最も具体的に一致するルート(Longest Prefix Match)</strong>を選びます。</p>
+<pre class="code"><code>10.0.0.0/16 → Local
+10.0.1.0/24 → 別のターゲット</code></pre>
+<p><code>10.0.1.50</code> 宛ての通信はどちらにも含まれますが、<code>/24</code> のほうが <code>/16</code> より具体的なので、<code>10.0.1.0/24</code> のルートが選ばれます。</p>
+
+<h3 id="c1-5">デフォルトルート<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
+<p><code>0.0.0.0/0</code> は<strong>すべてのIPv4アドレスに一致する</strong>ルートです。<code>0.0.0.0/0 → Internet Gateway</code> とすると、より具体的なルートがない宛先への通信はインターネットゲートウェイへ送られます。</p>
+<div class="point"><p>ただし、<strong>インターネットゲートウェイへのルートがあるだけで、EC2がインターネットと通信できるとは限りません</strong>。EC2のパブリックIP、セキュリティグループ、ネットワークACLなども関係します。</p></div>
+
+<h3 id="c1-6">セキュリティグループ・NACLとの違い<a class="anchor" href="#c1-6" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 788 116" style="max-width:788px;min-width:630px" role="img" aria-label="図2 ルートテーブルは「どこへ送るか(経路)」を決めるもので、ファイアウォールではない。通信を許可するかどうかは、その経路上のNACLとセキュリティグループが判断する。"><defs><marker id="dgterms-route-table-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="net">
+<rect x="34" y="46" width="130" height="40" rx="8" class="dg-blue"/>
+<text x="99" y="70" text-anchor="middle" class="dg-t">インターネット</text>
+</g>
+<g data-node="rt">
+<rect x="184" y="40" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="249" y="62" text-anchor="middle" class="dg-tb">ルートテーブル</text>
+<text x="249" y="80" text-anchor="middle" class="dg-s">どこへ送るか</text>
+</g>
+<g data-node="nacl">
+<rect x="334" y="40" width="130" height="52" rx="8" class="dg-box"/>
+<text x="399" y="62" text-anchor="middle" class="dg-t">NACL</text>
+<text x="399" y="80" text-anchor="middle" class="dg-s">許可 / 拒否</text>
+</g>
+<g data-node="sg">
+<rect x="484" y="40" width="130" height="52" rx="8" class="dg-box"/>
+<text x="549" y="62" text-anchor="middle" class="dg-t">SG</text>
+<text x="549" y="80" text-anchor="middle" class="dg-s">許可 / 拒否</text>
+</g>
+<g data-node="ec2">
+<rect x="634" y="46" width="130" height="40" rx="8" class="dg-ok"/>
+<text x="699" y="70" text-anchor="middle" class="dg-t">EC2</text>
+</g>
+<path d="M164.0,66.5 L184.0,66.5" class="dg-line" marker-end="url(#dgterms-route-table-2)"/>
+<path d="M314.0,66.5 L334.0,66.5" class="dg-line" marker-end="url(#dgterms-route-table-2)"/>
+<path d="M464.0,66.5 L484.0,66.5" class="dg-line" marker-end="url(#dgterms-route-table-2)"/>
+<path d="M614.0,66.5 L634.0,66.5" class="dg-line" marker-end="url(#dgterms-route-table-2)"/>
+</svg>
+</div>
+<figcaption>図2 ルートテーブルは「どこへ送るか(経路)」を決めるもので、ファイアウォールではない。通信を許可するかどうかは、その経路上のNACLとセキュリティグループが判断する。</figcaption>
+</figure>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>役割</th><th>判断するもの</th></tr>
+<tr><td>ルートテーブル</td><td>通信をどこへ送るか決める</td><td><strong>経路</strong></td></tr>
+<tr><td>セキュリティグループ</td><td>通信を許可するか決める</td><td><strong>許可</strong></td></tr>
+<tr><td>ネットワークACL</td><td>サブネットへの通信を許可/拒否する</td><td><strong>許可/拒否</strong></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="vpc-flow-logs.html">VPCフローログ</a>:経路やSG・NACLのトラブル調査に使う通信の記録</li>
+<li><a href="nacl-security-group.html">ネットワークACLとセキュリティグループ</a>:通信の許可・拒否を判断する仕組み</li>
+<li><a href="outbound-traffic.html">アウトバウンド通信</a>/<a href="inbound-traffic.html">インバウンド通信</a>:ルートテーブルのターゲットごとの通信パターン</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/vpc.html">Amazon VPC</a>:ルートテーブルを関連付けるサブネット・ゲートウェイ</li>
+<li><a href="../services/transit-gateway.html">AWS Transit Gateway</a>:VPC・オンプレミスへの経路のターゲット</li>
+<li><a href="../services/ram.html">AWS Resource Access Manager</a>:Transit Gatewayの共有</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/vpc.html"><span class="title">Amazon VPC</span><span class="kind">サービス</span><span class="desc">AWS上に論理的に分離された仮想ネットワークを作るサービス</span></a></li>
+<li><a href="../services/network-firewall.html"><span class="title">AWS Network Firewall</span><span class="kind">サービス</span><span class="desc">VPCに出入りする通信を検査・フィルタリングするマネージド型のネットワークファイアウォール</span></a></li>
+<li><a href="../usecases/network-troubleshooting.html"><span class="title">EC2に接続できない原因を調査する</span><span class="kind">運用シナリオ</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 7件・リンク元 8件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="ルートテーブルとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/network-firewall.html"><title>サービス:AWS Network Firewall</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Network Firewall</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cidr.html"><title>用語:CIDR</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="80" class="gr-t">CIDR</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-endpoint.html"><title>用語:VPCエンドポイント</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">VPCエンドポイント</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-peering.html"><title>用語:VPCピアリング</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">VPCピアリング</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-connectivity.html"><title>用語:VPC同士をつなぐ方法の選び方</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">VPC同士をつなぐ方法の選び方</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/hybrid-connectivity.html"><title>用語:オンプレミスとAWSをつなぐ方法の選び方</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">オンプレミスとAWSをつなぐ方法…</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/default-vpc.html"><title>用語:デフォルトVPC</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">デフォルトVPC</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/network-troubleshooting.html"><title>運用シナリオ:EC2に接続できない原因を調査する</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">EC2に接続できない原因を調査する</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,60 550,60" marker-end="url(#gr-arrow)"/>
+<a href="../services/ram.html"><title>サービス:AWS Resource Access Manager</title><rect x="550" y="49" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="64" class="gr-t">AWS Resource Access Manag…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,90 550,90" marker-end="url(#gr-arrow)"/>
+<a href="../services/transit-gateway.html"><title>サービス:AWS Transit Gateway</title><rect x="550" y="79" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="94" class="gr-t">AWS Transit Gateway</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,120 550,120" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="109" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="124" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,150 550,150" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/vpc-flow-logs.html"><title>用語:VPCフローログ</title><rect x="550" y="139" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="154" class="gr-t">VPCフローログ</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,180 550,180" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/outbound-traffic.html"><title>用語:アウトバウンド通信</title><rect x="550" y="169" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="184" class="gr-t">アウトバウンド通信</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,210 550,210" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/inbound-traffic.html"><title>用語:インバウンド通信</title><rect x="550" y="199" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="214" class="gr-t">インバウンド通信</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,240 550,240" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/nacl-security-group.html"><title>用語:ネットワークACLとセキュリティグループ</title><rect x="550" y="229" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="244" class="gr-t">ネットワークACLとセキュリティ…</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">ルートテーブル</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(8)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="cidr.html"><span class="label">← 前へ</span>CIDR</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="nacl-security-group.html"><span class="label">次へ →</span>ネットワークACLとセキュリティグループ</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

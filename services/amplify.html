@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Amplify | AWS教科書</title>
+<meta name="description" content="フロントエンド開発者がAWSのバックエンドを簡単に使えるサービス群">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#C925D1">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/amplify.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat10">デベロッパーツール</a>
+  <h1>AWS Amplify</h1>
+  <p class="lead">フロントエンド開発者がAWSのバックエンドを簡単に使えるサービス群</p>
+  <p class="updated">最終更新:<time datetime="2026-11-03">2026-11-03</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Amplify</strong>は、<strong>フロントエンド開発者がAWSのバックエンドを簡単に利用</strong>できるようにするサービス群です。サーバーの管理をどこまでAWSに任せるかの考え方は用語ページ「<a href="../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>」を参照してください。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><strong>Amplify Hosting</strong>:静的Webサイトのホスティング。<strong>Git連携によるCI/CD</strong>を実現する。</li>
+<li><strong>Authentication</strong>:認証機能を簡単に追加できる(内部では<strong>Cognito</strong>を使用)。</li>
+</ul>
+<p>ほかにも、API(AppSync/API Gateway)、データ保存(DynamoDB)、ファイルストレージ(S3)などのバックエンドを、Amplifyのライブラリやコマンドから簡単に追加できます。React・Vue・Next.jsなどのフレームワークや、iOS/Androidアプリに対応しています。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 218" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Amplifyの主な機能。Hostingはプッシュをきっかけに自動でビルド・配信する(CI/CD)。Authenticationは内部でCognitoを使い、アプリにサインイン機能を簡単に追加する。"><defs><marker id="dgservices-amplify-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="git">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">Gitリポジトリ</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">プッシュ</text>
+</g>
+<g data-node="host">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">Amplify Hosting</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">ビルド・配信</text>
+</g>
+<g data-node="site">
+<rect x="510" y="46" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="585" y="70" text-anchor="middle" class="dg-t">Webサイト</text>
+</g>
+<g data-node="app">
+<rect x="34" y="142" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="164" text-anchor="middle" class="dg-t">フロントエンド</text>
+<text x="109" y="182" text-anchor="middle" class="dg-s">Amplifyライブラリ</text>
+</g>
+<g data-node="auth">
+<rect x="272" y="142" width="150" height="52" rx="8" class="dg-box"/>
+<text x="347" y="164" text-anchor="middle" class="dg-t">Authentication</text>
+<text x="347" y="182" text-anchor="middle" class="dg-s">サインイン機能</text>
+</g>
+<g data-node="cog">
+<rect x="510" y="142" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="164" text-anchor="middle" class="dg-t">Cognito</text>
+<text x="585" y="182" text-anchor="middle" class="dg-s">ユーザープール</text>
+</g>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgservices-amplify-1)"/>
+<text x="228" y="70" text-anchor="middle" class="dg-s dg-halo">自動デプロイ</text>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgservices-amplify-1)"/>
+<path d="M184.0,168.5 L272.0,168.5" class="dg-line" marker-end="url(#dgservices-amplify-1)"/>
+<path d="M422.0,168.5 L510.0,168.5" class="dg-line" marker-end="url(#dgservices-amplify-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amplifyの主な機能。Hostingはプッシュをきっかけに自動でビルド・配信する(CI/CD)。Authenticationは内部でCognitoを使い、アプリにサインイン機能を簡単に追加する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>GitHubにプッシュするだけで自動デプロイされるWebサイト</li>
+<li>Webアプリにログイン機能(サインアップ・サインイン)を素早く追加</li>
+<li>小規模チームでのフルスタックアプリ開発</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Amplify Hostingは、ビルド時間・保存容量・配信データ量で課金されます。Cognitoなど裏側で使うサービスは、それぞれの料金がかかります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="cognito.html">Amazon Cognito</a>:Authenticationの実体</li>
+<li><a href="appsync.html">AWS AppSync</a>:GraphQL API</li>
+<li><a href="s3.html">Amazon S3</a>/<a href="cloudfront.html">Amazon CloudFront</a>:静的サイトの配信</li>
+<li><a href="codepipeline.html">AWS CodePipeline</a>:汎用的なCI/CD</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>フロントエンドのホスティング+Git連携のCI/CD → <strong>Amplify Hosting</strong>。</li>
+<li>Amplifyの認証は内部で<strong>Cognito</strong>を使っている。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Amplifyはフロントエンド開発者向けにホスティングと認証などを簡単に提供する。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 6件・リンク元 0件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Amplifyとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/appsync.html"><title>サービス:AWS AppSync</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS AppSync</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS CodePipeline</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudfront.html"><title>サービス:Amazon CloudFront</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon CloudFront</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cognito.html"><title>サービス:Amazon Cognito</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon Cognito</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon S3</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/managed-serverless.html"><title>用語:マネージドサービスとサーバーレス</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">マネージドサービスとサーバーレス</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">AWS Amplify</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="cloudshell.html"><span class="label">← 前へ</span>AWS CloudShell</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="kiro.html"><span class="label">次へ →</span>Kiro</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

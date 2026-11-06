@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security HubのSBOMインベントリ・EC2のImdsV1Enabledメトリクス・Lambda耐久関数の既定の上限引き上げ | 2026年11月7日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Security Hubで、組織全体のEC2・コンテナイメージ・Lambdaに入っているソフトウェアの一覧(SBOM)を確認できるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-07">2026年11月7日</time>のAWSニュース</p>
+  <h1>Security HubのSBOMインベントリ・EC2のImdsV1Enabledメトリクス・Lambda耐久関数の既定の上限引き上げ</h1>
+  <p class="lead">Security Hubで、組織全体のEC2・コンテナイメージ・Lambdaに入っているソフトウェアの一覧(SBOM)を確認できるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 今日のまとめ<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">Security Hub:SBOMインベントリ</a></td><td>Inspectorが作るSBOMをもとに、組織全体のソフトウェアの一覧を画面とAPIで確認できる</td><td><a href="../services/security-hub.html">Security Hub</a>、<a href="../services/inspector.html">Inspector</a></td></tr>
+<tr><td><a href="#n2">EC2:ImdsV1EnabledメトリクスでIMDSv2への移行を追跡</a></td><td>IMDSv1がまだ有効なインスタンスを、CloudWatchのメトリクスとアラームで把握できる</td><td><a href="../services/ec2.html">EC2</a>、<a href="../services/cloudwatch.html">CloudWatch</a></td></tr>
+<tr><td><a href="#n3">Lambda耐久関数:既定の上限を引き上げ</a></td><td>実行中の耐久実行数やAPIの上限が、多くのリージョンで5〜10倍になった</td><td><a href="../services/lambda.html">Lambda</a></td></tr>
+<tr><td><a href="#n4">AWS assistant:Amazon Q Developerの名称変更</a></td><td>コンソールのAmazon Q Developerが「AWS assistant」という名前になった</td><td><a href="../services/systems-manager.html">Systems Manager</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 注目の発表<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="n1">Security Hub:SBOMインベントリ<a class="anchor" href="#n1" aria-label="この見出しへのリンク">#</a></h3>
+<p>SBOM(Software Bill of Materials)は、あるシステムにどんなソフトウェア部品(パッケージ)がどのバージョンで入っているかを書き出した「部品表」です。脆弱性が見つかったとき、「その部品を使っているのはどこか」をすぐ調べるために使います。Security Hubは、Inspectorが EC2インスタンス・ECRのコンテナイメージ・Lambda関数 について作るSBOMを集め、組織全体のパッケージ一覧として表示します。パッケージごとにバージョン・種類・入っているリソースの数が分かり、アカウントやリージョンで絞り込めます。リソースの詳細画面では、そのリソースに入っているソフトウェアを一覧でき、検出結果の優先度を判断する材料になります。APIでも取得できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 InspectorのSBOMがSecurity Hubに集まる"><defs><marker id="dgnews-2026-11-07-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">EC2・ECR・Lambda</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">入っている</text>
+</g>
+<g data-node="insp">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">Inspector</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">SBOMを作る</text>
+</g>
+<g data-node="hub">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="653" y="62" text-anchor="middle" class="dg-tb">Security Hub</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">組織全体の</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-07-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">スキャン</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-07-1)"/>
+<text x="517" y="70" text-anchor="middle" class="dg-s dg-halo">自動で集約</text>
+</svg>
+</div>
+<figcaption>図1 InspectorのSBOMがSecurity Hubに集まる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>新しい脆弱性が公表されたとき、該当のパッケージを使っているリソースを、アカウントをまたいで1か所で探せます。</dd>
+<dt>試験・実務への影響</dt><dd>Security Hub Essentialsに追加料金なしで含まれ、新しい有効化の操作は要りません。Inspectorが有効なところで自動的に表示されます。「脆弱性のスキャンはInspector、結果の集約はSecurity Hub」という役割分担を押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/security-hub.html">Security Hub</a>、<a href="../services/inspector.html">Inspector</a>、<a href="../services/ecr.html">ECR</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/security-hub-sbom-inventory/">AWS Security Hub now provides an SBOM inventory for your compute resources</a>(2026-11-06)</dd>
+</dl>
+
+<h3 id="n2">EC2:ImdsV1EnabledメトリクスでIMDSv2への移行を追跡<a class="anchor" href="#n2" aria-label="この見出しへのリンク">#</a></h3>
+<p>EC2のインスタンスメタデータサービス(IMDS)は、インスタンスが自分の情報や一時的な認証情報を取得する窓口です。IMDSv1は単純なリクエストだけで取得でき、アプリの脆弱性を突かれると認証情報を盗まれるおそれがあるため、トークンを使うIMDSv2への移行が推奨されています。今回、IMDSv1がまだ有効なインスタンスを示す ImdsV1Enabled というCloudWatchメトリクスが追加されました。ダッシュボードやアラームで、移行が済んでいないインスタンスを追跡できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図2 移行状況の確認が自動化される"><defs><marker id="dgnews-2026-11-07-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">自分で全インスタンスの</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">メトリクスと</text>
+</g>
+<g data-node="done">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="653" y="62" text-anchor="middle" class="dg-tb">IMDSv2</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">への移行を完了</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-07-2)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-07-2)"/>
+</svg>
+</div>
+<figcaption>図2 移行状況の確認が自動化される</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アカウントやリージョンをまたいで、独自のツールを作らずに移行の漏れを見つけ、優先順位を付けられます。</dd>
+<dt>試験・実務への影響</dt><dd>すべてのリージョンで追加料金なしで使えます。「IMDSv2を必須にする」設定とあわせて、セキュリティ対策の定番として覚えておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ec2.html">EC2</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/ec2-imdsv1enabled-cloudwatch-metric/">Amazon EC2 now publishes ImdsV1Enabled CloudWatch metric</a>(2026-11-05)</dd>
+</dl>
+
+<h3 id="n3">Lambda耐久関数:既定の上限を引き上げ<a class="anchor" href="#n3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Lambdaの耐久関数(durable functions)は、最長1年かかる複数ステップの処理を、途中経過の保存(チェックポイント)や自動リトライを使って確実に進める機能です。待っている間は計算料金がかかりません。今回、既定のクォータ(上限)が引き上げられました。米国東部(バージニア北部)・米国西部(オレゴン)・欧州(アイルランド)以外のリージョンでの新しい値は次のとおりで、この3リージョンはその2倍です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図3 既定の上限が上がった(上限は代表的な2項目)"><defs><marker id="dgnews-2026-11-07-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">実行中 100万</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">実行中 500万</text>
+</g>
+<g data-node="req">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="653" y="62" text-anchor="middle" class="dg-t">上限の</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">引き上げ申請</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-07-3)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-07-3)"/>
+</svg>
+</div>
+<figcaption>図3 既定の上限が上がった(上限は代表的な2項目)</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>注文処理や文書処理などで、申請なしにより多くの実行を並行して進められます。状態の確認・一覧・履歴取得・停止のAPIも10倍の頻度で呼べるので、ダッシュボードやスクリプトでの監視がしやすくなります。</dd>
+<dt>試験・実務への影響</dt><dd>実行中の数は100万から500万、チェックポイントの取得などは毎秒1,000から10,000、コールバック関連は毎秒300から3,000に上がりました。クォータが原因のスロットリングは、Service Quotasで確認して調整するのが基本です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/lambda.html">Lambda</a>、<a href="../services/step-functions.html">Step Functions</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/lambda-durable-functions-default-quotas/">AWS Lambda durable functions increases default execution and API quotas</a>(2026-11-05)</dd>
+</dl>
+
+<h3 id="n4">AWS assistant:Amazon Q Developerの名称変更<a class="anchor" href="#n4" aria-label="この見出しへのリンク">#</a></h3>
+<p>AWSマネジメントコンソールとコンソールのモバイルアプリで使えた Amazon Q Developer が、AWS assistant という名前になりました。アカウントの状況に合わせた案内や操作の支援といった機能は同じで、名前だけを分かりやすくしたものです。現在は無料で提供され、すでにPro階層を契約している人は、そのままPro階層の機能が使えます。世界中で利用できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 116" style="max-width:480px;min-width:480px" role="img" aria-label="図4 コンソールの支援機能の名前が変わった"><defs><marker id="dgnews-2026-11-07-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">Amazon Q Developer</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">AWS assistant</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-07-4)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">名称の変更</text>
+</svg>
+</div>
+<figcaption>図4 コンソールの支援機能の名前が変わった</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>コンソールの中の「AWSの運用を手伝ってくれる機能」だと、名前から分かるようになります。</dd>
+<dt>試験・実務への影響</dt><dd>古い教材や設問の「Amazon Q Developer」は、コンソール内ではこのAWS assistantを指します。サービス名の変更は出題文の読み替えで迷いやすいので、覚えておくと安心です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/systems-manager.html">Systems Manager</a>、<a href="../services/trusted-advisor.html">Trusted Advisor</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/q-developer-renamed-aws-assistant/">Amazon Q Developer in console is now the AWS assistant</a>(2026-11-05)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. その他の発表<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/rds-oracle-kerberos-self-managed-ad/">RDS for Oracle:自社運用のActive DirectoryでKerberos認証</a>:AWS Managed Microsoft ADとの信頼関係を作らなくても、オンプレミスなどの既存のADに直接参加させて認証できるようになりました(<a href="../services/rds.html">RDS</a>、<a href="../services/directory-service.html">Directory Service</a>)。</li>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-fsx-for-lustre-intelligent-tiering-16x-higher-metadata-iops">FSx for Lustre:メタデータIOPSが16倍に</a>:Intelligent-Tieringの新しいファイルシステムで、メタデータのIOPSの上限が12,000から192,000になりました(<a href="../services/fsx.html">FSx</a>)。</li>
+</ul>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-06.html"><span class="label">次へ → 2026年11月6日</span>Parameter Storeの組み込みデータ型・IAM Roles Anywhereの失効確認の自動化・DynamoDBのS3からの一括書き込み</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

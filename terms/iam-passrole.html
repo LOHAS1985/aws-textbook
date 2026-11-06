@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iam:PassRoleとサービスにリンクされたロール | AWS教科書</title>
+<meta name="description" content="AWSのサービスにロールを渡すときに必要な権限と、サービスが自動で作る専用のロール">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">セキュリティ・認証</a>
+  <h1>iam:PassRoleとサービスにリンクされたロール</h1>
+  <p class="lead">AWSのサービスにロールを渡すときに必要な権限と、サービスが自動で作る専用のロール</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+
+<h3 id="c1-1">iam:PassRole とは<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>EC2にインスタンスプロファイルを付ける、Lambda関数に実行ロールを設定する、といった操作では、利用者がAWSのサービスに<strong>ロールを渡し</strong>、サービスがそのロールで動きます。このとき、渡す人には操作そのもの(<code>lambda:CreateFunction</code> など)の権限に加えて、<strong class="em">そのロールに対する <code>iam:PassRole</code> の権限</strong>が必要です。</p>
+<p>PassRoleはAPIの名前ではなく、ロールを渡す操作のときに確認される<strong>権限</strong>です。もしこの確認がなければ、自分には権限がなくても、強い権限のロールをEC2やLambdaに渡してそこから何でもできてしまいます(権限の昇格)。PassRoleは「どのロールなら渡してよいか」を絞るための権限です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 ロールを渡す流れ。開発者自身はS3を操作できなくても、渡したロールの権限でLambdaが操作する。そのため、渡せるロールを iam:PassRole で制限する。"><defs><marker id="dgterms-iam-passrole-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">開発者</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">PassRoleの権限</text>
+</g>
+<g data-node="lam">
+<rect x="272" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="62" text-anchor="middle" class="dg-tb">Lambda関数</text>
+<text x="347" y="80" text-anchor="middle" class="dg-s">作成・更新</text>
+</g>
+<g data-node="role">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">実行ロール</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">強い権限でもよい</text>
+</g>
+<g data-node="s3">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">S3など</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">ロールの権限で操作</text>
+</g>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgterms-iam-passrole-1)"/>
+<text x="228" y="70" text-anchor="middle" class="dg-s dg-halo">ロールを渡す</text>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgterms-iam-passrole-1)"/>
+<text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">引き受ける</text>
+<path d="M585.0,92.5 L585.0,125.5" class="dg-line" marker-end="url(#dgterms-iam-passrole-1)"/>
+</svg>
+</div>
+<figcaption>図1 ロールを渡す流れ。開発者自身はS3を操作できなくても、渡したロールの権限でLambdaが操作する。そのため、渡せるロールを iam:PassRole で制限する。</figcaption>
+</figure>
+
+<h3 id="c1-2">PassRoleが必要になる主な操作<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>操作</th><th>渡すロール</th></tr>
+<tr><td>EC2インスタンスの起動(<code>RunInstances</code>)、起動中のインスタンスへのロールの付与</td><td>インスタンスプロファイルのロール</td></tr>
+<tr><td>Lambda関数の作成・設定の変更</td><td>実行ロール</td></tr>
+<tr><td>ECSのタスク定義の登録</td><td>タスクロール・タスク実行ロール</td></tr>
+<tr><td>CloudFormationのスタックの作成・更新(サービスロールを指定したとき)</td><td>CloudFormationのサービスロール</td></tr>
+<tr><td>SSM Automationの実行、Config・EventBridgeのターゲットの設定</td><td>Automationやターゲットが使うロール</td></tr>
+<tr><td>Auto Scalingの起動テンプレートを使った起動</td><td>起動テンプレートのインスタンスプロファイル</td></tr>
+</table></div>
+<p>権限が足りないと、<code>User: arn:aws:iam::111122223333:user/dev is not authorized to perform: iam:PassRole on resource: arn:aws:iam::111122223333:role/MyRole</code> のようなエラーになります。</p>
+
+<h3 id="c1-3">PassRoleの書き方<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>渡してよいロールを <code>Resource</code> で絞り、<code>iam:PassedToService</code> の条件で渡し先のサービスも絞ります。</p>
+<pre class="code"><code>{
+  "Effect": "Allow",
+  "Action": "iam:PassRole",
+  "Resource": "arn:aws:iam::111122223333:role/app-lambda-*",
+  "Condition": {
+    "StringEquals": { "iam:PassedToService": "lambda.amazonaws.com" }
+  }
+}</code></pre>
+<div class="point"><p>CloudFormationの<strong>サービスロール</strong>を使うと、開発者自身にはリソースを作る権限を与えず、「スタックの操作」と「決められたサービスロールのPassRole」だけを与えて、リソースはサービスロールの権限で作らせることができます。最小権限でデプロイさせる定番の方法です。</p></div>
+
+<h3 id="c1-4">サービスロールとサービスにリンクされたロール<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th></th><th>サービスロール</th><th>サービスにリンクされたロール</th></tr>
+<tr><td>作る人</td><td>利用者</td><td><strong>サービスが自動で作る</strong>(機能を最初に使ったとき)</td></tr>
+<tr><td>権限の変更</td><td>自由に変更できる</td><td><strong>変更できない</strong>(サービスが決めた内容)</td></tr>
+<tr><td>信頼ポリシー</td><td>利用者が書く</td><td>そのサービスだけに固定</td></tr>
+<tr><td>名前の例</td><td>任意(例:<code>MyLambdaRole</code>)</td><td><code>AWSServiceRoleForAutoScaling</code>、<code>AWSServiceRoleForElasticLoadBalancing</code>(パスは <code>/aws-service-role/</code>)</td></tr>
+<tr><td>削除</td><td>いつでも削除できる</td><td>そのロールを使うリソースをなくしてから削除する</td></tr>
+<tr><td>PassRole</td><td>サービスに設定するとき必要</td><td>不要(初回の作成時に <code>iam:CreateServiceLinkedRole</code> の権限が必要)</td></tr>
+</table></div>
+<p>Auto ScalingやELB、Organizationsなどは、サービスにリンクされたロールで動きます。Auto ScalingグループのEC2が暗号化されたEBSボリュームで起動できないときは、そのKMSキーのキーポリシーで、Auto Scalingのサービスにリンクされたロールにキーの利用を許可しているかを確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="iam-roles-credentials.html">IAMロールと一時的な認証情報</a>:ロールの基本と使い方</li>
+<li><a href="iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>:ポリシーの書き方と許可・拒否の決まり方</li>
+<li><a href="event-driven-remediation.html">イベント駆動の自動修復</a>:Automationなどに渡すロール</li>
+<li><a href="arn.html">ARN</a>:Resourceでロールを指定する</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:ロールとPassRoleの権限</li>
+<li><a href="../services/cloudformation.html">AWS CloudFormation</a>:サービスロールによるデプロイ</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:実行ロール</li>
+<li><a href="../services/ec2.html">Amazon EC2</a>:インスタンスプロファイル</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:サービスにリンクされたロール</li>
+<li><a href="../services/kms.html">AWS KMS</a>:キーポリシーでサービスにリンクされたロールを許可する</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/lambda.html"><span class="title">AWS Lambda</span><span class="kind">サービス</span><span class="desc">サーバーレスでプログラムを実行するサービス</span></a></li>
+<li><a href="../services/iam.html"><span class="title">AWS IAM</span><span class="kind">サービス</span><span class="desc">AWSの認証・認可を管理するサービス</span></a></li>
+<li><a href="../services/cloudformation.html"><span class="title">AWS CloudFormation</span><span class="kind">サービス</span><span class="desc">AWSリソースをテンプレート(コード)で定義し、自動構築・管理</span></a></li>
+<li><a href="../services/codepipeline.html"><span class="title">AWS CodePipeline</span><span class="kind">サービス</span><span class="desc">ソース取得からデプロイまでを自動化するCI/CDサービス</span></a></li>
+<li><a href="../usecases/scheduled-start-stop.html"><span class="title">開発環境を夜間・休日に自動で停止して費用を下げる</span><span class="kind">運用シナリオ</span></a></li>
+<li><a href="../usecases/access-denied-troubleshooting.html"><span class="title">「AccessDenied」の原因を調べ、最小権限に直す</span><span class="kind">運用シナリオ</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 10件・リンク元 4件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 336" style="max-width:784px;min-width:600px" role="img" aria-label="iam:PassRoleとサービスにリンクされたロールとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../services/codepipeline.html"><title>サービス:AWS CodePipeline</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">AWS CodePipeline</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../terms/instance-profile.html"><title>用語:インスタンスプロファイル</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">インスタンスプロファイル</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/access-denied-troubleshooting.html"><title>運用シナリオ:「AccessDenied」の原因を調べ、最小権限に直す</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="200" class="gr-t">「AccessDenied」の原因を調…</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,180 300,180" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/scheduled-start-stop.html"><title>運用シナリオ:開発環境を夜間・休日に自動で停止して費用を下げる</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="230" class="gr-t">開発環境を夜間・休日に自動で停…</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cloudformation.html"><title>サービス:AWS CloudFormation</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudFormation</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/kms.html"><title>サービス:AWS KMS</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS KMS</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/arn.html"><title>用語:ARN</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">ARN</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,255 550,255" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-policy-evaluation.html"><title>用語:IAMポリシーと評価ロジック</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">IAMポリシーと評価ロジック</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,285 550,285" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="550" y="274" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="290" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M480,180 C515.0,180 515.0,315 550,315" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/event-driven-remediation.html"><title>用語:イベント駆動の自動修復</title><rect x="550" y="304" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="320" class="gr-t">イベント駆動の自動修復</text></a>
+<rect x="300" y="160" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="185" text-anchor="middle" class="gr-tb">iam:PassRoleとサー…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(4)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(10)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="instance-profile.html"><span class="label">← 前へ</span>インスタンスプロファイル</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="encryption.html"><span class="label">次へ →</span>保存時の暗号化と転送時の暗号化</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

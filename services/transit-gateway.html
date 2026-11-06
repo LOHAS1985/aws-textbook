@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Transit Gateway | AWS教科書</title>
+<meta name="description" content="多数のVPCとオンプレミスをハブ&amp;スポークでつなぐ中継ルーター">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/transit-gateway.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
+  <h1>AWS Transit Gateway</h1>
+  <p class="lead">多数のVPCとオンプレミスをハブ&スポークでつなぐ中継ルーター</p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Transit Gateway(TGW)</strong>は、<strong>複数のVPCやオンプレミスのネットワークを1か所に集めて接続する、リージョン単位の中継ルーター</strong>です。各ネットワークをTransit Gatewayにつなぐだけで、つながったネットワーク同士が通信できるようになります(ハブ&スポーク型)。</p>
+<p>VPCピアリングは「1対1」の接続で、VPCが増えると接続の数が急に増えます。Transit Gatewayなら、接続はVPCの数だけで済みます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 848 276" style="max-width:848px;min-width:678px" role="img" aria-label="図1 VPCピアリングとTransit Gatewayの違い。4つのVPCをすべてつなぐ場合、ピアリングは6本の接続が必要だが、Transit Gatewayなら4本で済む。"><defs><marker id="dgservices-transit-gateway-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="a1">
+<rect x="34" y="46" width="130" height="40" rx="8" class="dg-box"/>
+<text x="99" y="70" text-anchor="middle" class="dg-t">VPC A</text>
+</g>
+<g data-node="b1">
+<rect x="214" y="46" width="130" height="40" rx="8" class="dg-box"/>
+<text x="279" y="70" text-anchor="middle" class="dg-t">VPC B</text>
+</g>
+<g data-node="c1">
+<rect x="34" y="166" width="130" height="40" rx="8" class="dg-box"/>
+<text x="99" y="190" text-anchor="middle" class="dg-t">VPC C</text>
+</g>
+<g data-node="d1">
+<rect x="214" y="166" width="130" height="40" rx="8" class="dg-box"/>
+<text x="279" y="190" text-anchor="middle" class="dg-t">VPC D</text>
+</g>
+<g data-node="a2">
+<rect x="394" y="46" width="130" height="40" rx="8" class="dg-box"/>
+<text x="459" y="70" text-anchor="middle" class="dg-t">VPC A</text>
+</g>
+<g data-node="b2">
+<rect x="694" y="46" width="130" height="40" rx="8" class="dg-box"/>
+<text x="759" y="70" text-anchor="middle" class="dg-t">VPC B</text>
+</g>
+<g data-node="t">
+<rect x="544" y="106" width="145" height="40" rx="8" class="dg-accent"/>
+<text x="616" y="130" text-anchor="middle" class="dg-tb">Transit Gateway</text>
+</g>
+<g data-node="c2">
+<rect x="394" y="166" width="130" height="40" rx="8" class="dg-box"/>
+<text x="459" y="190" text-anchor="middle" class="dg-t">VPC C</text>
+</g>
+<g data-node="d2">
+<rect x="694" y="166" width="130" height="40" rx="8" class="dg-box"/>
+<text x="759" y="190" text-anchor="middle" class="dg-t">VPC D</text>
+</g>
+<path d="M164.0,66.5 L214.0,66.5" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<path d="M99.0,86.5 L99.0,165.5" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<path d="M279.0,86.5 L279.0,165.5" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<path d="M164.0,185.5 L214.0,185.5" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<path d="M129.3,86.5 L248.7,165.5" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<path d="M248.7,86.5 L129.3,165.5" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<path d="M511.9,86.5 L563.6,106.0" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<path d="M711.1,86.5 L664.4,106.0" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<path d="M511.9,165.5 L563.6,146.0" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<path d="M711.1,165.5 L664.4,146.0" class="dg-line" marker-end="url(#dgservices-transit-gateway-1)" marker-start="url(#dgservices-transit-gateway-1)"/>
+<text x="189" y="246" text-anchor="middle" class="dg-s">ピアリング:6本(VPCが増えると急増)</text>
+<text x="609" y="246" text-anchor="middle" class="dg-s">Transit Gateway:4本(VPCの数だけ)</text>
+</svg>
+</div>
+<figcaption>図1 VPCピアリングとTransit Gatewayの違い。4つのVPCをすべてつなぐ場合、ピアリングは6本の接続が必要だが、Transit Gatewayなら4本で済む。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">アタッチメント(つなぐもの)<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>アタッチメント</th><th>内容</th></tr>
+<tr><td>VPC</td><td>VPCの各AZのサブネットにTGW用のネットワークインターフェイスを置いて接続する</td></tr>
+<tr><td><a href="site-to-site-vpn.html">Site-to-Site VPN</a></td><td>オンプレミスとIPsec VPNで接続する</td></tr>
+<tr><td><a href="direct-connect.html">Direct Connect</a> ゲートウェイ</td><td>専用線(トランジットVIF)で接続する</td></tr>
+<tr><td>ピアリング</td><td>別のTransit Gateway(別リージョンも可)と接続する</td></tr>
+<tr><td>Connect</td><td>SD-WANなどのネットワーク機器とGRE+BGPで接続する</td></tr>
+</table></div>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 731 286" style="max-width:731px;min-width:585px" role="img" aria-label="図2 Transit Gatewayのアタッチメント。VPC・VPN・Direct Connect・別リージョンのTransit Gatewayを1か所に集め、まとめてルーティングする。"><defs><marker id="dgservices-transit-gateway-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="v1">
+<rect x="34" y="46" width="145" height="40" rx="8" class="dg-box"/>
+<text x="106" y="70" text-anchor="middle" class="dg-t">VPC(本番)</text>
+</g>
+<g data-node="v2">
+<rect x="34" y="132" width="145" height="40" rx="8" class="dg-box"/>
+<text x="106" y="156" text-anchor="middle" class="dg-t">VPC(開発)</text>
+</g>
+<g data-node="v3">
+<rect x="34" y="216" width="162" height="40" rx="8" class="dg-box"/>
+<text x="115" y="240" text-anchor="middle" class="dg-t">VPC(共有サービス)</text>
+</g>
+<g data-node="tgw">
+<rect x="298" y="126" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="370" y="147" text-anchor="middle" class="dg-tb">Transit Gateway</text>
+<text x="370" y="165" text-anchor="middle" class="dg-s">リージョンのハブ</text>
+</g>
+<g data-node="vpn">
+<rect x="562" y="40" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="634" y="62" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="634" y="80" text-anchor="middle" class="dg-s">Site-to-Site VPN</text>
+</g>
+<g data-node="dx">
+<rect x="562" y="126" width="145" height="52" rx="8" class="dg-blue"/>
+<text x="634" y="147" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="634" y="165" text-anchor="middle" class="dg-s">Direct Connect</text>
+</g>
+<g data-node="peer">
+<rect x="562" y="210" width="145" height="52" rx="8" class="dg-box"/>
+<text x="634" y="232" text-anchor="middle" class="dg-t">別リージョンのTGW</text>
+<text x="634" y="250" text-anchor="middle" class="dg-s">ピアリング</text>
+</g>
+<path d="M168.6,86.5 L298.0,128.2" class="dg-line" marker-end="url(#dgservices-transit-gateway-2)" marker-start="url(#dgservices-transit-gateway-2)"/>
+<path d="M179.0,151.5 L298.0,151.5" class="dg-line" marker-end="url(#dgservices-transit-gateway-2)" marker-start="url(#dgservices-transit-gateway-2)"/>
+<path d="M174.9,216.5 L298.0,175.6" class="dg-line" marker-end="url(#dgservices-transit-gateway-2)" marker-start="url(#dgservices-transit-gateway-2)"/>
+<path d="M443.0,128.2 L562.0,89.8" class="dg-line" marker-end="url(#dgservices-transit-gateway-2)" marker-start="url(#dgservices-transit-gateway-2)"/>
+<path d="M443.0,151.5 L562.0,151.5" class="dg-line" marker-end="url(#dgservices-transit-gateway-2)" marker-start="url(#dgservices-transit-gateway-2)"/>
+<path d="M443.0,174.8 L562.0,213.2" class="dg-line dg-dash" marker-end="url(#dgservices-transit-gateway-2)" marker-start="url(#dgservices-transit-gateway-2)"/>
+</svg>
+</div>
+<figcaption>図2 Transit Gatewayのアタッチメント。VPC・VPN・Direct Connect・別リージョンのTransit Gatewayを1か所に集め、まとめてルーティングする。</figcaption>
+</figure>
+
+<h3 id="c2-2">Transit Gatewayのルートテーブル<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Transit Gatewayにも専用のルートテーブルがあり、「どのアタッチメントから来た通信を、どのアタッチメントへ送るか」を決めます。</p>
+<ul>
+<li><strong>関連付け(Association)</strong>:アタッチメントから入ってきた通信を、どのルートテーブルで判断するか。</li>
+<li><strong>伝播(Propagation)</strong>:アタッチメントのCIDRを、ルートテーブルに自動で登録するか。</li>
+</ul>
+<p>ルートテーブルを複数に分けると、「本番VPCと開発VPCは通信させない。どちらも共有サービスVPCとオンプレミスにはつなぐ」のような<strong>ネットワークの分離(セグメンテーション)</strong>ができます。</p>
+<p>あわせて、各VPCのサブネットのルートテーブルにも「相手のCIDR → Transit Gateway」の経路を追加する必要があります。</p>
+
+<h3 id="c2-3">そのほかの特徴<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>推移的なルーティング</strong>:A→TGW→B のように中継できる(VPCピアリングはできない)。</li>
+<li><strong>アカウント間の共有</strong>:<a href="ram.html">AWS RAM</a>でTransit Gatewayを他アカウントと共有し、各アカウントのVPCをつなげる。</li>
+<li><strong>VPNのECMP</strong>:複数のVPN接続に通信を分散し、帯域を増やせる(VGWではできない)。</li>
+<li><strong>アプライアンスモード</strong>:ファイアウォールなどの検査用VPCを通すとき、行きと帰りの通信が同じAZの機器を通るようにする。</li>
+<li><strong>フローログ</strong>:Transit Gatewayを通る通信を記録できる(<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>と同じ仕組み)。</li>
+<li>CIDRが重複しているVPC同士は、そのままではルーティングできない。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>数十〜数百のVPCとオンプレミスをまとめて接続する</li>
+<li>マルチアカウント環境で、共有サービス(認証・監視など)のVPCに各アカウントからつなぐ</li>
+<li>インターネットへの出口(NAT・ファイアウォール)を1つのVPCに集約する</li>
+<li>リージョン間ピアリングで、複数リージョンのネットワークをつなぐ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>アタッチメントごとの時間料金</strong>と、Transit Gatewayを通った<strong>データ量(GB)に応じた処理料金</strong>がかかります。VPCが2〜3個で通信量が多い場合は、データ処理料金のかからないVPCピアリングの方が安くなることがあります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>:接続するネットワーク。少数の接続ならVPCピアリング</li>
+<li><a href="site-to-site-vpn.html">AWS Site-to-Site VPN</a>/<a href="direct-connect.html">AWS Direct Connect</a>:オンプレミスとの接続</li>
+<li><a href="ram.html">AWS Resource Access Manager</a>:Transit Gatewayのアカウント間共有</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:通信量などのメトリクス</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「多数のVPC」「オンプレミスも含めて」「推移的に接続」→ <strong>Transit Gateway</strong>。2つのVPCだけなら<strong>VPCピアリング</strong>。</li>
+<li>他アカウントのVPCをつなぐ → <strong>RAM</strong>で共有する。</li>
+<li>通信できない → TGWのルートテーブル(関連付け・伝播)と、<strong>VPC側のルートテーブル</strong>の両方を確認する。セキュリティグループ・ネットワークACLも確認。</li>
+<li>VPNの帯域を増やしたい → TGW+複数VPN+<strong>ECMP</strong>。</li>
+<li>本番と開発を分離したい → TGWの<strong>ルートテーブルを分ける</strong>。</li>
+<li>VPCピアリング・Transit Gateway・PrivateLinkの使い分け → <a href="../terms/vpc-connectivity.html">VPC同士をつなぐ方法の選び方</a>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>リージョン単位の中継ルーターで、VPC・VPN・Direct Connectをハブ&スポークでつなぐ。</li>
+<li>ルートテーブルの関連付け・伝播で経路を管理し、分離もできる。</li>
+<li>RAMでアカウント間共有、ピアリングでリージョン間接続。</li>
+<li>料金はアタッチメント時間+データ処理量。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/hybrid-multi-vpc.html"><span class="title">複数のVPCとオンプレミスを接続する</span></a></li>
+<li><a href="../usecases/remote-access-vpn.html"><span class="title">社員の端末からVPCの社内システムに安全に接続する</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 7件・リンク元 9件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 306" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Transit Gatewayとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/network-firewall.html"><title>サービス:AWS Network Firewall</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Network Firewall</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/ipam.html"><title>サービス:Amazon VPC IP Address Manager (IPAM)</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">Amazon VPC IP Address Man…</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cidr.html"><title>用語:CIDR</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">CIDR</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-peering.html"><title>用語:VPCピアリング</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="140" class="gr-t">VPCピアリング</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/inbound-traffic.html"><title>用語:インバウンド通信</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">インバウンド通信</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/hybrid-connectivity.html"><title>用語:オンプレミスとAWSをつなぐ方法の選び方</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">オンプレミスとAWSをつなぐ方法…</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../terms/route-table.html"><title>用語:ルートテーブル</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">ルートテーブル</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/remote-access-vpn.html"><title>運用シナリオ:社員の端末からVPCの社内システムに安全に接続する</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="260" class="gr-t">社員の端末からVPCの社内システ…</text></a>
+<path class="gr-line" d="M230,285 C265.0,285 265.0,165 300,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/hybrid-multi-vpc.html"><title>運用シナリオ:複数のVPCとオンプレミスを接続する</title><rect x="0" y="274" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="290" class="gr-t">複数のVPCとオンプレミスを接続…</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,75 550,75" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/direct-connect.html"><title>サービス:AWS Direct Connect</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Direct Connect</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/ram.html"><title>サービス:AWS Resource Access Manager</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Resource Access Manag…</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,135 550,135" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/site-to-site-vpn.html"><title>サービス:AWS Site-to-Site VPN</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">AWS Site-to-Site VPN</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="200" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,225 550,225" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/vpc-flow-logs.html"><title>用語:VPCフローログ</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">VPCフローログ</text></a>
+<path class="gr-line" d="M480,165 C515.0,165 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/vpc-connectivity.html"><title>用語:VPC同士をつなぐ方法の選び方</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">VPC同士をつなぐ方法の選び方</text></a>
+<rect x="300" y="145" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="170" text-anchor="middle" class="gr-tb">AWS Transit Gateway</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(9)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(7)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="ipam.html"><span class="label">← 前へ</span>Amazon VPC IP Address Manager (IPAM)</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="site-to-site-vpn.html"><span class="label">次へ →</span>AWS Site-to-Site VPN</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

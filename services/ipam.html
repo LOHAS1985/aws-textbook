@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon VPC IP Address Manager (IPAM) | AWS教科書</title>
+<meta name="description" content="組織全体のVPCのIPアドレスを計画・割り当て・監視し、CIDRの重複を防ぐ">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#8C4FFF">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/ipam.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat5">ネットワークとコンテンツ配信</a>
+  <h1>Amazon VPC IP Address Manager (IPAM)</h1>
+  <p class="lead">組織全体のVPCのIPアドレスを計画・割り当て・監視し、CIDRの重複を防ぐ</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon VPC IP Address Manager(IPAM)</strong>は、複数のアカウント・リージョンにまたがる<strong>IPアドレス(CIDR)を一元的に計画・割り当て・監視</strong>するVPCの機能です。</p>
+<p>VPCが増えると、表計算ソフトでのCIDRの管理では重複や記入漏れが起きがちです。CIDRが重なったVPCどうしはピアリングやTransit Gatewayでうまくつなげません。IPAMを使うと、<strong>決められた範囲から重ならないCIDRを自動で割り当て</strong>られます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">構成要素<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>要素</th><th>説明</th></tr>
+<tr><td>IPAM</td><td>本体。管理するリージョン(運用リージョン)を指定する</td></tr>
+<tr><td>スコープ</td><td>IPアドレス空間の単位。プライベートスコープとパブリックスコープが最初から作られる</td></tr>
+<tr><td>プール</td><td>CIDRの集まり。入れ子にして階層を作れる(例:全社 → リージョン → 本番/開発)</td></tr>
+<tr><td>割り当てルール</td><td>プールから割り当てるCIDRのサイズの上限・下限・既定値、必須のタグなど</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 846 234" style="max-width:846px;min-width:677px" role="img" aria-label="図1 IPAMのプールの階層の例。上位のプールを地域や環境ごとに分け、VPCを作るときはプールを指定するだけで重ならないCIDRが割り当てられる。"><defs><marker id="dgservices-ipam-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="top">
+<rect x="34" y="118" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="106" y="140" text-anchor="middle" class="dg-tb">全社プール</text>
+<text x="106" y="158" text-anchor="middle" class="dg-s">10.0.0.0/8</text>
+</g>
+<g data-node="r1">
+<rect x="248" y="78" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="100" text-anchor="middle" class="dg-t">東京プール</text>
+<text x="321" y="118" text-anchor="middle" class="dg-s">10.0.0.0/12</text>
+</g>
+<g data-node="r2">
+<rect x="248" y="158" width="145" height="52" rx="8" class="dg-box"/>
+<text x="321" y="180" text-anchor="middle" class="dg-t">大阪プール</text>
+<text x="321" y="198" text-anchor="middle" class="dg-s">10.16.0.0/12</text>
+</g>
+<g data-node="p">
+<rect x="463" y="44" width="145" height="40" rx="8" class="dg-box"/>
+<text x="536" y="68" text-anchor="middle" class="dg-t">本番プール</text>
+</g>
+<g data-node="d">
+<rect x="463" y="124" width="145" height="40" rx="8" class="dg-box"/>
+<text x="536" y="148" text-anchor="middle" class="dg-t">開発プール</text>
+</g>
+<g data-node="vpc">
+<rect x="678" y="38" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="750" y="60" text-anchor="middle" class="dg-t">新しいVPC</text>
+<text x="750" y="78" text-anchor="middle" class="dg-s">/16を自動で割当</text>
+</g>
+<path d="M179.0,130.5 L248.5,117.5" class="dg-line" marker-end="url(#dgservices-ipam-1)"/>
+<path d="M179.0,157.5 L248.5,170.5" class="dg-line" marker-end="url(#dgservices-ipam-1)"/>
+<path d="M393.5,90.5 L463.0,77.5" class="dg-line" marker-end="url(#dgservices-ipam-1)"/>
+<path d="M393.5,117.5 L463.0,130.5" class="dg-line" marker-end="url(#dgservices-ipam-1)"/>
+<path d="M608.0,64.0 L677.5,64.0" class="dg-line" marker-end="url(#dgservices-ipam-1)"/>
+</svg>
+</div>
+<figcaption>図1 IPAMのプールの階層の例。上位のプールを地域や環境ごとに分け、VPCを作るときはプールを指定するだけで重ならないCIDRが割り当てられる。</figcaption>
+</figure>
+
+<h3 id="c2-2">主な機能<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>CIDRの自動割り当て</strong>:VPCの作成時にIPAMプールを指定すると、空いているCIDRが割り当てられる。CloudFormationからも指定できる。</li>
+<li><strong>使用状況の監視</strong>:プールやVPCのIPアドレスの使用率を確認し、CloudWatchでアラームを設定できる。</li>
+<li><strong>重複・非準拠の検出</strong>:CIDRが重なっているリソースや、割り当てルールに合わないリソースを見つける。</li>
+<li><strong>IPアドレスの履歴</strong>:あるIPアドレスが、いつどのリソースに使われていたかを調べられる(セキュリティ調査に便利)。</li>
+<li><strong>パブリックIPの分析</strong>:パブリックIPv4アドレスの使い道(EC2・NAT・ELBなど)を一覧にする。</li>
+<li>独自に保有するIPアドレス(BYOIP)やIPv6アドレスの管理。</li>
+</ul>
+
+<h3 id="c2-3">複数アカウントでの利用<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Organizations と連携し、<strong>委任管理者アカウント</strong>でIPAMを作成します。プールは <strong>AWS RAM</strong> で他のアカウントに共有し、各アカウントはそのプールからCIDRを割り当てます。</p>
+
+<h3 id="c2-4">ティア<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p>無料ティアと高度なティアがあります。無料ティアで使えるのはパブリックIPの分析など一部の機能だけです。<strong>プライベートIPアドレスのプール</strong>を作る場合や、IPAMを所有するアカウント以外にCIDRを割り当てる場合は、高度なティアが必要です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>大規模な組織で、全VPCのCIDRが重ならないように自動で割り当てる</li>
+<li>Transit Gatewayやオンプレミスと接続する前に、CIDRの重複がないか確認する</li>
+<li>IPアドレスの枯渇を、使用率のアラームで事前に知る</li>
+<li>使われていないパブリックIPv4アドレス(Elastic IP)を見つけて費用を減らす</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>高度なティアでは、IPAMで管理しているアクティブなIPアドレスの数に応じた時間料金がかかります。無料ティアは無料です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="vpc.html">Amazon VPC</a>:CIDRを割り当てる対象</li>
+<li><a href="organizations.html">AWS Organizations</a>/<a href="ram.html">AWS RAM</a>:委任管理者とプールの共有</li>
+<li><a href="transit-gateway.html">AWS Transit Gateway</a>:CIDRが重ならないことが前提の接続</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:使用率のアラーム</li>
+<li><a href="../terms/cidr.html">CIDR</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>「複数アカウントのVPCのCIDRの重複を防ぐ」「IPアドレスの一元管理」→ <strong class="em">IPAM</strong>。</li>
+<li>他のアカウントへのプールの共有は <strong>RAM</strong>、組織での管理は<strong>委任管理者</strong>。</li>
+<li>IPアドレスの使用率は CloudWatch のメトリクスでアラームにできる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>IPAMは、組織全体のIPアドレスをプールの階層で管理し、重ならないCIDRを自動で割り当てる。</li>
+<li>使用状況・重複・IPアドレスの履歴を確認できる。</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c8">このサービスが登場する運用シナリオ<a class="anchor" href="#c8" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../usecases/vpc-ip-planning.html"><span class="title">組織全体のVPCのIPアドレスを重ならないように払い出す</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 6件・リンク元 2件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="Amazon VPC IP Address Manager (IPAM)とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
+<a href="../terms/vpc-connectivity.html"><title>用語:VPC同士をつなぐ方法の選び方</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="110" class="gr-t">VPC同士をつなぐ方法の選び方</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/vpc-ip-planning.html"><title>運用シナリオ:組織全体のVPCのIPアドレスを重ならないように払い出す</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-usecases"/><text x="10" y="140" class="gr-t">組織全体のVPCのIPアドレスを重…</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/ram.html"><title>サービス:AWS Resource Access Manager</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Resource Access Manag…</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/transit-gateway.html"><title>サービス:AWS Transit Gateway</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Transit Gateway</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/vpc.html"><title>サービス:Amazon VPC</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon VPC</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cidr.html"><title>用語:CIDR</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">CIDR</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">Amazon VPC IP Add…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(2)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="vpc.html"><span class="label">← 前へ</span>Amazon VPC</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="transit-gateway.html"><span class="label">次へ →</span>AWS Transit Gateway</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

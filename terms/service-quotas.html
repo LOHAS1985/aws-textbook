@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>サービスクォータ | AWS教科書</title>
+<meta name="description" content="アカウント・リージョンごとに決められた、リソース数やAPI呼び出し回数の上限">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">AWSの基礎</a>
+  <h1>サービスクォータ</h1>
+  <p class="lead">アカウント・リージョンごとに決められた、リソース数やAPI呼び出し回数の上限</p>
+  <p class="updated">最終更新:<time datetime="2026-10-25">2026-10-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>サービスクォータ(Service Quotas、以前は「制限」とも呼ばれた)</strong>は、AWSの各サービスで<strong>作成できるリソースの数や、1秒あたりに呼び出せるAPIの回数などの上限</strong>です。誤操作による大量作成や、一部の利用者によるリソースの占有を防ぐために設けられています。多くのクォータは<strong>アカウントごと・リージョンごと</strong>に決まっています。</p>
+
+<h3 id="c1-1">調整できるクォータと、できないクォータ<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>調整可能(ソフトリミット)</strong>:申請すれば引き上げられる。多くのクォータはこちら。</li>
+<li><strong>調整不可(ハードリミット)</strong>:引き上げられない。設計で対応する(例:Lambdaの最大実行時間15分、S3のオブジェクトの最大サイズ)。</li>
+</ul>
+
+<h3 id="c1-2">よく出てくるクォータの例<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table class="stack">
+<tr><th>サービス</th><th>クォータ</th><th>既定値の目安</th><th>上限に達すると</th></tr>
+<tr><td data-label="サービス">EC2</td><td data-label="クォータ">実行中のオンデマンドインスタンスの<strong>vCPU数</strong>(インスタンスファミリーのグループごと)</td><td data-label="既定値の目安">アカウントによって異なる</td><td data-label="上限に達すると">起動時に <code>VcpuLimitExceeded</code> などのエラーになり、Auto Scalingでも台数が増えない</td></tr>
+<tr><td data-label="サービス">EC2</td><td data-label="クォータ">Elastic IPアドレスの数</td><td data-label="既定値の目安">リージョンごとに5個</td><td data-label="上限に達すると">新しいElastic IPを確保できない</td></tr>
+<tr><td data-label="サービス">VPC</td><td data-label="クォータ">リージョンあたりのVPCの数</td><td data-label="既定値の目安">5個</td><td data-label="上限に達すると">VPCを作成できない</td></tr>
+<tr><td data-label="サービス">Lambda</td><td data-label="クォータ">同時実行数</td><td data-label="既定値の目安">リージョンごとに1,000(新しいアカウントでは低い場合がある)</td><td data-label="上限に達すると">超えた呼び出しがスロットリングされる</td></tr>
+<tr><td data-label="サービス">各サービスのAPI</td><td data-label="クォータ">1秒あたりのリクエスト数</td><td data-label="既定値の目安">APIごとに異なる</td><td data-label="上限に達すると"><code>ThrottlingException</code>(スロットリング)になる</td></tr>
+</table></div>
+<div class="point"><p>APIのスロットリングは、AWS SDKの<strong>リトライ(エクスポネンシャルバックオフ)</strong>で吸収するのが基本です。それでも足りない場合にクォータの引き上げを申請します。</p></div>
+
+<h3 id="c1-3">確認と引き上げ:Service Quotas<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>クォータは<strong>Service Quotas</strong>(コンソール・API)でまとめて確認し、引き上げを申請できます。</p>
+<ul>
+<li>サービスごとに、現在の値(適用されているクォータ)・既定値・調整可能かどうかを確認できる。</li>
+<li>調整可能なクォータは、Service Quotasから<strong>引き上げをリクエスト</strong>する。承認まで時間がかかることがあるため、本番の前やイベントの前に余裕を持って申請する。</li>
+<li>Organizationsを使っている場合は、<strong>クォータリクエストテンプレート</strong>で、新しく作るアカウントに自動で引き上げを申請できる。</li>
+</ul>
+
+<h3 id="c1-4">上限に近づいたら知らせる<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 202" style="max-width:684px;min-width:547px" role="img" aria-label="図1 クォータの監視。多くのサービスは使用量をCloudWatchの AWS/Usage 名前空間に送っている。メトリクス計算の SERVICE_QUOTA() 関数でクォータに対する割合を求めてアラームを作り、上限に近づいたら通知して引き上げを申請する。"><defs><marker id="dgterms-service-quotas-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="use">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">使用量</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">AWS/Usage メトリクス</text>
+</g>
+<g data-node="al">
+<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="347" y="104" text-anchor="middle" class="dg-tb">アラーム</text>
+<text x="347" y="122" text-anchor="middle" class="dg-s">CloudWatch・80%など</text>
+</g>
+<g data-node="sns">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">SNSで通知</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">担当者へ</text>
+</g>
+<g data-node="req">
+<rect x="510" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">引き上げを申請</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">Service Quotas</text>
+</g>
+<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#dgterms-service-quotas-1)"/>
+<path d="M422.0,95.6 L510.0,79.9" class="dg-line" marker-end="url(#dgterms-service-quotas-1)"/>
+<path d="M585.0,92.5 L585.0,125.5" class="dg-line dg-dash" marker-end="url(#dgterms-service-quotas-1)"/>
+</svg>
+</div>
+<figcaption>図1 クォータの監視。多くのサービスは使用量をCloudWatchの AWS/Usage 名前空間に送っている。メトリクス計算の SERVICE_QUOTA() 関数でクォータに対する割合を求めてアラームを作り、上限に近づいたら通知して引き上げを申請する。</figcaption>
+</figure>
+<ul>
+<li><strong>CloudWatch</strong>:Service Quotasのコンソールから、クォータに対する使用率のアラームを直接作成できる。</li>
+<li><strong>Trusted Advisor</strong>:「サービスクォータ」のチェックで、上限に近いリソース(使用率80%以上など)を一覧できる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="region-az.html">リージョンとアベイラビリティーゾーン</a>:クォータの多くはリージョンごと</li>
+<li><a href="high-availability-scaling.html">高可用性とスケーリング</a>:スケールアウトの前にクォータが足りるか確認する</li>
+<li><a href="dr-strategies.html">災害対策(DR)戦略</a>:切り替え先のリージョンでもクォータを引き上げておく</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/cloudwatch.html">Amazon CloudWatch</a>:使用量のメトリクスとアラーム</li>
+<li><a href="../services/trusted-advisor.html">AWS Trusted Advisor</a>:サービスクォータのチェック</li>
+<li><a href="../services/organizations.html">AWS Organizations</a>:クォータリクエストテンプレート</li>
+<li><a href="../services/auto-scaling.html">Amazon EC2 Auto Scaling</a>:vCPUのクォータ不足で起動に失敗することがある</li>
+<li><a href="../services/lambda.html">AWS Lambda</a>:同時実行数のクォータ</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/ec2.html"><span class="title">Amazon EC2</span><span class="kind">サービス</span><span class="desc">AWS上で仮想サーバーを動かすサービス(Elastic Compute Cloud)</span></a></li>
+<li><a href="../services/auto-scaling.html"><span class="title">Amazon EC2 Auto Scaling</span><span class="kind">サービス</span><span class="desc">負荷や障害に合わせてEC2の台数を自動で増減・維持する</span></a></li>
+<li><a href="../services/elastic-beanstalk.html"><span class="title">AWS Elastic Beanstalk</span><span class="kind">サービス</span><span class="desc">コードを渡すだけでアプリを簡単にデプロイ・運用できるPaaS</span></a></li>
+<li><a href="../services/global-accelerator.html"><span class="title">AWS Global Accelerator</span><span class="kind">サービス</span><span class="desc">AWSのグローバルネットワークで通信経路を最適化</span></a></li>
+<li><a href="../services/trusted-advisor.html"><span class="title">AWS Trusted Advisor</span><span class="kind">サービス</span><span class="desc">AWS環境を自動チェックし、ベストプラクティスに沿った改善を提案</span></a></li>
+<li><a href="../services/bedrock.html"><span class="title">Amazon Bedrock</span><span class="kind">サービス</span><span class="desc">複数の企業の生成AIモデル(基盤モデル)を、1つのAPIでサーバーの管理なしに使える</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 8件・リンク元 8件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 276" style="max-width:784px;min-width:600px" role="img" aria-label="サービスクォータとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,45 C265.0,45 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/elastic-beanstalk.html"><title>サービス:AWS Elastic Beanstalk</title><rect x="0" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="50" class="gr-t">AWS Elastic Beanstalk</text></a>
+<path class="gr-line" d="M230,75 C265.0,75 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/global-accelerator.html"><title>サービス:AWS Global Accelerator</title><rect x="0" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="80" class="gr-t">AWS Global Accelerator</text></a>
+<path class="gr-line" d="M230,105 C265.0,105 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/bedrock.html"><title>サービス:Amazon Bedrock</title><rect x="0" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="110" class="gr-t">Amazon Bedrock</text></a>
+<path class="gr-line" d="M230,135 C265.0,135 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../services/ec2.html"><title>サービス:Amazon EC2</title><rect x="0" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="140" class="gr-t">Amazon EC2</text></a>
+<path class="gr-line" d="M230,165 C265.0,165 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cloudwatch-alarm-states.html"><title>用語:CloudWatchアラームの状態と評価</title><rect x="0" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="170" class="gr-t">CloudWatchアラームの状態と評価</text></a>
+<path class="gr-line" d="M230,195 C265.0,195 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/cost-management-comparison.html"><title>用語:コスト管理ツールの選び方</title><rect x="0" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="200" class="gr-t">コスト管理ツールの選び方</text></a>
+<path class="gr-line" d="M230,225 C265.0,225 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/support-plans.html"><title>用語:サポートプラン</title><rect x="0" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="230" class="gr-t">サポートプラン</text></a>
+<path class="gr-line" d="M230,255 C265.0,255 265.0,150 300,150" marker-end="url(#gr-arrow)"/>
+<a href="../terms/throttling-retry.html"><title>用語:スロットリングとリトライ</title><rect x="0" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="260" class="gr-t">スロットリングとリトライ</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/lambda.html"><title>サービス:AWS Lambda</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Lambda</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/organizations.html"><title>サービス:AWS Organizations</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Organizations</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/trusted-advisor.html"><title>サービス:AWS Trusted Advisor</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Trusted Advisor</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/auto-scaling.html"><title>サービス:Amazon EC2 Auto Scaling</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon EC2 Auto Scaling</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,195 550,195" marker-end="url(#gr-arrow)"/>
+<a href="../terms/dr-strategies.html"><title>用語:DR戦略</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">DR戦略</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,225 550,225" marker-end="url(#gr-arrow)"/>
+<a href="../terms/region-az.html"><title>用語:リージョンとアベイラビリティーゾーン</title><rect x="550" y="214" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="230" class="gr-t">リージョンとアベイラビリティー…</text></a>
+<path class="gr-line" d="M480,150 C515.0,150 515.0,255 550,255" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/high-availability-scaling.html"><title>用語:高可用性とスケーリング</title><rect x="550" y="244" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="260" class="gr-t">高可用性とスケーリング</text></a>
+<rect x="300" y="130" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="155" text-anchor="middle" class="gr-tb">サービスクォータ</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(8)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(8)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="support-plans.html"><span class="label">← 前へ</span>サポートプラン</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="sla-availability.html"><span class="label">次へ →</span>SLAと可用性</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

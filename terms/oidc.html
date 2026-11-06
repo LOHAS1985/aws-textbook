@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OIDC(OpenID Connect) | AWS教科書</title>
+<meta name="description" content="OAuth 2.0を拡張した、ユーザー認証のためのプロトコル">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html" class="current">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat3">セキュリティ・認証</a>
+  <h1>OIDC(OpenID Connect)</h1>
+  <p class="lead">OAuth 2.0を拡張した、ユーザー認証のためのプロトコル</p>
+  <p class="updated">最終更新:<time datetime="2026-10-24">2026-10-24</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 詳しい説明<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>OIDC(OpenID Connect)</strong>は、<strong>OAuth 2.0を拡張したプロトコル</strong>です。OAuth 2.0が「認可」のための仕組みなのに対し、OIDCは「認証(ユーザーが誰か)」を扱います。</p>
+<div class="table-wrap"><table>
+<tr><th>プロトコル</th><th>目的</th></tr>
+<tr><td>OAuth 2.0</td><td>認可(Authorization):何をしてよいか</td></tr>
+<tr><td>OpenID Connect</td><td>認証(Authentication):誰か</td></tr>
+</table></div>
+<h3 id="c1-1">認証フロー<a class="anchor" href="#c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 682 202" style="max-width:682px;min-width:545px" role="img" aria-label="図1 OIDCの認証フロー。①ユーザーがアプリからIdPにログインし、②IdPが認証して、③IDトークン(JWT)を発行する。④アプリはIDトークンの署名を検証してユーザーを認証する。"><defs><marker id="dgterms-oidc-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="89" width="145" height="40" rx="8" class="dg-blue"/>
+<text x="106" y="113" text-anchor="middle" class="dg-t">ユーザー</text>
+</g>
+<g data-node="app">
+<rect x="248" y="89" width="145" height="40" rx="8" class="dg-box"/>
+<text x="321" y="113" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="idp">
+<rect x="512" y="40" width="145" height="52" rx="8" class="dg-accent"/>
+<text x="585" y="62" text-anchor="middle" class="dg-tb">IdP</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">Google・Okta など</text>
+</g>
+<g data-node="tok">
+<rect x="512" y="126" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="147" text-anchor="middle" class="dg-t">IDトークン(JWT)</text>
+<text x="585" y="165" text-anchor="middle" class="dg-s">誰が・いつ・どのIdP</text>
+</g>
+<path d="M179.0,109.0 L248.5,109.0" class="dg-line" marker-end="url(#dgterms-oidc-1)"/>
+<text x="214" y="113" text-anchor="middle" class="dg-s dg-halo">①</text>
+<path d="M393.5,97.3 L512.5,78.2" class="dg-line" marker-end="url(#dgterms-oidc-1)"/>
+<text x="453" y="92" text-anchor="middle" class="dg-s dg-halo">② 認証</text>
+<path d="M585.0,92.5 L585.0,125.5" class="dg-line" marker-end="url(#dgterms-oidc-1)"/>
+<text x="585" y="113" text-anchor="middle" class="dg-s dg-halo">③ 発行</text>
+<path d="M512.5,139.8 L393.5,120.7" class="dg-line" marker-end="url(#dgterms-oidc-1)"/>
+<text x="453" y="134" text-anchor="middle" class="dg-s dg-halo">④ 署名を検証</text>
+</svg>
+</div>
+<figcaption>図1 OIDCの認証フロー。①ユーザーがアプリからIdPにログインし、②IdPが認証して、③IDトークン(JWT)を発行する。④アプリはIDトークンの署名を検証してユーザーを認証する。</figcaption>
+</figure>
+<ol>
+<li>ユーザーが、アプリを通じてIdP(Google、Okta、GitHubなど)にログインする。IdP=ユーザーを認証し、その結果を他のサービスへ提供するもの</li>
+<li>IdPがユーザーを認証する</li>
+<li>IdPが<strong>IDトークン</strong>を発行する。IDトークンはJWT形式で、「誰が」「いつ」「どのIdPによって」認証されたかの情報を含む</li>
+<li>アプリはIDトークンを受け取り、<strong>署名を検証</strong>することで認証を行う</li>
+</ol>
+
+<h3 id="c1-2">AWSでの使われ方<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>AWSでは、IAMにOIDC IdPを登録しておき、IdPが発行したIDトークンをSTSの <code>AssumeRoleWithWebIdentity</code> に渡すことで、IAMユーザーなしで一時的な認証情報を受け取れます。EKSのIRSAや、Cognitoのソーシャルログインでも使われています。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 関連する用語<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../usecases/cross-account-access.html">異なるAWSアカウントのリソースにアクセス</a>:STSで一時認証情報を得る流れ</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 関連サービス<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/iam.html">AWS IAM</a>:OIDC IdPの登録</li>
+<li><a href="../services/sts.html">AWS STS</a>:AssumeRoleWithWebIdentity</li>
+<li><a href="../services/cognito.html">Amazon Cognito</a>:OIDC IdP経由のサインイン</li>
+<li><a href="../services/eks.html">Amazon EKS</a>:IRSAでOIDCプロバイダーを使う</li>
+</ul>
+</section>
+<section class="chapter backlinks">
+<h2 id="c4">この用語が出てくるページ<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul class="backlink-list">
+<li><a href="../services/iam.html"><span class="title">AWS IAM</span><span class="kind">サービス</span><span class="desc">AWSの認証・認可を管理するサービス</span></a></li>
+<li><a href="../services/cognito.html"><span class="title">Amazon Cognito</span><span class="kind">サービス</span><span class="desc">アプリにユーザー認証・認可の機能を提供するサービス</span></a></li>
+<li><a href="../services/appsync.html"><span class="title">AWS AppSync</span><span class="kind">サービス</span><span class="desc">マネージドなGraphQL APIサービス</span></a></li>
+</ul>
+</section>
+
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 5件・リンク元 4件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="OIDC(OpenID Connect)とリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,60 C265.0,60 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/appsync.html"><title>サービス:AWS AppSync</title><rect x="0" y="49" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="64" class="gr-t">AWS AppSync</text></a>
+<path class="gr-line" d="M230,90 C265.0,90 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-policy-evaluation.html"><title>用語:IAMポリシーと評価ロジック</title><rect x="0" y="79" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="94" class="gr-t">IAMポリシーと評価ロジック</text></a>
+<path class="gr-line" d="M230,120 C265.0,120 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../terms/iam-roles-credentials.html"><title>用語:IAMロールと一時的な認証情報</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="124" class="gr-t">IAMロールと一時的な認証情報</text></a>
+<path class="gr-line" d="M230,150 C265.0,150 265.0,105 300,105" marker-end="url(#gr-arrow)"/>
+<a href="../terms/terraform-git.html"><title>用語:TerraformとGit</title><rect x="0" y="139" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="154" class="gr-t">TerraformとGit</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/sts.html"><title>サービス:AWS STS</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS STS</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/cognito.html"><title>サービス:Amazon Cognito</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon Cognito</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/eks.html"><title>サービス:Amazon EKS</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon EKS</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../usecases/cross-account-access.html"><title>運用シナリオ:異なるAWSアカウントのリソースにアクセス</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-usecases"/><text x="560" y="170" class="gr-t">異なるAWSアカウントのリソース…</text></a>
+<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">OIDC(OpenID Conne…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(4)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="tls-termination.html"><span class="label">← 前へ</span>TLS終端と証明書の配置</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="spf.html"><span class="label">次へ →</span>SPF(Sender Policy Framework)</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

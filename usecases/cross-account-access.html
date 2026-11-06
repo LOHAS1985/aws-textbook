@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>異なるAWSアカウントのリソースにアクセス | AWS教科書</title>
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html" class="current">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
+  <h1>異なるAWSアカウントのリソースにアクセス</h1>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. やりたいこと<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>アカウントAのロールから、<strong>アカウントBのS3バケット</strong>を操作したい。</li>
+<li>アカウントBにIAMユーザーを作って<strong>アクセスキーを渡すことはしたくない</strong>。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 構成を組み立てる<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 722 263" style="max-width:722px;min-width:578px" role="img" aria-label="図1 クロスアカウントアクセスの構成。"><defs><marker id="dgusecases-cross-account-access-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="88" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="110" text-anchor="middle" class="dg-t">アカウントA</text>
+<text x="114" y="128" text-anchor="middle" class="dg-s">IAMユーザー/ロール</text>
+</g>
+<g data-node="sts">
+<rect x="286" y="88" width="160" height="52" rx="8" class="dg-blank"/>
+<text x="366" y="110" text-anchor="middle" class="dg-t">①</text>
+<text x="366" y="128" text-anchor="middle" class="dg-s">一時的な認証情報</text>
+</g>
+<g data-node="role">
+<rect x="538" y="88" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="618" y="110" text-anchor="middle" class="dg-tb">アカウントBのロール</text>
+<text x="618" y="128" text-anchor="middle" class="dg-s">信頼+権限ポリシー</text>
+</g>
+<g data-node="s3">
+<rect x="538" y="187" width="160" height="52" rx="8" class="dg-ok"/>
+<text x="618" y="208" text-anchor="middle" class="dg-t">アカウントBのS3</text>
+<text x="618" y="226" text-anchor="middle" class="dg-s">ロールの権限で操作</text>
+</g>
+<path d="M194.0,114.0 L286.0,114.0" class="dg-line" marker-end="url(#dgusecases-cross-account-access-1)" marker-start="url(#dgusecases-cross-account-access-1)"/>
+<path d="M446.0,114.0 L538.0,114.0" class="dg-line" marker-end="url(#dgusecases-cross-account-access-1)"/>
+<text x="492" y="118" text-anchor="middle" class="dg-s dg-halo">確認</text>
+<path d="M194.0,129.7 L538.0,197.3" class="dg-line dg-dash" marker-end="url(#dgusecases-cross-account-access-1)"/>
+<text x="366" y="168" text-anchor="middle" class="dg-s dg-halo">操作</text>
+</svg>
+</div>
+<figcaption>図1 クロスアカウントアクセスの構成。</figcaption>
+</figure>
+
+<div class="ex-item" data-node="sts">
+<p class="ex-q">① 別アカウントのロールを引き受け、一時的な認証情報を発行するものは?</p>
+<ul class="ex-choices">
+<li data-ok data-short="AWS STS">AWS STS(AssumeRole)<span class="ex-why">有効期限付きのアクセスキー・シークレットキー・セッショントークンを発行します(<a href="../terms/iam-roles-credentials.html">IAMロールと一時的な認証情報</a>)。</span></li>
+<li data-short="KMS">AWS KMS<span class="ex-why">暗号化のキーを管理するサービスで、認証情報は発行しません。</span></li>
+<li data-short="Secrets Manager">AWS Secrets Manager<span class="ex-why">保存した秘密情報を渡せますが、長期のアクセスキーを渡すのと同じになります。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">② 「アカウントAがこのロールを引き受けてよい」と決めるのは?</p>
+<ul class="ex-choices">
+<li data-ok>アカウントBのロールの信頼ポリシー<span class="ex-why">誰がロールを引き受けられるかを <code>Principal</code> で決めます。</span></li>
+<li>アカウントBのロールの権限ポリシー<span class="ex-why">引き受けたあとに何ができるかを決めるもので、誰が引き受けられるかではありません。</span></li>
+<li>アカウントBのSCP<span class="ex-why">権限の上限を決めるもので、引き受けを許可するものではありません。</span></li>
+</ul>
+</div>
+
+<div class="ex-item">
+<p class="ex-q">③ AssumeRoleで AccessDenied になるとき、確認するものは?</p>
+<ul class="ex-choices">
+<li data-ok>アカウントA側の <code>sts:AssumeRole</code> の許可と、B側の信頼ポリシーの両方<span class="ex-why">別アカウントへのアクセスは、両方の側で許可されている必要があります(<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>)。</span></li>
+<li>アカウントBのS3バケットのバージョニング<span class="ex-why">ロールの引き受けには関係ありません。</span></li>
+<li>アカウントAのルートユーザーのMFA<span class="ex-why">ロールの引き受けの判定には関係ありません。</span></li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. 構成図<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<p>アカウントAが<strong>STS</strong>でアカウントBのロールを引き受け、ロールの<strong>信頼ポリシー</strong>で許可されていれば一時的な認証情報が返ります。その認証情報で、ロールの権限ポリシーの範囲でS3を操作します。CloudTrailには AssumedRole として記録されます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 734 275" style="max-width:734px;min-width:587px" role="img" aria-label="図2 クロスアカウントアクセスの流れ。①アカウントAがSTSにAssumeRoleを要求し、②STSがアカウントBのロールの信頼ポリシーを確認して、③一時認証情報(デフォルト1時間有効)を返す。④Aはその認証情報を使い、ロールの権限ポリシーの範囲でBのリソースを操作する。"><defs><marker id="dgusecases-cross-account-access-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="526" y="58" width="184" height="193" rx="10" class="dg-group"/>
+<text x="536" y="73" class="dg-s">アカウントB</text>
+<g data-node="user">
+<rect x="34" y="88" width="160" height="52" rx="8" class="dg-blue"/>
+<text x="114" y="110" text-anchor="middle" class="dg-t">アカウントA</text>
+<text x="114" y="128" text-anchor="middle" class="dg-s">IAMユーザー/ロール</text>
+</g>
+<g data-node="sts">
+<rect x="286" y="94" width="160" height="40" rx="8" class="dg-box"/>
+<text x="366" y="118" text-anchor="middle" class="dg-t">AWS STS</text>
+</g>
+<g data-node="role">
+<rect x="538" y="88" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="618" y="110" text-anchor="middle" class="dg-tb">アカウントBのロール</text>
+<text x="618" y="128" text-anchor="middle" class="dg-s">信頼+権限ポリシー</text>
+</g>
+<g data-node="s3">
+<rect x="538" y="187" width="160" height="52" rx="8" class="dg-ok"/>
+<text x="618" y="208" text-anchor="middle" class="dg-t">アカウントBのS3</text>
+<text x="618" y="226" text-anchor="middle" class="dg-s">ロールの権限で操作</text>
+</g>
+<path d="M194.0,114.0 L286.0,114.0" class="dg-line" marker-end="url(#dgusecases-cross-account-access-2)" marker-start="url(#dgusecases-cross-account-access-2)"/>
+<path d="M446.0,114.0 L538.0,114.0" class="dg-line" marker-end="url(#dgusecases-cross-account-access-2)"/>
+<text x="492" y="118" text-anchor="middle" class="dg-s dg-halo">② 確認</text>
+<path d="M194.0,129.7 L538.0,197.3" class="dg-line dg-dash" marker-end="url(#dgusecases-cross-account-access-2)"/>
+<text x="366" y="168" text-anchor="middle" class="dg-s dg-halo">④ 操作</text>
+</svg>
+</div>
+<figcaption>図2 クロスアカウントアクセスの流れ。①アカウントAがSTSにAssumeRoleを要求し、②STSがアカウントBのロールの信頼ポリシーを確認して、③一時認証情報(デフォルト1時間有効)を返す。④Aはその認証情報を使い、ロールの権限ポリシーの範囲でBのリソースを操作する。</figcaption>
+</figure>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 643 129" style="max-width:643px;min-width:520px" role="img" aria-label="図3 3つのポリシーの役割。AssumeRoleが成功するには、Aの「IDベースポリシー」とBのロールの「信頼ポリシー」の両方で許可されている必要がある。引き受けた後にできることは「権限ポリシー」で決まる。"><defs><marker id="dgusecases-cross-account-access-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<rect x="279" y="15" width="340" height="90" rx="10" class="dg-group"/>
+<text x="289" y="30" class="dg-s">アカウントBのロール</text>
+<rect x="24" y="15" width="170" height="90" rx="10" class="dg-group"/>
+<text x="34" y="30" class="dg-s">アカウントA</text>
+<g data-node="idp">
+<rect x="34" y="43" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="64" text-anchor="middle" class="dg-t">IDベースポリシー</text>
+<text x="109" y="82" text-anchor="middle" class="dg-s">自分が何をできるか</text>
+</g>
+<g data-node="trust">
+<rect x="289" y="43" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="64" text-anchor="middle" class="dg-tb">信頼ポリシー</text>
+<text x="364" y="82" text-anchor="middle" class="dg-s">誰がロールになれるか</text>
+</g>
+<g data-node="perm">
+<rect x="459" y="43" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="534" y="64" text-anchor="middle" class="dg-t">権限ポリシー</text>
+<text x="534" y="82" text-anchor="middle" class="dg-s">ロールで何ができるか</text>
+</g>
+<path d="M184.0,69.0 L289.0,69.0" class="dg-line" marker-end="url(#dgusecases-cross-account-access-3)"/>
+<path d="M439.0,69.0 L459.0,69.0" class="dg-line" marker-end="url(#dgusecases-cross-account-access-3)"/>
+</svg>
+</div>
+<figcaption>図3 3つのポリシーの役割。AssumeRoleが成功するには、Aの「IDベースポリシー」とBのロールの「信頼ポリシー」の両方で許可されている必要がある。引き受けた後にできることは「権限ポリシー」で決まる。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 使うサービスと役割<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../services/sts.html">AWS STS</a>:有効期限付きの一時認証情報(アクセスキー、シークレットキー、セッショントークン)を発行する</li>
+<li><a href="../services/iam.html">AWS IAM</a>:アカウントAのIDベースポリシー、アカウントBのロール(信頼ポリシー・権限ポリシー)を定義する</li>
+<li><a href="../services/s3.html">Amazon S3</a>などのアクセス先リソース:必要に応じてリソース側のポリシー(バケットポリシーなど)も確認される</li>
+<li><a href="../services/cloudtrail.html">AWS CloudTrail</a>:ロールを引き受けた操作が <code>AssumedRole</code> として記録される</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 構築の流れ<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table class="stack">
+<tr><th>手順</th><th>誰が</th><th>何をするか</th><th>確認・使用されるポリシー</th><th>結果</th></tr>
+<tr><td data-label="手順">①</td><td data-label="誰が">アカウントAのIAMユーザー/ロール</td><td data-label="何をするか">STSに <code>sts:AssumeRole</code> を呼び出す(BのロールのARNを指定)</td><td data-label="確認・使用されるポリシー">AのIDベースポリシー(Bのロールへの <code>sts:AssumeRole</code> が許可されているか)</td><td data-label="結果">引き受けのリクエストがSTSに届く</td></tr>
+<tr><td data-label="手順">②</td><td data-label="誰が">AWS STS</td><td data-label="何をするか">Bのロールの信頼ポリシーを確認する</td><td data-label="確認・使用されるポリシー">Bのロールの信頼ポリシー(<code>Principal</code> にAが含まれるか、ExternalIdなどの条件を満たすか)</td><td data-label="結果">引き受けの可否が判定される</td></tr>
+<tr><td data-label="手順">③</td><td data-label="誰が">AWS STS</td><td data-label="何をするか">Aのプリンシパルに一時認証情報を返す(有効期限はデフォルト1時間)</td><td data-label="確認・使用されるポリシー">―</td><td data-label="結果">アクセスキー、シークレットキー、セッショントークンを取得</td></tr>
+<tr><td data-label="手順">④</td><td data-label="誰が">アカウントAのIAMユーザー/ロール</td><td data-label="何をするか">一時認証情報を使ってBのリソースを操作する</td><td data-label="確認・使用されるポリシー">Bのロールの権限ポリシー(必要に応じてリソース側のポリシーも)</td><td data-label="結果">ロールの権限の範囲で操作できる。CloudTrailには <code>AssumedRole</code> として記録される</td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. ポイント・注意点<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>ポリシー</th><th>ひとことで</th><th>答える問い</th></tr>
+<tr><td>IDベースポリシー</td><td>「自分が何をできるか」</td><td>このユーザー/ロールは、どのリソースに何をしてよいか</td></tr>
+<tr><td>権限ポリシー</td><td>「ロールになった後に何ができるか」</td><td>このロールを引き受けた人は、何をしてよいか</td></tr>
+<tr><td>信頼ポリシー</td><td>「誰がこのロールになれるか」</td><td>このロールを引き受けてよいのは誰か</td></tr>
+</table></div>
+<div class="point"><ul>
+<li><strong>信頼ポリシー</strong>は、ロールを引き受けてよい相手の一覧。例:アカウントAはOK、アカウントBのIAMユーザー tanaka はNG。</li>
+<li><strong>権限ポリシー</strong>は、ロールで何ができるか。例:特定のS3バケットに読み書きできる。</li>
+<li>AssumeRoleできないときは、<strong>Aの IDベースポリシー</strong>と<strong>Bのロールの信頼ポリシー</strong>の両方を確認する。</li>
+<li>アクセスキーを渡さずに済み、認証情報は自動で期限切れになるため安全。</li>
+</ul></div>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 4件・リンク元 1件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 156" style="max-width:784px;min-width:600px" role="img" aria-label="異なるAWSアカウントのリソースにアクセスとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,90 C265.0,90 265.0,90 300,90" marker-end="url(#gr-arrow)"/>
+<a href="../terms/oidc.html"><title>用語:OIDC(OpenID Connect)</title><rect x="0" y="79" width="230" height="22" rx="11" class="gr-terms"/><text x="10" y="94" class="gr-t">OIDC(OpenID Connect)</text></a>
+<path class="gr-line" d="M480,90 C515.0,90 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudtrail.html"><title>サービス:AWS CloudTrail</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS CloudTrail</text></a>
+<path class="gr-line" d="M480,90 C515.0,90 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/iam.html"><title>サービス:AWS IAM</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS IAM</text></a>
+<path class="gr-line" d="M480,90 C515.0,90 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/sts.html"><title>サービス:AWS STS</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS STS</text></a>
+<path class="gr-line" d="M480,90 C515.0,90 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/s3.html"><title>サービス:Amazon S3</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon S3</text></a>
+<rect x="300" y="70" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="95" text-anchor="middle" class="gr-tb">異なるAWSアカウント…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(4)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="identity-center-sso.html"><span class="label">← 前へ</span>複数アカウントへのログインをシングルサインオンにまとめる</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="access-denied-troubleshooting.html"><span class="label">次へ →</span>「AccessDenied」の原因を調べ、最小権限に直す</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script type="application/json" id="ex-graph">{"colw": 180.0, "rowh": 90.0, "nodes": [{"id": "user", "label": "アカウントA", "sub": "IAMユーザー/ロール", "x": 0.0, "y": 0.5}, {"id": "sts", "label": "AWS STS", "sub": "", "x": 1.4, "y": 0.5}, {"id": "role", "label": "アカウントBのロール", "sub": "信頼+権限ポリシー", "x": 2.8, "y": 0.5}, {"id": "s3", "label": "アカウントBのS3", "sub": "ロールの権限で操作", "x": 2.8, "y": 1.6}], "edges": [["user", "sts", false, true], ["sts", "role", false, false], ["user", "s3", true, false]], "distractors": ["KMS", "Secrets Manager"]}</script>
+<script src="../js/sim.js" defer></script>
+</body>
+</html>
