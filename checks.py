@@ -219,13 +219,30 @@ def _check_question_paper(raw, where, warnings):
     if not questions:
         warnings.append(f"{where}: 問題(quiz-q)がありません")
         return
-    if where == "questions/dea-c01" and len(questions) != 10:
-        warnings.append(f"{where}: DEA-C01の問題は10問にしてください(現在{len(questions)}問)")
+    if where == "questions/dea-c01" and len(questions) != 100:
+        warnings.append(f"{where}: DEA-C01の問題は100問にしてください(現在{len(questions)}問)")
+    ids = set()
+    domains = {str(domain): 0 for domain in range(1, 5)}
     for n, (attrs, inner) in enumerate(questions, 1):
+        question_id = re.search(r'data-id="([^"]+)"', attrs)
+        domain = re.search(r'data-domain="([1-4])"', attrs)
+        difficulty = re.search(r'data-difficulty="(basic|intermediate|advanced)"', attrs)
         answer = re.search(r'data-answer="([^"]+)"', attrs)
         kind = re.search(r'data-type="(single|multiple)"', attrs)
         choices = re.findall(r'<input\b[^>]*type="(radio|checkbox)"[^>]*value="([^"]+)"', inner)
         values = [value for _, value in choices]
+        if question_id:
+            if question_id.group(1) in ids:
+                warnings.append(f"{where}: 問{question_id.group(1)}のIDが重複しています")
+            ids.add(question_id.group(1))
+        else:
+            warnings.append(f"{where}: {n}問目に data-id がありません")
+        if not difficulty:
+            warnings.append(f"{where}: {n}問目に data-difficulty がありません")
+        if domain:
+            domains[domain.group(1)] += 1
+        else:
+            warnings.append(f"{where}: {n}問目に正しい data-domain がありません")
         if not answer or not kind:
             warnings.append(f"{where}: {n}問目に data-answer または data-type がありません")
             continue
@@ -240,6 +257,19 @@ def _check_question_paper(raw, where, warnings):
             warnings.append(f"{where}: {n}問目の正解(data-answer)が選択肢と一致しません")
         if len(re.findall(r'<details class="quiz-answer">', inner)) != 1:
             warnings.append(f"{where}: {n}問目に答えと解説(quiz-answer)を1つ付けてください")
+        stem = re.search(r'<p class="quiz-stem">(.*?)</p>', inner, re.S)
+        if stem and not 100 <= len(_text_only(stem.group(1)).strip()) <= 250:
+            warnings.append(f"{where}: 問{n}の問題文は100〜250字を目安にしてください")
+        wrong_count = len(values) - len(correct)
+        explanation = re.search(r'<ul>(.*?)</ul>', inner, re.S)
+        if not explanation or len(re.findall(r'<li>', explanation.group(1))) != wrong_count:
+            warnings.append(f"{where}: 問{n}の誤答選択肢それぞれに解説を付けてください")
+    if where == "questions/dea-c01":
+        if ids != {str(question_id) for question_id in range(1, 101)}:
+            warnings.append(f"{where}: 問題IDは1〜100の連番にしてください")
+        expected = {"1": 34, "2": 26, "3": 22, "4": 18}
+        if domains != expected:
+            warnings.append(f"{where}: 出題分野の配分が公式ガイドと一致しません({domains})")
 
 
 def _check_style(raw, where, warnings):

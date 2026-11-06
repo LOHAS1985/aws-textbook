@@ -238,6 +238,8 @@ def load_pages(col, warnings, updated):
         if path.name.startswith("_"):
             continue
         text = path.read_text(encoding="utf-8")
+        if col["key"] == "questions" and path.stem == "dea-c01":
+            text = add_question_bank(text, src_dir)
         meta = dict(META_RE.findall(text))
         body = META_RE.sub("", text).strip()
         slug = path.stem
@@ -270,6 +272,91 @@ def load_pages(col, warnings, updated):
     if col.get("newest_first"):
         pages.sort(key=lambda p: p["slug"], reverse=True)
     return pages
+
+
+def add_question_bank(page, src_dir):
+    """試験別の本文に、分野ごとの追加問題データをHTMLとして組み込む。"""
+    page = annotate_existing_questions(page)
+    questions = {domain: [] for domain in range(1, 5)}
+    for domain in questions:
+        path = src_dir / f"domain-{domain}.json"
+        if not path.exists():
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        questions[domain] = [render_question(q, domain) for q in data]
+
+    for domain in range(1, 5):
+        rendered = "\n".join(questions[domain])
+        if not rendered:
+            continue
+        if domain < 4:
+            next_heading = f'<div class="quiz-domain">\n<h3 id="domain{domain + 1}"'
+            pos = page.find(next_heading)
+            if pos < 0:
+                raise ValueError(f"{src_dir.name}: 分野{domain + 1}の見出しがありません")
+            insertion = page.rfind("</div>", 0, pos)
+        else:
+            marker = '\n</div>\n\n<div class="quiz-actions">'
+            insertion = page.find(marker)
+            if insertion < 0:
+                raise ValueError(f"{src_dir.name}: 問題フォームの終了位置がありません")
+        page = page[:insertion] + "\n" + rendered + "\n" + page[insertion:]
+    return page
+
+
+def annotate_existing_questions(page):
+    domain_headings = list(re.finditer(r'<h3 id="domain([1-4])"', page))
+    matches = list(re.finditer(r'(<section class="quiz-q")([^>]*)>', page))
+    for question_number, match in reversed(list(enumerate(matches, 1))):
+        domain = max(
+            (heading for heading in domain_headings if heading.start() < match.start()),
+            key=lambda heading: heading.start(),
+        ).group(1)
+        attrs = match.group(2)
+        attrs += (f' data-id="{question_number}" data-domain="{domain}"'
+                  ' data-difficulty="intermediate"')
+        page = page[:match.start(2)] + attrs + page[match.end(2):]
+    return page
+
+
+def render_question(question, domain):
+    """問題データ1件を、JavaScriptなしでも読める選択問題HTMLにする。"""
+    qid = question["id"]
+    answer = question["answer"]
+    answer_labels = "、".join(value.upper() for value in answer)
+    input_type = "radio" if question["type"] == "single" else "checkbox"
+    difficulty_labels = {"basic": "基礎", "intermediate": "標準", "advanced": "応用"}
+    choices = []
+    incorrect = []
+    correct_reason = ""
+    for choice in question["choices"]:
+        value = choice["id"]
+        choices.append(
+            f'<li><label><input type="{input_type}" name="q{qid}" value="{html.escape(value, quote=True)}"> '
+            f'{html.escape(choice["text"])}</label></li>')
+        if value in answer:
+            correct_reason = choice["why"]
+        else:
+            incorrect.append(f'<li><strong>{html.escape(value.upper())}:</strong> {html.escape(choice["why"])}</li>')
+    links = "".join(
+        f'<a href="{html.escape(link["href"], quote=True)}">{html.escape(link["label"])}</a>'
+        for link in question.get("links", []))
+    links = f'<p>{" / ".join([links])}</p>' if links else ""
+    instruction = html.escape(question["instruction"])
+    choice_html = "\n".join(choices)
+    incorrect_html = "\n".join(incorrect)
+    return (
+        f'<section class="quiz-q" data-id="{qid}" data-domain="{domain}" '
+        f'data-difficulty="{question["difficulty"]}" data-answer="{",".join(answer)}" '
+        f'data-type="{question["type"]}">\n'
+        f'<h4>問{qid} <span class="quiz-difficulty">{difficulty_labels[question["difficulty"]]}</span></h4>\n'
+        f'<p class="quiz-stem">{html.escape(question["stem"])}</p>\n'
+        f'<fieldset class="quiz-options"><legend>{instruction}</legend>\n'
+        f'<ol class="quiz-choices">\n{choice_html}\n</ol></fieldset>\n'
+        f'<details class="quiz-answer"><summary>答えと解説を確認</summary>\n'
+        f'<p><strong>正解: {answer_labels}</strong></p>\n'
+        f'<p>{html.escape(correct_reason)}</p>\n<ul>\n{incorrect_html}\n</ul>\n{links}'
+        f'</details>\n</section>')
 
 
 # 被リンクの一覧を付けるページ:(リンク先のコレクション, リンク元のコレクション, 見出し)
@@ -652,7 +739,7 @@ def search_keys(p, category, extra=""):
 
 def question_search_text(p):
     """問題集では、問題文・選択肢・解説の語句でも試験ページを検索できるようにする。"""
-    return plain(p["body"])
+    return " ".join(plain(p["body"]).split())
 
 
 # 検索で同じものとして扱う言い換え(略称・英語名・日本語の言い方)。

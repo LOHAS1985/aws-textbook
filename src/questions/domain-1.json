@@ -1,0 +1,1371 @@
+[
+  {
+    "id": 11,
+    "difficulty": "basic",
+    "type": "single",
+    "stem": "分析部門はオンプレミスのPostgreSQLデータベースから、毎晩必要な表を抽出し、列の整形を行ってAmazon S3へ保存したいと考えています。数分ごとの変更追跡や無停止移行は要件ではなく、既存JDBC接続を利用します。抽出結果は後続分析に使うため、ジョブ履歴も確認したい場合の適切な方法はどれですか。今回、データは毎晩の定時処理で十分であり、レコード単位の即時反映や更新ログの追従は求められません。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "b"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "GlueクローラーにS3への転送と列変換を任せる",
+        "why": "クローラーはスキーマの検出とData Catalogへの登録に使い、データ自体のETLは行いません。"
+      },
+      {
+        "id": "b",
+        "text": "Glue ETLジョブにJDBC接続を設定して読み込み、変換後にS3へ書く",
+        "why": "正解です。Glue ETLジョブはJDBCを含むデータソースから読み込み、変換してS3などへ出力できます。"
+      },
+      {
+        "id": "c",
+        "text": "AWS DMSでCDCタスクを作り、変更データだけをS3へ送る",
+        "why": "DMS CDCは継続的な変更複製に適しますが、毎晩の抽出・列変換が目的で変更追跡が不要な条件には合いません。"
+      },
+      {
+        "id": "d",
+        "text": "DataSyncでPostgreSQLの表をファイルシステムとして同期する",
+        "why": "DataSyncはファイルシステム間転送向けで、JDBCデータベースの表を抽出・変換しません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      },
+      {
+        "href": "../services/dms.html",
+        "label": "AWS DMS"
+      },
+      {
+        "href": "../services/datasync.html",
+        "label": "AWS DataSync"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "difficulty": "basic",
+    "type": "single",
+    "stem": "ECサイトから毎秒届く行動ログを、変換処理をほとんど加えずにAmazon S3へ蓄積します。アプリ側にファイル分割や再試行を作らず、一定量または一定時間ごとにまとめてS3へ配信するマネージドサービスを選んでください。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "a"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Amazon Data Firehose",
+        "why": "正解です。Data Firehoseはストリーミングデータをバッファリングし、S3などへマネージドに配信できます。"
+      },
+      {
+        "id": "b",
+        "text": "Amazon Kinesis Data Streams",
+        "why": "Kinesis Data Streamsはコンシューマーが読み取るストリーム基盤です。直接S3へ配信する条件にはFirehoseが適します。"
+      },
+      {
+        "id": "c",
+        "text": "Amazon MSK",
+        "why": "MSKはApache Kafka互換クラスター向けです。S3への単純なマネージド配信を求める条件には過剰です。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Glue Data Catalog",
+        "why": "Data Catalogはテーブルやスキーマのメタデータを管理し、ストリームをS3へ配送しません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/data-firehose.html",
+        "label": "Amazon Data Firehose"
+      },
+      {
+        "href": "../services/kinesis.html",
+        "label": "Amazon Kinesis"
+      },
+      {
+        "href": "../services/msk.html",
+        "label": "Amazon MSK"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "difficulty": "basic",
+    "type": "multiple",
+    "stem": "S3に日々追加されるCSVをGlue ETLジョブでParquetに変換しています。正常終了したファイルを次回に繰り返し読まないことと、Athenaから出力をテーブルとして検索できることが必要です。入力は日付ごとの別ファイルで、失敗後にジョブを再実行する場合もあります。設定する機能を選んでください。入力範囲の拡大に備え、再実行時の重複読込を減らし、分析利用者が共通のテーブル定義から参照できる必要があります。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "a",
+      "c"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Glueジョブのジョブブックマークを有効にする",
+        "why": "正解です。ジョブブックマークはソースの処理状態を追跡し、後続実行で新しいデータを中心に処理できます。"
+      },
+      {
+        "id": "b",
+        "text": "Glueクローラーを出力バケットのライフサイクルルールにする",
+        "why": "クローラーはスキーマやパーティションをカタログ化しますが、オブジェクトの保存期間を管理しません。"
+      },
+      {
+        "id": "c",
+        "text": "出力テーブルのスキーマをGlue Data Catalogに登録する",
+        "why": "正解です。テーブル定義とS3上の場所をCatalogに登録すると、Athenaなどから参照できます。"
+      },
+      {
+        "id": "d",
+        "text": "Athenaのクエリ結果再利用をブックマークの代わりに使う",
+        "why": "これはAthenaのクエリ結果に関する機能で、Glue ETL入力の処理状態を追跡しません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      },
+      {
+        "href": "../services/athena.html",
+        "label": "Amazon Athena"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "difficulty": "basic",
+    "type": "single",
+    "stem": "営業部門のSaaS CRMに保存される顧客情報を毎晩Amazon S3へ取り込みます。独自API連携コードを保守せず、対応コネクタで定期転送し、転送対象の項目も選びたい場合に適するサービスはどれですか。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "b"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "AWS DataSync",
+        "why": "DataSyncはファイルサービスとAWSストレージ間の転送向けで、SaaSレコード連携用コネクタではありません。"
+      },
+      {
+        "id": "b",
+        "text": "Amazon AppFlow",
+        "why": "正解です。AppFlowは対応SaaSとAWSサービス間のフローを設定し、スケジュール転送や項目選択ができます。"
+      },
+      {
+        "id": "c",
+        "text": "AWS DMS",
+        "why": "DMSはデータベースの移行や複製向けです。SaaSコネクタによる転送ならAppFlowが適します。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Transfer Family",
+        "why": "Transfer FamilyはSFTPなどのファイル転送エンドポイントを提供し、SaaSレコードを抽出しません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/appflow.html",
+        "label": "Amazon AppFlow"
+      },
+      {
+        "href": "../services/datasync.html",
+        "label": "AWS DataSync"
+      },
+      {
+        "href": "../services/dms.html",
+        "label": "AWS DMS"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "difficulty": "basic",
+    "type": "single",
+    "stem": "社内のNFSファイルサーバーにある数十TBの分析ファイルをAmazon S3へ定期同期します。初回の移行後も変更ファイルを効率よく転送し、転送ジョブの進捗を管理したいときに選ぶサービスはどれですか。この運用です。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "c"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "AWS Transfer Family",
+        "why": "Transfer FamilyはSFTPなどの転送インターフェイスを提供しますが、大規模なファイルシステム同期を行いません。"
+      },
+      {
+        "id": "b",
+        "text": "Amazon AppFlow",
+        "why": "AppFlowはSaaSアプリケーション間のデータフローに使い、NFS上のファイル同期には使いません。"
+      },
+      {
+        "id": "c",
+        "text": "AWS DataSync",
+        "why": "正解です。DataSyncはオンプレミスのNFSなどとAWSストレージ間の転送を管理し、スケジュールや進捗を扱えます。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Glue",
+        "why": "GlueはETLサービスであり、ファイルシステム間の大規模な同期転送を担いません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/datasync.html",
+        "label": "AWS DataSync"
+      },
+      {
+        "href": "../services/transfer-family.html",
+        "label": "AWS Transfer Family"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "difficulty": "basic",
+    "type": "multiple",
+    "stem": "社内に既存のApache Kafkaプロデューサー、コンシューマー、Kafka Connectコネクタがあり、これらを大きく変更せずAWS上のマネージド環境へ移したいと考えています。移行後もKafka互換クライアントを使い、ブローカー管理の負担を減らす構成を選んでください。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "a",
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Amazon MSKに既存のKafkaアプリケーションを接続する",
+        "why": "正解です。MSKはApache Kafka互換のマネージドサービスで、既存Kafkaワークロードの移行先になります。"
+      },
+      {
+        "id": "b",
+        "text": "Data FirehoseをKafkaブローカーとして利用する",
+        "why": "Data Firehoseはストリーム配送サービスで、Kafkaブローカーやクラスターの置き換えではありません。"
+      },
+      {
+        "id": "c",
+        "text": "Glue Data CatalogをKafkaクラスターとして構成する",
+        "why": "Data Catalogはメタデータリポジトリであり、Kafkaプロトコルのメッセージブローカーではありません。"
+      },
+      {
+        "id": "d",
+        "text": "MSK ConnectでKafka Connectコネクタを実行する",
+        "why": "正解です。MSK ConnectはKafka Connectコネクタを実行するマネージド機能で、既存連携を活用できます。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/msk.html",
+        "label": "Amazon MSK"
+      },
+      {
+        "href": "../services/data-firehose.html",
+        "label": "Amazon Data Firehose"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "difficulty": "basic",
+    "type": "single",
+    "stem": "利用者がアップロードしたCSVが特定のS3プレフィックスに置かれたときだけ、検証・変換のワークフローを開始します。常時ポーリングせず、イベントを条件に処理を起動する入口として適するサービスはどれですか。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "a"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Amazon EventBridge",
+        "why": "正解です。S3イベントをEventBridgeに送り、ルールで条件判定して後続ターゲットを起動できます。"
+      },
+      {
+        "id": "b",
+        "text": "AWS Glue Data Catalog",
+        "why": "Catalogはメタデータ管理用で、オブジェクト作成イベントを受けてワークフローを起動しません。"
+      },
+      {
+        "id": "c",
+        "text": "AWS DataSync",
+        "why": "DataSyncはファイル転送を実行しますが、オブジェクト作成を条件にする汎用イベントルーターではありません。"
+      },
+      {
+        "id": "d",
+        "text": "Amazon Athena",
+        "why": "AthenaはS3データをSQLで分析し、イベントルーティングや処理起動は行いません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/eventbridge.html",
+        "label": "Amazon EventBridge"
+      },
+      {
+        "href": "../services/step-functions.html",
+        "label": "AWS Step Functions"
+      },
+      {
+        "href": "../services/s3.html",
+        "label": "Amazon S3"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "difficulty": "basic",
+    "type": "single",
+    "stem": "取引先は自社のSFTPクライアントからファイルを送る運用を変えられません。サーバー管理を避けて接続先をAWSで提供し、アップロードされたファイルをAmazon S3に保存したい場合に適するサービスはどれですか。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "AWS DataSync",
+        "why": "DataSyncはマネージドファイル転送を行いますが、取引先向けSFTPサーバーの提供が要件です。"
+      },
+      {
+        "id": "b",
+        "text": "Amazon AppFlow",
+        "why": "AppFlowはSaaS連携向けで、取引先のSFTPクライアント接続先にはなりません。"
+      },
+      {
+        "id": "c",
+        "text": "Amazon Data Firehose",
+        "why": "Data Firehoseはストリーミングレコードを配信し、SFTPエンドポイントを提供しません。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Transfer Family",
+        "why": "正解です。Transfer FamilyはSFTPなどのマネージド転送エンドポイントを提供し、S3をデータストアにできます。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/transfer-family.html",
+        "label": "AWS Transfer Family"
+      },
+      {
+        "href": "../services/datasync.html",
+        "label": "AWS DataSync"
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "difficulty": "intermediate",
+    "type": "multiple",
+    "stem": "S3に日付別のプレフィックスで保存されたJSONログをGlue ETLで正規化してParquetへ変換します。Athenaのスキャン量を抑え、日付条件で対象を絞りたい場合の設計を選んでください。分析は特定期間の指定が多く、データ量の増加に合わせて読み取り対象を小さく保つ必要があります。テーブルは年・月・日別に整理し、列を限定した分析クエリが中心です。小さいファイルが過剰に増えないよう出力も整えます。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "a",
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "出力テーブルを日付列でパーティション化し、値をカタログに登録する",
+        "why": "正解です。日付パーティションはクエリ条件に合う範囲に読み取りを絞るのに役立ちます。"
+      },
+      {
+        "id": "b",
+        "text": "全期間のデータを単一の大きなCSVに追記する",
+        "why": "単一CSVは列指向圧縮やパーティション除外を活用しにくく、日付検索時の読み取り削減に不利です。"
+      },
+      {
+        "id": "c",
+        "text": "S3オブジェクト名だけをCatalogに登録し、テーブルの場所は設定しない",
+        "why": "クエリエンジンから利用するにはスキーマやデータ場所などのテーブルメタデータが必要です。"
+      },
+      {
+        "id": "d",
+        "text": "出力をParquetにし、適切なサイズの複数ファイルとして書き出す",
+        "why": "正解です。Parquetは必要列のみの読み取りや圧縮を活用できます。細かすぎるファイルを避ける設計も重要です。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      },
+      {
+        "href": "../services/athena.html",
+        "label": "Amazon Athena"
+      },
+      {
+        "href": "../services/s3.html",
+        "label": "Amazon S3"
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "決済イベントを数秒以内に処理し、独自のコンシューマーで業務判定します。レコードを一時保持し、障害後に読み取り位置を戻して再処理する必要があります。宛先へのファイル配信ではなく、アプリケーションがストリームを読む基盤はどれですか。複数チームが独立して読み、調査時にイベントを再生します。コンシューマーの処理速度に差があり、障害調査では保持期間内の過去レコードから再開します。アプリ側で読み取り位置を制御します。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "b"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Amazon Data Firehose",
+        "why": "Firehoseはバッファリングしたデータを宛先へ配信し、コンシューマーが読み取り位置を管理する基盤ではありません。"
+      },
+      {
+        "id": "b",
+        "text": "Amazon Kinesis Data Streams",
+        "why": "正解です。コンシューマーはストリームレコードを処理し、保持中のデータを読み取り位置から再処理できます。"
+      },
+      {
+        "id": "c",
+        "text": "Amazon AppFlow",
+        "why": "AppFlowはSaaSとのデータフロー向けで、低レイテンシーイベントストリームを読む用途ではありません。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Glue Data Catalog",
+        "why": "Catalogはメタデータを管理し、レコードを保持してコンシューマーへ配信するストリームではありません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/kinesis.html",
+        "label": "Amazon Kinesis"
+      },
+      {
+        "href": "../services/data-firehose.html",
+        "label": "Amazon Data Firehose"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "会社のデータ基盤はApache Kafkaを利用し、Kafka Connectコネクタやプロトコル互換クライアントに依存しています。運用負担を減らしつつKafkaのエコシステムを継続利用できるマネージドAWSサービスを選びます。監視方式やクライアントを保ち、ブローカー運用を軽減することが評価基準です。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "c"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Amazon Kinesis Data Streams",
+        "why": "KinesisはAWSストリーミングサービスですがKafkaクラスターではなく、Kafka Connect依存をそのまま持ち込めません。"
+      },
+      {
+        "id": "b",
+        "text": "Amazon Data Firehose",
+        "why": "Firehoseはストリーム配送を簡素化しますが、Kafka互換ブローカーやKafka Connect環境ではありません。"
+      },
+      {
+        "id": "c",
+        "text": "Amazon MSK",
+        "why": "正解です。MSKはApache Kafka互換のマネージドクラスターを提供し、Kafkaプロトコルやエコシステムを活用できます。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Glue",
+        "why": "GlueはETLとデータ統合に適しますが、Kafka互換ブローカーの代替ではありません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/msk.html",
+        "label": "Amazon MSK"
+      },
+      {
+        "href": "../services/kinesis.html",
+        "label": "Amazon Kinesis"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "IoTセンサーのイベントを数分単位の時間窓で集計し、キーごとの状態を保って継続処理します。結果は集計テーブルに出力し、ストリーム処理にApache Flinkを利用したいと考えています。遅延イベントも窓に反映し、状態管理を独自実装する方法は避けます。処理の中間状態はチェックポイントで復旧し、集計結果は定期的に分析用ストアへ反映します。バッチ実行に置き換える選択は避けます。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "a"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Amazon Managed Service for Apache Flink",
+        "why": "正解です。Apache Flinkを使い、状態を持つ演算や時間窓集計などを構成できます。"
+      },
+      {
+        "id": "b",
+        "text": "Amazon Data Firehose",
+        "why": "Firehoseは配信や対応する変換を提供しますが、状態を持つ任意の時間窓処理エンジンではありません。"
+      },
+      {
+        "id": "c",
+        "text": "AWS Glueクローラー",
+        "why": "クローラーはスキーマ検出・カタログ化を行い、継続的な状態管理付き集計は行いません。"
+      },
+      {
+        "id": "d",
+        "text": "Amazon AppFlow",
+        "why": "AppFlowはSaaS連携向けで、IoTストリームのFlink演算基盤ではありません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/kinesis.html",
+        "label": "Amazon Kinesis"
+      },
+      {
+        "href": "../services/data-firehose.html",
+        "label": "Amazon Data Firehose"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "difficulty": "intermediate",
+    "type": "multiple",
+    "stem": "データレイクに新しいS3プレフィックスが定期追加され、ファイル形式や列が変更されることがあります。運用者がテーブル定義を毎回手入力せず、検出したスキーマを分析サービスから参照できる状態にしたい場合の対応を選んでください。利用者は新しい列の定義も共通参照します。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "b",
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Athenaで各オブジェクトを都度直接クエリし、スキーマを永続化しない",
+        "why": "毎回の直接指定は分析者の作業を増やし、再利用できるメタデータの管理要件を満たしません。"
+      },
+      {
+        "id": "b",
+        "text": "Glueクローラーでスキーマやパーティションを検出する",
+        "why": "正解です。クローラーはデータを調べ、検出したメタデータをGlue Data Catalogへ登録・更新できます。"
+      },
+      {
+        "id": "c",
+        "text": "DataSyncのタスク履歴をテーブル定義としてAthenaに渡す",
+        "why": "DataSyncはファイル転送状態を管理しますが、内容からスキーマを検出して登録する機能ではありません。"
+      },
+      {
+        "id": "d",
+        "text": "Glue Data Catalogのテーブル定義を分析サービスから利用する",
+        "why": "正解です。CatalogのテーブルメタデータをAthenaなどと共有し、場所やスキーマを参照できます。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      },
+      {
+        "href": "../services/athena.html",
+        "label": "Amazon Athena"
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "S3入力を使うGlueジョブでブックマークを有効にしました。以前に正常処理したファイルは再実行時に読まれず、新規ファイルは対象になります。既存ファイルを修正して同じ場所へ再配置した場合の運用上の説明として適切なものはどれですか。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "ブックマークは全出力先への重複書き込みを自動的に防ぐ",
+        "why": "ブックマークは入力状態を追跡しますが、出力先の一意性や重複排除を自動保証しません。"
+      },
+      {
+        "id": "b",
+        "text": "クローラーを実行すればブックマーク済みファイルも再処理される",
+        "why": "クローラーはカタログメタデータを検出・更新する機能で、ジョブの処理状態を巻き戻しません。"
+      },
+      {
+        "id": "c",
+        "text": "ブックマークはAthenaクエリの実行履歴だけを保存する",
+        "why": "ジョブブックマークはGlueジョブのソース処理状態を追跡し、Athenaのクエリ履歴とは別です。"
+      },
+      {
+        "id": "d",
+        "text": "修正済みデータの再処理にはブックマーク状態や入力範囲の管理が必要になる",
+        "why": "正解です。ブックマークは新規データ識別を支援しますが、過去入力の再取り込みは状態のリセットや範囲分けが必要です。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "difficulty": "intermediate",
+    "type": "multiple",
+    "stem": "ストリームのコンシューマーは処理後に外部APIへ通知します。障害時の再試行や読み取り位置の巻き戻しで同じイベントが複数回届く可能性があるため、通知先に二重登録を作らない設計が必要です。処理済み通知は業務記録上、一件だけに保つ必要があります。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "a",
+      "c"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "イベントIDを冪等性キーとして保存し、処理済みIDの再適用を抑止する",
+        "why": "正解です。安定したイベントIDを重複判定に使えば、再配信でも業務効果を一度に制御できます。"
+      },
+      {
+        "id": "b",
+        "text": "再試行回数を無制限にし、配信の重複をなくす",
+        "why": "再試行を増やしても重複はなくならず、失敗が続くと処理や外部API負荷が滞留します。"
+      },
+      {
+        "id": "c",
+        "text": "外部API側でも一意制約や冪等な更新を使えるようにする",
+        "why": "正解です。受信側で同じキーの更新を安全に扱えば、送信側再試行による重複副作用を防げます。"
+      },
+      {
+        "id": "d",
+        "text": "処理完了前に読み取り位置を確定する",
+        "why": "外部APIへの反映前に完了扱いにすると、後続障害時に通知が失われる可能性があり、重複防止にもなりません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/kinesis.html",
+        "label": "Amazon Kinesis"
+      },
+      {
+        "href": "../services/step-functions.html",
+        "label": "AWS Step Functions"
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "ファイル到着後に検証、変換、公開の順で処理し、各段階で失敗時の再試行と状態確認を行います。AWSサービス中心に構成し、処理順序や分岐を視覚的に管理したい場合に適するサービスはどれですか。運用者は失敗段階を特定してから再実行できることも必要です。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "b"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "AWS Glue Data Catalog",
+        "why": "Catalogはデータメタデータを管理し、複数タスクの順序や再試行を制御しません。"
+      },
+      {
+        "id": "b",
+        "text": "AWS Step Functions",
+        "why": "正解です。状態機械として順序、分岐、再試行を定義し、AWSサービスを連携できます。"
+      },
+      {
+        "id": "c",
+        "text": "Amazon Data Firehose",
+        "why": "Firehoseはストリーム配信向けで、複数段階の一般的なワークフローを制御しません。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Transfer Family",
+        "why": "Transfer Familyはファイル転送エンドポイントを提供し、後続タスクの状態管理や分岐を担いません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/step-functions.html",
+        "label": "AWS Step Functions"
+      },
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "分析チームは既存のApache Airflow DAGやプラグイン、Python依存関係をできるだけ維持し、スケジュールされた複数ジョブの依存関係を運用したいと考えています。AWSでマネージドAirflow環境を提供するサービスを選んでください。定義を独自形式へ書き換えることは避けます。既存のDAGではタスク依存や定期実行を多用し、運用者はAirflowの画面でスケジュールと履歴を確認しています。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "c"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "AWS Step Functions",
+        "why": "Step Functionsは状態機械に適しますが、既存Airflow DAGやプラグインをそのまま動かす環境ではありません。"
+      },
+      {
+        "id": "b",
+        "text": "AWS Batch",
+        "why": "Batchはコンテナジョブのキューイングと実行を管理しますが、Airflow環境ではありません。"
+      },
+      {
+        "id": "c",
+        "text": "Amazon Managed Workflows for Apache Airflow (MWAA)",
+        "why": "正解です。MWAAはAirflowのマネージド環境で、DAGによるワークフローを実行できます。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Glue Data Catalog",
+        "why": "Data Catalogはメタデータ管理機能で、AirflowのDAG実行環境ではありません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/mwaa.html",
+        "label": "Amazon MWAA"
+      },
+      {
+        "href": "../services/step-functions.html",
+        "label": "AWS Step Functions"
+      },
+      {
+        "href": "../services/batch.html",
+        "label": "AWS Batch"
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "毎晩のデータ圧縮処理はコンテナで動作し、実行時間が一定でなく数時間に及びます。多数の独立ジョブをキューで管理し、必要な計算リソースを確保して処理したい場合、Lambdaだけで構成するより適するサービスはどれですか。ジョブは処理量に応じて並列化します。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Amazon AppFlow",
+        "why": "AppFlowはSaaSとのデータフロー向けで、長時間コンテナジョブのキュー管理には使いません。"
+      },
+      {
+        "id": "b",
+        "text": "AWS Glue Data Catalog",
+        "why": "Data Catalogはメタデータ管理用で、コンテナバッチの計算リソース管理はしません。"
+      },
+      {
+        "id": "c",
+        "text": "AWS Lambda",
+        "why": "Lambdaは短時間処理に適しますが、数時間実行するコンテナバッチには実行制約が合いません。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Batch",
+        "why": "正解です。Batchはジョブキューや計算環境を管理し、コンテナバッチ処理に適します。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/batch.html",
+        "label": "AWS Batch"
+      },
+      {
+        "href": "../services/lambda.html",
+        "label": "AWS Lambda"
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "S3への小さな設定ファイル到着をきっかけに、数秒以内に軽量な検証処理を実行します。コンテナ起動管理や常時稼働サーバーを避け、イベント数に応じて実行回数を伸縮させたい場合に適するサービスはどれですか。常時サーバーを管理せず、到着イベントごとに実行回数を伸縮できることも条件です。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "a"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "AWS Lambda",
+        "why": "正解です。Lambdaはイベント駆動の短時間処理に適し、イベント数に応じて実行をスケールできます。"
+      },
+      {
+        "id": "b",
+        "text": "AWS Batch",
+        "why": "Batchはキューに投入するバッチジョブ向けで、短時間処理だけに専用計算環境は過剰です。"
+      },
+      {
+        "id": "c",
+        "text": "Amazon MWAA",
+        "why": "MWAAはAirflow DAGを実行する環境で、軽量なイベント関数だけには大きすぎます。"
+      },
+      {
+        "id": "d",
+        "text": "Amazon MSK",
+        "why": "MSKはKafka互換ストリーミング基盤で、ファイル到着時に短い関数を実行しません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/lambda.html",
+        "label": "AWS Lambda"
+      },
+      {
+        "href": "../services/batch.html",
+        "label": "AWS Batch"
+      },
+      {
+        "href": "../services/mwaa.html",
+        "label": "Amazon MWAA"
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "difficulty": "intermediate",
+    "type": "multiple",
+    "stem": "オンプレミスDBからAWSへ継続複製し、ターゲットはS3です。移行中にソース列が追加される可能性があり、DMSタスクの監視も必要です。S3データは後続ETLで使うため、取り込み状態と下流のテーブル定義を別に確認します。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "a",
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "フルロードとCDCを組み合わせ、タスク状態や遅延を確認する",
+        "why": "正解です。フルロードとCDCで既存データと進行中の変更を複製でき、遅延は移行判断の材料です。"
+      },
+      {
+        "id": "b",
+        "text": "Glueクローラーだけでトランザクションログを監視して変更行を転送する",
+        "why": "クローラーはスキーマ検出・カタログ更新向けで、データベース変更を複製しません。"
+      },
+      {
+        "id": "c",
+        "text": "DataSyncでDBログを同期すればCDCと同じ意味で変更を適用できる",
+        "why": "ファイル同期はログの意味を解釈してトランザクション変更を適用するCDCではありません。"
+      },
+      {
+        "id": "d",
+        "text": "S3ターゲットの形式や後続処理で列変更への対応を検討する",
+        "why": "正解です。ターゲットの出力構造と後続利用側のスキーマ互換性も設計が必要です。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/dms.html",
+        "label": "AWS DMS"
+      },
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      },
+      {
+        "href": "../services/datasync.html",
+        "label": "AWS DataSync"
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "difficulty": "intermediate",
+    "type": "multiple",
+    "stem": "同じイベントを複数の独立した分析アプリケーションが低レイテンシーで読みます。各アプリが他の読み取り負荷の影響を受けず、保持中のデータを別々に再処理できる必要があります。読み取りは異なる時間に再開し、各チームが独自に処理位置を管理します。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "b",
+      "c"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Data FirehoseのS3バッファを各アプリの読み取りカーソルとして使う",
+        "why": "Firehoseは宛先へ配信し、各アプリが読み取り位置を持つストリームではありません。"
+      },
+      {
+        "id": "b",
+        "text": "各アプリケーションに独立したコンシューマーを用意する",
+        "why": "正解です。複数コンシューマーが同じストリームのレコードをそれぞれ処理できます。"
+      },
+      {
+        "id": "c",
+        "text": "必要な再処理期間を満たすよう保持期間を設定する",
+        "why": "正解です。レコードは保持期間内に再取得できるため、要件の期間をカバーする設定が必要です。"
+      },
+      {
+        "id": "d",
+        "text": "単一のSQSキューを全アプリで共有して同じメッセージを配る",
+        "why": "通常のSQSキューはメッセージをコンシューマー間で分配し、全アプリへの独立配信には合いません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/kinesis.html",
+        "label": "Amazon Kinesis"
+      },
+      {
+        "href": "../services/data-firehose.html",
+        "label": "Amazon Data Firehose"
+      },
+      {
+        "href": "../services/sqs.html",
+        "label": "Amazon SQS"
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "一連のGlueジョブを多数の依存関係付きDAGとして定義し、既存のAirflow演算子や運用手順も活用したいと考えています。状態機械へ全面的に書き換えるより、Airflow互換性を優先します。多数のタスク依存や定期実行を既存の運用知識で扱う場合に選ぶサービスはどれですか。DAGの可視化や実行履歴を日常的に使っており、ワークフロー定義を独自形式へ書き換えることは避けたい状況です。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "b"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "AWS Step Functions",
+        "why": "Step Functionsはサービス連携の状態機械に適しますが、Airflow DAGや演算子の互換実行を目的としません。"
+      },
+      {
+        "id": "b",
+        "text": "Amazon MWAA",
+        "why": "正解です。MWAAはAirflowをマネージドに実行し、既存DAGの仕組みを活用する要件に適します。"
+      },
+      {
+        "id": "c",
+        "text": "AWS Batch",
+        "why": "Batchはジョブキューや計算環境を管理しますが、Airflow DAGのスケジューラーではありません。"
+      },
+      {
+        "id": "d",
+        "text": "Amazon Data Firehose",
+        "why": "Firehoseはストリーム配信サービスであり、ジョブ依存関係のDAGを実行しません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/mwaa.html",
+        "label": "Amazon MWAA"
+      },
+      {
+        "href": "../services/step-functions.html",
+        "label": "AWS Step Functions"
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "difficulty": "intermediate",
+    "type": "single",
+    "stem": "外部の研究機関が毎日SFTPで圧縮ファイルを送ります。受信側は接続先をマネージドにし、到着後はファイルをS3に保存して別のETL処理を起動します。相手のクライアント設定を変えず、DataSyncによるファイルシステム同期ではなく既存プロトコルを維持したい場合に選ぶサービスはどれですか。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "AWS DataSync",
+        "why": "DataSyncはファイルシステム間同期に適しますが、外部取引先向けSFTPエンドポイントではありません。"
+      },
+      {
+        "id": "b",
+        "text": "AWS Glue",
+        "why": "Glueは保存後のETLに使えますが、SFTPで接続するファイル受信インターフェイスにはなりません。"
+      },
+      {
+        "id": "c",
+        "text": "Amazon AppFlow",
+        "why": "AppFlowはSaaS連携向けで、取引先のSFTP転送を受け付けません。"
+      },
+      {
+        "id": "d",
+        "text": "AWS Transfer Family",
+        "why": "正解です。Transfer FamilyはSFTPなどのマネージド転送エンドポイントを提供し、S3を保存先にできます。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/transfer-family.html",
+        "label": "AWS Transfer Family"
+      },
+      {
+        "href": "../services/datasync.html",
+        "label": "AWS DataSync"
+      },
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "difficulty": "intermediate",
+    "type": "multiple",
+    "stem": "複数のSaaSアプリからAmazon S3へ毎日データを集約します。ソースSaaSはAppFlowの増分転送に対応し、特定の列だけを受け取りたい要件です。全件同期によるAPI負荷を避け、必要な項目を抽出するためにAppFlowで検討する機能を選んでください。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "a",
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "フローの転送モードとして増分転送を選ぶ",
+        "why": "正解です。増分転送に対応するソースでは、新規・更新データを中心に取り込めます。"
+      },
+      {
+        "id": "b",
+        "text": "DataSyncタスクをAppFlowのSaaSコネクタとして登録する",
+        "why": "DataSyncはファイル転送サービスで、AppFlowコネクタやSaaSレコード抽出にはなりません。"
+      },
+      {
+        "id": "c",
+        "text": "DMS CDCタスクでSaaS APIのフィールドを選択する",
+        "why": "DMSはDB移行・複製向けで、SaaSコネクタのフィールド選択機能を提供しません。"
+      },
+      {
+        "id": "d",
+        "text": "フローのフィールドマッピングで必要な項目を選ぶ",
+        "why": "正解です。AppFlowのマッピングで転送フィールドを選び、必要に応じて変換できます。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/appflow.html",
+        "label": "Amazon AppFlow"
+      },
+      {
+        "href": "../services/datasync.html",
+        "label": "AWS DataSync"
+      },
+      {
+        "href": "../services/dms.html",
+        "label": "AWS DMS"
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "difficulty": "advanced",
+    "type": "single",
+    "stem": "店舗イベントをストリームで受け、直近5分の店舗別合計を計算してアラート判定に使います。同じ入力から未加工レコードもS3に長期保存し、集計状態を維持したい一方、独自のストリーム読み取りアプリは作りたくありません。イベント量は日内変動し、生データは監査や将来の別集計にも使います。集計結果は迅速な判断に使われます。生データは監査や後日の別集計用に保持し、中断後も処理状態を復旧できる必要があります。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "c"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Data Firehoseだけで状態付き時間窓集計と店舗別アラート判定をする",
+        "why": "Firehoseはバッファリングや配信、対応する変換を担いますが、状態付きの任意時間窓処理エンジンではありません。"
+      },
+      {
+        "id": "b",
+        "text": "Kinesis Data Streamsで独自アプリを作り、S3保存のみを行う",
+        "why": "Kinesisは候補ですが、独自アプリを作らない条件に反し、時間窓集計の実装も別途必要です。"
+      },
+      {
+        "id": "c",
+        "text": "Managed Service for Apache Flinkで状態付き集計し、Firehoseなどで元データをS3へ配信する",
+        "why": "正解です。Flinkは状態を持つ集計を行い、別の配信経路で生データ保存と分析出力を両立できます。"
+      },
+      {
+        "id": "d",
+        "text": "Glueクローラーをイベントごとに起動し、イベントを集計してアラート判定する",
+        "why": "クローラーはメタデータ検出向けで、低レイテンシー集計やアラート処理ではありません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/kinesis.html",
+        "label": "Amazon Kinesis"
+      },
+      {
+        "href": "../services/data-firehose.html",
+        "label": "Amazon Data Firehose"
+      },
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "difficulty": "advanced",
+    "type": "single",
+    "stem": "Kinesis Data Streamsのイベント数は安定していますが、特定の顧客IDにレコードが集中し、そのキーのコンシューマーだけ遅延します。ストリーム全体の容量を増やしても偏りが残り、平均スループットには余裕があります。まず見直すべき設計上の要因はどれですか。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "a"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "パーティションキーの偏り",
+        "why": "正解です。特定キーに集中すると負荷が偏ります。データ分布とキー設計を見直す必要があります。"
+      },
+      {
+        "id": "b",
+        "text": "Data Catalogのテーブル列順",
+        "why": "列順はメタデータに関係し、Kinesisのレコード分布やシャード処理負荷を決めません。"
+      },
+      {
+        "id": "c",
+        "text": "S3バケットのライフサイクル移行期間",
+        "why": "ライフサイクルはS3オブジェクトの保存に関する設定で、Kinesisのキー偏りを解消しません。"
+      },
+      {
+        "id": "d",
+        "text": "Glueクローラーの実行頻度",
+        "why": "クローラー頻度はスキーマ検出に影響しますが、ストリームのキー分布には影響しません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/kinesis.html",
+        "label": "Amazon Kinesis"
+      },
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "difficulty": "advanced",
+    "type": "multiple",
+    "stem": "日次データを取り込むGlueジョブはブックマークで増分処理しています。監査の結果、過去数日分の一部ファイルを訂正して再処理する必要があります。同じS3キーの内容が差し替えられた可能性があり、訂正分以外の再計算は最小限にしたい要件です。安全な考え方を選んでください。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "b",
+      "c"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "ブックマークが内容変更済みファイルを必ず自動再処理するとみなす",
+        "why": "ブックマークは入力状態を追跡しますが、任意の過去訂正を常に検出して再処理する保証ではありません。"
+      },
+      {
+        "id": "b",
+        "text": "訂正対象を明示した入力範囲やジョブ実行に分けて再処理する",
+        "why": "正解です。対象期間やファイルを限定すれば、通常の増分処理と分離して影響を制御できます。"
+      },
+      {
+        "id": "c",
+        "text": "出力を冪等にするか、対象パーティションを置き換えて重複や旧データを防ぐ",
+        "why": "正解です。再処理では追記重複や古い値の残存を防ぐ出力側の方針が必要です。"
+      },
+      {
+        "id": "d",
+        "text": "クローラー頻度を上げ、ブックマークをそのままにして過去入力を再実行する",
+        "why": "クローラーはメタデータを更新するだけで、ブックマーク対象の過去データを再処理させません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      },
+      {
+        "href": "../services/athena.html",
+        "label": "Amazon Athena"
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "difficulty": "advanced",
+    "type": "single",
+    "stem": "S3へのファイル到着で形式検証、Glue ETL、完了通知を順に実行します。S3イベントは少なくとも1回配信される可能性があり、重複起動で同じファイルを二重公開しないことが重要です。運用者は失敗段階を特定して再実行し、公開済みデータの整合性を保つ必要があります。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "S3を定期一覧し、すべてのファイルを無条件にGlue ETLへ再投入する",
+        "why": "ポーリングと無条件再処理は負荷や重複を生み、到着イベントを条件に状態管理する要件に合いません。"
+      },
+      {
+        "id": "b",
+        "text": "DataSyncでS3オブジェクト作成イベントを監視し、ETL順序を制御する",
+        "why": "DataSyncはストレージ転送向けで、S3イベントルーティングやワークフロー状態管理は行いません。"
+      },
+      {
+        "id": "c",
+        "text": "Glueクローラーの完了をファイル検証と通知の代わりにする",
+        "why": "クローラーはカタログ検出機能で、検証・ETL・通知の一連の制御を担いません。"
+      },
+      {
+        "id": "d",
+        "text": "EventBridgeルールで対象イベントを絞り、Step Functionsで連携し、ファイル単位の冪等性を実装する",
+        "why": "正解です。EventBridgeでルーティングし、Step Functionsで順序や失敗状態を管理し、冪等性で重複の副作用を抑えます。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/eventbridge.html",
+        "label": "Amazon EventBridge"
+      },
+      {
+        "href": "../services/step-functions.html",
+        "label": "AWS Step Functions"
+      },
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "difficulty": "advanced",
+    "type": "single",
+    "stem": "移行元DBの更新量が多く、AWS DMSでフルロードとCDCを実施しています。切り替え前にレプリケーションが追い付いたことを確認し、以後の更新欠落を抑えます。移行元への書き込みは止められず、旧環境へ戻す可能性もあります。切り替え時に確認すべき運用上の判断はどれですか。切り替え後に旧環境へ戻す可能性も考慮し、メタデータ検出の完了を複製完了と誤認しないことが重要です。",
+    "instruction": "最も適切なサービスを1つ選んでください。",
+    "answer": [
+      "b"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "Glueクローラーが全S3プレフィックスを検出したらCDC遅延に関係なく切り替える",
+        "why": "クローラーの検出状況はCDC遅延を示さず、未反映変更が残った状態で切り替えるおそれがあります。"
+      },
+      {
+        "id": "b",
+        "text": "DMSタスクのCDC遅延や状態を監視し、変更反映を確認してから切り替える",
+        "why": "正解です。フルロード完了だけでなくCDCの進行・遅延を確認し、変更追従を判断します。"
+      },
+      {
+        "id": "c",
+        "text": "DataSyncの転送スループットだけを計測し、DMSの状態を確認しない",
+        "why": "DataSync指標はDMSのCDC適用状況を表しません。異なるサービスの指標では切り替えを判断できません。"
+      },
+      {
+        "id": "d",
+        "text": "ターゲットの総行数だけ比較し、内容やCDC遅延を無視する",
+        "why": "行数が一致しても異なる更新内容や未適用変更があり得るため、遅延やデータ検証が必要です。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/dms.html",
+        "label": "AWS DMS"
+      },
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      },
+      {
+        "href": "../services/datasync.html",
+        "label": "AWS DataSync"
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "difficulty": "advanced",
+    "type": "multiple",
+    "stem": "分析チームはS3データレイクの新規データを日付パーティションで参照します。到着時にカタログ定義を更新したい一方、プレフィックス構造は一定で、頻繁な全件クロールや不要なスキーマ変更は避けたい要件です。期間検索と列追加の認識も必要です。適切な設計方針を選んでください。クエリでは特定期間だけを読むことが多く、スキーマの追加があれば認識できる状態を維持します。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "a",
+      "d"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "到着データに応じて対象範囲を絞ったクローラーやカタログ更新を設計する",
+        "why": "正解です。更新対象を限定すれば全範囲クロールを避けつつ新規メタデータを反映できます。"
+      },
+      {
+        "id": "b",
+        "text": "全パーティションを単一の非パーティション表に統合する",
+        "why": "日付で対象を絞る要件に対して、パーティションをなくすと読み取り削減に不利です。"
+      },
+      {
+        "id": "c",
+        "text": "スキーマ変化があってもカタログ更新を無効にし、古い列定義を使う",
+        "why": "新しい列を利用できないなど分析の正確性に問題が生じます。"
+      },
+      {
+        "id": "d",
+        "text": "パーティション列とS3プレフィックス規則を一貫させCatalogで管理する",
+        "why": "正解です。一貫した配置とメタデータ管理で、クエリ範囲の絞り込みや新規パーティション認識を支援します。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/glue.html",
+        "label": "AWS Glue"
+      },
+      {
+        "href": "../services/athena.html",
+        "label": "Amazon Athena"
+      },
+      {
+        "href": "../services/s3.html",
+        "label": "Amazon S3"
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "difficulty": "advanced",
+    "type": "multiple",
+    "stem": "Step Functionsのワークフローが外部ストレージへデータを書き込む処理を再試行します。書き込み成功後に応答が失われると同じ処理が再実行されます。書き込みと状態更新は単一トランザクションではないため、欠落と二重成果物のどちらも避ける設計を選んでください。",
+    "instruction": "要件を満たす選択肢を2つ選んでください。",
+    "answer": [
+      "a",
+      "c"
+    ],
+    "choices": [
+      {
+        "id": "a",
+        "text": "実行やデータ単位の安定IDを使い、書き込みを冪等にする",
+        "why": "正解です。同じ識別子の再実行を同じ結果に収束させれば再試行でも重複を抑えられます。"
+      },
+      {
+        "id": "b",
+        "text": "応答がない場合は成功とみなして再試行を一切しない",
+        "why": "書き込みに失敗していた場合にデータが欠落するため、再試行を止めるだけでは信頼性を満たしません。"
+      },
+      {
+        "id": "c",
+        "text": "出力先で一意性を強制するか、同じキーの出力を上書き・置換する",
+        "why": "正解です。同一キーの重複を出力先で防げば、再試行に耐えやすくなります。"
+      },
+      {
+        "id": "d",
+        "text": "Step Functionsの再試行設定だけで外部書き込みの重複を自動排除する",
+        "why": "再試行ポリシーは実行を制御しますが、外部副作用の重複排除は自動保証しません。"
+      }
+    ],
+    "links": [
+      {
+        "href": "../services/step-functions.html",
+        "label": "AWS Step Functions"
+      },
+      {
+        "href": "../services/lambda.html",
+        "label": "AWS Lambda"
+      }
+    ]
+  }
+]
