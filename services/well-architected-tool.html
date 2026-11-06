@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Well-Architected Tool | AWS教科書</title>
+<meta name="description" content="ワークロードをAWS Well-Architected Frameworkに沿ってレビューし、改善を追跡するサービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#E7157B">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/well-architected-tool.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat7">マネジメントとガバナンス</a>
+  <h1>AWS Well-Architected Tool</h1>
+  <p class="lead">ワークロードをAWS Well-Architected Frameworkに沿ってレビューし、改善を追跡するサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  <p class="updated">内容の確認:2026年11月7日</p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Well-Architected Tool</strong>は、ワークロードの設計をAWS Well-Architected Frameworkに沿って評価し、リスクや改善計画を記録するサービスです。フレームワークの質問に答え、レンズやマイルストーンを使ってレビューを継続できます。</p>
+<p>Well-Architected Toolはガイド付きの自己レビューを行うサービスです。AWS Well-Architected Agentのように、環境を自動分析して修正案を生成するものとは役割が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">ワークロードのレビュー<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ワークロード</strong>:業務価値を提供するシステムを登録し、レビュー対象をまとめる。</li>
+<li><strong>レンズ</strong>:AWS Well-Architected Frameworkや、業界・技術領域ごとの追加質問を使って評価する。</li>
+<li><strong>リスク</strong>:回答から高リスク・中リスクの項目を特定し、改善の優先順位を付ける。</li>
+<li><strong>マイルストーン</strong>:レビューの時点を保存し、改善前後を比較する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1148 144" style="max-width:1148px;min-width:918px" role="img" aria-label="図1 Well-Architected Toolのレビュー。質問への回答からリスクを洗い出し、改善を追跡する。"><defs><marker id="dgservices-well-architected-tool-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="workload">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">ワークロード</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">レビュー対象</text>
+</g>
+<g data-node="review">
+<rect x="364" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="429" y="90" text-anchor="middle" class="dg-tb">質問に回答</text>
+<text x="429" y="108" text-anchor="middle" class="dg-s">レンズ</text>
+</g>
+<g data-node="risk">
+<rect x="694" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="759" y="90" text-anchor="middle" class="dg-t">リスク</text>
+<text x="759" y="108" text-anchor="middle" class="dg-s">改善項目</text>
+</g>
+<g data-node="plan">
+<rect x="994" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="1059" y="90" text-anchor="middle" class="dg-t">改善計画</text>
+<text x="1059" y="108" text-anchor="middle" class="dg-s">追跡</text>
+</g>
+<path d="M164.0,94.0 L364.0,94.0" class="dg-line" marker-end="url(#dgservices-well-architected-tool-1)"/>
+<path d="M494.0,94.0 L694.0,94.0" class="dg-line" marker-end="url(#dgservices-well-architected-tool-1)"/>
+<path d="M824.0,94.0 L994.0,94.0" class="dg-line" marker-end="url(#dgservices-well-architected-tool-1)"/>
+</svg>
+</div>
+<figcaption>図1 Well-Architected Toolのレビュー。質問への回答からリスクを洗い出し、改善を追跡する。</figcaption>
+</figure>
+<h3 id="c2-2">フレームワークとの違い<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>AWS Well-Architected Frameworkは設計のベストプラクティス、Well-Architected Toolは質問への回答・レビュー記録・改善追跡のためのサービスです。Toolがワークロードの設定を自動変更するわけではありません。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>データパイプラインやデータレイクの設計を、運用・セキュリティ・信頼性の観点で見直す。</li>
+<li>複数チームのレビューと改善計画を記録する。</li>
+<li>新しい構成や移行後のワークロードを定期的に評価する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Well-Architected Tool自体は追加料金なしで利用できます。レビュー対象のAWSリソースや、改善で利用する各サービスにはそれぞれの料金が発生します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../terms/well-architected.html">AWS Well-Architected フレームワーク</a>:レビューの設計原則</li>
+<li><a href="trusted-advisor.html">AWS Trusted Advisor</a>:ベストプラクティスに基づく自動チェック</li>
+<li><a href="cloudwatch.html">Amazon CloudWatch</a>:運用状態の監視</li>
+<li><a href="systems-manager.html">AWS Systems Manager</a>:運用作業の自動化</li>
+<li>関連する用語:<a href="../terms/data-engineer-exam-map.html">DEA-C01の学習範囲</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>設計レビューの質問・リスク・改善計画を記録 → <strong>AWS Well-Architected Tool</strong>。</li>
+<li>フレームワークはベストプラクティス、Toolはレビューと改善追跡を支援するサービス。</li>
+<li>レビュー結果を基に実際の設定変更や運用改善を行うのは利用者の責任。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Well-Architected Toolはワークロードの設計レビューと改善追跡を支援する。</li>
+<li>自動修復サービスではなく、フレームワークに沿った継続的な評価に使う。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 5件・リンク元 0件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 186" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Well-Architected Toolとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/systems-manager.html"><title>サービス:AWS Systems Manager</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS Systems Manager</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/trusted-advisor.html"><title>サービス:AWS Trusted Advisor</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Trusted Advisor</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,105 550,105" marker-end="url(#gr-arrow)"/>
+<a href="../services/cloudwatch.html"><title>サービス:Amazon CloudWatch</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">Amazon CloudWatch</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../terms/well-architected.html"><title>用語:AWS Well-Architected フレームワーク</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="140" class="gr-t">AWS Well-Architected フレ…</text></a>
+<path class="gr-line" d="M480,105 C515.0,105 515.0,165 550,165" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/data-engineer-exam-map.html"><title>用語:DEA-C01の学習範囲</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="170" class="gr-t">DEA-C01の学習範囲</text></a>
+<rect x="300" y="85" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="110" text-anchor="middle" class="gr-tb">AWS Well-Architec…</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(5)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="config.html"><span class="label">← 前へ</span>AWS Config</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="systems-manager.html"><span class="label">次へ →</span>AWS Systems Manager</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

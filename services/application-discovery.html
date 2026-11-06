@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Application Discovery Service | AWS教科書</title>
+<meta name="description" content="オンプレミスのサーバー構成や依存関係を収集してクラウド移行を計画するサービス">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html" class="current">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html">ニュース</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero" style="--cat:#01A88D">
+  <div class="hero-icon"><img class="svc-icon" src="../icons/services/application-discovery.svg" alt="" width="56" height="56" loading="lazy"></div>
+  <div class="hero-text">
+  <a class="category" href="index.html#cat15">移行と転送</a>
+  <h1>AWS Application Discovery Service</h1>
+  <p class="lead">オンプレミスのサーバー構成や依存関係を収集してクラウド移行を計画するサービス</p>
+  <p class="updated">最終更新:<time datetime="2026-11-07">2026-11-07</time></p>
+  <p class="updated">内容の確認:2026年11月7日</p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. サービス概要<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Application Discovery Service</strong>は、オンプレミス環境のサーバーやデータベースの使用状況・構成・ネットワーク依存関係を収集し、AWSへの移行計画を支援するサービスです。AWS Migration Hubと連携し、検出したサーバーをアプリケーション単位にまとめて移行状況を追跡できます。</p>
+<p><strong>新規顧客は利用を開始できません。</strong>2025年11月7日以降、新規の利用開始は終了しています。既存顧客は継続して利用できます。新しい移行調査には、後継の<a href="https://aws.amazon.com/transform/" target="_blank" rel="noopener">AWS Transform</a>を検討します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 主な機能・特徴<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="c2-1">サーバーの検出方法<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>Agentless Collector</strong>:VMware vCenterに仮想アプライアンスを配置し、対象サーバーの構成・使用状況を収集する。</li>
+<li><strong>Discovery Agent</strong>:個々のサーバーにエージェントを導入して、詳細な構成やネットワーク接続を収集する。</li>
+<li>収集したデータはMigration Hubのホームリージョンに保存される。</li>
+<li>エクスポートしたデータをAmazon AthenaやAmazon Quickで分析できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1148 144" style="max-width:1148px;min-width:918px" role="img" aria-label="図1 Application Discovery Serviceによる移行前調査。収集した構成・依存関係をMigration Hubに集約し、計画に使う。"><defs><marker id="dgservices-application-discovery-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="servers">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">サーバー</text>
+</g>
+<g data-node="discovery">
+<rect x="334" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="90" text-anchor="middle" class="dg-tb">ADS</text>
+<text x="399" y="108" text-anchor="middle" class="dg-s">構成・依存関係</text>
+</g>
+<g data-node="hub">
+<rect x="679" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="744" y="90" text-anchor="middle" class="dg-t">Migration Hub</text>
+<text x="744" y="108" text-anchor="middle" class="dg-s">ホームリージョン</text>
+</g>
+<g data-node="assess">
+<rect x="994" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="1059" y="90" text-anchor="middle" class="dg-t">分析・計画</text>
+<text x="1059" y="108" text-anchor="middle" class="dg-s">移行候補</text>
+</g>
+<path d="M164.0,94.0 L334.0,94.0" class="dg-line" marker-end="url(#dgservices-application-discovery-1)"/>
+<path d="M464.0,94.0 L679.0,94.0" class="dg-line" marker-end="url(#dgservices-application-discovery-1)"/>
+<path d="M809.0,94.0 L994.0,94.0" class="dg-line" marker-end="url(#dgservices-application-discovery-1)"/>
+</svg>
+</div>
+<figcaption>図1 Application Discovery Serviceによる移行前調査。収集した構成・依存関係をMigration Hubに集約し、計画に使う。</figcaption>
+</figure>
+<h3 id="c2-2">検出と移行の違い<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Application Discovery Serviceは、移行元の把握と計画のためのデータ収集を担います。サーバーの複製・起動は行いません。実際のサーバー移行にはAWS Transform MGN、データベース移行には<a href="dms.html">AWS DMS</a>などを要件に応じて使います。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. ユースケース<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>移行対象のサーバー台数・構成・リソース使用量を把握する。</li>
+<li>サーバー間の通信を分析して、同時に移行するアプリケーション群を決める。</li>
+<li>収集データをコスト見積もりや移行先の設計に使う。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c4">4. 料金の考え方<a class="anchor" href="#c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>提供状況や利用できる機能が変更されているため、既存環境の料金と継続利用条件は公式情報で確認します。新規の調査ではAWS Transformなど現行の代替サービスと、その利用料金を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="c5">5. 関連サービス<a class="anchor" href="#c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="application-migration.html">AWS Transform MGN</a>:検出後のサーバー複製・移行</li>
+<li><a href="dms.html">AWS DMS</a>:データベースの移行と継続レプリケーション</li>
+<li><a href="datasync.html">AWS DataSync</a>:ファイル・オブジェクトの転送</li>
+<li><a href="athena.html">Amazon Athena</a>/<a href="quick.html">Amazon Quick</a>:収集データの分析</li>
+<li>関連する用語:<a href="../terms/data-engineer-exam-map.html">DEA-C01の学習範囲</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="c6">6. 試験・実務でのポイント<a class="anchor" href="#c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>オンプレミス環境を検出して移行を計画 → <strong>Application Discovery Service</strong>。</li>
+<li>新規顧客は利用を開始できず、後継のAWS Transformが案内されている。</li>
+<li>検出・計画、サーバー移行、データベース移行はそれぞれ別の役割として整理する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="c7">7. まとめ<a class="anchor" href="#c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Application Discovery Serviceは移行前のサーバー構成・依存関係を集める。</li>
+<li>新規利用は終了しているため、移行計画ではAWS Transformなどの現行サービスを検討する。</li>
+</ul>
+</section>
+<section class="chapter graph-chapter">
+<h2>このページのつながり</h2>
+<details class="graph">
+<summary>つながり図を開く(リンク先 6件・リンク元 1件)</summary>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 784 216" style="max-width:784px;min-width:600px" role="img" aria-label="AWS Application Discovery Serviceとリンクでつながるページの図"><defs><marker id="gr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<path class="gr-line" d="M230,120 C265.0,120 265.0,120 300,120" marker-end="url(#gr-arrow)"/>
+<a href="../services/snow-family.html"><title>サービス:AWS Snow Family</title><rect x="0" y="109" width="230" height="22" rx="11" class="gr-services"/><text x="10" y="124" class="gr-t">AWS Snow Family</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,45 550,45" marker-end="url(#gr-arrow)"/>
+<a href="../services/datasync.html"><title>サービス:AWS DataSync</title><rect x="550" y="34" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="50" class="gr-t">AWS DataSync</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,75 550,75" marker-end="url(#gr-arrow)"/>
+<a href="../services/dms.html"><title>サービス:AWS Database Migration Service</title><rect x="550" y="64" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="80" class="gr-t">AWS Database Migration Se…</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,105 550,105" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../services/application-migration.html"><title>サービス:AWS Transform MGN</title><rect x="550" y="94" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="110" class="gr-t">AWS Transform MGN</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,135 550,135" marker-end="url(#gr-arrow)"/>
+<a href="../services/athena.html"><title>サービス:Amazon Athena</title><rect x="550" y="124" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="140" class="gr-t">Amazon Athena</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,165 550,165" marker-end="url(#gr-arrow)"/>
+<a href="../services/quick.html"><title>サービス:Amazon Quick</title><rect x="550" y="154" width="230" height="22" rx="11" class="gr-services"/><text x="560" y="170" class="gr-t">Amazon Quick</text></a>
+<path class="gr-line" d="M480,120 C515.0,120 515.0,195 550,195" marker-end="url(#gr-arrow)" marker-start="url(#gr-arrow)"/>
+<a href="../terms/data-engineer-exam-map.html"><title>用語:DEA-C01の学習範囲</title><rect x="550" y="184" width="230" height="22" rx="11" class="gr-terms"/><text x="560" y="200" class="gr-t">DEA-C01の学習範囲</text></a>
+<rect x="300" y="100" width="180" height="40" rx="12" class="gr-me"/><text x="390" y="125" text-anchor="middle" class="gr-tb">AWS Application D…</text>
+<text x="115" y="14" text-anchor="middle" class="gr-h">リンク元(1)</text>
+<text x="665" y="14" text-anchor="middle" class="gr-h">リンク先(6)</text>
+</svg>
+</div>
+<figcaption>左はこのページへリンクしているページ、右はこのページからリンクしているページ(両向きの矢印は互いにリンク)。名前を押すとそのページへ移動します。<span class="gr-key gr-key-services">サービス</span><span class="gr-key gr-key-terms">用語</span><span class="gr-key gr-key-usecases">運用シナリオ</span></figcaption>
+</figure>
+</details>
+</section>
+<nav class="pager">
+  <a class="prev" href="datasync.html"><span class="label">← 前へ</span>AWS DataSync</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="application-migration.html"><span class="label">次へ →</span>AWS Transform MGN</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

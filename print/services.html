@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <div class="page-head booklet-cover">
 <p class="booklet-site">AWS教科書</p>
 <h1>サービス</h1>
-<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全114ページ)</p>
+<p class="lead">AWSの各サービスの仕組み・機能・料金・ポイント(全122ページ)</p>
 <p class="booklet-help">このページは、印刷やPDFでの保存のために全ページを1つにまとめたものです。ブラウザーの印刷(Ctrl+P、スマホは共有メニューの「プリント」)から、紙に印刷するかPDFとして保存してください。ページの順番は目次と同じです。</p>
 <p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button> <a href="../services/index.html">目次へ戻る</a></p>
 </div>
@@ -74,6 +74,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-rds">Amazon RDS</a></li>
 <li><a href="#p-aurora">Amazon Aurora</a></li>
 <li><a href="#p-dynamodb">Amazon DynamoDB</a></li>
+<li><a href="#p-documentdb">Amazon DocumentDB</a></li>
+<li><a href="#p-keyspaces">Amazon Keyspaces</a></li>
+<li><a href="#p-neptune">Amazon Neptune</a></li>
 <li><a href="#p-elasticache">Amazon ElastiCache</a></li>
 <li><a href="#p-memorydb">Amazon MemoryDB</a></li>
 </ol>
@@ -120,6 +123,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><a href="#p-cloudwatch">Amazon CloudWatch</a></li>
 <li><a href="#p-cloudtrail">AWS CloudTrail</a></li>
 <li><a href="#p-config">AWS Config</a></li>
+<li><a href="#p-well-architected-tool">AWS Well-Architected Tool</a></li>
 <li><a href="#p-systems-manager">AWS Systems Manager</a></li>
 <li><a href="#p-cloudformation">AWS CloudFormation</a></li>
 <li><a href="#p-cdk">AWS CDK</a></li>
@@ -193,11 +197,15 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <ol>
 <li><a href="#p-bedrock">Amazon Bedrock</a></li>
 <li><a href="#p-kendra">Amazon Kendra</a></li>
+<li><a href="#p-amazon-q">Amazon Q</a></li>
 <li><a href="#p-sagemaker-ai">Amazon SageMaker AI</a></li>
 </ol>
 <h3>移行と転送</h3>
 <ol>
 <li><a href="#p-datasync">AWS DataSync</a></li>
+<li><a href="#p-application-discovery">AWS Application Discovery Service</a></li>
+<li><a href="#p-application-migration">AWS Transform MGN</a></li>
+<li><a href="#p-snow-family">AWS Snow Family</a></li>
 <li><a href="#p-dms">AWS Database Migration Service</a></li>
 <li><a href="#p-transfer-family">AWS Transfer Family</a></li>
 </ol>
@@ -5199,6 +5207,298 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>DynamoDBはキーバリュー型のフルマネージドNoSQL。</li>
 <li>キー設計(パーティションキー・ソートキー・LSI/GSI)が性能を左右する。</li>
 <li>DAX・Streams・TTL・Transactionsで機能を拡張できる。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-documentdb">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon DocumentDB</h1>
+<p class="lead">MongoDB互換のドキュメントデータベースをマネージドで利用するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="documentdb-c1">1. サービス概要<a class="anchor" href="#documentdb-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon DocumentDB</strong>は、JSON形式のドキュメントを保存・検索するMongoDB互換のマネージドデータベースです。MongoDB用のドライバーやAPIを使うアプリケーションをAWS上で実行できます。</p>
+<p>DocumentDBはMongoDBそのものではありません。APIの互換性や利用できる機能はエンジンのバージョンによって異なるため、移行前にアプリケーションが使うコマンド・集計機能・ドライバーを検証します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c2">2. 主な機能・特徴<a class="anchor" href="#documentdb-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="documentdb-c2-1">ドキュメントモデルとクラスター<a class="anchor" href="#documentdb-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>データを柔軟なJSON形式のドキュメントとして保存し、フィールドや配列を条件に検索する。</li>
+<li>インスタンスベースのクラスターでは、書き込みを処理するインスタンスと読み取りレプリカを組み合わせる。</li>
+<li>Elastic Clustersは、シャーディングによって水平にスケールするワークロード向けの選択肢。</li>
+<li>ストレージはデータ量に応じて拡張され、バックアップや複数AZ構成を利用できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1058 144" style="max-width:1058px;min-width:846px" role="img" aria-label="図1 Amazon DocumentDBの概念。アプリケーションは互換APIを使い、読み書きの負荷に合わせてクラスターを構成する。"><defs><marker id="documentdb-dgservices-documentdb-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">MongoDB互換API</text>
+</g>
+<g data-node="writer">
+<rect x="304" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="369" y="90" text-anchor="middle" class="dg-tb">書き込み</text>
+<text x="369" y="108" text-anchor="middle" class="dg-s">プライマリ</text>
+</g>
+<g data-node="store">
+<rect x="604" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="669" y="90" text-anchor="middle" class="dg-t">文書データ</text>
+<text x="669" y="108" text-anchor="middle" class="dg-s">JSON</text>
+</g>
+<g data-node="reader">
+<rect x="904" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="969" y="90" text-anchor="middle" class="dg-t">読み取り</text>
+<text x="969" y="108" text-anchor="middle" class="dg-s">レプリカ</text>
+</g>
+<path d="M164.0,94.0 L304.0,94.0" class="dg-line" marker-end="url(#documentdb-dgservices-documentdb-1)"/>
+<path d="M434.0,94.0 L604.0,94.0" class="dg-line" marker-end="url(#documentdb-dgservices-documentdb-1)"/>
+<path d="M734.0,94.0 L904.0,94.0" class="dg-line" marker-end="url(#documentdb-dgservices-documentdb-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon DocumentDBの概念。アプリケーションは互換APIを使い、読み書きの負荷に合わせてクラスターを構成する。</figcaption>
+</figure>
+<h3 id="documentdb-c2-2">データモデルの選択<a class="anchor" href="#documentdb-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>ドキュメント内のフィールドを柔軟に扱いたいときや、MongoDB互換アプリを移行するときに候補になります。関係データやトランザクションをSQLで扱う場合は<a href="#p-rds">Amazon RDS</a>、キーを指定した低遅延アクセスは<a href="#p-dynamodb">Amazon DynamoDB</a>と比較します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c3">3. ユースケース<a class="anchor" href="#documentdb-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>MongoDB互換のアプリケーションをAWSへ移行する。</li>
+<li>商品カタログやユーザープロファイルなど、属性が異なるドキュメントを保存する。</li>
+<li>JSON形式のデータをアプリケーションの読み書きに合わせて検索する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c4">4. 料金の考え方<a class="anchor" href="#documentdb-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>クラスターのインスタンスやElastic Clustersの処理能力、データストレージ、バックアップ、データ転送などが料金に影響します。必要な読み取り性能、冗長性、保持期間を見積もり、クラスター構成を調整します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c5">5. 関連サービス<a class="anchor" href="#documentdb-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-rds">Amazon RDS</a>/<a href="#p-dynamodb">Amazon DynamoDB</a>:リレーショナル・キー値データとの使い分け</li>
+<li><a href="#p-dms">AWS DMS</a>:データベース移行と継続レプリケーション</li>
+<li><a href="#p-backup">AWS Backup</a>:データベースのバックアップ管理</li>
+<li><a href="#p-kms">AWS KMS</a>:暗号化キーの管理</li>
+<li>関連する用語:<a href="../terms/data-store-selection.html">データストアの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c6">6. 試験・実務でのポイント<a class="anchor" href="#documentdb-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>MongoDB互換のドキュメントデータベース → <strong>Amazon DocumentDB</strong>。</li>
+<li>MongoDBとの機能互換性を前提にせず、アプリが使うAPI・ドライバー・クエリーを移行前に確認する。</li>
+<li>関係データのSQLクエリーやトランザクションが必要なら、RDS・Auroraとの要件を比較する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c7">7. まとめ<a class="anchor" href="#documentdb-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>DocumentDBはMongoDB互換のドキュメントデータベース。</li>
+<li>データモデルとAPI互換性を確かめて、適切なクラスター方式を選ぶ。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-keyspaces">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon Keyspaces</h1>
+<p class="lead">Apache Cassandra互換のワイドカラムデータベースをサーバーレスで利用するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="keyspaces-c1">1. サービス概要<a class="anchor" href="#keyspaces-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Keyspaces (for Apache Cassandra)</strong>は、Apache Cassandra互換のマネージドなワイドカラムデータベースです。Cassandra Query Language (CQL) と既存のCassandraアプリケーション用ツールを使って、サーバーを管理せずにデータを読み書きできます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c2">2. 主な機能・特徴<a class="anchor" href="#keyspaces-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="keyspaces-c2-1">サーバーレスのテーブル<a class="anchor" href="#keyspaces-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>テーブルの保存容量や処理能力をサービス側が管理し、需要に応じてスケールする。</li>
+<li>オンデマンド容量モードとプロビジョンド容量モードから、トラフィックの予測可能性に合わせて選ぶ。</li>
+<li>CQLでテーブルを定義し、アプリケーションから読み書きする。</li>
+<li>マルチリージョン構成では、複数リージョン間のレプリケーションを設定できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1133 144" style="max-width:1133px;min-width:906px" role="img" aria-label="図1 Amazon Keyspacesの概念。アプリケーションがCQLでアクセスし、キー設計に基づいてデータを分散する。"><defs><marker id="keyspaces-dgservices-keyspaces-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">CQL</text>
+</g>
+<g data-node="keyspaces">
+<rect x="334" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="90" text-anchor="middle" class="dg-tb">Keyspaces</text>
+<text x="399" y="108" text-anchor="middle" class="dg-s">サーバーレス</text>
+</g>
+<g data-node="table">
+<rect x="664" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="729" y="90" text-anchor="middle" class="dg-t">テーブル</text>
+<text x="729" y="108" text-anchor="middle" class="dg-s">パーティション</text>
+</g>
+<g data-node="region">
+<rect x="979" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="1044" y="90" text-anchor="middle" class="dg-t">リージョン</text>
+<text x="1044" y="108" text-anchor="middle" class="dg-s">レプリカ</text>
+</g>
+<path d="M164.0,94.0 L334.0,94.0" class="dg-line" marker-end="url(#keyspaces-dgservices-keyspaces-1)"/>
+<path d="M464.0,94.0 L664.0,94.0" class="dg-line" marker-end="url(#keyspaces-dgservices-keyspaces-1)"/>
+<path d="M794.0,94.0 L979.0,94.0" class="dg-line dg-dash" marker-end="url(#keyspaces-dgservices-keyspaces-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon Keyspacesの概念。アプリケーションがCQLでアクセスし、キー設計に基づいてデータを分散する。</figcaption>
+</figure>
+<h3 id="keyspaces-c2-2">アクセスパターンに合わせた設計<a class="anchor" href="#keyspaces-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>パーティションキーはデータの分散と検索範囲に影響します。Cassandra互換のワイドカラム設計では、実行するクエリーを先に定め、その検索条件に合う主キーとテーブルを設計します。任意の列を自由に検索する用途には向きません。</p>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c3">3. ユースケース<a class="anchor" href="#keyspaces-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>既存のApache Cassandraアプリケーションをマネージド環境へ移行する。</li>
+<li>大量の時系列データやイベントを、キーに基づいて継続的に読み書きする。</li>
+<li>サーバー運用を避けながら、CQL互換のアプリケーションを構築する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c4">4. 料金の考え方<a class="anchor" href="#keyspaces-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>書き込み・読み取り容量、データストレージ、バックアップ、データ転送などが料金に影響します。オンデマンドとプロビジョンドの容量モード、アクセスパターン、保持期間を合わせて見積もります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c5">5. 関連サービス<a class="anchor" href="#keyspaces-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-dynamodb">Amazon DynamoDB</a>:キー値・ドキュメント型のサーバーレスデータベース</li>
+<li><a href="#p-msk">Amazon MSK</a>/<a href="#p-kinesis">Amazon Kinesis</a>:ストリームの取り込み</li>
+<li><a href="#p-dms">AWS DMS</a>:データベース移行とレプリケーション</li>
+<li>関連する用語:<a href="../terms/data-store-selection.html">データストアの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c6">6. 試験・実務でのポイント<a class="anchor" href="#keyspaces-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>Apache Cassandra互換のワイドカラムデータベース → <strong>Amazon Keyspaces</strong>。</li>
+<li>パーティションキーとアクセスパターンを先に設計する。任意の条件での検索を前提にしない。</li>
+<li>CQL互換が必要か、DynamoDBなど別のNoSQLデータベースが適するかを要件で比べる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c7">7. まとめ<a class="anchor" href="#keyspaces-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>KeyspacesはCassandra互換のサーバーレスなワイドカラムデータベース。</li>
+<li>クエリーとパーティションキーに合わせてデータモデルを設計する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-neptune">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon Neptune</h1>
+<p class="lead">ノードと関係で表すデータをクエリーするマネージドグラフデータベース</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="neptune-c1">1. サービス概要<a class="anchor" href="#neptune-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Neptune</strong>は、エンティティ間の関係をグラフとして保存・検索するマネージドデータベースです。人物・商品・端末などのノードと、その関係を表すエッジをたどるクエリーに適しています。</p>
+<p>Neptune Databaseは運用データを保持してクエリーするエンジンです。大規模なグラフをメモリ内で分析するAmazon Neptune Analyticsとは、用途と実行方法が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c2">2. 主な機能・特徴<a class="anchor" href="#neptune-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="neptune-c2-1">グラフモデルとクエリー言語<a class="anchor" href="#neptune-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>プロパティグラフではノード・エッジ・属性でデータを表し、GremlinやopenCypherで検索する。</li>
+<li>RDFグラフでは主語・述語・目的語のトリプルでデータを表し、SPARQLで検索する。</li>
+<li>クエリー言語はデータモデルやアプリケーションの要件に合わせて選ぶ。</li>
+<li>リードレプリカ、複数AZ、バックアップなど、運用データベース向けの機能を利用できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 818 179" style="max-width:818px;min-width:654px" role="img" aria-label="図1 グラフデータの概念。利用者と商品をノード、購入をエッジとして表し、関係をたどって検索する。"><defs><marker id="neptune-dgservices-neptune-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">利用者</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">ノード</text>
+</g>
+<g data-node="item">
+<rect x="334" y="33" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="54" text-anchor="middle" class="dg-tb">商品</text>
+<text x="399" y="72" text-anchor="middle" class="dg-s">ノード</text>
+</g>
+<g data-node="buys">
+<rect x="334" y="103" width="130" height="52" rx="8" class="dg-box"/>
+<text x="399" y="124" text-anchor="middle" class="dg-t">購入</text>
+<text x="399" y="142" text-anchor="middle" class="dg-s">エッジ</text>
+</g>
+<g data-node="graph">
+<rect x="664" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="729" y="90" text-anchor="middle" class="dg-t">Neptune</text>
+<text x="729" y="108" text-anchor="middle" class="dg-s">関係を探索</text>
+</g>
+<path d="M164.0,101.6 L334.0,121.4" class="dg-line" marker-end="url(#neptune-dgservices-neptune-1)"/>
+<path d="M399.0,103.0 L399.0,85.0" class="dg-line" marker-end="url(#neptune-dgservices-neptune-1)"/>
+<path d="M164.0,94.0 L664.0,94.0" class="dg-line dg-dash" marker-end="url(#neptune-dgservices-neptune-1)"/>
+</svg>
+</div>
+<figcaption>図1 グラフデータの概念。利用者と商品をノード、購入をエッジとして表し、関係をたどって検索する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c3">3. ユースケース<a class="anchor" href="#neptune-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>不正検知や推薦で、複数段階の関係をたどる。</li>
+<li>顧客・商品・取引の関係をナレッジグラフとして管理する。</li>
+<li>ネットワークや依存関係をグラフとして分析する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c4">4. 料金の考え方<a class="anchor" href="#neptune-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Neptune Databaseでは、データベースインスタンス、ストレージ、I/O、バックアップ、転送などが料金に影響します。Neptune Analyticsは別の分析用エンジンで、料金の単位や構成が異なるため、用途に合うサービスを選びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c5">5. 関連サービス<a class="anchor" href="#neptune-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-documentdb">Amazon DocumentDB</a>:ドキュメントモデルとの使い分け</li>
+<li><a href="#p-opensearch">Amazon OpenSearch Service</a>:全文検索やベクトル検索</li>
+<li><a href="#p-s3">Amazon S3</a>:グラフデータセットの保存</li>
+<li>関連する用語:<a href="../terms/data-store-selection.html">データストアの選び方</a>、<a href="../terms/vector-search.html">ベクトル検索</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c6">6. 試験・実務でのポイント<a class="anchor" href="#neptune-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>複雑な関係をたどるグラフクエリー → <strong>Amazon Neptune</strong>。</li>
+<li>Gremlin・openCypherはプロパティグラフ、SPARQLはRDFグラフのクエリー言語。</li>
+<li>SQLの表形式分析や全文検索とは異なるデータモデルを選ぶ。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c7">7. まとめ<a class="anchor" href="#neptune-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Neptuneはノードと関係を扱うマネージドグラフデータベース。</li>
+<li>データモデルに合わせてGremlin・openCypher・SPARQLを使い分ける。</li>
 </ul>
 </section>
 </article>
@@ -12571,6 +12871,105 @@ sudo resize2fs /dev/nvme0n1p1   # ext4の場合</code></pre>
 <li>Configは設定レコーダーで記録し、Configルールで評価する。</li>
 <li>非準拠はSSM AutomationやLambdaで自動修復できる。</li>
 <li>コンフォーマンスパックでルールをまとめて展開し、アグリゲーターで組織全体の状況を1か所で見る。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-well-architected-tool">
+<div class="page-head hero" style="--cat:#E7157B">
+<div class="hero-text">
+<span class="category">マネジメントとガバナンス</span>
+<h1>AWS Well-Architected Tool</h1>
+<p class="lead">ワークロードをAWS Well-Architected Frameworkに沿ってレビューし、改善を追跡するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="well-architected-tool-c1">1. サービス概要<a class="anchor" href="#well-architected-tool-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Well-Architected Tool</strong>は、ワークロードの設計をAWS Well-Architected Frameworkに沿って評価し、リスクや改善計画を記録するサービスです。フレームワークの質問に答え、レンズやマイルストーンを使ってレビューを継続できます。</p>
+<p>Well-Architected Toolはガイド付きの自己レビューを行うサービスです。AWS Well-Architected Agentのように、環境を自動分析して修正案を生成するものとは役割が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="well-architected-tool-c2">2. 主な機能・特徴<a class="anchor" href="#well-architected-tool-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="well-architected-tool-c2-1">ワークロードのレビュー<a class="anchor" href="#well-architected-tool-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>ワークロード</strong>:業務価値を提供するシステムを登録し、レビュー対象をまとめる。</li>
+<li><strong>レンズ</strong>:AWS Well-Architected Frameworkや、業界・技術領域ごとの追加質問を使って評価する。</li>
+<li><strong>リスク</strong>:回答から高リスク・中リスクの項目を特定し、改善の優先順位を付ける。</li>
+<li><strong>マイルストーン</strong>:レビューの時点を保存し、改善前後を比較する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1148 144" style="max-width:1148px;min-width:918px" role="img" aria-label="図1 Well-Architected Toolのレビュー。質問への回答からリスクを洗い出し、改善を追跡する。"><defs><marker id="well-architected-tool-dgservices-well-architected-tool-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="workload">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">ワークロード</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">レビュー対象</text>
+</g>
+<g data-node="review">
+<rect x="364" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="429" y="90" text-anchor="middle" class="dg-tb">質問に回答</text>
+<text x="429" y="108" text-anchor="middle" class="dg-s">レンズ</text>
+</g>
+<g data-node="risk">
+<rect x="694" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="759" y="90" text-anchor="middle" class="dg-t">リスク</text>
+<text x="759" y="108" text-anchor="middle" class="dg-s">改善項目</text>
+</g>
+<g data-node="plan">
+<rect x="994" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="1059" y="90" text-anchor="middle" class="dg-t">改善計画</text>
+<text x="1059" y="108" text-anchor="middle" class="dg-s">追跡</text>
+</g>
+<path d="M164.0,94.0 L364.0,94.0" class="dg-line" marker-end="url(#well-architected-tool-dgservices-well-architected-tool-1)"/>
+<path d="M494.0,94.0 L694.0,94.0" class="dg-line" marker-end="url(#well-architected-tool-dgservices-well-architected-tool-1)"/>
+<path d="M824.0,94.0 L994.0,94.0" class="dg-line" marker-end="url(#well-architected-tool-dgservices-well-architected-tool-1)"/>
+</svg>
+</div>
+<figcaption>図1 Well-Architected Toolのレビュー。質問への回答からリスクを洗い出し、改善を追跡する。</figcaption>
+</figure>
+<h3 id="well-architected-tool-c2-2">フレームワークとの違い<a class="anchor" href="#well-architected-tool-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>AWS Well-Architected Frameworkは設計のベストプラクティス、Well-Architected Toolは質問への回答・レビュー記録・改善追跡のためのサービスです。Toolがワークロードの設定を自動変更するわけではありません。</p>
+</section>
+
+<section class="chapter">
+<h2 id="well-architected-tool-c3">3. ユースケース<a class="anchor" href="#well-architected-tool-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>データパイプラインやデータレイクの設計を、運用・セキュリティ・信頼性の観点で見直す。</li>
+<li>複数チームのレビューと改善計画を記録する。</li>
+<li>新しい構成や移行後のワークロードを定期的に評価する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="well-architected-tool-c4">4. 料金の考え方<a class="anchor" href="#well-architected-tool-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Well-Architected Tool自体は追加料金なしで利用できます。レビュー対象のAWSリソースや、改善で利用する各サービスにはそれぞれの料金が発生します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="well-architected-tool-c5">5. 関連サービス<a class="anchor" href="#well-architected-tool-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../terms/well-architected.html">AWS Well-Architected フレームワーク</a>:レビューの設計原則</li>
+<li><a href="#p-trusted-advisor">AWS Trusted Advisor</a>:ベストプラクティスに基づく自動チェック</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:運用状態の監視</li>
+<li><a href="#p-systems-manager">AWS Systems Manager</a>:運用作業の自動化</li>
+<li>関連する用語:<a href="../terms/data-engineer-exam-map.html">DEA-C01の学習範囲</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="well-architected-tool-c6">6. 試験・実務でのポイント<a class="anchor" href="#well-architected-tool-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>設計レビューの質問・リスク・改善計画を記録 → <strong>AWS Well-Architected Tool</strong>。</li>
+<li>フレームワークはベストプラクティス、Toolはレビューと改善追跡を支援するサービス。</li>
+<li>レビュー結果を基に実際の設定変更や運用改善を行うのは利用者の責任。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="well-architected-tool-c7">7. まとめ<a class="anchor" href="#well-architected-tool-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Well-Architected Toolはワークロードの設計レビューと改善追跡を支援する。</li>
+<li>自動修復サービスではなく、フレームワークに沿った継続的な評価に使う。</li>
 </ul>
 </section>
 </article>
@@ -20341,6 +20740,103 @@ def lambda_handler(event, context):
 </ul>
 </section>
 </article>
+<article class="booklet-page" id="p-amazon-q">
+<div class="page-head hero" style="--cat:#01A88D">
+<div class="hero-text">
+<span class="category">機械学習と人工知能</span>
+<h1>Amazon Q</h1>
+<p class="lead">業務データに基づく回答やAWS開発支援を提供する生成AIアシスタント群</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="amazon-q-c1">1. サービス概要<a class="anchor" href="#amazon-q-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Q</strong>は、業務データに基づく回答を行うAmazon Q Businessと、AWSやソフトウェア開発を支援するAmazon Q Developerなどの生成AIアシスタント群です。用途に応じて、データソース・利用者・アクセス権を分けて考えます。</p>
+<p>Amazon Q Businessは<strong>新規顧客の利用開始が終了</strong>しており、AWSは類似機能の後継としてAmazon Quickを案内しています。Amazon Q DeveloperはIDEやCLIでの開発支援として提供されています。コンソール上の会話型アシスタントはAWS assistantへ移行しているため、現行の名称と提供状況を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="amazon-q-c2">2. 主な機能・特徴<a class="anchor" href="#amazon-q-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="amazon-q-c2-1">用途の異なるアシスタント<a class="anchor" href="#amazon-q-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>Q Business</strong>:企業データソースと連携し、利用者の権限に応じた回答・要約・検索を行う。新規顧客は利用できない。</li>
+<li><strong>Q Developer</strong>:コードやAWSサービスについて質問し、IDEやCLIで開発作業を支援する。</li>
+<li><strong>Amazon Quick</strong>:Q Businessに類似する業務アシスタントに加えて、BIやエージェント機能を提供する現行の選択肢。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 848 179" style="max-width:848px;min-width:678px" role="img" aria-label="図1 Amazon Qの主な用途。企業データに基づく業務支援と、開発者向け支援を区別する。"><defs><marker id="amazon-q-dgservices-amazon-q-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">利用者</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">質問</text>
+</g>
+<g data-node="q">
+<rect x="334" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="90" text-anchor="middle" class="dg-tb">Amazon Q</text>
+<text x="399" y="108" text-anchor="middle" class="dg-s">用途を選ぶ</text>
+</g>
+<g data-node="biz">
+<rect x="694" y="33" width="130" height="52" rx="8" class="dg-box"/>
+<text x="759" y="54" text-anchor="middle" class="dg-t">Q Business</text>
+<text x="759" y="72" text-anchor="middle" class="dg-s">業務データ</text>
+</g>
+<g data-node="dev">
+<rect x="694" y="103" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="759" y="124" text-anchor="middle" class="dg-t">Q Developer</text>
+<text x="759" y="142" text-anchor="middle" class="dg-s">開発支援</text>
+</g>
+<path d="M164.0,94.0 L334.0,94.0" class="dg-line" marker-end="url(#amazon-q-dgservices-amazon-q-1)"/>
+<path d="M464.0,87.7 L694.0,65.3" class="dg-line" marker-end="url(#amazon-q-dgservices-amazon-q-1)"/>
+<path d="M464.0,100.3 L694.0,122.7" class="dg-line" marker-end="url(#amazon-q-dgservices-amazon-q-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon Qの主な用途。企業データに基づく業務支援と、開発者向け支援を区別する。</figcaption>
+</figure>
+<p>Q Businessで使われるデータ連携や権限付き検索の考え方はデータエンジニアリングに関係しますが、Amazon Q自体はデータウェアハウスやETLサービスではありません。</p>
+</section>
+
+<section class="chapter">
+<h2 id="amazon-q-c3">3. ユースケース<a class="anchor" href="#amazon-q-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>既存のQ Business環境で、アクセス権を考慮した社内情報の検索を行う。</li>
+<li>Q Developerを使って、AWSやアプリケーションの開発作業を支援する。</li>
+<li>新規の業務データ活用ではAmazon Quickなど現行サービスを評価する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="amazon-q-c4">4. 料金の考え方<a class="anchor" href="#amazon-q-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Amazon Qの製品・契約プラン、利用者数、機能に応じて料金が異なります。Q Businessの既存利用と、Amazon QuickやQ Developerの新規利用を分けて、最新の料金ページで確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="amazon-q-c5">5. 関連サービス<a class="anchor" href="#amazon-q-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-quick">Amazon Quick</a>:Q Businessに類似する現行の業務アシスタントとBI</li>
+<li><a href="#p-kendra">Amazon Kendra</a>:既存環境の企業検索</li>
+<li><a href="#p-bedrock">Amazon Bedrock</a>:生成AIアプリケーションの基盤</li>
+<li><a href="#p-s3">Amazon S3</a>:企業データの保存先</li>
+<li>関連する用語:<a href="../terms/data-governance.html">データガバナンス</a>、<a href="../terms/vector-search.html">ベクトル検索</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="amazon-q-c6">6. 試験・実務でのポイント<a class="anchor" href="#amazon-q-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>企業データを使う業務支援と開発支援を区別し、用途に合うAmazon Q製品を選ぶ。</li>
+<li>Q Businessは新規顧客の利用開始が終了している。新規構成ではAmazon Quickなど現行の選択肢を確認する。</li>
+<li>Amazon QはETLやデータベースではない。データ連携・検索・生成AIによる利用者支援を担う。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="amazon-q-c7">7. まとめ<a class="anchor" href="#amazon-q-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Amazon Qには企業データ向けと開発者向けの異なるアシスタントがある。</li>
+<li>Q Businessの提供状況が変更されているため、新規利用では現行のAmazon Quickなどを確認する。</li>
+</ul>
+</section>
+</article>
 <article class="booklet-page" id="p-sagemaker-ai">
 <div class="page-head hero" style="--cat:#01A88D">
 <div class="hero-text">
@@ -20621,6 +21117,301 @@ def lambda_handler(event, context):
 <ul>
 <li>DataSyncはエージェント・ロケーション・タスクで構成されるデータ転送サービス。</li>
 <li>増分転送・スケジュール・整合性検証・メタデータ保持に対応する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-application-discovery">
+<div class="page-head hero" style="--cat:#01A88D">
+<div class="hero-text">
+<span class="category">移行と転送</span>
+<h1>AWS Application Discovery Service</h1>
+<p class="lead">オンプレミスのサーバー構成や依存関係を収集してクラウド移行を計画するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="application-discovery-c1">1. サービス概要<a class="anchor" href="#application-discovery-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Application Discovery Service</strong>は、オンプレミス環境のサーバーやデータベースの使用状況・構成・ネットワーク依存関係を収集し、AWSへの移行計画を支援するサービスです。AWS Migration Hubと連携し、検出したサーバーをアプリケーション単位にまとめて移行状況を追跡できます。</p>
+<p><strong>新規顧客は利用を開始できません。</strong>2025年11月7日以降、新規の利用開始は終了しています。既存顧客は継続して利用できます。新しい移行調査には、後継の<a href="https://aws.amazon.com/transform/" target="_blank" rel="noopener">AWS Transform</a>を検討します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="application-discovery-c2">2. 主な機能・特徴<a class="anchor" href="#application-discovery-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="application-discovery-c2-1">サーバーの検出方法<a class="anchor" href="#application-discovery-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>Agentless Collector</strong>:VMware vCenterに仮想アプライアンスを配置し、対象サーバーの構成・使用状況を収集する。</li>
+<li><strong>Discovery Agent</strong>:個々のサーバーにエージェントを導入して、詳細な構成やネットワーク接続を収集する。</li>
+<li>収集したデータはMigration Hubのホームリージョンに保存される。</li>
+<li>エクスポートしたデータをAmazon AthenaやAmazon Quickで分析できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1148 144" style="max-width:1148px;min-width:918px" role="img" aria-label="図1 Application Discovery Serviceによる移行前調査。収集した構成・依存関係をMigration Hubに集約し、計画に使う。"><defs><marker id="application-discovery-dgservices-application-discovery-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="servers">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">オンプレミス</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">サーバー</text>
+</g>
+<g data-node="discovery">
+<rect x="334" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="90" text-anchor="middle" class="dg-tb">ADS</text>
+<text x="399" y="108" text-anchor="middle" class="dg-s">構成・依存関係</text>
+</g>
+<g data-node="hub">
+<rect x="679" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="744" y="90" text-anchor="middle" class="dg-t">Migration Hub</text>
+<text x="744" y="108" text-anchor="middle" class="dg-s">ホームリージョン</text>
+</g>
+<g data-node="assess">
+<rect x="994" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="1059" y="90" text-anchor="middle" class="dg-t">分析・計画</text>
+<text x="1059" y="108" text-anchor="middle" class="dg-s">移行候補</text>
+</g>
+<path d="M164.0,94.0 L334.0,94.0" class="dg-line" marker-end="url(#application-discovery-dgservices-application-discovery-1)"/>
+<path d="M464.0,94.0 L679.0,94.0" class="dg-line" marker-end="url(#application-discovery-dgservices-application-discovery-1)"/>
+<path d="M809.0,94.0 L994.0,94.0" class="dg-line" marker-end="url(#application-discovery-dgservices-application-discovery-1)"/>
+</svg>
+</div>
+<figcaption>図1 Application Discovery Serviceによる移行前調査。収集した構成・依存関係をMigration Hubに集約し、計画に使う。</figcaption>
+</figure>
+<h3 id="application-discovery-c2-2">検出と移行の違い<a class="anchor" href="#application-discovery-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Application Discovery Serviceは、移行元の把握と計画のためのデータ収集を担います。サーバーの複製・起動は行いません。実際のサーバー移行にはAWS Transform MGN、データベース移行には<a href="#p-dms">AWS DMS</a>などを要件に応じて使います。</p>
+</section>
+
+<section class="chapter">
+<h2 id="application-discovery-c3">3. ユースケース<a class="anchor" href="#application-discovery-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>移行対象のサーバー台数・構成・リソース使用量を把握する。</li>
+<li>サーバー間の通信を分析して、同時に移行するアプリケーション群を決める。</li>
+<li>収集データをコスト見積もりや移行先の設計に使う。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="application-discovery-c4">4. 料金の考え方<a class="anchor" href="#application-discovery-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>提供状況や利用できる機能が変更されているため、既存環境の料金と継続利用条件は公式情報で確認します。新規の調査ではAWS Transformなど現行の代替サービスと、その利用料金を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="application-discovery-c5">5. 関連サービス<a class="anchor" href="#application-discovery-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-application-migration">AWS Transform MGN</a>:検出後のサーバー複製・移行</li>
+<li><a href="#p-dms">AWS DMS</a>:データベースの移行と継続レプリケーション</li>
+<li><a href="#p-datasync">AWS DataSync</a>:ファイル・オブジェクトの転送</li>
+<li><a href="#p-athena">Amazon Athena</a>/<a href="#p-quick">Amazon Quick</a>:収集データの分析</li>
+<li>関連する用語:<a href="../terms/data-engineer-exam-map.html">DEA-C01の学習範囲</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="application-discovery-c6">6. 試験・実務でのポイント<a class="anchor" href="#application-discovery-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>オンプレミス環境を検出して移行を計画 → <strong>Application Discovery Service</strong>。</li>
+<li>新規顧客は利用を開始できず、後継のAWS Transformが案内されている。</li>
+<li>検出・計画、サーバー移行、データベース移行はそれぞれ別の役割として整理する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="application-discovery-c7">7. まとめ<a class="anchor" href="#application-discovery-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Application Discovery Serviceは移行前のサーバー構成・依存関係を集める。</li>
+<li>新規利用は終了しているため、移行計画ではAWS Transformなどの現行サービスを検討する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-application-migration">
+<div class="page-head hero" style="--cat:#01A88D">
+<div class="hero-text">
+<span class="category">移行と転送</span>
+<h1>AWS Transform MGN</h1>
+<p class="lead">サーバーを継続レプリケーションし、AWS上でテスト・切り替えする移行サービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="application-migration-c1">1. サービス概要<a class="anchor" href="#application-migration-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Transform MGN</strong>は、物理・仮想・クラウド上のサーバーをAWSへリホストするサービスです。旧AWS Application Migration Serviceと同じMGNの名称で、ソースサーバーのブロックデータを継続的に複製し、AWS上で起動できる形に変換します。</p>
+<p>移行時の停止時間を抑えながら、複数サーバーをテスト・切り替えできます。データベースの論理的な移行や異種DB間のスキーマ変換が目的なら、<a href="#p-dms">AWS DMS</a>などと比較します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="application-migration-c2">2. 主な機能・特徴<a class="anchor" href="#application-migration-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="application-migration-c2-1">継続レプリケーションと起動<a class="anchor" href="#application-migration-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>ソースサーバーのブロックレベルの変更をステージング領域へ継続的に複製する。</li>
+<li>レプリケーション設定テンプレートで、複製先のネットワークやディスクなどを定義する。</li>
+<li>テスト起動で移行先の動作を確認した後、カットオーバーして本番利用へ切り替える。</li>
+<li>起動テンプレートやポスト起動アクションで、移行後のインスタンス設定や処理を管理する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 878 179" style="max-width:878px;min-width:702px" role="img" aria-label="図1 AWS Transform MGNの移行手順。データを複製し、テスト起動で確認してからカットオーバーする。"><defs><marker id="application-migration-dgservices-application-migration-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="source">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">ソースサーバー</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">ブロック変更</text>
+</g>
+<g data-node="repl">
+<rect x="364" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="429" y="90" text-anchor="middle" class="dg-tb">データ複製</text>
+<text x="429" y="108" text-anchor="middle" class="dg-s">ブロック変更</text>
+</g>
+<g data-node="test">
+<rect x="724" y="33" width="130" height="52" rx="8" class="dg-box"/>
+<text x="789" y="54" text-anchor="middle" class="dg-t">テスト起動</text>
+<text x="789" y="72" text-anchor="middle" class="dg-s">動作確認</text>
+</g>
+<g data-node="cutover">
+<rect x="724" y="103" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="789" y="124" text-anchor="middle" class="dg-t">カットオーバー</text>
+<text x="789" y="142" text-anchor="middle" class="dg-s">本番切替</text>
+</g>
+<path d="M164.0,94.0 L364.0,94.0" class="dg-line" marker-end="url(#application-migration-dgservices-application-migration-1)"/>
+<path d="M494.0,87.7 L724.0,65.3" class="dg-line" marker-end="url(#application-migration-dgservices-application-migration-1)"/>
+<path d="M789.0,85.0 L789.0,103.0" class="dg-line dg-dash" marker-end="url(#application-migration-dgservices-application-migration-1)"/>
+</svg>
+</div>
+<figcaption>図1 AWS Transform MGNの移行手順。データを複製し、テスト起動で確認してからカットオーバーする。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="application-migration-c3">3. ユースケース<a class="anchor" href="#application-migration-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>オンプレミスの物理・仮想サーバーを短い停止時間でAWSへ移行する。</li>
+<li>多数のサーバーをアプリケーションや移行ウェーブごとにまとめて移行する。</li>
+<li>本番切り替え前にテストインスタンスを起動し、移行後の動作を確認する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="application-migration-c4">4. 料金の考え方<a class="anchor" href="#application-migration-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>レプリケーションに使うステージング用リソース、移行先のEC2などの実行料金、ストレージ、データ転送が費用に影響します。移行中のテスト起動や複製期間も含めて見積もります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="application-migration-c5">5. 関連サービス<a class="anchor" href="#application-migration-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-application-discovery">AWS Application Discovery Service</a>:移行前のサーバー調査</li>
+<li><a href="#p-dms">AWS DMS</a>:データベースの移行・継続レプリケーション</li>
+<li><a href="#p-datasync">AWS DataSync</a>:ファイルやオブジェクトの転送</li>
+<li><a href="#p-ec2">Amazon EC2</a>:移行後のサーバー実行先</li>
+<li><a href="#p-cloudwatch">Amazon CloudWatch</a>:移行後の監視</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="application-migration-c6">6. 試験・実務でのポイント<a class="anchor" href="#application-migration-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>サーバーのブロックレベル複製とAWSへのリホスト → <strong>AWS Transform MGN</strong>。</li>
+<li>テスト起動で検証してからカットオーバーする。</li>
+<li>データベースの論理移行・継続レプリケーションは、サーバー単位のMGNとAWS DMSを使い分ける。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="application-migration-c7">7. まとめ<a class="anchor" href="#application-migration-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AWS Transform MGNはサーバーを継続複製し、AWS上でテストして切り替える。</li>
+<li>試験ガイドの旧名称「AWS Application Migration Service」と同じMGNとして把握する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-snow-family">
+<div class="page-head hero" style="--cat:#01A88D">
+<div class="hero-text">
+<span class="category">移行と転送</span>
+<h1>AWS Snow Family</h1>
+<p class="lead">ネットワーク転送が難しい環境でデータを物理デバイスに移すサービス群</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="snow-family-c1">1. サービス概要<a class="anchor" href="#snow-family-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Snow Family</strong>は、AWS Snowball Edgeなどの物理デバイスを使い、大容量データのオフライン転送やエッジ環境での処理を行うサービス群です。ネットワーク帯域が限られる、接続が不安定、現地でデータを処理する必要がある場合に検討します。</p>
+<p><strong>新規顧客はSnowball Edgeを利用できません。</strong>2025年11月7日以降は既存顧客向けの提供に限られます。Snowconeは2024年11月12日に提供終了し、既存利用のサポート期間も終了しています。最新の提供状況は<a href="https://aws.amazon.com/blogs/storage/aws-snow-device-updates/" target="_blank" rel="noopener">AWS Snowデバイスの公式更新情報</a>を確認してください。</p>
+</section>
+
+<section class="chapter">
+<h2 id="snow-family-c2">2. 主な機能・特徴<a class="anchor" href="#snow-family-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="snow-family-c2-1">データ移行とエッジ処理<a class="anchor" href="#snow-family-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>Snowball Edge Storage Optimizedは、大容量データの物理転送を行う。</li>
+<li>Snowball Edge Compute Optimizedは、ネットワーク接続が限られた現場でコンピューティング処理を行う。</li>
+<li>デバイスを注文し、現地でデータをコピーしてAWSへ返送する。AWS側で取り込み後、ジョブの状態を確認する。</li>
+<li>既存顧客でデバイスを利用できるかは、アカウント・リージョン・デバイスモデルの提供条件を確認する。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1088 144" style="max-width:1088px;min-width:870px" role="img" aria-label="図1 Snowball Edgeによる物理データ転送。デバイスにデータをコピーし、AWSへ返送して取り込む。"><defs><marker id="snow-family-dgservices-snow-family-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="source">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">現地データ</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">オンプレミス</text>
+</g>
+<g data-node="device">
+<rect x="334" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="90" text-anchor="middle" class="dg-tb">Snowball Edge</text>
+<text x="399" y="108" text-anchor="middle" class="dg-s">物理転送</text>
+</g>
+<g data-node="ship">
+<rect x="634" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="699" y="90" text-anchor="middle" class="dg-t">輸送</text>
+<text x="699" y="108" text-anchor="middle" class="dg-s">オフライン</text>
+</g>
+<g data-node="s3">
+<rect x="934" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="999" y="90" text-anchor="middle" class="dg-t">Amazon S3</text>
+<text x="999" y="108" text-anchor="middle" class="dg-s">取り込み</text>
+</g>
+<path d="M164.0,94.0 L334.0,94.0" class="dg-line" marker-end="url(#snow-family-dgservices-snow-family-1)"/>
+<path d="M464.0,94.0 L634.0,94.0" class="dg-line" marker-end="url(#snow-family-dgservices-snow-family-1)"/>
+<path d="M764.0,94.0 L934.0,94.0" class="dg-line" marker-end="url(#snow-family-dgservices-snow-family-1)"/>
+</svg>
+</div>
+<figcaption>図1 Snowball Edgeによる物理データ転送。デバイスにデータをコピーし、AWSへ返送して取り込む。</figcaption>
+</figure>
+<h3 id="snow-family-c2-2">新規構成での代替<a class="anchor" href="#snow-family-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>ネットワーク経由のファイル転送には<a href="#p-datasync">AWS DataSync</a>、物理メディアを使うデータ転送にはAWS Data Transfer Terminal、現場でAWS基盤を動かす場合はAWS Outpostsを検討します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="snow-family-c3">3. ユースケース<a class="anchor" href="#snow-family-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>ネットワーク帯域が限られた拠点から、大量のデータをAWSへ移す。</li>
+<li>接続が断続的な現場でデータを収集・処理する。</li>
+<li>既存のSnowball Edge利用環境を把握し、移行計画を立てる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="snow-family-c4">4. 料金の考え方<a class="anchor" href="#snow-family-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>ジョブの種類・期間、デバイスの配送、データ転送、AWS側の保存先などが料金に影響します。新規顧客は利用を開始できないため、新規移行ではDataSyncやData Transfer Terminalなどの現行代替の料金を確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="snow-family-c5">5. 関連サービス<a class="anchor" href="#snow-family-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-datasync">AWS DataSync</a>:オンラインのファイル・オブジェクト転送</li>
+<li><a href="#p-s3">Amazon S3</a>:データ移行先のオブジェクトストレージ</li>
+<li><a href="#p-direct-connect">AWS Direct Connect</a>:専用ネットワーク接続</li>
+<li><a href="#p-application-discovery">AWS Application Discovery Service</a>:移行前の環境調査</li>
+<li>関連する用語:<a href="../terms/data-engineering-basics.html">データパイプラインの基礎</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="snow-family-c6">6. 試験・実務でのポイント<a class="anchor" href="#snow-family-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>ネットワークが制約される環境でのオフライン転送 → <strong>Snowball Edge</strong>の用途を理解する。</li>
+<li>Snowball Edgeは新規顧客向けに提供されないため、新規構成では現行の代替を選ぶ。</li>
+<li>Snow Familyの名称があっても、Snowconeなど提供終了済みのデバイスを新規構成に含めない。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="snow-family-c7">7. まとめ<a class="anchor" href="#snow-family-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Snow Familyは物理デバイスを使うオフライン転送・エッジ処理の選択肢。</li>
+<li>新規顧客はSnowball Edgeを利用できないため、AWSの最新案内に沿って代替を選ぶ。</li>
 </ul>
 </section>
 </article>
