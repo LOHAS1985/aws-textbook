@@ -63,7 +63,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="a" data-type="single">
 <h4>問1</h4>
-<p class="quiz-stem">オンプレミスの販売データベースをAWSへ移行し、移行後も発生する更新をデータレイクへ継続的に反映します。アプリケーションの改修を避け、初期データの全件ロードと以降の変更の取り込みを行う方法はどれですか。</p>
+<p class="quiz-stem">販売システムはオンプレミスのリレーショナルデータベースで稼働し、AWSへの切り替えまで数日間は更新が続きます。分析チームは移行後すぐに、Amazon S3のデータレイクで最新データを利用したいと考えています。一方、アプリケーションの改修や独自のログ転送処理は避ける必要があります。初期データを移した後も更新を追従させる方法はどれですか。</p>
 <fieldset class="quiz-options">
 <legend>最も適切な方法を1つ選んでください。</legend>
 <ol class="quiz-choices">
@@ -88,7 +88,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="b" data-type="single">
 <h4>問2</h4>
-<p class="quiz-stem">注文イベントを複数の分析アプリケーションへ低レイテンシーで配信します。各アプリケーションは同じイベントを独立して読み取り、障害時には直近48時間のデータを再処理する必要があります。適切な構成はどれですか。</p>
+<p class="quiz-stem">注文イベントを複数の分析アプリケーションへ低レイテンシーで配信します。各アプリケーションは同じ全イベントをそれぞれ独立して読み取り、1つのアプリケーションの読み取り負荷が他に影響しない構成が必要です。また、障害時には直近48時間のイベントを再処理できるようにしたいと考えています。適切な構成はどれですか。</p>
 <fieldset class="quiz-options">
 <legend>最も適切な方法を1つ選んでください。</legend>
 <ol class="quiz-choices">
@@ -113,7 +113,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="c" data-type="single">
 <h4>問3</h4>
-<p class="quiz-stem">Amazon S3に毎日追加されるParquet形式のファイルをAWS Glueジョブで処理しています。正常終了したジョブが次回実行時に処理済みファイルを再読込しないようにし、処理の進行状態をジョブ単位で管理したいと考えています。使う機能はどれですか。</p>
+<p class="quiz-stem">データレイクのAmazon S3バケットには、Parquet形式の日次ファイルが追加されます。AWS Glueジョブはスケジュール実行され、正常終了した入力を次回に再処理すると重複データが発生するため、新しく追加されたファイルを中心に処理したい要件です。ジョブごとに入力データの処理状態を保持し、再実行時の読み直しを抑える機能はどれですか。</p>
 <fieldset class="quiz-options">
 <legend>最も適切な方法を1つ選んでください。</legend>
 <ol class="quiz-choices">
@@ -142,7 +142,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="a" data-type="single">
 <h4>問4</h4>
-<p class="quiz-stem">あるテナントのイベント書き込みが全体の大半を占め、DynamoDBの同一パーティションキーにリクエストが集中しています。書き込みを分散しつつ、そのテナントの一定期間のイベントを取得したい場合に適した設計はどれですか。</p>
+<p class="quiz-stem">マルチテナントのイベント管理テーブルで、特定テナントからの書き込みが全体の大半を占めています。現在はテナントIDだけをパーティションキーにしているため、そのテナントの項目にアクセスが集中してスロットリングが発生します。書き込みを複数のキーに分散しながら、後でそのテナントの指定期間のイベントを検索できる設計はどれですか。</p>
 <fieldset class="quiz-options">
 <legend>最も適切な設計を1つ選んでください。</legend>
 <ol class="quiz-choices">
@@ -167,7 +167,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="b" data-type="single">
 <h4>問5</h4>
-<p class="quiz-stem">企業の分析チームが、複数年分の売上データを使ってディメンション表とファクト表を結合するSQLを頻繁に実行します。複数のBI利用者が同時にダッシュボードを更新し、データウェアハウスとして運用したい場合、適切な保存先はどれですか。</p>
+<p class="quiz-stem">企業の分析チームは、複数年分の売上データをディメンション表とファクト表に分け、結合や集計を行うSQLを繰り返し実行します。複数のBI利用者が同時にダッシュボードを更新するため、分析向けに管理されたデータウェアハウスを使いたいと考えています。アプリケーション側で結合処理を実装せずに要件を満たす保存先はどれですか。</p>
 <fieldset class="quiz-options">
 <legend>最も適切なサービスを1つ選んでください。</legend>
 <ol class="quiz-choices">
@@ -192,7 +192,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="c" data-type="single">
 <h4>問6</h4>
-<p class="quiz-stem">Amazon S3上の分析テーブルを複数のエンジンから参照します。データの追加・更新と並行クエリを行い、テーブルのスキーマ進化や一貫性のあるスナップショットを利用したい場合、適した方法はどれですか。</p>
+<p class="quiz-stem">データレイクの分析テーブルを複数のクエリエンジンから参照し、データの追加や更新とクエリを並行して実行します。ファイルを直接置き換える方式では更新中の読み取りに一貫性がなく、列の追加などのスキーマ変更も安全に管理できません。読み手が更新前後の整合したデータを参照できるよう、テーブルのスナップショットとスキーマ進化を扱う方法はどれですか。</p>
 <fieldset class="quiz-options">
 <legend>最も適切な方法を1つ選んでください。</legend>
 <ol class="quiz-choices">
@@ -221,7 +221,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="a" data-type="single">
 <h4>問7</h4>
-<p class="quiz-stem">AWS GlueのETL処理で、出力前に顧客IDの欠損と金額の範囲外データを検出したいと考えています。ルールに基づいてデータ品質を評価し、結果を確認できるようにする機能はどれですか。</p>
+<p class="quiz-stem">AWS GlueのETL処理では、顧客IDが欠けたレコードや、業務上許容する範囲を外れた金額を出力前に見つける必要があります。データ件数が増えても担当者が毎回目視確認する運用は避け、定義した条件に基づく品質評価とジョブ実行ごとの結果確認を行いたいと考えています。毎回同じ品質基準を適用するために適切な機能はどれですか。</p>
 <fieldset class="quiz-options">
 <legend>最も適切な機能を1つ選んでください。</legend>
 <ol class="quiz-choices">
@@ -246,7 +246,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="d" data-type="single">
 <h4>問8</h4>
-<p class="quiz-stem">毎晩実行するAWS Glueジョブが失敗したとき、ジョブの実行状態を定期的に問い合わせるコードを用意せず、運用チームへ通知したいと考えています。適切な方法はどれですか。</p>
+<p class="quiz-stem">複数のAWS Glue ETLジョブを毎晩実行しており、そのうち1つでも失敗した場合は運用チームが早く気付けるよう通知したいと考えています。担当者による画面の定期確認も減らす必要があります。状態を問い合わせる独自コードや、失敗を推測する出力データの検査は避け、ジョブ実行の状態変化をきっかけに通知先へ連携する方法はどれですか。</p>
 <fieldset class="quiz-options">
 <legend>最も適切な方法を1つ選んでください。</legend>
 <ol class="quiz-choices">
@@ -275,7 +275,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="a,b" data-type="multiple">
 <h4>問9</h4>
-<p class="quiz-stem">AWS Glueジョブが、カスタマーマネージドKMSキーで暗号化されたS3オブジェクトを読み取ります。ジョブには専用IAMロールを使い、必要なデータとキーにだけアクセスさせます。必要な権限を2つ選んでください。</p>
+<p class="quiz-stem">AWS Glueジョブが、カスタマーマネージドKMSキーで暗号化されたAmazon S3オブジェクトを読み取ります。ジョブには専用IAMロールを割り当て、対象バケットの必要なプレフィックスと指定したKMSキーだけを利用できるよう最小権限にします。読み取りと復号を成立させるために必要な設定を2つ選んでください。</p>
 <fieldset class="quiz-options">
 <legend>要件を満たす選択肢を2つ選んでください。</legend>
 <ol class="quiz-choices">
@@ -299,7 +299,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 <section class="quiz-q" data-answer="c" data-type="single">
 <h4>問10</h4>
-<p class="quiz-stem">複数のS3バケットに保存されたデータから、個人情報や認証情報などの機密データを検出し、調査対象となるオブジェクトを把握したいと考えています。適切なサービスはどれですか。</p>
+<p class="quiz-stem">組織では複数のAmazon S3バケットを部門ごとに利用しており、個人情報や認証情報が意図せず保存されていないか定期的に確認する必要があります。バケットへのAPI操作を監査するだけでは要件を満たせません。オブジェクトの内容を調べて機密データを検出し、調査すべき対象を把握したい場合に適したサービスはどれですか。</p>
 <fieldset class="quiz-options">
 <legend>最も適切なサービスを1つ選んでください。</legend>
 <ol class="quiz-choices">

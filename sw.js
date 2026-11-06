@@ -1,6 +1,6 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "c6a38ff439d5";
+var CACHE = PREFIX + "8395c4724fa3";
 var FILES = {
 "checklist.html": "45ebed3174f2",
 "css/style.css": "6872a810f7f3",
@@ -169,7 +169,7 @@ var FILES = {
 "icons/services/waf.svg": "e67f918f21cf",
 "icons/services/well-architected-tool.svg": "1a660c904e61",
 "icons/services/xray.svg": "49c3a0c3f4e8",
-"index.html": "d1d09f721188",
+"index.html": "291c7b42c79b",
 "js/glossary.js": "c67d44fca2b3",
 "js/quiz.js": "13f76c100641",
 "js/sim.js": "3ae9e28cc7a7",
@@ -189,8 +189,8 @@ var FILES = {
 "news/2026-11-06.html": "6bea1474d4b3",
 "news/2026-11-07.html": "3066a2b6bf30",
 "news/index.html": "98a41ceeabf1",
-"questions/dea-c01.html": "ca8f0d0d43f7",
-"questions/index.html": "58238220fab2",
+"questions/dea-c01.html": "a59d6d5a7c19",
+"questions/index.html": "dc3a18411661",
 "services/acm.html": "4857d27e38e6",
 "services/amazon-q.html": "ebc1252fd690",
 "services/amplify.html": "ea7935ab858c",
