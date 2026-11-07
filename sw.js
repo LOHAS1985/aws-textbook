@@ -1,9 +1,9 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "e7903fadef2b";
+var CACHE = PREFIX + "c2c1666a2b97";
 var FILES = {
 "checklist.html": "45ebed3174f2",
-"css/style.css": "c36501fe3bde",
+"css/style.css": "a7fc32f7f0fd",
 "exercises/access-denied-troubleshooting.html": "3f68c538ac99",
 "exercises/auto-scaling-web.html": "847fcfb1675a",
 "exercises/az-failure-isolation.html": "9ce2d4967982",
@@ -169,9 +169,9 @@ var FILES = {
 "icons/services/waf.svg": "e67f918f21cf",
 "icons/services/well-architected-tool.svg": "1a660c904e61",
 "icons/services/xray.svg": "49c3a0c3f4e8",
-"index.html": "13c2c0c022c8",
+"index.html": "853955c52965",
 "js/glossary.js": "c67d44fca2b3",
-"js/quiz.js": "fdfdaf8cfafb",
+"js/quiz.js": "c9e30d06f9be",
 "js/sim.js": "3ae9e28cc7a7",
 "js/site.js": "3f6897e97e85",
 "links.html": "8ddb821667f2",
@@ -189,8 +189,8 @@ var FILES = {
 "news/2026-11-06.html": "6bea1474d4b3",
 "news/2026-11-07.html": "3066a2b6bf30",
 "news/index.html": "98a41ceeabf1",
-"questions/dea-c01.html": "75b186b1e343",
-"questions/index.html": "f9e0123e27b2",
+"questions/dea-c01.html": "fee9cc603a0b",
+"questions/index.html": "8b584fa298a2",
 "services/acm.html": "4857d27e38e6",
 "services/amazon-q.html": "ebc1252fd690",
 "services/amplify.html": "ea7935ab858c",
