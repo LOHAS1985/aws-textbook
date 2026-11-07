@@ -85,6 +85,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 In-place。同じサーバーを止めて、その場で新バージョンに入れ替える。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="c1-2">Recreate<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>旧環境を停止・削除してから、新環境を構築します。稼働するのは新のみで、新環境を構築した後に切り替わります。ダウンタイムが発生し、ロールバックは難しいです。主な用途は開発・検証環境です。</p>
@@ -114,6 +115,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 Recreate。旧環境をすべて削除してから新環境を作り直すため、その間サービスが止まる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="c1-3">Rolling<a class="anchor" href="#c1-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>複数のインスタンスを少しずつ新バージョンへ更新します。更新中は一時的に新旧が両方動き、インスタンス単位で切り替わります。ダウンタイムは基本的になく、ロールバックは比較的容易です。主な用途は一般的なWebサービスです。</p>
@@ -181,6 +183,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図3 Rolling。インスタンスを数台ずつ順番に更新する。更新中も残りのインスタンスがリクエストを処理するため、サービスは止まらない。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="c1-4">Blue/Green<a class="anchor" href="#c1-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>Blue(旧)とGreen(新)の2つの環境を用意し、トラフィックを一括で切り替えます。新旧が両方稼働しており、ダウンタイムはほぼありません。問題があればBlueに戻すだけなので、ロールバックは非常に容易です。主な用途は本番環境や重要なシステムです。</p>
@@ -215,6 +218,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図4 Blue/Green。新しい環境(Green)を本番と別に用意してから、入口の向き先を一括で切り替える。Blueを残しておけば、すぐに戻せる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
 <h3 id="c1-5">Canary<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>一部のユーザー・トラフィックだけを新バージョンへ移行し、少量から段階的に増やします。新旧が両方稼働し、ダウンタイムはなく、ロールバックも容易です。主な用途は、リスクを抑えた本番リリースです。</p>
@@ -248,6 +252,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図5 Canary。まず少量(例: 10%)だけv2に流して様子を見て、問題がなければ割合を段階的に増やす。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="c1-6">A/Bテスト<a class="anchor" href="#c1-6" aria-label="この見出しへのリンク">#</a></h3>
 <p>異なるバージョンをユーザー群ごとに提供して比較します。新旧が両方稼働し、ユーザー属性などで振り分けます。ダウンタイムはなく、ロールバックも容易です。主な用途は、UI・機能・マーケティングの比較です。</p>
@@ -292,6 +297,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図6 A/Bテスト。ユーザーの属性などでグループを分け、それぞれに別のバージョンを見せて結果を比べる。Canaryが「安全なリリース」のためなのに対し、A/Bテストは「どちらが良いかの比較」が目的。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
 <h3 id="c1-7">Shadow/Mirroring<a class="anchor" href="#c1-7" aria-label="この見出しへのリンク">#</a></h3>
 <p>本番トラフィックを新環境にも複製しますが、新環境の応答はユーザーには返しません。新旧が両方稼働し、ダウンタイムはなく、ロールバックも容易です。主な用途は、新バージョンの本番負荷での動作検証です。</p>
@@ -325,6 +331,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図7 Shadow/Mirroring。本番と同じリクエストを新環境にも送って動作や負荷を確かめるが、ユーザーには本番(v1)の応答だけを返すため、影響を与えない。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
 <h3 id="c1-8">Feature Flag<a class="anchor" href="#c1-8" aria-label="この見出しへのリンク">#</a></h3>
 <p>新機能を含むアプリをデプロイしておき、機能のON/OFFを設定で制御します。同じ環境の中で複数の機能が共存し、フラグを変えるだけで切り替わります。ダウンタイムはなく、ロールバックは非常に容易です。主な用途は、段階的な機能リリースです。</p>
@@ -359,6 +366,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図8 Feature Flag。新機能のコードは先にデプロイしておき、設定(フラグ)でONにする相手やタイミングを制御する。デプロイ(配置)とリリース(公開)を切り離せる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="c1-9">比較<a class="anchor" href="#c1-9" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table class="stack">

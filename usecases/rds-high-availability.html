@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat2">信頼性・事業継続</a>
   <h1>データベースの高可用性と読み取り分散</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -92,8 +92,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 DBの高可用性と読み取りの分散の構成。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span></p>
 
-<div class="ex-item" data-node="stb">
+<div class="ex-item" data-node="stb" data-req="1">
 <p class="ex-q">① 別のAZで待機し、障害時に自動で切り替わるものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="スタンバイ">Multi-AZのスタンバイ<span class="ex-why">同期で複製され、プライマリの障害時に自動でフェイルオーバーします。エンドポイント名は変わりません。</span></li>
@@ -102,7 +103,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item" data-node="rr">
+<div class="ex-item" data-node="rr" data-req="2">
 <p class="ex-q">② 重い読み取りを受け持つものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="リードレプリカ">リードレプリカ<span class="ex-why">非同期で複製された読み取り専用のDBで、本番の負荷を減らせます。わずかに遅れることがあります。</span></li>
@@ -111,7 +112,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1,3">
 <p class="ex-q">③ フェイルオーバーのあと、アプリ側で必要な変更は?</p>
 <ul class="ex-choices">
 <li data-ok>なし(エンドポイント名は同じまま切り替わる)<span class="ex-why">DNSの向き先が新しいプライマリに変わるだけです。DNSを長くキャッシュしないようにしておきます。</span></li>
@@ -165,6 +166,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 書き込みはRDS Proxy経由でプライマリへ、重い読み取りはリードレプリカへ。プライマリに障害が起きると、別AZのスタンバイへ自動でフェイルオーバーする。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">

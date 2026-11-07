@@ -120,6 +120,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 CodeBuildの流れ。buildspec.ymlの手順(依存のインストール → ビルド → テスト → 後処理)で実行し、成果物とテストレポートを出力する。キャッシュを使うと依存ファイルを再利用でき、高速になる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="c2-2">環境変数と機密情報<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>環境変数は、プロジェクトの設定とbuildspec.ymlの<code>env</code>のどちらでも指定できます。buildspec.ymlの値は優先順位が最も低く、ほかの場所で指定した値が優先されます。平文の環境変数はコンソールやCLIで値が見えてしまうため、パスワードやAPIキーは<strong>Secrets Manager</strong>または<strong>Parameter Store</strong>から参照します(<code>secrets-manager</code>・<code>parameter-store</code>)。保存先の選び方は用語ページ「<a href="../terms/secrets-config-comparison.html">機密情報・設定値の保存先の選び方</a>」を参照してください。</p>
@@ -158,6 +159,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 S3キャッシュの共有。1回目のビルドが依存ファイルをS3に保存し、別のビルドホストで動く2回目のビルドがそれを取得する。ローカルキャッシュは、保存したホストの中だけで使える。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span></p>
 
 <h3 id="c2-4">テストレポート<a class="anchor" href="#c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>buildspec.ymlの<code>reports</code>で、テスト結果のファイルとレポートグループを指定すると、ビルドの結果でテストの成功・失敗を確認できます。対応する形式は、JUnit XML、Cucumber JSON、NUnit XML、NUnit3 XML、TestNG XML、Visual Studio TRX などです。</p>

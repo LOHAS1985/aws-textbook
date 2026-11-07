@@ -12,6 +12,8 @@
 //       <li data-short="…">不正解の選択肢<span class="ex-why">解説</span></li>
 //     </ul>
 //   </div>
+// ・要件チェック:問いに data-req="1" や data-req="1,3"(1章の箇条書きの番号)を付けると、答え合わせのあと
+//   要件ごとに「満たした」「満たさなかった」を分けて示す。付けていない問いは要件に数えない
 // 選択肢・部品は表示のたびに並べ替える。結果は閲覧者のブラウザ(localStorage)にだけ保存する。
 (function () {
   var KEY = "aws-textbook-ex:", FREE_KEY = "aws-textbook-free:";
@@ -72,6 +74,49 @@
     }
   }
 
+  // ---- 要件チェック ----
+  // 1章「やりたいこと」の箇条書き(要件)。2章の問いの data-req に、要件の番号(1から、カンマ区切り)を書くと対応づく
+  function requirementItems() {
+    var first = document.querySelector("main section.chapter");
+    return first ? Array.prototype.slice.call(first.querySelectorAll(":scope > ul > li")) : [];
+  }
+  // 答え合わせの結果を、要件ごとに「満たした」「満たさなかった」に分けて示す(対応づけが無ければ何も出さない)
+  function showRequirements(items, box) {
+    var reqs = requirementItems();
+    var state = {}, mapped = false;
+    items.forEach(function (item) {
+      var attr = item.getAttribute("data-req");
+      if (!attr) return;
+      var ok = item.classList.contains("is-ok");
+      attr.split(",").forEach(function (s) {
+        var n = parseInt(s, 10);
+        if (!(n >= 1 && n <= reqs.length)) return;
+        mapped = true;
+        if (!ok) state[n] = false;
+        else if (state[n] === undefined) state[n] = true;
+      });
+    });
+    box.textContent = "";
+    box.hidden = !mapped;
+    if (!mapped) return;
+    var nums = Object.keys(state).map(Number).sort(function (a, b) { return a - b; });
+    var groups = [["満たした要件", true, "ok"], ["満たさなかった要件", false, "ng"]];
+    groups.forEach(function (g) {
+      var list = nums.filter(function (n) { return state[n] === g[1]; });
+      if (!list.length) return;
+      var part = el("div", "ex-req-group ex-req-" + g[2]);
+      part.appendChild(el("h4", "", g[0] + "(" + list.length + ")"));
+      var ul = el("ul");
+      list.forEach(function (n) {
+        var li = document.createElement("li");
+        li.textContent = reqs[n - 1].textContent.replace(/\s+/g, " ").trim();
+        ul.appendChild(li);
+      });
+      part.appendChild(ul);
+      box.appendChild(part);
+    });
+  }
+
   // ---- 穴埋め ----
   function setupFill(items, slug, wrap) {
     function nodeOf(item) {
@@ -124,6 +169,9 @@
       + '<button type="button" class="ex-to-read ex-sub" hidden>解説を読む</button>'
       + '<p class="ex-result" role="status"></p>');
     bar.querySelector(".ex-to-read").addEventListener("click", toRead);
+    var reqBox = el("div", "ex-reqs");
+    reqBox.hidden = true;
+    bar.appendChild(reqBox);
     items[items.length - 1].parentNode.insertBefore(bar, items[items.length - 1].nextSibling);
     var result = bar.querySelector(".ex-result");
     var prev = store(KEY + slug);
@@ -161,6 +209,7 @@
         item.querySelector(".ex-feedback").innerHTML = fb;
         setNode(item, shortOf(answer), ok ? "dg-ok" : "dg-ng");
       }
+      showRequirements(items, reqBox);
       store(KEY + slug, { score: score, total: items.length, date: today() });
       result.textContent = items.length + "問中" + score + "問正解"
         + (score === items.length ? "。「解説を読む」で、構成全体の考え方も確かめましょう。" : "。各問の下の解説で、正解との違いを確かめましょう。");
@@ -181,6 +230,8 @@
         setNode(item, null, "dg-blank");
       }
       result.textContent = "";
+      reqBox.textContent = "";
+      reqBox.hidden = true;
       this.hidden = true;
       bar.querySelector(".ex-to-read").hidden = true;
       bar.querySelector(".ex-check").hidden = false;

@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <a class="category" href="index.html#cat3">ストレージ</a>
   <h1>Amazon EBS</h1>
   <p class="lead">EC2にアタッチして使うブロックストレージ</p>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-10-26">2026-10-26</time></p>
   </div>
 </div>
 <nav class="page-toc" aria-label="ページ内目次">
@@ -113,6 +113,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 EBSはAZ単位のストレージで、同じAZのEC2にアタッチする。別のAZで使うときは、スナップショット(S3に保存)から新しいボリュームを復元する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <h3 id="c2-1">ボリュームの種類<a class="anchor" href="#c2-1" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table class="stack">
 <tr><th>種類</th><th>媒体</th><th>特徴</th><th>主用途</th><th>ポイント</th></tr>
@@ -156,6 +157,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 ボリュームタイプの選び方。ランダムアクセスが多い用途はSSD、大きなファイルの順次読み書きはHDD。迷ったらgp3。(旧世代のgp2・io1・standardは省略)</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="c2-2">ボリュームタイプごとの性能値<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table class="stack">
@@ -201,6 +203,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図3 スナップショットは増分。2回目以降は変更されたブロックだけを保存し、未変更のブロックは前のスナップショットのものを参照する。どのスナップショットからでもボリューム全体を復元できる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 <ul>
 <li>保存料金は実際に保存したブロック分だけなので、頻繁に取っても容量は増えにくい</li>
 <li><strong>古いスナップショットを削除しても、後のスナップショットから復元できる</strong>(他のスナップショットが参照しているブロックは残され、どこからも参照されないブロックだけが削除される)</li>
@@ -269,6 +272,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図4 暗号化されていないボリュームを暗号化する手順。①スナップショットを取り、②暗号化を指定してコピーし、③そこから新しいボリュームを作成して、④インスタンスを停止して古いボリュームと付け替える。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <ol>
 <li>ボリュームのスナップショットを取る</li>
 <li>スナップショットを、<strong>暗号化を有効にしてコピー</strong>する(KMSキーを指定)。スナップショットからボリュームを作るときに暗号化を指定してもよい</li>

@@ -114,6 +114,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Global Acceleratorの仕組み。2つの固定Anycast IPで最寄りのエッジに入り、インターネットではなくAWSのバックボーンでエンドポイントへ届ける。ヘルスチェックで異常を検知すると、正常なエンドポイントへ自動で切り替える。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
 <h3 id="c2-2">構成要素と2種類のアクセラレーター<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>アクセラレーターの中は、<strong>リスナー</strong>、<strong>エンドポイントグループ</strong>、<strong>エンドポイント</strong>の階層になっています。リスナーは受け付けるプロトコル(TCPまたはUDP)とポート範囲を指定します。エンドポイントグループはリージョンごとに作り、その中のエンドポイントは同じリージョンに置きます。</p>
@@ -158,6 +159,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 トラフィックダイヤル。メンテナンス中のリージョンはダイヤルを0%にすると、そのリージョンへの新しい通信を止められる。既存の接続は切れない。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
 <h3 id="c2-5">ヘルスチェック<a class="anchor" href="#c2-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>エンドポイントグループごとにヘルスチェックを設定できます。EC2インスタンスとElastic IPアドレスは、Global Acceleratorのエンドポイントグループでヘルスチェックの設定を変えられ、ALBとNLBは Elastic Load Balancingのコンソールで設定します。正常なエンドポイントが1つもない場合は、リージョン内のすべてのエンドポイントへ振り分けます。</p>
