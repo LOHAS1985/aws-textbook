@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat5">ネットワーク・コンテンツ配信</a>
   <h1>組織全体のVPCのIPアドレスを重ならないように払い出す</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -87,8 +87,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 CIDRの払い出しの構成。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span></p>
 
-<div class="ex-item" data-node="ipam">
+<div class="ex-item" data-node="ipam" data-req="1,2,3">
 <p class="ex-q">① 組織全体のIPアドレスのプールを管理し、重複を防ぐものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="IPAM">Amazon VPC IP Address Manager(IPAM)<span class="ex-why">プールの階層と割り当てのルールを決め、使用状況や重複を監視します(<a href="../terms/cidr.html">CIDR</a>)。</span></li>
@@ -97,7 +98,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item" data-node="ram">
+<div class="ex-item" data-node="ram" data-req="2">
 <p class="ex-q">② プールをほかのアカウントに共有するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="RAM">AWS Resource Access Manager(RAM)<span class="ex-why">プールをOUやアカウントに共有し、各アカウントがVPCの作成時に使えるようにします。</span></li>
@@ -106,7 +107,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">③ 既存のVPCのCIDRについて正しいものは?</p>
 <ul class="ex-choices">
 <li data-ok>CIDRは後から追加できるが、元のCIDRは変更できない<span class="ex-why">セカンダリCIDRで範囲は広げられますが、重なりは作り直さないと解消できません。作る前の計画が大切です。</span></li>
@@ -155,6 +156,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 IPAMによるCIDRの払い出し。委任管理者アカウントでIPAMとプールを作り、RAMで本番OUのアカウントに共有する。各アカウントはVPCの作成時にプールを指定するだけで、重ならないCIDRが割り当てられる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">

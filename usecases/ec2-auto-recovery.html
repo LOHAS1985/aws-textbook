@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat1">監視・ログ・自動修復</a>
   <h1>EC2の障害を検知して自動で復旧する</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -94,8 +94,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 ステータスチェックの種類ごとに対処を分ける構成。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span></p>
 
-<div class="ex-item" data-node="rec">
+<div class="ex-item" data-node="rec" data-req="1,2">
 <p class="ex-q">① システムステータスチェックの失敗(ホストの障害)への対処は?</p>
 <ul class="ex-choices">
 <li data-ok data-short="復旧アクション">アラームの復旧アクション<span class="ex-why">インスタンスを別の物理ホストに移して起動し直します。インスタンスID・プライベートIP・EBSのデータは引き継がれます。</span></li>
@@ -104,7 +105,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item" data-node="ssm">
+<div class="ex-item" data-node="ssm" data-req="1,2">
 <p class="ex-q">② インスタンスステータスチェックの失敗(OSの問題)に対処する手順を実行するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="SSM Automation">Systems Manager Automation<span class="ex-why"><code>AWS-RestartEC2Instance</code> などのランブックで、再起動などの手順を自動で実行します(<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a>)。</span></li>
@@ -113,7 +114,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">③ 復旧アクションで失われるものは?</p>
 <ul class="ex-choices">
 <li data-ok>インスタンスストアのデータ<span class="ex-why">インスタンスストアは物理ホストに付いたディスクなので、別のホストに移ると消えます。残したいデータはEBSに置きます。</span></li>
@@ -171,6 +172,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 ステータスチェックの失敗をCloudWatchアラームで検知する。ハードウェア側の障害(システムステータスチェック)は復旧アクションで別の物理ホストに移し、OS側の問題(インスタンスステータスチェック)は再起動などで対処する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">

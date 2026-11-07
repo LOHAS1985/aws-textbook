@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat1">監視・ログ・自動修復</a>
   <h1>AWSの予定メンテナンスや障害の通知に自動で対応する</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -81,8 +81,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 AWS側のイベントへの対応の構成。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span></p>
 
-<div class="ex-item" data-node="h">
+<div class="ex-item" data-node="h" data-req="1">
 <p class="ex-q">① 自分のアカウントに影響するAWS側のイベントを出すものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="AWS Health">AWS Health<span class="ex-why">予定メンテナンス・障害・アカウントへの通知を、影響するリソースとあわせてイベントとして出します。</span></li>
@@ -91,7 +92,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item" data-node="eb">
+<div class="ex-item" data-node="eb" data-req="1,2">
 <p class="ex-q">② イベントをサービスや種類で絞り込み、通知や処理に振り分けるものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="EventBridge">Amazon EventBridgeのルール<span class="ex-why"><code>aws.health</code> のイベントをイベントパターンで絞り、SNSやAutomationに渡します。どのサポートプランでも使えます。</span></li>
@@ -100,7 +101,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">③ リタイア予定のEBS-backedのEC2を別のホストに移す操作は?</p>
 <ul class="ex-choices">
 <li data-ok>停止してから起動する<span class="ex-why">停止して起動すると、別の物理ホストで起動します。インスタンスストアのデータは消えます。</span></li>
@@ -109,7 +110,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="3">
 <p class="ex-q">④ 組織の全アカウントのイベントをまとめて見るには?</p>
 <ul class="ex-choices">
 <li data-ok>AWS Healthの組織ビューを有効にする<span class="ex-why">Organizationsの管理アカウント(または委任管理者)で、全アカウントのHealthイベントを集約できます。</span></li>
@@ -152,6 +153,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 AWS Healthイベントへの対応。イベントはEventBridgeに送られるので、ルールでサービスや種類を絞って通知や自動処理を起動する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
 </section>
 
 <section class="chapter">

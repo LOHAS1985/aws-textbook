@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat2">信頼性・事業継続</a>
   <h1>負荷に応じて自動でスケールするWebシステム</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -83,8 +83,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Webシステムの構成。入り口(①)が複数AZのEC2にリクエストを分散し、②が台数を管理する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span></p>
 
-<div class="ex-item" data-node="lb">
+<div class="ex-item" data-req="1,4" data-node="lb">
 <p class="ex-q">① 利用者からのリクエストを、複数AZのEC2に分散するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="ALB">Application Load Balancer(ALB)<span class="ex-why">HTTP/HTTPSの中身を見て振り分けるので、パスによる振り分け(パスベースルーティング)ができます。ヘルスチェックで異常なEC2には送りません。</span></li>
@@ -93,7 +94,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2,3">
 <p class="ex-q">② 台数を自動で増減し、異常なインスタンスを入れ替える仕組みは?</p>
 <ul class="ex-choices">
 <li data-ok>EC2 Auto Scalingグループ<span class="ex-why">希望する台数を保ち、スケーリングポリシーで台数を増減します。複数のAZのサブネットを指定すると、AZにまたがって均等に配置します。</span></li>
@@ -102,7 +103,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">③ 「CPU使用率をおよそ50%に保つ」に最も合うスケーリングポリシーは?</p>
 <ul class="ex-choices">
 <li data-ok>ターゲット追跡スケーリング(CPU使用率 50%)<span class="ex-why">目標の値を決めるだけで、必要なアラームの作成と台数の計算をAuto Scalingが行います。最も手間の少ない方法です。</span></li>
@@ -111,7 +112,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="3">
 <p class="ex-q">④ 「アプリが応答しなくなったインスタンス」も入れ替えるための、Auto Scalingグループのヘルスチェックの種類は?</p>
 <ul class="ex-choices">
 <li data-ok>ELBのヘルスチェックを有効にする<span class="ex-why">ALBのヘルスチェック(例:<code>/health</code> に200が返るか)に失敗したインスタンスも異常とみなして入れ替えます。</span></li>
@@ -120,7 +121,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">⑤ Auto Scalingグループに指定するサブネットは?</p>
 <ul class="ex-choices">
 <li data-ok>2つ以上のAZのプライベートサブネット<span class="ex-why">複数のAZに分けることで1つのAZの障害に耐えられます。EC2はALBの後ろにあるので、インターネットから直接見える必要はありません。</span></li>
@@ -171,6 +172,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 ALBが複数AZのEC2にリクエストを分散し、Auto ScalingグループがCloudWatchのメトリクスに応じて台数を増減する。異常なインスタンスは自動で入れ替わる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 </section>
 
 <section class="chapter">

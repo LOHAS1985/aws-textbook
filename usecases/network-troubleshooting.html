@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat5">ネットワーク・コンテンツ配信</a>
   <h1>EC2に接続できない原因を調査する</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -85,8 +85,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 通信の経路と調査の構成。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
-<div class="ex-item" data-node="igw">
+<div class="ex-item" data-node="igw" data-req="1">
 <p class="ex-q">① インターネットとVPCの間の出入り口は?</p>
 <ul class="ex-choices">
 <li data-ok data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">VPCにアタッチし、サブネットのルートテーブルに <code>0.0.0.0/0</code> への経路を作ります。EC2にはパブリックIPも必要です。</span></li>
@@ -95,7 +96,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item" data-node="fl">
+<div class="ex-item" data-node="fl" data-req="2">
 <p class="ex-q">② 通信が許可・拒否されたかを記録するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="VPCフローログ">VPCフローログ<span class="ex-why">ENIごとの通信を ACCEPT・REJECT とともに記録します(<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>)。</span></li>
@@ -104,7 +105,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">③ 受信はACCEPTなのに、戻りの通信がREJECTのときの原因は?</p>
 <ul class="ex-choices">
 <li data-ok>ネットワークACLのアウトバウンドでエフェメラルポートを許可していない<span class="ex-why">ネットワークACLはステートレスなので、戻りの通信(1024〜65535)も許可が必要です(<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>)。</span></li>
@@ -113,7 +114,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">④ 実際に通信せずに、設定上の経路を自動で解析するものは?</p>
 <ul class="ex-choices">
 <li data-ok>VPC Reachability Analyzer<span class="ex-why">送信元と宛先を指定すると、どの設定で止まるかを解析して示します。</span></li>
@@ -173,6 +174,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 上段: 通信が届かないときの確認順(ルートテーブル → IGW・NATの状態 → セキュリティグループ → NACL → パブリックIP)。下段: VPCフローログをCloudWatch Logsに送り、拒否(REJECT)された通信を検索すると、どこで止まっているかを絞り込める。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">
