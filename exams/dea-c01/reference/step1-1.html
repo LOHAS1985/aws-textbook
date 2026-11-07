@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>責任共有モデル | AWS教科書</title>
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../../../css/style.css">
+<link rel="icon" type="image/png" href="../../../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../../../icons/apple-touch-icon.png">
+<link rel="manifest" href="../../../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../../../sw.js").catch(function () {});
+}
+</script>
+<script src="../../../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../../../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../../../services/index.html">サービス</a><a href="../../../terms/index.html">用語</a><a href="../../../usecases/index.html">運用シナリオ</a><a href="../../../news/index.html">ニュース</a><a href="../../../exams/index.html" class="current">試験別</a><a href="../../../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main class="booklet guide">
+<div class="page-head booklet-cover">
+<p class="booklet-site">ステップ1 AWSの前提</p>
+<h1>責任共有モデル</h1>
+<p class="booklet-help">この項目で使うサービス・用語を、参考書としてまとめたページです。ブラウザーの印刷(Ctrl+P)から、紙に印刷するかPDFとして保存してください。</p>
+<p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button></p>
+</div>
+<article class="booklet-page" id="p-shared-responsibility">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">AWSの基礎</span>
+<h1>責任共有モデル</h1>
+<p class="lead">セキュリティと運用の責任を、AWSと利用者のどちらが持つかの分担。使うサービスによって境界が変わる</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="shared-responsibility-c1">1. 詳しい説明<a class="anchor" href="#shared-responsibility-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>責任共有モデル</strong>は、AWSを使うときのセキュリティと運用の責任を、AWSと利用者で分け合う考え方です。AWSは<strong>「クラウドのセキュリティ」</strong>(クラウドそのものを守る)を、利用者は<strong>「クラウドにおけるセキュリティ」</strong>(クラウドの上に置いたものを守る)を受け持ちます。</p>
+<div class="table-wrap"><table>
+<tr><th>担当</th><th>範囲</th><th>例</th></tr>
+<tr><td><strong>AWS</strong></td><td>クラウドのセキュリティ</td><td>データセンターの建物・入退室管理、電源・空調、サーバー・ストレージ・ネットワークの機器、仮想化の基盤(ハイパーバイザー)、マネージドサービスの基盤のソフトウェア</td></tr>
+<tr><td><strong>利用者</strong></td><td>クラウドにおけるセキュリティ</td><td>データ(暗号化・バックアップ)、IAMの権限、ネットワークの設定(セキュリティグループ・ネットワークACL)、EC2のOSとアプリ、ログの確認</td></tr>
+</table></div>
+
+<h3 id="shared-responsibility-c1-1">サービスによって境界が変わる<a class="anchor" href="#shared-responsibility-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>AWSが管理してくれる範囲が広いサービスほど、利用者の責任は小さくなります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 548 354" style="max-width:548px;min-width:520px" role="img" aria-label="図1 サービスごとの責任の範囲(blue=利用者、accent=AWS)。EC2ではOSから上が利用者の責任だが、RDSやLambdaではOSやランタイムもAWSが管理する。どのサービスでも、データと権限の管理は利用者の責任。"><defs><marker id="shared-responsibility-dgterms-shared-responsibility-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="h1">
+<text x="109" y="68" text-anchor="middle" class="dg-t">EC2</text>
+</g>
+<g data-node="h2">
+<text x="279" y="68" text-anchor="middle" class="dg-t">RDS</text>
+</g>
+<g data-node="h3">
+<text x="449" y="68" text-anchor="middle" class="dg-t">Lambda</text>
+</g>
+<g data-node="a1">
+<rect x="34" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">データ・権限</text>
+<text x="109" y="158" text-anchor="middle" class="dg-s">利用者</text>
+</g>
+<g data-node="a2">
+<rect x="204" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="279" y="140" text-anchor="middle" class="dg-t">データ・権限</text>
+<text x="279" y="158" text-anchor="middle" class="dg-s">利用者</text>
+</g>
+<g data-node="a3">
+<rect x="374" y="118" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="449" y="140" text-anchor="middle" class="dg-t">データ・権限</text>
+<text x="449" y="158" text-anchor="middle" class="dg-s">利用者</text>
+</g>
+<g data-node="b1">
+<rect x="34" y="198" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="220" text-anchor="middle" class="dg-t">OS・ミドルウェア</text>
+<text x="109" y="238" text-anchor="middle" class="dg-s">利用者</text>
+</g>
+<g data-node="b2">
+<rect x="204" y="198" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="279" y="220" text-anchor="middle" class="dg-tb">OS・DBエンジン</text>
+<text x="279" y="238" text-anchor="middle" class="dg-s">AWS</text>
+</g>
+<g data-node="b3">
+<rect x="374" y="198" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="449" y="220" text-anchor="middle" class="dg-tb">OS・ランタイム</text>
+<text x="449" y="238" text-anchor="middle" class="dg-s">AWS</text>
+</g>
+<g data-node="c1">
+<rect x="34" y="278" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="300" text-anchor="middle" class="dg-tb">ハードウェア</text>
+<text x="109" y="318" text-anchor="middle" class="dg-s">AWS</text>
+</g>
+<g data-node="c2">
+<rect x="204" y="278" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="279" y="300" text-anchor="middle" class="dg-tb">ハードウェア</text>
+<text x="279" y="318" text-anchor="middle" class="dg-s">AWS</text>
+</g>
+<g data-node="c3">
+<rect x="374" y="278" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="449" y="300" text-anchor="middle" class="dg-tb">ハードウェア</text>
+<text x="449" y="318" text-anchor="middle" class="dg-s">AWS</text>
+</g>
+</svg>
+</div>
+<figcaption>図1 サービスごとの責任の範囲(blue=利用者、accent=AWS)。EC2ではOSから上が利用者の責任だが、RDSやLambdaではOSやランタイムもAWSが管理する。どのサービスでも、データと権限の管理は利用者の責任。</figcaption>
+</figure>
+<div class="table-wrap"><table class="stack">
+<tr><th>作業</th><th>EC2</th><th>RDS</th><th>Lambda</th></tr>
+<tr><td data-label="作業">OSのパッチ</td><td data-label="EC2"><strong>利用者</strong>(Patch Managerなど)</td><td data-label="RDS">AWS(適用する時間帯はメンテナンスウィンドウで利用者が選ぶ)</td><td data-label="Lambda">AWS</td></tr>
+<tr><td data-label="作業">DBエンジン・ランタイムの更新</td><td data-label="EC2">利用者</td><td data-label="RDS">AWSが提供し、メジャーバージョンの更新は利用者が実施</td><td data-label="Lambda">AWS(サポートが終わるランタイムからの移行は利用者)</td></tr>
+<tr><td data-label="作業">バックアップの設定</td><td data-label="EC2">利用者</td><td data-label="RDS">自動バックアップの保持期間は利用者が設定</td><td data-label="Lambda">コードとデータの管理は利用者</td></tr>
+<tr><td data-label="作業">ネットワークの制限</td><td data-label="EC2">利用者(セキュリティグループ)</td><td data-label="RDS">利用者(セキュリティグループ・公開するか)</td><td data-label="Lambda">利用者(VPCに接続するか・権限)</td></tr>
+<tr><td data-label="作業">データの暗号化</td><td data-label="EC2">利用者が設定</td><td data-label="RDS">利用者が設定(作成時に指定)</td><td data-label="Lambda">利用者が設定</td></tr>
+</table></div>
+
+<h3 id="shared-responsibility-c1-2">両方で受け持つもの<a class="anchor" href="#shared-responsibility-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>パッチの管理</strong>:AWSは基盤のパッチ、利用者はOSとアプリのパッチ</li>
+<li><strong>設定の管理</strong>:AWSは基盤の設定、利用者はOS・データベース・アプリの設定</li>
+<li><strong>教育</strong>:AWSは自社の社員、利用者は自社の社員</li>
+</ul>
+<p>反対に、データセンターの物理的なセキュリティや環境(電源・空調)は、利用者がAWSから<strong>そのまま引き継ぐ</strong>もので、利用者が手を出すことはできません。監査で求められる証明書類は<a href="../../../terms/compliance-artifact.html">AWS Artifact</a>から入手します。</p>
+<div class="point"><p>試験では「誰がやるべきか」が問われます。<strong class="em">EC2のOSのパッチは利用者</strong>、RDSのOSのパッチはAWS(適用の時間帯は利用者が選ぶ)、どのサービスでも<strong>データの暗号化・IAMの権限・バックアップの設定</strong>は利用者、と整理しておきます。</p></div>
+</section>
+
+<section class="chapter">
+<h2 id="shared-responsibility-c2">2. 関連する用語<a class="anchor" href="#shared-responsibility-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../../../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>:AWSに任せる範囲が広いサービス</li>
+<li><a href="../../../terms/compliance-artifact.html">コンプライアンスとAWS Artifact</a>:AWS側の責任を証明する書類</li>
+<li><a href="../../../terms/encryption.html">保存時の暗号化と転送時の暗号化</a>:利用者が設定する暗号化</li>
+<li><a href="../../../terms/well-architected.html">AWS Well-Architected フレームワーク</a>:セキュリティの柱</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="shared-responsibility-c3">3. 関連サービス<a class="anchor" href="#shared-responsibility-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../../../services/ec2.html">Amazon EC2</a>:OSから上が利用者の責任</li>
+<li><a href="../../../services/rds.html">Amazon RDS</a>:OS・DBエンジンのパッチをAWSが行う</li>
+<li><a href="../../../services/lambda.html">AWS Lambda</a>:実行環境をAWSが管理する</li>
+<li><a href="../../../services/systems-manager.html">AWS Systems Manager</a>:EC2のパッチの適用(Patch Manager)</li>
+<li><a href="../../../services/iam.html">AWS IAM</a>:権限の管理は利用者の責任</li>
+</ul>
+</section>
+</article>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="../roadmap.html">ロードマップへ戻る</a>
+  <a class="next" href="step1-2.html"><span class="label">次の項目 →</span>リージョンとアベイラビリティーゾーン</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
