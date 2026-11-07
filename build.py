@@ -1409,7 +1409,7 @@ def exam_scope_page(exam, updated, warnings):
 
 
 def exam_roadmap_page(exam, updated, warnings):
-    """学習ロードマップ(roadmap.html)。本文のリンクの順に、リンク先のページを参考書として後ろに続ける。"""
+    """学習ロードマップ(roadmap.html)。ステップと項目ごとに、参考書のページ(reference/)を作る。"""
     source = exam["folder"] / "roadmap.html"
     if not source.exists():
         return None
@@ -1417,15 +1417,34 @@ def exam_roadmap_page(exam, updated, warnings):
     text = source.read_text(encoding="utf-8")
     meta = dict(META_RE.findall(text))
     raw = META_RE.sub("", text).strip()
-    refs = []
-    for key, slug in GUIDE_REF_RE.findall(raw):
-        if (key, slug) not in refs:
-            refs.append((key, slug))
     page = exam_page(exam, f"{exam['id']}/roadmap", meta.get("title", f"{exam['code']}の学習ロードマップ"), exam["code"],
                      meta.get("lead", ""), exam_links(render_figures(raw, where, warnings), "../../"),
                      updated.get(f"src/exams/{exam['id']}/roadmap.html", int(time.time())), meta.get("verified", ""))
-    page["refs"] = refs
+    page["steps"] = roadmap_steps(raw)
     return page
+
+
+def roadmap_steps(raw):
+    """学習ロードマップを、ステップ(h3)と、その中の項目(箇条書きの1行)に分ける。
+    項目ごとに参考書のページを作るため、項目で参照しているページ(services・terms・usecases)を集める。"""
+    steps = []
+    for chunk in re.split(r"(?=<h3[^>]*>)", raw)[1:]:
+        title = plain(re.match(r"<h3[^>]*>(.*?)</h3>", chunk, re.S).group(1))
+        found = re.search(r"ステップ(\d+)", title)
+        number = int(found.group(1)) if found else len(steps) + 1
+        items = []
+        for li in re.findall(r"<li>(.*?)</li>", chunk, re.S):
+            refs = []
+            for ref in GUIDE_REF_RE.findall(li):
+                if ref not in refs:
+                    refs.append(ref)
+            if not refs:
+                continue
+            text = plain(li)
+            label = re.split(r"[:：]", text, 1)[0].strip() if re.search(r"[:：]", text) else text
+            items.append({"label": label, "refs": refs, "slug": f"step{number}-{len(items) + 1}"})
+        steps.append({"title": title, "items": items})
+    return steps
 
 
 def exam_questions_page(exam, updated, warnings):
@@ -1448,23 +1467,36 @@ def exam_top_html(exam, pages):
     """試験ごとの入口。学習範囲は必ずあり、ロードマップ・問題集は作られているものだけ並べる。"""
     cards = [("scope.html", "学習範囲", "分野・配点・タスクと、関連するページ")]
     if pages["roadmap"]:
-        cards.append(("roadmap.html", "学習ロードマップと参考書", "学ぶ順番と、印刷用の参考書"))
+        cards.append(("roadmap.html", "学習ロードマップと参考書", "学ぶ順番と、項目ごとの参考書"))
     if pages["questions"]:
         cards.append(("questions.html", "問題集", "シナリオ型の問題で理解を確認"))
     items = "".join(f'  <li><a href="{href}"><span class="name">{name}</span><span class="desc">{desc}</span></a></li>\n'
                     for href, name, desc in cards)
     level = dict(EXAM_LEVELS).get(exam["level"], "")
     return (head(f"{exam['name']} | {SITE_TITLE}", "../../", exam["name"]) + header("../../", "exams")
-            + '<main>\n<div class="page-head">\n'
+            + f'<main>\n<div class="page-head{progress_class(exam)}">\n'
             + f'<p class="category">{html.escape(level)}・{html.escape(exam["code"])}</p>\n'
-            + f'<h1>{html.escape(exam["name"])}</h1>\n</div>\n'
+            + f'<h1>{html.escape(exam["name"])}{progress_badge(exam)}</h1>\n</div>\n'
             + f'<ul class="card-list top-cards">\n{items}</ul>\n'
             + '<p><a href="../index.html">試験の一覧へ戻る</a></p>\n'
             + "</main>\n" + TO_TOP + TAIL)
 
 
+PROGRESS_LABEL = {"studying": "学習中", "passed": "合格済み"}
+
+
+def progress_class(exam):
+    """試験の進み具合に応じた CSS のクラス(学習中・合格済み。なければ空)。"""
+    return f' progress-{exam["progress"]}' if exam.get("progress") in PROGRESS_LABEL else ""
+
+
+def progress_badge(exam):
+    label = PROGRESS_LABEL.get(exam.get("progress", ""), "")
+    return f'<span class="progress-badge {exam["progress"]}">{label}</span>' if label else ""
+
+
 def exams_index_html(exams):
-    """試験の一覧。級ごとに並べ、試験の入口へつなぐ。"""
+    """試験の一覧。級ごとに並べ、試験の入口へつなぐ。学習中・合格済みの試験は色を変える。"""
     parts = [head(f"試験別 | {SITE_TITLE}", "../", "AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる"),
              header("../", "exams"), "<main>\n",
              '<div class="page-head"><h1>試験別</h1><p class="lead">AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる</p></div>\n']
@@ -1476,48 +1508,87 @@ def exams_index_html(exams):
         for e in group:
             status = EXAM_STATUS_LABEL.get(e["status"], "")
             desc = status or e["name"]
-            parts.append(f'  <li><a href="{e["id"]}/index.html"><span class="name">{html.escape(e["name"])}'
-                         f'<span class="badge">{html.escape(e["code"])}</span></span>'
+            parts.append(f'  <li><a class="{progress_class(e).strip()}" href="{e["id"]}/index.html">'
+                         f'<span class="name">{html.escape(e["name"])}'
+                         f'<span class="badge">{html.escape(e["code"])}</span>{progress_badge(e)}</span>'
                          f'<span class="desc">{html.escape(desc)}</span></a></li>\n')
         parts.append("</ul>\n")
     parts.append("</main>\n" + TO_TOP + TAIL)
     return "".join(parts)
 
 
-def render_roadmap(page, loaded):
-    """学習ロードマップの本文の後ろに、リンク先のページを順番どおりに並べた参考書を続ける(印刷用)。"""
-    refs = []
-    for key, slug in page["refs"]:
+def render_roadmap(page, exam):
+    """学習ロードマップのページ。本文の後ろに、項目ごとの参考書のページへの一覧を付ける。"""
+    body, items = add_heading_ids(stack_tables(page["body"]))
+    index = []
+    for step in page["steps"]:
+        if step["items"]:
+            index.append(f'<h3>{html.escape(step["title"])}</h3>\n<ul>\n'
+                         + "".join(f'<li><a href="reference/{item["slug"]}.html">{html.escape(item["label"])}</a></li>\n'
+                                   for item in step["items"])
+                         + "</ul>\n")
+    reference = ('<section class="chapter">\n<h2>4. 参考書の一覧</h2>\n'
+                 '<p>学習の項目ごとに、参考書のページを分けています。項目を開くと、その項目で使うサービス・用語の説明が並びます。</p>\n'
+                 + "".join(index) + "</section>\n") if index else ""
+    return (head(f"{page['title']} | {SITE_TITLE}", "../../", page["lead"]) + header("../../", "exams")
+            + f'<main>\n<div class="page-head{progress_class(exam)}">\n<p class="category">{html.escape(exam["code"])}</p>\n'
+            + f'<h1>{html.escape(page["title"])}</h1>\n'
+            + (f'<p class="lead">{page["lead"]}</p>\n' if page["lead"] else "")
+            + "</div>\n" + page_toc(items) + body + "\n" + reference
+            + "</main>\n" + TO_TOP + TAIL)
+
+
+def item_pager(prev, nxt):
+    def link(item, cls, label):
+        if item is None:
+            return f'<span class="{cls} empty"></span>'
+        return (f'<a class="{cls}" href="{item["slug"]}.html"><span class="label">{label}</span>'
+                f'{html.escape(item["label"])}</a>')
+    return ('<nav class="pager">\n  ' + link(prev, "prev", "← 前の項目") + '\n'
+            '  <a class="toc" href="../roadmap.html">ロードマップへ戻る</a>\n  '
+            + link(nxt, "next", "次の項目 →") + '\n</nav>\n')
+
+
+def reference_item_html(exam, step, item, prev, nxt, loaded):
+    """参考書の1項目分のページ。その項目で参照しているページの本文を、順番どおりに並べる(印刷用)。"""
+    pages = []
+    for key, slug in item["refs"]:
         p = next((x for x in loaded.get(key, []) if x["slug"] == slug), None)
         if p is not None:
-            refs.append((key, p))
-    included = {p["slug"] for _, p in refs}
+            pages.append((key, p))
+    included = {p["slug"] for _, p in pages}
     articles = []
-    for key, p in refs:
-        # 冊子の中の移動先は、冊子に入っているページだけにする。それ以外は通常のページへのリンクにする
+    for key, p in pages:
+        # book/exams/{試験ID}/reference/ から見たリンクにする。項目の中にないページへのリンクは通常のページへ向ける
+        article = booklet_body(key, p).replace('href="../', 'href="../../../')
         article = re.sub(r'href="#p-([\w-]+)"',
-                         lambda m: m.group(0) if m.group(1) in included else f'href="../{key}/{m.group(1)}.html"',
-                         booklet_body(key, p))
-        article = exam_links(article, "../../")
+                         lambda m: m.group(0) if m.group(1) in included else f'href="../../../{key}/{m.group(1)}.html"',
+                         article)
         articles.append(f'<article class="booklet-page" id="p-{p["slug"]}">\n'
                         f'<div class="page-head hero"{cat_style(_by_key[key], p["category"])}>\n<div class="hero-text">\n'
                         f'<span class="category">{html.escape(p["category"])}</span>\n<h1>{html.escape(p["title"])}</h1>\n'
                         + (f'<p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
                         + "</div>\n</div>\n" + article + "\n</article>\n")
-    body, items = add_heading_ids(stack_tables(page["body"]))
-    title, lead = page["title"], page["lead"]
-    return (head(f"{title} | {SITE_TITLE}", "../../", lead) + header("../../", "exams")
+    return (head(f"{item['label']} | {SITE_TITLE}", "../../../", "") + header("../../../", "exams")
             + '<main class="booklet guide">\n'
-            + f'<div class="page-head booklet-cover">\n<p class="booklet-site">{SITE_TITLE}</p>\n<h1>{html.escape(title)}</h1>\n'
-            + (f'<p class="lead">{lead}</p>\n' if lead else "")
-            + '<p class="booklet-help">後半の「参考書」は、ロードマップで参照しているページを順番どおりに並べたものです。'
+            + f'<div class="page-head booklet-cover">\n<p class="booklet-site">{html.escape(step["title"])}</p>\n'
+            + f'<h1>{html.escape(item["label"])}</h1>\n'
+            + '<p class="booklet-help">この項目で使うサービス・用語を、参考書としてまとめたページです。'
             'ブラウザーの印刷(Ctrl+P)から、紙に印刷するかPDFとして保存してください。</p>\n'
             + '<p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button></p>\n'
-            + "</div>\n" + page_toc(items)
-            + f'<section class="guide-roadmap">\n{body}\n</section>\n'
-            + '<section class="guide-reference">\n<h2 id="reference">参考書</h2>\n'
-            + "".join(articles) + "</section>\n"
-            + "</main>\n" + TO_TOP + TAIL)
+            + "</div>\n" + "".join(articles) + item_pager(prev, nxt) + "</main>\n" + TO_TOP + TAIL)
+
+
+def write_reference_pages(exam, page, loaded):
+    """学習ロードマップの項目ごとに、参考書のページを書く。前の項目・次の項目へつながる。"""
+    folder = OUT / "exams" / exam["id"] / "reference"
+    folder.mkdir(parents=True, exist_ok=True)
+    items = [(step, item) for step in page["steps"] for item in step["items"]]
+    for n, (step, item) in enumerate(items):
+        prev = items[n - 1][1] if n > 0 else None
+        nxt = items[n + 1][1] if n + 1 < len(items) else None
+        (folder / f"{item['slug']}.html").write_text(reference_item_html(exam, step, item, prev, nxt, loaded),
+                                                     encoding="utf-8")
 
 
 def redirect_html(url, label):
@@ -1550,7 +1621,8 @@ def write_exams(exams, loaded):
         (folder / "index.html").write_text(exam_top_html(e, pages), encoding="utf-8")
         (folder / "scope.html").write_text(render_page(EXAM_COL, [pages["scope"]], 0, "../../"), encoding="utf-8")
         if pages["roadmap"]:
-            (folder / "roadmap.html").write_text(render_roadmap(pages["roadmap"], loaded), encoding="utf-8")
+            (folder / "roadmap.html").write_text(render_roadmap(pages["roadmap"], e), encoding="utf-8")
+            write_reference_pages(e, pages["roadmap"], loaded)
         if pages["questions"]:
             (folder / "questions.html").write_text(render_page(QUESTION_COL, [pages["questions"]], 0, "../../"),
                                                    encoding="utf-8")
