@@ -68,10 +68,10 @@
 
   var slug = form.getAttribute("data-quiz");
   var questions = Array.prototype.slice.call(form.querySelectorAll(".quiz-q"));
-  var submit = document.getElementById("quiz-submit");
-  var reset = document.getElementById("quiz-reset");
   var output = document.getElementById("quiz-result");
   var best = document.getElementById("quiz-best");
+  var finishPanel = document.getElementById("quiz-finish");
+  var returnButton = document.getElementById("quiz-return");
   var previous = showBest(slug, best);
   var activeQuestions = [];
   var currentIndex = 0;
@@ -105,6 +105,7 @@
   function setMode(value) {
     mode = value;
     selection.hidden = mode !== "choose";
+    startButton.textContent = mode === "random" ? "ランダムに始める" : "選んだ問題を始める";
     setup.querySelectorAll("[name='quiz-mode']").forEach(function (radio) {
       radio.checked = radio.value === mode;
     });
@@ -122,8 +123,7 @@
       checkbox.checked = false;
       label.appendChild(checkbox);
       label.appendChild(document.createTextNode(
-        " 問" + checkbox.value + "・分野" + question.getAttribute("data-domain")
-        + " — " + (stem.length > 72 ? stem.slice(0, 72) + "…" : stem)
+        " 問" + checkbox.value + " — " + (stem.length > 72 ? stem.slice(0, 72) + "…" : stem)
       ));
       list.appendChild(label);
     });
@@ -137,8 +137,7 @@
       ? "問題 " + (currentIndex + 1) + " / " + activeQuestions.length
       : "";
     back.hidden = currentIndex === 0;
-    next.textContent = currentIndex === activeQuestions.length - 1 ? "採点する" : "次の問題";
-    reset.hidden = false;
+    next.textContent = currentIndex === activeQuestions.length - 1 ? "結果を見る" : "次の問題";
   }
 
   function start() {
@@ -152,10 +151,11 @@
         return ids.indexOf(question.getAttribute("data-id")) !== -1;
       });
       if (!selected.length) {
-        output.textContent = "解く問題を1問以上選んでください。";
+        setupMessage.textContent = "解く問題を1問以上選んでください。";
         return;
       }
     }
+    setupMessage.textContent = "";
     questions.forEach(function (question) {
       question.querySelectorAll("input").forEach(function (input) { input.checked = false; });
       question.querySelectorAll(".quiz-choices li").forEach(function (choice) {
@@ -168,17 +168,19 @@
     setup.hidden = true;
     progress.hidden = false;
     navigation.hidden = false;
-    submit.hidden = true;
-    reset.hidden = false;
-    output.textContent = "採点後に結果が表示されます。";
+    finishPanel.hidden = true;
     showQuestion();
-    document.getElementById("c2").scrollIntoView({ behavior: "smooth", block: "start" });
+    document.querySelector(".quiz-page").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   setup.className = "quiz-setup";
   setup.innerHTML = '<h4>出題方法</h4>'
     + '<label><input type="radio" name="quiz-mode" value="random" checked> 全100問をランダムに解く</label>'
     + '<label><input type="radio" name="quiz-mode" value="choose"> 問題を選んで解く</label>';
+  var setupMessage = document.createElement("p");
+  setupMessage.className = "quiz-setup-message";
+  setupMessage.setAttribute("role", "status");
+  setupMessage.setAttribute("aria-live", "polite");
   selection.className = "quiz-selection";
   selection.hidden = true;
   selection.innerHTML = '<p>解く問題を選んでください。間違えた問題は保存され、ここからまとめて選べます。</p>'
@@ -196,8 +198,9 @@
       input.checked = wrong.indexOf(input.value) !== -1;
     });
   }));
-  var startButton = makeButton("選んだ問題を始める", start);
+  var startButton = makeButton("ランダムに始める", start);
   setup.appendChild(selection);
+  setup.appendChild(setupMessage);
   setup.appendChild(startButton);
   form.insertBefore(setup, form.firstChild);
   renderSelection();
@@ -223,31 +226,32 @@
       currentIndex++;
       showQuestion();
     } else {
-      form.requestSubmit ? form.requestSubmit() : submit.click();
+      finishStudy();
     }
   });
   navigation.appendChild(back);
   navigation.appendChild(next);
+  navigation.appendChild(makeButton("勉強を終了する", finishStudy));
   form.insertBefore(progress, setup.nextSibling);
-  form.querySelector(".quiz-actions").insertBefore(navigation, submit);
+  form.querySelector(".quiz-actions").appendChild(navigation);
   form.classList.add("quiz-js");
-  submit.hidden = true;
-  reset.hidden = true;
   questions.forEach(function (question, index) {
     if (!question.hasAttribute("data-id")) question.setAttribute("data-id", String(index + 1));
     question.hidden = true;
   });
 
-  form.addEventListener("submit", function (event) {
-    event.preventDefault();
+  function finishStudy() {
     if (!activeQuestions.length) return;
     var score = 0;
+    var unanswered = 0;
+    var wrongThisRun = 0;
     var wrong = new Set(previous && Array.isArray(previous.wrong) ? previous.wrong : []);
     activeQuestions.forEach(function (question) {
       var id = question.getAttribute("data-id");
       var expected = question.getAttribute("data-answer").split(",").sort();
       var selected = Array.prototype.slice.call(question.querySelectorAll("input:checked"))
         .map(function (input) { return input.value; }).sort();
+      if (!selected.length) unanswered++;
       var correct = expected.length === selected.length
         && expected.every(function (answer, index) { return answer === selected[index]; });
       if (correct) {
@@ -255,6 +259,7 @@
         wrong.delete(id);
       } else {
         wrong.add(id);
+        wrongThisRun++;
       }
       question.querySelectorAll(".quiz-choices li").forEach(function (choice) {
         var input = choice.querySelector("input");
@@ -265,12 +270,10 @@
       question.querySelector(".quiz-answer").open = true;
       question.hidden = false;
     });
-    activeQuestions.forEach(function (question) { question.hidden = false; });
-    setup.hidden = false;
     progress.hidden = true;
     navigation.hidden = true;
-    output.textContent = score + " / " + activeQuestions.length + "問正解です。間違えた問題: "
-      + wrong.size + "問。";
+    output.textContent = score + " / " + activeQuestions.length + "問正解です。不正解・未回答: "
+      + wrongThisRun + "問 (未回答 " + unanswered + "問)。";
     try {
       var attempts = previous ? previous.attempts + 1 : 1;
       var better = !previous || score * previous.total > previous.best * activeQuestions.length;
@@ -288,11 +291,17 @@
     } catch (error) {
       output.textContent += " 成績を保存できませんでした: " + error.message;
     }
-    document.getElementById("c3").scrollIntoView({ behavior: "smooth", block: "start" });
+    setup.hidden = true;
+    finishPanel.hidden = false;
+    finishPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    finishStudy();
   });
 
-  form.addEventListener("reset", function (event) {
-    event.preventDefault();
+  returnButton.addEventListener("click", function () {
     questions.forEach(function (question) {
       question.hidden = true;
       question.querySelectorAll("input").forEach(function (input) { input.checked = false; });
@@ -303,9 +312,9 @@
     });
     activeQuestions = [];
     setup.hidden = false;
+    finishPanel.hidden = true;
     progress.hidden = true;
     navigation.hidden = true;
-    reset.hidden = true;
-    output.textContent = "採点後に結果が表示されます。";
+    setupMessage.textContent = "";
   });
 })();

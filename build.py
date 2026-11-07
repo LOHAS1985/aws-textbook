@@ -301,7 +301,7 @@ def add_question_bank(page, src_dir):
             if insertion < 0:
                 raise ValueError(f"{src_dir.name}: 問題フォームの終了位置がありません")
         page = page[:insertion] + "\n" + rendered + "\n" + page[insertion:]
-    return page
+    return re.sub(r'<h3 id="domain[1-4]">.*?</h3>\s*', "", page)
 
 
 def annotate_existing_questions(page):
@@ -565,20 +565,25 @@ def render_page(col, pages, i):
     body, items = add_heading_ids(stack_tables(p["body"]))
     icon = service_icon(p["slug"], "../", 56) if col["key"] == "services" else ""
     title = f"{p['title']} | {p['date']}のAWSニュース" if p["date"] else p["title"]
+    quiz_page = col["key"] == "questions"
+    page_head = ""
+    if not quiz_page:
+        page_head = (f'<div class="page-head hero"{cat_style(col, p["category"])}>\n'
+                     + (f'  <div class="hero-icon">{icon}</div>\n' if icon else "")
+                     + '  <div class="hero-text">\n'
+                     + f'  <a class="category" href="index.html#cat{cat_no}">{html.escape(p["category"])}</a>\n'
+                     + (f'  <p class="news-date"><time datetime="{p["slug"]}">{p["date"]}</time>のAWSニュース</p>\n'
+                        if p["date"] else "")
+                     + f'  <h1>{html.escape(p["title"])}</h1>\n'
+                     + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
+                     + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
+                     + f'{fmt_date(p["updated"])}</time></p>\n'
+                     + (f'  <p class="updated">内容の確認:{verified_label(p["verified"])}</p>\n' if p["verified"] else "")
+                     + "  </div>\n</div>\n")
+    main_class = ' class="quiz-page"' if quiz_page else ""
     return (head(f"{title} | {SITE_TITLE}", "../", p["lead"])
             + header("../", col["key"])
-            + f'<main>\n<div class="page-head hero"{cat_style(col, p["category"])}>\n'
-            + (f'  <div class="hero-icon">{icon}</div>\n' if icon else "")
-            + '  <div class="hero-text">\n'
-            + f'  <a class="category" href="index.html#cat{cat_no}">{html.escape(p["category"])}</a>\n'
-            + (f'  <p class="news-date"><time datetime="{p["slug"]}">{p["date"]}</time>のAWSニュース</p>\n'
-               if p["date"] else "")
-            + f'  <h1>{html.escape(p["title"])}</h1>\n'
-            + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
-            + f'  <p class="updated">最終更新:<time datetime="{fmt_date(p["updated"])}">'
-            + f'{fmt_date(p["updated"])}</time></p>\n'
-            + (f'  <p class="updated">内容の確認:{verified_label(p["verified"])}</p>\n' if p["verified"] else "")
-            + "  </div>\n</div>\n" + page_toc(items) + body + "\n" + p.get("graph", "")
+            + f'<main{main_class}>\n' + page_head + page_toc(items) + body + "\n" + p.get("graph", "")
             + pager(prev, nxt) + "</main>\n" + TO_TOP
             + exercise_graph(col, p) + page_script(col) + TAIL)
 
