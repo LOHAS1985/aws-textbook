@@ -276,14 +276,18 @@ def load_pages(col, warnings, updated):
 
 def add_question_bank(page, src_dir):
     """試験別の本文に、分野ごとの追加問題データをHTMLとして組み込む。"""
-    page = annotate_existing_questions(page)
+    title_path = src_dir / "dea-c01-titles.json"
+    titles = json.loads(title_path.read_text(encoding="utf-8"))
+    if set(titles) != {str(question_id) for question_id in range(1, 101)}:
+        raise ValueError(f"{title_path}: 問1〜100の選択画面用タイトルが必要です")
+    page = annotate_existing_questions(page, titles)
     questions = {domain: [] for domain in range(1, 5)}
     for domain in questions:
         path = src_dir / f"domain-{domain}.json"
         if not path.exists():
             continue
         data = json.loads(path.read_text(encoding="utf-8"))
-        questions[domain] = [render_question(q, domain) for q in data]
+        questions[domain] = [render_question(q, domain, titles[str(q["id"])]) for q in data]
 
     for domain in range(1, 5):
         rendered = "\n".join(questions[domain])
@@ -304,7 +308,7 @@ def add_question_bank(page, src_dir):
     return re.sub(r'<h3 id="domain[1-4]">.*?</h3>\s*', "", page)
 
 
-def annotate_existing_questions(page):
+def annotate_existing_questions(page, titles):
     domain_headings = list(re.finditer(r'<h3 id="domain([1-4])"', page))
     matches = list(re.finditer(r'(<section class="quiz-q")([^>]*)>', page))
     for question_number, match in reversed(list(enumerate(matches, 1))):
@@ -314,12 +318,12 @@ def annotate_existing_questions(page):
         ).group(1)
         attrs = match.group(2)
         attrs += (f' data-id="{question_number}" data-domain="{domain}"'
-                  ' data-difficulty="intermediate"')
+                  f' data-difficulty="intermediate" data-title="{html.escape(titles[str(question_number)], quote=True)}"')
         page = page[:match.start(2)] + attrs + page[match.end(2):]
     return page
 
 
-def render_question(question, domain):
+def render_question(question, domain, title):
     """問題データ1件を、JavaScriptなしでも読める選択問題HTMLにする。"""
     qid = question["id"]
     answer = question["answer"]
@@ -346,7 +350,7 @@ def render_question(question, domain):
     choice_html = "\n".join(choices)
     incorrect_html = "\n".join(incorrect)
     return (
-        f'<section class="quiz-q" data-id="{qid}" data-domain="{domain}" '
+        f'<section class="quiz-q" data-id="{qid}" data-title="{html.escape(title, quote=True)}" data-domain="{domain}" '
         f'data-difficulty="{question["difficulty"]}" data-answer="{",".join(answer)}" '
         f'data-type="{question["type"]}">\n'
         f'<h4>問{qid} <span class="quiz-difficulty">{difficulty_labels[question["difficulty"]]}</span></h4>\n'

@@ -225,6 +225,7 @@ def _check_question_paper(raw, where, warnings):
     domains = {str(domain): 0 for domain in range(1, 5)}
     for n, (attrs, inner) in enumerate(questions, 1):
         question_id = re.search(r'data-id="([^"]+)"', attrs)
+        question_title = re.search(r'data-title="([^"]+)"', attrs)
         domain = re.search(r'data-domain="([1-4])"', attrs)
         difficulty = re.search(r'data-difficulty="(basic|intermediate|advanced)"', attrs)
         answer = re.search(r'data-answer="([^"]+)"', attrs)
@@ -237,6 +238,8 @@ def _check_question_paper(raw, where, warnings):
             ids.add(question_id.group(1))
         else:
             warnings.append(f"{where}: {n}問目に data-id がありません")
+        if not question_title or not question_title.group(1).strip():
+            warnings.append(f"{where}: {n}問目に選択画面用タイトル(data-title)がありません")
         if not difficulty:
             warnings.append(f"{where}: {n}問目に data-difficulty がありません")
         if domain:

@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <section class="chapter">
 <form class="quiz-paper" id="quiz-form" data-quiz="dea-c01">
 <div class="quiz-domain">
-<section class="quiz-q" data-answer="a" data-type="single" data-id="1" data-domain="1" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="a" data-type="single" data-id="1" data-domain="1" data-difficulty="intermediate" data-title="販売データの移行">
 <h4>問1</h4>
 <p class="quiz-stem">販売システムはオンプレミスのリレーショナルデータベースで稼働し、AWSへの切り替えまで数日間は更新が続きます。分析チームは移行後すぐに、Amazon S3のデータレイクで最新データを利用したいと考えています。一方、アプリケーションの改修や独自のログ転送処理は避ける必要があります。初期データを移した後も更新を追従させる方法はどれですか。</p>
 <fieldset class="quiz-options">
@@ -62,7 +62,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </details>
 </section>
 
-<section class="quiz-q" data-answer="b" data-type="single" data-id="2" data-domain="1" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="b" data-type="single" data-id="2" data-domain="1" data-difficulty="intermediate" data-title="注文イベントの共有">
 <h4>問2</h4>
 <p class="quiz-stem">注文イベントを複数の分析アプリケーションへ低レイテンシーで配信します。各アプリケーションは同じ全イベントをそれぞれ独立して読み取り、1つのアプリケーションの読み取り負荷が他に影響しない構成が必要です。また、障害時には直近48時間のイベントを再処理できるようにしたいと考えています。適切な構成はどれですか。</p>
 <fieldset class="quiz-options">
@@ -87,7 +87,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </details>
 </section>
 
-<section class="quiz-q" data-answer="c" data-type="single" data-id="3" data-domain="1" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="c" data-type="single" data-id="3" data-domain="1" data-difficulty="intermediate" data-title="日次ファイルの処理">
 <h4>問3</h4>
 <p class="quiz-stem">データレイクのAmazon S3バケットには、Parquet形式の日次ファイルが追加されます。AWS Glueジョブはスケジュール実行され、正常終了した入力を次回に再処理すると重複データが発生するため、新しく追加されたファイルを中心に処理したい要件です。ジョブごとに入力データの処理状態を保持し、再実行時の読み直しを抑える機能はどれですか。</p>
 <fieldset class="quiz-options">
@@ -112,7 +112,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </details>
 </section>
 
-<section class="quiz-q" data-id="11" data-domain="1" data-difficulty="basic" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="11" data-title="業務データベースの活用" data-domain="1" data-difficulty="basic" data-answer="b" data-type="single">
 <h4>問11 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">分析部門はオンプレミスのPostgreSQLデータベースから、毎晩必要な表を抽出し、列の整形を行ってAmazon S3へ保存したいと考えています。数分ごとの変更追跡や無停止移行は要件ではなく、既存JDBC接続を利用します。抽出結果は後続分析に使うため、ジョブ履歴も確認したい場合の適切な方法はどれですか。今回、データは毎晩の定時処理で十分であり、レコード単位の即時反映や更新ログの追従は求められません。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -132,7 +132,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/dms.html">AWS DMS</a><a href="../services/datasync.html">AWS DataSync</a></p></details>
 </section>
-<section class="quiz-q" data-id="12" data-domain="1" data-difficulty="basic" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="12" data-title="ウェブサイトの行動ログ" data-domain="1" data-difficulty="basic" data-answer="a" data-type="single">
 <h4>問12 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">ECサイトから毎秒届く行動ログを、変換処理をほとんど加えずにAmazon S3へ蓄積します。アプリ側にファイル分割や再試行を作らず、一定量または一定時間ごとにまとめてS3へ配信するマネージドサービスを選んでください。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -152,7 +152,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/data-firehose.html">Amazon Data Firehose</a><a href="../services/kinesis.html">Amazon Kinesis</a><a href="../services/msk.html">Amazon MSK</a></p></details>
 </section>
-<section class="quiz-q" data-id="13" data-domain="1" data-difficulty="basic" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="13" data-title="日次データファイルの処理" data-domain="1" data-difficulty="basic" data-answer="a,c" data-type="multiple">
 <h4>問13 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">S3に日々追加されるCSVをGlue ETLジョブでParquetに変換しています。正常終了したファイルを次回に繰り返し読まないことと、Athenaから出力をテーブルとして検索できることが必要です。入力は日付ごとの別ファイルで、失敗後にジョブを再実行する場合もあります。設定する機能を選んでください。入力範囲の拡大に備え、再実行時の重複読込を減らし、分析利用者が共通のテーブル定義から参照できる必要があります。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -171,7 +171,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/athena.html">Amazon Athena</a></p></details>
 </section>
-<section class="quiz-q" data-id="14" data-domain="1" data-difficulty="basic" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="14" data-title="顧客管理データの連携" data-domain="1" data-difficulty="basic" data-answer="b" data-type="single">
 <h4>問14 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">営業部門のSaaS CRMに保存される顧客情報を毎晩Amazon S3へ取り込みます。独自API連携コードを保守せず、対応コネクタで定期転送し、転送対象の項目も選びたい場合に適するサービスはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -191,7 +191,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/appflow.html">Amazon AppFlow</a><a href="../services/datasync.html">AWS DataSync</a><a href="../services/dms.html">AWS DMS</a></p></details>
 </section>
-<section class="quiz-q" data-id="15" data-domain="1" data-difficulty="basic" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="15" data-title="社内ファイルの移行" data-domain="1" data-difficulty="basic" data-answer="c" data-type="single">
 <h4>問15 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">社内のNFSファイルサーバーにある数十TBの分析ファイルをAmazon S3へ定期同期します。初回の移行後も変更ファイルを効率よく転送し、転送ジョブの進捗を管理したいときに選ぶサービスはどれですか。この運用です。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -211,7 +211,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/datasync.html">AWS DataSync</a><a href="../services/transfer-family.html">AWS Transfer Family</a></p></details>
 </section>
-<section class="quiz-q" data-id="16" data-domain="1" data-difficulty="basic" data-answer="a,d" data-type="multiple">
+<section class="quiz-q" data-id="16" data-title="既存イベント基盤の活用" data-domain="1" data-difficulty="basic" data-answer="a,d" data-type="multiple">
 <h4>問16 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">社内に既存のApache Kafkaプロデューサー、コンシューマー、Kafka Connectコネクタがあり、これらを大きく変更せずAWS上のマネージド環境へ移したいと考えています。移行後もKafka互換クライアントを使い、ブローカー管理の負担を減らす構成を選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -230,7 +230,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/msk.html">Amazon MSK</a><a href="../services/data-firehose.html">Amazon Data Firehose</a></p></details>
 </section>
-<section class="quiz-q" data-id="17" data-domain="1" data-difficulty="basic" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="17" data-title="アップロードファイルの処理" data-domain="1" data-difficulty="basic" data-answer="a" data-type="single">
 <h4>問17 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">利用者がアップロードしたCSVが特定のS3プレフィックスに置かれたときだけ、検証・変換のワークフローを開始します。常時ポーリングせず、イベントを条件に処理を起動する入口として適するサービスはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -250,7 +250,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/eventbridge.html">Amazon EventBridge</a><a href="../services/step-functions.html">AWS Step Functions</a><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="18" data-domain="1" data-difficulty="basic" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="18" data-title="取引先からのデータ受信" data-domain="1" data-difficulty="basic" data-answer="d" data-type="single">
 <h4>問18 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">取引先は自社のSFTPクライアントからファイルを送る運用を変えられません。サーバー管理を避けて接続先をAWSで提供し、アップロードされたファイルをAmazon S3に保存したい場合に適するサービスはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -270,7 +270,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/transfer-family.html">AWS Transfer Family</a><a href="../services/datasync.html">AWS DataSync</a></p></details>
 </section>
-<section class="quiz-q" data-id="19" data-domain="1" data-difficulty="intermediate" data-answer="a,d" data-type="multiple">
+<section class="quiz-q" data-id="19" data-title="アプリケーションログの分析" data-domain="1" data-difficulty="intermediate" data-answer="a,d" data-type="multiple">
 <h4>問19 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">S3に日付別のプレフィックスで保存されたJSONログをGlue ETLで正規化してParquetへ変換します。Athenaのスキャン量を抑え、日付条件で対象を絞りたい場合の設計を選んでください。分析は特定期間の指定が多く、データ量の増加に合わせて読み取り対象を小さく保つ必要があります。テーブルは年・月・日別に整理し、列を限定した分析クエリが中心です。小さいファイルが過剰に増えないよう出力も整えます。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -289,7 +289,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/athena.html">Amazon Athena</a><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="20" data-domain="1" data-difficulty="intermediate" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="20" data-title="決済イベントの処理" data-domain="1" data-difficulty="intermediate" data-answer="b" data-type="single">
 <h4>問20 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">決済イベントを数秒以内に処理し、独自のコンシューマーで業務判定します。レコードを一時保持し、障害後に読み取り位置を戻して再処理する必要があります。宛先へのファイル配信ではなく、アプリケーションがストリームを読む基盤はどれですか。複数チームが独立して読み、調査時にイベントを再生します。コンシューマーの処理速度に差があり、障害調査では保持期間内の過去レコードから再開します。アプリ側で読み取り位置を制御します。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -309,7 +309,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/kinesis.html">Amazon Kinesis</a><a href="../services/data-firehose.html">Amazon Data Firehose</a></p></details>
 </section>
-<section class="quiz-q" data-id="21" data-domain="1" data-difficulty="intermediate" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="21" data-title="イベントデータ基盤の運用" data-domain="1" data-difficulty="intermediate" data-answer="c" data-type="single">
 <h4>問21 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">会社のデータ基盤はApache Kafkaを利用し、Kafka Connectコネクタやプロトコル互換クライアントに依存しています。運用負担を減らしつつKafkaのエコシステムを継続利用できるマネージドAWSサービスを選びます。監視方式やクライアントを保ち、ブローカー運用を軽減することが評価基準です。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -329,7 +329,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/msk.html">Amazon MSK</a><a href="../services/kinesis.html">Amazon Kinesis</a></p></details>
 </section>
-<section class="quiz-q" data-id="22" data-domain="1" data-difficulty="intermediate" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="22" data-title="センサーデータの集計" data-domain="1" data-difficulty="intermediate" data-answer="a" data-type="single">
 <h4>問22 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">IoTセンサーのイベントを数分単位の時間窓で集計し、キーごとの状態を保って継続処理します。結果は集計テーブルに出力し、ストリーム処理にApache Flinkを利用したいと考えています。遅延イベントも窓に反映し、状態管理を独自実装する方法は避けます。処理の中間状態はチェックポイントで復旧し、集計結果は定期的に分析用ストアへ反映します。バッチ実行に置き換える選択は避けます。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -349,7 +349,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/kinesis.html">Amazon Kinesis</a><a href="../services/data-firehose.html">Amazon Data Firehose</a></p></details>
 </section>
-<section class="quiz-q" data-id="23" data-domain="1" data-difficulty="intermediate" data-answer="b,d" data-type="multiple">
+<section class="quiz-q" data-id="23" data-title="データ形式の変更への対応" data-domain="1" data-difficulty="intermediate" data-answer="b,d" data-type="multiple">
 <h4>問23 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">データレイクに新しいS3プレフィックスが定期追加され、ファイル形式や列が変更されることがあります。運用者がテーブル定義を毎回手入力せず、検出したスキーマを分析サービスから参照できる状態にしたい場合の対応を選んでください。利用者は新しい列の定義も共通参照します。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -368,7 +368,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/athena.html">Amazon Athena</a></p></details>
 </section>
-<section class="quiz-q" data-id="24" data-domain="1" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="24" data-title="日次データの継続処理" data-domain="1" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問24 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">S3入力を使うGlueジョブでブックマークを有効にしました。以前に正常処理したファイルは再実行時に読まれず、新規ファイルは対象になります。既存ファイルを修正して同じ場所へ再配置した場合の運用上の説明として適切なものはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -388,7 +388,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="25" data-domain="1" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="25" data-title="イベント処理の再実行" data-domain="1" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
 <h4>問25 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">ストリームのコンシューマーは処理後に外部APIへ通知します。障害時の再試行や読み取り位置の巻き戻しで同じイベントが複数回届く可能性があるため、通知先に二重登録を作らない設計が必要です。処理済み通知は業務記録上、一件だけに保つ必要があります。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -407,7 +407,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/kinesis.html">Amazon Kinesis</a><a href="../services/step-functions.html">AWS Step Functions</a></p></details>
 </section>
-<section class="quiz-q" data-id="26" data-domain="1" data-difficulty="intermediate" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="26" data-title="ファイル処理のワークフロー" data-domain="1" data-difficulty="intermediate" data-answer="b" data-type="single">
 <h4>問26 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">ファイル到着後に検証、変換、公開の順で処理し、各段階で失敗時の再試行と状態確認を行います。AWSサービス中心に構成し、処理順序や分岐を視覚的に管理したい場合に適するサービスはどれですか。運用者は失敗段階を特定してから再実行できることも必要です。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -427,7 +427,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/step-functions.html">AWS Step Functions</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="27" data-domain="1" data-difficulty="intermediate" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="27" data-title="データ処理のスケジュール" data-domain="1" data-difficulty="intermediate" data-answer="c" data-type="single">
 <h4>問27 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">分析チームは既存のApache Airflow DAGやプラグイン、Python依存関係をできるだけ維持し、スケジュールされた複数ジョブの依存関係を運用したいと考えています。AWSでマネージドAirflow環境を提供するサービスを選んでください。定義を独自形式へ書き換えることは避けます。既存のDAGではタスク依存や定期実行を多用し、運用者はAirflowの画面でスケジュールと履歴を確認しています。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -447,7 +447,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/mwaa.html">Amazon MWAA</a><a href="../services/step-functions.html">AWS Step Functions</a><a href="../services/batch.html">AWS Batch</a></p></details>
 </section>
-<section class="quiz-q" data-id="28" data-domain="1" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="28" data-title="夜間バッチの実行" data-domain="1" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問28 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">毎晩のデータ圧縮処理はコンテナで動作し、実行時間が一定でなく数時間に及びます。多数の独立ジョブをキューで管理し、必要な計算リソースを確保して処理したい場合、Lambdaだけで構成するより適するサービスはどれですか。ジョブは処理量に応じて並列化します。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -467,7 +467,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/batch.html">AWS Batch</a><a href="../services/lambda.html">AWS Lambda</a></p></details>
 </section>
-<section class="quiz-q" data-id="29" data-domain="1" data-difficulty="intermediate" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="29" data-title="設定ファイルの検証" data-domain="1" data-difficulty="intermediate" data-answer="a" data-type="single">
 <h4>問29 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">S3への小さな設定ファイル到着をきっかけに、数秒以内に軽量な検証処理を実行します。コンテナ起動管理や常時稼働サーバーを避け、イベント数に応じて実行回数を伸縮させたい場合に適するサービスはどれですか。常時サーバーを管理せず、到着イベントごとに実行回数を伸縮できることも条件です。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -487,7 +487,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/lambda.html">AWS Lambda</a><a href="../services/batch.html">AWS Batch</a><a href="../services/mwaa.html">Amazon MWAA</a></p></details>
 </section>
-<section class="quiz-q" data-id="30" data-domain="1" data-difficulty="intermediate" data-answer="a,d" data-type="multiple">
+<section class="quiz-q" data-id="30" data-title="データベース移行の進捗" data-domain="1" data-difficulty="intermediate" data-answer="a,d" data-type="multiple">
 <h4>問30 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">オンプレミスDBからAWSへ継続複製し、ターゲットはS3です。移行中にソース列が追加される可能性があり、DMSタスクの監視も必要です。S3データは後続ETLで使うため、取り込み状態と下流のテーブル定義を別に確認します。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -506,7 +506,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/dms.html">AWS DMS</a><a href="../services/glue.html">AWS Glue</a><a href="../services/datasync.html">AWS DataSync</a></p></details>
 </section>
-<section class="quiz-q" data-id="31" data-domain="1" data-difficulty="intermediate" data-answer="b,c" data-type="multiple">
+<section class="quiz-q" data-id="31" data-title="複数アプリでのイベント利用" data-domain="1" data-difficulty="intermediate" data-answer="b,c" data-type="multiple">
 <h4>問31 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">同じイベントを複数の独立した分析アプリケーションが低レイテンシーで読みます。各アプリが他の読み取り負荷の影響を受けず、保持中のデータを別々に再処理できる必要があります。読み取りは異なる時間に再開し、各チームが独自に処理位置を管理します。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -525,7 +525,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/kinesis.html">Amazon Kinesis</a><a href="../services/data-firehose.html">Amazon Data Firehose</a><a href="../services/sqs.html">Amazon SQS</a></p></details>
 </section>
-<section class="quiz-q" data-id="32" data-domain="1" data-difficulty="intermediate" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="32" data-title="依存関係のあるデータ処理" data-domain="1" data-difficulty="intermediate" data-answer="b" data-type="single">
 <h4>問32 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">一連のGlueジョブを多数の依存関係付きDAGとして定義し、既存のAirflow演算子や運用手順も活用したいと考えています。状態機械へ全面的に書き換えるより、Airflow互換性を優先します。多数のタスク依存や定期実行を既存の運用知識で扱う場合に選ぶサービスはどれですか。DAGの可視化や実行履歴を日常的に使っており、ワークフロー定義を独自形式へ書き換えることは避けたい状況です。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -545,7 +545,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/mwaa.html">Amazon MWAA</a><a href="../services/step-functions.html">AWS Step Functions</a></p></details>
 </section>
-<section class="quiz-q" data-id="33" data-domain="1" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="33" data-title="研究データの受け入れ" data-domain="1" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問33 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">外部の研究機関が毎日SFTPで圧縮ファイルを送ります。受信側は接続先をマネージドにし、到着後はファイルをS3に保存して別のETL処理を起動します。相手のクライアント設定を変えず、DataSyncによるファイルシステム同期ではなく既存プロトコルを維持したい場合に選ぶサービスはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -565,7 +565,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/transfer-family.html">AWS Transfer Family</a><a href="../services/datasync.html">AWS DataSync</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="34" data-domain="1" data-difficulty="intermediate" data-answer="a,d" data-type="multiple">
+<section class="quiz-q" data-id="34" data-title="複数業務システムのデータ集約" data-domain="1" data-difficulty="intermediate" data-answer="a,d" data-type="multiple">
 <h4>問34 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">複数のSaaSアプリからAmazon S3へ毎日データを集約します。ソースSaaSはAppFlowの増分転送に対応し、特定の列だけを受け取りたい要件です。全件同期によるAPI負荷を避け、必要な項目を抽出するためにAppFlowで検討する機能を選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -584,7 +584,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/appflow.html">Amazon AppFlow</a><a href="../services/datasync.html">AWS DataSync</a><a href="../services/dms.html">AWS DMS</a></p></details>
 </section>
-<section class="quiz-q" data-id="35" data-domain="1" data-difficulty="advanced" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="35" data-title="店舗イベントの分析" data-domain="1" data-difficulty="advanced" data-answer="c" data-type="single">
 <h4>問35 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">店舗イベントをストリームで受け、直近5分の店舗別合計を計算してアラート判定に使います。同じ入力から未加工レコードもS3に長期保存し、集計状態を維持したい一方、独自のストリーム読み取りアプリは作りたくありません。イベント量は日内変動し、生データは監査や将来の別集計にも使います。集計結果は迅速な判断に使われます。生データは監査や後日の別集計用に保持し、中断後も処理状態を復旧できる必要があります。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -604,7 +604,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/kinesis.html">Amazon Kinesis</a><a href="../services/data-firehose.html">Amazon Data Firehose</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="36" data-domain="1" data-difficulty="advanced" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="36" data-title="イベント量の偏り" data-domain="1" data-difficulty="advanced" data-answer="a" data-type="single">
 <h4>問36 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">Kinesis Data Streamsのイベント数は安定していますが、特定の顧客IDにレコードが集中し、そのキーのコンシューマーだけ遅延します。ストリーム全体の容量を増やしても偏りが残り、平均スループットには余裕があります。まず見直すべき設計上の要因はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -624,7 +624,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/kinesis.html">Amazon Kinesis</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="37" data-domain="1" data-difficulty="advanced" data-answer="b,c" data-type="multiple">
+<section class="quiz-q" data-id="37" data-title="過去データの再処理" data-domain="1" data-difficulty="advanced" data-answer="b,c" data-type="multiple">
 <h4>問37 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">日次データを取り込むGlueジョブはブックマークで増分処理しています。監査の結果、過去数日分の一部ファイルを訂正して再処理する必要があります。同じS3キーの内容が差し替えられた可能性があり、訂正分以外の再計算は最小限にしたい要件です。安全な考え方を選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -643,7 +643,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/athena.html">Amazon Athena</a></p></details>
 </section>
-<section class="quiz-q" data-id="38" data-domain="1" data-difficulty="advanced" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="38" data-title="ファイル到着後の連続処理" data-domain="1" data-difficulty="advanced" data-answer="d" data-type="single">
 <h4>問38 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">S3へのファイル到着で形式検証、Glue ETL、完了通知を順に実行します。S3イベントは少なくとも1回配信される可能性があり、重複起動で同じファイルを二重公開しないことが重要です。運用者は失敗段階を特定して再実行し、公開済みデータの整合性を保つ必要があります。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -663,7 +663,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/eventbridge.html">Amazon EventBridge</a><a href="../services/step-functions.html">AWS Step Functions</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="39" data-domain="1" data-difficulty="advanced" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="39" data-title="データベース複製の切り替え" data-domain="1" data-difficulty="advanced" data-answer="b" data-type="single">
 <h4>問39 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">移行元DBの更新量が多く、AWS DMSでフルロードとCDCを実施しています。切り替え前にレプリケーションが追い付いたことを確認し、以後の更新欠落を抑えます。移行元への書き込みは止められず、旧環境へ戻す可能性もあります。切り替え時に確認すべき運用上の判断はどれですか。切り替え後に旧環境へ戻す可能性も考慮し、メタデータ検出の完了を複製完了と誤認しないことが重要です。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -683,7 +683,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/dms.html">AWS DMS</a><a href="../services/glue.html">AWS Glue</a><a href="../services/datasync.html">AWS DataSync</a></p></details>
 </section>
-<section class="quiz-q" data-id="40" data-domain="1" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
+<section class="quiz-q" data-id="40" data-title="データカタログの更新" data-domain="1" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
 <h4>問40 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">分析チームはS3データレイクの新規データを日付パーティションで参照します。到着時にカタログ定義を更新したい一方、プレフィックス構造は一定で、頻繁な全件クロールや不要なスキーマ変更は避けたい要件です。期間検索と列追加の認識も必要です。適切な設計方針を選んでください。クエリでは特定期間だけを読むことが多く、スキーマの追加があれば認識できる状態を維持します。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -702,7 +702,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/athena.html">Amazon Athena</a><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="41" data-domain="1" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="41" data-title="外部書き込みの再試行" data-domain="1" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
 <h4>問41 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">Step Functionsのワークフローが外部ストレージへデータを書き込む処理を再試行します。書き込み成功後に応答が失われると同じ処理が再実行されます。書き込みと状態更新は単一トランザクションではないため、欠落と二重成果物のどちらも避ける設計を選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -724,7 +724,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 
 <div class="quiz-domain">
-<section class="quiz-q" data-answer="a" data-type="single" data-id="4" data-domain="2" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="a" data-type="single" data-id="4" data-domain="2" data-difficulty="intermediate" data-title="顧客データの連携">
 <h4>問4</h4>
 <p class="quiz-stem">マルチテナントのイベント管理テーブルで、特定テナントからの書き込みが全体の大半を占めています。現在はテナントIDだけをパーティションキーにしているため、そのテナントの項目にアクセスが集中してスロットリングが発生します。書き込みを複数のキーに分散しながら、後でそのテナントの指定期間のイベントを検索できる設計はどれですか。</p>
 <fieldset class="quiz-options">
@@ -749,7 +749,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </details>
 </section>
 
-<section class="quiz-q" data-answer="b" data-type="single" data-id="5" data-domain="2" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="b" data-type="single" data-id="5" data-domain="2" data-difficulty="intermediate" data-title="分析ファイルの移動">
 <h4>問5</h4>
 <p class="quiz-stem">企業の分析チームは、複数年分の売上データをディメンション表とファクト表に分け、結合や集計を行うSQLを繰り返し実行します。複数のBI利用者が同時にダッシュボードを更新するため、分析向けに管理されたデータウェアハウスを使いたいと考えています。アプリケーション側で結合処理を実装せずに要件を満たす保存先はどれですか。</p>
 <fieldset class="quiz-options">
@@ -774,7 +774,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </details>
 </section>
 
-<section class="quiz-q" data-answer="c" data-type="single" data-id="6" data-domain="2" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="c" data-type="single" data-id="6" data-domain="2" data-difficulty="intermediate" data-title="既存基盤との連携">
 <h4>問6</h4>
 <p class="quiz-stem">データレイクの分析テーブルを複数のクエリエンジンから参照し、データの追加や更新とクエリを並行して実行します。ファイルを直接置き換える方式では更新中の読み取りに一貫性がなく、列の追加などのスキーマ変更も安全に管理できません。読み手が更新前後の整合したデータを参照できるよう、テーブルのスナップショットとスキーマ進化を扱う方法はどれですか。</p>
 <fieldset class="quiz-options">
@@ -799,7 +799,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </details>
 </section>
 
-<section class="quiz-q" data-id="42" data-domain="2" data-difficulty="intermediate" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="42" data-title="長期ログの定期分析" data-domain="2" data-difficulty="intermediate" data-answer="c" data-type="single">
 <h4>問42 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">複数年分のアプリケーションログをAmazon S3に保存し、Amazon Athenaで日付を指定して定期分析します。現在は圧縮していないJSONで、クエリーのたびに全ファイルを走査しており、データ量と分析費用が増えています。下流の集計結果を変えずにスキャン量を抑える保存方法はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な方法を1つ選んでください。</legend>
@@ -819,7 +819,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/s3.html">Amazon S3</a><a href="../services/athena.html">Amazon Athena</a></p></details>
 </section>
-<section class="quiz-q" data-id="43" data-domain="2" data-difficulty="basic" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="43" data-title="大容量ファイルの一時分析" data-domain="2" data-difficulty="basic" data-answer="b" data-type="single">
 <h4>問43 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">分析担当者は、Amazon S3に置いた数十GBのCSVを月に数回だけ、その場で調査します。専用クラスターを常時稼働させず、インフラ管理を避け、実行したクエリーのデータ走査量に応じて費用を払いたいと考えています。最も適した分析サービスはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -839,7 +839,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/athena.html">Amazon Athena</a><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="44" data-domain="2" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="44" data-title="注文データのアクセス" data-domain="2" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問44 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">注文イベントをAmazon DynamoDBに書き込むと、アクセスパターンの大半は特定の大口顧客の顧客IDをパーティションキーにした書き込みです。その顧客のイベントだけに負荷が集中し、スロットリングが起きています。書き込みを複数のパーティションへ分散する設計変更はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な変更を1つ選んでください。</legend>
@@ -859,7 +859,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/dynamodb.html">Amazon DynamoDB</a></p></details>
 </section>
-<section class="quiz-q" data-id="45" data-domain="2" data-difficulty="basic" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="45" data-title="長期保管データの利用" data-domain="2" data-difficulty="basic" data-answer="a" data-type="single">
 <h4>問45 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">コンプライアンス記録をAmazon S3に8年間保存します。参照は年に1回程度で、数十時間以内の復元でよく、保存費用を最小化したい要件です。移行後は長期間保持し、まれにしか取り出さないオブジェクトに選ぶストレージクラスはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なストレージクラスを1つ選んでください。</legend>
@@ -879,7 +879,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="46" data-domain="2" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
+<section class="quiz-q" data-id="46" data-title="分析テーブルの変更" data-domain="2" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
 <h4>問46 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">Amazon S3上の分析テーブルでは、列の追加があり、過去データも再書き込みせずに参照したい要件です。複数の処理が同じテーブルを更新し、スナップショット整合性と変更履歴の管理も必要です。AWS Glue Data Catalogを使う構成で、要件を満たす選択肢を選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
@@ -898,7 +898,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/athena.html">Amazon Athena</a></p></details>
 </section>
-<section class="quiz-q" data-id="47" data-domain="2" data-difficulty="basic" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="47" data-title="注文情報の検索" data-domain="2" data-difficulty="basic" data-answer="c" data-type="single">
 <h4>問47 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">注文をAmazon DynamoDBに保存しています。主キーは注文IDで、既存のアクセスパターンを維持したまま、新たに顧客IDと注文日時を指定して注文を検索したい要件が追加されました。テーブル全体を走査せずにこの検索を実現する機能はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な機能を1つ選んでください。</legend>
@@ -918,7 +918,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/dynamodb.html">Amazon DynamoDB</a></p></details>
 </section>
-<section class="quiz-q" data-id="48" data-domain="2" data-difficulty="intermediate" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="48" data-title="履歴データの初期投入" data-domain="2" data-difficulty="intermediate" data-answer="b" data-type="single">
 <h4>問48 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">数百GBの履歴データをAmazon S3からAmazon Redshiftへ初期ロードします。データは複数のファイルに分割済みで、ロード処理を並列化し、分析開始までの時間を短縮したい要件です。一般的なバッチロードに適した方法はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なロード方法を1つ選んでください。</legend>
@@ -938,7 +938,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/redshift.html">Amazon Redshift</a><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="49" data-domain="2" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="49" data-title="分析用テーブルの管理" data-domain="2" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
 <h4>問49 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">S3に日次で届くCSVファイルのスキーマとパーティションを検出し、AthenaとAWS Glueジョブの両方から同じテーブル定義を使いたいと考えています。新しいデータが到着した後も、定期的に検出内容を更新します。適切な説明を2つ選んでください。</p>
 <fieldset class="quiz-options"><legend>要件に合う説明を2つ選んでください。</legend>
@@ -957,7 +957,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/athena.html">Amazon Athena</a></p></details>
 </section>
-<section class="quiz-q" data-id="50" data-domain="2" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="50" data-title="注文処理と履歴分析" data-domain="2" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問50 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">業務アプリケーションは注文の登録・更新を低レイテンシーで処理する必要があります。担当者は数年分の履歴を使う複雑な集計も実行しますが、集計クエリーが本番トランザクションに影響しない構成にしたい要件です。適したデータ配置はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な構成を1つ選んでください。</legend>
@@ -977,7 +977,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/rds.html">Amazon RDS</a><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="51" data-domain="2" data-difficulty="basic" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="51" data-title="商品情報の検索" data-domain="2" data-difficulty="basic" data-answer="a" data-type="single">
 <h4>問51 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">商品カタログに対し、利用者が入力した語句に対する全文検索、関連度順の結果、属性による絞り込みを提供します。検索インデックスの更新をデータベースのトランザクションと分けてよく、検索要求には低レイテンシーが必要です。適したサービスはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -997,7 +997,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/opensearch.html">Amazon OpenSearch Service</a></p></details>
 </section>
-<section class="quiz-q" data-id="52" data-domain="2" data-difficulty="intermediate" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="52" data-title="監査データの保管" data-domain="2" data-difficulty="intermediate" data-answer="c" data-type="single">
 <h4>問52 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">監査データをAmazon S3に保存し、最初の45日間は毎日参照します。その後は年に数回しか読まないものの、必要時には即時に取り出さなければなりません。アーカイブ復元を避けつつ、参照が減った後の保存コストを抑える方法はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な方法を1つ選んでください。</legend>
@@ -1017,7 +1017,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="53" data-domain="2" data-difficulty="advanced" data-answer="b,d" data-type="multiple">
+<section class="quiz-q" data-id="53" data-title="分析テーブルの項目追加" data-domain="2" data-difficulty="advanced" data-answer="b,d" data-type="multiple">
 <h4>問53 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">S3上のApache IcebergテーブルをAthenaで分析しています。新しい項目列を追加する一方、既存のデータファイルを全件書き換えず、テーブルのパーティション設計もデータ量の増加に合わせて変更したい要件です。適切な性質を2つ選んでください。</p>
 <fieldset class="quiz-options"><legend>要件に合う性質を2つ選んでください。</legend>
@@ -1036,7 +1036,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/athena.html">Amazon Athena</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="54" data-domain="2" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="54" data-title="一時利用データの管理" data-domain="2" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問54 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">セッション情報をAmazon DynamoDBに保存し、期限後は利用者が参照できないようにします。期限を過ぎた項目の物理削除を運用負荷なく行いたい一方、期限時刻ちょうどに削除済みであることを保証できない点は許容できます。利用する機能はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な機能を1つ選んでください。</legend>
@@ -1056,7 +1056,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/dynamodb.html">Amazon DynamoDB</a></p></details>
 </section>
-<section class="quiz-q" data-id="55" data-domain="2" data-difficulty="intermediate" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="55" data-title="部門間の分析データ共有" data-domain="2" data-difficulty="intermediate" data-answer="b" data-type="single">
 <h4>問55 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">中央のAmazon Redshiftデータウェアハウスにある共有データを、別のAWSアカウントの分析チームが参照します。データを複製して保持する運用を避け、中央側の更新を利用側に反映しながら、利用側の分析環境は分けたい要件です。適した機能はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な機能を1つ選んでください。</legend>
@@ -1076,7 +1076,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="56" data-domain="2" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="56" data-title="データベースの復旧計画" data-domain="2" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
 <h4>問56 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">Amazon RDSデータベースで障害復旧と定期的な保全を計画しています。運用担当者は、バックアップ保持期間内の特定時刻へ復元できるようにし、さらにリリース前の任意時点のデータベース状態を長期保管したいと考えています。適切な説明を2つ選んでください。</p>
 <fieldset class="quiz-options"><legend>要件に合う説明を2つ選んでください。</legend>
@@ -1095,7 +1095,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/rds.html">Amazon RDS</a></p></details>
 </section>
-<section class="quiz-q" data-id="57" data-domain="2" data-difficulty="basic" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="57" data-title="売上データの集計" data-domain="2" data-difficulty="basic" data-answer="d" data-type="single">
 <h4>問57 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">Amazon S3の売上データをParquetで保存しています。分析では毎回、日付範囲を指定して月次集計を行いますが、現在は全年度のファイルを走査しています。日付で絞ったクエリーが対象期間外のデータを読まないよう、最初に見直す設計はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も効果的な変更を1つ選んでください。</legend>
@@ -1115,7 +1115,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/s3.html">Amazon S3</a><a href="../services/athena.html">Amazon Athena</a></p></details>
 </section>
-<section class="quiz-q" data-id="58" data-domain="2" data-difficulty="advanced" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="58" data-title="利用状況の変化への対応" data-domain="2" data-difficulty="advanced" data-answer="a" data-type="single">
 <h4>問58 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">Amazon DynamoDBでは、数百万のユーザーをキーにした通常の書き込みは均等ですが、キャンペーン開始時に1つの固定パーティションキーへ大量のイベントが集中します。容量モードの変更だけでは集中を解消できません。書き込み経路で取れる有効な対策はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な対策を1つ選んでください。</legend>
@@ -1135,7 +1135,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/dynamodb.html">Amazon DynamoDB</a></p></details>
 </section>
-<section class="quiz-q" data-id="59" data-domain="2" data-difficulty="intermediate" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="59" data-title="大規模データの変換" data-domain="2" data-difficulty="intermediate" data-answer="c" data-type="single">
 <h4>問59 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">データチームは、S3に蓄積した大規模データに対してSparkを使う複雑な変換を行い、追加のオープンソース処理フレームワークも利用します。クラスター設定を細かく制御し、処理需要がある期間だけコンピューティング資源を使いたい場合に適したサービスはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -1155,7 +1155,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/emr.html">Amazon EMR</a><a href="../services/athena.html">Amazon Athena</a></p></details>
 </section>
-<section class="quiz-q" data-id="60" data-domain="2" data-difficulty="advanced" data-answer="b,d" data-type="multiple">
+<section class="quiz-q" data-id="60" data-title="分析クエリの処理性能" data-domain="2" data-difficulty="advanced" data-answer="b,d" data-type="multiple">
 <h4>問60 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">Amazon Redshiftで複数年分のイベントを分析します。クエリーの大半は直近30日を絞り込み、ユーザーIDで大きなイベント表とユーザー表を結合します。データ分布とアクセスパターンに合った設計方針を2つ選んでください。</p>
 <fieldset class="quiz-options"><legend>要件に合う方針を2つ選んでください。</legend>
@@ -1174,7 +1174,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="61" data-domain="2" data-difficulty="intermediate" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="61" data-title="機器の時系列データ" data-domain="2" data-difficulty="intermediate" data-answer="a" data-type="single">
 <h4>問61 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">IoT機器から秒単位で届く時系列測定値を保存します。分析担当者はデバイスIDと時間範囲を指定して期間集計し、保持期間を過ぎた古い値は自動的に削除したい要件です。時系列データに適したマネージドデータベースはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -1194,7 +1194,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </details>
 </section>
-<section class="quiz-q" data-id="62" data-domain="2" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="62" data-title="注文データの更新" data-domain="2" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問62 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">ECサイトは注文ごとに整合性を保った作成・更新を行い、在庫引き当て時にはトランザクションを必要とします。データは構造化され、アプリケーションはSQLを使います。過去の注文分析は別の仕組みに任せる場合、運用負担を抑えた主データストアはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なデータストアを1つ選んでください。</legend>
@@ -1214,7 +1214,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/rds.html">Amazon RDS</a><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="63" data-domain="2" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="63" data-title="小規模ファイルの分析" data-domain="2" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
 <h4>問63 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">Athenaで日付別の売上ファイルを分析しています。1日あたり何万もの小さなオブジェクトが増え、クエリーの起動とメタデータ処理に時間がかかっています。日付検索の効率を保ちながらファイル数を抑える改善策を2つ選んでください。</p>
 <fieldset class="quiz-options"><legend>適切な改善策を2つ選んでください。</legend>
@@ -1233,7 +1233,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/athena.html">Amazon Athena</a><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="64" data-domain="2" data-difficulty="advanced" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="64" data-title="センサーデータの検索" data-domain="2" data-difficulty="advanced" data-answer="b" data-type="single">
 <h4>問64 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">大量のセンサーデータをAmazon S3に保存し、Athenaで直近の時間帯を頻繁に検索します。古いデータも保持が必要ですが、数か月後はほとんど参照せず、読み出しに数時間かかっても構いません。鮮度とアクセス頻度に合わせた配置方針はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な方針を1つ選んでください。</legend>
@@ -1256,7 +1256,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 
 <div class="quiz-domain">
-<section class="quiz-q" data-answer="a" data-type="single" data-id="7" data-domain="3" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="a" data-type="single" data-id="7" data-domain="3" data-difficulty="intermediate" data-title="アップロード後の処理">
 <h4>問7</h4>
 <p class="quiz-stem">AWS GlueのETL処理では、顧客IDが欠けたレコードや、業務上許容する範囲を外れた金額を出力前に見つける必要があります。データ件数が増えても担当者が毎回目視確認する運用は避け、定義した条件に基づく品質評価とジョブ実行ごとの結果確認を行いたいと考えています。毎回同じ品質基準を適用するために適切な機能はどれですか。</p>
 <fieldset class="quiz-options">
@@ -1281,7 +1281,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </details>
 </section>
 
-<section class="quiz-q" data-answer="d" data-type="single" data-id="8" data-domain="3" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="d" data-type="single" data-id="8" data-domain="3" data-difficulty="intermediate" data-title="取引先からのファイル受信">
 <h4>問8</h4>
 <p class="quiz-stem">複数のAWS Glue ETLジョブを毎晩実行しており、そのうち1つでも失敗した場合は運用チームが早く気付けるよう通知したいと考えています。担当者による画面の定期確認も減らす必要があります。状態を問い合わせる独自コードや、失敗を推測する出力データの検査は避け、ジョブ実行の状態変化をきっかけに通知先へ連携する方法はどれですか。</p>
 <fieldset class="quiz-options">
@@ -1306,7 +1306,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </details>
 </section>
 
-<section class="quiz-q" data-id="65" data-domain="3" data-difficulty="basic" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="65" data-title="夜間データ処理の監視" data-domain="3" data-difficulty="basic" data-answer="b" data-type="single">
 <h4>問65 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">AWS Glueの夜間ETLジョブが失敗したとき、担当者のメールにすぐ通知したい。ジョブはGlueで実行され、翌朝の業務開始までに失敗に気付く必要がある。通知専用の追加サーバーは持ちたくなく、運用の手間も増やしたくない。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1326,7 +1326,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/eventbridge.html">Amazon EventBridge</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="66" data-domain="3" data-difficulty="basic" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="66" data-title="分析コストの管理" data-domain="3" data-difficulty="basic" data-answer="c" data-type="single">
 <h4>問66 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">AthenaでS3上の大きなCSVを検索しており、毎回全データがスキャンされて月額の料金が高い。クエリのほとんどは特定の日付範囲で絞り込んでおり、結果の内容は変えずにスキャン量だけを減らしたい。新たなサーバーは用意しない。</p>
 <fieldset class="quiz-options"><legend>最も効果的なものを1つ選んでください。</legend>
@@ -1346,7 +1346,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/athena.html">Amazon Athena</a></p></details>
 </section>
-<section class="quiz-q" data-id="67" data-domain="3" data-difficulty="basic" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="67" data-title="データ基盤の稼働状況" data-domain="3" data-difficulty="basic" data-answer="a" data-type="single">
 <h4>問67 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">Redshiftクラスターで、CPU使用率が長時間高止まりしていないかを定期的に確認し、しきい値を超えたら夜間でも担当者に知らせたい。確認のための手作業は増やさず、継続的に自動で監視する仕組みにしたい。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1366,7 +1366,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/cloudwatch.html">Amazon CloudWatch</a><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="68" data-domain="3" data-difficulty="basic" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="68" data-title="日次データ処理の連携" data-domain="3" data-difficulty="basic" data-answer="d" data-type="single">
 <h4>問68 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">毎日のデータ処理は、S3へのファイル到着後にGlueジョブを実行し、成功したらRedshiftへロードする順序で動く。失敗時のリトライと分岐を、コードを書かずに視覚的に管理したい。サーバーの管理はしたくない。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1386,7 +1386,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/step-functions.html">AWS Step Functions</a></p></details>
 </section>
-<section class="quiz-q" data-id="69" data-domain="3" data-difficulty="basic" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="69" data-title="ログデータの保管期間" data-domain="3" data-difficulty="basic" data-answer="a,c" data-type="multiple">
 <h4>問69 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">S3に毎日大量のログを保存している。直近30日は頻繁に参照するが、それ以降はほとんど読まれず、1年後には不要になる。ストレージ費用を下げつつ、人手による移動や削除の運用の手間を増やしたくない。監査の要請はない。</p>
 <fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
@@ -1405,7 +1405,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="70" data-domain="3" data-difficulty="intermediate" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="70" data-title="日次ファイルの処理状況" data-domain="3" data-difficulty="intermediate" data-answer="b" data-type="single">
 <h4>問70 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">Glueジョブは毎日、S3の入力フォルダ全体を読み込んで加工している。前日までに処理済みのファイルも再処理されて時間と費用が増えており、新しく追加されたファイルだけを処理したい。出力内容は変えたくない。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1425,7 +1425,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="71" data-domain="3" data-difficulty="intermediate" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="71" data-title="分析処理の混雑" data-domain="3" data-difficulty="intermediate" data-answer="c" data-type="single">
 <h4>問71 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">Redshiftで、短時間で終わる集計ダッシュボード用クエリが、夜間バッチの重い変換クエリの後ろで待たされて遅い。クラスターは分けず、両方を同じクラスターで動かし続けたい。軽いクエリの待ち時間だけを減らしたい。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1445,7 +1445,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="72" data-domain="3" data-difficulty="intermediate" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="72" data-title="一時障害のある処理手順" data-domain="3" data-difficulty="intermediate" data-answer="a" data-type="single">
 <h4>問72 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">Step Functionsで、Glueジョブの実行中に一時的なエラーが起きて全体が失敗することがある。再実行すれば成功するケースが多く、人手の介入を減らしたい。ただし永続的な失敗は無限に繰り返したくない。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1465,7 +1465,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/step-functions.html">AWS Step Functions</a><a href="../terms/throttling-retry.html">スロットリングとリトライ</a></p></details>
 </section>
-<section class="quiz-q" data-id="73" data-domain="3" data-difficulty="intermediate" data-answer="b,d" data-type="multiple">
+<section class="quiz-q" data-id="73" data-title="小さなデータファイルの集計" data-domain="3" data-difficulty="intermediate" data-answer="b,d" data-type="multiple">
 <h4>問73 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">Athenaで、毎日S3に大量の小さなJSONファイル(数KB)が出力され、クエリが遅く、スキャン対象のファイル数も多い。データの内容や検索条件は変えずに、クエリ性能とコストの両方を改善したい。実行は夜間のバッチでよい。</p>
 <fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
@@ -1484,7 +1484,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/athena.html">Amazon Athena</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="74" data-domain="3" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="74" data-title="バッチ再実行時のデータ" data-domain="3" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問74 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">再実行可能なバッチ処理が、失敗後に再実行されると、Redshiftの集計テーブルに同じ日の行が二重に入ってしまう。運用担当者が何度再実行しても結果が同じになるようにし、データの整合性を保ちたい。日次の処理である。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1504,7 +1504,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../terms/data-quality.html">データ品質</a><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="75" data-domain="3" data-difficulty="intermediate" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="75" data-title="データ処理時間のばらつき" data-domain="3" data-difficulty="intermediate" data-answer="c" data-type="single">
 <h4>問75 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">Glueジョブの実行時間が日に日に延び、特定のステージだけ一部のタスクが極端に遅い。入力の一部のキーにデータが偏っているようだ。設定を変更する前に、まず原因を調べて切り分けたい。エラーは出ておらず、ジョブ自体は成功している。</p>
 <fieldset class="quiz-options"><legend>最初に行う調査として最も適切なものを1つ選んでください。</legend>
@@ -1524,7 +1524,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/cloudwatch.html">Amazon CloudWatch</a></p></details>
 </section>
-<section class="quiz-q" data-id="76" data-domain="3" data-difficulty="intermediate" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="76" data-title="大量ファイルの読み込み" data-domain="3" data-difficulty="intermediate" data-answer="b" data-type="single">
 <h4>問76 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">S3上の大量の小さなオブジェクトを多数のGETリクエストで読む分析ジョブがあり、リクエスト料金とレイテンシーが課題である。保存するデータ量は同じままで、オブジェクト数とリクエスト数だけを減らしたい。分析の結果は変えない。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1544,7 +1544,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="77" data-domain="3" data-difficulty="intermediate" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="77" data-title="定期データ処理の安定化" data-domain="3" data-difficulty="intermediate" data-answer="a" data-type="single">
 <h4>問77 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">MWAA(Apache Airflow)で動かす日次DAGの一部のタスクが、外部APIの不安定さで時々失敗する。失敗したタスクだけを自動で再試行し、すでに成功したタスクはやり直したくない。夜間は人が対応できない。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1564,7 +1564,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/mwaa.html">Amazon MWAA</a></p></details>
 </section>
-<section class="quiz-q" data-id="78" data-domain="3" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="78" data-title="大量データの取り込み" data-domain="3" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
 <h4>問78 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">Redshiftへのロードが遅い。毎日、S3から1つの巨大な非圧縮CSVファイルを1回のCOPYで読み込んでいる。データの内容や投入先のテーブルは変えず、ロード時間を短くしたい。クラスターのサイズは変更しない前提とする。</p>
 <fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
@@ -1583,7 +1583,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="79" data-domain="3" data-difficulty="intermediate" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="79" data-title="売上データの品質確認" data-domain="3" data-difficulty="intermediate" data-answer="c" data-type="single">
 <h4>問79 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">Glueで取り込んだ売上データに、金額が負の値や、必須の顧客IDが空の行が混ざることがある。不正な行を検出して後続の集計へ流さず、担当者が発生状況を把握できるようにしたい。手作業の全件確認は避けたい。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1603,7 +1603,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../terms/data-quality.html">データ品質</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="80" data-domain="3" data-difficulty="advanced" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="80" data-title="夜間分析ジョブの運用" data-domain="3" data-difficulty="advanced" data-answer="d" data-type="single">
 <h4>問80 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">EMRで実行する夜間のSparkバッチは日中は使わず、常時起動のクラスターが費用の大半を占めている。処理は数時間で終わるが、クラスター障害が起きても翌朝までに結果を出す復旧目標があり、入力と結果はS3に保持できる。費用と復旧目標を両立したい。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1623,7 +1623,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/emr.html">Amazon EMR</a></p></details>
 </section>
-<section class="quiz-q" data-id="81" data-domain="3" data-difficulty="advanced" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="81" data-title="処理中データの公開" data-domain="3" data-difficulty="advanced" data-answer="b" data-type="single">
 <h4>問81 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">毎時のGlueジョブがS3へParquetを書き込み、書き込み中にジョブが失敗することがある。下流のAthenaは途中の中途半端なファイルを読んでしまい、集計が一時的に不正確になる。復旧後は再実行で整合させたい。</p>
 <fieldset class="quiz-options"><legend>最も適切な設計を1つ選んでください。</legend>
@@ -1643,7 +1643,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../terms/open-table-formats.html">オープンテーブルフォーマット</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="82" data-domain="3" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
+<section class="quiz-q" data-id="82" data-title="定期処理の重複実行" data-domain="3" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
 <h4>問82 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">毎時のデータ処理を、EventBridgeのスケジュール、Step Functions、Glueで構成している。時々、前回の処理が終わらないうちに次の起動が重なり、同じデータを二重に処理して集計が狂う。再発を防いで整合性を保ちたい。</p>
 <fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
@@ -1662,7 +1662,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/step-functions.html">AWS Step Functions</a><a href="../services/eventbridge.html">Amazon EventBridge</a></p></details>
 </section>
-<section class="quiz-q" data-id="83" data-domain="3" data-difficulty="advanced" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="83" data-title="分析テーブルの結合" data-domain="3" data-difficulty="advanced" data-answer="c" data-type="single">
 <h4>問83 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">Redshiftの月次レポートが遅い。同じ巨大なファクトテーブルと小さなディメンションテーブルの結合が多く、結合時にデータの再分散で時間がかかっている。クエリの書き換えをせず、テーブル設計で改善したい。</p>
 <fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
@@ -1682,7 +1682,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/redshift.html">Amazon Redshift</a></p></details>
 </section>
-<section class="quiz-q" data-id="84" data-domain="3" data-difficulty="advanced" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="84" data-title="大量ログの期間分析" data-domain="3" data-difficulty="advanced" data-answer="d" data-type="single">
 <h4>問84 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">毎日6TBのログをAthenaで集計している。クエリは常に直近7日分と特定のサービス名だけを対象にし、過去の全期間はほとんど読まれない。コストを抑えつつ、過去データも必要時には検索できるようにしたい。</p>
 <fieldset class="quiz-options"><legend>最も適切な設計を1つ選んでください。</legend>
@@ -1705,7 +1705,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 
 <div class="quiz-domain">
-<section class="quiz-q" data-answer="a,b" data-type="multiple" data-id="9" data-domain="4" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="a,b" data-type="multiple" data-id="9" data-domain="4" data-difficulty="intermediate" data-title="ログデータの活用">
 <h4>問9</h4>
 <p class="quiz-stem">AWS Glueジョブが、カスタマーマネージドKMSキーで暗号化されたAmazon S3オブジェクトを読み取ります。ジョブには専用IAMロールを割り当て、対象バケットの必要なプレフィックスと指定したKMSキーだけを利用できるよう最小権限にします。読み取りと復号を成立させるために必要な設定を2つ選んでください。</p>
 <fieldset class="quiz-options">
@@ -1729,7 +1729,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </details>
 </section>
 
-<section class="quiz-q" data-answer="c" data-type="single" data-id="10" data-domain="4" data-difficulty="intermediate">
+<section class="quiz-q" data-answer="c" data-type="single" data-id="10" data-domain="4" data-difficulty="intermediate" data-title="顧客情報の取り扱い">
 <h4>問10</h4>
 <p class="quiz-stem">組織では複数のAmazon S3バケットを部門ごとに利用しており、個人情報や認証情報が意図せず保存されていないか定期的に確認する必要があります。バケットへのAPI操作を監査するだけでは要件を満たせません。オブジェクトの内容を調べて機密データを検出し、調査すべき対象を把握したい場合に適したサービスはどれですか。</p>
 <fieldset class="quiz-options">
@@ -1753,7 +1753,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p><a href="../services/macie.html">Amazon Macie</a> / <a href="../services/lake-formation.html">AWS Lake Formation</a> / <a href="../services/guardduty.html">Amazon GuardDuty</a> / <a href="../services/cloudtrail.html">AWS CloudTrail</a></p>
 </details>
 </section>
-<section class="quiz-q" data-id="85" data-domain="4" data-difficulty="basic" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="85" data-title="分析処理のアクセス権" data-domain="4" data-difficulty="basic" data-answer="b" data-type="single">
 <h4>問85 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">Glueジョブが特定のS3プレフィックスからデータを読み取ります。ジョブごとに長期アクセスキーを保存せず、実行中だけ使える認証情報を利用し、他のバケットへのアクセスも避けたい場合、認証と権限の設計として最も適切なのはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な方法を1つ選んでください。</legend>
@@ -1773,7 +1773,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/iam.html">AWS IAM</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="86" data-domain="4" data-difficulty="basic" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="86" data-title="部門別データの利用" data-domain="4" data-difficulty="basic" data-answer="c" data-type="single">
 <h4>問86 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">データレイク内のテーブルには、全分析担当者が利用する集計対象の列と、人事担当者だけが扱う個人識別情報の列があります。共有テーブルの個人識別情報を一般分析担当者に見せず、データカタログを使ったアクセス管理を行うには何を設定しますか。</p>
 <fieldset class="quiz-options"><legend>最も適切な方法を1つ選んでください。</legend>
@@ -1793,7 +1793,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/lake-formation.html">AWS Lake Formation</a><a href="../services/glue.html">AWS Glue</a></p></details>
 </section>
-<section class="quiz-q" data-id="87" data-domain="4" data-difficulty="basic" data-answer="a,d" data-type="multiple">
+<section class="quiz-q" data-id="87" data-title="データ操作の監査" data-domain="4" data-difficulty="basic" data-answer="a,d" data-type="multiple">
 <h4>問87 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">監査担当者が、あるS3バケットのオブジェクトに対する読み取りや削除の実行主体と時刻を調査する必要があります。バケット設定の変更などの管理操作だけでなく、オブジェクト単位の操作も記録するために必要な設定を選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす設定を2つ選んでください。</legend>
@@ -1812,7 +1812,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/cloudtrail.html">AWS CloudTrail</a><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="88" data-domain="4" data-difficulty="basic" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="88" data-title="分析データの保護" data-domain="4" data-difficulty="basic" data-answer="a" data-type="single">
 <h4>問88 <span class="quiz-difficulty">基礎</span></h4>
 <p class="quiz-stem">新規の分析用S3バケットでは、保存データの暗号化を有効にし、暗号鍵の作成・ローテーション・アクセス許可の管理を個別に行う要件はありません。運用負荷を増やさず、保存時暗号化を適用する標準的な選択肢はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な暗号化方式を1つ選んでください。</legend>
@@ -1832,7 +1832,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/s3.html">Amazon S3</a><a href="../services/kms.html">AWS KMS</a></p></details>
 </section>
-<section class="quiz-q" data-id="89" data-domain="4" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="89" data-title="部門ごとのデータ利用" data-domain="4" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問89 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">複数部門が同じデータカタログ上のテーブルを分析しますが、各部門には自部門の行だけを表示し、他部門の行は検索結果にも含めない要件があります。テーブルの複製を部門数分作らずに実現する制御として最も適切なものはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な制御を1つ選んでください。</legend>
@@ -1852,7 +1852,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/lake-formation.html">AWS Lake Formation</a></p></details>
 </section>
-<section class="quiz-q" data-id="90" data-domain="4" data-difficulty="intermediate" data-answer="b,c" data-type="multiple">
+<section class="quiz-q" data-id="90" data-title="部門間のデータ連携" data-domain="4" data-difficulty="intermediate" data-answer="b,c" data-type="multiple">
 <h4>問90 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">あるAWSアカウントの分析ロールに、別アカウントのS3バケットにあるSSE-KMS暗号化オブジェクトを読み取らせます。オブジェクトは指定プレフィックスに限定し、暗号鍵も提供元が管理します。クロスアカウントで必要な許可の組み合わせを選んでください。</p>
 <fieldset class="quiz-options"><legend>必要な設定を2つ選んでください。</legend>
@@ -1871,7 +1871,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/s3.html">Amazon S3</a><a href="../services/kms.html">AWS KMS</a><a href="../services/iam.html">AWS IAM</a></p></details>
 </section>
-<section class="quiz-q" data-id="91" data-domain="4" data-difficulty="intermediate" data-answer="c" data-type="single">
+<section class="quiz-q" data-id="91" data-title="保存データの調査" data-domain="4" data-difficulty="intermediate" data-answer="c" data-type="single">
 <h4>問91 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">監査ログで不審なアクセスは見つかりましたが、担当者は漏えいした可能性のあるS3オブジェクトの範囲も把握したいと考えています。氏名や金融情報など、オブジェクトの内容に含まれる機密データを検出する用途に適したサービスはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切なサービスを1つ選んでください。</legend>
@@ -1891,7 +1891,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/macie.html">Amazon Macie</a><a href="../services/cloudtrail.html">AWS CloudTrail</a></p></details>
 </section>
-<section class="quiz-q" data-id="92" data-domain="4" data-difficulty="intermediate" data-answer="a" data-type="single">
+<section class="quiz-q" data-id="92" data-title="アプリケーション認証情報の管理" data-domain="4" data-difficulty="intermediate" data-answer="a" data-type="single">
 <h4>問92 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">アプリケーションはデータベースの認証情報を使って接続しています。認証情報をソースコードやAMIに埋め込まず、担当者が値を安全に保管・取得でき、更新作業も管理しやすくしたい場合に最も適した方法はどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な方法を1つ選んでください。</legend>
@@ -1911,7 +1911,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/secrets-manager.html">AWS Secrets Manager</a><a href="../services/iam.html">AWS IAM</a></p></details>
 </section>
-<section class="quiz-q" data-id="93" data-domain="4" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="93" data-title="閉域環境からのデータ利用" data-domain="4" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
 <h4>問93 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">プライベートサブネット内の分析処理からS3へアクセスさせます。インターネットゲートウェイやNATゲートウェイを経由させず、通信をTLSで保護し、到達できるバケットも制限したい場合、設計に含める設定を選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす設定を2つ選んでください。</legend>
@@ -1930,7 +1930,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/vpc.html">Amazon VPC</a><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="94" data-domain="4" data-difficulty="intermediate" data-answer="b,d" data-type="multiple">
+<section class="quiz-q" data-id="94" data-title="分析データの利用管理" data-domain="4" data-difficulty="intermediate" data-answer="b,d" data-type="multiple">
 <h4>問94 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">分析用データを利用者ごとに必要な範囲だけ見せ、個人識別情報を含むデータの利用と保存期間も組織的に管理します。権限管理に加え、機密データの発見と保持期間後の削除を組み合わせるために適切なものを選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす方法を2つ選んでください。</legend>
@@ -1949,7 +1949,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/lake-formation.html">AWS Lake Formation</a><a href="../services/macie.html">Amazon Macie</a><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="95" data-domain="4" data-difficulty="intermediate" data-answer="b" data-type="single">
+<section class="quiz-q" data-id="95" data-title="登録済みデータの利用" data-domain="4" data-difficulty="intermediate" data-answer="b" data-type="single">
 <h4>問95 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">GlueクローラーがS3データのスキーマを検出し、テーブル定義をデータカタログに登録しました。利用者はクエリエンジンからテーブルを見つけられますが、行データの読み取りを細かく制御したい場合、メタデータの存在だけでなく何を整備すべきですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な方法を1つ選んでください。</legend>
@@ -1969,7 +1969,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/lake-formation.html">AWS Lake Formation</a></p></details>
 </section>
-<section class="quiz-q" data-id="96" data-domain="4" data-difficulty="intermediate" data-answer="d" data-type="single">
+<section class="quiz-q" data-id="96" data-title="顧客情報を含む分析" data-domain="4" data-difficulty="intermediate" data-answer="d" data-type="single">
 <h4>問96 <span class="quiz-difficulty">標準</span></h4>
 <p class="quiz-stem">分析チームには顧客属性の傾向を調べさせますが、元の氏名やメールアドレスは不要です。分析用データは別に準備し、担当者は元データにもアクセスできません。再識別用の対応表を持たせない方針で、分析対象を準備する方法として適切なのはどれですか。</p>
 <fieldset class="quiz-options"><legend>最も適切な方法を1つ選んでください。</legend>
@@ -1989,7 +1989,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/lake-formation.html">AWS Lake Formation</a></p></details>
 </section>
-<section class="quiz-q" data-id="97" data-domain="4" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="97" data-title="分析用データへのアクセス" data-domain="4" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
 <h4>問97 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">データカタログのテーブルは登録済みで、分析担当ロールにはLake FormationのSELECTが付与されていますが、クエリ時にテーブル情報を取得できず失敗します。テーブルの詳細情報を参照し、クエリサービスがデータアクセスを行うために確認すべき設定を選んでください。</p>
 <fieldset class="quiz-options"><legend>確認が必要な設定を2つ選んでください。</legend>
@@ -2008,7 +2008,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/glue.html">AWS Glue</a><a href="../services/lake-formation.html">AWS Lake Formation</a><a href="../services/iam.html">AWS IAM</a></p></details>
 </section>
-<section class="quiz-q" data-id="98" data-domain="4" data-difficulty="advanced" data-answer="b,d" data-type="multiple">
+<section class="quiz-q" data-id="98" data-title="複数アカウントのデータ処理" data-domain="4" data-difficulty="advanced" data-answer="b,d" data-type="multiple">
 <h4>問98 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">別アカウントのS3データを処理するため、処理用ロールをSTSで引き受ける構成にします。対象データはSSE-KMSで暗号化され、ジョブの処理対象も限定します。資格情報を固定せず、読み取りと復号を最小権限にする設計を選んでください。</p>
 <fieldset class="quiz-options"><legend>適切な設計を2つ選んでください。</legend>
@@ -2027,7 +2027,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/sts.html">AWS STS</a><a href="../services/iam.html">AWS IAM</a><a href="../services/kms.html">AWS KMS</a></p></details>
 </section>
-<section class="quiz-q" data-id="99" data-domain="4" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
+<section class="quiz-q" data-id="99" data-title="複数環境の操作記録" data-domain="4" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
 <h4>問99 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">セキュリティチームは、複数アカウントのS3オブジェクト読み取りを後から追跡できるよう、集中管理された監査ログを長期保管します。バケット設定変更だけの記録では不十分で、ログ自体の改ざん検証も求められます。要件に合う設定を選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす設定を2つ選んでください。</legend>
@@ -2046,7 +2046,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../services/cloudtrail.html">AWS CloudTrail</a><a href="../services/s3.html">Amazon S3</a></p></details>
 </section>
-<section class="quiz-q" data-id="100" data-domain="4" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
+<section class="quiz-q" data-id="100" data-title="分析データの部門間共有" data-domain="4" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
 <h4>問100 <span class="quiz-difficulty">応用</span></h4>
 <p class="quiz-stem">データ提供側が管理するS3上のテーブルを、別アカウントの分析チームと共有します。データを複製せず、提供側は元データとアクセス権を管理し、受領側では共有テーブルを自分のデータカタログから利用できるようにしたい場合、適切な進め方を選んでください。</p>
 <fieldset class="quiz-options"><legend>要件を満たす方法を2つ選んでください。</legend>
