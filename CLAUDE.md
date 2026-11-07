@@ -21,7 +21,6 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/index.html … トップ(サービス・用語・運用シナリオ・問題集・公式リンクへの入口)
 - book/icons/services/{slug}.svg … サービスのアイコン(AWS公式の Architecture Icons 2026年7月版の48px SVGを、改変せずファイル名だけ slug にしたもの)。サービス一覧・各サービスページの見出し・公式リンク・トップの検索結果に build.py が表示する。サービスを追加したら公式パッケージ(https://aws.amazon.com/jp/architecture/icons/)から同じ形でコピーする。専用アイコンがないサービス(Copilot・Database Encryption SDK・STS・SAM・Kiro・IPAM・DNS Firewall)は所属カテゴリの公式カテゴリアイコンを使っている
 - src/links.html・src/links.json … 公式リンク(book/links.html)の本文と、サービスごとの公式ページ(製品ページ・ドキュメント)のパス。サービスを追加したら links.json にも追加する(URLは実際にアクセスして確認する)
-- 試験前チェックリスト.md … 試験の直前に見直す項目(利用者が直接編集する)。build.py が book/checklist.html(トップページの入口から開くページ)に変換する。書けるのは `#`(1行目のページ名。括弧内は一言説明)・`##`(項目)・`- `(箇条書き)・段落・`**太字**`・`` `コード` ``・`[名前](URL)`。公開サイトの完全なURL(https://lohas1985.github.io/aws-textbook/…)は相対パスに直して出力する
 - book/{services,terms,usecases,questions}/index.html … 各コレクションの目次(カテゴリ別)
 - book/{services,terms,usecases,questions}/{slug}.html … 各ページ(生成物。直接編集しない)
 - book/css/style.css … 共通スタイル(全ページで共有。これは直接編集する)
@@ -95,7 +94,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 ### 問題集(questions)
 1. 問題集の使い方 2. 問題(試験分野ごと) 3. 採点結果
 - 試験ごとに1ページを作り、カテゴリ名・slug・タイトルに試験IDを使う(例: `questions/dea-c01.html`)
-- DEA-C01の問題は公式試験ガイドの分野・配点に沿って配置する。分野名・比率は build.py の `DEA_EXAM_DOMAINS` で定義する
+- DEA-C01の問題は公式試験ガイドの分野・配点に沿って配置する。出題配分は checks.py で検査し、選択画面用タイトルは `src/questions/dea-c01-titles.json` で管理する
 - 問題文は実務の状況・制約・目標を示すシナリオ型にし、サービスの暗記だけで解けないよう要件から選ばせる。出題形式・難易度・文章量は [問題集の作成方針.md](問題集の作成方針.md) を参照する
 - 1問あたり選択肢は4つを基本とし、単一選択または「2つ選択」を明記する。正解だけでなく不正解の各選択肢も、要件を満たさない理由を解説する
 - 選択式の問いは `<section class="quiz-q" data-answer="a" data-type="single">` で記述する。複数選択では正解値をカンマで区切り、`data-type="multiple"` とする。各問いにラジオボタンまたはチェックボックス、`<details class="quiz-answer">` の答えと解説を置く

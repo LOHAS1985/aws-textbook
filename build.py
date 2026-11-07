@@ -9,7 +9,6 @@
     <!-- lead: 一言説明 -->
 図は diagrams.py の記法で書くとSVGに変換される。
 公式リンク(book/links.html)は、src/links.html の本文と src/links.json(サービスごとの公式ページ)から作る。
-試験前チェックリスト(book/checklist.html)は、リポジトリ直下の 試験前チェックリスト.md から作る。
 """
 import hashlib
 import html
@@ -194,13 +193,6 @@ EXAM_DOMAINS = [
     ("デプロイ、プロビジョニング、オートメーション", 22),
     ("セキュリティとコンプライアンス", 16),
     ("ネットワークとコンテンツ配信", 18),
-]
-
-DEA_EXAM_DOMAINS = [
-    ("データ取り込み・変換", 34),
-    ("データストア管理", 26),
-    ("データ運用・サポート", 22),
-    ("データセキュリティ・ガバナンス", 18),
 ]
 
 TOC_MIN_H3 = 5  # 小見出し(h3)がこの数以上あるページにだけページ内目次を付ける
@@ -963,10 +955,6 @@ def render_top(loaded):
         badge = f"{n}ページ" if n else "準備中"
         parts.append(f'  <li><a href="{c["key"]}/index.html"><span class="name">{c["label"]}'
                      f'<span class="badge">{badge}</span></span><span class="desc">{c["desc"]}</span></a></li>\n')
-    if CHECKLIST_MD.exists():
-        ctitle, clead = checklist_title()
-        parts.append(f'  <li><a href="checklist.html"><span class="name">{html.escape(ctitle)}</span>'
-                     f'<span class="desc">{html.escape(clead or "試験の直前に見直しておきたい項目のまとめ")}</span></a></li>\n')
     parts.append('  <li><a href="links.html"><span class="name">公式リンク</span>'
                  '<span class="desc">試験ガイドや各サービスの公式ページ・ドキュメントへのリンク</span></a></li>\n')
     parts.append("</ul>\n")
@@ -979,15 +967,6 @@ def render_top(loaded):
         parts.append(f'  <li><a href="usecases/index.html#cat{i}"><span class="name">{html.escape(name)}</span>'
                      f'<span class="badge">{weight}%</span></a></li>\n')
     parts.append("</ol>\n</section>\n")
-
-    if loaded.get("questions"):
-        parts.append('<section class="top-section">\n<h2>試験分野から学ぶ(DEA-C01)</h2>\n'
-                     '<p class="cat-desc">出題分野ごとの問題を解き、選択肢の解説から関連するサービスや用語を確認できます。</p>\n'
-                     '<ol class="domain-list">\n')
-        for i, (name, weight) in enumerate(DEA_EXAM_DOMAINS, 1):
-            parts.append(f'  <li><a href="questions/dea-c01.html#domain{i}"><span class="name">'
-                         f'{html.escape(name)}</span><span class="badge">{weight}%</span></a></li>\n')
-        parts.append("</ol>\n</section>\n")
 
     # 最新のニュース(新しい日付から5件)
     if loaded["news"]:
@@ -1248,92 +1227,6 @@ def render_links(services, warnings):
             + "</div>\n" + body + "\n</main>\n" + TAIL)
 
 
-CHECKLIST_MD = ROOT / "試験前チェックリスト.md"
-SITE_URL = "https://lohas1985.github.io/aws-textbook/"
-
-
-def md_inline(text):
-    """チェックリストのMarkdownの1行分(太字・コード・リンク)をHTMLにする。
-    公開サイトの完全なURLは、サイト内の相対パスに直す。"""
-    codes = []
-
-    def keep_code(m):
-        codes.append(f"<code>{html.escape(m.group(1), quote=False)}</code>")
-        return f"\x00{len(codes) - 1}\x00"
-
-    t = re.sub(r"`([^`]+)`", keep_code, text)
-    t = html.escape(t, quote=False)
-    t = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t)
-
-    def link(m):
-        url = m.group(2)
-        if url.startswith(SITE_URL):
-            url = url[len(SITE_URL):] or "index.html"
-            return f'<a href="{html.escape(url)}">{m.group(1)}</a>'
-        return f'<a href="{html.escape(url)}" target="_blank" rel="noopener">{m.group(1)}</a>'
-
-    t = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", link, t)
-    return re.sub("\x00(\\d+)\x00", lambda m: codes[int(m.group(1))], t)
-
-
-def checklist_title():
-    """(ページ名, 一言説明)。1行目の「# 名前(説明)」から取る。"""
-    first = CHECKLIST_MD.read_text(encoding="utf-8").lstrip().split("\n", 1)[0]
-    m = re.match(r"#\s+(.+?)(?:[((](.+)[))])?\s*$", first)
-    return (m.group(1).strip(), (m.group(2) or "").strip()) if m else ("試験前チェックリスト", "")
-
-
-def render_checklist():
-    """試験前チェックリスト.md(見出し・箇条書き・段落・太字・コード・リンク)から book/checklist.html を作る。"""
-    title, lead = checklist_title()
-    sections, cur, in_list = [], None, False
-
-    def close_list():
-        nonlocal in_list
-        if in_list:
-            cur["body"].append("</ul>")
-            in_list = False
-
-    for line in CHECKLIST_MD.read_text(encoding="utf-8").splitlines():
-        line = line.rstrip()
-        if line.startswith("# "):
-            continue
-        if line.startswith("## "):
-            if cur:
-                close_list()
-            cur = {"title": line[3:].strip(), "body": []}
-            sections.append(cur)
-            continue
-        if cur is None:
-            continue
-        if line.lstrip().startswith(("- ", "* ")):
-            if not in_list:
-                cur["body"].append("<ul>")
-                in_list = True
-            cur["body"].append(f"<li>{md_inline(line.lstrip()[2:].strip())}</li>")
-        elif line.strip():
-            close_list()
-            cur["body"].append(f"<p>{md_inline(line.strip())}</p>")
-        else:
-            close_list()
-    if cur:
-        close_list()
-
-    anchor = '<a class="anchor" href="#{0}" aria-label="この見出しへのリンク">#</a>'
-    toc = "".join(f'<li><a href="#c{i}">{md_inline(sec["title"])}</a></li>\n'
-                  for i, sec in enumerate(sections, 1))
-    body = (f'<section class="chapter">\n<h2 id="toc">確認する項目{anchor.format("toc")}</h2>\n'
-            f'<ol class="checklist-toc">\n{toc}</ol>\n</section>\n')
-    for i, sec in enumerate(sections, 1):
-        body += (f'\n<section class="chapter">\n<h2 id="c{i}">{md_inline(sec["title"])}'
-                 f'{anchor.format(f"c{i}")}</h2>\n' + "\n".join(sec["body"]) + "\n</section>\n")
-    description = lead or "試験の直前に見直しておきたい項目のまとめ"
-    return (head(f"{title} | {SITE_TITLE}", "", description) + header("", "checklist")
-            + f'<main>\n<div class="page-head">\n  <h1>{html.escape(title)}</h1>\n'
-            + (f'  <p class="lead">{html.escape(lead)}</p>\n' if lead else "")
-            + "</div>\n" + body + "</main>\n" + TO_TOP + TAIL)
-
-
 def write_service_worker():
     """book/ の全ファイルをオフライン用に保存する Service Worker(book/sw.js)を作る。
     ファイルごとに内容のハッシュを持たせ、更新時は変わったファイルだけを取り直す。"""
@@ -1417,9 +1310,6 @@ def main():
         loaded[col["key"]] = load_pages(col, warnings, updated)
     links_raw = (SRC / "links.html").read_text(encoding="utf-8")
     extra = {"links.html": links_raw}
-    checklist_html = render_checklist() if CHECKLIST_MD.exists() else None
-    if checklist_html:
-        extra["checklist.html"] = checklist_html
     check_pages(COLLECTIONS, loaded, extra, OUT, warnings)
     links = collect_links(loaded)
     titles = {(k, p["slug"]): p["title"] for k in GRAPH_KEYS for p in loaded[k]}
@@ -1451,8 +1341,9 @@ def main():
     write_glossary(loaded)
     (OUT / "index.html").write_text(render_top(loaded), encoding="utf-8")
     (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
-    if checklist_html:
-        (OUT / "checklist.html").write_text(checklist_html, encoding="utf-8")
+    checklist_page = OUT / "checklist.html"
+    if checklist_page.exists():
+        checklist_page.unlink()
     write_service_worker()
     print("built " + ", ".join(f"{c['label']} {counts[c['key']]}" for c in COLLECTIONS))
     for w in warnings:

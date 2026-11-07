@@ -22,7 +22,7 @@ fi
 
 # build.py が生成するページだけを戻し、手作業で編集するアセットは残す
 restore_generated_book() {
-  git checkout -- book/checklist.html book/exercises book/index.html book/links.html book/news book/print \
+  git checkout -- book/exercises book/index.html book/links.html book/news book/print \
     book/questions \
     book/services book/terms book/usecases book/js/glossary.js book/sw.js
 }
