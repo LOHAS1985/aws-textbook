@@ -76,6 +76,7 @@
   var activeQuestions = [];
   var currentIndex = 0;
   var setup = document.createElement("section");
+  var modeButtons = document.createElement("div");
   var selection = document.createElement("div");
   var randomButton = document.createElement("button");
   var chooseButton = document.createElement("button");
@@ -206,8 +207,10 @@
   selectionFooter.appendChild(startButton);
   selection.appendChild(selectionFooter);
   selection.hidden = true;
-  setup.appendChild(randomButton);
-  setup.appendChild(chooseButton);
+  modeButtons.className = "quiz-mode-buttons";
+  modeButtons.appendChild(randomButton);
+  modeButtons.appendChild(chooseButton);
+  setup.appendChild(modeButtons);
   setup.appendChild(selection);
   setup.appendChild(setupMessage);
   form.insertBefore(setup, form.firstChild);
