@@ -25,7 +25,7 @@ edge ct aa
 <figcaption>図1 権限エラーの調査と最小権限化の構成。</figcaption>
 </figure>
 
-<div class="ex-item" data-node="ct">
+<div class="ex-item" data-req="2" data-node="ct">
 <p class="ex-q">① 拒否されたAPIの呼び出しと呼び出し元を記録しているものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="CloudTrail">AWS CloudTrail<span class="ex-why"><code>errorCode</code> が AccessDenied のイベントから、誰がどの操作で拒否されたかが分かります。</span></li>
@@ -34,7 +34,7 @@ edge ct aa
 </ul>
 </div>
 
-<div class="ex-item" data-node="aa">
+<div class="ex-item" data-req="3" data-node="aa">
 <p class="ex-q">② 実際の利用の記録から、必要な権限だけのポリシーを作るものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="Access Analyzer">IAM Access Analyzer<span class="ex-why">CloudTrailの記録からポリシーを生成し、使っていないアクセスも見つけます。</span></li>
@@ -43,7 +43,7 @@ edge ct aa
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">③ S3の権限はあるのに、KMSで暗号化されたオブジェクトだけ読めない原因は?</p>
 <ul class="ex-choices">
 <li data-ok>KMSキーの <code>kms:Decrypt</code> の権限がない<span class="ex-why">SSE-KMSのオブジェクトは、S3の権限に加えてキーの権限も必要です(<a href="../terms/encryption.html">暗号化</a>)。</span></li>
@@ -52,7 +52,7 @@ edge ct aa
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">④ IAMで許可しているのに拒否されるとき、ほかに確認するものは?</p>
 <ul class="ex-choices">
 <li data-ok>SCP・アクセス許可の境界・バケットポリシーの明示的なDeny<span class="ex-why">どこか1つでも明示的なDenyがあれば拒否されます(<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>)。</span></li>

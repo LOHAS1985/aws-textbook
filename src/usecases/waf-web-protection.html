@@ -27,7 +27,7 @@ edge alb app
 <figcaption>図1 Webアプリの保護の構成。</figcaption>
 </figure>
 
-<div class="ex-item" data-node="waf">
+<div class="ex-item" data-node="waf" data-req="1,2,3">
 <p class="ex-q">① SQLインジェクションなどアプリ層の攻撃を、前段で止めるものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="AWS WAF">AWS WAF<span class="ex-why">Web ACLのマネージドルールで、SQLインジェクションや既知の悪い入力をブロックします。</span></li>
@@ -36,7 +36,7 @@ edge alb app
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">② 同じIPアドレスからの大量のログイン試行を止めるルールは?</p>
 <ul class="ex-choices">
 <li data-ok>レートベースルール<span class="ex-why">一定時間内のリクエスト数が上限を超えたIPアドレスを、一時的にブロックします。</span></li>
@@ -45,7 +45,7 @@ edge alb app
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">③ CloudFrontに関連付けるWeb ACLを作るリージョンは?</p>
 <ul class="ex-choices">
 <li data-ok>us-east-1(バージニア北部)<span class="ex-why">CloudFrontはグローバルなサービスなので、us-east-1で作ります。ALB用はALBと同じリージョンで作ります(<a href="../terms/region-az.html">サービスの範囲</a>)。</span></li>
@@ -54,7 +54,7 @@ edge alb app
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">④ WAFを迂回して、ALBに直接アクセスされないようにするには?</p>
 <ul class="ex-choices">
 <li data-ok>ALBへの経路をCloudFrontからだけに絞る<span class="ex-why">CloudFrontのマネージドプレフィックスリストをセキュリティグループに使い、カスタムヘッダーの確認も組み合わせます。</span></li>

@@ -27,7 +27,7 @@ edge alarm mail
 <figcaption>図1 メモリ使用率の監視の構成。空欄に入るサービスを選ぶと、図に表示される。</figcaption>
 </figure>
 
-<div class="ex-item" data-node="conf">
+<div class="ex-item" data-node="conf" data-req="3">
 <p class="ex-q">① 全台で共通の収集の設定を置く場所は?</p>
 <ul class="ex-choices">
 <li data-ok data-short="Parameter Store">Systems Manager Parameter Store<span class="ex-why">CloudWatchエージェントは、Parameter Storeに置いた設定を <code>fetch-config</code> で取得できます。設定を1か所で管理し、全台に同じ設定を配れます。</span></li>
@@ -36,7 +36,7 @@ edge alarm mail
 </ul>
 </div>
 
-<div class="ex-item" data-node="ec2">
+<div class="ex-item" data-node="ec2" data-req="1">
 <p class="ex-q">② EC2の中でメモリ・ディスクの使用率を集めて送るものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="CWエージェント">CloudWatchエージェント<span class="ex-why">メモリやディスクの使用率はOSの中の値なので、AWSの外側からは見えません。エージェントをインストールして、カスタムメトリクスとして送ります。</span></li>
@@ -45,7 +45,7 @@ edge alarm mail
 </ul>
 </div>
 
-<div class="ex-item" data-node="mail">
+<div class="ex-item" data-node="mail" data-req="2">
 <p class="ex-q">③ アラームから担当者にメールで知らせるものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="SNS">Amazon SNS<span class="ex-why">アラームのアクションにSNSトピックを指定し、メールアドレスをサブスクリプションとして登録します。</span></li>
@@ -54,7 +54,7 @@ edge alarm mail
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">④ EC2に付けるIAMロールのポリシーは?</p>
 <ul class="ex-choices">
 <li data-ok>CloudWatchAgentServerPolicy<span class="ex-why">メトリクス・ログの送信(<code>cloudwatch:PutMetricData</code> など)と、Parameter Storeの <code>AmazonCloudWatch-</code> で始まる設定の読み取りが許可された、エージェント用のAWS管理ポリシーです。</span></li>
@@ -63,7 +63,7 @@ edge alarm mail
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1,2">
 <p class="ex-q">⑤ エージェントが送ったメトリクスは、CloudWatchのどの名前空間に入る?(既定の設定)</p>
 <ul class="ex-choices">
 <li data-ok><code>CWAgent</code><span class="ex-why">エージェントのメトリクスは既定で <code>CWAgent</code> 名前空間に入ります(メモリ使用率は <code>mem_used_percent</code>)。アラームはここのメトリクスで作ります。</span></li>

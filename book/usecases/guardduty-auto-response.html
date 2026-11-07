@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
   <h1>乗っ取られたEC2を自動で隔離する</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -93,8 +93,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 侵害されたEC2の自動隔離の構成。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span></p>
 
-<div class="ex-item" data-node="gd">
+<div class="ex-item" data-node="gd" data-req="1,3">
 <p class="ex-q">① 不審な通信やマイニングなどの脅威を検出するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="GuardDuty">Amazon GuardDuty<span class="ex-why">VPCフローログ・DNSのログ・CloudTrailなどを分析して、脅威を検出します。リージョンごとに有効にします。</span></li>
@@ -103,7 +104,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item" data-node="snap">
+<div class="ex-item" data-node="snap" data-req="2">
 <p class="ex-q">② 調査のためにディスクの状態を残すものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="スナップショット">EBSのスナップショット<span class="ex-why">その時点のボリュームの状態を保存し、あとで別の環境で調べられます。</span></li>
@@ -112,7 +113,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1,2">
 <p class="ex-q">③ Auto Scalingグループのインスタンスを隔離するときの注意は?</p>
 <ul class="ex-choices">
 <li data-ok>先にグループから切り離す(デタッチする)<span class="ex-why">グループに入ったままだと、ヘルスチェックで置き換えられて証拠が消えます。</span></li>
@@ -167,6 +168,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 侵害されたEC2の自動隔離。GuardDutyの検出結果をEventBridgeで受け、自動処理で隔離用のセキュリティグループに付け替え、EBSのスナップショットを取って証拠を残す。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">

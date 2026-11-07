@@ -23,7 +23,7 @@ edge run rds
 <figcaption>図1 定時の停止・起動の構成。①が決まった時刻に②を起動し、②が対象のEC2・RDSを停止・起動する。</figcaption>
 </figure>
 
-<div class="ex-item" data-node="sch">
+<div class="ex-item" data-node="sch" data-req="1,3">
 <p class="ex-q">① 決まった時刻に処理を起動するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="Scheduler">Amazon EventBridge Scheduler<span class="ex-why">サーバーなしで、cron式・rate式のスケジュールでターゲットを起動できます。<strong>タイムゾーンを指定できる</strong>のも利点です。</span></li>
@@ -32,7 +32,7 @@ edge run rds
 </ul>
 </div>
 
-<div class="ex-item" data-node="run">
+<div class="ex-item" data-node="run" data-req="2">
 <p class="ex-q">② EC2とRDSを停止・起動する手順を実行するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="SSM Automation">Systems Manager Automation<span class="ex-why">AWSが用意したランブック(<code>AWS-StopEC2Instance</code>、<code>AWS-StopRdsInstance</code> など)で、APIを使って停止・起動できます。タグで対象を選ぶこともできます。</span></li>
@@ -41,7 +41,7 @@ edge run rds
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">③ 「平日の20時(日本時間)」のスケジュールの指定として正しいものは?</p>
 <ul class="ex-choices">
 <li data-ok>タイムゾーンを Asia/Tokyo にして <code>cron(0 20 ? * MON-FRI *)</code><span class="ex-why">EventBridge Schedulerはタイムゾーンを指定できるので、日本時間のまま書けます。「日」と「曜日」のどちらかは <code>?</code> にします(<a href="../terms/cron-rate-expressions.html">cron式とrate式</a>)。</span></li>
@@ -50,7 +50,7 @@ edge run rds
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">④ 停止・起動する対象の選び方は?</p>
 <ul class="ex-choices">
 <li data-ok><code>Env=dev</code> のタグで選ぶ<span class="ex-why">台数が増えても、タグを付けるだけで対象に加わります(<a href="../terms/tags.html">タグ</a>)。</span></li>
@@ -59,7 +59,7 @@ edge run rds
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">⑤ RDSを停止するときの注意点として正しいものは?</p>
 <ul class="ex-choices">
 <li data-ok>停止したDBインスタンスは7日たつと自動で起動する<span class="ex-why">そのため、長期間止めておく場合も、毎日の停止の処理で止め直す必要があります。停止中は、インスタンスの料金はかからず、ストレージとバックアップの料金はかかります。</span></li>

@@ -8,8 +8,12 @@ build.py の main() から check_pages() が呼ばれる。検査の内容:
   - 6章「試験・実務でのポイント」が10項目を超えるのに h4 で分けていないか
   - 図のキャプションが「図1」から順に番号が振られているか
   - 表記ゆれ(NOTATION)・古い名称(STALE)・使わない表示(FORBIDDEN)
+  - 問題集の整合(選択肢は4つ・正解と選択肢の一致・誤答の解説・1つ/2つ選択の指示)と、
+    追加問題データ(domain-N.json)の整合(check_question_data)
 表記の決まりを増やすときは NOTATION に (誤りのパターン, 正しい表記) を足す。
+薄いページ(加筆の候補)は WARNING ではなく、thin_page_report() の一覧としてビルドの最後に出す。
 """
+import json
 import posixpath
 import re
 
@@ -79,6 +83,9 @@ FORBIDDEN = [
     (r"まだ関連する用語がありません|本書|このセッション", "仮の文言・制作に関する説明"),
 ]
 
+# 薄いページの閾値(文字数)。加筆の候補の一覧に使う
+THIN_CHARS = 1200
+
 BLOCK_RE = re.compile(r"<(p|li|td|th|dd)\b[^>]*>(.*?)</\1>", re.S)
 HEADING_RE = re.compile(r"<(h[23])((?:\s[^>]*)?)>(.*?)</\1>", re.S)
 HREF_RE = re.compile(r'href="([^"]+)"')
@@ -146,6 +153,32 @@ def check_pages(collections, loaded, extra_pages, out_dir, warnings):
     for path, raw in extra_pages.items():
         _check_links(path, raw, targets, out_dir, path, warnings)
         _check_style(raw, path, warnings)
+
+
+def page_density(raw):
+    """本文の分量:(文字数(空白を除く・図の記法と表示されない部分を除く), 図の数, 表の数)。"""
+    text = re.sub(r"\s+", "", _text_only(raw))
+    return len(text), raw.count('<figure class="figure"'), len(re.findall(r"<table\b", raw))
+
+
+def thin_page_report(collections, loaded, limit=10):
+    """加筆の候補になる薄いページの一覧(文字数の少ない順)。WARNING にはせず、ビルドの最後に表示する。
+    対象は サービス・用語・運用シナリオ。閾値は THIN_CHARS 未満、または図が0で THIN_CHARS の2倍未満のページ。"""
+    rows = []
+    for col in collections:
+        if col["key"] not in ("services", "terms", "usecases"):
+            continue
+        for p in loaded[col["key"]]:
+            chars, figures, tables = page_density(p["raw"])
+            if chars < THIN_CHARS or (figures == 0 and chars < THIN_CHARS * 2):
+                rows.append((chars, figures, tables, _page_path(col["key"], p), p["title"]))
+    rows.sort()
+    lines = [f"加筆の候補({len(rows)}件・文字数の少ない順。閾値: {THIN_CHARS}字未満、または図なしで{THIN_CHARS * 2}字未満)"]
+    for chars, figures, tables, path, title in rows[:limit]:
+        lines.append(f"  {path}「{title}」 文字数{chars} 図{figures} 表{tables}")
+    if len(rows) > limit:
+        lines.append(f"  ほか{len(rows) - limit}件")
+    return lines
 
 
 def _check_meta(col, p, where, warnings):
@@ -266,9 +299,9 @@ def _check_question_paper(raw, where, warnings):
         expected_count = "1つ" if kind.group(1) == "single" else "2つ"
         if not legend or expected_count not in _text_only(legend.group(1)):
             warnings.append(f"{where}: 問{n}の選択数の指示と回答形式が一致しません")
-        if (len(choices) < 3 or len(choices) > 5 or len(values) != len(set(values))
+        if (len(choices) != 4 or len(values) != len(set(values))
                 or any(input_type != expected_type for input_type, _ in choices)):
-            warnings.append(f"{where}: {n}問目は選択肢を3〜5個にし、選択方式を統一してください")
+            warnings.append(f"{where}: {n}問目は選択肢を4つにし、選択方式を統一してください")
         if (len(correct) != len(set(correct)) or not set(correct) <= set(values)
                 or (kind.group(1) == "single" and len(correct) != 1)
                 or (kind.group(1) == "multiple" and len(correct) != 2)):
@@ -290,6 +323,9 @@ def _check_question_paper(raw, where, warnings):
         explanation = re.search(r'<ul>(.*?)</ul>', inner, re.S)
         if not explanation or len(re.findall(r'<li>', explanation.group(1))) != wrong_count:
             warnings.append(f"{where}: 問{n}の誤答選択肢それぞれに解説を付けてください")
+        elif any(not _text_only(re.sub(r"^\s*<strong>.*?</strong>", "", item, count=1)).strip()
+                 for item in re.findall(r'<li>(.*?)</li>', explanation.group(1), re.S)):  # 先頭の「A:」を除いて見る
+            warnings.append(f"{where}: 問{n}の誤答の解説が空になっている選択肢があります")
     if where == "exams/dea-c01/questions":
         if ids != {str(question_id) for question_id in range(1, 201)}:
             warnings.append(f"{where}: 問題IDは1〜200の連番にしてください")
@@ -302,6 +338,32 @@ def _check_question_paper(raw, where, warnings):
             warnings.append(f"{where}: 1つ選択・2つ選択の問題を十分に混在させてください({types})")
         if lengths["short"] < 15 or lengths["medium"] < 80 or lengths["long"] < 15:
             warnings.append(f"{where}: 問題文の長さに幅を持たせてください({lengths})")
+
+
+def check_question_data(exams_dir, warnings):
+    """試験別の追加問題データ(exams/{試験ID}/domain-N.json)を、HTMLに組み込む前に問題単位で検査する。
+    選択肢の数・ID、正解と選択肢の一致、正解の数と type、誤答の解説の有無、問題IDの重複を見る。"""
+    seen = {}  # 問題ID → 最初に見つけたファイル
+    for path in sorted(exams_dir.glob("*/domain-*.json")):
+        where = f"exams/{path.parent.name}/{path.name}"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        for q in data:
+            qid = str(q.get("id"))
+            if qid in seen:
+                warnings.append(f"{where}: 問{qid}のIDが {seen[qid]} と重複しています")
+            seen[qid] = where
+            choices = q.get("choices", [])
+            ids = [c.get("id") for c in choices]
+            if len(choices) != 4 or len(set(ids)) != len(ids):
+                warnings.append(f"{where}: 問{qid}は選択肢を4つにし、選択肢のIDを重複させないでください")
+            if any(not str(c.get("why", "")).strip() for c in choices):
+                warnings.append(f"{where}: 問{qid}に解説(why)が空の選択肢があります")
+            answer = q.get("answer", [])
+            if not set(answer) <= set(ids) or len(answer) != len(set(answer)):
+                warnings.append(f"{where}: 問{qid}の正解(answer)が選択肢と一致しません")
+            expected = {"single": 1, "multiple": 2}.get(q.get("type"))
+            if expected is None or len(answer) != expected:
+                warnings.append(f"{where}: 問{qid}の type と正解の数が一致しません(type={q.get('type')}、正解{len(answer)}つ)")
 
 
 def _check_style(raw, where, warnings):

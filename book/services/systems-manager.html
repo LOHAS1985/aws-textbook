@@ -115,6 +115,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Systems Managerの仕組み。各ノードのSSM AgentがSystems ManagerへHTTPSで接続し、届いたタスクを実行して結果を返す。インバウンドのポートを開ける必要はない。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <p>Systems Managerで管理できるサーバーを<strong>管理対象ノード</strong>と呼びます。EC2を管理対象ノードにするには、次の3つがそろっている必要があります。</p>
 <ul>
 <li><strong>SSM Agent</strong>がインストールされ、起動している</li>
@@ -166,6 +167,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 EC2を管理対象ノードにする手順。①権限を持つロールをインスタンスプロファイルで付け、②SSM Agentを動かし、③Systems Managerまでの通信経路を用意すると、④管理対象ノードとして表示され、⑤各機能が使えるようになる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <ol>
 <li><strong>IAMロールを付ける</strong>:EC2用のロールにAWS管理ポリシー <code>AmazonSSMManagedInstanceCore</code> を付け、<a href="../terms/instance-profile.html">インスタンスプロファイル</a>としてインスタンスに付ける。起動中のインスタンスにも、停止せずに付けられる。インスタンスごとにロールを付けたくないときは、アカウント・リージョン単位の「<strong>デフォルトのホスト管理設定</strong>」を有効にすると、ロールのないインスタンスも管理対象になる(IMDSv2と、新しめのSSM Agentが必要)。</li>
 <li><strong>SSM Agentを確認する</strong>:Amazon Linux・Windows Server・Ubuntuなどの主要なAMIには最初から入っている。入っていないAMIでは、ユーザーデータなどでインストールする。Linuxでは <code>sudo systemctl status amazon-ssm-agent</code> で起動しているか確認できる。</li>
@@ -234,6 +236,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図3 Session Managerでの接続。EC2側から外向きのHTTPSで接続しているため、インバウンドのポート22・3389を開けずに操作できる。操作の記録はS3やCloudWatch Logsに残せる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 </div>
 
 <div class="feature" id="f-run">
@@ -302,6 +305,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図4 Patch Managerの構成要素。メンテナンスウィンドウで指定した日時に、パッチベースライン(どのパッチを当てるか)とパッチグループ(どのノードに当てるか)に従って、Run Commandがパッチを適用する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 </div>
 
 <div class="feature" id="f-inventory">
@@ -398,6 +402,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図5 Automationの使われ方。Configのルール違反やEventBridgeのイベントをきっかけにランブックを実行し、AWSのAPIでリソースを修正する。必要に応じて途中で承認を挟める。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 </div>
 
 <div class="feature" id="f-mw">
@@ -496,6 +501,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図6 AppConfigによる設定変更の段階デプロイ。検証した設定を一部のクライアントから配り、CloudWatchアラームで異常を検知したら自動でロールバックする。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </div>
 
 <h3 id="c2-7">運用管理の機能<a class="anchor" href="#c2-7" aria-label="この見出しへのリンク">#</a></h3>

@@ -110,6 +110,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 IAMの基本構造。ユーザーやグループにはIAMポリシーで権限を与える。ロールは信頼ポリシーで「誰が引き受けられるか」、権限ポリシーで「何ができるか」を決め、EC2などのサービスやユーザーが一時的に引き受ける。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <h3 id="iam-c2-2">ポリシーJSONの書き方<a class="anchor" href="#iam-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>IAMポリシーはJSONで書き、1つ以上の<strong>ステートメント</strong>(<code>Statement</code>)からなります。次の例は「<code>my-bucket</code> の読み書きを許可し、ただしMFAで認証していないときの削除は拒否する」ポリシーです。</p>
 <pre class="code"><code>{
@@ -190,6 +191,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 ポリシー評価の基本。明示的なDenyが最優先で、次に明示的なAllow。どちらもなければ拒否される。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <p>さらに、Organizationsの<strong>SCP</strong>や<strong>アクセス許可の境界</strong>、ロールのセッションポリシーが設定されている場合は、<strong>そのすべてで許可されている範囲</strong>だけが実際に使えます。アイデンティティベースのポリシーでAllowしても、SCPで許可されていなければ使えません。</p>
 
 <h3 id="iam-c2-4">マネージドポリシーとインラインポリシー<a class="anchor" href="#iam-c2-4" aria-label="この見出しへのリンク">#</a></h3>
@@ -227,6 +229,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図3 アクセス許可の境界。実際の権限は、ポリシーと境界の両方で許可された部分(重なり)だけになる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <p>代表的な用途は<strong>権限の委任</strong>です。開発者にIAMロールを作る権限を与えつつ、「作るロールには必ずこの境界を付けること」を条件にすると、開発者が自分より強い権限のロールを作って権限昇格するのを防げます。SCPがアカウント全体の上限なのに対して、境界は<strong>個々のユーザー・ロール</strong>の上限です。</p>
 
 <h3 id="iam-c2-6">IAM Access Analyzer<a class="anchor" href="#iam-c2-6" aria-label="この見出しへのリンク">#</a></h3>
@@ -321,6 +324,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図4 AWS CLI/SDKが認証情報を探す順番。上位で見つかった認証情報が使われるため、環境変数にキーが残っていると、EC2のロールより優先されてしまう。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">
@@ -497,6 +501,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 IAMの評価ロジック(簡略化)。明示的なDenyが1つでもあれば拒否。上限(SCP・アクセス許可の境界など)の範囲内で、どこかにAllowがあれば許可。Allowがどこにもなければ「暗黙的な拒否」になる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="iam-policy-evaluation-c1-4">同じアカウントと別のアカウント<a class="anchor" href="#iam-policy-evaluation-c1-4" aria-label="この見出しへのリンク">#</a></h3>
 <ul>

@@ -14,7 +14,7 @@ primary="$(cd "$(dirname "$0")/.." && cd "$(git rev-parse --git-common-dir)/.." 
 wt="$primary/../aws-textbook-wt/$name"
 [ -d "$wt" ] || { echo "worktree がありません: $wt" >&2; exit 1; }
 subject="$(date +%Y-%m-%d) $msg"
-trailer="Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+trailer="Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>"
 if ! python -c "" 2>/dev/null; then
   echo "Python が見つからないためビルドできません(公開を中止します)" >&2
   exit 1
@@ -22,7 +22,7 @@ fi
 
 # build.py が生成するページだけを戻し、手作業で編集するアセットは残す
 restore_generated_book() {
-  git checkout -- book/exercises book/index.html book/links.html book/news book/print \
+  git checkout -- book/exercises book/exams book/index.html book/links.html book/news book/print \
     book/questions \
     book/services book/terms book/usecases book/js/glossary.js book/sw.js
 }
@@ -41,7 +41,7 @@ git pull --ff-only origin main
 cd "$wt"
 restore_generated_book
 git add -A -- . ':!book'
-git add -A -- book/css/style.css book/icons book/js/quiz.js book/js/sim.js book/js/site.js book/manifest.webmanifest
+git add -A -- book/css/style.css book/icons book/js/quiz.js book/js/sim.js book/js/site.js book/js/mypage.js book/manifest.webmanifest
 git diff --cached --quiet || git commit -q -m "$subject" -m "$trailer"
 if ! git rebase main; then
   echo "リベースで衝突しました。$wt で解消して git rebase --continue を実行してから、もう一度このスクリプトを実行してください" >&2

@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat5">ネットワーク・コンテンツ配信</a>
   <h1>外向きの通信を許可したドメインだけに制限する</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -93,8 +93,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 外向きの通信の制限の構成。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
-<div class="ex-item" data-node="fw">
+<div class="ex-item" data-node="fw" data-req="1,2">
 <p class="ex-q">① 許可したドメイン以外への外向きの通信を止めるものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="NW Firewall">AWS Network Firewall<span class="ex-why">ステートフルルールのドメインリストで、TLSのSNIやHTTPのHostヘッダーから宛先のドメインを判定します。</span></li>
@@ -103,7 +104,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item" data-node="dns">
+<div class="ex-item" data-node="dns" data-req="3">
 <p class="ex-q">② 不正なドメインの名前解決を止めるものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="DNS Firewall">Route 53 Resolver DNS Firewall<span class="ex-why">AWS管理のドメインリストなどで、マルウェアのドメインの名前解決をブロックします(<a href="../terms/dns.html">DNS</a>)。</span></li>
@@ -112,7 +113,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1,2">
 <p class="ex-q">③ Network Firewallで通信を検査するために必要な設定は?</p>
 <ul class="ex-choices">
 <li data-ok>ルートテーブルで、通信がファイアウォールのエンドポイントを通るようにする<span class="ex-why">ルートで通さないと検査されません。行きと戻りの経路を同じにします(<a href="../terms/route-table.html">ルートテーブル</a>)。</span></li>
@@ -168,6 +169,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 外向きの通信の制限。DNS Firewallで不正なドメインの名前解決を止め、Network Firewallで許可したドメイン以外への通信を止める。ルートテーブルで、インターネットへの通信がファイアウォールのエンドポイントを通るようにする。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 </section>
 
 <section class="chapter">

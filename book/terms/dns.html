@@ -108,6 +108,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 名前解決の流れ。クライアントはDNSリゾルバーに「最終的な答え」を求め(再帰問い合わせ)、リゾルバーはルート → TLD → 権威DNSの順に「次の問い合わせ先」を教えてもらいながら(反復問い合わせ)答えを得る。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <p>ブラウザで <code>www.example.com</code> にアクセスすると、概ね次の流れで名前解決が行われます。</p>
 <ol>
 <li><strong>ブラウザのDNSキャッシュを確認</strong>:以前に取得した情報が残っていれば使う</li>
@@ -164,6 +165,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 DNSの階層構造。上位のサーバーは下位のサーバーの場所を知っており、最終的なレコードは各ドメインの権威DNSサーバーが管理する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="c1-5">DNSキャッシュとTTL<a class="anchor" href="#c1-5" aria-label="この見出しへのリンク">#</a></h3>
 <p>問い合わせのたびにルートから権威DNSまでたどると負荷が大きいため、DNSでは結果を一定期間キャッシュします。レコードには<strong>TTL(Time To Live)</strong>が設定されており、キャッシュを保持する期間を指定します。例えばTTLが <code>3600</code> 秒なら、リゾルバーは原則として1時間ほど結果をキャッシュし、その間は権威DNSに問い合わせずに回答します。</p>

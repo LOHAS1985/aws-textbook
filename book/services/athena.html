@@ -96,6 +96,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 <p>SQLのほかに、Apache SparkのPythonコードをノートブックからAthenaで実行できます。S3以外のデータも、フェデレーテッドクエリでLambda関数のコネクタを経由して分析できます。</p>
 
 <h3 id="c2-2">スキャン量を減らす<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
@@ -131,6 +132,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 パーティションによるスキャン量の削減。WHEREでパーティションのキーを指定すると、該当するフォルダ(この例では dt=2026-10-01)だけを読み、ほかのフォルダは読まない。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 <p>データを<strong>列指向形式(Parquet・ORC)</strong>にすると、クエリに必要な列だけを読めます。<strong>圧縮</strong>(GZIP・SNAPPY・ZSTDなど)をかけると、S3上の容量と読み取る量も減ります。既存のCSVなどは、CTAS(<code>CREATE TABLE AS SELECT</code>)でParquetやORCに変換できます。公式ドキュメントでは、圧縮・パーティション・列指向形式の組み合わせで、クエリあたりのコストを最大90%減らせるとされています。</p>
 
 <h3 id="c2-3">設定の要点<a class="anchor" href="#c2-3" aria-label="この見出しへのリンク">#</a></h3>

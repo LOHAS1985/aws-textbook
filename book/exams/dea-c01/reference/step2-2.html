@@ -92,6 +92,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Kinesisの主なサービス。Data Streamsはシャードで並列に受け取り、Lambdaなど自作の処理でリアルタイムに処理する。Data Firehoseはコードをほぼ書かずに、S3やOpenSearchなどへ配送・保存する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">
@@ -145,6 +146,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 シャードとパーティションキー。レコードはパーティションキーでシャードに振り分けられる。シャード1本の性能は固定なので、キーが偏ると特定のシャードに負荷が集中する(ホットシャード)。シャードを増やすとスループットが上がる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <h3 class="em" id="kinesis-c2-3">Amazon Data Firehose(データの配送・変換・保存)<a class="anchor" href="#kinesis-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ul>
 <li>ストリームデータを <strong>S3、Redshift、OpenSearch Service</strong> などへ配信する。</li>
@@ -278,6 +280,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Data Firehoseの流れ。受け取ったデータをバッファにため、必要ならLambdaで変換してから配送先にまとめて書き込む。配送に失敗したデータはS3のバックアップ用バケットに保存できる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
 <h3 id="data-firehose-c2-3">バッファリング<a class="anchor" href="#data-firehose-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <p>配送先への書き込みは、<strong>バッファのサイズ(MB)か時間(秒)のどちらかに達したとき</strong>に行われます。小さくするほど早く届き、大きくするほどファイルの数が減ってS3やAthenaで扱いやすくなります。</p>
@@ -413,6 +416,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Amazon MSKのイベント処理。トピックのパーティションをコンシューマーグループで分担し、オフセットに基づいて読み取る。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="msk-c2-2">利用形態と連携<a class="anchor" href="#msk-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>MSK Provisioned</strong>はブローカーの種類や数を選びます。<strong>MSK Serverless</strong>はブローカーの容量管理をAWSに任せます。MSK ConnectでKafka Connectコネクターを実行し、外部システムとのデータ連携もできます。MSK Replicatorはクラスター間のレプリケーションに使います。</p>
@@ -518,6 +522,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 AWS DMSによる移行。全件データをロードした後、変更データを継続レプリケーションして切り替えまで同期できる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
 <h3 id="dms-c2-2">データ移行とスキーマ変換<a class="anchor" href="#dms-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>DMSはデータの移行・レプリケーションを担います。異なるデータベースエンジンへ移行する場合、AWS DMS Schema ConversionやAWS Schema Conversion Toolでスキーマやコードの互換性を評価・変換します。移行元と移行先の型・関数・制約が完全に一致するとは限らないため、変換結果を確認してテストします。</p>
@@ -626,6 +631,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Amazon AppFlowによるSaaSデータの取り込み。転送先にS3やRedshiftを選び、必要に応じてカタログ化して分析する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="appflow-c2-2">セキュリティと監視<a class="anchor" href="#appflow-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>転送中と保存時のデータ暗号化に対応し、AWS PrivateLinkを使ってプライベートに転送できる接続先もあります。すべてのコネクターや転送先で同じ接続方式が使えるわけではないため、要件とコネクターの対応状況を確認します。API操作はCloudTrailで監査できます。</p>
@@ -735,6 +741,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 パーティションキー(UserID)で保存先のパーティションが決まり、同じパーティション内はソートキー(OrderDate)の順に並ぶ。値が偏ると特定のパーティションに負荷が集中する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
 <h3 id="dynamodb-c2-2">データの読み取り<a class="anchor" href="#dynamodb-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p>1回のリクエストで取得できる最大データ容量は<strong>1MB</strong>です。</p>
 <ul>
@@ -785,6 +792,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 LSIとGSI。LSIはパーティションキーをそのままにソートキーだけを変える(テーブル作成時のみ)。GSIはパーティションキーから変えられ、後から追加できる(結果整合性のみ)。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <h3 id="dynamodb-c2-4">読み取りの整合性<a class="anchor" href="#dynamodb-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
 <tr><th>項目</th><th>強い整合性</th><th>結果整合性</th></tr>
@@ -848,6 +856,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図3 DAXとDynamoDB Streams。DAXは読み取りをマイクロ秒レベルに高速化するキャッシュ。Streamsはテーブルの変更を記録し、Lambdaがポーリングして後続処理を行う(若干の遅延あり)。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">

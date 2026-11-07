@@ -87,6 +87,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 RPOとRTO。RPOは障害の前の「失ってもよいデータの量」、RTOは障害の後の「止まってもよい時間」。どちらも小さくするほど、常に動かしておくリソースが増えてコストが上がる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span></p>
 <p>RPOとRTOは別々に決まります。例えば、1時間ごとにバックアップしていればRPOは最大1時間ですが、そのバックアップから環境を作り直すのに4時間かかれば、RTOは4時間です。</p>
 
 <h3 id="c1-2">4つのDR戦略<a class="anchor" href="#c1-2" aria-label="この見出しへのリンク">#</a></h3>
@@ -136,6 +137,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 DR戦略の比較(下段はRTOの目安とコスト)。右に行くほど復旧が速く(RTO・RPOが小さく)なるが、待機させておくリソースが増えてコストが上がる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <div class="table-wrap"><table class="stack">
 <tr><th>名称</th><th>DR側の状態</th><th>RTOの目安</th><th>RPOの目安</th><th>コスト</th></tr>
 <tr><td data-label="名称">バックアップと復元</td><td data-label="DR側の状態">バックアップだけを保管。障害時に環境を作り直す</td><td data-label="RTOの目安">数時間</td><td data-label="RPOの目安">バックアップの間隔(数時間)</td><td data-label="コスト">最小</td></tr>
@@ -223,6 +225,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図3 DR戦略の選び方。要件を満たす中で、最もコストが低い戦略を選ぶ。試験では「最もコスト効率よく」と書かれていることが多い。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <ul>
 <li>要件(RTO・RPO)を満たす戦略のうち、<strong>最もコストが低いもの</strong>を選ぶ。</li>
 <li>切り替え手順は、実際に試さないと動くか分からない。AWS Fault Injection Service(FIS)で障害を起こす訓練や、AWS Backupの復元テストで、定期的に確かめる。</li>

@@ -25,7 +25,7 @@ edge ev sns
 <figcaption>図1 自動修復の構成。①が違反を検出すると②が設定を直し、違反のイベントは③を通してSNSで通知される。</figcaption>
 </figure>
 
-<div class="ex-item" data-node="det">
+<div class="ex-item" data-req="1,2" data-node="det">
 <p class="ex-q">① バケットの設定がルールに違反していないかを評価するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="Configルール">AWS Configのルール<span class="ex-why">マネージドルール(例:<code>s3-bucket-level-public-access-prohibited</code>)で設定を評価し、違反を NON_COMPLIANT と判定します。修復アクションも設定できます。</span></li>
@@ -34,7 +34,7 @@ edge ev sns
 </ul>
 </div>
 
-<div class="ex-item" data-node="fix">
+<div class="ex-item" data-req="2" data-node="fix">
 <p class="ex-q">② Configの修復アクションとして、設定を直す処理を実行するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="SSM Automation">Systems Manager Automationのランブック<span class="ex-why">Configの修復アクションに指定できるのは、SSM Automationのランブックです。ブロックパブリックアクセスを有効にするAWS提供のランブックがあります。</span></li>
@@ -43,7 +43,7 @@ edge ev sns
 </ul>
 </div>
 
-<div class="ex-item" data-node="ev">
+<div class="ex-item" data-req="3" data-node="ev">
 <p class="ex-q">③ 違反が見つかったことを受け取り、SNSに渡すものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="EventBridge">Amazon EventBridgeのルール<span class="ex-why">Configの「準拠状況の変化」のイベントをイベントパターンで選び、SNSトピックに送ります(<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a>)。</span></li>
@@ -52,7 +52,7 @@ edge ev sns
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">④ 「人手を介さずに直す」ための修復アクションの設定は?</p>
 <ul class="ex-choices">
 <li data-ok>自動修復を有効にする(再試行の回数も設定)<span class="ex-why">違反と判定されるたびに自動でランブックが実行されます。</span></li>
@@ -61,7 +61,7 @@ edge ev sns
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">⑤ ランブックが設定を変更するときに使う権限は?</p>
 <ul class="ex-choices">
 <li data-ok>修復に必要な権限だけを与えたIAMロール(<code>AutomationAssumeRole</code> に指定)<span class="ex-why">最小権限で修復させます。このロールを設定する人には <code>iam:PassRole</code> の権限が必要です(<a href="../terms/iam-passrole.html">iam:PassRoleとサービスにリンクされたロール</a>)。</span></li>

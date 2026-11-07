@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat4">セキュリティ・コンプライアンス</a>
   <h1>「AccessDenied」の原因を調べ、最小権限に直す</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -88,8 +88,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 権限エラーの調査と最小権限化の構成。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
-<div class="ex-item" data-node="ct">
+<div class="ex-item" data-req="2" data-node="ct">
 <p class="ex-q">① 拒否されたAPIの呼び出しと呼び出し元を記録しているものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="CloudTrail">AWS CloudTrail<span class="ex-why"><code>errorCode</code> が AccessDenied のイベントから、誰がどの操作で拒否されたかが分かります。</span></li>
@@ -98,7 +99,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item" data-node="aa">
+<div class="ex-item" data-req="3" data-node="aa">
 <p class="ex-q">② 実際の利用の記録から、必要な権限だけのポリシーを作るものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="Access Analyzer">IAM Access Analyzer<span class="ex-why">CloudTrailの記録からポリシーを生成し、使っていないアクセスも見つけます。</span></li>
@@ -107,7 +108,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">③ S3の権限はあるのに、KMSで暗号化されたオブジェクトだけ読めない原因は?</p>
 <ul class="ex-choices">
 <li data-ok>KMSキーの <code>kms:Decrypt</code> の権限がない<span class="ex-why">SSE-KMSのオブジェクトは、S3の権限に加えてキーの権限も必要です(<a href="../terms/encryption.html">暗号化</a>)。</span></li>
@@ -116,7 +117,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="1">
 <p class="ex-q">④ IAMで許可しているのに拒否されるとき、ほかに確認するものは?</p>
 <ul class="ex-choices">
 <li data-ok>SCP・アクセス許可の境界・バケットポリシーの明示的なDeny<span class="ex-why">どこか1つでも明示的なDenyがあれば拒否されます(<a href="../terms/iam-policy-evaluation.html">IAMポリシーと評価ロジック</a>)。</span></li>
@@ -171,6 +172,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 拒否の原因の候補。SCP・RCP、IAMのポリシーと許可境界、バケットポリシーやKMSキーポリシーなどのリソースベースのポリシーが評価され、どこかに明示的なDenyがあれば拒否、必要な許可がそろわなければ暗黙的に拒否される。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 </section>
 
 <section class="chapter">

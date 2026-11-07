@@ -24,7 +24,7 @@ edge fl li
 <figcaption>図1 通信の経路と調査の構成。</figcaption>
 </figure>
 
-<div class="ex-item" data-node="igw">
+<div class="ex-item" data-node="igw" data-req="1">
 <p class="ex-q">① インターネットとVPCの間の出入り口は?</p>
 <ul class="ex-choices">
 <li data-ok data-short="インターネットGW">インターネットゲートウェイ<span class="ex-why">VPCにアタッチし、サブネットのルートテーブルに <code>0.0.0.0/0</code> への経路を作ります。EC2にはパブリックIPも必要です。</span></li>
@@ -33,7 +33,7 @@ edge fl li
 </ul>
 </div>
 
-<div class="ex-item" data-node="fl">
+<div class="ex-item" data-node="fl" data-req="2">
 <p class="ex-q">② 通信が許可・拒否されたかを記録するものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="VPCフローログ">VPCフローログ<span class="ex-why">ENIごとの通信を ACCEPT・REJECT とともに記録します(<a href="../terms/vpc-flow-logs.html">VPCフローログ</a>)。</span></li>
@@ -42,7 +42,7 @@ edge fl li
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">③ 受信はACCEPTなのに、戻りの通信がREJECTのときの原因は?</p>
 <ul class="ex-choices">
 <li data-ok>ネットワークACLのアウトバウンドでエフェメラルポートを許可していない<span class="ex-why">ネットワークACLはステートレスなので、戻りの通信(1024〜65535)も許可が必要です(<a href="../terms/nacl-security-group.html">ネットワークACLとセキュリティグループ</a>)。</span></li>
@@ -51,7 +51,7 @@ edge fl li
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">④ 実際に通信せずに、設定上の経路を自動で解析するものは?</p>
 <ul class="ex-choices">
 <li data-ok>VPC Reachability Analyzer<span class="ex-why">送信元と宛先を指定すると、どの設定で止まるかを解析して示します。</span></li>

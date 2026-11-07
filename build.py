@@ -21,7 +21,7 @@ import time
 import unicodedata
 from pathlib import Path
 
-from checks import check_pages
+from checks import check_pages, check_question_data, thin_page_report
 from diagrams import render_figures, text_width
 
 ROOT = Path(__file__).parent
@@ -254,7 +254,7 @@ def load_pages(col, warnings, updated):
             "verified": meta.get("verified", ""),  # 料金・上限などを公式ドキュメントで確認した日(YYYY-MM-DD)
             "date": page_date,
             "raw": text,  # 検査用(行番号がファイルと一致するよう、メタ情報も含める)
-            "body": render_figures(body, where, warnings),
+            "body": figure_legend(render_figures(body, where, warnings)),
             "updated": updated.get(f"src/{col['key']}/{path.name}", int(time.time())),
         })
     order = {s: i for i, s in enumerate(col["order"])}
@@ -679,6 +679,8 @@ def cat_style(col, category):
 def render_collection_index(col, pages, loaded):
     parts = [head(f"{col['label']} | {SITE_TITLE}", "../", col["desc"]), header("../", col["key"]), "<main>\n",
              f'<div class="page-head"><h1>{col["label"]}</h1><p class="lead">{col["desc"]}</p></div>\n']
+    if col["key"] in SELECTION_KEYS:
+        parts.append(selection_entry("../", "index-all.html" if col["key"] == "terms" else "../terms/index-all.html"))
     if col["key"] == "questions":
         parts.append('<p class="cat-desc" id="quiz-storage-note" hidden>このブラウザーでは保存済みの成績を読み込めません。</p>\n')
     if col["key"] in BOOKLET_KEYS and pages:
@@ -968,7 +970,7 @@ def render_top(loaded, exams, exam_pages):
             icon = c["key"] == "services" and (ICON_DIR / f'{p["slug"]}.svg').exists()
             index.append({"t": p["title"], "c": c["label"], "u": f'{c["key"]}/{p["slug"]}.html',
                           "i": f'icons/services/{p["slug"]}.svg' if icon else "",
-                          "d": plain(p["lead"]),
+                          "d": plain(p["lead"]), "g": c["key"],
                           "k": search_keys(p, p["category"], h3)})
     for c in (EXAM_COL, QUESTION_COL):
         for p in loaded[c["key"]]:
@@ -976,11 +978,15 @@ def render_top(loaded, exams, exam_pages):
             if c["key"] == "questions":
                 h3 += " " + question_search_text(p)
             index.append({"t": p["title"], "c": f'{c["label"]}(試験別)', "u": p["path"] + ".html", "i": "",
-                          "d": plain(p["lead"]), "k": search_keys(p, p["category"], h3)})
+                          "d": plain(p["lead"]), "g": "exams", "k": search_keys(p, p["category"], h3)})
     parts.append('<div class="toc-search site-search" id="search">\n'
                  '  <input type="search" id="site-q" placeholder="全ページを検索(例: ロードバランサー、IMDSv2、DR)"'
                  ' aria-label="全ページを検索" autocomplete="off">\n'
                  '  <span class="toc-hits" id="site-hits"></span>\n</div>\n'
+                 '<div class="prefs-seg search-kinds" id="site-kinds" role="group" aria-label="種類で絞り込み" hidden>\n'
+                 + "".join(f'  <button type="button" data-g="{g}" aria-pressed="{str(g == "all").lower()}">{label}</button>\n'
+                           for g, label in SEARCH_KINDS)
+                 + '</div>\n'
                  '<ul class="search-results" id="site-results" hidden></ul>\n'
                  + SITE_SEARCH_SCRIPT.replace("__INDEX__", json.dumps(index, ensure_ascii=False))
                  .replace("__HELPERS__", search_helpers()))
@@ -997,6 +1003,7 @@ def render_top(loaded, exams, exam_pages):
     parts.append('<h2>試験別</h2>\n<ul class="card-list top-cards">\n'
                  f'  <li><a href="exams/index.html"><span class="name">AWS認定の試験別<span class="badge">{len(exams)}資格</span></span>'
                  '<span class="desc">試験ごとの学習範囲・ロードマップと参考書・問題集</span></a></li>\n</ul>\n')
+    parts.append(selection_entry("", "terms/index-all.html"))
 
     # 試験分野ごとの入口(運用シナリオのカテゴリへ)
     parts.append('<section class="top-section">\n<h2>試験分野から学ぶ(SOA-C03)</h2>\n'
@@ -1035,17 +1042,20 @@ SITE_SEARCH_SCRIPT = """<script>
   var q = document.getElementById("site-q");
   var hits = document.getElementById("site-hits");
   var list = document.getElementById("site-results");
+  var kinds = document.getElementById("site-kinds");
+  var kind = "all";
 __HELPERS__
   if (location.hash === "#search") q.focus();
+  kinds.hidden = false;
   function esc(s) { return s.replace(/[&<>"]/g, function (c) { return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }
   function apply() {
     var words = terms(q.value);
     if (!words.length) { list.hidden = true; hits.textContent = ""; return; }
-    var found = pages.filter(function (p) { return hitAll(p.k, words); });
+    var found = pages.filter(function (p) { return (kind === "all" || p.g === kind) && hitAll(p.k, words); });
     found.sort(function (a, b) {
       return (hitAll(norm(a.t), words) ? 0 : 1) - (hitAll(norm(b.t), words) ? 0 : 1);
     });
-    hits.textContent = found.length + "件";
+    hits.textContent = found.length + "件" + (found.length > 30 ? "(先頭30件を表示)" : "");
     list.innerHTML = found.slice(0, 30).map(function (p) {
       var icon = p.i ? '<img class="svc-icon" src="' + p.i + '" alt="" width="20" height="20">' : "";
       return '<li><a href="' + p.u + '"><span class="badge">' + esc(p.c) + '</span>' + icon + '<span class="name">' +
@@ -1053,6 +1063,14 @@ __HELPERS__
     }).join("") || '<li class="empty-state">該当するページがありません。</li>';
     list.hidden = false;
   }
+  // 種類のチップ(すべて・サービス・用語…)で結果を絞る
+  kinds.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    kind = b.getAttribute("data-g");
+    kinds.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", x === b); });
+    apply();
+  });
   q.addEventListener("input", apply);
   q.addEventListener("keydown", function (e) { if (e.key === "Escape") { q.value = ""; apply(); } });
 })();
@@ -1639,6 +1657,448 @@ def write_exams(exams, loaded):
         target.write_text(redirect_html(url, label), encoding="utf-8")
 
 
+# ---- 図の凡例 ----
+
+# 図の配色の意味(CLAUDE.md の決まり)。図で使われている分だけ、図の下に凡例として出す
+LEGEND_ITEMS = [
+    ("accent", "説明の中心", ("dg-accent", "dg-ta")),
+    ("ok", "成功・推奨・正常", ("dg-ok", "dg-tok")),
+    ("ng", "失敗・非推奨・障害", ("dg-ng", "dg-tng")),
+    ("blue", "利用者・外部・送信元", ("dg-blue",)),
+    ("box", "その他の構成要素", ("dg-box",)),
+    ("blank", "空欄(問いで答える)", ("dg-blank",)),
+    ("dash", "点線の矢印(使われない・切り替え前・補足)", ("dg-dash",)),
+]
+FIGURE_RE = re.compile(r'<figure class="figure">.*?</figure>', re.S)
+
+
+def legend_swatch(kind):
+    if kind == "dash":
+        return ('<svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" '
+                'style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg>')
+    cls = {"accent": "dg-accent", "ok": "dg-ok", "ng": "dg-ng", "blue": "dg-blue", "box": "dg-box",
+           "blank": "dg-blank"}[kind]
+    return ('<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" '
+            f'style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="{cls}"/></svg>')
+
+
+def figure_legend(body):
+    """図の下に、その図で使われている配色の意味を小さく出す(図の本体の外に置き、図のCSSの影響を受けないようにする)。"""
+    def sub(m):
+        fig = m.group(0)
+        used = [(kind, label) for kind, label, classes in LEGEND_ITEMS
+                if any(re.search(rf"\b{c}\b", fig) for c in classes)]
+        if not used:
+            return fig
+        keys = "".join(f'<span class="fig-item">{legend_swatch(k)} {label}</span>' for k, label in used)
+        return f'{fig}\n<p class="cat-desc fig-legend">{keys}</p>'
+    return FIGURE_RE.sub(sub, body)
+
+
+# ---- 選び方の入口・索引・比較表・選び方診断・マイページ(生成ページ) ----
+
+SELECTION_KEYS = ("services", "terms", "usecases")  # 目次の上に「選び方の入口」を出すコレクション
+
+
+def selection_entry(prefix, index_all):
+    """目次の上の「選び方の入口」。prefix はそのページからの相対パス、index_all は用語の索引へのパス。"""
+    return (f'<p class="booklet-link">選び方の入口:<a href="{prefix}compare.html">サービスの比較表</a>・'
+            f'<a href="{prefix}chooser.html">選び方診断</a>・<a href="{index_all}">用語・サービスの索引</a></p>\n')
+
+
+# 検索の種類のチップ(トップの全ページ検索)。値は検索データの "g"
+SEARCH_KINDS = [("all", "すべて"), ("services", "サービス"), ("terms", "用語"), ("usecases", "運用シナリオ"),
+                ("news", "ニュース"), ("exams", "試験別・問題集")]
+
+# 読みの辞書: 漢字で始まる見出しの読み(ひらがな)。索引の並びとかな行の振り分けに使う。漢字で始まる見出しを増やしたら足す
+READINGS = {
+    "責任共有モデル": "せきにんきょうゆうもでる",
+    "料金の基本": "りょうきんのきほん",
+    "保存時の暗号化と転送時の暗号化": "ほぞんじのあんごうかとてんそうじのあんごうか",
+    "高可用性とスケーリング": "こうかようせいとすけーりんぐ",
+    "監視・記録のサービスの選び方": "かんしきろくのさーびすのえらびかた",
+    "機密情報・設定値の保存先の選び方": "きみつじょうほうせっていちのほぞんさきのえらびかた",
+}
+KANA_ROWS = [("あ", "あいうえお"), ("か", "かきくけこ"), ("さ", "さしすせそ"), ("た", "たちつてと"),
+             ("な", "なにぬねの"), ("は", "はひふへほ"), ("ま", "まみむめも"), ("や", "やゆよ"),
+             ("ら", "らりるれろ"), ("わ", "わをん")]
+SMALL_KANA = str.maketrans("ぁぃぅぇぉゃゅょゎ", "あいうえおやゆよわ")
+
+
+def index_section(title):
+    """索引の見出し。(並び順の区分, 区分の中の順, 見出しの文字, アンカー, 読み)を返す。
+    Amazon・AWS の付く名前は、その後ろの語で引く。カタカナはひらがなにして読む。"""
+    if title in READINGS:
+        reading = READINGS[title]
+    else:
+        name = re.sub(r"^(Amazon|AWS)\s+", "", title)
+        reading = "".join(chr(ord(c) - 0x60) if "ァ" <= c <= "ヶ" else c
+                          for c in unicodedata.normalize("NFKC", name)).lower()
+    first = unicodedata.normalize("NFD", reading[:1])[:1].translate(SMALL_KANA)
+    if first and first.isascii() and first.isalnum():
+        if first.isdigit():
+            return (0, "0", "0-9", "idx-num", reading)
+        return (0, first.upper(), first.upper(), f"idx-{first.lower()}", reading)
+    for i, (label, chars) in enumerate(KANA_ROWS):
+        if first and first in chars:
+            return (1, i, label, f"idx-kana{i + 1}", reading)
+    return (2, 0, "その他", "idx-other", reading)
+
+
+def render_index_all(loaded):
+    """用語・サービスの索引。名前の読みの順に、英字・かな行・その他に分ける。"""
+    desc = "サービスと用語を、名前の読みの順に引けます"
+    rows = [(index_section(p["title"]), key, p) for key in ("services", "terms") for p in loaded[key]]
+    rows.sort(key=lambda r: (r[0][0], r[0][1], r[0][4]))
+    sections = []  # [(アンカー, 見出し, [(コレクション, ページ)])]
+    for info, key, p in rows:
+        if not sections or sections[-1][0] != info[3]:
+            sections.append((info[3], info[2], []))
+        sections[-1][2].append((key, p))
+    if not any(sid == "idx-other" for sid, _, _ in sections):
+        sections.append(("idx-other", "その他", []))
+    nav = "".join(f'<a href="#{sid}">{html.escape(label)}({len(items)})</a> ' for sid, label, items in sections)
+    parts = [head(f"用語・サービスの索引 | {SITE_TITLE}", "../", desc), header("../", "terms"), "<main>\n",
+             f'<div class="page-head"><h1>用語・サービスの索引</h1><p class="lead">{desc}</p></div>\n',
+             '<p class="cat-desc">「Amazon」「AWS」を除いた名前で並べています。読みが分からない見出しは「その他」に入ります。</p>\n',
+             f'<p class="booklet-link">{nav}</p>\n']
+    for sid, label, items in sections:
+        parts.append(f'<section class="toc-category" id="{sid}">\n<h2>{html.escape(label)} '
+                     f'<span class="count">({len(items)})</span></h2>\n')
+        if not items:
+            parts.append('<p class="cat-desc">該当する見出しはありません。</p>\n')
+        else:
+            parts.append('<ul class="svc-list">\n')
+            for key, p in items:
+                href = f"../services/{p['slug']}.html" if key == "services" else f"{p['slug']}.html"
+                icon = service_icon(p["slug"], "../", 28) if key == "services" else ""
+                parts.append(f'  <li><a href="{href}">{icon}<span class="name">{html.escape(p["title"])}</span>'
+                             f'<span class="badge">{html.escape(p["category"])}</span></a></li>\n')
+            parts.append("</ul>\n")
+        parts.append("</section>\n")
+    parts += ["</main>\n", TAIL]
+    return "".join(parts)
+
+
+def service_price(p):
+    """サービスページの「料金の考え方」の最初の段落(比較表の一行に使う。数値は書き写さず、短く切る)。"""
+    m = re.search(r"<h2[^>]*>\s*\d*\.?\s*料金の考え方\s*</h2>(.*?)(?=<h2|\Z)", p["body"], re.S)
+    if not m:
+        return ""
+    # 「下の図のように」など、そのページの図を指す段落は比較表では意味が通らないので飛ばす
+    for para in re.finditer(r"<p>(.*?)</p>", m.group(1), re.S):
+        text = " ".join(plain(para.group(1)).split())
+        if text and "図" not in text:
+            return text if len(text) <= 160 else text[:160] + "…"
+    return ""
+
+
+COMPARE_SCRIPT = """<script>
+(function () {
+  var items = JSON.parse(document.getElementById("compare-data").textContent);
+  var root = document.getElementById("compare-root");
+  var MAX = 3;
+  var picked = [];
+  function el(tag, text, cls) {
+    var e = document.createElement(tag);
+    if (text !== undefined) e.textContent = text;
+    if (cls) e.className = cls;
+    return e;
+  }
+  root.innerHTML = "";
+  var search = el("input");
+  search.type = "search";
+  search.placeholder = "サービス名で絞り込み";
+  search.setAttribute("aria-label", "サービス名で絞り込み");
+  search.setAttribute("autocomplete", "off");
+  var status = el("p", "", "cat-desc");
+  status.setAttribute("aria-live", "polite");
+  var list = el("ul", undefined, "compare-pick");
+  var result = el("div");
+  var rows = items.map(function (it) {
+    var li = el("li");
+    var label = el("label");
+    var box = el("input");
+    box.type = "checkbox";
+    box.value = it.s;
+    label.appendChild(box);
+    label.appendChild(document.createTextNode(" " + it.t));
+    li.appendChild(label);
+    list.appendChild(li);
+    box.addEventListener("change", function () {
+      if (box.checked) picked.push(it);
+      else picked = picked.filter(function (p) { return p.s !== it.s; });
+      update();
+    });
+    return { it: it, li: li, box: box, text: (it.t + " " + it.l).toLowerCase() };
+  });
+  search.addEventListener("input", function () {
+    var q = search.value.trim().toLowerCase();
+    rows.forEach(function (r) { r.li.hidden = q !== "" && r.text.indexOf(q) < 0; });
+  });
+  function update() {
+    rows.forEach(function (r) { r.box.disabled = picked.length >= MAX && !r.box.checked; });
+    status.textContent = "選択中 " + picked.length + "/" + MAX + "件(2〜3件を選ぶと比べられます)";
+    result.innerHTML = "";
+    if (picked.length < 2) {
+      result.appendChild(el("p", "2件以上選ぶと比較表が出ます。", "cat-desc"));
+      return;
+    }
+    var table = el("table");
+    table.className = "stack";
+    var thead = el("thead");
+    var hr = el("tr");
+    hr.appendChild(el("th", "項目"));
+    picked.forEach(function (it) {
+      var th = el("th");
+      var a = el("a", it.t);
+      a.href = "services/" + it.s + ".html";
+      th.appendChild(a);
+      hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+    var tbody = el("tbody");
+    [["一言説明", "l"], ["料金の考え方", "p"], ["最終確認日", "v"]].forEach(function (row) {
+      var tr = el("tr");
+      tr.appendChild(el("th", row[0]));
+      picked.forEach(function (it) {
+        var td = el("td", it[row[1]] || "—");
+        td.setAttribute("data-label", it.t);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    result.appendChild(table);
+    result.appendChild(el("p", "数値(料金・上限など)は各ページで確認してください。", "cat-desc"));
+  }
+  root.appendChild(search);
+  root.appendChild(status);
+  root.appendChild(list);
+  root.appendChild(result);
+  update();
+})();
+</script>
+"""
+
+
+def render_compare(loaded):
+    desc = "2〜3個のサービスを選んで、一言説明・料金の考え方・最終確認日を並べて比べます"
+    items = [{"s": p["slug"], "t": p["title"], "l": plain(p["lead"]), "p": service_price(p),
+              "v": verified_label(p["verified"]) if p["verified"] else ""} for p in loaded["services"]]
+    data = json.dumps(items, ensure_ascii=False).replace("</", "<\\/")
+    static = "".join(f'  <li><a href="services/{p["slug"]}.html">{html.escape(p["title"])}</a></li>\n'
+                     for p in loaded["services"])
+    parts = [head(f"サービスの比較表 | {SITE_TITLE}", "", desc), header(""), "<main>\n",
+             f'<div class="page-head"><h1>サービスの比較表</h1><p class="lead">{desc}</p></div>\n',
+             '<div id="compare-root">\n'
+             '<p class="cat-desc">JavaScript が動くと、2〜3件を選んで比較表を出せます。'
+             '料金・上限などの数値は、各サービスのページで確認してください。</p>\n'
+             f'<ul class="svc-list">\n{static}</ul>\n</div>\n',
+             f'<script type="application/json" id="compare-data">{data}</script>\n',
+             COMPARE_SCRIPT,
+             "</main>\n", TAIL]
+    return "".join(parts)
+
+
+# 選び方診断の質問と候補。候補の tag は AWS の公式な特徴に基づく代表例(要件によって他のサービスも選べる)
+CHOOSER_QUESTIONS = [
+    {"id": "purpose", "q": "何をしたいですか", "when": None, "options": [
+        ["compute", "プログラムを動かす(サーバー・関数・コンテナ)"],
+        ["storage", "データを保存する・配信する"],
+        ["database", "データを保存して検索・更新する"],
+        ["network", "ネットワークを作る・接続する"],
+        ["integration", "サービス同士をつないで処理を連携する"]]},
+    {"id": "mgmt", "q": "サーバーの管理をどこまで任せたいですか", "when": None, "options": [
+        ["managed", "管理したくない(AWSに任せたい)"],
+        ["container", "コンテナで動かしたい"],
+        ["vm", "OSごと自分で管理したい"],
+        ["any", "指定しない"]]},
+    {"id": "data", "q": "データの形は", "when": ["database", "storage"], "options_by": {
+        "database": [["sql", "表形式(SQLで検索する)"], ["kv", "キーと値(一定の形で速く取り出す)"],
+                     ["doc", "JSONなどのドキュメント"], ["graph", "関係(グラフ)をたどる"],
+                     ["olap", "大量データを集計・分析する"], ["any", "指定しない"]],
+        "storage": [["object", "ファイル単位(画像・ログなど)"], ["file", "共有フォルダのようなファイル"],
+                    ["block", "OSのディスク(ブロック)"], ["any", "指定しない"]]}},
+    {"id": "fast", "q": "応答の速さは", "when": ["database"], "options": [
+        ["fast", "ミリ秒単位で応答する必要がある"],
+        ["any", "数十ミリ秒〜秒単位で足りる、または指定しない"]]},
+    {"id": "net", "q": "アクセスの経路は", "when": ["compute", "storage", "database", "network"], "options": [
+        ["public", "インターネットから直接アクセスさせる"],
+        ["onprem", "オンプレミスの社内ネットワークとつなぐ"],
+        ["any", "指定しない"]]},
+]
+CHOOSER_CANDIDATES = [
+    {"s": "lambda", "p": "compute", "m": ["managed"], "d": [], "f": False, "n": ["public", "onprem"]},
+    {"s": "elastic-beanstalk", "p": "compute", "m": ["managed"], "d": [], "f": False, "n": ["public", "onprem"]},
+    {"s": "ecs", "p": "compute", "m": ["container", "managed"], "d": [], "f": False, "n": ["public", "onprem"]},
+    {"s": "eks", "p": "compute", "m": ["container"], "d": [], "f": False, "n": ["public", "onprem"]},
+    {"s": "ec2", "p": "compute", "m": ["vm"], "d": [], "f": False, "n": ["public", "onprem"]},
+    {"s": "s3", "p": "storage", "m": ["managed"], "d": ["object"], "f": False, "n": ["public", "onprem"]},
+    {"s": "efs", "p": "storage", "m": ["managed"], "d": ["file"], "f": False, "n": ["onprem"]},
+    {"s": "fsx", "p": "storage", "m": ["managed"], "d": ["file"], "f": False, "n": ["onprem"]},
+    {"s": "ebs", "p": "storage", "m": ["vm"], "d": ["block"], "f": False, "n": []},
+    {"s": "rds", "p": "database", "m": ["managed"], "d": ["sql"], "f": False, "n": ["onprem"]},
+    {"s": "aurora", "p": "database", "m": ["managed"], "d": ["sql"], "f": False, "n": ["onprem"]},
+    {"s": "dynamodb", "p": "database", "m": ["managed"], "d": ["kv"], "f": True, "n": ["onprem"]},
+    {"s": "elasticache", "p": "database", "m": ["managed"], "d": ["kv"], "f": True, "n": ["onprem"]},
+    {"s": "documentdb", "p": "database", "m": ["managed"], "d": ["doc"], "f": False, "n": ["onprem"]},
+    {"s": "neptune", "p": "database", "m": ["managed"], "d": ["graph"], "f": False, "n": ["onprem"]},
+    {"s": "redshift", "p": "database", "m": ["managed"], "d": ["sql", "olap"], "f": False, "n": ["onprem"]},
+    {"s": "vpc", "p": "network", "m": ["managed"], "d": [], "f": False, "n": []},
+    {"s": "site-to-site-vpn", "p": "network", "m": ["managed"], "d": [], "f": False, "n": ["onprem"]},
+    {"s": "direct-connect", "p": "network", "m": ["managed"], "d": [], "f": False, "n": ["onprem"]},
+    {"s": "elb", "p": "network", "m": ["managed"], "d": [], "f": False, "n": ["public", "onprem"]},
+    {"s": "cloudfront", "p": "network", "m": ["managed"], "d": [], "f": False, "n": ["public"]},
+    {"s": "route53", "p": "network", "m": ["managed"], "d": [], "f": False, "n": ["public"]},
+    {"s": "sqs", "p": "integration", "m": ["managed"], "d": [], "f": False, "n": []},
+    {"s": "sns", "p": "integration", "m": ["managed"], "d": [], "f": False, "n": []},
+    {"s": "eventbridge", "p": "integration", "m": ["managed"], "d": [], "f": False, "n": []},
+    {"s": "step-functions", "p": "integration", "m": ["managed"], "d": [], "f": False, "n": []},
+    {"s": "api-gateway", "p": "integration", "m": ["managed"], "d": [], "f": False, "n": ["public"]},
+]
+
+CHOOSER_SCRIPT = """<script>
+(function () {
+  var data = JSON.parse(document.getElementById("chooser-data").textContent);
+  var root = document.getElementById("chooser-root");
+  var answers = {};
+  var shown = {};
+  var fieldsets = {};
+  var result;
+  function el(tag, text, cls) {
+    var e = document.createElement(tag);
+    if (text !== undefined) e.textContent = text;
+    if (cls) e.className = cls;
+    return e;
+  }
+  function optionsOf(q) {
+    return q.options_by ? (q.options_by[answers.purpose] || []) : q.options;
+  }
+  // 目的によって選択肢が変わる質問は、目的が変わったときに組み直す
+  function build(q, fs) {
+    var opts = optionsOf(q);
+    if (!opts.some(function (o) { return o[0] === answers[q.id]; })) answers[q.id] = q.id === "purpose" ? undefined : "any";
+    fs.innerHTML = "";
+    fs.appendChild(el("legend", q.q));
+    opts.forEach(function (o) {
+      var lab = el("label");
+      var r = el("input");
+      r.type = "radio";
+      r.name = q.id;
+      r.value = o[0];
+      r.checked = answers[q.id] === o[0];
+      r.addEventListener("change", function () {
+        answers[q.id] = o[0];
+        update();
+      });
+      lab.appendChild(r);
+      lab.appendChild(document.createTextNode(" " + o[1]));
+      fs.appendChild(lab);
+    });
+    fs.setAttribute("data-purpose", answers.purpose || "");
+  }
+  function match(c) {
+    if (c.p !== answers.purpose) return false;
+    return data.questions.every(function (q) {
+      var a = answers[q.id];
+      if (q.id === "purpose" || !shown[q.id] || !a || a === "any") return true;
+      if (q.id === "mgmt") return c.m.indexOf(a) >= 0;
+      if (q.id === "data") return c.d.indexOf(a) >= 0;
+      if (q.id === "fast") return !!c.f;
+      if (q.id === "net") return c.n.indexOf(a) >= 0;
+      return true;
+    });
+  }
+  function render() {
+    result.innerHTML = "";
+    if (!answers.purpose) {
+      result.appendChild(el("p", "まず「何をしたいですか」を選んでください。", "cat-desc"));
+      return;
+    }
+    var found = data.candidates.filter(match);
+    result.appendChild(el("h2", "候補(" + found.length + "件)"));
+    if (!found.length) {
+      result.appendChild(el("p", "条件に合うサービスがありません。「指定しない」を選ぶか、条件を変えてみてください。", "cat-desc"));
+      return;
+    }
+    var ul = el("ul", undefined, "card-list");
+    found.forEach(function (c) {
+      var li = el("li");
+      var a = el("a");
+      a.href = "services/" + c.s + ".html";
+      a.appendChild(el("span", c.t, "name"));
+      a.appendChild(el("span", c.l, "desc"));
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    result.appendChild(ul);
+  }
+  function update() {
+    data.questions.forEach(function (q) {
+      var fs = fieldsets[q.id];
+      shown[q.id] = !q.when || (!!answers.purpose && q.when.indexOf(answers.purpose) >= 0);
+      fs.hidden = !shown[q.id];
+      if (q.options_by && fs.getAttribute("data-purpose") !== (answers.purpose || "")) build(q, fs);
+    });
+    render();
+  }
+  root.innerHTML = "";
+  data.questions.forEach(function (q) {
+    var fs = el("fieldset", undefined, "chooser-q");
+    fieldsets[q.id] = fs;
+    root.appendChild(fs);
+    build(q, fs);
+  });
+  result = el("div");
+  result.setAttribute("aria-live", "polite");
+  root.appendChild(result);
+  update();
+})();
+</script>
+"""
+
+
+def render_chooser(loaded, warnings):
+    desc = "いくつかの質問に答えると、目的に合うサービスの候補を絞り込みます"
+    services = {p["slug"]: p for p in loaded["services"]}
+    cands = []
+    for c in CHOOSER_CANDIDATES:
+        if c["s"] not in services:
+            warnings.append(f"chooser.html: 候補のサービス「{c['s']}」のページがありません")
+            continue
+        cands.append({**c, "t": services[c["s"]]["title"], "l": plain(services[c["s"]]["lead"])})
+    data = json.dumps({"questions": CHOOSER_QUESTIONS, "candidates": cands}, ensure_ascii=False).replace("</", "<\\/")
+    static_q = "".join(
+        f'  <li>{html.escape(q["q"])}:'
+        + "・".join(html.escape(o[1]) for o in dict.fromkeys(
+            tuple(o) for o in (q["options"] if "options" in q else [x for v in q["options_by"].values() for x in v])))
+        + "</li>\n" for q in CHOOSER_QUESTIONS)
+    static_c = "".join(f'  <li><a href="services/{c["s"]}.html">{html.escape(c["t"])}</a></li>\n' for c in cands)
+    parts = [head(f"選び方診断 | {SITE_TITLE}", "", desc), header(""), "<main>\n",
+             f'<div class="page-head"><h1>選び方診断</h1><p class="lead">{desc}</p></div>\n',
+             '<div id="chooser-root">\n'
+             '<p class="cat-desc">JavaScript が動くと、質問に答えて候補を絞り込めます。候補は代表的な例です。'
+             '要件に合うかは、各サービスのページで確認してください。</p>\n'
+             f'<h2>質問</h2>\n<ol>\n{static_q}</ol>\n'
+             f'<h2>候補のサービス</h2>\n<ul class="svc-list">\n{static_c}</ul>\n</div>\n',
+             f'<script type="application/json" id="chooser-data">{data}</script>\n',
+             CHOOSER_SCRIPT,
+             "</main>\n", TAIL]
+    return "".join(parts)
+
+
+def render_mypage():
+    """しおり・学習メモの一覧(中身は js/mypage.js が localStorage から組み立てる)。"""
+    desc = "このブラウザーに保存したしおり・学習メモを、一覧で見返せます"
+    return (head(f"しおり・メモ | {SITE_TITLE}", "", desc) + header("") + "<main>\n"
+            f'<div class="page-head"><h1>しおり・メモ</h1><p class="lead">{desc}</p></div>\n'
+            '<div id="my-root"></div>\n'
+            '<noscript><p class="empty-state">しおり・学習メモは、JavaScript が動くブラウザーで使えます。</p></noscript>\n'
+            "</main>\n" + TAIL)
+
+
 def main():
     warnings, counts, loaded = [], {}, {}
     updated = git_updated()
@@ -1684,10 +2144,15 @@ def main():
         (print_dir / f"{key}.html").write_text(render_booklet(_by_key[key], loaded[key]), encoding="utf-8")
     write_glossary(loaded)
     write_exams(exams, loaded)
+    (OUT / "terms" / "index-all.html").write_text(render_index_all(loaded), encoding="utf-8")
+    (OUT / "compare.html").write_text(render_compare(loaded), encoding="utf-8")
+    (OUT / "chooser.html").write_text(render_chooser(loaded, warnings), encoding="utf-8")
+    (OUT / "mypage.html").write_text(render_mypage(), encoding="utf-8")
     # 生成したページ(試験別のページを含む)へのリンクも検査するため、書き出しの後に検査する
     for e in exams:
         extra[f"exams/{e['id']}/index.html"] = ""
     extra["exams/index.html"] = ""
+    check_question_data(EXAMS_DIR, warnings)
     check_pages(COLLECTIONS + [EXAM_COL, QUESTION_COL], loaded, extra, OUT, warnings)
     (OUT / "index.html").write_text(render_top(loaded, exams, exam_pages), encoding="utf-8")
     (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
@@ -1698,6 +2163,8 @@ def main():
     print("built " + ", ".join(f"{c['label']} {counts[c['key']]}" for c in COLLECTIONS))
     for w in warnings:
         print("WARNING:", w)
+    for line in thin_page_report(COLLECTIONS, loaded):
+        print(line)
 
 
 if __name__ == "__main__":
