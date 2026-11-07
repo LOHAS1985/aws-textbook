@@ -1,8 +1,8 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "b267bc6b437e";
+var CACHE = PREFIX + "b98ec128500c";
 var FILES = {
-"css/style.css": "173716565949",
+"css/style.css": "6b682e178890",
 "exercises/access-denied-troubleshooting.html": "3f68c538ac99",
 "exercises/auto-scaling-web.html": "847fcfb1675a",
 "exercises/az-failure-isolation.html": "9ce2d4967982",
@@ -170,7 +170,7 @@ var FILES = {
 "icons/services/xray.svg": "49c3a0c3f4e8",
 "index.html": "5fc0f917fb34",
 "js/glossary.js": "c67d44fca2b3",
-"js/quiz.js": "625d730be3fc",
+"js/quiz.js": "cd1ef9e7cb8d",
 "js/sim.js": "3ae9e28cc7a7",
 "js/site.js": "3f6897e97e85",
 "links.html": "8ddb821667f2",
