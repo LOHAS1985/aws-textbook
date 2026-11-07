@@ -76,6 +76,8 @@
   var activeQuestions = [];
   var currentIndex = 0;
   var setup = document.createElement("section");
+  var lobbyHeading = document.createElement("div");
+  var modeIntro = document.createElement("div");
   var modeButtons = document.createElement("div");
   var selection = document.createElement("div");
   var randomButton = document.createElement("button");
@@ -90,6 +92,18 @@
     button.type = "button";
     button.textContent = text;
     button.addEventListener("click", handler);
+    return button;
+  }
+
+  function modeCard(button, icon, eyebrow, title, description, badge) {
+    button.className = "quiz-mode-card";
+    button.setAttribute("aria-label", title + "。 " + description);
+    button.innerHTML = '<span class="quiz-mode-icon" aria-hidden="true">' + icon + '</span>'
+      + '<span class="quiz-mode-copy"><span class="quiz-mode-eyebrow">' + eyebrow + '</span>'
+      + '<span class="quiz-mode-title">' + title + '</span>'
+      + '<span class="quiz-mode-description">' + description + '</span></span>'
+      + '<span class="quiz-mode-bottom"><span class="quiz-mode-badge">' + badge + '</span>'
+      + '<span class="quiz-mode-arrow" aria-hidden="true">→</span></span>';
     return button;
   }
 
@@ -152,26 +166,41 @@
 
   setup.className = "quiz-setup";
   setup.setAttribute("aria-label", "問題の選択");
+  lobbyHeading.className = "quiz-lobby-heading";
+  lobbyHeading.innerHTML = '<p class="quiz-lobby-eyebrow">DEA-C01 <span>QUESTION BANK</span></p>'
+    + '<h2>どのスタイルで挑戦しますか？</h2>'
+    + '<p>目的に合わせて出題方法を選べます。</p>';
   var setupMessage = document.createElement("p");
   setupMessage.className = "quiz-setup-message";
   setupMessage.setAttribute("role", "status");
   setupMessage.setAttribute("aria-live", "polite");
   selection.className = "quiz-selection";
   selection.hidden = true;
-  selection.innerHTML = '<p>解く問題を選んでください。間違えた問題は保存され、ここからまとめて選べます。</p>'
+  selection.innerHTML = '<div class="quiz-selection-heading"><span class="quiz-selection-step">STEP 02</span>'
+    + '<h2>出題する問題を選択</h2>'
+    + '<p>復習したい問題にチェックを入れてください。</p></div>'
+    + '<p class="quiz-selection-count" aria-live="polite"></p>'
     + '<div class="quiz-selection-actions"></div><div class="quiz-selection-list"></div>';
+  var selectionCount = selection.querySelector(".quiz-selection-count");
+  function updateSelectionCount() {
+    selectionCount.textContent = selection.querySelectorAll(".quiz-selection-list input:checked").length
+      + " 問選択中";
+  }
   var selectionActions = selection.querySelector(".quiz-selection-actions");
   selectionActions.appendChild(makeButton("すべて選択", function () {
     selection.querySelectorAll(".quiz-selection-list input").forEach(function (input) { input.checked = true; });
+    updateSelectionCount();
   }));
   selectionActions.appendChild(makeButton("すべて解除", function () {
     selection.querySelectorAll(".quiz-selection-list input").forEach(function (input) { input.checked = false; });
+    updateSelectionCount();
   }));
   selectionActions.appendChild(makeButton("間違えた問題を選択", function () {
     var wrong = previous && Array.isArray(previous.wrong) ? previous.wrong : [];
     selection.querySelectorAll(".quiz-selection-list input").forEach(function (input) {
       input.checked = wrong.indexOf(input.value) !== -1;
     });
+    updateSelectionCount();
   }));
   randomButton.type = "button";
   randomButton.textContent = "ランダム";
@@ -181,7 +210,9 @@
   chooseButton.addEventListener("click", function () {
     randomButton.hidden = true;
     chooseButton.hidden = true;
+    modeIntro.hidden = true;
     selection.hidden = false;
+    selection.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   var startButton = makeButton("選んだ問題を始める", function () {
     var ids = Array.prototype.slice.call(selection.querySelectorAll(".quiz-selection-list input:checked"))
@@ -197,6 +228,7 @@
   });
   var backToModes = makeButton("戻る", function () {
     selection.hidden = true;
+    modeIntro.hidden = false;
     randomButton.hidden = false;
     chooseButton.hidden = false;
     setupMessage.textContent = "";
@@ -207,14 +239,27 @@
   selectionFooter.appendChild(startButton);
   selection.appendChild(selectionFooter);
   selection.hidden = true;
-  modeButtons.className = "quiz-mode-buttons";
+  randomButton = modeCard(randomButton,
+    '<svg viewBox="0 0 48 48" focusable="false"><path d="M8 14h6c11 0 11 20 22 20h4M32 29l8 5-8 5M8 34h6c5 0 7-5 10-10s5-10 10-10h6M32 9l8 5-8 5"/></svg>',
+    "模擬試験", "ランダム", "全100問からランダムに出題。試験のようにまとめて挑戦できます。", "100 問");
+  chooseButton = modeCard(chooseButton,
+    '<svg viewBox="0 0 48 48" focusable="false"><path d="M20 10h19v30H9V10h5M18 7h12v7H18zM16 23l3 3 6-7M29 24h5M16 33l3 3 6-7M29 34h5"/></svg>',
+    "弱点を復習", "問題を選ぶ", "解きたい問題だけを選択。間違えた問題の復習にも使えます。", "自由に選択");
+  modeButtons.className = "quiz-mode-cards";
   modeButtons.appendChild(randomButton);
   modeButtons.appendChild(chooseButton);
-  setup.appendChild(modeButtons);
+  modeIntro.className = "quiz-lobby-content";
+  modeIntro.appendChild(lobbyHeading);
+  modeIntro.appendChild(modeButtons);
+  setup.appendChild(modeIntro);
   setup.appendChild(selection);
   setup.appendChild(setupMessage);
   form.insertBefore(setup, form.firstChild);
   renderSelection();
+  selection.querySelectorAll(".quiz-selection-list input").forEach(function (input) {
+    input.addEventListener("change", updateSelectionCount);
+  });
+  updateSelectionCount();
 
   progress.className = "quiz-progress";
   progress.hidden = true;
@@ -324,6 +369,7 @@
     progress.hidden = true;
     navigation.hidden = true;
     selection.hidden = true;
+    modeIntro.hidden = false;
     randomButton.hidden = false;
     chooseButton.hidden = false;
     setupMessage.textContent = "";
