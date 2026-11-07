@@ -1400,7 +1400,6 @@ def main():
         loaded[col["key"]] = load_pages(col, warnings, updated)
     links_raw = (SRC / "links.html").read_text(encoding="utf-8")
     extra = {"links.html": links_raw}
-    check_pages(COLLECTIONS, loaded, extra, OUT, warnings)
     links = collect_links(loaded)
     titles = {(k, p["slug"]): p["title"] for k in GRAPH_KEYS for p in loaded[k]}
     for k in GRAPH_KEYS:
@@ -1430,6 +1429,8 @@ def main():
         (print_dir / f"{key}.html").write_text(render_booklet(_by_key[key], loaded[key]), encoding="utf-8")
     write_glossary(loaded)
     write_guides(loaded, warnings)
+    # 生成したページ(学習ロードマップを含む)へのリンクも検査するため、書き出しの後に検査する
+    check_pages(COLLECTIONS, loaded, extra, OUT, warnings)
     (OUT / "index.html").write_text(render_top(loaded), encoding="utf-8")
     (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
     checklist_page = OUT / "checklist.html"
