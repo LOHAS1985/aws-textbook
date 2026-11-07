@@ -1404,7 +1404,7 @@ def exam_scope_page(exam, updated, warnings):
         text = META_RE.sub("", source.read_text(encoding="utf-8")).strip()
         body += exam_links(render_figures(text, where, warnings), "../../")
     return exam_page(exam, f"{exam['id']}/scope", f"{exam['code']}の学習範囲", exam["code"],
-                     f"{exam['name']}の分野・配点・タスクと、関連する教科書のページ", body,
+                     f"{short_name(exam)}の分野・配点・タスクと、関連する教科書のページ", body,
                      updated.get(f"src/exams/{exam['id']}/exam.json", int(time.time())))
 
 
@@ -1465,21 +1465,21 @@ def exam_questions_page(exam, updated, warnings):
 
 def exam_top_html(exam, pages):
     """試験ごとの入口。学習範囲は必ずあり、ロードマップ・問題集は作られているものだけ並べる。"""
-    cards = [("scope.html", "学習範囲", "分野・配点・タスクと、関連するページ")]
+    links = [("scope.html", "学習範囲", "分野・配点・タスク")]
     if pages["roadmap"]:
-        cards.append(("roadmap.html", "学習ロードマップと参考書", "学ぶ順番と、項目ごとの参考書"))
+        links.append(("roadmap.html", "学習ロードマップと参考書", "学ぶ順番と項目ごとの参考書"))
     if pages["questions"]:
-        cards.append(("questions.html", "問題集", "シナリオ型の問題で理解を確認"))
-    items = "".join(f'  <li><a href="{href}"><span class="name">{name}</span><span class="desc">{desc}</span></a></li>\n'
-                    for href, name, desc in cards)
-    level = dict(EXAM_LEVELS).get(exam["level"], "")
-    return (head(f"{exam['name']} | {SITE_TITLE}", "../../", exam["name"]) + header("../../", "exams")
+        links.append(("questions.html", "問題集", "シナリオ型の問題で理解を確認"))
+    items = "".join(f'  <li><a href="{href}"><span class="exam-name">{name}</span>'
+                    f'<span class="exam-status">{desc}</span></a></li>\n' for href, name, desc in links)
+    return (head(f"{short_name(exam)} | {SITE_TITLE}", "../../", short_name(exam)) + header("../../", "exams")
             + f'<main>\n<div class="page-head{progress_class(exam)}">\n'
-            + f'<p class="category">{html.escape(level)}・{html.escape(exam["code"])}</p>\n'
-            + f'<h1>{html.escape(exam["name"])}{progress_badge(exam)}</h1>\n</div>\n'
-            + f'<ul class="card-list top-cards">\n{items}</ul>\n'
+            + f'<p class="category">{html.escape(exam["code"])}</p>\n'
+            + f'<h1>{html.escape(short_name(exam))}{progress_badge(exam)}</h1>\n</div>\n'
+            + f'<ul class="exam-list">\n{items}</ul>\n'
             + '<p><a href="../index.html">試験の一覧へ戻る</a></p>\n'
             + "</main>\n" + TO_TOP + TAIL)
+
 
 
 PROGRESS_LABEL = {"studying": "学習中", "passed": "合格済み"}
@@ -1495,26 +1495,31 @@ def progress_badge(exam):
     return f'<span class="progress-badge {exam["progress"]}">{label}</span>' if label else ""
 
 
+def short_name(exam):
+    """「AWS Certified」は全資格に共通するので、表示では省く。"""
+    return re.sub(r"^AWS Certified\s+", "", exam["name"])
+
+
 def exams_index_html(exams):
-    """試験の一覧。級ごとに並べ、試験の入口へつなぐ。学習中・合格済みの試験は色を変える。"""
+    """試験の一覧。級ごとに、1行に1試験(コード・名前・状態)を並べる。学習中・合格済みは色で示す。"""
     parts = [head(f"試験別 | {SITE_TITLE}", "../", "AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる"),
-             header("../", "exams"), "<main>\n",
-             '<div class="page-head"><h1>試験別</h1><p class="lead">AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる</p></div>\n']
+             header("../", "exams"), "<main>\n", '<div class="page-head"><h1>試験別</h1></div>\n']
     for key, label in EXAM_LEVELS:
         group = [e for e in exams if e["level"] == key]
         if not group:
             continue
-        parts.append(f'<h2>{label}</h2>\n<ul class="card-list top-cards">\n')
+        parts.append(f'<h2>{label}</h2>\n<ul class="exam-list">\n')
         for e in group:
             status = EXAM_STATUS_LABEL.get(e["status"], "")
-            desc = status or e["name"]
-            parts.append(f'  <li><a class="{progress_class(e).strip()}" href="{e["id"]}/index.html">'
-                         f'<span class="name">{html.escape(e["name"])}'
-                         f'<span class="badge">{html.escape(e["code"])}</span>{progress_badge(e)}</span>'
-                         f'<span class="desc">{html.escape(desc)}</span></a></li>\n')
+            parts.append(f'  <li class="{progress_class(e).strip()}"><a href="{e["id"]}/index.html">'
+                         f'<span class="code">{html.escape(e["code"])}</span>'
+                         f'<span class="exam-name">{html.escape(short_name(e))}</span>'
+                         + (f'<span class="exam-status">{status}</span>' if status else "")
+                         + f'{progress_badge(e)}</a></li>\n')
         parts.append("</ul>\n")
     parts.append("</main>\n" + TO_TOP + TAIL)
     return "".join(parts)
+
 
 
 def render_roadmap(page, exam):
