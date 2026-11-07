@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>データストア | AWS教科書</title>
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../../../css/style.css">
+<link rel="icon" type="image/png" href="../../../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../../../icons/apple-touch-icon.png">
+<link rel="manifest" href="../../../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../../../sw.js").catch(function () {});
+}
+</script>
+<script src="../../../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../../../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../../../services/index.html">サービス</a><a href="../../../terms/index.html">用語</a><a href="../../../usecases/index.html">運用シナリオ</a><a href="../../../news/index.html">ニュース</a><a href="../../../exams/index.html" class="current">試験別</a><a href="../../../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main class="booklet guide">
+<div class="page-head booklet-cover">
+<p class="booklet-site">ステップ3 データストアの管理(分野2・26%)</p>
+<h1>データストア</h1>
+<p class="booklet-help">この項目で使うサービス・用語を、参考書としてまとめたページです。ブラウザーの印刷(Ctrl+P)から、紙に印刷するかPDFとして保存してください。</p>
+<p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button></p>
+</div>
+<article class="booklet-page" id="p-dynamodb">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon DynamoDB</h1>
+<p class="lead">フルマネージドのキーバリュー型NoSQLデータベース</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="dynamodb-c1">1. サービス概要<a class="anchor" href="#dynamodb-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon DynamoDB</strong>は、<strong>フルマネージドのキーバリューストア</strong>(NoSQLデータベース)です。サーバー管理が不要で、大量のアクセスにも低レイテンシーで応答します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="dynamodb-c2">2. 主な機能・特徴<a class="anchor" href="#dynamodb-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="dynamodb-c2-1">テーブルのキー<a class="anchor" href="#dynamodb-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>プライマリキー</strong>:アイテムを一意に識別するキー。次の2通りがある。
+  <ul>
+  <li><strong>パーティションキーのみ</strong>:パーティションキーの値がテーブル内で<strong>一意</strong>でなければならない。</li>
+  <li><strong>パーティションキー+ソートキー</strong>:同じパーティションキーの値を複数のアイテムが持てる。<strong>2つの組み合わせ</strong>がテーブル内で一意になる。</li>
+  </ul></li>
+<li><strong>パーティションキー</strong>:どの物理パーティションに保存するかを決める。<strong>値に偏りがあると性能が劣化</strong>する。</li>
+<li><strong>ソートキー</strong>:同じパーティションキー内での並び順を決める。</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 262" style="max-width:480px;min-width:480px" role="img" aria-label="図1 パーティションキー(UserID)で保存先のパーティションが決まり、同じパーティション内はソートキー(OrderDate)の順に並ぶ。値が偏ると特定のパーティションに負荷が集中する。"><defs><marker id="dynamodb-dgservices-dynamodb-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="i1">
+<rect x="34" y="36" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="57" text-anchor="middle" class="dg-t">UserID = u1</text>
+<text x="109" y="75" text-anchor="middle" class="dg-s">OrderDate = 0401</text>
+</g>
+<g data-node="i2">
+<rect x="34" y="110" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="132" text-anchor="middle" class="dg-t">UserID = u1</text>
+<text x="109" y="150" text-anchor="middle" class="dg-s">OrderDate = 0405</text>
+</g>
+<g data-node="i3">
+<rect x="34" y="186" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="207" text-anchor="middle" class="dg-t">UserID = u2</text>
+<text x="109" y="225" text-anchor="middle" class="dg-s">OrderDate = 0402</text>
+</g>
+<g data-node="p1">
+<rect x="306" y="73" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="94" text-anchor="middle" class="dg-tb">パーティションA</text>
+<text x="381" y="112" text-anchor="middle" class="dg-s">u1 のアイテム</text>
+</g>
+<g data-node="p2">
+<rect x="306" y="186" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="207" text-anchor="middle" class="dg-tb">パーティションB</text>
+<text x="381" y="225" text-anchor="middle" class="dg-s">u2 のアイテム</text>
+</g>
+<path d="M184.0,71.8 L306.0,88.7" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-1)"/>
+<path d="M184.0,126.2 L306.0,109.3" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-1)"/>
+<path d="M184.0,211.5 L306.0,211.5" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-1)"/>
+</svg>
+</div>
+<figcaption>図1 パーティションキー(UserID)で保存先のパーティションが決まり、同じパーティション内はソートキー(OrderDate)の順に並ぶ。値が偏ると特定のパーティションに負荷が集中する。</figcaption>
+</figure>
+<h3 id="dynamodb-c2-2">データの読み取り<a class="anchor" href="#dynamodb-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>1回のリクエストで取得できる最大データ容量は<strong>1MB</strong>です。</p>
+<ul>
+<li><code>GetItem</code>:主キーで1件取得</li>
+<li><code>BatchGetItem</code>:主キーで複数件取得</li>
+<li><code>Query</code>:パーティションキー・インデックスを条件に取得</li>
+<li><code>Scan</code>:全件走査</li>
+</ul>
+
+<h3 id="dynamodb-c2-3">セカンダリインデックス<a class="anchor" href="#dynamodb-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>別のキー構成でクエリを実行するための仕組みです。</p>
+<ul>
+<li><strong>ローカル(LSI)</strong>:パーティションキーはそのままで、<strong>ソートキーを変えたい</strong>とき。例:UserID+OrderDate のテーブルで、UserID+OrderStatus で検索したい。</li>
+<li><strong>グローバル(GSI)</strong>:<strong>パーティションキーを変えたい</strong>とき。例:OrderID+OrderStatus で検索したい。</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th></th><th>ローカル(LSI)</th><th>グローバル(GSI)</th></tr>
+<tr><td>対象</td><td>パーティションキーとソートキーを持つテーブル</td><td>任意</td></tr>
+<tr><td>作成タイミング</td><td><strong>テーブル作成時のみ</strong></td><td>テーブル作成時/作成後</td></tr>
+<tr><td>キャパシティユニット</td><td>テーブルと同じ</td><td>テーブルと異なる値を設定</td></tr>
+<tr><td>削除</td><td>インデックスのみの削除は不可</td><td>インデックスのみ削除可能</td></tr>
+<tr><td>読み取りの整合性</td><td>結果整合性/強い整合性</td><td><strong>結果整合性のみ</strong></td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 588 194" style="max-width:588px;min-width:520px" role="img" aria-label="図2 LSIとGSI。LSIはパーティションキーをそのままにソートキーだけを変える(テーブル作成時のみ)。GSIはパーティションキーから変えられ、後から追加できる(結果整合性のみ)。"><defs><marker id="dynamodb-dgservices-dynamodb-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="base">
+<rect x="34" y="78" width="200" height="52" rx="8" class="dg-accent"/>
+<text x="134" y="100" text-anchor="middle" class="dg-tb">テーブル</text>
+<text x="134" y="118" text-anchor="middle" class="dg-s">PK=UserID・SK=OrderDate</text>
+</g>
+<g data-node="lsi">
+<rect x="364" y="38" width="200" height="52" rx="8" class="dg-box"/>
+<text x="464" y="60" text-anchor="middle" class="dg-t">LSI</text>
+<text x="464" y="78" text-anchor="middle" class="dg-s">PKはそのまま・SKを変更</text>
+</g>
+<g data-node="gsi">
+<rect x="364" y="118" width="200" height="52" rx="8" class="dg-ok"/>
+<text x="464" y="140" text-anchor="middle" class="dg-t">GSI</text>
+<text x="464" y="158" text-anchor="middle" class="dg-s">PKごと変更(例: OrderID)</text>
+</g>
+<path d="M234.0,91.9 L364.0,76.1" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-2)"/>
+<text x="299" y="88" text-anchor="middle" class="dg-s dg-halo">作成時のみ</text>
+<path d="M234.0,116.1 L364.0,131.9" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-2)"/>
+<text x="299" y="128" text-anchor="middle" class="dg-s dg-halo">後から追加可</text>
+</svg>
+</div>
+<figcaption>図2 LSIとGSI。LSIはパーティションキーをそのままにソートキーだけを変える(テーブル作成時のみ)。GSIはパーティションキーから変えられ、後から追加できる(結果整合性のみ)。</figcaption>
+</figure>
+<h3 id="dynamodb-c2-4">読み取りの整合性<a class="anchor" href="#dynamodb-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>項目</th><th>強い整合性</th><th>結果整合性</th></tr>
+<tr><td>最新データの保証</td><td>○</td><td>×</td></tr>
+<tr><td>書き込み直後の読み取り</td><td>必ず最新</td><td>古い可能性あり</td></tr>
+<tr><td>コスト</td><td>高い</td><td>安い</td></tr>
+<tr><td>レイテンシー</td><td>やや高い</td><td>低い</td></tr>
+<tr><td>デフォルト</td><td>×</td><td>○</td></tr>
+</table></div>
+
+<h3 id="dynamodb-c2-5">TTL(Time To Live)<a class="anchor" href="#dynamodb-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<p>指定時刻を過ぎたアイテムを自動削除する機能です。TTL属性は<strong>Number型+UNIXエポック秒</strong>である必要があります。セッション管理・キャッシュ・一時URLや認証コードに使います。ただし<strong>削除までにラグが生じる</strong>ため、正確な時刻で処理したい場合はEventBridge+Lambdaを使います。</p>
+
+<h3 id="dynamodb-c2-6">エラー処理<a class="anchor" href="#dynamodb-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p><code>UnprocessedKeys</code> は、スロットリングやサイズ超過で未処理になったキーのリストです。<strong>エクスポネンシャルバックオフでリトライ</strong>して再実行します。</p>
+
+<h3 id="dynamodb-c2-7">関連機能<a class="anchor" href="#dynamodb-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong class="em">DynamoDB Accelerator(DAX)</strong>:インメモリキャッシュ。読み取りを<strong>マイクロ秒レベル</strong>に高速化。</li>
+<li><strong class="em">DynamoDB Streams</strong>:テーブルのデータ変更を記録し、外部処理に連携する。
+  <ul>
+  <li>Streams+Lambdaの流れ:アプリがテーブルを更新 → Streamsが変更イベントを記録 → Lambdaがポーリング(若干の遅延あり)→ まとめて取得して関数を実行</li>
+  <li>ビュータイプ(記録する内容):<code>KEYS_ONLY</code>(キーのみ)、<code>NEW_IMAGE</code>(更新後のアイテム)、<code>OLD_IMAGE</code>(更新前のアイテム)、<code>NEW_AND_OLD_IMAGES</code>(更新前と更新後の両方)</li>
+  </ul></li>
+<li><strong>DynamoDB Transactions</strong>:複数アイテムの更新を「全成功 or 全失敗」にするACIDトランザクション。<code>TransactWriteItems</code>(複数書き込み)、<code>TransactGetItems</code>(複数読み取り)。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 871 202" style="max-width:871px;min-width:697px" role="img" aria-label="図3 DAXとDynamoDB Streams。DAXは読み取りをマイクロ秒レベルに高速化するキャッシュ。Streamsはテーブルの変更を記録し、Lambdaがポーリングして後続処理を行う(若干の遅延あり)。"><defs><marker id="dynamodb-dgservices-dynamodb-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="132" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="156" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="dax">
+<rect x="255" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="330" y="62" text-anchor="middle" class="dg-t">DAX</text>
+<text x="330" y="80" text-anchor="middle" class="dg-s">キャッシュ(μ秒)</text>
+</g>
+<g data-node="ddb">
+<rect x="255" y="132" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="330" y="156" text-anchor="middle" class="dg-tb">DynamoDB</text>
+</g>
+<g data-node="st">
+<rect x="476" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="551" y="147" text-anchor="middle" class="dg-t">Streams</text>
+<text x="551" y="165" text-anchor="middle" class="dg-s">変更を記録</text>
+</g>
+<g data-node="fn">
+<rect x="697" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="772" y="147" text-anchor="middle" class="dg-t">Lambda</text>
+<text x="772" y="165" text-anchor="middle" class="dg-s">ポーリングして処理</text>
+</g>
+<path d="M161.0,131.5 L262.4,92.5" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-3)"/>
+<text x="212" y="116" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
+<path d="M330.0,92.5 L330.0,131.5" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-3)"/>
+<path d="M184.0,151.5 L255.0,151.5" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-3)"/>
+<text x="220" y="156" text-anchor="middle" class="dg-s dg-halo">書き込み</text>
+<path d="M405.0,151.5 L476.0,151.5" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-3)"/>
+<path d="M626.0,151.5 L697.0,151.5" class="dg-line" marker-end="url(#dynamodb-dgservices-dynamodb-3)"/>
+</svg>
+</div>
+<figcaption>図3 DAXとDynamoDB Streams。DAXは読み取りをマイクロ秒レベルに高速化するキャッシュ。Streamsはテーブルの変更を記録し、Lambdaがポーリングして後続処理を行う(若干の遅延あり)。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="dynamodb-c3">3. ユースケース<a class="anchor" href="#dynamodb-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>セッション管理・ユーザープロファイル(TTLで自動削除)</li>
+<li>大量アクセスのあるゲーム・EC・IoTのデータ保存</li>
+<li>変更をトリガーにした後続処理(Streams+Lambda)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="dynamodb-c4">4. 料金の考え方<a class="anchor" href="#dynamodb-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>性能は<strong>キャパシティユニット</strong>で表し、テーブルが1秒間にどれだけ読み書きできるかを示します(1RCU/1WCU=1KB/秒が基準)。</p>
+<ul>
+<li><strong class="em">RCU(読み込みキャパシティユニット)</strong>:<strong>整合性の違いで消費量が変わる</strong>(強い整合性のほうが多く消費)。</li>
+<li><strong class="em">WCU(書き込みキャパシティユニット)</strong></li>
+</ul>
+<p>1RCUは「4KBまでのアイテムを強い整合性で1回/秒、結果整合性なら2回/秒」、1WCUは「1KBまでのアイテムを1回/秒」書き込めます。料金モードは、容量を事前に指定する<strong>プロビジョンド</strong>と、リクエスト数に応じて課金される<strong>オンデマンド</strong>の2種類です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="dynamodb-c5">5. 関連サービス<a class="anchor" href="#dynamodb-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../../../services/lambda.html">AWS Lambda</a>:DynamoDB Streamsの処理</li>
+<li><a href="../../../services/eventbridge.html">Amazon EventBridge</a>:正確な時刻での削除処理</li>
+<li><a href="../../../services/elasticache.html">Amazon ElastiCache</a>:汎用的なキャッシュ</li>
+<li><a href="#p-rds">Amazon RDS</a>:リレーショナルDBの選択肢</li>
+<li><a href="../../../services/database-encryption-sdk.html">AWS Database Encryption SDK</a>:クライアント側での属性暗号化</li>
+<li>関連する用語:<a href="../../../terms/throttling-retry.html">スロットリングとリトライ</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="dynamodb-c6">6. 試験・実務でのポイント<a class="anchor" href="#dynamodb-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>パーティションキーは<strong>値が分散するもの</strong>を選ぶ(偏るとホットパーティション)。</li>
+<li>後からインデックスを追加 → <strong>GSI</strong>のみ可能。LSIはテーブル作成時のみ。</li>
+<li>GSIは<strong>結果整合性のみ</strong>。強い整合性が必要ならベーステーブルかLSI。</li>
+<li>読み取りをマイクロ秒に → <strong>DAX</strong>。</li>
+<li>変更をトリガーに処理 → <strong>Streams+Lambda</strong>。</li>
+<li><code>UnprocessedKeys</code> → <strong>エクスポネンシャルバックオフでリトライ</strong>。</li>
+<li>全件取得の <code>Scan</code> は高コスト。可能なら <code>Query</code>。</li>
+<li>CloudFront・API Gateway・ElastiCache・DAXのキャッシュの使い分け → <a href="../../../terms/caching-comparison.html">キャッシュの選び方</a>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="dynamodb-c7">7. まとめ<a class="anchor" href="#dynamodb-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>DynamoDBはキーバリュー型のフルマネージドNoSQL。</li>
+<li>キー設計(パーティションキー・ソートキー・LSI/GSI)が性能を左右する。</li>
+<li>DAX・Streams・TTL・Transactionsで機能を拡張できる。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-rds">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon RDS</h1>
+<p class="lead">リレーショナルデータベースの構築・運用を任せられるマネージドDB</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="rds-c1">1. サービス概要<a class="anchor" href="#rds-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon RDS(Relational Database Service)</strong>は、リレーショナルデータベース(SQL)の構築・運用を提供するマネージドサービスです。パッチ適用やバックアップなどの面倒な運用作業をAWSに任せられます。</p>
+<p>対応DBエンジン:<strong>MySQL、PostgreSQL、MariaDB、Oracle Database、Microsoft SQL Server、Amazon Aurora</strong></p>
+</section>
+
+<section class="chapter">
+<h2 id="rds-c2">2. 主な機能・特徴<a class="anchor" href="#rds-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="rds-c2-1">RDSが代行するDB運用タスク<a class="anchor" href="#rds-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>プロビジョニング</strong>:DBサーバーの起動</li>
+<li><strong>パッチ適用</strong>:OS/DBエンジン</li>
+<li><strong>バックアップ</strong>
+  <ul>
+  <li>自動バックアップ:保持期間は<strong>最大35日</strong></li>
+  <li>手動スナップショット:<strong>無期限</strong>(削除するまで残る)</li>
+  <li>ポイントインタイムリカバリ:特定時点のデータに復元</li>
+  </ul></li>
+<li><strong>障害時のフェイルオーバー</strong>:Multi-AZ構成</li>
+<li><strong>スケーリング</strong>:スペック変更、リードレプリカ(プライマリから<strong>非同期</strong>でレプリケーションするため<strong class="em">わずかな遅延が発生</strong>)</li>
+</ul>
+<p>Multi-AZは別AZにスタンバイを置く<strong>可用性</strong>のための仕組みで、スタンバイは読み取りに使えません(同期レプリケーション)。リードレプリカは<strong>読み取り性能</strong>を上げる仕組みです。目的の違いを区別しましょう。</p>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 254" style="max-width:718px;min-width:574px" role="img" aria-label="図1 Multi-AZとリードレプリカの違い。スタンバイは障害時に引き継ぐための待機系(同期・読み取りには使えない)、リードレプリカは読み取りを分散するためのコピー(非同期・わずかに遅延)。"><defs><marker id="rds-dgservices-rds-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="139" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="163" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="pri">
+<rect x="289" y="88" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="110" text-anchor="middle" class="dg-tb">プライマリ</text>
+<text x="364" y="128" text-anchor="middle" class="dg-s">読み書き</text>
+</g>
+<g data-node="stb">
+<rect x="544" y="43" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="64" text-anchor="middle" class="dg-t">スタンバイ</text>
+<text x="619" y="82" text-anchor="middle" class="dg-s">別AZ・読めない</text>
+</g>
+<g data-node="rr">
+<rect x="544" y="178" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="200" text-anchor="middle" class="dg-t">リードレプリカ</text>
+<text x="619" y="218" text-anchor="middle" class="dg-s">読み取り専用</text>
+</g>
+<path d="M184.0,145.8 L289.0,127.2" class="dg-line" marker-end="url(#rds-dgservices-rds-1)"/>
+<text x="236" y="140" text-anchor="middle" class="dg-s dg-halo">書き込み</text>
+<path d="M184.0,165.6 L544.0,197.4" class="dg-line" marker-end="url(#rds-dgservices-rds-1)"/>
+<text x="364" y="186" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
+<path d="M439.0,100.8 L544.0,82.2" class="dg-line" marker-end="url(#rds-dgservices-rds-1)"/>
+<text x="492" y="96" text-anchor="middle" class="dg-s dg-halo">同期</text>
+<path d="M437.7,140.0 L545.3,178.0" class="dg-line" marker-end="url(#rds-dgservices-rds-1)"/>
+<text x="492" y="163" text-anchor="middle" class="dg-s dg-halo">非同期</text>
+</svg>
+</div>
+<figcaption>図1 Multi-AZとリードレプリカの違い。スタンバイは障害時に引き継ぐための待機系(同期・読み取りには使えない)、リードレプリカは読み取りを分散するためのコピー(非同期・わずかに遅延)。</figcaption>
+</figure>
+<p>試験では「どちらを選ぶか」と「障害時に何が起きるか」がよく問われます。次の表で違いを整理しておきましょう。</p>
+<div class="table-wrap"><table class="stack">
+<tr><th></th><th>Multi-AZ(スタンバイ)</th><th>リードレプリカ</th></tr>
+<tr><td data-label="">目的</td><td data-label="Multi-AZ(スタンバイ)"><strong>可用性</strong>(障害時の引き継ぎ)</td><td data-label="リードレプリカ"><strong>読み取り性能</strong>(読み取りの分散)</td></tr>
+<tr><td data-label="">レプリケーション</td><td data-label="Multi-AZ(スタンバイ)"><strong>同期</strong>(データの損失がない)</td><td data-label="リードレプリカ"><strong>非同期</strong>(わずかに遅れる=レプリカラグ)</td></tr>
+<tr><td data-label="">読み取りに使えるか</td><td data-label="Multi-AZ(スタンバイ)">使えない(Multi-AZ DBクラスターのスタンバイは読める)</td><td data-label="リードレプリカ">使える(レプリカごとのエンドポイントに接続)</td></tr>
+<tr><td data-label="">置ける場所</td><td data-label="Multi-AZ(スタンバイ)">同じリージョンの別AZ</td><td data-label="リードレプリカ">同じAZ・別AZ・<strong>別リージョン</strong>(クロスリージョンリードレプリカ)</td></tr>
+<tr><td data-label="">障害時の切り替え</td><td data-label="Multi-AZ(スタンバイ)"><strong>自動</strong>でスタンバイが昇格し、エンドポイントのDNSが切り替わる</td><td data-label="リードレプリカ"><strong class="em">自動では昇格しない</strong>。手動で「昇格」すると独立したDBになる</td></tr>
+<tr><td data-label="">接続先の変更</td><td data-label="Multi-AZ(スタンバイ)">不要(エンドポイント名は同じ)</td><td data-label="リードレプリカ">必要(昇格したDBのエンドポイントへ切り替える)</td></tr>
+<tr><td data-label="">バックアップ・メンテナンス</td><td data-label="Multi-AZ(スタンバイ)">バックアップはスタンバイから取るため、プライマリのI/Oが止まらない</td><td data-label="リードレプリカ">レプリカの作成にはソースDBの<strong>自動バックアップの有効化</strong>が必要</td></tr>
+</table></div>
+<p>RDS(MySQL・PostgreSQLなど)のリードレプリカを手動で昇格すると、レプリケーションが切れて<strong>書き込みできる独立したDB</strong>になります。元に戻すことはできず、ほかのレプリカも新しいDBには付いてきません。別リージョンのリードレプリカを昇格させるのは、リージョン障害に備えたDRの定番の手順です。</p>
+<p>これに対して<a href="#p-aurora">Aurora</a>は、プライマリに障害が起きると<strong class="em">リードレプリカ(Auroraレプリカ)が自動でプライマリに昇格</strong>します。Auroraのレプリカはプライマリと同じストレージを共有しているため、スタンバイと読み取り用のレプリカを兼ねられるのです。「リードレプリカが自動でプライマリに昇格する」のは<strong>Auroraだけ</strong>と覚えておきましょう。</p>
+<h3 id="rds-c2-2">RDS Proxy<a class="anchor" href="#rds-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>大量のクライアントからのアクセスを、<strong>少数のDB接続に集約・再利用</strong>する仕組みです。</p>
+<ul>
+<li>前提:DBクエリの時間は短く、DB接続を行うのはアプリサーバー。</li>
+<li>例:アプリサーバーから1万人がDBにアクセスしても、実際に同時にクエリを投げているのは一部。RDS Proxyは<strong>50接続を1万人で使い回す</strong>。Proxyがないと1万接続を使い、接続数の上限を超える可能性が高い。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 262" style="max-width:684px;min-width:547px" role="img" aria-label="図2 RDS Proxy。大量のクライアントからの接続を少数のDB接続にまとめて使い回し、DBの最大接続数を超えないようにする。"><defs><marker id="rds-dgservices-rds-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="l1">
+<rect x="34" y="42" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="66" text-anchor="middle" class="dg-t">Lambda</text>
+</g>
+<g data-node="l2">
+<rect x="34" y="116" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">Lambda</text>
+</g>
+<g data-node="l3">
+<rect x="34" y="192" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="216" text-anchor="middle" class="dg-t">アプリサーバー</text>
+</g>
+<g data-node="proxy">
+<rect x="272" y="36" width="150" height="202" rx="8" class="dg-accent"/>
+<text x="347" y="132" text-anchor="middle" class="dg-tb">RDS Proxy</text>
+<text x="347" y="150" text-anchor="middle" class="dg-s">接続を集約・再利用</text>
+</g>
+<g data-node="db">
+<rect x="510" y="110" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="132" text-anchor="middle" class="dg-t">RDS</text>
+<text x="585" y="150" text-anchor="middle" class="dg-s">少数の接続で済む</text>
+</g>
+<path d="M172.5,81.5 L272.0,112.9" class="dg-line" marker-end="url(#rds-dgservices-rds-2)"/>
+<path d="M184.0,136.5 L272.0,136.5" class="dg-line" marker-end="url(#rds-dgservices-rds-2)"/>
+<path d="M172.5,191.5 L272.0,160.1" class="dg-line" marker-end="url(#rds-dgservices-rds-2)"/>
+<path d="M422.0,136.5 L510.0,136.5" class="dg-line" marker-end="url(#rds-dgservices-rds-2)"/>
+</svg>
+</div>
+<figcaption>図2 RDS Proxy。大量のクライアントからの接続を少数のDB接続にまとめて使い回し、DBの最大接続数を超えないようにする。</figcaption>
+</figure>
+
+<h3 id="rds-c2-3">RDS Proxyとフェイルオーバー<a class="anchor" href="#rds-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>Multi-AZのフェイルオーバーが起きると、Proxyは新しいプライマリへの接続を振り分け直す。アプリはProxyのエンドポイントに接続したままでよい。</li>
+<li>Proxyは<strong>DNSのキャッシュを使わず</strong>に切り替え先へ接続するため、DNS名の切り替えを待たずに済む。Multi-AZ DBインスタンスでは、フェイルオーバー時間を最大66%短くできる。</li>
+<li>フェイルオーバーに備えて、Proxyは一部の接続を監視用に確保している。</li>
+<li>フェイルオーバー中に実行していたトランザクションは失敗する。Proxyが自動で再実行するわけではないので、アプリ側で再試行の処理を用意する。</li>
+<li>Proxyは書き込み側(プライマリ)にだけ関連付けられる。リードレプリカには関連付けられない。</li>
+</ul>
+
+<h3 id="rds-c2-4">DBサブネットグループ<a class="anchor" href="#rds-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>DBサブネットグループ</strong>は、RDSのDBインスタンスを配置してよい<strong>VPC内のサブネットの組</strong>です。DBインスタンスを作るときに指定し、RDSはこの中のサブネットにインスタンスを置きます。</p>
+<ul>
+<li><strong>2つ以上のAZのサブネット</strong>を含める必要がある(Multi-AZのスタンバイや、障害時の配置先に使われる)</li>
+<li>通常は<strong>プライベートサブネット</strong>だけで構成し、DBをインターネットから切り離す</li>
+<li>DBへのアクセスはセキュリティグループで、アプリサーバーのセキュリティグループからのDBポート(MySQLなら3306)だけを許可する</li>
+</ul>
+
+<h3 id="rds-c2-5">パラメータグループとオプショングループ<a class="anchor" href="#rds-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>種類</th><th>設定するもの</th><th>例</th></tr>
+<tr><td>パラメータグループ</td><td><strong>DBエンジンの設定値</strong>(設定ファイルの内容に当たるもの)</td><td><code>max_connections</code>、文字コード、タイムゾーン、スロークエリログの出力、<code>rds.force_ssl</code>(SSL接続の強制)</td></tr>
+<tr><td>オプショングループ</td><td>エンジンに<strong>追加する機能</strong></td><td>OracleのTDE(透過的データ暗号化)、SQL ServerのS3へのネイティブバックアップ</td></tr>
+</table></div>
+<ul>
+<li>RDSではOSにログインして設定ファイルを直接編集できないため、エンジンの設定はパラメータグループで行う</li>
+<li><strong>デフォルトのパラメータグループは変更できない</strong>。カスタムのパラメータグループを作ってDBに関連付ける</li>
+<li>パラメータには、すぐに反映される<strong>動的パラメータ</strong>と、<strong>再起動するまで反映されない静的パラメータ</strong>がある(状態が「pending-reboot」になる)</li>
+<li>オプショングループはMySQL・MariaDB・Oracle・SQL Serverで使う(PostgreSQLは拡張機能をパラメータで有効にする)</li>
+</ul>
+
+<h3 id="rds-c2-6">メンテナンスウィンドウ<a class="anchor" href="#rds-c2-6" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>メンテナンスウィンドウ</strong>は、OSやDBエンジンのパッチ適用など、RDSが行うメンテナンスの時間帯です。<strong>週1回・30分以上</strong>の枠を指定します(指定しないとリージョンごとの時間帯から自動で割り当てられる)。</p>
+<ul>
+<li>「マイナーバージョンの自動アップグレード」を有効にすると、新しいマイナーバージョンがメンテナンスウィンドウで適用される</li>
+<li>インスタンスクラスの変更なども、「すぐに適用」を選ばなければ次のメンテナンスウィンドウで適用される</li>
+<li>メンテナンス中はDBが停止することがある。<strong>Multi-AZ</strong>では、先にスタンバイに適用してからフェイルオーバーし、最後に旧プライマリに適用するため、停止時間を短くできる</li>
+<li>予定されているメンテナンスは、コンソールやAWS Health Dashboardで確認できる</li>
+</ul>
+
+<h3 id="rds-c2-7">暗号化<a class="anchor" href="#rds-c2-7" aria-label="この見出しへのリンク">#</a></h3>
+<p>RDSの保存時の暗号化は<strong>KMSキー</strong>で行い、ストレージだけでなく<strong>自動バックアップ・スナップショット・リードレプリカ・ログ</strong>もすべて暗号化されます。</p>
+<ul>
+<li>暗号化は<strong>DBインスタンスの作成時にしか有効にできない</strong>。作成後に有効・無効を切り替えることはできない</li>
+<li>暗号化されたDBのリードレプリカは暗号化される(別リージョンのレプリカでは、そのリージョンのKMSキーを使う)</li>
+<li>転送時の暗号化はSSL/TLSで行い、パラメータグループで接続時のSSLを強制できる</li>
+</ul>
+<p>暗号化されていない既存のDBを暗号化するには、次の手順で<strong>新しいDBに作り直します</strong>。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 698 116" style="max-width:698px;min-width:558px" role="img" aria-label="図3 暗号化されていないDBを暗号化する手順。①スナップショットを取り、②暗号化を指定してスナップショットをコピーし、③暗号化されたスナップショットから新しいDBを復元する。最後にアプリの接続先を切り替える。"><defs><marker id="rds-dgservices-rds-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="db">
+<rect x="34" y="40" width="145" height="52" rx="8" class="dg-ng"/>
+<text x="106" y="62" text-anchor="middle" class="dg-t">既存のDB</text>
+<text x="106" y="80" text-anchor="middle" class="dg-s">暗号化なし</text>
+</g>
+<g data-node="snap">
+<rect x="199" y="40" width="145" height="52" rx="8" class="dg-box"/>
+<text x="272" y="62" text-anchor="middle" class="dg-t">スナップショット</text>
+<text x="272" y="80" text-anchor="middle" class="dg-s">暗号化なし</text>
+</g>
+<g data-node="copy">
+<rect x="364" y="40" width="145" height="52" rx="8" class="dg-box"/>
+<text x="436" y="62" text-anchor="middle" class="dg-t">コピー</text>
+<text x="436" y="80" text-anchor="middle" class="dg-s">KMSキーで暗号化</text>
+</g>
+<g data-node="newdb">
+<rect x="529" y="40" width="145" height="52" rx="8" class="dg-ok"/>
+<text x="602" y="62" text-anchor="middle" class="dg-t">新しいDB</text>
+<text x="602" y="80" text-anchor="middle" class="dg-s">暗号化あり</text>
+</g>
+<path d="M179.0,66.5 L199.0,66.5" class="dg-line" marker-end="url(#rds-dgservices-rds-3)"/>
+<text x="189" y="70" text-anchor="middle" class="dg-s dg-halo">①</text>
+<path d="M344.0,66.5 L364.0,66.5" class="dg-line" marker-end="url(#rds-dgservices-rds-3)"/>
+<text x="354" y="70" text-anchor="middle" class="dg-s dg-halo">②</text>
+<path d="M509.0,66.5 L529.0,66.5" class="dg-line" marker-end="url(#rds-dgservices-rds-3)"/>
+<text x="519" y="70" text-anchor="middle" class="dg-s dg-halo">③ 復元</text>
+</svg>
+</div>
+<figcaption>図3 暗号化されていないDBを暗号化する手順。①スナップショットを取り、②暗号化を指定してスナップショットをコピーし、③暗号化されたスナップショットから新しいDBを復元する。最後にアプリの接続先を切り替える。</figcaption>
+</figure>
+
+<h3 id="rds-c2-8">ストレージの自動スケーリング<a class="anchor" href="#rds-c2-8" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>ストレージの自動スケーリング</strong>を有効にすると、空き容量が少なくなったときに<strong>ストレージが自動で拡張</strong>されます。拡張の上限(最大ストレージしきい値)を指定しておきます。</p>
+<ul>
+<li>拡張される条件:空き容量が割り当て容量の<strong>10%未満</strong>の状態が<strong>5分以上</strong>続き、前回のストレージ変更から6時間以上経っている</li>
+<li>拡張量は10GiB、割り当て容量の10%、直近の増え方から予測した7時間分のうち最も大きい値</li>
+<li>拡張中もDBは止まらない。ただし<strong>ストレージを縮小することはできない</strong></li>
+</ul>
+<p>容量不足でDBが止まるのを防げるため、データ量の増え方が読みにくい場合に有効です。CloudWatchメトリクス <code>FreeStorageSpace</code> にアラームを設定して監視も併用します。</p>
+
+<h3 id="rds-c2-9">Multi-AZのDNS切り替え<a class="anchor" href="#rds-c2-9" aria-label="この見出しへのリンク">#</a></h3>
+<p>Multi-AZでは、アプリは<strong>DBのエンドポイント(DNS名)</strong>に接続します。プライマリに障害が起きると、RDSは自動で<strong>スタンバイを新しいプライマリに昇格</strong>し、<strong>エンドポイントのDNSレコードをスタンバイに向け直します</strong>。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 720 218" style="max-width:720px;min-width:576px" role="img" aria-label="図4 Multi-AZのフェイルオーバー。エンドポイントのDNS名は変わらず、指す先だけがスタンバイ(新プライマリ)に切り替わる。アプリの接続先の設定を変える必要はない。"><defs><marker id="rds-dgservices-rds-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="92" width="155" height="52" rx="8" class="dg-blue"/>
+<text x="112" y="113" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="112" y="131" text-anchor="middle" class="dg-s">エンドポイントに接続</text>
+</g>
+<g data-node="dns">
+<rect x="262" y="92" width="208" height="52" rx="8" class="dg-accent"/>
+<text x="365" y="113" text-anchor="middle" class="dg-tb">エンドポイント</text>
+<text x="365" y="131" text-anchor="middle" class="dg-s">mydb.xxxx.rds.amazonaws.com</text>
+</g>
+<g data-node="pri">
+<rect x="542" y="40" width="155" height="52" rx="8" class="dg-ng"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">旧プライマリ</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">AZ-a・障害</text>
+</g>
+<g data-node="stb">
+<rect x="542" y="142" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="164" text-anchor="middle" class="dg-t">新プライマリ</text>
+<text x="619" y="182" text-anchor="middle" class="dg-s">AZ-c・昇格</text>
+</g>
+<path d="M189.0,117.5 L261.5,117.5" class="dg-line" marker-end="url(#rds-dgservices-rds-4)"/>
+<path d="M469.0,96.6 L541.5,82.1" class="dg-line dg-dash" marker-end="url(#rds-dgservices-rds-4)"/>
+<path d="M469.0,138.4 L541.5,152.9" class="dg-line" marker-end="url(#rds-dgservices-rds-4)"/>
+<text x="505" y="150" text-anchor="middle" class="dg-s dg-halo">切り替え</text>
+</svg>
+</div>
+<figcaption>図4 Multi-AZのフェイルオーバー。エンドポイントのDNS名は変わらず、指す先だけがスタンバイ(新プライマリ)に切り替わる。アプリの接続先の設定を変える必要はない。</figcaption>
+</figure>
+<ul>
+<li><strong>エンドポイント名は変わらない</strong>ので、アプリの設定変更は不要。切り替えには通常1〜2分かかり、その間の接続は切れるため、アプリは<strong>再接続</strong>できるようにしておく</li>
+<li>DNSの結果を長くキャッシュするアプリ(JavaのDNSキャッシュなど)は、古いIPに接続し続けないようTTLを短くする</li>
+<li>フェイルオーバーが起きるのは、AZの障害、プライマリの故障、インスタンスクラスの変更やパッチ適用、「フェイルオーバーを伴う再起動」を実行したとき。RDSイベント通知で検知できる</li>
+<li>読み取り可能なスタンバイを2つ持つ「Multi-AZ DBクラスター」構成もあり、フェイルオーバーがより速い</li>
+</ul>
+
+<h3 id="rds-c2-10">Performance Insightsと拡張モニタリング<a class="anchor" href="#rds-c2-10" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>見られるもの</th><th>使う場面</th></tr>
+<tr><td>CloudWatchの標準メトリクス</td><td>CPU使用率、空きメモリ、空きストレージ、接続数、IOPS、レイテンシーなど(1分間隔)</td><td>基本の監視・アラーム</td></tr>
+<tr><td><strong>拡張モニタリング</strong></td><td>DBインスタンス上のエージェントが集める<strong>OSレベルのメトリクス</strong>(プロセスごとのCPU・メモリ、ファイルシステムなど)。<strong>1〜60秒間隔</strong>で、CloudWatch Logsに出力</td><td>「OSのどのプロセスがCPUを使っているか」を細かく見たい</td></tr>
+<tr><td><strong>Performance Insights</strong></td><td><strong>DBの負荷</strong>(平均アクティブセッション数)を、<strong>SQL文・待機イベント・ユーザー・ホスト別</strong>に分解して表示する</td><td>「どのSQLが遅いのか」「何を待っているのか」を特定したい</td></tr>
+</table></div>
+<p>CloudWatchの標準メトリクスはハイパーバイザー側から取るため、OS内部の詳細は見えません。OSの中を見るなら拡張モニタリング、DBの中(SQL)を見るならPerformance Insights、と使い分けます。これらはCloudWatch Database Insightsとしてもまとめて表示できます。</p>
+
+<h3 id="rds-c2-11">Blue/Green Deployments<a class="anchor" href="#rds-c2-11" aria-label="この見出しへのリンク">#</a></h3>
+<p><strong>RDS Blue/Green Deployments</strong>は、本番のDB(ブルー)をコピーした<strong>ステージング環境(グリーン)</strong>を作り、ブルーの変更をレプリケーションで同期させながらグリーン側で変更・テストし、準備ができたら<strong>短時間で切り替える</strong>機能です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 703 202" style="max-width:703px;min-width:562px" role="img" aria-label="図5 Blue/Green Deployments。グリーン環境でメジャーバージョンアップやパラメータ変更を済ませてテストし、切り替え時にグリーンがブルーのエンドポイント名を引き継ぐ。"><defs><marker id="rds-dgservices-rds-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="89" width="155" height="40" rx="8" class="dg-blue"/>
+<text x="112" y="113" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="blue">
+<rect x="279" y="40" width="155" height="52" rx="8" class="dg-accent"/>
+<text x="356" y="62" text-anchor="middle" class="dg-tb">ブルー(本番)</text>
+<text x="356" y="80" text-anchor="middle" class="dg-s">現行バージョン</text>
+</g>
+<g data-node="green">
+<rect x="279" y="126" width="155" height="52" rx="8" class="dg-ok"/>
+<text x="356" y="147" text-anchor="middle" class="dg-t">グリーン</text>
+<text x="356" y="165" text-anchor="middle" class="dg-s">新バージョン・変更済み</text>
+</g>
+<g data-node="sw">
+<rect x="524" y="83" width="155" height="52" rx="8" class="dg-box"/>
+<text x="602" y="104" text-anchor="middle" class="dg-t">切り替え</text>
+<text x="602" y="122" text-anchor="middle" class="dg-s">通常1分以内</text>
+</g>
+<path d="M189.0,95.6 L279.0,79.9" class="dg-line" marker-end="url(#rds-dgservices-rds-5)"/>
+<path d="M356.5,92.5 L356.5,125.5" class="dg-line" marker-end="url(#rds-dgservices-rds-5)"/>
+<text x="356" y="113" text-anchor="middle" class="dg-s dg-halo">レプリケーション</text>
+<path d="M434.0,138.1 L524.0,122.4" class="dg-line" marker-end="url(#rds-dgservices-rds-5)"/>
+</svg>
+</div>
+<figcaption>図5 Blue/Green Deployments。グリーン環境でメジャーバージョンアップやパラメータ変更を済ませてテストし、切り替え時にグリーンがブルーのエンドポイント名を引き継ぐ。</figcaption>
+</figure>
+<ul>
+<li>メジャーバージョンアップグレード、スキーマ変更、パラメータの変更などを、本番への影響を抑えて行える</li>
+<li>切り替え(スイッチオーバー)は通常<strong>1分以内</strong>で、グリーンがブルーと<strong>同じエンドポイント名</strong>になるため、アプリの接続先を変えなくてよい</li>
+<li>切り替え後も旧ブルー環境は残るので、確認が終わってから削除する</li>
+<li>MySQL・MariaDB・PostgreSQL(とAurora)で使える</li>
+</ul>
+
+<h3 id="rds-c2-12">停止は最大7日<a class="anchor" href="#rds-c2-12" aria-label="この見出しへのリンク">#</a></h3>
+<p>開発用のDBなど、使わない時間はDBインスタンスを<strong>停止</strong>してインスタンスの料金を節約できます。ただし、停止できるのは<strong>最大7日間</strong>で、<strong>7日を過ぎると自動で起動</strong>します(メンテナンスを適用できなくなるのを防ぐため)。</p>
+<ul>
+<li>停止中もストレージとスナップショットの料金はかかる</li>
+<li>長期間止めておきたい場合は、EventBridgeのスケジュールとLambdaで定期的に停止し直すか、スナップショットを取ってDBを削除し、必要なときに復元する</li>
+<li>リードレプリカがあるDBなど、構成によっては停止できない</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="rds-c3">3. ユースケース<a class="anchor" href="#rds-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Webアプリの業務データベース</li>
+<li>既存のMySQL/Oracle/SQL ServerをAWSへ移行</li>
+<li>Lambdaなど接続数が急増しやすい環境からのDB接続(RDS Proxy)</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="rds-c4">4. 料金の考え方<a class="anchor" href="#rds-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>DBインスタンスの稼働時間(インスタンスクラス)、ストレージ容量、バックアップ容量、データ転送量で課金されます。Multi-AZはスタンバイ分の料金も加わります。リザーブドインスタンスで割引も可能です。</p>
+</section>
+
+<section class="chapter">
+<h2 id="rds-c5">5. 関連サービス<a class="anchor" href="#rds-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-aurora">Amazon Aurora</a>:AWSが開発した高性能なRDSエンジン</li>
+<li><a href="#p-dynamodb">Amazon DynamoDB</a>:NoSQLの選択肢</li>
+<li><a href="../../../services/elasticache.html">Amazon ElastiCache</a>:DBの前段のキャッシュ</li>
+<li><a href="../../../services/lambda.html">AWS Lambda</a>:RDS Proxyと相性の良い接続元</li>
+<li><a href="../../../services/secrets-manager.html">AWS Secrets Manager</a>:DB認証情報の管理・ローテーション</li>
+<li><a href="../../../services/backup.html">AWS Backup</a>:バックアップの一元管理</li>
+<li>関連する用語:<a href="../../../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>、<a href="../../../terms/port-numbers.html">よく使うポート番号</a>、<a href="../../../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../../../terms/shared-responsibility.html">責任共有モデル</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="rds-c6">6. 試験・実務でのポイント<a class="anchor" href="#rds-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point">
+<h4>構成・設定</h4>
+<ul>
+<li>DBを置くサブネットの指定 → <strong>DBサブネットグループ</strong>(2つ以上のAZのサブネットが必要)。</li>
+<li><code>max_connections</code> などエンジンの設定を変える → カスタムの<strong>パラメータグループ</strong>(デフォルトは変更不可)。静的パラメータは<strong>再起動</strong>で反映。TDEなど機能の追加 → <strong>オプショングループ</strong>。</li>
+<li>パッチ適用の時間帯を決める → <strong>メンテナンスウィンドウ</strong>。Multi-AZなら停止時間が短くなる。</li>
+</ul>
+<h4>可用性・性能</h4>
+<ul>
+<li>障害対策 → <strong>Multi-AZ</strong>、読み取り性能 → <strong>リードレプリカ</strong>(非同期なので遅延あり)。</li>
+<li>RDSのリードレプリカは障害時に<strong>自動で昇格しない</strong>(手動で昇格すると独立したDBになり、接続先の変更が必要)。レプリカが<strong>自動で昇格</strong>するのは<strong>Aurora</strong>だけ。</li>
+<li>リージョン障害に備えて別リージョンにコピーを持つ → <strong>クロスリージョンリードレプリカ</strong>(障害時に手動で昇格)。Auroraなら<strong>グローバルデータベース</strong>。</li>
+<li>Multi-AZのフェイルオーバーでは<strong>エンドポイント名は変わらず</strong>、DNSがスタンバイに切り替わる。アプリは再接続できるようにする。</li>
+<li>「DB接続数が多すぎる」「Lambdaから大量接続」→ <strong>RDS Proxy</strong>。フェイルオーバーを速くしたい場合も、DNSのキャッシュを使わないProxyが向く(進行中のトランザクションは失敗するので再試行を実装する)。</li>
+<li>遅いSQLや待機イベントの特定 → <strong>Performance Insights</strong>。OSのプロセス単位のメトリクス → <strong>拡張モニタリング</strong>。</li>
+</ul>
+<h4>バックアップ・暗号化</h4>
+<ul>
+<li>自動バックアップは<strong>最大35日</strong>。それ以上残したい → <strong>手動スナップショット</strong>。</li>
+<li>特定時点に戻したい → <strong>ポイントインタイムリカバリ</strong>。</li>
+<li>既存の暗号化されていないDBを暗号化 → スナップショット → <strong>暗号化してコピー</strong> → 復元。暗号化は作成時にしか設定できない。</li>
+</ul>
+<h4>運用</h4>
+<ul>
+<li>空き容量不足を自動で防ぐ → <strong>ストレージの自動スケーリング</strong>(縮小はできない)。</li>
+<li>メジャーバージョンアップを短い停止時間で安全に → <strong>Blue/Green Deployments</strong>。</li>
+<li>停止したDBが勝手に起動した → 停止は<strong>最大7日</strong>で自動起動する。</li>
+</ul>
+</div>
+</section>
+
+<section class="chapter">
+<h2 id="rds-c7">7. まとめ<a class="anchor" href="#rds-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>RDSはリレーショナルDBのマネージドサービス。運用タスクをAWSが代行する。</li>
+<li>バックアップは自動(最大35日)と手動(無期限)。</li>
+<li>可用性はMulti-AZ、読み取り拡張はリードレプリカ、接続集約はRDS Proxy。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-aurora">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon Aurora</h1>
+<p class="lead">MySQL/PostgreSQL互換の高性能リレーショナルデータベース</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="aurora-c1">1. サービス概要<a class="anchor" href="#aurora-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Aurora</strong>は、<strong>MySQL/PostgreSQL互換</strong>のリレーショナルデータベースです。RDSのDBエンジンの1つで、AWSが独自に設計したストレージにより高い性能と可用性を持ちます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="aurora-c2">2. 主な機能・特徴<a class="anchor" href="#aurora-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="aurora-c2-1">アーキテクチャの特徴<a class="anchor" href="#aurora-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>共有クラスターボリューム</strong>:データは<strong>3つのAZにまたがって6コピー</strong>保持される。</li>
+<li><strong>インスタンス構成</strong>:1つのプライマリ(書き込み)と<strong>最大15のレプリカ</strong>(読み取り)。全インスタンスがボリュームを共有するため、レプリカのラグは通常ミリ秒レベル。</li>
+<li><strong>自己修復</strong>:ストレージ側でディスク障害を自動検出して修復する。</li>
+</ul>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 548 218" style="max-width:548px;min-width:520px" role="img" aria-label="図1 Auroraのアーキテクチャ。すべてのインスタンスが1つのクラスターボリュームを共有する。データは3つのAZに6コピー保存され、レプリカは最大15台まで追加できる。"><defs><marker id="aurora-dgservices-aurora-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="w">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="62" text-anchor="middle" class="dg-tb">プライマリ</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">書き込み</text>
+</g>
+<g data-node="r1">
+<rect x="204" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="279" y="62" text-anchor="middle" class="dg-t">レプリカ</text>
+<text x="279" y="80" text-anchor="middle" class="dg-s">読み取り</text>
+</g>
+<g data-node="r2">
+<rect x="374" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="449" y="62" text-anchor="middle" class="dg-t">レプリカ</text>
+<text x="449" y="80" text-anchor="middle" class="dg-s">読み取り</text>
+</g>
+<g data-node="vol">
+<rect x="34" y="142" width="490" height="52" rx="8" class="dg-ok"/>
+<text x="279" y="164" text-anchor="middle" class="dg-t">共有クラスターボリューム</text>
+<text x="279" y="182" text-anchor="middle" class="dg-s">3つのAZに6コピー・自己修復</text>
+</g>
+<path d="M152.3,92.5 L235.7,142.5" class="dg-line" marker-end="url(#aurora-dgservices-aurora-1)" marker-start="url(#aurora-dgservices-aurora-1)"/>
+<path d="M279.0,92.5 L279.0,142.5" class="dg-line" marker-end="url(#aurora-dgservices-aurora-1)"/>
+<path d="M405.7,92.5 L322.3,142.5" class="dg-line" marker-end="url(#aurora-dgservices-aurora-1)"/>
+</svg>
+</div>
+<figcaption>図1 Auroraのアーキテクチャ。すべてのインスタンスが1つのクラスターボリュームを共有する。データは3つのAZに6コピー保存され、レプリカは最大15台まで追加できる。</figcaption>
+</figure>
+<h3 id="aurora-c2-2">エンドポイント<a class="anchor" href="#aurora-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>エンドポイント</th><th>向き先</th></tr>
+<tr><td>クラスターエンドポイント</td><td>常にプライマリ(書き込み用)</td></tr>
+<tr><td>リーダーエンドポイント</td><td>レプリカへ負荷分散(読み取り用)</td></tr>
+<tr><td>カスタムエンドポイント</td><td>任意のインスタンスの組み合わせ</td></tr>
+<tr><td>インスタンスエンドポイント</td><td>特定のインスタンス</td></tr>
+</table></div>
+
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 256" style="max-width:718px;min-width:574px" role="img" aria-label="図2 エンドポイントの使い分け。書き込みはクラスターエンドポイント(常にプライマリ)、読み取りはリーダーエンドポイント(レプリカに負荷分散)を使う。"><defs><marker id="aurora-dgservices-aurora-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="116" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="140" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="ce">
+<rect x="289" y="36" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="57" text-anchor="middle" class="dg-t">クラスター</text>
+<text x="364" y="75" text-anchor="middle" class="dg-s">エンドポイント</text>
+</g>
+<g data-node="re">
+<rect x="289" y="148" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="170" text-anchor="middle" class="dg-t">リーダー</text>
+<text x="364" y="188" text-anchor="middle" class="dg-s">エンドポイント</text>
+</g>
+<g data-node="w">
+<rect x="544" y="42" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="619" y="66" text-anchor="middle" class="dg-tb">プライマリ</text>
+</g>
+<g data-node="r1">
+<rect x="544" y="116" width="150" height="40" rx="8" class="dg-box"/>
+<text x="619" y="140" text-anchor="middle" class="dg-t">レプリカ</text>
+</g>
+<g data-node="r2">
+<rect x="544" y="192" width="150" height="40" rx="8" class="dg-box"/>
+<text x="619" y="216" text-anchor="middle" class="dg-t">レプリカ</text>
+</g>
+<path d="M177.0,116.5 L289.0,83.6" class="dg-line" marker-end="url(#aurora-dgservices-aurora-2)"/>
+<text x="233" y="104" text-anchor="middle" class="dg-s dg-halo">書き込み</text>
+<path d="M184.0,147.5 L289.0,163.0" class="dg-line" marker-end="url(#aurora-dgservices-aurora-2)"/>
+<text x="236" y="159" text-anchor="middle" class="dg-s dg-halo">読み取り</text>
+<path d="M439.0,61.5 L544.0,61.5" class="dg-line" marker-end="url(#aurora-dgservices-aurora-2)"/>
+<path d="M439.0,163.0 L544.0,147.5" class="dg-line" marker-end="url(#aurora-dgservices-aurora-2)"/>
+<path d="M439.0,185.0 L544.0,200.5" class="dg-line" marker-end="url(#aurora-dgservices-aurora-2)"/>
+</svg>
+</div>
+<figcaption>図2 エンドポイントの使い分け。書き込みはクラスターエンドポイント(常にプライマリ)、読み取りはリーダーエンドポイント(レプリカに負荷分散)を使う。</figcaption>
+</figure>
+<h3 id="aurora-c2-3">可用性とフェイルオーバー<a class="anchor" href="#aurora-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>プライマリに障害が起きると、<strong>レプリカが自動で昇格</strong>する。</li>
+<li>レプリカがない場合は新しいインスタンスを作成するため、復旧に時間がかかる。可用性を重視するなら<strong>別AZにレプリカを置く</strong>。高可用性の考え方は用語ページ「<a href="../../../terms/high-availability-scaling.html">高可用性とスケーリング</a>」を参照してください。</li>
+<li>通常のRDS Multi-AZと違い、スタンバイ専用インスタンスはなく、<strong>レプリカが読み取りとフェイルオーバーを兼ねる</strong>。</li>
+<li><strong class="em">リードレプリカが自動でプライマリに昇格するのはAuroraだけ</strong>。RDS(MySQL・PostgreSQLなど)のリードレプリカは自動では昇格せず、手動で昇格すると独立したDBになる(違いは<a href="#p-rds">Amazon RDS</a>のページの表を参照)。</li>
+<li>どのレプリカを昇格させるかは<strong>フェイルオーバー優先度(ティア0〜15)</strong>で決める。数字が小さいほど優先され、同じ優先度ならサイズが大きいレプリカが選ばれる。プライマリと同じインスタンスクラスのレプリカを優先度の高いティアに置くと、昇格後に性能が落ちない。</li>
+<li>フェイルオーバーは通常30秒〜1分程度。<strong>クラスターエンドポイント</strong>は新しいプライマリを自動で指すため、アプリはクラスターエンドポイントに接続しておけば接続先を変えなくてよい。</li>
+</ul>
+
+<h3 id="aurora-c2-4">主な機能<a class="anchor" href="#aurora-c2-4" aria-label="この見出しへのリンク">#</a></h3>
+<div class="table-wrap"><table>
+<tr><th>機能</th><th>概要</th></tr>
+<tr><td>レプリカのAuto Scaling</td><td>負荷に応じてレプリカ数を増減する</td></tr>
+<tr><td>Aurora Serverless v2</td><td>負荷に応じてACU(Auroraキャパシティーユニット)を細かく自動調整する。変動の大きいワークロード向け</td></tr>
+<tr><td>Auroraグローバルデータベース</td><td>複数リージョンにレプリケートする。通常は1秒未満の遅延で、DRやグローバルな読み取りに使う</td></tr>
+<tr><td>バックトラック</td><td><strong>Aurora MySQLのみ</strong>。スナップショットから復元せず、クラスターを過去の時点へ巻き戻せる</td></tr>
+<tr><td>クローン</td><td>コピーオンライトで短時間に複製する。本番データを使ったテスト環境の作成に便利</td></tr>
+<tr><td>RDS Proxy</td><td>接続をプールし、フェイルオーバー時間の短縮と接続数の抑制に有効。Lambdaからの接続にも向く</td></tr>
+<tr><td>Database Activity Streams</td><td>データベースアクティビティをほぼリアルタイムでストリーミングする(監査用)</td></tr>
+</table></div>
+
+<h3 id="aurora-c2-5">バックアップと復元<a class="anchor" href="#aurora-c2-5" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>継続的バックアップ</strong>:自動バックアップはS3に保存され、保持期間は<strong>1〜35日</strong>。ポイントインタイムリカバリが使える。</li>
+<li>復元は<strong>常に新しいクラスターとして作成</strong>される(既存クラスターは上書きされない)。</li>
+<li>手動スナップショットは削除するまで残り、リージョン間でコピーできる。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="aurora-c3">3. ユースケース<a class="anchor" href="#aurora-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>高い可用性・性能が必要な業務システムのDB</li>
+<li>読み取りが多いWebサービス(最大15レプリカ+リーダーエンドポイント)</li>
+<li>負荷の変動が大きいアプリ(Serverless v2)</li>
+<li>複数リージョンでの災害対策・グローバル読み取り(グローバルデータベース)。災害対策の4つの方式は用語ページ「<a href="../../../terms/dr-strategies.html">DR戦略</a>」を参照してください。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="aurora-c4">4. 料金の考え方<a class="anchor" href="#aurora-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>インスタンスの稼働時間(Serverless v2ではACUの使用量)、ストレージの使用量、I/Oリクエスト、バックアップ容量で課金されます。ストレージは使った分だけ自動で拡張されます。従量課金の仕組みは用語ページ「<a href="../../../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
+</section>
+
+<section class="chapter">
+<h2 id="aurora-c5">5. 関連サービス<a class="anchor" href="#aurora-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-rds">Amazon RDS</a>:Auroraを含むマネージドDBサービス</li>
+<li><a href="../../../services/lambda.html">AWS Lambda</a>:RDS Proxy経由での接続</li>
+<li><a href="../../../services/elasticache.html">Amazon ElastiCache</a>:前段のキャッシュ</li>
+<li><a href="../../../services/backup.html">AWS Backup</a>:バックアップの一元管理</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="aurora-c6">6. 試験・実務でのポイント<a class="anchor" href="#aurora-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>データは<strong>3AZに6コピー</strong>。レプリカは<strong>最大15</strong>。</li>
+<li>書き込み → <strong>クラスターエンドポイント</strong>、読み取り → <strong>リーダーエンドポイント</strong>。</li>
+<li>フェイルオーバーを速くしたい → <strong>別AZにレプリカ</strong>を置く。</li>
+<li>リードレプリカがプライマリに<strong>自動で昇格</strong>する → <strong>Aurora</strong>(RDSのリードレプリカは手動で昇格)。昇格の順番は<strong>フェイルオーバー優先度(ティア)</strong>で決める。</li>
+<li>誤操作をすばやく戻したい(MySQL)→ <strong>バックトラック</strong>。</li>
+<li>本番データでテスト環境を素早く作る → <strong>クローン</strong>。</li>
+<li>リージョン障害対策 → <strong>グローバルデータベース</strong>。</li>
+<li>PITRやスナップショットからの復元は<strong>新しいクラスター</strong>になる(接続先の切り替えが必要)。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="aurora-c7">7. まとめ<a class="anchor" href="#aurora-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>AuroraはMySQL/PostgreSQL互換の高性能DB。共有ストレージで3AZ・6コピー。</li>
+<li>エンドポイントで書き込み・読み取りを使い分ける。</li>
+<li>Serverless v2、グローバルDB、バックトラック、クローンなど独自機能が豊富。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-documentdb">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon DocumentDB</h1>
+<p class="lead">MongoDB互換のドキュメントデータベースをマネージドで利用するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="documentdb-c1">1. サービス概要<a class="anchor" href="#documentdb-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon DocumentDB</strong>は、JSON形式のドキュメントを保存・検索するMongoDB互換のマネージドデータベースです。MongoDB用のドライバーやAPIを使うアプリケーションをAWS上で実行できます。</p>
+<p>DocumentDBはMongoDBそのものではありません。APIの互換性や利用できる機能はエンジンのバージョンによって異なるため、移行前にアプリケーションが使うコマンド・集計機能・ドライバーを検証します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c2">2. 主な機能・特徴<a class="anchor" href="#documentdb-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="documentdb-c2-1">ドキュメントモデルとクラスター<a class="anchor" href="#documentdb-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>データを柔軟なJSON形式のドキュメントとして保存し、フィールドや配列を条件に検索する。</li>
+<li>インスタンスベースのクラスターでは、書き込みを処理するインスタンスと読み取りレプリカを組み合わせる。</li>
+<li>Elastic Clustersは、シャーディングによって水平にスケールするワークロード向けの選択肢。</li>
+<li>ストレージはデータ量に応じて拡張され、バックアップや複数AZ構成を利用できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1058 144" style="max-width:1058px;min-width:846px" role="img" aria-label="図1 Amazon DocumentDBの概念。アプリケーションは互換APIを使い、読み書きの負荷に合わせてクラスターを構成する。"><defs><marker id="documentdb-dgservices-documentdb-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">MongoDB互換API</text>
+</g>
+<g data-node="writer">
+<rect x="304" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="369" y="90" text-anchor="middle" class="dg-tb">書き込み</text>
+<text x="369" y="108" text-anchor="middle" class="dg-s">プライマリ</text>
+</g>
+<g data-node="store">
+<rect x="604" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="669" y="90" text-anchor="middle" class="dg-t">文書データ</text>
+<text x="669" y="108" text-anchor="middle" class="dg-s">JSON</text>
+</g>
+<g data-node="reader">
+<rect x="904" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="969" y="90" text-anchor="middle" class="dg-t">読み取り</text>
+<text x="969" y="108" text-anchor="middle" class="dg-s">レプリカ</text>
+</g>
+<path d="M164.0,94.0 L304.0,94.0" class="dg-line" marker-end="url(#documentdb-dgservices-documentdb-1)"/>
+<path d="M434.0,94.0 L604.0,94.0" class="dg-line" marker-end="url(#documentdb-dgservices-documentdb-1)"/>
+<path d="M734.0,94.0 L904.0,94.0" class="dg-line" marker-end="url(#documentdb-dgservices-documentdb-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon DocumentDBの概念。アプリケーションは互換APIを使い、読み書きの負荷に合わせてクラスターを構成する。</figcaption>
+</figure>
+<h3 id="documentdb-c2-2">データモデルの選択<a class="anchor" href="#documentdb-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>ドキュメント内のフィールドを柔軟に扱いたいときや、MongoDB互換アプリを移行するときに候補になります。関係データやトランザクションをSQLで扱う場合は<a href="#p-rds">Amazon RDS</a>、キーを指定した低遅延アクセスは<a href="#p-dynamodb">Amazon DynamoDB</a>と比較します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c3">3. ユースケース<a class="anchor" href="#documentdb-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>MongoDB互換のアプリケーションをAWSへ移行する。</li>
+<li>商品カタログやユーザープロファイルなど、属性が異なるドキュメントを保存する。</li>
+<li>JSON形式のデータをアプリケーションの読み書きに合わせて検索する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c4">4. 料金の考え方<a class="anchor" href="#documentdb-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>クラスターのインスタンスやElastic Clustersの処理能力、データストレージ、バックアップ、データ転送などが料金に影響します。必要な読み取り性能、冗長性、保持期間を見積もり、クラスター構成を調整します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c5">5. 関連サービス<a class="anchor" href="#documentdb-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-rds">Amazon RDS</a>/<a href="#p-dynamodb">Amazon DynamoDB</a>:リレーショナル・キー値データとの使い分け</li>
+<li><a href="../../../services/dms.html">AWS DMS</a>:データベース移行と継続レプリケーション</li>
+<li><a href="../../../services/backup.html">AWS Backup</a>:データベースのバックアップ管理</li>
+<li><a href="../../../services/kms.html">AWS KMS</a>:暗号化キーの管理</li>
+<li>関連する用語:<a href="../../../terms/data-store-selection.html">データストアの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c6">6. 試験・実務でのポイント<a class="anchor" href="#documentdb-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>MongoDB互換のドキュメントデータベース → <strong>Amazon DocumentDB</strong>。</li>
+<li>MongoDBとの機能互換性を前提にせず、アプリが使うAPI・ドライバー・クエリーを移行前に確認する。</li>
+<li>関係データのSQLクエリーやトランザクションが必要なら、RDS・Auroraとの要件を比較する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="documentdb-c7">7. まとめ<a class="anchor" href="#documentdb-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>DocumentDBはMongoDB互換のドキュメントデータベース。</li>
+<li>データモデルとAPI互換性を確かめて、適切なクラスター方式を選ぶ。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-keyspaces">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon Keyspaces</h1>
+<p class="lead">Apache Cassandra互換のワイドカラムデータベースをサーバーレスで利用するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="keyspaces-c1">1. サービス概要<a class="anchor" href="#keyspaces-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Keyspaces (for Apache Cassandra)</strong>は、Apache Cassandra互換のマネージドなワイドカラムデータベースです。Cassandra Query Language (CQL) と既存のCassandraアプリケーション用ツールを使って、サーバーを管理せずにデータを読み書きできます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c2">2. 主な機能・特徴<a class="anchor" href="#keyspaces-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="keyspaces-c2-1">サーバーレスのテーブル<a class="anchor" href="#keyspaces-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>テーブルの保存容量や処理能力をサービス側が管理し、需要に応じてスケールする。</li>
+<li>オンデマンド容量モードとプロビジョンド容量モードから、トラフィックの予測可能性に合わせて選ぶ。</li>
+<li>CQLでテーブルを定義し、アプリケーションから読み書きする。</li>
+<li>マルチリージョン構成では、複数リージョン間のレプリケーションを設定できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1133 144" style="max-width:1133px;min-width:906px" role="img" aria-label="図1 Amazon Keyspacesの概念。アプリケーションがCQLでアクセスし、キー設計に基づいてデータを分散する。"><defs><marker id="keyspaces-dgservices-keyspaces-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">アプリ</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">CQL</text>
+</g>
+<g data-node="keyspaces">
+<rect x="334" y="68" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="90" text-anchor="middle" class="dg-tb">Keyspaces</text>
+<text x="399" y="108" text-anchor="middle" class="dg-s">サーバーレス</text>
+</g>
+<g data-node="table">
+<rect x="664" y="68" width="130" height="52" rx="8" class="dg-box"/>
+<text x="729" y="90" text-anchor="middle" class="dg-t">テーブル</text>
+<text x="729" y="108" text-anchor="middle" class="dg-s">パーティション</text>
+</g>
+<g data-node="region">
+<rect x="979" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="1044" y="90" text-anchor="middle" class="dg-t">リージョン</text>
+<text x="1044" y="108" text-anchor="middle" class="dg-s">レプリカ</text>
+</g>
+<path d="M164.0,94.0 L334.0,94.0" class="dg-line" marker-end="url(#keyspaces-dgservices-keyspaces-1)"/>
+<path d="M464.0,94.0 L664.0,94.0" class="dg-line" marker-end="url(#keyspaces-dgservices-keyspaces-1)"/>
+<path d="M794.0,94.0 L979.0,94.0" class="dg-line dg-dash" marker-end="url(#keyspaces-dgservices-keyspaces-1)"/>
+</svg>
+</div>
+<figcaption>図1 Amazon Keyspacesの概念。アプリケーションがCQLでアクセスし、キー設計に基づいてデータを分散する。</figcaption>
+</figure>
+<h3 id="keyspaces-c2-2">アクセスパターンに合わせた設計<a class="anchor" href="#keyspaces-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>パーティションキーはデータの分散と検索範囲に影響します。Cassandra互換のワイドカラム設計では、実行するクエリーを先に定め、その検索条件に合う主キーとテーブルを設計します。任意の列を自由に検索する用途には向きません。</p>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c3">3. ユースケース<a class="anchor" href="#keyspaces-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>既存のApache Cassandraアプリケーションをマネージド環境へ移行する。</li>
+<li>大量の時系列データやイベントを、キーに基づいて継続的に読み書きする。</li>
+<li>サーバー運用を避けながら、CQL互換のアプリケーションを構築する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c4">4. 料金の考え方<a class="anchor" href="#keyspaces-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>書き込み・読み取り容量、データストレージ、バックアップ、データ転送などが料金に影響します。オンデマンドとプロビジョンドの容量モード、アクセスパターン、保持期間を合わせて見積もります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c5">5. 関連サービス<a class="anchor" href="#keyspaces-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-dynamodb">Amazon DynamoDB</a>:キー値・ドキュメント型のサーバーレスデータベース</li>
+<li><a href="../../../services/msk.html">Amazon MSK</a>/<a href="../../../services/kinesis.html">Amazon Kinesis</a>:ストリームの取り込み</li>
+<li><a href="../../../services/dms.html">AWS DMS</a>:データベース移行とレプリケーション</li>
+<li>関連する用語:<a href="../../../terms/data-store-selection.html">データストアの選び方</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c6">6. 試験・実務でのポイント<a class="anchor" href="#keyspaces-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>Apache Cassandra互換のワイドカラムデータベース → <strong>Amazon Keyspaces</strong>。</li>
+<li>パーティションキーとアクセスパターンを先に設計する。任意の条件での検索を前提にしない。</li>
+<li>CQL互換が必要か、DynamoDBなど別のNoSQLデータベースが適するかを要件で比べる。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="keyspaces-c7">7. まとめ<a class="anchor" href="#keyspaces-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>KeyspacesはCassandra互換のサーバーレスなワイドカラムデータベース。</li>
+<li>クエリーとパーティションキーに合わせてデータモデルを設計する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-neptune">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon Neptune</h1>
+<p class="lead">ノードと関係で表すデータをクエリーするマネージドグラフデータベース</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="neptune-c1">1. サービス概要<a class="anchor" href="#neptune-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Neptune</strong>は、エンティティ間の関係をグラフとして保存・検索するマネージドデータベースです。人物・商品・端末などのノードと、その関係を表すエッジをたどるクエリーに適しています。</p>
+<p>Neptune Databaseは運用データを保持してクエリーするエンジンです。大規模なグラフをメモリ内で分析するAmazon Neptune Analyticsとは、用途と実行方法が異なります。</p>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c2">2. 主な機能・特徴<a class="anchor" href="#neptune-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="neptune-c2-1">グラフモデルとクエリー言語<a class="anchor" href="#neptune-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>プロパティグラフではノード・エッジ・属性でデータを表し、GremlinやopenCypherで検索する。</li>
+<li>RDFグラフでは主語・述語・目的語のトリプルでデータを表し、SPARQLで検索する。</li>
+<li>クエリー言語はデータモデルやアプリケーションの要件に合わせて選ぶ。</li>
+<li>リードレプリカ、複数AZ、バックアップなど、運用データベース向けの機能を利用できる。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 818 179" style="max-width:818px;min-width:654px" role="img" aria-label="図1 グラフデータの概念。利用者と商品をノード、購入をエッジとして表し、関係をたどって検索する。"><defs><marker id="neptune-dgservices-neptune-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="68" width="130" height="52" rx="8" class="dg-blue"/>
+<text x="99" y="90" text-anchor="middle" class="dg-t">利用者</text>
+<text x="99" y="108" text-anchor="middle" class="dg-s">ノード</text>
+</g>
+<g data-node="item">
+<rect x="334" y="33" width="130" height="52" rx="8" class="dg-accent"/>
+<text x="399" y="54" text-anchor="middle" class="dg-tb">商品</text>
+<text x="399" y="72" text-anchor="middle" class="dg-s">ノード</text>
+</g>
+<g data-node="buys">
+<rect x="334" y="103" width="130" height="52" rx="8" class="dg-box"/>
+<text x="399" y="124" text-anchor="middle" class="dg-t">購入</text>
+<text x="399" y="142" text-anchor="middle" class="dg-s">エッジ</text>
+</g>
+<g data-node="graph">
+<rect x="664" y="68" width="130" height="52" rx="8" class="dg-ok"/>
+<text x="729" y="90" text-anchor="middle" class="dg-t">Neptune</text>
+<text x="729" y="108" text-anchor="middle" class="dg-s">関係を探索</text>
+</g>
+<path d="M164.0,101.6 L334.0,121.4" class="dg-line" marker-end="url(#neptune-dgservices-neptune-1)"/>
+<path d="M399.0,103.0 L399.0,85.0" class="dg-line" marker-end="url(#neptune-dgservices-neptune-1)"/>
+<path d="M164.0,94.0 L664.0,94.0" class="dg-line dg-dash" marker-end="url(#neptune-dgservices-neptune-1)"/>
+</svg>
+</div>
+<figcaption>図1 グラフデータの概念。利用者と商品をノード、購入をエッジとして表し、関係をたどって検索する。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c3">3. ユースケース<a class="anchor" href="#neptune-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>不正検知や推薦で、複数段階の関係をたどる。</li>
+<li>顧客・商品・取引の関係をナレッジグラフとして管理する。</li>
+<li>ネットワークや依存関係をグラフとして分析する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c4">4. 料金の考え方<a class="anchor" href="#neptune-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Neptune Databaseでは、データベースインスタンス、ストレージ、I/O、バックアップ、転送などが料金に影響します。Neptune Analyticsは別の分析用エンジンで、料金の単位や構成が異なるため、用途に合うサービスを選びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c5">5. 関連サービス<a class="anchor" href="#neptune-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="#p-documentdb">Amazon DocumentDB</a>:ドキュメントモデルとの使い分け</li>
+<li><a href="../../../services/opensearch.html">Amazon OpenSearch Service</a>:全文検索やベクトル検索</li>
+<li><a href="../../../services/s3.html">Amazon S3</a>:グラフデータセットの保存</li>
+<li>関連する用語:<a href="../../../terms/data-store-selection.html">データストアの選び方</a>、<a href="../../../terms/vector-search.html">ベクトル検索</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c6">6. 試験・実務でのポイント<a class="anchor" href="#neptune-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>複雑な関係をたどるグラフクエリー → <strong>Amazon Neptune</strong>。</li>
+<li>Gremlin・openCypherはプロパティグラフ、SPARQLはRDFグラフのクエリー言語。</li>
+<li>SQLの表形式分析や全文検索とは異なるデータモデルを選ぶ。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="neptune-c7">7. まとめ<a class="anchor" href="#neptune-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Neptuneはノードと関係を扱うマネージドグラフデータベース。</li>
+<li>データモデルに合わせてGremlin・openCypher・SPARQLを使い分ける。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-memorydb">
+<div class="page-head hero" style="--cat:#C925D1">
+<div class="hero-text">
+<span class="category">データベース</span>
+<h1>Amazon MemoryDB</h1>
+<p class="lead">Redis互換の永続的なインメモリデータベース</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="memorydb-c1">1. サービス概要<a class="anchor" href="#memorydb-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon MemoryDB</strong>は、Redis(Valkey)互換の<strong>耐久性のあるインメモリデータベース</strong>です。インメモリならではの高速な応答と、データを失わない耐久性を両立し、キャッシュではなく<strong>メインのデータベース</strong>として使えます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="memorydb-c2">2. 主な機能・特徴<a class="anchor" href="#memorydb-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>データは<strong>マルチAZのトランザクションログ</strong>に書き込まれ、ノード障害でも失われない。</li>
+<li>読み取りはマイクロ秒、書き込みは1桁ミリ秒のレイテンシー。</li>
+<li>Redisのデータ構造・APIをそのまま使える。</li>
+<li>シャーディングとレプリカでスケールし、障害時は自動フェイルオーバー。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 722 114" style="max-width:722px;min-width:578px" role="img" aria-label="図1 MemoryDBの仕組み。インメモリで高速に応答しつつ、書き込みをマルチAZのトランザクションログに記録してデータを失わない。"><defs><marker id="memorydb-dgservices-memorydb-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="44" width="160" height="40" rx="8" class="dg-blue"/>
+<text x="114" y="68" text-anchor="middle" class="dg-t">アプリ</text>
+</g>
+<g data-node="mem">
+<rect x="286" y="38" width="160" height="52" rx="8" class="dg-accent"/>
+<text x="366" y="60" text-anchor="middle" class="dg-tb">MemoryDB</text>
+<text x="366" y="78" text-anchor="middle" class="dg-s">インメモリで高速</text>
+</g>
+<g data-node="log">
+<rect x="538" y="38" width="160" height="52" rx="8" class="dg-ok"/>
+<text x="618" y="60" text-anchor="middle" class="dg-t">トランザクションログ</text>
+<text x="618" y="78" text-anchor="middle" class="dg-s">マルチAZで永続化</text>
+</g>
+<path d="M194.0,64.0 L286.0,64.0" class="dg-line" marker-end="url(#memorydb-dgservices-memorydb-1)"/>
+<text x="240" y="68" text-anchor="middle" class="dg-s dg-halo">Redis API</text>
+<path d="M446.0,64.0 L538.0,64.0" class="dg-line" marker-end="url(#memorydb-dgservices-memorydb-1)"/>
+<text x="492" y="68" text-anchor="middle" class="dg-s dg-halo">記録</text>
+</svg>
+</div>
+<figcaption>図1 MemoryDBの仕組み。インメモリで高速に応答しつつ、書き込みをマルチAZのトランザクションログに記録してデータを失わない。</figcaption>
+</figure>
+</section>
+
+<section class="chapter">
+<h2 id="memorydb-c3">3. ユースケース<a class="anchor" href="#memorydb-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>超低レイテンシーが必要なアプリのプライマリDB(ゲームのリーダーボード、セッション、在庫など)</li>
+<li>「キャッシュ+DB」の2層構成を1つにまとめたい</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="memorydb-c4">4. 料金の考え方<a class="anchor" href="#memorydb-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>ノードのタイプと稼働時間、書き込みデータ量、スナップショットの保存量で課金されます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="memorydb-c5">5. 関連サービス<a class="anchor" href="#memorydb-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../../../services/elasticache.html">Amazon ElastiCache</a>:キャッシュ用途のインメモリサービス</li>
+<li><a href="#p-dynamodb">Amazon DynamoDB</a>:キーバリュー型NoSQL</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="memorydb-c6">6. 試験・実務でのポイント<a class="anchor" href="#memorydb-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>Redis互換で<strong>耐久性が必要なプライマリDB</strong> → MemoryDB。</li>
+<li>DBの前段に置く<strong>キャッシュ</strong> → ElastiCache。</li>
+<li>CloudFront・API Gateway・ElastiCache・DAXのキャッシュの使い分け → <a href="../../../terms/caching-comparison.html">キャッシュの選び方</a>。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="memorydb-c7">7. まとめ<a class="anchor" href="#memorydb-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>MemoryDBは、高速なインメモリと耐久性を両立したRedis互換DB。</li>
+</ul>
+</section>
+</article>
+<nav class="pager">
+  <a class="prev" href="step3-2.html"><span class="label">← 前の項目</span>データレイク・形式</a>
+  <a class="toc" href="../roadmap.html">ロードマップへ戻る</a>
+  <a class="next" href="step3-4.html"><span class="label">次の項目 →</span>ライフサイクル</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

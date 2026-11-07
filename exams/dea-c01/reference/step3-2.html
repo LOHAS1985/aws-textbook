@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>データレイク・形式 | AWS教科書</title>
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../../../css/style.css">
+<link rel="icon" type="image/png" href="../../../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../../../icons/apple-touch-icon.png">
+<link rel="manifest" href="../../../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../../../sw.js").catch(function () {});
+}
+</script>
+<script src="../../../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../../../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../../../services/index.html">サービス</a><a href="../../../terms/index.html">用語</a><a href="../../../usecases/index.html">運用シナリオ</a><a href="../../../news/index.html">ニュース</a><a href="../../../exams/index.html" class="current">試験別</a><a href="../../../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main class="booklet guide">
+<div class="page-head booklet-cover">
+<p class="booklet-site">ステップ3 データストアの管理(分野2・26%)</p>
+<h1>データレイク・形式</h1>
+<p class="booklet-help">この項目で使うサービス・用語を、参考書としてまとめたページです。ブラウザーの印刷(Ctrl+P)から、紙に印刷するかPDFとして保存してください。</p>
+<p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button></p>
+</div>
+<article class="booklet-page" id="p-lake-formation">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>AWS Lake Formation</h1>
+<p class="lead">データレイクとカタログのアクセス権を一元管理するサービス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="lake-formation-c1">1. サービス概要<a class="anchor" href="#lake-formation-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>AWS Lake Formation</strong>は、Amazon S3上のデータレイクとAWS Glue Data Catalogのメタデータへのアクセスを一元的に管理するサービスです。データベース・テーブルだけでなく、列・行・セル単位のアクセス制御や、アカウントをまたぐデータ共有に対応します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c2">2. 主な機能・特徴<a class="anchor" href="#lake-formation-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="lake-formation-c2-1">権限の仕組み<a class="anchor" href="#lake-formation-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<p>Lake Formationの権限はIAMやS3バケットポリシーを置き換えるものではなく、それらに加えてデータレイク内の細かいアクセスを制御します。利用者には、サービスAPIを呼ぶIAM権限と、テーブルデータを読むLake Formation権限の両方が必要です。実際にアクセスできる範囲は、関係する権限の組み合わせで決まります。</p>
+<ul>
+<li>データベース・テーブル単位の権限に加え、列・行・セルを絞るデータフィルターを設定できる。</li>
+<li>Lake Formationのタグをデータベースやテーブルに付け、タグに基づいて権限を付与できる。</li>
+<li>ハイブリッドアクセスモードでは、対象のデータベースやテーブルごとにLake Formation権限を段階的に導入できる。</li>
+</ul>
+
+<h3 id="lake-formation-c2-2">データ共有<a class="anchor" href="#lake-formation-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>Data Catalogと基盤データを、AWSアカウント・組織をまたいで共有できます。共有先はAWS Resource Access Managerなどを介してカタログ資産を利用します。共有設定だけでなく、共有先のIAM権限やデータ側の権限も適切に整えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 973 234" style="max-width:973px;min-width:778px" role="img" aria-label="図1 データレイクのアクセス。IAMでサービス操作を許可し、Lake Formationでカタログとデータに対する細粒度の権限を管理する。"><defs><marker id="lake-formation-dgservices-lake-formation-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="roles">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">IAMロール</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">サービスの呼び出し</text>
+</g>
+<g data-node="lf">
+<rect x="289" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="100" text-anchor="middle" class="dg-tb">Lake Formation</text>
+<text x="364" y="118" text-anchor="middle" class="dg-s">テーブル権限</text>
+</g>
+<g data-node="cat">
+<rect x="544" y="38" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="60" text-anchor="middle" class="dg-t">Data Catalog</text>
+<text x="619" y="78" text-anchor="middle" class="dg-s">メタデータ</text>
+</g>
+<g data-node="data">
+<rect x="544" y="158" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="180" text-anchor="middle" class="dg-t">Amazon S3</text>
+<text x="619" y="198" text-anchor="middle" class="dg-s">実データ</text>
+</g>
+<g data-node="query">
+<rect x="799" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="874" y="100" text-anchor="middle" class="dg-t">Athena・EMR</text>
+<text x="874" y="118" text-anchor="middle" class="dg-s">許可範囲を読む</text>
+</g>
+<path d="M184.0,104.0 L289.0,104.0" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+<path d="M439.0,92.2 L544.0,75.8" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+<path d="M439.0,127.5 L544.0,160.5" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+<path d="M694.0,75.8 L799.0,92.2" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+<path d="M694.0,160.5 L799.0,127.5" class="dg-line" marker-end="url(#lake-formation-dgservices-lake-formation-1)"/>
+</svg>
+</div>
+<figcaption>図1 データレイクのアクセス。IAMでサービス操作を許可し、Lake Formationでカタログとデータに対する細粒度の権限を管理する。</figcaption>
+</figure>
+
+<h3 id="lake-formation-c2-3">監査と統合<a class="anchor" href="#lake-formation-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Athena、AWS Glue、Amazon EMR、Redshift Spectrumなどの分析サービスと連携します。AWS CloudTrailでAPI操作やデータアクセスに関するイベントを記録し、アクセス状況の監査に利用できます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c3">3. ユースケース<a class="anchor" href="#lake-formation-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>部門ごとに異なるS3上のデータを一元管理し、分析サービスから安全に利用させる。</li>
+<li>個人情報の列を隠す、または行条件で閲覧データを制限する。</li>
+<li>タグを用いてデータ分類とアクセス権をまとめて管理する。</li>
+<li>他アカウントの分析チームに、元データを複製せずにデータを共有する。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c4">4. 料金の考え方<a class="anchor" href="#lake-formation-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>Lake Formationの機能料金のほか、基盤となるAmazon S3、AWS Glue Data Catalog、AWS RAM、クエリ・処理サービスなどの料金が発生する場合があります。共有やクエリの利用料がどのアカウントに発生するかを構成ごとに確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c5">5. 関連サービス<a class="anchor" href="#lake-formation-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../../../services/glue.html">AWS Glue</a>:カタログ、クローラー、ETLジョブ</li>
+<li><a href="../../../services/s3.html">Amazon S3</a>:データレイクの実データ</li>
+<li><a href="../../../services/athena.html">Amazon Athena</a>:データレイクのクエリ</li>
+<li><a href="#p-redshift">Amazon Redshift</a>:Spectrumやデータ共有との連携</li>
+<li><a href="../../../services/macie.html">Amazon Macie</a>:S3内の機密データ・個人情報の検出</li>
+<li><a href="../../../services/cloudtrail.html">AWS CloudTrail</a>:操作やアクセスの監査</li>
+<li>関連する用語:<a href="../../../terms/data-governance.html">データガバナンス</a></li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c6">6. 試験・実務でのポイント<a class="anchor" href="#lake-formation-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>データレイクのカタログとデータに対する細粒度の権限管理 → <strong class="em">Lake Formation</strong>。</li>
+<li>IAM権限はサービスAPIへのアクセス、Lake Formation権限はデータ資産へのアクセスを制御する。</li>
+<li>列・行単位の制限やタグベースの権限を使い、最小権限にする。</li>
+<li>データ共有では、共有元・共有先の設定と各アカウントの権限を確認する。</li>
+<li>既存のIAM・S3権限を保ちながら段階導入する選択肢 → ハイブリッドアクセスモード。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="lake-formation-c7">7. まとめ<a class="anchor" href="#lake-formation-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Lake FormationはデータレイクとGlue Data Catalogへのアクセスを一元管理する。</li>
+<li>IAMと連携し、列・行・タグ単位の制御やアカウント間共有を提供する。</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-open-table-formats">
+<div class="page-head hero">
+<div class="hero-text">
+<span class="category">ストレージ</span>
+<h1>オープンテーブル形式</h1>
+<p class="lead">データレイク上の複数ファイルをテーブルとして一貫して管理する形式</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="open-table-formats-c1">1. 詳しい説明<a class="anchor" href="#open-table-formats-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>CSVやParquetは個々のファイルのデータ形式です。Apache Icebergなどの<strong>オープンテーブル形式</strong>は、データレイク上の複数ファイルをテーブルとして管理するメタデータやトランザクションの仕組みを定めます。データ形式とテーブル形式は異なる層です。</p>
+<h3 id="open-table-formats-c1-1">Apache Iceberg<a class="anchor" href="#open-table-formats-c1-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li>スナップショットとメタデータでテーブルの状態を管理し、一貫した読み取りや変更を支援する。</li>
+<li>列の追加・変更などのスキーマ進化や、パーティション仕様の変更をデータファイルの再配置を抑えて行える。</li>
+<li>対応する複数の処理エンジンから同じテーブルを扱いやすくする。</li>
+<li>スナップショットによる過去状態の参照や、変更データの追跡を利用できる機能がある。</li>
+</ul>
+<p>実際に使える書き込み・更新・削除・タイムトラベルの機能は、エンジン、カタログ、テーブル形式のバージョンに依存します。利用予定の組み合わせで公式の対応表を確認します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 838 216" style="max-width:838px;min-width:670px" role="img" aria-label="図1 Icebergテーブル。複数のエンジンが共有メタデータを介してS3上のデータファイルをテーブルとして扱う。"><defs><marker id="open-table-formats-dgterms-open-table-formats-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="engine1">
+<rect x="34" y="36" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="57" text-anchor="middle" class="dg-t">Athena</text>
+<text x="104" y="75" text-anchor="middle" class="dg-s">クエリ</text>
+</g>
+<g data-node="engine2">
+<rect x="34" y="140" width="140" height="52" rx="8" class="dg-blue"/>
+<text x="104" y="162" text-anchor="middle" class="dg-t">Glue・Spark</text>
+<text x="104" y="180" text-anchor="middle" class="dg-s">ETL</text>
+</g>
+<g data-node="table">
+<rect x="354" y="88" width="140" height="52" rx="8" class="dg-accent"/>
+<text x="424" y="110" text-anchor="middle" class="dg-tb">Iceberg</text>
+<text x="424" y="128" text-anchor="middle" class="dg-s">table metadata</text>
+</g>
+<g data-node="files">
+<rect x="674" y="88" width="140" height="52" rx="8" class="dg-ok"/>
+<text x="744" y="110" text-anchor="middle" class="dg-t">S3データファイル</text>
+<text x="744" y="128" text-anchor="middle" class="dg-s">Parquetなど</text>
+</g>
+<path d="M174.0,73.0 L354.0,102.5" class="dg-line" marker-end="url(#open-table-formats-dgterms-open-table-formats-1)"/>
+<path d="M174.0,155.0 L354.0,125.5" class="dg-line" marker-end="url(#open-table-formats-dgterms-open-table-formats-1)"/>
+<path d="M494.0,114.0 L674.0,114.0" class="dg-line" marker-end="url(#open-table-formats-dgterms-open-table-formats-1)"/>
+</svg>
+</div>
+<figcaption>図1 Icebergテーブル。複数のエンジンが共有メタデータを介してS3上のデータファイルをテーブルとして扱う。</figcaption>
+</figure>
+
+<h3 id="open-table-formats-c1-2">ファイル形式との組み合わせ<a class="anchor" href="#open-table-formats-c1-2" aria-label="この見出しへのリンク">#</a></h3>
+<p>ParquetやORCのような列指向ファイル形式は、必要な列だけを読み、圧縮してスキャン量を減らすのに有効です。Icebergはこれらのデータファイルを管理するテーブル層です。パーティション設計、圧縮、スナップショットの期限切れや古いファイルの削除も運用に含めます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="open-table-formats-c2">2. 関連する用語<a class="anchor" href="#open-table-formats-c2" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../../../terms/data-store-selection.html">データストアの選び方</a>:データレイクと分析基盤の選択</li>
+<li><a href="../../../terms/data-quality.html">データ品質</a>:スキーマと内容の検証</li>
+<li><a href="../../../terms/storage-types.html">ストレージの種類</a>:オブジェクトストレージの特徴</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="open-table-formats-c3">3. 関連サービス<a class="anchor" href="#open-table-formats-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../../../services/s3.html">Amazon S3</a>:テーブルデータファイルの保存先</li>
+<li><a href="../../../services/glue.html">AWS Glue</a>:カタログ、ETL、Iceberg読み書き</li>
+<li><a href="../../../services/athena.html">Amazon Athena</a>:データレイクのSQLクエリ</li>
+<li><a href="../../../services/data-firehose.html">Amazon Data Firehose</a>:S3上のIcebergテーブルへの配送</li>
+<li><a href="../../../services/lake-formation.html">AWS Lake Formation</a>:カタログ・データへの権限管理</li>
+</ul>
+</section>
+</article>
+<article class="booklet-page" id="p-redshift">
+<div class="page-head hero" style="--cat:#8C4FFF">
+<div class="hero-text">
+<span class="category">分析</span>
+<h1>Amazon Redshift</h1>
+<p class="lead">大規模な分析クエリを実行するマネージドデータウェアハウス</p>
+</div>
+</div>
+<section class="chapter">
+<h2 id="redshift-c1">1. サービス概要<a class="anchor" href="#redshift-c1" aria-label="この見出しへのリンク">#</a></h2>
+<p><strong>Amazon Redshift</strong>は、大量の構造化データをSQLで集計・分析するデータウェアハウスです。列指向の保存と並列処理で分析クエリを実行し、S3のデータレイクやBIツールとも連携します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c2">2. 主な機能・特徴<a class="anchor" href="#redshift-c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="redshift-c2-1">プロビジョンドとServerless<a class="anchor" href="#redshift-c2-1" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><strong>プロビジョンド</strong>:クラスターのノード構成を選び、継続的なワークロードの容量を管理する。</li>
+<li><strong>Redshift Serverless</strong>:データウェアハウスの容量を個別に管理せず、ワークロードに応じて処理能力を利用する。</li>
+</ul>
+<p>どちらもSQLで分析できます。継続的で予測しやすい処理か、変動が大きく管理負荷を下げたい処理かで選びます。</p>
+
+<h3 id="redshift-c2-2">データの取り込みと連携<a class="anchor" href="#redshift-c2-2" aria-label="この見出しへのリンク">#</a></h3>
+<ul>
+<li><code>COPY</code>でS3などからデータをロードし、<code>UNLOAD</code>でクエリ結果をS3へ出力する。</li>
+<li><strong>Redshift Spectrum</strong>で、S3上のデータをクラスターのテーブルにロードせずにクエリする。外部テーブルの定義にGlue Data Catalogを利用できる。</li>
+<li>フェデレーテッドクエリでRDSやAuroraなどの外部データソースを参照する。</li>
+<li>データ共有で別のRedshiftデータウェアハウスへデータを共有し、複製を抑えた分析を行う。</li>
+</ul>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 234" style="max-width:718px;min-width:574px" role="img" aria-label="図1 Amazon Redshiftの分析。S3からロードするほか、SpectrumでS3上のデータを直接参照し、クエリ結果をBIや別のRedshiftへ共有できる。"><defs><marker id="redshift-dgservices-redshift-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="100" text-anchor="middle" class="dg-t">S3</text>
+<text x="109" y="118" text-anchor="middle" class="dg-s">COPYでロード</text>
+</g>
+<g data-node="wh">
+<rect x="289" y="78" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="100" text-anchor="middle" class="dg-tb">Redshift</text>
+<text x="364" y="118" text-anchor="middle" class="dg-s">SQL・集計</text>
+</g>
+<g data-node="bi">
+<rect x="544" y="78" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="619" y="100" text-anchor="middle" class="dg-t">BIツール</text>
+<text x="619" y="118" text-anchor="middle" class="dg-s">ダッシュボード</text>
+</g>
+<g data-node="lake">
+<rect x="289" y="158" width="150" height="52" rx="8" class="dg-box"/>
+<text x="364" y="180" text-anchor="middle" class="dg-t">S3データレイク</text>
+<text x="364" y="198" text-anchor="middle" class="dg-s">Spectrumで参照</text>
+</g>
+<g data-node="share">
+<rect x="544" y="158" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="180" text-anchor="middle" class="dg-t">別クラスター</text>
+<text x="619" y="198" text-anchor="middle" class="dg-s">データ共有</text>
+</g>
+<path d="M184.0,104.0 L289.0,104.0" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
+<text x="236" y="108" text-anchor="middle" class="dg-s dg-halo">COPY</text>
+<path d="M439.0,104.0 L544.0,104.0" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
+<path d="M364.0,158.0 L364.0,130.0" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
+<text x="364" y="148" text-anchor="middle" class="dg-s dg-halo">Spectrum</text>
+<path d="M439.0,127.5 L544.0,160.5" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
+<text x="492" y="148" text-anchor="middle" class="dg-s dg-halo">共有</text>
+</svg>
+</div>
+<figcaption>図1 Amazon Redshiftの分析。S3からロードするほか、SpectrumでS3上のデータを直接参照し、クエリ結果をBIや別のRedshiftへ共有できる。</figcaption>
+</figure>
+
+<h3 id="redshift-c2-3">テーブル設計と同時実行<a class="anchor" href="#redshift-c2-3" aria-label="この見出しへのリンク">#</a></h3>
+<p>クエリのアクセスパターンに応じて、列のデータ型、ソートキー、分散方法を設計します。列指向形式や圧縮はスキャン量を抑えます。テーブルや行のロック、トランザクションの競合が発生した場合は、長時間トランザクションや同時更新を調査します。分析性能はクエリプラン、スキャン量、分散キーのデータ偏りも確認します。</p>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c3">3. ユースケース<a class="anchor" href="#redshift-c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>業務システムやS3のデータを統合した大規模なSQL分析。</li>
+<li>BIダッシュボード向けの集計テーブルやマテリアライズドビュー。</li>
+<li>S3データレイクとデータウェアハウスを組み合わせた分析。</li>
+<li>別のRedshift利用者への管理されたデータ共有。</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c4">4. 料金の考え方<a class="anchor" href="#redshift-c4" aria-label="この見出しへのリンク">#</a></h2>
+<p>プロビジョンドでは主に利用するノードの容量と稼働時間、Serverlessでは処理容量の利用量などが課金要因です。ストレージ、バックアップ、データ転送、Spectrumのスキャンなども確認します。アイドル時間が長いか、負荷が一定か変動するかを踏まえて方式を選びます。</p>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c5">5. 関連サービス<a class="anchor" href="#redshift-c5" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="../../../services/s3.html">Amazon S3</a>:ロード元、UNLOAD先、Spectrumのデータレイク</li>
+<li><a href="../../../services/glue.html">AWS Glue</a>:カタログとETL</li>
+<li><a href="#p-lake-formation">AWS Lake Formation</a>:データレイクのアクセス制御</li>
+<li><a href="../../../services/athena.html">Amazon Athena</a>:サーバーレスSQLでのデータレイク分析</li>
+<li><a href="../../../services/quick.html">Amazon Quick</a>:Quick SightのBIダッシュボード</li>
+<li><a href="../../../services/appflow.html">Amazon AppFlow</a>:SaaSデータの取り込み</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c6">6. 試験・実務でのポイント<a class="anchor" href="#redshift-c6" aria-label="この見出しへのリンク">#</a></h2>
+<div class="point"><ul>
+<li>大規模な分析用SQLデータウェアハウス → <strong class="em">Amazon Redshift</strong>。</li>
+<li>データをS3からロードする → <code>COPY</code>。クエリ結果をS3へ出力する → <code>UNLOAD</code>。</li>
+<li>S3のデータをロードせずに分析 → <strong>Redshift Spectrum</strong>。</li>
+<li>負荷変動が大きく容量管理を減らしたい → Serverless。一定負荷で容量を管理したい → プロビジョンドを比較する。</li>
+<li>他のデータウェアハウスへ読み取り用データを渡す → データ共有。データベース間の移送方法と区別する。</li>
+</ul></div>
+</section>
+
+<section class="chapter">
+<h2 id="redshift-c7">7. まとめ<a class="anchor" href="#redshift-c7" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li>Redshiftは、SQLによる大規模分析向けのデータウェアハウス。</li>
+<li>COPY/UNLOAD、Spectrum、フェデレーテッドクエリ、データ共有で複数のデータソースと連携する。</li>
+<li>ノード容量・クエリ・ストレージなど、方式別の料金要因を比較する。</li>
+</ul>
+</section>
+</article>
+<nav class="pager">
+  <a class="prev" href="step3-1.html"><span class="label">← 前の項目</span>選び方</a>
+  <a class="toc" href="../roadmap.html">ロードマップへ戻る</a>
+  <a class="next" href="step3-3.html"><span class="label">次の項目 →</span>データストア</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
