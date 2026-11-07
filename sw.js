@@ -1,6 +1,6 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "b3374ea16e19";
+var CACHE = PREFIX + "5af11a625285";
 var FILES = {
 "css/style.css": "557ba51eb530",
 "exercises/access-denied-troubleshooting.html": "3f68c538ac99",
@@ -54,6 +54,7 @@ var FILES = {
 "exercises/vpc-ip-planning.html": "e4e6f491462c",
 "exercises/vulnerability-management.html": "531112214807",
 "exercises/waf-web-protection.html": "519be48f2222",
+"guides/dea-c01.html": "b4ff2138b47c",
 "icons/apple-touch-icon.png": "7b5b103e736b",
 "icons/favicon-32.png": "12d5a73d273f",
 "icons/icon-192.png": "015f1cdf368f",
@@ -168,7 +169,7 @@ var FILES = {
 "icons/services/waf.svg": "e67f918f21cf",
 "icons/services/well-architected-tool.svg": "1a660c904e61",
 "icons/services/xray.svg": "49c3a0c3f4e8",
-"index.html": "fce0303c0bd3",
+"index.html": "89949ae6adeb",
 "js/glossary.js": "c67d44fca2b3",
 "js/quiz.js": "d5b39b8d2230",
 "js/sim.js": "3ae9e28cc7a7",
@@ -322,7 +323,7 @@ var FILES = {
 "terms/compliance-artifact.html": "64db255e0f86",
 "terms/cost-management-comparison.html": "15dad952514a",
 "terms/cron-rate-expressions.html": "1eb21fbcf9ca",
-"terms/data-engineer-exam-map.html": "a773bd221de1",
+"terms/data-engineer-exam-map.html": "79ad24f0e116",
 "terms/data-engineering-basics.html": "96234ca48cf5",
 "terms/data-governance.html": "09ceed81c30c",
 "terms/data-quality.html": "577146203e6e",
