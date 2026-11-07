@@ -266,6 +266,14 @@ def load_pages(col, warnings, updated):
     return pages
 
 
+DEA_C01_SKILL_COUNTS = {
+    1: {1: 12, 2: 10, 3: 4, 4: 11},
+    2: {1: 8, 2: 6, 3: 6, 4: 6},
+    3: {1: 9, 2: 6, 3: 8, 4: 5},
+    4: {1: 7, 2: 6, 3: 4, 4: 5, 5: 7},
+}
+
+
 def add_question_bank(page, src_dir):
     """試験別の本文に、分野ごとの追加問題データをHTMLとして組み込む。"""
     title_path = src_dir / "dea-c01-titles.json"
@@ -274,12 +282,34 @@ def add_question_bank(page, src_dir):
         raise ValueError(f"{title_path}: 問1〜100の選択画面用タイトルが必要です")
     page = annotate_existing_questions(page, titles)
     questions = {domain: [] for domain in range(1, 5)}
+    question_titles = dict(titles)
     for domain in questions:
         path = src_dir / f"domain-{domain}.json"
         if not path.exists():
             continue
         data = json.loads(path.read_text(encoding="utf-8"))
-        questions[domain] = [render_question(q, domain, titles[str(q["id"])]) for q in data]
+        valid_skills = {
+            f"{domain}.{task}.{number}"
+            for task, count in DEA_C01_SKILL_COUNTS[domain].items()
+            for number in range(1, count + 1)
+        }
+        for question in data:
+            question_id = str(question["id"])
+            title = question.get("title", titles.get(question_id))
+            if not title:
+                raise ValueError(f"{path}: 問{question_id}の選択画面用タイトルがありません")
+            if int(question_id) > 100:
+                skill = question.get("skill", "")
+                if skill not in valid_skills:
+                    raise ValueError(f"{path}: 問{question_id}のSkill「{skill}」が公式ガイドにありません")
+                question_titles[question_id] = title
+            questions[domain].append(render_question(question, domain, title))
+
+    expected_ids = {str(question_id) for question_id in range(1, 201)}
+    if set(question_titles) != expected_ids:
+        raise ValueError(f"{src_dir}: 問1〜200の選択画面用タイトルが必要です")
+    if len(set(question_titles.values())) != len(question_titles):
+        raise ValueError(f"{src_dir}: 選択画面用タイトルが重複しています")
 
     for domain in range(1, 5):
         rendered = "\n".join(questions[domain])

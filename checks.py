@@ -219,10 +219,13 @@ def _check_question_paper(raw, where, warnings):
     if not questions:
         warnings.append(f"{where}: 問題(quiz-q)がありません")
         return
-    if where == "questions/dea-c01" and len(questions) != 100:
-        warnings.append(f"{where}: DEA-C01の問題は100問にしてください(現在{len(questions)}問)")
+    if where == "questions/dea-c01" and len(questions) != 200:
+        warnings.append(f"{where}: DEA-C01の問題は200問にしてください(現在{len(questions)}問)")
     ids = set()
     domains = {str(domain): 0 for domain in range(1, 5)}
+    difficulties = {"basic": 0, "intermediate": 0, "advanced": 0}
+    types = {"single": 0, "multiple": 0}
+    lengths = {"short": 0, "medium": 0, "long": 0}
     for n, (attrs, inner) in enumerate(questions, 1):
         question_id = re.search(r'data-id="([^"]+)"', attrs)
         question_title = re.search(r'data-title="([^"]+)"', attrs)
@@ -240,7 +243,9 @@ def _check_question_paper(raw, where, warnings):
             warnings.append(f"{where}: {n}問目に data-id がありません")
         if not question_title or not question_title.group(1).strip():
             warnings.append(f"{where}: {n}問目に選択画面用タイトル(data-title)がありません")
-        if not difficulty:
+        if difficulty:
+            difficulties[difficulty.group(1)] += 1
+        else:
             warnings.append(f"{where}: {n}問目に data-difficulty がありません")
         if domain:
             domains[domain.group(1)] += 1
@@ -249,30 +254,49 @@ def _check_question_paper(raw, where, warnings):
         if not answer or not kind:
             warnings.append(f"{where}: {n}問目に data-answer または data-type がありません")
             continue
+        types[kind.group(1)] += 1
         correct = answer.group(1).split(",")
         expected_type = "radio" if kind.group(1) == "single" else "checkbox"
+        legend = re.search(r"<legend>(.*?)</legend>", inner, re.S)
+        expected_count = "1つ" if kind.group(1) == "single" else "2つ"
+        if not legend or expected_count not in _text_only(legend.group(1)):
+            warnings.append(f"{where}: 問{n}の選択数の指示と回答形式が一致しません")
         if (len(choices) < 3 or len(choices) > 5 or len(values) != len(set(values))
                 or any(input_type != expected_type for input_type, _ in choices)):
             warnings.append(f"{where}: {n}問目は選択肢を3〜5個にし、選択方式を統一してください")
         if (len(correct) != len(set(correct)) or not set(correct) <= set(values)
                 or (kind.group(1) == "single" and len(correct) != 1)
-                or (kind.group(1) == "multiple" and len(correct) < 2)):
+                or (kind.group(1) == "multiple" and len(correct) != 2)):
             warnings.append(f"{where}: {n}問目の正解(data-answer)が選択肢と一致しません")
         if len(re.findall(r'<details class="quiz-answer">', inner)) != 1:
             warnings.append(f"{where}: {n}問目に答えと解説(quiz-answer)を1つ付けてください")
         stem = re.search(r'<p class="quiz-stem">(.*?)</p>', inner, re.S)
-        if stem and not 100 <= len(_text_only(stem.group(1)).strip()) <= 250:
-            warnings.append(f"{where}: 問{n}の問題文は100〜250字を目安にしてください")
+        if stem:
+            stem_length = len(_text_only(stem.group(1)).strip())
+            if not 100 <= stem_length <= 250:
+                warnings.append(f"{where}: 問{n}の問題文は100〜250字を目安にしてください")
+            elif stem_length <= 135:
+                lengths["short"] += 1
+            elif stem_length <= 185:
+                lengths["medium"] += 1
+            else:
+                lengths["long"] += 1
         wrong_count = len(values) - len(correct)
         explanation = re.search(r'<ul>(.*?)</ul>', inner, re.S)
         if not explanation or len(re.findall(r'<li>', explanation.group(1))) != wrong_count:
             warnings.append(f"{where}: 問{n}の誤答選択肢それぞれに解説を付けてください")
     if where == "questions/dea-c01":
-        if ids != {str(question_id) for question_id in range(1, 101)}:
-            warnings.append(f"{where}: 問題IDは1〜100の連番にしてください")
-        expected = {"1": 34, "2": 26, "3": 22, "4": 18}
+        if ids != {str(question_id) for question_id in range(1, 201)}:
+            warnings.append(f"{where}: 問題IDは1〜200の連番にしてください")
+        expected = {"1": 68, "2": 52, "3": 44, "4": 36}
         if domains != expected:
-            warnings.append(f"{where}: 出題分野の配分が公式ガイドと一致しません({domains})")
+            warnings.append(f"{where}: 200問の出題分野の配分が公式ガイドと一致しません({domains})")
+        if any(count < 25 for count in difficulties.values()):
+            warnings.append(f"{where}: 難易度を基礎・標準・応用に十分分散してください({difficulties})")
+        if types["single"] < 100 or types["multiple"] < 40:
+            warnings.append(f"{where}: 1つ選択・2つ選択の問題を十分に混在させてください({types})")
+        if lengths["short"] < 15 or lengths["medium"] < 80 or lengths["long"] < 15:
+            warnings.append(f"{where}: 問題文の長さに幅を持たせてください({lengths})")
 
 
 def _check_style(raw, where, warnings):
