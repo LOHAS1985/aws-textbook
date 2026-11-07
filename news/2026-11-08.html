@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC2 Capacity Blocksの費用の按分・Redshift SUPERの文字列上限拡大・Glue Data Catalogの外部Icebergカタログ連携 | 2026年11月8日のAWSニュース | AWS教科書</title>
+<meta name="description" content="GPU向けの予約「EC2 Capacity Blocks for ML」の前払い料金が、予約期間に按分されてCost ExplorerとCUR 2.0で見えるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">試験別</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-08">2026年11月8日</time>のAWSニュース</p>
+  <h1>EC2 Capacity Blocksの費用の按分・Redshift SUPERの文字列上限拡大・Glue Data Catalogの外部Icebergカタログ連携</h1>
+  <p class="lead">GPU向けの予約「EC2 Capacity Blocks for ML」の前払い料金が、予約期間に按分されてCost ExplorerとCUR 2.0で見えるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 今日のまとめ<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<div class="table-wrap"><table>
+<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
+<tr><td><a href="#n1">EC2 Capacity Blocks:前払い料金の按分</a></td><td>購入日に1回だけ出ていた前払い料金を、予約期間にならして確認できる</td><td><a href="../services/cost-explorer.html">Cost Explorer</a>、<a href="../services/cost-and-usage-reports.html">コストと使用状況レポート</a>、<a href="../services/ec2.html">EC2</a></td></tr>
+<tr><td><a href="#n2">Redshift:SUPER型の文字列上限を拡大</a></td><td>SUPER型の中の文字列1つの上限が65,535バイトから1,600万バイトになった</td><td><a href="../services/redshift.html">Redshift</a></td></tr>
+<tr><td><a href="#n3">Glue Data Catalog:外部Icebergカタログの一時的な認証情報に対応</a></td><td>外部のカタログが発行する一時的な認証情報で、外部のIcebergテーブルを読める</td><td><a href="../services/glue.html">Glue</a>、<a href="../services/lake-formation.html">Lake Formation</a>、<a href="../services/athena.html">Athena</a></td></tr>
+</table></div>
+</section>
+
+<section class="chapter">
+<h2 id="c2">2. 注目の発表<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
+<h3 id="n1">EC2 Capacity Blocks:前払い料金の按分<a class="anchor" href="#n1" aria-label="この見出しへのリンク">#</a></h3>
+<p>EC2 Capacity Blocks for ML は、機械学習向けのGPUインスタンスを、あらかじめ決めた期間だけ確実に使えるように予約する仕組みです。料金は予約するときに前払いします。これまでは、その前払い料金が購入日に1回だけ請求として現れるため、どのチームやプロジェクトがどれだけ使ったのかをコストと結び付けにくい状態でした。今回、Cost Explorer と、コストと使用状況レポートの新しい形式であるCUR 2.0(Data Exports)で、前払い料金を予約期間にわたって按分(日割りのように配分)して表示できるようになりました。使ったインスタンスごとの費用と、使われずに余った分の費用も分けて見えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 前払い料金が使用状況と並べて見られる"><defs><marker id="dgnews-2026-11-08-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">前払いが購入日に</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">予約期間に按分して</text>
+</g>
+<g data-node="use">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="653" y="62" text-anchor="middle" class="dg-tb">チーム・案件ごとの</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">配分と未使用分の</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-08-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-08-1)"/>
+</svg>
+</div>
+<figcaption>図1 前払い料金が使用状況と並べて見られる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>GPUの費用を、実際に使ったチームやアプリケーションに割り当てられます。予約のうち使われなかった割合も分かるので、次の購入量を決める材料になります。</dd>
+<dt>試験・実務への影響</dt><dd>CUR 2.0では reservation_amortized_upfront_fee_for_billing_period や reservation_effective_cost などの列に按分後の金額が入ります。Cost Explorerでは按分(amortized)のコスト表示に切り替えて確認します。追加料金はなく、GovCloudと中国リージョン以外のすべてのリージョンで使えます。「前払いの料金を期間にならして見る」という考え方は、Savings Plansやリザーブドインスタンスのコスト分析でも出てきます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cost-explorer.html">Cost Explorer</a>、<a href="../services/cost-and-usage-reports.html">コストと使用状況レポート</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/savings-plans.html">Savings Plans</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-ec2-capacity-blocks-ml/">AWS launches support for amortization of EC2 Capacity Blocks for ML</a>(2026-11-06)</dd>
+</dl>
+
+<h3 id="n2">Redshift:SUPER型の文字列上限を拡大<a class="anchor" href="#n2" aria-label="この見出しへのリンク">#</a></h3>
+<p>RedshiftのSUPER型は、JSONのような構造が決まっていないデータ(半構造化データ)を、そのまま1つの列に入れて、PartiQLというSQLに近い言語で検索できるデータ型です。これまでSUPER型の中の文字列1つは、最大65,535バイトまででした。今回、これが最大1,600万バイトまで広がりました。契約書や利用規約のような長い文章を、取り込む前に分割や加工をしなくても、そのまま入れて検索できます。使うには、データベースのパラメータで有効にする必要があります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図2 SUPER型の文字列の上限が広がった"><defs><marker id="dgnews-2026-11-08-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">文字列1つは</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">文字列1つは</text>
+</g>
+<g data-node="opt">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="653" y="62" text-anchor="middle" class="dg-tb">DBパラメータで</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">有効にして使う</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-08-2)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-08-2)"/>
+</svg>
+</div>
+<figcaption>図2 SUPER型の文字列の上限が広がった</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>JSON・Parquet・テキスト・CSVのファイルから取り込むときや、ELT(取り込んだあとにRedshift内で変換する方式)で、長い文字列を切り詰めずに扱えます。JSON_PARSE・CONCAT・LISTAGGなどの関数も、長い文字列を入出力できます。</dd>
+<dt>試験・実務への影響</dt><dd>有効化はオプトイン(自分で設定を変えたときだけ有効)で、勝手には変わりません。すべてのリージョンで使えます。データエンジニアリングでは、「構造が決まっていないデータはSUPER型に入れる」という使い分けと、上限の違いを押さえておくと役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/redshift.html">Redshift</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-redshift-expands-super-to-16-million-bytes/">Amazon Redshift expands SUPER data type to store strings up to 16 million bytes</a>(2026-11-06)</dd>
+</dl>
+
+<h3 id="n3">Glue Data Catalog:外部Icebergカタログの一時的な認証情報に対応<a class="anchor" href="#n3" aria-label="この見出しへのリンク">#</a></h3>
+<p>Apache Iceberg は、データレイク上の表を管理するオープンなテーブル形式で、AWS以外のカタログ(表の一覧や場所を管理する仕組み)でも使われています。Glue Data Catalogは、そうした外部のIcebergカタログに接続(フェデレーション)して、AthenaやEMR、Redshift、Glueから表を読めます。これまでは、AWS側のIAMロールにS3バケットへのアクセス権を持たせる方法でした。今回、外部のカタログが発行する一時的な認証情報(S3の特定のパスに限定されたもの)を使う方法が加わりました。外部カタログが許可した表だけを読めます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図3 外部カタログの一時認証情報で外部の表を読む"><defs><marker id="dgnews-2026-11-08-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="ext">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">外部のIceberg</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">カタログ</text>
+</g>
+<g data-node="glue">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="62" text-anchor="middle" class="dg-tb">Glue Data</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">Catalog</text>
+</g>
+<g data-node="eng">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="653" y="62" text-anchor="middle" class="dg-t">Athena・EMR</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">Redshift・Glue</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-08-3)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">接続</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-08-3)"/>
+<text x="517" y="70" text-anchor="middle" class="dg-s dg-halo">アクセス制御</text>
+</svg>
+</div>
+<figcaption>図3 外部カタログの一時認証情報で外部の表を読む</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>S3全体へのアクセス権を持つIAMロールを用意しなくても、外部カタログが認めた表だけに絞って読めます。Lake Formationが、どの分析エンジンから読む場合でも行や列のレベルまで権限を絞り、AWSアカウントをまたいだ共有も管理します。</dd>
+<dt>試験・実務への影響</dt><dd>Lake Formationのコンソール・AWS CLI・SDKから設定します。AWSのすべての商用リージョン(GlueとLake Formationがあるところ)で使えます。「最小権限」と「一時的な認証情報」という、セキュリティの基本の考え方がデータレイクでも使われる例です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/glue.html">Glue</a>、<a href="../services/lake-formation.html">Lake Formation</a>、<a href="../services/athena.html">Athena</a>、<a href="../services/emr.html">EMR</a>、<a href="../services/redshift.html">Redshift</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/glue-catalog-vended-credentials-iceberg/">AWS Glue Data Catalog now supports catalog-vended credentials with Apache Iceberg REST catalog federation</a>(2026-11-06)</dd>
+</dl>
+</section>
+
+<section class="chapter">
+<h2 id="c3">3. その他の発表<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
+<ul>
+<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-simple-email-service-new-aws-regions/">SES:新しい6つのリージョンで利用可能に</a>:アジアパシフィック(ニュージーランド・メルボルン・台北・タイ)、メキシコ(中部)、欧州(スペイン)が加わり、35リージョンになりました(<a href="../services/ses.html">SES</a>)。</li>
+</ul>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-07.html"><span class="label">次へ → 2026年11月7日</span>Security HubのSBOMインベントリ・EC2のImdsV1Enabledメトリクス・Lambda耐久関数の既定の上限引き上げ</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
