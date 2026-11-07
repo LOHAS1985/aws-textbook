@@ -75,9 +75,10 @@
   var previous = showBest(slug, best);
   var activeQuestions = [];
   var currentIndex = 0;
-  var mode = "random";
   var setup = document.createElement("section");
   var selection = document.createElement("div");
+  var randomButton = document.createElement("button");
+  var chooseButton = document.createElement("button");
   var progress = document.createElement("p");
   var navigation = document.createElement("div");
   var back = document.createElement("button");
@@ -102,29 +103,18 @@
     return result;
   }
 
-  function setMode(value) {
-    mode = value;
-    selection.hidden = mode !== "choose";
-    startButton.textContent = mode === "random" ? "ランダムに始める" : "選んだ問題を始める";
-    setup.querySelectorAll("[name='quiz-mode']").forEach(function (radio) {
-      radio.checked = radio.value === mode;
-    });
-  }
-
   function renderSelection() {
     var list = selection.querySelector(".quiz-selection-list");
     list.textContent = "";
     questions.forEach(function (question) {
       var label = document.createElement("label");
       var checkbox = document.createElement("input");
-      var stem = question.querySelector(".quiz-stem").textContent;
       checkbox.type = "checkbox";
       checkbox.value = question.getAttribute("data-id");
       checkbox.checked = false;
       label.appendChild(checkbox);
-      label.appendChild(document.createTextNode(
-        " 問" + checkbox.value + " — " + (stem.length > 72 ? stem.slice(0, 72) + "…" : stem)
-      ));
+      label.appendChild(document.createTextNode(" 問" + checkbox.value + " — "
+        + question.getAttribute("data-title")));
       list.appendChild(label);
     });
   }
@@ -140,21 +130,7 @@
     next.textContent = currentIndex === activeQuestions.length - 1 ? "結果を見る" : "次の問題";
   }
 
-  function start() {
-    var selected;
-    if (mode === "random") {
-      selected = shuffled(questions);
-    } else {
-      var ids = Array.prototype.slice.call(selection.querySelectorAll("input:checked"))
-        .map(function (input) { return input.value; });
-      selected = questions.filter(function (question) {
-        return ids.indexOf(question.getAttribute("data-id")) !== -1;
-      });
-      if (!selected.length) {
-        setupMessage.textContent = "解く問題を1問以上選んでください。";
-        return;
-      }
-    }
+  function start(selected) {
     setupMessage.textContent = "";
     questions.forEach(function (question) {
       question.querySelectorAll("input").forEach(function (input) { input.checked = false; });
@@ -174,9 +150,7 @@
   }
 
   setup.className = "quiz-setup";
-  setup.innerHTML = '<h4>出題方法</h4>'
-    + '<label><input type="radio" name="quiz-mode" value="random" checked> 全100問をランダムに解く</label>'
-    + '<label><input type="radio" name="quiz-mode" value="choose"> 問題を選んで解く</label>';
+  setup.setAttribute("aria-label", "問題の選択");
   var setupMessage = document.createElement("p");
   setupMessage.className = "quiz-setup-message";
   setupMessage.setAttribute("role", "status");
@@ -198,15 +172,46 @@
       input.checked = wrong.indexOf(input.value) !== -1;
     });
   }));
-  var startButton = makeButton("ランダムに始める", start);
+  randomButton.type = "button";
+  randomButton.textContent = "ランダム";
+  randomButton.addEventListener("click", function () { start(shuffled(questions)); });
+  chooseButton.type = "button";
+  chooseButton.textContent = "問題を選ぶ";
+  chooseButton.addEventListener("click", function () {
+    randomButton.hidden = true;
+    chooseButton.hidden = true;
+    selection.hidden = false;
+  });
+  var startButton = makeButton("選んだ問題を始める", function () {
+    var ids = Array.prototype.slice.call(selection.querySelectorAll(".quiz-selection-list input:checked"))
+      .map(function (input) { return input.value; });
+    var selected = questions.filter(function (question) {
+      return ids.indexOf(question.getAttribute("data-id")) !== -1;
+    });
+    if (!selected.length) {
+      setupMessage.textContent = "解く問題を1問以上選んでください。";
+      return;
+    }
+    start(selected);
+  });
+  var backToModes = makeButton("戻る", function () {
+    selection.hidden = true;
+    randomButton.hidden = false;
+    chooseButton.hidden = false;
+    setupMessage.textContent = "";
+  });
+  var selectionFooter = document.createElement("div");
+  selectionFooter.className = "quiz-selection-footer";
+  selectionFooter.appendChild(backToModes);
+  selectionFooter.appendChild(startButton);
+  selection.appendChild(selectionFooter);
+  selection.hidden = true;
+  setup.appendChild(randomButton);
+  setup.appendChild(chooseButton);
   setup.appendChild(selection);
   setup.appendChild(setupMessage);
-  setup.appendChild(startButton);
   form.insertBefore(setup, form.firstChild);
   renderSelection();
-  setup.querySelectorAll("[name='quiz-mode']").forEach(function (radio) {
-    radio.addEventListener("change", function () { setMode(radio.value); });
-  });
 
   progress.className = "quiz-progress";
   progress.hidden = true;
@@ -315,6 +320,9 @@
     finishPanel.hidden = true;
     progress.hidden = true;
     navigation.hidden = true;
+    selection.hidden = true;
+    randomButton.hidden = false;
+    chooseButton.hidden = false;
     setupMessage.textContent = "";
   });
 })();
