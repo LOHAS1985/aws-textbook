@@ -5,6 +5,8 @@
 // ・読み上げ・印刷:サービス・用語・運用シナリオなどのページ見出しの下にボタンを出す
 // ・用語のポップアップ:本文中のサービス・用語へのリンクに、マウスを重ねる(スマホは1回タップ)と説明を出す
 //   (内容は build.py が作る js/glossary.js)
+// ・しおり・学習メモ:ページ見出しの下のボタン。localStorage に保存し、ヘッダーの「しおり」からマイページ(js/mypage.js)で見返す
+// ・図の拡大:図の下のボタンで全画面に広げる。長いページの2章は、節(h3)ごとに開閉できる
 // JavaScript が動かない環境では、どのボタンも表示されない(ページはそのまま読める)。
 (function () {
   var PREFS = "aws-textbook-prefs";
@@ -26,6 +28,28 @@
     if (html !== undefined) e.innerHTML = html;
     return e;
   }
+
+  // ---- しおり・メモの保存(この端末のブラウザにだけ保存する) ----
+  var BM_KEY = "aws-textbook-bookmarks", NOTE_KEY = "aws-textbook-notes";
+  var syncers = [];  // 保存内容が変わったときに、ボタンや件数の表示を合わせる関数の一覧
+  function readJSON(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key) || "null"); return v === null ? fallback : v; } catch (e) { return fallback; }
+  }
+  function writeJSON(key, v) {
+    try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
+  }
+  function bookmarks() {
+    var v = readJSON(BM_KEY, []);
+    return Array.isArray(v) ? v.filter(function (b) { return b && typeof b.url === "string"; }) : [];
+  }
+  function notes() {
+    var v = readJSON(NOTE_KEY, {});
+    return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  }
+  function pageTitle() { var h = document.querySelector(".page-head h1"); return h ? h.textContent.trim() : document.title; }
+  function pageLead() { var l = document.querySelector(".page-head .lead"); return l ? l.textContent.trim() : ""; }
+  function syncAll() { for (var i = 0; i < syncers.length; i++) syncers[i](); }
+  function changed() { window.dispatchEvent(new Event("aws-textbook-change")); }
 
   // ---- 表示設定 ----
   var THEMES = [["", "自動"], ["light", "ライト"], ["dark", "ダーク"]];
@@ -100,7 +124,20 @@
     panel.addEventListener("click", function (e) { e.stopPropagation(); });
     document.addEventListener("click", function () { toggle(false); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !panel.hidden) { toggle(false); btn.focus(); } });
+    // しおり・メモ(マイページへ)。件数は保存済みのしおりの数
+    var mine = el("a", "tool-btn tool-mine",
+      '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span class="tool-count" hidden></span>');
+    mine.href = base + "mypage.html";
+    mine.setAttribute("aria-label", "しおり・メモ");
+    mine.title = "しおり・メモ(この端末に保存)";
+    var count = mine.querySelector(".tool-count");
+    syncers.push(function () {
+      var n = bookmarks().length;
+      count.hidden = !n;
+      count.textContent = n;
+    });
     tools.appendChild(search);
+    tools.appendChild(mine);
     tools.appendChild(btn);
     tools.appendChild(panel);
     inner.appendChild(tools);
@@ -141,7 +178,9 @@
     for (var i = 0; i < found.length; i++) {
       var e = found[i];
       // 閉じているタブ(運用シナリオの解説など)は読まない
-      if (e.closest(SKIP) || e.closest("[hidden]") || e.closest("tr") && e.tagName !== "TR") continue;
+      // 閉じている節(章の折りたたみ)の本文も読まない。節の見出し(summary の中)は読む
+      var folded = e.closest("details:not([open])") && !e.closest("summary");
+      if (e.closest(SKIP) || e.closest("[hidden]") || folded || e.closest("tr") && e.tagName !== "TR") continue;
       var text = blockText(e);
       if (text) list.push({ el: e, text: text });
     }
@@ -273,7 +312,189 @@
     print.title = "このページを印刷・PDFに保存";
     print.addEventListener("click", function () { window.print(); });
     tools.appendChild(print);
+    setupMarks(main, tools);
     text.appendChild(tools);
+  }
+
+  // ---- しおり・学習メモ(ページ見出しの下のボタン。メモ欄は本文の下に開く) ----
+  function setupMarks(main, tools) {
+    var url = location.pathname;
+    var mark = el("button", "page-tool");
+    mark.type = "button";
+    mark.title = "このページをしおりに追加・解除";
+    mark.addEventListener("click", function () {
+      var list = bookmarks();
+      var at = -1;
+      list.forEach(function (b, k) { if (b.url === url) at = k; });
+      if (at >= 0) list.splice(at, 1); else list.push({ url: url, title: pageTitle(), lead: pageLead() });
+      writeJSON(BM_KEY, list);
+      changed();
+    });
+
+    var note = el("button", "page-tool");
+    note.type = "button";
+    note.setAttribute("aria-expanded", "false");
+    note.setAttribute("aria-controls", "note-panel");
+    note.innerHTML = '<span aria-hidden="true">✎</span> メモ';
+    var panel = el("div", "note-panel");
+    panel.id = "note-panel";
+    panel.hidden = true;
+    var label = el("label", "note-label", "このページのメモ");
+    label.setAttribute("for", "note-text");
+    var ta = el("textarea", "note-text");
+    ta.id = "note-text";
+    ta.rows = 5;
+    ta.placeholder = "気づいたことや覚えておきたいことを書けます(自動で保存されます)";
+    panel.appendChild(label);
+    panel.appendChild(ta);
+    panel.appendChild(el("p", "note-hint", "メモはこの端末のブラウザにだけ保存されます。ヘッダーの「しおり」で見返せます。"));
+    note.addEventListener("click", function () {
+      var open = panel.hidden;
+      panel.hidden = !open;
+      note.setAttribute("aria-expanded", open);
+      if (open) ta.focus();
+    });
+    ta.addEventListener("input", function () {
+      var all = notes();
+      if (ta.value.trim()) all[url] = { title: pageTitle(), text: ta.value }; else delete all[url];
+      writeJSON(NOTE_KEY, all);
+      changed();
+    });
+    main.appendChild(panel);
+
+    syncers.push(function () {
+      var on = bookmarks().some(function (b) { return b.url === url; });
+      mark.setAttribute("aria-pressed", on);
+      mark.innerHTML = '<span aria-hidden="true">' + (on ? "★" : "☆") + "</span> しおり";
+      var n = notes()[url];
+      var has = !!(n && typeof n.text === "string" && n.text.trim());
+      note.classList.toggle("has-note", has);
+      if (document.activeElement !== ta) ta.value = has ? n.text : "";
+    });
+    tools.appendChild(mark);
+    tools.appendChild(note);
+  }
+
+  // ---- 図の拡大表示(図の下のボタンで全画面にする。運用シナリオの構成演習は対象外) ----
+  function setupFigures(main) {
+    var figs = main.querySelectorAll("figure.figure");
+    for (var i = 0; i < figs.length; i++) {
+      var fig = figs[i];
+      var svgEl = fig.querySelector("svg");
+      if (!svgEl || svgEl.classList.contains("ex-canvas") || fig.closest(".ex-free")) continue;
+      var bar = el("div", "fig-tools");
+      var b = el("button", "page-tool fig-open-btn", '<span aria-hidden="true">⤢</span> 図を拡大して見る');
+      b.type = "button";
+      b.addEventListener("click", openFigure.bind(null, fig, svgEl, b));
+      bar.appendChild(b);
+      fig.appendChild(bar);
+    }
+  }
+  function openFigure(fig, svgEl, opener) {
+    var ov = el("div", "fig-overlay");
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.setAttribute("aria-label", "図の拡大表示");
+    var head = el("div", "fig-overlay-head");
+    var close = el("button", "fig-close", '<span aria-hidden="true">✕</span> 閉じる');
+    close.type = "button";
+    head.appendChild(close);
+    var zoom = el("div", "fig-zoom");
+    zoom.tabIndex = 0;
+    zoom.setAttribute("role", "region");
+    zoom.setAttribute("aria-label", "図(横にスクロールできます)");
+    var copy = svgEl.cloneNode(true);
+    copy.removeAttribute("style");
+    copy.setAttribute("class", "fig-zoom-svg");
+    zoom.appendChild(copy);
+    ov.appendChild(head);
+    ov.appendChild(zoom);
+    var cap = fig.querySelector("figcaption");
+    if (cap) {
+      var capText = el("p", "fig-cap");
+      capText.textContent = cap.textContent.trim();
+      ov.appendChild(capText);
+    }
+
+    function done() {
+      document.removeEventListener("keydown", onKey, true);
+      document.documentElement.classList.remove("fig-open");
+      ov.remove();
+      opener.focus();
+    }
+    // Escape で閉じる。Tab は閉じるボタンと図の間だけで回す
+    function onKey(e) {
+      if (e.key === "Escape") { e.preventDefault(); done(); return; }
+      if (e.key !== "Tab") return;
+      var f = document.activeElement;
+      if (e.shiftKey && f === close) { e.preventDefault(); zoom.focus(); }
+      else if (!e.shiftKey && f === zoom) { e.preventDefault(); close.focus(); }
+      else if (f !== close && f !== zoom) { e.preventDefault(); close.focus(); }
+    }
+    close.addEventListener("click", done);
+    document.body.appendChild(ov);
+    document.documentElement.classList.add("fig-open");
+    document.addEventListener("keydown", onKey, true);
+    close.focus();
+  }
+
+  // ---- 長いページの2章:節(h3)ごとに開閉できる(節が5つ以上のとき。本文は変えず details で包む) ----
+  function setupFolds(main) {
+    var chapters = main.querySelectorAll("section.chapter");
+    var ch = null;
+    for (var c = 0; c < chapters.length && !ch; c++) {
+      var h = chapters[c].querySelector("h2");
+      if (h && /^2[.．]/.test(h.textContent.trim())) ch = chapters[c];
+    }
+    if (!ch) return;
+    var h3s = ch.querySelectorAll(":scope > h3");
+    if (h3s.length < 5) return;
+    var folds = [];
+    for (var i = 0; i < h3s.length; i++) {
+      var d = el("details", "fold");
+      d.open = true;
+      var s = el("summary");
+      var h3 = h3s[i];
+      h3.parentNode.insertBefore(d, h3);
+      s.appendChild(h3);
+      d.appendChild(s);
+      // 次の節(h3)までを、この節の本文として包む
+      for (var nx = d.nextElementSibling; nx && nx.tagName !== "H3";) {
+        var next = nx.nextElementSibling;
+        d.appendChild(nx);
+        nx = next;
+      }
+      folds.push(d);
+    }
+    function setAll(on) { for (var k = 0; k < folds.length; k++) folds[k].open = on; }
+    var tools = el("div", "fold-tools");
+    var openAll = el("button", "page-tool", "すべて開く");
+    var closeAll = el("button", "page-tool", "すべて閉じる");
+    openAll.type = closeAll.type = "button";
+    openAll.addEventListener("click", function () { setAll(true); });
+    closeAll.addEventListener("click", function () { setAll(false); });
+    tools.appendChild(openAll);
+    tools.appendChild(closeAll);
+    ch.insertBefore(tools, folds[0]);
+
+    // 印刷・PDFは全部開いて出す。終わったら元に戻す
+    var before = null;
+    addEventListener("beforeprint", function () {
+      before = folds.map(function (d) { return d.open; });
+      setAll(true);
+    });
+    addEventListener("afterprint", function () {
+      if (before) for (var k = 0; k < folds.length; k++) folds[k].open = before[k];
+      before = null;
+    });
+    // 目次やリンクで閉じた節に飛んだときは、その節を開く
+    function openHash() {
+      var t = null;
+      try { t = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (e) {}
+      for (var p = t && t.closest("details"); p; p = p.parentElement && p.parentElement.closest("details")) p.open = true;
+    }
+    openHash();
+    addEventListener("hashchange", openHash);
   }
 
   // ---- 用語のポップアップ ----
@@ -363,6 +584,17 @@
     setupHeader();
     setupPageTools();
     setupPopups();
+    var main = document.querySelector("main");
+    if (main) { setupFigures(main); setupFolds(main); }
+    addEventListener("aws-textbook-change", syncAll);
+    addEventListener("storage", function (e) { if (e.key === BM_KEY || e.key === NOTE_KEY) syncAll(); });
+    syncAll();
+    // マイページ(しおり・メモの一覧・書き出し・読み込み)は、#my-root があるページだけ読み込む
+    if (document.getElementById("my-root")) {
+      var s = document.createElement("script");
+      s.src = base + "js/mypage.js";
+      document.head.appendChild(s);
+    }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

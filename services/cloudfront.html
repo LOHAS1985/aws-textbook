@@ -113,6 +113,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 CloudFrontの仕組み。初回はエッジからオリジンへ取りに行き、エッジにキャッシュを残す。2回目以降は近くのエッジが応答するため高速。オリジンシールドを使うと、オリジンへのリクエストをさらにまとめられる。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <h3 id="c2-2">ビヘイビア(パスごとのオリジン・設定)<a class="anchor" href="#c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <p><strong>ビヘイビア(キャッシュビヘイビア)</strong>は、リクエストのパスに応じて「<strong>どのオリジンに送るか</strong>」「<strong>どうキャッシュするか</strong>」を決める設定です。1つのディストリビューションに複数のビヘイビアを作り、パスパターンで振り分けます。</p>
 <figure class="figure">
@@ -150,6 +151,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 ビヘイビアによる振り分け。パスパターンごとにオリジンとキャッシュの設定を変え、どれにも一致しないリクエストは既定のビヘイビア(*)で処理する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <ul>
 <li>パスパターンの例:<code>/api/*</code>、<code>/images/*</code>、<code>*.jpg</code>。上から順(優先順位の順)に評価され、最初に一致したものが使われる。どれにも一致しなければ<strong>既定のビヘイビア(<code>*</code>)</strong></li>
 <li>ビヘイビアごとに設定するもの:オリジン(またはオリジングループ)、Viewer Protocol Policy、許可するHTTPメソッド、キャッシュポリシー・オリジンリクエストポリシー、関連付ける関数、署名付きURL/Cookieの要求</li>
@@ -241,6 +243,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図3 オリジンフェイルオーバー。プライマリが指定したステータスコードを返すか接続できない場合、同じリクエストをセカンダリに送り直す。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
 <ul>
 <li>切り替える条件:指定したHTTPステータスコード(500・502・503・504・403・404など)や、接続の失敗・タイムアウト</li>
 <li>対象はGET・HEAD・OPTIONSのリクエスト</li>
@@ -296,6 +299,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図4 オリジンシールド。各地のキャッシュで見つからなかったリクエストをオリジンシールドが1つにまとめ、キャッシュにもなければオリジンへ1回だけ取りに行く。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
 <ul>
 <li>オリジンシールドは<strong>オリジンごとの設定</strong>。オリジンの設定で「有効にする」を選び、オリジンシールドを置くリージョンを指定する。コンソール・CloudFormation・APIで設定できる。</li>
 <li>リージョンは、<strong>オリジンとのレイテンシーが最も小さいリージョン</strong>を選ぶ。オリジンがAWSのリージョンにあり、そのリージョンがオリジンシールドに対応していれば、同じリージョンを選ぶ。オンプレミスなどAWS外のオリジンにも使える。</li>
@@ -355,6 +359,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図5 OACとHTTPSの制御。S3はOAC経由(CloudFront経由)のアクセスだけを許可し、直接アクセスは拒否する。ユーザー⇔CloudFront間はViewer Protocol Policy、CloudFront⇔オリジン間はOrigin Protocol Policyで制御する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 <h3 id="c2-14">独自ドメインで配信する(代替ドメイン名と証明書)<a class="anchor" href="#c2-14" aria-label="この見出しへのリンク">#</a></h3>
 <p>CloudFrontのディストリビューションには <code>d111111abcdef8.cloudfront.net</code> のようなドメイン名が付きます。<code>www.example.com</code> などの独自ドメインで配信するには、次の手順で設定します。</p>
 <ol>

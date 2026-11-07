@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>選び方診断 | AWS教科書</title>
+<meta name="description" content="いくつかの質問に答えると、目的に合うサービスの候補を絞り込みます">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("sw.js").catch(function () {});
+}
+</script>
+<script src="js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="services/index.html">サービス</a><a href="terms/index.html">用語</a><a href="usecases/index.html">運用シナリオ</a><a href="news/index.html">ニュース</a><a href="exams/index.html">試験別</a><a href="links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head"><h1>選び方診断</h1><p class="lead">いくつかの質問に答えると、目的に合うサービスの候補を絞り込みます</p></div>
+<div id="chooser-root">
+<p class="cat-desc">JavaScript が動くと、質問に答えて候補を絞り込めます。候補は代表的な例です。要件に合うかは、各サービスのページで確認してください。</p>
+<h2>質問</h2>
+<ol>
+  <li>何をしたいですか:プログラムを動かす(サーバー・関数・コンテナ)・データを保存する・配信する・データを保存して検索・更新する・ネットワークを作る・接続する・サービス同士をつないで処理を連携する</li>
+  <li>サーバーの管理をどこまで任せたいですか:管理したくない(AWSに任せたい)・コンテナで動かしたい・OSごと自分で管理したい・指定しない</li>
+  <li>データの形は:表形式(SQLで検索する)・キーと値(一定の形で速く取り出す)・JSONなどのドキュメント・関係(グラフ)をたどる・大量データを集計・分析する・指定しない・ファイル単位(画像・ログなど)・共有フォルダのようなファイル・OSのディスク(ブロック)</li>
+  <li>応答の速さは:ミリ秒単位で応答する必要がある・数十ミリ秒〜秒単位で足りる、または指定しない</li>
+  <li>アクセスの経路は:インターネットから直接アクセスさせる・オンプレミスの社内ネットワークとつなぐ・指定しない</li>
+</ol>
+<h2>候補のサービス</h2>
+<ul class="svc-list">
+  <li><a href="services/lambda.html">AWS Lambda</a></li>
+  <li><a href="services/elastic-beanstalk.html">AWS Elastic Beanstalk</a></li>
+  <li><a href="services/ecs.html">Amazon ECS</a></li>
+  <li><a href="services/eks.html">Amazon EKS</a></li>
+  <li><a href="services/ec2.html">Amazon EC2</a></li>
+  <li><a href="services/s3.html">Amazon S3</a></li>
+  <li><a href="services/efs.html">Amazon EFS</a></li>
+  <li><a href="services/fsx.html">Amazon FSx</a></li>
+  <li><a href="services/ebs.html">Amazon EBS</a></li>
+  <li><a href="services/rds.html">Amazon RDS</a></li>
+  <li><a href="services/aurora.html">Amazon Aurora</a></li>
+  <li><a href="services/dynamodb.html">Amazon DynamoDB</a></li>
+  <li><a href="services/elasticache.html">Amazon ElastiCache</a></li>
+  <li><a href="services/documentdb.html">Amazon DocumentDB</a></li>
+  <li><a href="services/neptune.html">Amazon Neptune</a></li>
+  <li><a href="services/redshift.html">Amazon Redshift</a></li>
+  <li><a href="services/vpc.html">Amazon VPC</a></li>
+  <li><a href="services/site-to-site-vpn.html">AWS Site-to-Site VPN</a></li>
+  <li><a href="services/direct-connect.html">AWS Direct Connect</a></li>
+  <li><a href="services/elb.html">Elastic Load Balancing (ELB)</a></li>
+  <li><a href="services/cloudfront.html">Amazon CloudFront</a></li>
+  <li><a href="services/route53.html">Amazon Route 53</a></li>
+  <li><a href="services/sqs.html">Amazon SQS</a></li>
+  <li><a href="services/sns.html">Amazon SNS</a></li>
+  <li><a href="services/eventbridge.html">Amazon EventBridge</a></li>
+  <li><a href="services/step-functions.html">AWS Step Functions</a></li>
+  <li><a href="services/api-gateway.html">Amazon API Gateway</a></li>
+</ul>
+</div>
+<script type="application/json" id="chooser-data">{"questions": [{"id": "purpose", "q": "何をしたいですか", "when": null, "options": [["compute", "プログラムを動かす(サーバー・関数・コンテナ)"], ["storage", "データを保存する・配信する"], ["database", "データを保存して検索・更新する"], ["network", "ネットワークを作る・接続する"], ["integration", "サービス同士をつないで処理を連携する"]]}, {"id": "mgmt", "q": "サーバーの管理をどこまで任せたいですか", "when": null, "options": [["managed", "管理したくない(AWSに任せたい)"], ["container", "コンテナで動かしたい"], ["vm", "OSごと自分で管理したい"], ["any", "指定しない"]]}, {"id": "data", "q": "データの形は", "when": ["database", "storage"], "options_by": {"database": [["sql", "表形式(SQLで検索する)"], ["kv", "キーと値(一定の形で速く取り出す)"], ["doc", "JSONなどのドキュメント"], ["graph", "関係(グラフ)をたどる"], ["olap", "大量データを集計・分析する"], ["any", "指定しない"]], "storage": [["object", "ファイル単位(画像・ログなど)"], ["file", "共有フォルダのようなファイル"], ["block", "OSのディスク(ブロック)"], ["any", "指定しない"]]}}, {"id": "fast", "q": "応答の速さは", "when": ["database"], "options": [["fast", "ミリ秒単位で応答する必要がある"], ["any", "数十ミリ秒〜秒単位で足りる、または指定しない"]]}, {"id": "net", "q": "アクセスの経路は", "when": ["compute", "storage", "database", "network"], "options": [["public", "インターネットから直接アクセスさせる"], ["onprem", "オンプレミスの社内ネットワークとつなぐ"], ["any", "指定しない"]]}], "candidates": [{"s": "lambda", "p": "compute", "m": ["managed"], "d": [], "f": false, "n": ["public", "onprem"], "t": "AWS Lambda", "l": "サーバーレスでプログラムを実行するサービス"}, {"s": "elastic-beanstalk", "p": "compute", "m": ["managed"], "d": [], "f": false, "n": ["public", "onprem"], "t": "AWS Elastic Beanstalk", "l": "コードを渡すだけでアプリを簡単にデプロイ・運用できるPaaS"}, {"s": "ecs", "p": "compute", "m": ["container", "managed"], "d": [], "f": false, "n": ["public", "onprem"], "t": "Amazon ECS", "l": "AWS上でコンテナを実行・管理するオーケストレーションサービス"}, {"s": "eks", "p": "compute", "m": ["container"], "d": [], "f": false, "n": ["public", "onprem"], "t": "Amazon EKS", "l": "Kubernetesをマネージドで運用するサービス"}, {"s": "ec2", "p": "compute", "m": ["vm"], "d": [], "f": false, "n": ["public", "onprem"], "t": "Amazon EC2", "l": "AWS上で仮想サーバーを動かすサービス(Elastic Compute Cloud)"}, {"s": "s3", "p": "storage", "m": ["managed"], "d": ["object"], "f": false, "n": ["public", "onprem"], "t": "Amazon S3", "l": "容量無制限で使えるオブジェクトストレージ"}, {"s": "efs", "p": "storage", "m": ["managed"], "d": ["file"], "f": false, "n": ["onprem"], "t": "Amazon EFS", "l": "Linux向けのマネージド共有ファイルストレージ"}, {"s": "fsx", "p": "storage", "m": ["managed"], "d": ["file"], "f": false, "n": ["onprem"], "t": "Amazon FSx", "l": "市販・オープンソースのファイルシステムをマネージドで提供"}, {"s": "ebs", "p": "storage", "m": ["vm"], "d": ["block"], "f": false, "n": [], "t": "Amazon EBS", "l": "EC2にアタッチして使うブロックストレージ"}, {"s": "rds", "p": "database", "m": ["managed"], "d": ["sql"], "f": false, "n": ["onprem"], "t": "Amazon RDS", "l": "リレーショナルデータベースの構築・運用を任せられるマネージドDB"}, {"s": "aurora", "p": "database", "m": ["managed"], "d": ["sql"], "f": false, "n": ["onprem"], "t": "Amazon Aurora", "l": "MySQL/PostgreSQL互換の高性能リレーショナルデータベース"}, {"s": "dynamodb", "p": "database", "m": ["managed"], "d": ["kv"], "f": true, "n": ["onprem"], "t": "Amazon DynamoDB", "l": "フルマネージドのキーバリュー型NoSQLデータベース"}, {"s": "elasticache", "p": "database", "m": ["managed"], "d": ["kv"], "f": true, "n": ["onprem"], "t": "Amazon ElastiCache", "l": "アプリのデータをインメモリでキャッシュするサービス"}, {"s": "documentdb", "p": "database", "m": ["managed"], "d": ["doc"], "f": false, "n": ["onprem"], "t": "Amazon DocumentDB", "l": "MongoDB互換のドキュメントデータベースをマネージドで利用するサービス"}, {"s": "neptune", "p": "database", "m": ["managed"], "d": ["graph"], "f": false, "n": ["onprem"], "t": "Amazon Neptune", "l": "ノードと関係で表すデータをクエリーするマネージドグラフデータベース"}, {"s": "redshift", "p": "database", "m": ["managed"], "d": ["sql", "olap"], "f": false, "n": ["onprem"], "t": "Amazon Redshift", "l": "大規模な分析クエリを実行するマネージドデータウェアハウス"}, {"s": "vpc", "p": "network", "m": ["managed"], "d": [], "f": false, "n": [], "t": "Amazon VPC", "l": "AWS上に論理的に分離された仮想ネットワークを作るサービス"}, {"s": "site-to-site-vpn", "p": "network", "m": ["managed"], "d": [], "f": false, "n": ["onprem"], "t": "AWS Site-to-Site VPN", "l": "オンプレミスとVPCを、インターネット上の暗号化トンネル(IPsec)でつなぐ"}, {"s": "direct-connect", "p": "network", "m": ["managed"], "d": [], "f": false, "n": ["onprem"], "t": "AWS Direct Connect", "l": "オンプレミスとAWSを、インターネットを通らない専用線でつなぐ"}, {"s": "elb", "p": "network", "m": ["managed"], "d": [], "f": false, "n": ["public", "onprem"], "t": "Elastic Load Balancing (ELB)", "l": "通信を複数のターゲットへ分散するロードバランサー群"}, {"s": "cloudfront", "p": "network", "m": ["managed"], "d": [], "f": false, "n": ["public"], "t": "Amazon CloudFront", "l": "コンテンツを世界中へ高速配信するCDN"}, {"s": "route53", "p": "network", "m": ["managed"], "d": [], "f": false, "n": ["public"], "t": "Amazon Route 53", "l": "マネージドDNSサービス。ヘルスチェックと組み合わせたルーティングや、VPCとオンプレミスの名前解決もできる"}, {"s": "sqs", "p": "integration", "m": ["managed"], "d": [], "f": false, "n": [], "t": "Amazon SQS", "l": "システム間でメッセージを受け渡すメッセージキュー"}, {"s": "sns", "p": "integration", "m": ["managed"], "d": [], "f": false, "n": [], "t": "Amazon SNS", "l": "複数の購読者へメッセージをプッシュ配信するPub/Subサービス"}, {"s": "eventbridge", "p": "integration", "m": ["managed"], "d": [], "f": false, "n": [], "t": "Amazon EventBridge", "l": "サーバーレスなイベント駆動型の統合サービス"}, {"s": "step-functions", "p": "integration", "m": ["managed"], "d": [], "f": false, "n": [], "t": "AWS Step Functions", "l": "複数の処理をつなぎ合わせてワークフローを作る"}, {"s": "api-gateway", "p": "integration", "m": ["managed"], "d": [], "f": false, "n": ["public"], "t": "Amazon API Gateway", "l": "APIの作成・公開・管理のためのサービス"}]}</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById("chooser-data").textContent);
+  var root = document.getElementById("chooser-root");
+  var answers = {};
+  var shown = {};
+  var fieldsets = {};
+  var result;
+  function el(tag, text, cls) {
+    var e = document.createElement(tag);
+    if (text !== undefined) e.textContent = text;
+    if (cls) e.className = cls;
+    return e;
+  }
+  function optionsOf(q) {
+    return q.options_by ? (q.options_by[answers.purpose] || []) : q.options;
+  }
+  // 目的によって選択肢が変わる質問は、目的が変わったときに組み直す
+  function build(q, fs) {
+    var opts = optionsOf(q);
+    if (!opts.some(function (o) { return o[0] === answers[q.id]; })) answers[q.id] = q.id === "purpose" ? undefined : "any";
+    fs.innerHTML = "";
+    fs.appendChild(el("legend", q.q));
+    opts.forEach(function (o) {
+      var lab = el("label");
+      var r = el("input");
+      r.type = "radio";
+      r.name = q.id;
+      r.value = o[0];
+      r.checked = answers[q.id] === o[0];
+      r.addEventListener("change", function () {
+        answers[q.id] = o[0];
+        update();
+      });
+      lab.appendChild(r);
+      lab.appendChild(document.createTextNode(" " + o[1]));
+      fs.appendChild(lab);
+    });
+    fs.setAttribute("data-purpose", answers.purpose || "");
+  }
+  function match(c) {
+    if (c.p !== answers.purpose) return false;
+    return data.questions.every(function (q) {
+      var a = answers[q.id];
+      if (q.id === "purpose" || !shown[q.id] || !a || a === "any") return true;
+      if (q.id === "mgmt") return c.m.indexOf(a) >= 0;
+      if (q.id === "data") return c.d.indexOf(a) >= 0;
+      if (q.id === "fast") return !!c.f;
+      if (q.id === "net") return c.n.indexOf(a) >= 0;
+      return true;
+    });
+  }
+  function render() {
+    result.innerHTML = "";
+    if (!answers.purpose) {
+      result.appendChild(el("p", "まず「何をしたいですか」を選んでください。", "cat-desc"));
+      return;
+    }
+    var found = data.candidates.filter(match);
+    result.appendChild(el("h2", "候補(" + found.length + "件)"));
+    if (!found.length) {
+      result.appendChild(el("p", "条件に合うサービスがありません。「指定しない」を選ぶか、条件を変えてみてください。", "cat-desc"));
+      return;
+    }
+    var ul = el("ul", undefined, "card-list");
+    found.forEach(function (c) {
+      var li = el("li");
+      var a = el("a");
+      a.href = "services/" + c.s + ".html";
+      a.appendChild(el("span", c.t, "name"));
+      a.appendChild(el("span", c.l, "desc"));
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    result.appendChild(ul);
+  }
+  function update() {
+    data.questions.forEach(function (q) {
+      var fs = fieldsets[q.id];
+      shown[q.id] = !q.when || (!!answers.purpose && q.when.indexOf(answers.purpose) >= 0);
+      fs.hidden = !shown[q.id];
+      if (q.options_by && fs.getAttribute("data-purpose") !== (answers.purpose || "")) build(q, fs);
+    });
+    render();
+  }
+  root.innerHTML = "";
+  data.questions.forEach(function (q) {
+    var fs = el("fieldset", undefined, "chooser-q");
+    fieldsets[q.id] = fs;
+    root.appendChild(fs);
+    build(q, fs);
+  });
+  result = el("div");
+  result.setAttribute("aria-live", "polite");
+  root.appendChild(result);
+  update();
+})();
+</script>
+</main>
+</body>
+</html>

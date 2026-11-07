@@ -1200,3 +1200,103 @@ a.has-pop { text-decoration-style: dotted; text-underline-offset: 3px; }
 .booklet-toc h3 { font-size: 15px; margin: 12px 0 2px; }
 .booklet-toc ol { margin: 0; padding-left: 1.6em; columns: 2 260px; font-size: 14px; }
 .booklet-page { margin-top: 48px; padding-top: 16px; border-top: 3px double var(--border-strong); }
+
+/* しおり・学習メモ(ページ見出しの下のボタンと、本文の下のメモ欄、ヘッダーの件数) */
+.tool-mine { position: relative; }
+.tool-count {
+  position: absolute; top: -5px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px;
+  background: var(--accent); color: var(--surface); font-size: 11px; font-weight: 700; line-height: 16px; text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.tool-count[hidden] { display: none; }
+.page-tool[aria-pressed="true"], .page-tool[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.page-tool.has-note::after {
+  content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 5px; vertical-align: middle; border-radius: 50%; background: var(--accent);
+}
+.note-panel { margin: 24px 0 8px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.note-panel[hidden] { display: none; }
+.note-label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 700; }
+.note-text {
+  display: block; width: 100%; box-sizing: border-box; padding: 8px 10px; font: inherit; font-size: 15px; line-height: 1.6;
+  color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: 6px; resize: vertical;
+}
+.note-text:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.note-hint { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+
+/* 図の拡大表示(全画面のオーバーレイ) */
+.fig-tools { margin-top: 6px; text-align: right; }
+.fig-overlay {
+  position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; box-sizing: border-box;
+  padding: 12px 16px; background: var(--bg);
+}
+.fig-overlay-head { display: flex; justify-content: flex-end; }
+.fig-close {
+  font: inherit; font-size: 14px; font-weight: 700; min-height: 40px; padding: 6px 16px; border-radius: 999px;
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); cursor: pointer;
+}
+.fig-close:hover { border-color: var(--accent); color: var(--accent); }
+.fig-zoom {
+  flex: 1; min-height: 0; overflow: auto; margin-top: 8px; padding: 12px; box-sizing: border-box;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); -webkit-overflow-scrolling: touch;
+}
+.fig-zoom-svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.fig-cap { margin: 8px 0 0; font-size: 14px; color: var(--caption); }
+.fig-close:focus-visible, .fig-zoom:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+html.fig-open { overflow: hidden; }
+
+/* 長いページの2章:節(h3)の開閉 */
+.fold-tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.fold > summary { display: flex; align-items: flex-start; gap: 6px; list-style: none; cursor: pointer; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::before {
+  content: "▾"; flex: 0 0 auto; margin-top: 0.35em; font-size: 14px; color: var(--muted); transition: transform 0.15s;
+}
+.fold:not([open]) > summary::before { transform: rotate(-90deg); }
+.fold > summary > h3 { flex: 1; min-width: 0; margin-top: 0.8em; }
+.fold > summary:hover > h3 { color: var(--accent); }
+
+/* 運用シナリオの要件チェック(答え合わせのあと、満たした・満たさなかった要件を分けて示す) */
+.ex-reqs { flex: 0 0 100%; margin-top: 12px; }
+.ex-reqs[hidden] { display: none; }
+.ex-req-group { margin: 8px 0; padding: 10px 14px; border: 1px solid; border-radius: var(--radius); }
+.ex-req-group h4 { margin: 0 0 4px; font-size: 14px; }
+.ex-req-group ul { margin: 0; padding-left: 1.4em; font-size: 14px; line-height: 1.6; }
+.ex-req-ok { background: var(--ok-bg); border-color: var(--ok); }
+.ex-req-ng { background: var(--danger-bg); border-color: var(--danger); }
+
+/* マイページ(しおり・学習メモの一覧、書き出し・読み込み) */
+.my-section { margin: 28px 0; }
+.my-section h2 { font-size: 18px; margin: 0 0 8px; }
+.my-section h2:focus { outline: 2px solid var(--focus); outline-offset: 4px; }
+.my-empty { margin: 6px 0; font-size: 14px; color: var(--muted); }
+.my-status { min-height: 1.6em; margin: 8px 0; font-size: 14px; font-weight: 700; color: var(--ok); }
+.my-list { list-style: none; margin: 0; padding: 0; }
+.my-item {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: start;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.my-title { grid-column: 1; font-weight: 700; overflow-wrap: anywhere; }
+.my-lead { grid-column: 1; margin: 0; font-size: 14px; color: var(--muted); }
+.my-note-text { grid-column: 1; margin: 4px 0 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.my-del {
+  grid-column: 2; grid-row: 1; min-height: 32px; padding: 4px 12px; font: inherit; font-size: 13px;
+  border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text); cursor: pointer;
+}
+.my-del:hover { border-color: var(--danger); color: var(--danger); }
+.my-btn, .my-file-label {
+  display: inline-block; margin: 4px 8px 4px 0; padding: 8px 16px; font: inherit; font-size: 14px; font-weight: 700;
+  border: 1px solid var(--accent); border-radius: 999px; background: var(--accent); color: var(--surface); cursor: pointer;
+}
+.my-file-label { background: var(--surface); color: var(--text); border-color: var(--border-strong); }
+#my-import { display: block; max-width: 100%; margin-top: 8px; font: inherit; font-size: 14px; }
+@media (max-width: 600px) {
+  .my-item { grid-template-columns: 1fr; }
+  .my-del { grid-column: 1; grid-row: auto; justify-self: start; }
+  .fig-zoom-svg { min-width: 560px; }
+}
+
+/* 印刷では、操作用の表示を出さない(章の節は全部開いて印刷する) */
+@media print {
+  .fig-tools, .fig-overlay, .fold-tools, .note-panel, .my-del, .my-btn, .my-file-label, #my-import { display: none !important; }
+  .fold > summary::before { display: none; }
+}

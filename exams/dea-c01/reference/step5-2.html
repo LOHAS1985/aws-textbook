@@ -96,6 +96,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 Lambda関数によるローテーションの4ステップ。新しい版はAWSPENDINGのラベルで作成・検証し、finishSecretでAWSCURRENTを新しい版に移す。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="secrets-manager-c2-2">ローテーション方式<a class="anchor" href="#secrets-manager-c2-2" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table>
@@ -140,6 +141,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 交代ユーザー方式。使っていないユーザーのパスワードを更新してから切り替えるため、使用中の接続が切れず、ダウンタイムがほぼない。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
 
 <h3 id="secrets-manager-c2-4">アクセス制御と共有<a class="anchor" href="#secrets-manager-c2-4" aria-label="この見出しへのリンク">#</a></h3>
 <p>シークレットには<strong>リソースポリシー</strong>を付けて、複数のユーザーやロールに許可を与えられます。別のAWSアカウントから使わせる場合は、リソースポリシーに加えて、呼び出し側のIAMポリシーでも許可が必要です。</p>
@@ -193,6 +195,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図3 Secrets Managerの使い方。アプリはGetSecretValueでDBの認証情報を取得して接続する。ローテーションではLambdaがDBのパスワードとシークレットを定期的に更新するため、アプリのコードを変えずに済む。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">
@@ -304,6 +307,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 保存先の選び方。機密情報で自動ローテーションが必要ならSecrets Manager、不要ならParameter StoreのSecureString。機密でない設定値は、段階的に配布したいならAppConfig、そうでなければParameter Store。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="secrets-config-comparison-c1-1">Secrets ManagerとParameter Storeの比較<a class="anchor" href="#secrets-config-comparison-c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <div class="table-wrap"><table class="stack">
@@ -442,6 +446,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 エンベロープ暗号化(GenerateDataKey)。①KMSにデータキーの生成を依頼し、②平文と暗号化済みのデータキーを受け取り、③平文のデータキーでデータを暗号化して、平文キーは破棄する。暗号化データと暗号化データキーを一緒に保存する。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <h3 id="kms-c2-3">復号の流れ<a class="anchor" href="#kms-c2-3" aria-label="この見出しへのリンク">#</a></h3>
 <ol>
 <li>アプリが保存先から暗号化データと暗号化データキーを取得</li>
@@ -492,6 +497,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 別アカウントでのKMSキーの利用。キーを持つアカウントAのキーポリシーでアカウントBを許可し、アカウントBのIAMポリシーで、使うユーザーやロールにキーの権限を与える。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 <p>AWSマネージドキーはキーポリシーを変えられないため、別アカウントでは使えません。暗号化したEBSスナップショットやRDSスナップショットを別アカウントと共有するときは、カスタマーマネージドキーで暗号化しておきます。</p>
 
 <h3 id="kms-c2-6">キーのローテーション<a class="anchor" href="#kms-c2-6" aria-label="この見出しへのリンク">#</a></h3>
@@ -632,6 +638,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 転送時の暗号化(矢印の通信)と保存時の暗号化(EBS・S3に保存されたデータ)。利用者とALBの間はACMの証明書でHTTPS、保存するデータはKMSのキーなどで暗号化する。ALBとEC2の間も暗号化するかは要件で決める。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 
 <h3 id="encryption-c1-1">保存時の暗号化<a class="anchor" href="#encryption-c1-1" aria-label="この見出しへのリンク">#</a></h3>
 <p>AWSの多くのサービスは、<strong>サーバー側の暗号化</strong>(サービスが保存するときに自動で暗号化し、読み出すときに自動で復号する)に対応しています。暗号化のキーは<a href="../../../services/kms.html">AWS KMS</a>で管理します。</p>

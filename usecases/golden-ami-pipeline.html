@@ -37,7 +37,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   <div class="hero-text">
   <a class="category" href="index.html#cat3">デプロイ・自動化</a>
   <h1>パッチ適用済みのAMIを定期的に作り、Auto Scalingに反映する</h1>
-  <p class="updated">最終更新:<time datetime="2026-10-31">2026-10-31</time></p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
   </div>
 </div>
 <section class="chapter">
@@ -87,8 +87,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図1 ゴールデンAMIのパイプラインの構成。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blank"/></svg> 空欄(問いで答える)</span></p>
 
-<div class="ex-item" data-node="ib">
+<div class="ex-item" data-node="ib" data-req="1,2">
 <p class="ex-q">① パッチの適用・ソフトの導入・テストをしてAMIを作るものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="Image Builder">EC2 Image Builder<span class="ex-why">レシピとコンポーネントでAMIを作り、テストし、ほかのリージョンやアカウントへの配布まで自動で行います。</span></li>
@@ -97,7 +98,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item" data-node="asg">
+<div class="ex-item" data-node="asg" data-req="3">
 <p class="ex-q">② 動いているインスタンスを、新しいAMIに順に入れ替えるものは?</p>
 <ul class="ex-choices">
 <li data-ok data-short="インスタンス更新">Auto Scalingのインスタンスの更新<span class="ex-why">最低限の正常な割合を保ちながら、インスタンスを少しずつ新しい起動テンプレートで入れ替えます。</span></li>
@@ -106,7 +107,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 </div>
 
-<div class="ex-item">
+<div class="ex-item" data-req="2">
 <p class="ex-q">③ 暗号化されたAMIを別のアカウントと共有するときに必要なことは?</p>
 <ul class="ex-choices">
 <li data-ok>カスタマー管理のKMSキーのポリシーで、そのアカウントに使用を許可する<span class="ex-why">AWS管理キーで暗号化したAMIは共有できません(<a href="../terms/encryption.html">暗号化</a>)。</span></li>
@@ -155,6 +156,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </div>
 <figcaption>図2 ゴールデンAMIのパイプライン。Image Builderがパッチ適用・ソフトの導入・テストを行ってAMIを作り、起動テンプレートの新しいバージョンに反映する。Auto Scalingのインスタンスの更新で、動いているインスタンスを順に入れ替える。</figcaption>
 </figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
 </section>
 
 <section class="chapter">
