@@ -21,6 +21,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/index.html … トップ(サービス・用語・運用シナリオ・問題集・公式リンクへの入口)
 - book/icons/services/{slug}.svg … サービスのアイコン(AWS公式の Architecture Icons 2026年7月版の48px SVGを、改変せずファイル名だけ slug にしたもの)。サービス一覧・各サービスページの見出し・公式リンク・トップの検索結果に build.py が表示する。サービスを追加したら公式パッケージ(https://aws.amazon.com/jp/architecture/icons/)から同じ形でコピーする。専用アイコンがないサービス(Copilot・Database Encryption SDK・STS・SAM・Kiro・IPAM・DNS Firewall)は所属カテゴリの公式カテゴリアイコンを使っている
 - src/links.html・src/links.json … 公式リンク(book/links.html)の本文と、サービスごとの公式ページ(製品ページ・ドキュメント)のパス。サービスを追加したら links.json にも追加する(URLは実際にアクセスして確認する)
+- src/guides/{試験ID}.html … 学習ロードマップ(本文の参照は `../services/`・`../terms/`・`../usecases/` へのリンク)。build.py がそのページを `book/guides/{試験ID}.html` にし、ロードマップのリンクの順に、リンク先のページの本文を印刷用の「参考書」として後ろに続ける(問題集は含めない)。DEA-C01 は公式試験ガイドの分野・タスク・スキル番号に合わせる
 - book/{services,terms,usecases,questions}/index.html … 各コレクションの目次(カテゴリ別)
 - book/{services,terms,usecases,questions}/{slug}.html … 各ページ(生成物。直接編集しない)
 - book/css/style.css … 共通スタイル(全ページで共有。これは直接編集する)

@@ -27,6 +27,8 @@ from diagrams import render_figures, text_width
 ROOT = Path(__file__).parent
 SRC = ROOT / "src"
 OUT = ROOT / "book"
+GUIDES_DIR = SRC / "guides"  # 学習ロードマップ(本文のリンク順に参考書を作る)
+GUIDE_REF_RE = re.compile(r'href="\.\./(services|terms|usecases)/([\w-]+)\.html"')
 SITE_TITLE = "AWS教科書"
 
 # key がフォルダ名(src/{key}/ → book/{key}/)。
@@ -1333,6 +1335,64 @@ self.addEventListener("fetch", function (e) {
 """
 
 
+def write_guides(loaded, warnings):
+    """学習ロードマップ(src/guides/*.html)を book/guides/ に書く。
+    本文のリンクの順に、リンク先のページの本文を「参考書」として後ろに続ける(印刷用)。"""
+    out_dir = OUT / "guides"
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    if not GUIDES_DIR.exists():
+        return
+    out_dir.mkdir(parents=True)
+    for path in sorted(GUIDES_DIR.glob("*.html")):
+        if path.name.startswith("_"):
+            continue
+        where = f"guides/{path.stem}"
+        text = path.read_text(encoding="utf-8")
+        meta = dict(META_RE.findall(text))
+        body = META_RE.sub("", text).strip()
+        refs = []
+        for key, slug in GUIDE_REF_RE.findall(body):
+            if (key, slug) not in refs:
+                refs.append((key, slug))
+        pages = []
+        for key, slug in refs:
+            p = next((x for x in loaded.get(key, []) if x["slug"] == slug), None)
+            if p is None:
+                warnings.append(f"{where}: {key}/{slug} がありません")
+            else:
+                pages.append((key, p))
+        included = {p["slug"] for _, p in pages}
+        articles = []
+        for key, p in pages:
+            # 冊子の中の移動先は、冊子に入っているページだけにする。それ以外は通常のページへのリンクにする
+            article = re.sub(r'href="#p-([\w-]+)"',
+                             lambda m: m.group(0) if m.group(1) in included else f'href="../{key}/{m.group(1)}.html"',
+                             booklet_body(key, p))
+            articles.append(f'<article class="booklet-page" id="p-{p["slug"]}">\n'
+                            f'<div class="page-head hero"{cat_style(_by_key[key], p["category"])}>\n<div class="hero-text">\n'
+                            f'<span class="category">{html.escape(p["category"])}</span>\n<h1>{html.escape(p["title"])}</h1>\n'
+                            + (f'<p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
+                            + "</div>\n</div>\n" + article + "\n</article>\n")
+        body, items = add_heading_ids(stack_tables(render_figures(body, where, warnings)))
+        title = meta.get("title", path.stem)
+        lead = meta.get("lead", "")
+        (out_dir / f"{path.stem}.html").write_text(
+            head(f"{title} | {SITE_TITLE}", "../", lead) + header("../")
+            + '<main class="booklet guide">\n'
+            + f'<div class="page-head booklet-cover">\n<p class="booklet-site">{SITE_TITLE}</p>\n<h1>{html.escape(title)}</h1>\n'
+            + (f'<p class="lead">{lead}</p>\n' if lead else "")
+            + '<p class="booklet-help">後半の「参考書」は、ロードマップで参照しているページを順番どおりに並べたものです。'
+            'ブラウザーの印刷(Ctrl+P)から、紙に印刷するかPDFとして保存してください。</p>\n'
+            + '<p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button></p>\n'
+            + "</div>\n" + page_toc(items)
+            + f'<section class="guide-roadmap">\n{body}\n</section>\n'
+            + '<section class="guide-reference">\n<h2 id="reference">参考書</h2>\n'
+            + "".join(articles) + "</section>\n"
+            + "</main>\n" + TO_TOP + TAIL,
+            encoding="utf-8")
+
+
 def main():
     warnings, counts, loaded = [], {}, {}
     updated = git_updated()
@@ -1369,6 +1429,7 @@ def main():
     for key in BOOKLET_KEYS:
         (print_dir / f"{key}.html").write_text(render_booklet(_by_key[key], loaded[key]), encoding="utf-8")
     write_glossary(loaded)
+    write_guides(loaded, warnings)
     (OUT / "index.html").write_text(render_top(loaded), encoding="utf-8")
     (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
     checklist_page = OUT / "checklist.html"
