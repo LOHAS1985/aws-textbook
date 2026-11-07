@@ -27,8 +27,15 @@ from diagrams import render_figures, text_width
 ROOT = Path(__file__).parent
 SRC = ROOT / "src"
 OUT = ROOT / "book"
-GUIDES_DIR = SRC / "guides"  # 学習ロードマップ(本文のリンク順に参考書を作る)
 GUIDE_REF_RE = re.compile(r'href="\.\./(services|terms|usecases)/([\w-]+)\.html"')
+EXAMS_DIR = SRC / "exams"  # 試験別(試験ごとのフォルダ: exam.json・scope.html・roadmap.html・questions.html)
+EXAM_LEVELS = [("foundational", "基礎"), ("associate", "アソシエイト"), ("professional", "プロフェッショナル"),
+               ("specialty", "スペシャリティ")]
+# 試験別の表示に使う仮想のコレクション(一覧はないが、ページの描画・検査で既存の仕組みを使う)
+EXAM_COL = {"key": "exams", "label": "試験別", "desc": "AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる",
+            "categories": [], "order": None}
+QUESTION_COL = {"key": "questions", "label": "問題集", "desc": "試験別のシナリオ型問題で、AWSの知識と選択理由を確認",
+                "categories": [], "script": "quiz.js", "order": None}
 SITE_TITLE = "AWS教科書"
 
 # key がフォルダ名(src/{key}/ → book/{key}/)。
@@ -118,7 +125,7 @@ COLLECTIONS = [
             "high-availability-scaling", "deploy-strategies", "dr-strategies", "circuit-breaker",
             "cloudwatch-alarm-states", "event-driven-remediation", "cron-rate-expressions", "throttling-retry", "terraform-git",
             "monitoring-logging-comparison", "messaging-comparison", "caching-comparison",
-            "data-engineer-exam-map", "data-engineering-basics", "data-store-selection",
+            "data-engineering-basics", "data-store-selection",
             "data-quality", "open-table-formats", "vector-search", "data-governance",
             "hybrid-connectivity", "vpc-connectivity", "security-detection-comparison",
             "secrets-config-comparison", "cost-management-comparison",
@@ -164,15 +171,6 @@ COLLECTIONS = [
             "hybrid-multi-vpc", "hybrid-dns-resolver", "remote-access-vpn", "route53-traffic-routing",
             "static-site-cloudfront", "network-troubleshooting",
         ],
-    },
-    {
-        "key": "questions",
-        "label": "問題集",
-        "desc": "試験別のシナリオ型問題で、AWSの知識と選択理由を確認",
-        "categories": ["DEA-C01", "SOA-C03"],
-        "search": "試験名・サービス・分野で絞り込み",
-        "script": "quiz.js",
-        "order": ["dea-c01"],
     },
     {
         # src/news/YYYY-MM-DD.html を毎日1件、クラウドの定期エージェントが追加する。
@@ -232,8 +230,6 @@ def load_pages(col, warnings, updated):
         if path.name.startswith("_"):
             continue
         text = path.read_text(encoding="utf-8")
-        if col["key"] == "questions" and path.stem == "dea-c01":
-            text = add_question_bank(text, src_dir)
         meta = dict(META_RE.findall(text))
         body = META_RE.sub("", text).strip()
         slug = path.stem
@@ -552,6 +548,7 @@ def header(prefix, current=None):
     links = "".join(
         f'<a href="{prefix}{c["key"]}/index.html"{cur if c["key"] == current else ""}>'
         f'{c["label"]}</a>' for c in COLLECTIONS if c.get("nav", True))
+    links += f'<a href="{prefix}exams/index.html"{cur if current == "exams" else ""}>試験別</a>'
     links += f'<a href="{prefix}links.html"{cur if current == "links" else ""}>公式リンク</a>'
     return f"""<header class="site-header" id="top">
   <div class="inner">
@@ -585,13 +582,13 @@ def verified_label(ymd):
     return f"{int(y)}年{int(m)}月{int(d)}日"
 
 
-def render_page(col, pages, i):
+def render_page(col, pages, i, prefix="../"):
     p = pages[i]
     prev = pages[i - 1] if i > 0 else None
     nxt = pages[i + 1] if i + 1 < len(pages) else None
     cat_no = [c for c, _ in grouped(col, pages)].index(p["category"]) + 1
     body, items = add_heading_ids(stack_tables(p["body"]))
-    icon = service_icon(p["slug"], "../", 56) if col["key"] == "services" else ""
+    icon = service_icon(p["slug"], prefix, 56) if col["key"] == "services" else ""
     title = f"{p['title']} | {p['date']}のAWSニュース" if p["date"] else p["title"]
     quiz_page = col["key"] == "questions"
     page_head = ""
@@ -609,11 +606,11 @@ def render_page(col, pages, i):
                      + (f'  <p class="updated">内容の確認:{verified_label(p["verified"])}</p>\n' if p["verified"] else "")
                      + "  </div>\n</div>\n")
     main_class = ' class="quiz-page"' if quiz_page else ""
-    return (head(f"{title} | {SITE_TITLE}", "../", p["lead"])
-            + header("../", col["key"])
+    return (head(f"{title} | {SITE_TITLE}", prefix, p["lead"])
+            + header(prefix, col["key"])
             + f'<main{main_class}>\n' + page_head + page_toc(items) + body + "\n" + p.get("graph", "")
             + pager(prev, nxt) + "</main>\n" + TO_TOP
-            + exercise_graph(col, p) + page_script(col) + TAIL)
+            + exercise_graph(col, p) + page_script(col, prefix) + TAIL)
 
 
 def exercise_graph(col, p):
@@ -668,9 +665,9 @@ def exercise_graph(col, p):
     return f'<script type="application/json" id="ex-graph">{js}</script>\n'
 
 
-def page_script(col):
+def page_script(col, prefix="../"):
     """コレクション専用のスクリプト(構成演習の答え合わせなど)を読み込むタグ。"""
-    return f'<script src="../js/{col["script"]}" defer></script>\n' if col.get("script") else ""
+    return f'<script src="{prefix}js/{col["script"]}" defer></script>\n' if col.get("script") else ""
 
 
 def cat_style(col, category):
@@ -956,8 +953,8 @@ __HELPERS__
 """
 
 
-def render_top(loaded):
-    desc = "AWS認定(SOA-C03・DEA-C01)の学習用に、サービス・用語・運用シナリオ・問題集をまとめた教科書"
+def render_top(loaded, exams, exam_pages):
+    desc = "AWS認定の学習用に、AWS共通のサービス・用語・運用シナリオと、試験別の学習範囲・問題集をまとめた教科書"
     parts = [head(SITE_TITLE, "", desc), header(""), "<main>\n",
              f'<div class="page-head"><h1>{SITE_TITLE}</h1><p class="lead">{desc}</p></div>\n']
 
@@ -973,6 +970,13 @@ def render_top(loaded):
                           "i": f'icons/services/{p["slug"]}.svg' if icon else "",
                           "d": plain(p["lead"]),
                           "k": search_keys(p, p["category"], h3)})
+    for c in (EXAM_COL, QUESTION_COL):
+        for p in loaded[c["key"]]:
+            h3 = " ".join(plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S))
+            if c["key"] == "questions":
+                h3 += " " + question_search_text(p)
+            index.append({"t": p["title"], "c": f'{c["label"]}(試験別)', "u": p["path"] + ".html", "i": "",
+                          "d": plain(p["lead"]), "k": search_keys(p, p["category"], h3)})
     parts.append('<div class="toc-search site-search" id="search">\n'
                  '  <input type="search" id="site-q" placeholder="全ページを検索(例: ロードバランサー、IMDSv2、DR)"'
                  ' aria-label="全ページを検索" autocomplete="off">\n'
@@ -981,7 +985,7 @@ def render_top(loaded):
                  + SITE_SEARCH_SCRIPT.replace("__INDEX__", json.dumps(index, ensure_ascii=False))
                  .replace("__HELPERS__", search_helpers()))
 
-    parts.append('<ul class="card-list top-cards">\n')
+    parts.append('<h2>AWS共通</h2>\n<ul class="card-list top-cards">\n')
     for c in COLLECTIONS:
         n = len(loaded[c["key"]])
         badge = f"{n}ページ" if n else "準備中"
@@ -990,6 +994,9 @@ def render_top(loaded):
     parts.append('  <li><a href="links.html"><span class="name">公式リンク</span>'
                  '<span class="desc">試験ガイドや各サービスの公式ページ・ドキュメントへのリンク</span></a></li>\n')
     parts.append("</ul>\n")
+    parts.append('<h2>試験別</h2>\n<ul class="card-list top-cards">\n'
+                 f'  <li><a href="exams/index.html"><span class="name">AWS認定の試験別<span class="badge">{len(exams)}資格</span></span>'
+                 '<span class="desc">試験ごとの学習範囲・ロードマップと参考書・問題集</span></a></li>\n</ul>\n')
 
     # 試験分野ごとの入口(運用シナリオのカテゴリへ)
     parts.append('<section class="top-section">\n<h2>試験分野から学ぶ(SOA-C03)</h2>\n'
@@ -1335,50 +1342,171 @@ self.addEventListener("fetch", function (e) {
 """
 
 
-def write_guides(loaded, warnings):
-    """学習ロードマップ(src/guides/*.html)を book/guides/ に書く。
-    本文のリンクの順に、リンク先のページの本文を「参考書」として後ろに続ける(印刷用)。"""
-    out_dir = OUT / "guides"
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
-    if not GUIDES_DIR.exists():
-        return
-    out_dir.mkdir(parents=True)
-    for path in sorted(GUIDES_DIR.glob("*.html")):
-        if path.name.startswith("_"):
+EXAM_STATUS_LABEL = {"beta": "ベータ版(試験の内容は変わることがあります)", "retiring": "廃止予定", "retired": "廃止済み"}
+
+
+def load_exams():
+    """試験別のフォルダ(src/exams/{試験ID}/)から、試験の情報(exam.json)を読む。試験は級の順、ID順に並べる。"""
+    exams = []
+    for folder in EXAMS_DIR.iterdir() if EXAMS_DIR.exists() else []:
+        meta_path = folder / "exam.json"
+        if folder.is_dir() and meta_path.exists():
+            exam = json.loads(meta_path.read_text(encoding="utf-8"))
+            exam["folder"] = folder
+            exams.append(exam)
+    order = {key: i for i, (key, _) in enumerate(EXAM_LEVELS)}
+    exams.sort(key=lambda e: (order.get(e["level"], len(order)), e["id"]))
+    return exams
+
+
+def exam_links(text, prefix):
+    """試験別のページは book/exams/{試験ID}/ に置くので、本文の ../ で始まるリンクを1段深くする。"""
+    return text.replace('href="../', f'href="{prefix}')
+
+
+def exam_page(exam, slug, title, category, lead, body, updated, verified=""):
+    """試験別のページを、コレクションのページと同じ形の辞書にする(描画・検査・検索で共通に使う)。"""
+    key = "questions" if slug.endswith("/questions") else "exams"
+    return {"key": key, "slug": slug, "path": f"exams/{exam['id']}/{slug.split('/')[1]}", "title": title,
+            "category": category, "lead": lead, "date": "", "verified": verified, "body": body, "raw": body,
+            "core": body, "graph": "", "updated": updated}
+
+
+def exam_overview_html(exam):
+    """試験の概要と、分野・配点・タスクの表。公式の試験ガイドの内容を exam.json から作る。"""
+    parts = ['<section class="chapter">\n<h2>1. 試験の概要</h2>\n',
+             f'<p>試験コードは{html.escape(exam["code"])}です。</p>\n']
+    status = EXAM_STATUS_LABEL.get(exam["status"], "")
+    if status or exam.get("status_note"):
+        parts.append(f'<p>{html.escape(" ".join(part for part in (status, exam.get("status_note", "")) if part))}</p>\n')
+    if exam.get("note"):
+        parts.append(f'<p>{html.escape(exam["note"])}</p>\n')
+    parts.append(f'<p><a href="{exam["guide_url"]}">公式の試験ガイド</a>で最新の内容を確認できます。</p>\n</section>\n')
+    if exam["domains"]:
+        rows = []
+        for i, domain in enumerate(exam["domains"], 1):
+            tasks = "<br>".join(f"{i}.{j} {html.escape(task['name_ja'])}" for j, task in enumerate(domain["tasks"], 1))
+            weight = "" if domain.get("weight") is None else f"{domain['weight']}%"
+            rows.append(f'<tr><td>{html.escape(domain["name_ja"])}<br><small>{html.escape(domain["name"])}</small></td>'
+                        f'<td>{weight}</td><td>{tasks}</td></tr>\n')
+        parts.append('<section class="chapter">\n<h2>2. 分野・配点・タスク</h2>\n'
+                     '<div class="table-wrap"><table>\n<tr><th>分野</th><th>配点</th><th>タスク</th></tr>\n'
+                     + "".join(rows) + "</table></div>\n</section>\n")
+    return "".join(parts)
+
+
+def exam_scope_page(exam, updated, warnings):
+    """学習範囲のページ。試験の概要・分野の表(exam.json)と、任意の本文(scope.html)を並べる。"""
+    where = f"exams/{exam['id']}/scope"
+    body = exam_overview_html(exam)
+    source = exam["folder"] / "scope.html"
+    if source.exists():
+        text = META_RE.sub("", source.read_text(encoding="utf-8")).strip()
+        body += exam_links(render_figures(text, where, warnings), "../../")
+    return exam_page(exam, f"{exam['id']}/scope", f"{exam['code']}の学習範囲", exam["code"],
+                     f"{exam['name']}の分野・配点・タスクと、関連する教科書のページ", body,
+                     updated.get(f"src/exams/{exam['id']}/exam.json", int(time.time())))
+
+
+def exam_roadmap_page(exam, updated, warnings):
+    """学習ロードマップ(roadmap.html)。本文のリンクの順に、リンク先のページを参考書として後ろに続ける。"""
+    source = exam["folder"] / "roadmap.html"
+    if not source.exists():
+        return None
+    where = f"exams/{exam['id']}/roadmap"
+    text = source.read_text(encoding="utf-8")
+    meta = dict(META_RE.findall(text))
+    raw = META_RE.sub("", text).strip()
+    refs = []
+    for key, slug in GUIDE_REF_RE.findall(raw):
+        if (key, slug) not in refs:
+            refs.append((key, slug))
+    page = exam_page(exam, f"{exam['id']}/roadmap", meta.get("title", f"{exam['code']}の学習ロードマップ"), exam["code"],
+                     meta.get("lead", ""), exam_links(render_figures(raw, where, warnings), "../../"),
+                     updated.get(f"src/exams/{exam['id']}/roadmap.html", int(time.time())), meta.get("verified", ""))
+    page["refs"] = refs
+    return page
+
+
+def exam_questions_page(exam, updated, warnings):
+    """問題集(questions.html)。DEA-C01 の問題は、分野ごとの追加問題データ(domain-N.json)を組み込む。"""
+    source = exam["folder"] / "questions.html"
+    if not source.exists():
+        return None
+    where = f"exams/{exam['id']}/questions"
+    text = source.read_text(encoding="utf-8")
+    if (exam["folder"] / "dea-c01-titles.json").exists():
+        text = add_question_bank(text, exam["folder"])
+    meta = dict(META_RE.findall(text))
+    raw = META_RE.sub("", text).strip()
+    return exam_page(exam, f"{exam['id']}/questions", meta.get("title", f"{exam['code']} 問題集"), meta.get("category", exam["code"]),
+                     meta.get("lead", ""), exam_links(render_figures(raw, where, warnings), "../../"),
+                     updated.get(f"src/exams/{exam['id']}/questions.html", int(time.time())), meta.get("verified", ""))
+
+
+def exam_top_html(exam, pages):
+    """試験ごとの入口。学習範囲は必ずあり、ロードマップ・問題集は作られているものだけ並べる。"""
+    cards = [("scope.html", "学習範囲", "分野・配点・タスクと、関連するページ")]
+    if pages["roadmap"]:
+        cards.append(("roadmap.html", "学習ロードマップと参考書", "学ぶ順番と、印刷用の参考書"))
+    if pages["questions"]:
+        cards.append(("questions.html", "問題集", "シナリオ型の問題で理解を確認"))
+    items = "".join(f'  <li><a href="{href}"><span class="name">{name}</span><span class="desc">{desc}</span></a></li>\n'
+                    for href, name, desc in cards)
+    level = dict(EXAM_LEVELS).get(exam["level"], "")
+    return (head(f"{exam['name']} | {SITE_TITLE}", "../../", exam["name"]) + header("../../", "exams")
+            + '<main>\n<div class="page-head">\n'
+            + f'<p class="category">{html.escape(level)}・{html.escape(exam["code"])}</p>\n'
+            + f'<h1>{html.escape(exam["name"])}</h1>\n</div>\n'
+            + f'<ul class="card-list top-cards">\n{items}</ul>\n'
+            + '<p><a href="../index.html">試験の一覧へ戻る</a></p>\n'
+            + "</main>\n" + TO_TOP + TAIL)
+
+
+def exams_index_html(exams):
+    """試験の一覧。級ごとに並べ、試験の入口へつなぐ。"""
+    parts = [head(f"試験別 | {SITE_TITLE}", "../", "AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる"),
+             header("../", "exams"), "<main>\n",
+             '<div class="page-head"><h1>試験別</h1><p class="lead">AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる</p></div>\n']
+    for key, label in EXAM_LEVELS:
+        group = [e for e in exams if e["level"] == key]
+        if not group:
             continue
-        where = f"guides/{path.stem}"
-        text = path.read_text(encoding="utf-8")
-        meta = dict(META_RE.findall(text))
-        body = META_RE.sub("", text).strip()
-        refs = []
-        for key, slug in GUIDE_REF_RE.findall(body):
-            if (key, slug) not in refs:
-                refs.append((key, slug))
-        pages = []
-        for key, slug in refs:
-            p = next((x for x in loaded.get(key, []) if x["slug"] == slug), None)
-            if p is None:
-                warnings.append(f"{where}: {key}/{slug} がありません")
-            else:
-                pages.append((key, p))
-        included = {p["slug"] for _, p in pages}
-        articles = []
-        for key, p in pages:
-            # 冊子の中の移動先は、冊子に入っているページだけにする。それ以外は通常のページへのリンクにする
-            article = re.sub(r'href="#p-([\w-]+)"',
-                             lambda m: m.group(0) if m.group(1) in included else f'href="../{key}/{m.group(1)}.html"',
-                             booklet_body(key, p))
-            articles.append(f'<article class="booklet-page" id="p-{p["slug"]}">\n'
-                            f'<div class="page-head hero"{cat_style(_by_key[key], p["category"])}>\n<div class="hero-text">\n'
-                            f'<span class="category">{html.escape(p["category"])}</span>\n<h1>{html.escape(p["title"])}</h1>\n'
-                            + (f'<p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
-                            + "</div>\n</div>\n" + article + "\n</article>\n")
-        body, items = add_heading_ids(stack_tables(render_figures(body, where, warnings)))
-        title = meta.get("title", path.stem)
-        lead = meta.get("lead", "")
-        (out_dir / f"{path.stem}.html").write_text(
-            head(f"{title} | {SITE_TITLE}", "../", lead) + header("../")
+        parts.append(f'<h2>{label}</h2>\n<ul class="card-list top-cards">\n')
+        for e in group:
+            status = EXAM_STATUS_LABEL.get(e["status"], "")
+            desc = status or e["name"]
+            parts.append(f'  <li><a href="{e["id"]}/index.html"><span class="name">{html.escape(e["name"])}'
+                         f'<span class="badge">{html.escape(e["code"])}</span></span>'
+                         f'<span class="desc">{html.escape(desc)}</span></a></li>\n')
+        parts.append("</ul>\n")
+    parts.append("</main>\n" + TO_TOP + TAIL)
+    return "".join(parts)
+
+
+def render_roadmap(page, loaded):
+    """学習ロードマップの本文の後ろに、リンク先のページを順番どおりに並べた参考書を続ける(印刷用)。"""
+    refs = []
+    for key, slug in page["refs"]:
+        p = next((x for x in loaded.get(key, []) if x["slug"] == slug), None)
+        if p is not None:
+            refs.append((key, p))
+    included = {p["slug"] for _, p in refs}
+    articles = []
+    for key, p in refs:
+        # 冊子の中の移動先は、冊子に入っているページだけにする。それ以外は通常のページへのリンクにする
+        article = re.sub(r'href="#p-([\w-]+)"',
+                         lambda m: m.group(0) if m.group(1) in included else f'href="../{key}/{m.group(1)}.html"',
+                         booklet_body(key, p))
+        article = exam_links(article, "../../")
+        articles.append(f'<article class="booklet-page" id="p-{p["slug"]}">\n'
+                        f'<div class="page-head hero"{cat_style(_by_key[key], p["category"])}>\n<div class="hero-text">\n'
+                        f'<span class="category">{html.escape(p["category"])}</span>\n<h1>{html.escape(p["title"])}</h1>\n'
+                        + (f'<p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
+                        + "</div>\n</div>\n" + article + "\n</article>\n")
+    body, items = add_heading_ids(stack_tables(page["body"]))
+    title, lead = page["title"], page["lead"]
+    return (head(f"{title} | {SITE_TITLE}", "../../", lead) + header("../../", "exams")
             + '<main class="booklet guide">\n'
             + f'<div class="page-head booklet-cover">\n<p class="booklet-site">{SITE_TITLE}</p>\n<h1>{html.escape(title)}</h1>\n'
             + (f'<p class="lead">{lead}</p>\n' if lead else "")
@@ -1389,8 +1517,49 @@ def write_guides(loaded, warnings):
             + f'<section class="guide-roadmap">\n{body}\n</section>\n'
             + '<section class="guide-reference">\n<h2 id="reference">参考書</h2>\n'
             + "".join(articles) + "</section>\n"
-            + "</main>\n" + TO_TOP + TAIL,
-            encoding="utf-8")
+            + "</main>\n" + TO_TOP + TAIL)
+
+
+def redirect_html(url, label):
+    return ('<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="UTF-8">\n'
+            f'<meta http-equiv="refresh" content="0; url={url}">\n<link rel="canonical" href="{url}">\n'
+            f'<title>{SITE_TITLE}</title>\n</head>\n<body>\n'
+            f'<p>このページは{label}に移りました。<a href="{url}">移動先を開く</a></p>\n</body>\n</html>\n')
+
+
+# 試験別の移行前のURL(公開済みのリンクを切らないため、新しいページへ転送する)
+LEGACY_PAGES = [
+    ("questions/index.html", "../exams/index.html", "試験別"),
+    ("questions/dea-c01.html", "../exams/dea-c01/questions.html", "DEA-C01の問題集"),
+    ("guides/dea-c01.html", "../exams/dea-c01/roadmap.html", "DEA-C01の学習ロードマップ"),
+    ("terms/data-engineer-exam-map.html", "../exams/dea-c01/scope.html", "DEA-C01の学習範囲"),
+]
+
+
+def write_exams(exams, loaded):
+    """試験別のページ(一覧・試験の入口・学習範囲・ロードマップ・問題集)と、移行前のURLの転送を書く。"""
+    base = OUT / "exams"
+    if base.exists():
+        shutil.rmtree(base)
+    base.mkdir(parents=True)
+    (base / "index.html").write_text(exams_index_html(exams), encoding="utf-8")
+    for e in exams:
+        folder = base / e["id"]
+        folder.mkdir()
+        pages = e["pages"]
+        (folder / "index.html").write_text(exam_top_html(e, pages), encoding="utf-8")
+        (folder / "scope.html").write_text(render_page(EXAM_COL, [pages["scope"]], 0, "../../"), encoding="utf-8")
+        if pages["roadmap"]:
+            (folder / "roadmap.html").write_text(render_roadmap(pages["roadmap"], loaded), encoding="utf-8")
+        if pages["questions"]:
+            (folder / "questions.html").write_text(render_page(QUESTION_COL, [pages["questions"]], 0, "../../"),
+                                                   encoding="utf-8")
+    for stale in ("questions", "guides"):  # 移行前の一覧・ページは、転送ページだけにする
+        shutil.rmtree(OUT / stale, ignore_errors=True)
+    for path, url, label in LEGACY_PAGES:
+        target = OUT / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(redirect_html(url, label), encoding="utf-8")
 
 
 def main():
@@ -1409,6 +1578,15 @@ def main():
         for p in loaded[c["key"]]:
             p["core"] = p["body"]  # 被リンクの一覧を付ける前の本文(冊子に使う)
     add_backlinks(loaded)
+    exams = load_exams()
+    exam_pages = []  # 試験別のページ(学習範囲・ロードマップ・問題集)
+    for e in exams:
+        e["pages"] = {"scope": exam_scope_page(e, updated, warnings),
+                     "roadmap": exam_roadmap_page(e, updated, warnings),
+                     "questions": exam_questions_page(e, updated, warnings)}
+        exam_pages += [p for p in e["pages"].values() if p]
+    loaded["exams"] = [p for p in exam_pages if p["key"] == "exams"]
+    loaded["questions"] = [p for p in exam_pages if p["key"] == "questions"]
     for col in COLLECTIONS:
         pages = loaded[col["key"]]
         counts[col["key"]] = len(pages)
@@ -1428,10 +1606,13 @@ def main():
     for key in BOOKLET_KEYS:
         (print_dir / f"{key}.html").write_text(render_booklet(_by_key[key], loaded[key]), encoding="utf-8")
     write_glossary(loaded)
-    write_guides(loaded, warnings)
-    # 生成したページ(学習ロードマップを含む)へのリンクも検査するため、書き出しの後に検査する
-    check_pages(COLLECTIONS, loaded, extra, OUT, warnings)
-    (OUT / "index.html").write_text(render_top(loaded), encoding="utf-8")
+    write_exams(exams, loaded)
+    # 生成したページ(試験別のページを含む)へのリンクも検査するため、書き出しの後に検査する
+    for e in exams:
+        extra[f"exams/{e['id']}/index.html"] = ""
+    extra["exams/index.html"] = ""
+    check_pages(COLLECTIONS + [EXAM_COL, QUESTION_COL], loaded, extra, OUT, warnings)
+    (OUT / "index.html").write_text(render_top(loaded, exams, exam_pages), encoding="utf-8")
     (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
     checklist_page = OUT / "checklist.html"
     if checklist_page.exists():

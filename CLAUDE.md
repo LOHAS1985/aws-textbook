@@ -7,13 +7,18 @@
 
 ## 目的
 AWS認定資格(SOA-C03・DEA-C01を中心)の学習用に、HTMLの教科書を作る。
-「サービス」「用語」「運用シナリオ」「問題集」の4種類のページで構成する。運用シナリオは、構成を自分で組み立てる演習と答えの解説を1ページにまとめたもの(フォルダ名・slugは usecases のまま。統合前の構成演習のURL book/exercises/ は build.py が転送ページを作る)。問題集は試験ごとに作り、シナリオ型の選択問題と解説を掲載する。
+大分類は2つ。「AWS共通」(サービス・用語・運用シナリオ・ニュース・公式リンク)と「試験別」(試験ごとの学習範囲・学習ロードマップと参考書・問題集)。試験別は AWS認定の全資格ぶんの枠を持ち、資格ごとに作る。運用シナリオは、構成を自分で組み立てる演習と答えの解説を1ページにまとめたもの(フォルダ名・slugは usecases のまま。統合前の構成演習のURL book/exercises/ は build.py が転送ページを作る)。問題集は試験ごとに作り、シナリオ型の選択問題と解説を掲載する。
 
 ## 対象読者
 AWS初学者〜AWS認定資格(SAA程度)の学習者
 
 ## フォルダ構成
-- src/{services,terms,usecases,questions}/{slug}.html … 各ページの本文(編集するのはこちら)
+- src/{services,terms,usecases}/{slug}.html … 各ページの本文(編集するのはこちら)
+- src/news/YYYY-MM-DD.html … ニュース(AWS共通)
+- src/exams/{試験ID}/exam.json … 試験の情報(正式名称・試験コード・級・状態・公式試験ガイドのURL・分野・配点・タスク)。全資格ぶんを置く。公式の試験ガイド(PDF)から作る
+- src/exams/{試験ID}/scope.html … 学習範囲の本文(任意)。分野・配点・タスクの表は exam.json から自動で作る
+- src/exams/{試験ID}/roadmap.html … 学習ロードマップ(任意)。本文のリンクの順に、リンク先のページを印刷用の「参考書」として後ろに続ける。本文の参照は `../services/`・`../terms/`・`../usecases/` へのリンク。問題集へは `questions.html` で、同じ試験のページへリンクする
+- src/exams/{試験ID}/questions.html … 問題集(任意)。DEA-C01 は同じフォルダの `dea-c01-titles.json`・`domain-N.json` を組み込む
 - src/{terms,usecases}/_template.html … 新規ページのひな形(`_` で始まるファイルはビルド対象外)
 - build.py … `python build.py` で src/ から book/ を生成する(コレクションの並び順・カテゴリ順もここで定義)
 - diagrams.py … 本文中の図の記法をSVGに変換する
@@ -21,9 +26,8 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/index.html … トップ(サービス・用語・運用シナリオ・問題集・公式リンクへの入口)
 - book/icons/services/{slug}.svg … サービスのアイコン(AWS公式の Architecture Icons 2026年7月版の48px SVGを、改変せずファイル名だけ slug にしたもの)。サービス一覧・各サービスページの見出し・公式リンク・トップの検索結果に build.py が表示する。サービスを追加したら公式パッケージ(https://aws.amazon.com/jp/architecture/icons/)から同じ形でコピーする。専用アイコンがないサービス(Copilot・Database Encryption SDK・STS・SAM・Kiro・IPAM・DNS Firewall)は所属カテゴリの公式カテゴリアイコンを使っている
 - src/links.html・src/links.json … 公式リンク(book/links.html)の本文と、サービスごとの公式ページ(製品ページ・ドキュメント)のパス。サービスを追加したら links.json にも追加する(URLは実際にアクセスして確認する)
-- src/guides/{試験ID}.html … 学習ロードマップ(本文の参照は `../services/`・`../terms/`・`../usecases/` へのリンク)。build.py がそのページを `book/guides/{試験ID}.html` にし、ロードマップのリンクの順に、リンク先のページの本文を印刷用の「参考書」として後ろに続ける(問題集は含めない)。DEA-C01 は公式試験ガイドの分野・タスク・スキル番号に合わせる
-- book/{services,terms,usecases,questions}/index.html … 各コレクションの目次(カテゴリ別)
-- book/{services,terms,usecases,questions}/{slug}.html … 各ページ(生成物。直接編集しない)
+- book/{services,terms,usecases}/index.html … 各コレクションの目次(カテゴリ別)。book/exams/index.html は試験の一覧、book/exams/{試験ID}/ は試験ごとの入口
+- book/{services,terms,usecases}/{slug}.html … 各ページ(生成物。直接編集しない)。book/exams/{試験ID}/ の scope・roadmap・questions も生成物
 - book/css/style.css … 共通スタイル(全ページで共有。これは直接編集する)
 - book/icons/・book/manifest.webmanifest … ホーム画面用アイコンとWebアプリ設定(アイコンは `python tools/make_icons.py book/icons` で再生成)
 - book/js/sim.js … 運用シナリオの構成演習(タブ・答え合わせ・自由構成)と、一覧への演習の結果の表示(直接編集する)
@@ -92,10 +96,13 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - 選択肢の表示順は表示のたびに並べ替わり、結果は閲覧者のブラウザ(localStorage)にだけ保存される
 - まとめ冊子(印刷用)には2章(問いと答え)を載せない
 
-### 問題集(questions)
-1. 問題集の使い方 2. 問題(試験分野ごと) 3. 採点結果
-- 試験ごとに1ページを作り、カテゴリ名・slug・タイトルに試験IDを使う(例: `questions/dea-c01.html`)
-- DEA-C01の問題は公式試験ガイドの分野・配点に沿って配置する。200問の配分(68/52/44/36)と連番は checks.py で検査する。問1〜100の選択画面用タイトルは `src/questions/dea-c01-titles.json`、追加問題のタイトルと公式ガイドのスキル番号は各 `domain-N.json` の設問データで管理する
+### 試験別(exams)
+1. 試験の概要 2. 分野・配点・タスク(exam.json から自動) 3以降 本文(scope.html)
+- 試験ごとにフォルダ(src/exams/{試験ID}/)を作り、exam.json を置く。学習範囲・ロードマップ・問題集は、あるものだけ作る(枠は全資格ぶん用意する)
+- 試験の入口(book/exams/{試験ID}/index.html)には、作られているページだけを並べる
+- 旧URL(book/questions/・book/guides/・book/terms/data-engineer-exam-map.html)は build.py の LEGACY_PAGES で新しいページへ転送する
+- 問題集は試験ごとに1ページ(src/exams/{試験ID}/questions.html)。カテゴリ名は試験ID(例: DEA-C01)
+- DEA-C01の問題は公式試験ガイドの分野・配点に沿って配置する。200問の配分(68/52/44/36)と連番は checks.py で検査する。問1〜100の選択画面用タイトルは `src/exams/dea-c01/dea-c01-titles.json`、追加問題のタイトルと公式ガイドのスキル番号は各 `src/exams/dea-c01/domain-N.json` の設問データで管理する
 - 問題文は実務の状況・制約・目標を示すシナリオ型にし、サービスの暗記だけで解けないよう要件から選ばせる。出題形式・難易度・文章量は [問題集の作成方針.md](問題集の作成方針.md) を参照する
 - 1問あたり選択肢は4つを基本とし、単一選択または「2つ選択」を明記する。正解だけでなく不正解の各選択肢も、要件を満たさない理由を解説する
 - 選択式の問いは `<section class="quiz-q" data-answer="a" data-type="single">` で記述する。複数選択では正解値をカンマで区切り、`data-type="multiple"` とする。各問いにラジオボタンまたはチェックボックス、`<details class="quiz-answer">` の答えと解説を置く

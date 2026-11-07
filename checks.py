@@ -113,6 +113,11 @@ def _anchor_ids(raw):
     return ids
 
 
+def _page_path(key, p):
+    """ページの公開パス(拡張子なし)。試験別のページは exams/{試験ID}/... にある。"""
+    return p.get("path") or f"{key}/{p['slug']}"
+
+
 def check_pages(collections, loaded, extra_pages, out_dir, warnings):
     """loaded: {コレクションのkey: [ページ]}(各ページに raw = メタ情報を除いた本文)。
     extra_pages: {公開パス: raw本文}(links.html など、コレクション以外のページ)。"""
@@ -121,7 +126,7 @@ def check_pages(collections, loaded, extra_pages, out_dir, warnings):
         key = col["key"]
         targets[f"{key}/index.html"] = None  # 目次ページ(id は検査しない)
         for p in loaded[key]:
-            targets[f"{key}/{p['slug']}.html"] = _anchor_ids(p["raw"])
+            targets[f"{_page_path(key, p)}.html"] = _anchor_ids(p["raw"])
     targets["index.html"] = None
     for path, raw in extra_pages.items():
         targets[path] = _anchor_ids(raw)
@@ -129,10 +134,10 @@ def check_pages(collections, loaded, extra_pages, out_dir, warnings):
     pages = [(col, p) for col in collections for p in loaded[col["key"]]]
     for col, p in pages:
         key, raw = col["key"], p["raw"]
-        where = f"{key}/{p['slug']}"
+        where = _page_path(key, p)
         _check_meta(col, p, where, warnings)
         _check_chapters(key, raw, where, warnings)
-        _check_links(f"{key}/{p['slug']}.html", raw, targets, out_dir, where, warnings)
+        _check_links(f"{where}.html", raw, targets, out_dir, where, warnings)
         _check_style(raw, where, warnings)
         if key == "usecases":
             _check_exercise(raw, where, warnings)
@@ -219,7 +224,7 @@ def _check_question_paper(raw, where, warnings):
     if not questions:
         warnings.append(f"{where}: 問題(quiz-q)がありません")
         return
-    if where == "questions/dea-c01" and len(questions) != 200:
+    if where == "exams/dea-c01/questions" and len(questions) != 200:
         warnings.append(f"{where}: DEA-C01の問題は200問にしてください(現在{len(questions)}問)")
     ids = set()
     domains = {str(domain): 0 for domain in range(1, 5)}
@@ -285,7 +290,7 @@ def _check_question_paper(raw, where, warnings):
         explanation = re.search(r'<ul>(.*?)</ul>', inner, re.S)
         if not explanation or len(re.findall(r'<li>', explanation.group(1))) != wrong_count:
             warnings.append(f"{where}: 問{n}の誤答選択肢それぞれに解説を付けてください")
-    if where == "questions/dea-c01":
+    if where == "exams/dea-c01/questions":
         if ids != {str(question_id) for question_id in range(1, 201)}:
             warnings.append(f"{where}: 問題IDは1〜200の連番にしてください")
         expected = {"1": 68, "2": 52, "3": 44, "4": 36}
