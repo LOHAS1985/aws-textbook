@@ -568,13 +568,19 @@ th { background: var(--accent-soft); white-space: nowrap; }
 .top-cards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-top: 20px; }
 .top-cards a { padding: 18px 20px; }
 .top-cards .name { font-size: 18px; margin-bottom: 4px; }
-/* 試験の進み具合(試験別の一覧・試験の入口): 学習中は強調色、合格済みは緑 */
-.card-list a.progress-studying { border: 2px solid var(--accent); background: var(--accent-soft); }
-.card-list a.progress-studying .name { color: var(--accent); }
-.card-list a.progress-passed { border: 2px solid var(--ok); background: var(--ok-bg); }
-.card-list a.progress-passed .name { color: var(--ok); }
-.progress-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px;
-  font-size: 12px; font-weight: 700; vertical-align: middle; }
+/* 試験の一覧・試験の入口: 1行に1試験(コード・名前・状態を横に並べる)。学習中は強調色、合格済みは緑 */
+.exam-list { list-style: none; padding: 0; margin: 0 0 24px; border-top: 1px solid var(--border); }
+.exam-list li { border-bottom: 1px solid var(--border); border-left: 4px solid transparent; }
+.exam-list li.progress-studying { border-left-color: var(--accent); background: var(--accent-soft); }
+.exam-list li.progress-passed { border-left-color: var(--ok); background: var(--ok-bg); }
+.exam-list a { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 10px 14px;
+  color: var(--text); text-decoration: none; }
+.exam-list a:hover .exam-name { text-decoration: underline; }
+.exam-list .code { flex: 0 0 auto; min-width: 6.5em; font-weight: 700; white-space: nowrap; }
+.exam-list .exam-name { flex: 1 1 12em; }
+.exam-list .exam-status { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.progress-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px;
+  font-weight: 700; white-space: nowrap; }
 .progress-badge.studying { background: var(--accent); color: #1f2933; }
 .progress-badge.passed { background: var(--ok); color: #ffffff; }
 .page-head.progress-studying h1 { color: var(--accent); }
