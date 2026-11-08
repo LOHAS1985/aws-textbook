@@ -696,7 +696,7 @@ def cat_style(col, category):
 
 def render_collection_index(col, pages, loaded):
     parts = [head(f"{col['label']} | {SITE_TITLE}", "../", col["desc"]), header("../", col["key"]), "<main>\n",
-             f'<div class="page-head"><h1>{col["label"]}</h1><p class="lead">{col["desc"]}</p></div>\n']
+             f'<div class="page-head"><h1>{col["label"]}</h1></div>\n']
     if col["key"] == "questions":
         parts.append('<p class="cat-desc" id="quiz-storage-note" hidden>このブラウザーでは保存済みの成績を読み込めません。</p>\n')
     if col["key"] in BOOKLET_KEYS and pages:
@@ -997,7 +997,7 @@ def write_search_fulltext(loaded):
 def render_top(loaded, exams, exam_pages):
     desc = "AWS認定の学習用に、AWS共通のサービス・用語・運用シナリオと、試験別の学習範囲・問題集をまとめた教科書"
     parts = [head(SITE_TITLE, "", desc), header(""), "<main>\n",
-             f'<div class="page-head"><h1>{SITE_TITLE}</h1><p class="lead">{desc}</p></div>\n']
+             f'<div class="page-head"><h1>{SITE_TITLE}</h1></div>\n']
 
     # 全ページ横断の検索(タイトル・説明・カテゴリ・小見出しが対象)
     index = []
@@ -1032,34 +1032,15 @@ def render_top(loaded, exams, exam_pages):
         n = len(loaded[c["key"]])
         badge = f"{n}ページ" if n else "準備中"
         parts.append(f'  <li><a href="{c["key"]}/index.html"><span class="name">{c["label"]}'
-                     f'<span class="badge">{badge}</span></span><span class="desc">{c["desc"]}</span></a></li>\n')
-    parts.append('  <li><a href="links.html"><span class="name">公式リンク</span>'
-                 '<span class="desc">試験ガイドや各サービスの公式ページ・ドキュメントへのリンク</span></a></li>\n')
+                     f'<span class="badge">{badge}</span></span></a></li>\n')
+    parts.append('  <li><a href="links.html"><span class="name">公式リンク</span></a></li>\n')
     parts.append("</ul>\n")
     parts.append('<h2>試験別</h2>\n<ul class="card-list top-cards">\n'
-                 f'  <li><a href="exams/index.html"><span class="name">AWS認定の試験別<span class="badge">{len(exams)}資格</span></span>'
-                 '<span class="desc">試験ごとの学習範囲・ロードマップと参考書・問題集</span></a></li>\n</ul>\n')
+                 f'  <li><a href="exams/index.html"><span class="name">AWS認定の試験別<span class="badge">{len(exams)}資格</span></span></a></li>\n</ul>\n')
 
-    # 試験分野ごとの入口(運用シナリオのカテゴリへ)
-    parts.append('<section class="top-section">\n<h2>試験分野から学ぶ(SOA-C03)</h2>\n'
-                 '<p class="cat-desc">分野ごとの運用シナリオから読み始め、出てくるサービス・用語のページへ進むのがおすすめです。</p>\n'
-                 '<ol class="domain-list">\n')
-    for i, (name, weight) in enumerate(EXAM_DOMAINS, 1):
-        parts.append(f'  <li><a href="usecases/index.html#cat{i}"><span class="name">{html.escape(name)}</span>'
-                     f'<span class="badge">{weight}%</span></a></li>\n')
-    parts.append("</ol>\n</section>\n")
-
-    # 最新のニュース(新しい日付から5件)
-    if loaded["news"]:
-        parts.append('<section class="top-section">\n<h2>最新のAWSニュース</h2>\n<ul class="recent-list">\n')
-        for p in loaded["news"][:5]:
-            parts.append(f'  <li><time datetime="{p["slug"][:10]}">{p["slug"][:10]}</time>'
-                         f'<a href="news/{p["slug"]}.html">{html.escape(p["title"])}</a></li>\n')
-        parts.append('</ul>\n<p class="cat-desc"><a href="news/index.html">ニュースの一覧へ</a></p>\n</section>\n')
-
-    # 最近更新したページ(ニュースは上の欄に出すので除く)
+    # 最近更新したページ(直近5件。ニュースは一覧から読むので除く)
     recent = sorted(((p, c) for c in COLLECTIONS if c["key"] != "news" for p in loaded[c["key"]]),
-                    key=lambda pc: -pc[0]["updated"])[:10]
+                    key=lambda pc: -pc[0]["updated"])[:5]
     parts.append('<section class="top-section">\n<h2>最近更新したページ</h2>\n<ul class="recent-list">\n')
     for p, c in recent:
         parts.append(f'  <li><time datetime="{fmt_date(p["updated"])}">{fmt_date(p["updated"])}</time>'
