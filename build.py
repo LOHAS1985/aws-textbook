@@ -978,9 +978,20 @@ __HELPERS__
 
 def search_fields(p, headings, extra=""):
     """トップの全ページ検索の根拠に使う項目。項目ごとの重みは SITE_SEARCH_SCRIPT の FIELDS と対応させる。
-    本文の全文は入れない(検索データが大きくなりすぎるため。本文の内容は小見出し・説明・関連サービスで拾う)。"""
-    return {"uses": p.get("uses", []), "heading": headings, "lead": plain(p["lead"]),
+    本文の全文は入れず、太字の用語(term)だけを入れる。全文は write_search_fulltext が search.json に書く。"""
+    terms = [plain(s).strip() for s in re.findall(r"<strong[^>]*>(.*?)</strong>", p["body"], re.S)]
+    terms = list(dict.fromkeys(t for t in terms if 0 < len(t) <= 60))
+    return {"uses": p.get("uses", []), "heading": headings, "lead": plain(p["lead"]), "term": terms,
             "category": p["category"], "other": " ".join([p["slug"], p.get("date", ""), extra])}
+
+
+def write_search_fulltext(loaded):
+    """本文の全文(book/search.json)。トップの全ページ検索は、入力したときに初めてこれを読み込む。"""
+    data = {}
+    for c in COLLECTIONS:
+        for p in loaded[c["key"]]:
+            data[f'{c["key"]}/{p["slug"]}.html'] = " ".join(plain(p["body"]).split())
+    (OUT / "search.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
 
 def render_top(loaded, exams, exam_pages):
@@ -1077,10 +1088,19 @@ __HELPERS__
     {name: "title", label: "タイトル", w: 10, texts: function (p) { return [p.t]; }},
     {name: "uses", label: "関連サービス", w: 6, texts: function (p) { return p.f.uses; }},
     {name: "heading", label: "小見出し", w: 4, texts: function (p) { return p.f.heading; }},
+    {name: "term", label: "用語", w: 5, texts: function (p) { return p.f.term; }},
     {name: "lead", label: "説明", w: 4, texts: function (p) { return p.f.lead ? [p.f.lead] : []; }},
     {name: "category", label: "カテゴリ", w: 2, texts: function (p) { return [p.f.category]; }},
-    {name: "other", label: "その他", w: 1, texts: function (p) { return [p.f.other]; }}
+    {name: "other", label: "その他", w: 1, texts: function (p) { return [p.f.other]; }},
+    {name: "body", label: "本文", w: 1, texts: function (p) { return FULL && FULL[p.u] ? [FULL[p.u]] : []; }}
   ];
+  // 本文の全文(search.json)は、入力したときに初めて読み込む。読み込むまでは本文では探さない
+  var FULL = null, loading = false;
+  function loadFull() {
+    if (FULL || loading) return;
+    loading = true;
+    fetch("search.json").then(function (r) { return r.json(); }).then(function (j) { FULL = j; apply(); }).catch(function () {});
+  }
   // 言い換えは元の語より弱い重みにする(直接の一致が言い換えより先に来る)。SYN は build.py の SYNONYMS
   function variants(w) {
     var out = [{t: w, f: 1, o: ""}];
@@ -1117,15 +1137,26 @@ __HELPERS__
       });
       if (!best) return null;
       total += best.s;
-      var shown = best.f.name === "lead" || best.f.name === "other" ? snip(best.t, best.v.t) : best.t;
+      var long = best.f.name === "lead" || best.f.name === "other" || best.f.name === "body";
+      var shown = long ? snip(best.t, best.v.t) : best.t;
       var label = (best.v.o ? "言い換え「" + best.v.o + "→" + best.v.t + "」・" : "") + best.f.label + "「" + shown + "」";
       if (why.indexOf(label) < 0) why.push(label);  // 2語とも同じ項目に一致しても、根拠は1つにまとめる
+    }
+    // 2語以上のとき、語を続けた句(例: transfer acceleration)がどこかに続けて書かれていたら加点する
+    if (words.length > 1) {
+      var phrase = words.join(" "), where = null;
+      FIELDS.forEach(function (f) {
+        if (where) return;
+        f.texts(p).forEach(function (t) { if (!where && norm(t).indexOf(phrase) >= 0) where = f; });
+      });
+      if (where) { total += 3; why.unshift("句「" + phrase + "」(" + where.label + ")"); }
     }
     return {s: total, why: why};
   }
   function apply() {
     var words = norm(q.value).trim().split(/\\s+/).filter(Boolean);
     if (!words.length) { list.hidden = true; hits.textContent = ""; return; }
+    loadFull();
     var found = [];
     pages.forEach(function (p, n) {
       if (kind !== "all" && p.g !== kind) return;
@@ -2240,6 +2271,7 @@ def main():
     check_question_data(EXAMS_DIR, warnings)
     check_pages(COLLECTIONS + [EXAM_COL, QUESTION_COL], loaded, extra, OUT, warnings)
     (OUT / "index.html").write_text(render_top(loaded, exams, exam_pages), encoding="utf-8")
+    write_search_fulltext(loaded)
     (OUT / "links.html").write_text(render_links(loaded["services"], warnings), encoding="utf-8")
     checklist_page = OUT / "checklist.html"
     if checklist_page.exists():
