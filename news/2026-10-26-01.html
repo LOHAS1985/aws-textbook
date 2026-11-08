@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transit Gateway・Cloud WAN:1:1 NAT | 2026年10月26日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Transit GatewayとCloud WANの接続の口に、1対1でアドレスを置き換える機能が加わりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">試験別</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">2026年10月</a>
+  <p class="news-date"><time datetime="2026-10-26">2026年10月26日</time>のAWSニュース</p>
+  <h1>Transit Gateway・Cloud WAN:1:1 NAT</h1>
+  <p class="lead">Transit GatewayとCloud WANの接続の口に、1対1でアドレスを置き換える機能が加わりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>NAT(ネットワークアドレス変換)は、通信の途中でIPアドレスを別のアドレスに書き換える仕組みです。今回、Transit Gateway(複数のVPCやオンプレミスをつなぐ中継点)と Cloud WAN(世界中のネットワークをまとめて管理するサービス)の「アタッチメント(接続の口)」に、1対1でアドレスを置き換える機能が加わりました。内部ではリージョナルなプライベートNATゲートウェイが使われ、AWSが運用・拡張します。</p>
+<p>これまでCIDR(IPアドレスの範囲)が同じ10.0.0.0/16同士のネットワークは、そのままでは通信できませんでした。企業の合併、パートナーとのVPN接続、マルチクラウド接続などでよく起きる問題です。今回の機能では、片方のアドレスを重ならない範囲に変換するルールをアタッチメントに設定するだけで接続できます。変換は往復の通信で自動的に行われ、戻り通信用のルールは要りません。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 同じCIDRのVPC同士を、アタッチメントの変換でつなぐ"><defs><marker id="dgnews-2026-10-26-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="a">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">VPC A</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">10.0.0.0/16</text>
+</g>
+<g data-node="tgw">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="62" text-anchor="middle" class="dg-tb">Transit Gateway</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">1:1 NATで変換</text>
+</g>
+<g data-node="b">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="653" y="62" text-anchor="middle" class="dg-t">VPC B</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">10.0.0.0/16(重複)</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-26-01-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">A側を別の範囲へ</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-26-01-1)"/>
+<text x="517" y="70" text-anchor="middle" class="dg-s dg-halo">往復を自動変換</text>
+</svg>
+</div>
+<figcaption>図1 同じCIDRのVPC同士を、アタッチメントの変換でつなぐ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>アドレスの振り直しやNATアプライアンス(NAT用のサーバー)の構築・戻り通信のルール作成が不要になる。コンソール、CLI、CloudFormationで設定でき、変換された通信はCloudWatchのメトリクスとEventBridgeのイベントで確認できる。</dd>
+<dt>試験・実務への影響</dt><dd>「CIDRが重なるVPCは、ピアリングやTransit Gatewayではそのままつなげない」という前提は変わらない。ただし、重なる場合の解決策として、アタッチメントでの1:1 NATという選択肢が増えた。料金はAmazon VPCの料金ページで確認する。</dd>
+<dt>関連するページ</dt><dd><a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../services/vpc.html">VPC</a>、<a href="../services/site-to-site-vpn.html">Site-to-Site VPN</a>、<a href="../services/direct-connect.html">Direct Connect</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-transit-gateway-cloud-wan-1-1-nat/">AWS Transit Gateway and AWS Cloud WAN now support 1:1 NAT</a>(2026-10-23)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-10-27-05.html"><span class="label">← 前へ 2026年10月27日</span>Bedrock:GPT-6.1 Terraが一般提供</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-10-26-02.html"><span class="label">次へ → 2026年10月26日</span>Amazon Bedrock:Web検索の絞り込み</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudFront:Service Quotasで上限を自分で引き上げ | 2026年11月3日のAWSニュース | AWS教科書</title>
+<meta name="description" content="CloudFrontの上限(クォータ)を、Service Quotasから自分で引き上げられるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">試験別</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-03">2026年11月3日</time>のAWSニュース</p>
+  <h1>CloudFront:Service Quotasで上限を自分で引き上げ</h1>
+  <p class="lead">CloudFrontの上限(クォータ)を、Service Quotasから自分で引き上げられるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWSのサービスには、作れるリソースの数などに上限(クォータ)があります。CloudFrontでも、ディストリビューションの数、キャッシュポリシー、オリジン、代替ドメイン名などに上限があります。これまでは上限を上げたいとき、サポートケースを開いて人の審査を待つ必要がありました。今回、CloudFrontがService Quotas(各サービスの上限を一か所で確認・申請できるサービス)に対応し、28種類の上限をコンソールやAPIで扱えるようになりました。Business Support以上のプランなら、公開されているしきい値の範囲内の申請は自動で承認されます。一部の上限は使用量が5分ごとにCloudWatchへ送られるので、上限に近づいたらアラームで気づけます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 CloudFrontの上限引き上げの流れの変化"><defs><marker id="dgnews-2026-11-03-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">サポートケースを</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">Service Quotasで</text>
+</g>
+<g data-node="cw">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="653" y="62" text-anchor="middle" class="dg-tb">CloudWatch</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">使用量を監視し</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-03-01-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-03-01-1)"/>
+</svg>
+</div>
+<figcaption>図1 CloudFrontの上限引き上げの流れの変化</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>審査を待たずに上限を上げられるため、急なサービス拡大でも止まりにくくなります。使用量のアラームを組み合わせれば、上限に達する前に余裕をもって対応できます。</dd>
+<dt>試験・実務への影響</dt><dd>「上限に達してリソースを作れない」問題は、Service Quotasで確認して引き上げを申請するのが基本の対応です。上限の使用量をCloudWatchアラームで監視する運用も押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudfront.html">CloudFront</a>、<a href="../terms/service-quotas.html">Service Quotas</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/cloudfront-self-service-quotas/">Amazon CloudFront now supports self-service increases in AWS Service Quotas</a>(2026-11-02)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-04-04.html"><span class="label">← 前へ 2026年11月4日</span>Aurora:MySQL 8.4.10互換のバージョンが利用可能に</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-03-02.html"><span class="label">次へ → 2026年11月3日</span>RDS:スナップショットごとの料金表示</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

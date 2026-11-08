@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inspector:EC2のAMIを起動前にスキャン | 2026年11月4日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Inspectorで、EC2インスタンスを起動する前にAMIの脆弱性をスキャンできるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">試験別</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-04">2026年11月4日</time>のAWSニュース</p>
+  <h1>Inspector:EC2のAMIを起動前にスキャン</h1>
+  <p class="lead">Inspectorで、EC2インスタンスを起動する前にAMIの脆弱性をスキャンできるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AMI(Amazon Machine Image)は、EC2インスタンスを起動するための「ひな形」となるイメージです。Amazon Inspectorは、ソフトウェアの脆弱性を自動で見つけるサービスです。これまでInspectorは、動いているEC2インスタンスなどを主な対象にしていたため、古いパッケージを含むAMIから多数のインスタンスを起動したあとでしか、問題に気づけないことがありました。今回、AMIそのものをスキャンできるようになり、インスタンスの起動やソフトウェアの追加インストールは不要になりました。AMI一覧を継続的に監視して新しく見つかった脆弱性を検出する方法と、EC2コンソールから特定のAMIだけを1回調べる方法があります。アカウント単位でも、組織全体(Organizations)でも有効にでき、検出結果はSecurity Hubにも届きます。</p>
+<p>スキャン結果は「Allowed AMIs」(アカウントで使ってよいAMIを条件で絞る設定)と組み合わせられます。セキュリティ基準を満たさないAMIを使えないようにする設定を、宣言型ポリシー(Declarative Policies。組織全体に設定を強制する仕組み)で全アカウントに適用できます。EC2 Image Builderでイメージを作っている場合は、パイプラインにスキャンを組み込み、基準を満たさないAMIの配布を止められます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 AMIの脆弱性を調べるタイミングの変化"><defs><marker id="dgnews-2026-11-04-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">AMIから起動した後に</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">起動前にAMIを</text>
+</g>
+<g data-node="block">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="653" y="62" text-anchor="middle" class="dg-tb">Allowed AMIs</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">基準を満たさない</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-04-01-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-04-01-1)"/>
+<text x="517" y="70" text-anchor="middle" class="dg-s dg-halo">スキャン結果を反映</text>
+</svg>
+</div>
+<figcaption>図1 AMIの脆弱性を調べるタイミングの変化</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 202" style="max-width:752px;min-width:602px" role="img" aria-label="図2 イメージ作成から配布までにスキャンを入れる流れ"><defs><marker id="dgnews-2026-11-04-01-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="build">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">Image Builder</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">AMIを作る</text>
+</g>
+<g data-node="scan">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="62" text-anchor="middle" class="dg-tb">Inspector</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">AMIをスキャン</text>
+</g>
+<g data-node="ok">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="62" text-anchor="middle" class="dg-t">基準を満たす</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">AMIを配布・起動</text>
+</g>
+<g data-node="hub">
+<rect x="306" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="381" y="147" text-anchor="middle" class="dg-t">Security Hub</text>
+<text x="381" y="165" text-anchor="middle" class="dg-s">検出結果を集約</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-04-01-2)"/>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-04-01-2)"/>
+<path d="M381.0,92.5 L381.0,125.5" class="dg-line dg-dash" marker-end="url(#dgnews-2026-11-04-01-2)"/>
+</svg>
+</div>
+<figcaption>図2 イメージ作成から配布までにスキャンを入れる流れ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>問題のあるAMIを、起動して広がる前に見つけて直せます。インスタンスにエージェントを入れる必要もなく、AMIの管理を一か所でそろえられます。</dd>
+<dt>試験・実務への影響</dt><dd>脆弱性の検出はInspector、設定の変更履歴の記録と評価はAWS Config、脅威の検出はGuardDuty、という役割の違いを押さえましょう。「AMIを安全な状態に保ち、承認されたものだけを使わせたい」という要件には、スキャンと許可するAMIの制限の組み合わせが答えになります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/inspector.html">Inspector</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/image-builder.html">EC2 Image Builder</a>、<a href="../services/security-hub.html">Security Hub</a>、<a href="../services/organizations.html">Organizations</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/ec2-amis-scanned-through-inspector/">EC2 Amazon Machine Images can now be scanned for vulnerabilities through Amazon Inspector</a>(2026-11-02)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-05-05.html"><span class="label">← 前へ 2026年11月5日</span>EC2 Capacity Manager:起動前の可用性チェックと充足率の指標</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-04-02.html"><span class="label">次へ → 2026年11月4日</span>AWS Config:記録できるリソースが10種類増加</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
