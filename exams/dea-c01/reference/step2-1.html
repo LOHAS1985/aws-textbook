@@ -32,7 +32,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
     <nav class="site-nav"><a href="../../../services/index.html">サービス</a><a href="../../../terms/index.html">用語</a><a href="../../../usecases/index.html">運用シナリオ</a><a href="../../../news/index.html">ニュース</a><a href="../../../exams/index.html" class="current">試験別</a><a href="../../../links.html">公式リンク</a></nav>
   </div>
 </header>
-<main class="booklet guide">
+<main class="booklet guide" data-incl="data-engineering-basics">
 <div class="page-head booklet-cover">
 <p class="booklet-site">ステップ2 データの取り込みと変換(分野1・34%)</p>
 <h1>基礎</h1>
@@ -47,91 +47,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p class="lead">データを取り込み・変換・保存・提供する処理の設計用語</p>
 </div>
 </div>
-<section class="chapter">
-<h2 id="data-engineering-basics-c1">1. 詳しい説明<a class="anchor" href="#data-engineering-basics-c1" aria-label="この見出しへのリンク">#</a></h2>
-<h3 id="data-engineering-basics-c1-1">ETLとELT<a class="anchor" href="#data-engineering-basics-c1-1" aria-label="この見出しへのリンク">#</a></h3>
-<p><strong>ETL</strong>はデータを抽出(Extract)し、変換(Transform)してから保存先へロード(Load)する方式です。<strong>ELT</strong>は先に保存先へロードし、その基盤の計算能力で変換します。前処理が必要か、保存先のSQL基盤で加工できるかで選びます。</p>
-
-<h3 id="data-engineering-basics-c1-2">バッチとストリーミング<a class="anchor" href="#data-engineering-basics-c1-2" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li><strong>バッチ</strong>:一定量または一定時刻にまとめて処理する。日次集計など、低頻度でよい処理に向く。</li>
-<li><strong>ストリーミング</strong>:イベント到着に合わせて継続的に処理する。低遅延が必要だが、順序・重複・遅延到着・状態管理が複雑になる。</li>
-</ul>
-
-<h3 id="data-engineering-basics-c1-3">取り込みと再処理<a class="anchor" href="#data-engineering-basics-c1-3" aria-label="この見出しへのリンク">#</a></h3>
-<p><strong>ファンイン</strong>は複数の送り元を1つの処理先へ集約すること、<strong>ファンアウト</strong>は1つのストリームを複数の利用者へ配信することです。リプレイは保持データを再び読み込んで処理することです。メッセージやレコードの保持期間、処理位置、重複時の挙動を設計し、障害後の再実行に備えます。</p>
-
-<h3 id="data-engineering-basics-c1-4">状態・冪等性・配信保証<a class="anchor" href="#data-engineering-basics-c1-4" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li><strong>ステートレス処理</strong>:各レコードを他のレコードや過去の実行状態に依存せず処理する。</li>
-<li><strong>ステートフル処理</strong>:ウィンドウ集計や重複排除など、過去のイベントやチェックポイントを保持して処理する。</li>
-<li><strong>冪等性</strong>:同じ入力を複数回処理しても、最終結果が重複・二重計上にならない性質。</li>
-<li>再試行は同じ処理を複数回実行する可能性があるため、冪等な書き込みや重複排除キーを用いる。</li>
-</ul>
-<p>「少なくとも1回」は欠落を避ける代わりに重複があり得ます。「最大1回」は重複を避ける代わりに欠落の可能性があります。「厳密に1回」は単一サービスの設定だけで保証されるとは限らず、取り込みから保存までの境界と副作用を含めて確認します。</p>
-
-<h3 id="data-engineering-basics-c1-5">データの種類と処理の実装<a class="anchor" href="#data-engineering-basics-c1-5" aria-label="この見出しへのリンク">#</a></h3>
-<p>データ量・速度・種類(構造化、半構造化、非構造化)は、保存形式と処理方式の選択に影響します。APIのページネーション、認証、レート制限、応答形式を処理し、入力サイズや再試行を制御します。データ処理では、SDK、SQL、言語に依存しないプログラミング概念を使い、Gitによるバージョン管理、テスト、ログ、IaC、CI/CDで変更を安全に展開します。</p>
-<p>LLMを使うデータ処理では、分類・要約などの処理結果を検証し、プロンプトへの機密情報の混入、出力の不確実性、再実行時の一貫性を考慮します。AI処理を利用しても、データ品質やプライバシーの確認は省略できません。</p>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 1024 154" style="max-width:1024px;min-width:819px" role="img" aria-label="図1 データパイプラインの基本。障害時に入力を再処理できるようにし、重複が発生しても結果が壊れない設計にする。"><defs><marker id="data-engineering-basics-dgterms-data-engineering-basics-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="src">
-<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
-<text x="109" y="100" text-anchor="middle" class="dg-t">バッチ・ストリーム</text>
-<text x="109" y="118" text-anchor="middle" class="dg-s">複数の送り元</text>
-</g>
-<g data-node="ingest">
-<rect x="306" y="78" width="150" height="52" rx="8" class="dg-accent"/>
-<text x="381" y="100" text-anchor="middle" class="dg-tb">取り込み</text>
-<text x="381" y="118" text-anchor="middle" class="dg-s">再試行・保持</text>
-</g>
-<g data-node="transform">
-<rect x="578" y="78" width="150" height="52" rx="8" class="dg-box"/>
-<text x="653" y="100" text-anchor="middle" class="dg-t">変換</text>
-<text x="653" y="118" text-anchor="middle" class="dg-s">状態・品質</text>
-</g>
-<g data-node="store">
-<rect x="850" y="78" width="150" height="52" rx="8" class="dg-ok"/>
-<text x="925" y="100" text-anchor="middle" class="dg-t">保存・提供</text>
-<text x="925" y="118" text-anchor="middle" class="dg-s">冪等な書き込み</text>
-</g>
-<path d="M184.0,104.0 L306.0,104.0" class="dg-line" marker-end="url(#data-engineering-basics-dgterms-data-engineering-basics-1)"/>
-<path d="M456.0,104.0 L578.0,104.0" class="dg-line" marker-end="url(#data-engineering-basics-dgterms-data-engineering-basics-1)"/>
-<path d="M728.0,104.0 L850.0,104.0" class="dg-line" marker-end="url(#data-engineering-basics-dgterms-data-engineering-basics-1)"/>
-<path d="M850.0,104.0 L456.0,104.0" class="dg-line dg-dash" marker-end="url(#data-engineering-basics-dgterms-data-engineering-basics-1)"/>
-<text x="653" y="108" text-anchor="middle" class="dg-s dg-halo">再処理</text>
-</svg>
+<div class="ref-body" data-src="../../../terms/data-engineering-basics.html" data-slug="data-engineering-basics">
+<noscript><p class="booklet-help"><a href="../../../terms/data-engineering-basics.html">データパイプラインの基礎のページ</a>で本文を読めます。</p></noscript>
 </div>
-<figcaption>図1 データパイプラインの基本。障害時に入力を再処理できるようにし、重複が発生しても結果が壊れない設計にする。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
-
-<h3 id="data-engineering-basics-c1-6">スループットとレート制限<a class="anchor" href="#data-engineering-basics-c1-6" aria-label="この見出しへのリンク">#</a></h3>
-<p>APIやデータベースの処理上限に対し、同時実行数を制御し、指数的に待ち時間を延ばすリトライやキューを利用します。供給速度が処理速度を上回ると遅延やバックログが増えるため、スロットリング、並列度、パーティション、再試行を合わせて調整します。</p>
-</section>
-
-<section class="chapter">
-<h2 id="data-engineering-basics-c2">2. 関連する用語<a class="anchor" href="#data-engineering-basics-c2" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="../../../terms/throttling-retry.html">スロットリングとリトライ</a>:レート制限と再試行の設計</li>
-<li><a href="../../../terms/data-quality.html">データ品質</a>:パイプライン内のデータ検証</li>
-<li><a href="../../../terms/storage-types.html">ストレージの種類</a>:ファイル・ブロック・オブジェクトの基本</li>
-<li><a href="../../../terms/high-availability-scaling.html">高可用性とスケーリング</a>:障害耐性と処理能力の拡張</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="data-engineering-basics-c3">3. 関連サービス<a class="anchor" href="#data-engineering-basics-c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="../../../services/kinesis.html">Amazon Kinesis</a>/<a href="../../../services/msk.html">Amazon MSK</a>:イベントストリーム</li>
-<li><a href="../../../services/data-firehose.html">Amazon Data Firehose</a>:ストリームの配送</li>
-<li><a href="../../../services/glue.html">AWS Glue</a>:バッチ・ストリームETL</li>
-<li><a href="../../../services/appflow.html">Amazon AppFlow</a>:SaaSデータ取り込み</li>
-<li><a href="../../../services/step-functions.html">AWS Step Functions</a>/<a href="../../../services/mwaa.html">Amazon MWAA</a>:処理のオーケストレーション</li>
-<li><a href="../../../services/bedrock.html">Amazon Bedrock</a>:LLMを用いたデータ処理</li>
-</ul>
-</section>
 </article>
 <nav class="pager">
   <a class="prev" href="step1-5.html"><span class="label">← 前の項目</span>Amazon S3(データレイクの土台)</a>
@@ -140,5 +58,6 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script src="../../../js/reference.js" defer></script>
 </body>
 </html>
