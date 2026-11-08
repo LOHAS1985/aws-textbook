@@ -32,7 +32,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
     <nav class="site-nav"><a href="../../../services/index.html">サービス</a><a href="../../../terms/index.html">用語</a><a href="../../../usecases/index.html">運用シナリオ</a><a href="../../../news/index.html">ニュース</a><a href="../../../exams/index.html" class="current">試験別</a><a href="../../../links.html">公式リンク</a></nav>
   </div>
 </header>
-<main class="booklet guide">
+<main class="booklet guide" data-incl="data-store-selection,storage-types,vector-search">
 <div class="page-head booklet-cover">
 <p class="booklet-site">ステップ3 データストアの管理(分野2・26%)</p>
 <h1>選び方</h1>
@@ -47,56 +47,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p class="lead">アクセスパターン・データ形式・鮮度・規模から保存先を選ぶ</p>
 </div>
 </div>
-<section class="chapter">
-<h2 id="data-store-selection-c1">1. 詳しい説明<a class="anchor" href="#data-store-selection-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p>最適な保存先は、データの形だけでなく、書き込み頻度、読み取り方法、応答時間、同時実行数、データ量、共有・保持要件で決まります。処理基盤と保存先は同じサービスである必要はありません。</p>
-<div class="table-wrap"><table>
-<tr><th>要件</th><th>候補</th><th>選ぶ理由</th></tr>
-<tr><td>オブジェクトの長期保存・データレイク</td><td>Amazon S3</td><td>多様な形式を低コストで保存し、複数の分析サービスから使う</td></tr>
-<tr><td>マネージド保守付きのIcebergテーブル</td><td><a href="../../../services/s3.html">Amazon S3 Tables</a></td><td>テーブルバケットでテーブルの最適化やメンテナンスを任せる</td></tr>
-<tr><td>大規模なSQL集計・BI</td><td>Amazon Redshift</td><td>データウェアハウスとして分析クエリを実行する</td></tr>
-<tr><td>S3上のデータをSQLでアドホック分析</td><td>Amazon Athena</td><td>データをロードせず、サーバーレスで検索する</td></tr>
-<tr><td>柔軟なOSS分散処理・複雑な変換</td><td>Amazon EMR</td><td>Sparkなどの実行環境とクラスター構成を制御する</td></tr>
-<tr><td>サーバーレスETL・カタログ</td><td>AWS Glue</td><td>データ統合・変換とメタデータ管理を行う</td></tr>
-<tr><td>低遅延のキー指定読み書き</td><td>Amazon DynamoDB</td><td>キー・アクセスパターンを先に設計したNoSQLデータベース</td></tr>
-<tr><td>MongoDB互換のドキュメントデータ</td><td><a href="../../../services/documentdb.html">Amazon DocumentDB</a></td><td>JSON形式の文書を扱い、MongoDB互換アプリを移行する</td></tr>
-<tr><td>Cassandra互換のワイドカラムデータ</td><td><a href="../../../services/keyspaces.html">Amazon Keyspaces</a></td><td>CQLとパーティションキーを使うサーバーレスデータベース</td></tr>
-<tr><td>強く関連するデータの探索</td><td><a href="../../../services/neptune.html">Amazon Neptune</a></td><td>ノードとエッジをたどるグラフクエリを実行する</td></tr>
-<tr><td>SQL・トランザクション・行更新</td><td>Amazon RDS/Aurora</td><td>リレーショナルモデルとトランザクションを使う</td></tr>
-<tr><td>イベントの保持・複数コンシューマー処理</td><td>Kinesis Data Streams / Amazon MSK</td><td>ストリームを一定期間保持し、読み取り位置から処理する</td></tr>
-</table></div>
-
-<h3 id="data-store-selection-c1-1">データレイクとデータウェアハウス<a class="anchor" href="#data-store-selection-c1-1" aria-label="この見出しへのリンク">#</a></h3>
-<p>データレイクは多様な形式の生データや加工済みデータを保存し、用途に応じた複数のエンジンで利用します。データウェアハウスは分析向けに整形・統合したデータをSQLで集計します。AthenaはS3データレイクのクエリ、Redshiftはウェアハウス分析が中心ですが、Spectrumなどで連携できます。</p>
-
-<h3 id="data-store-selection-c1-2">移行・リモート参照・ロック<a class="anchor" href="#data-store-selection-c1-2" aria-label="この見出しへのリンク">#</a></h3>
-<p>データを複製して取り込むか、フェデレーテッドクエリなどで外部データを参照するかを、鮮度・負荷・遅延・権限で選びます。RDSなどから継続的に移行する場合はAWS DMS、スキーマ変換にはAWS Schema Conversion ToolやDMS Schema Conversionが候補です。分析データベースのロックや同時更新は競合を避けるために必要ですが、長時間トランザクションは待ちや遅延を起こすことがあります。</p>
-<p>リレーショナルデータベースでは正規化や制約で更新の一貫性を保ち、分析用テーブルではクエリに合わせて集計済みデータやマテリアライズドビューを検討します。DynamoDBでは、主キー・複合ソートキー・セカンダリインデックスをアクセスパターンに合わせて設計します。これらのモデルは、検索・更新パターンやロックの特性が異なります。</p>
-</section>
-
-<section class="chapter">
-<h2 id="data-store-selection-c2">2. 関連する用語<a class="anchor" href="#data-store-selection-c2" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="#p-storage-types">ストレージの種類</a>:オブジェクト・ブロック・ファイル</li>
-<li><a href="../../../terms/open-table-formats.html">オープンテーブル形式</a>:データレイクのテーブル管理</li>
-<li><a href="#p-vector-search">ベクトル検索</a>:類似度検索とインデックス</li>
-<li><a href="../../../terms/performance-metrics.html">性能指標</a>:待ち時間やスループットの見方</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="data-store-selection-c3">3. 関連サービス<a class="anchor" href="#data-store-selection-c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="../../../services/s3.html">Amazon S3</a>/<a href="../../../services/athena.html">Amazon Athena</a>:データレイクとSQL分析</li>
-<li><a href="../../../services/redshift.html">Amazon Redshift</a>:分析データウェアハウス</li>
-<li><a href="../../../services/emr.html">Amazon EMR</a>/<a href="../../../services/glue.html">AWS Glue</a>:データ処理</li>
-<li><a href="../../../services/rds.html">Amazon RDS</a>/<a href="../../../services/dynamodb.html">Amazon DynamoDB</a>:業務データベース</li>
-<li><a href="../../../services/documentdb.html">Amazon DocumentDB</a>/<a href="../../../services/keyspaces.html">Amazon Keyspaces</a>/<a href="../../../services/neptune.html">Amazon Neptune</a>:文書・ワイドカラム・グラフのデータモデル</li>
-<li><a href="../../../services/kinesis.html">Amazon Kinesis</a>/<a href="../../../services/msk.html">Amazon MSK</a>:イベントストリーム</li>
-<li><a href="../../../services/dms.html">AWS DMS</a>:データベース移行とCDC</li>
-<li><a href="../../../services/transfer-family.html">AWS Transfer Family</a>:SFTPなどによるファイル取り込み</li>
-</ul>
-</section>
+<div class="ref-body" data-src="../../../terms/data-store-selection.html" data-slug="data-store-selection">
+<noscript><p class="booklet-help"><a href="../../../terms/data-store-selection.html">データストアの選び方のページ</a>で本文を読めます。</p></noscript>
+</div>
 </article>
 <article class="booklet-page" id="p-storage-types">
 <div class="page-head hero">
@@ -106,147 +59,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p class="lead">3種類のストレージの違い(EBS・EFS・S3)</p>
 </div>
 </div>
-<section class="chapter">
-<h2 id="storage-types-c1">1. 詳しい説明<a class="anchor" href="#storage-types-c1" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><strong>ブロック</strong>:ディスクとして使う(Amazon EBS)</li>
-<li><strong>ファイル</strong>:フォルダ+ファイルとして使う(Amazon EFS)</li>
-<li><strong>オブジェクト</strong>:データ+メタデータをオブジェクト単位で使う(Amazon S3)</li>
-</ul>
-<p>3種類とも最終的にはHDD/SSDなどの記憶媒体にデータを保存します。違いは「物理的に何に保存するか」ではなく、<strong>「利用者にどのような論理単位でストレージを提供するか」</strong>です。</p>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 608 257" style="max-width:608px;min-width:520px" role="img" aria-label="図1 3種類のストレージの違い。どれも最終的にはHDD/SSDに保存されるが、「利用者にどんな単位で見せるか」が異なる。"><defs><marker id="storage-types-dgterms-storage-types-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="b">
-<rect x="34" y="33" width="170" height="52" rx="8" class="dg-accent"/>
-<text x="119" y="54" text-anchor="middle" class="dg-tb">ブロック</text>
-<text x="119" y="72" text-anchor="middle" class="dg-s">Amazon EBS</text>
-</g>
-<g data-node="f">
-<rect x="224" y="33" width="170" height="52" rx="8" class="dg-accent"/>
-<text x="309" y="54" text-anchor="middle" class="dg-tb">ファイル</text>
-<text x="309" y="72" text-anchor="middle" class="dg-s">Amazon EFS</text>
-</g>
-<g data-node="o">
-<rect x="414" y="33" width="170" height="52" rx="8" class="dg-accent"/>
-<text x="499" y="54" text-anchor="middle" class="dg-tb">オブジェクト</text>
-<text x="499" y="72" text-anchor="middle" class="dg-s">Amazon S3</text>
-</g>
-<g data-node="b2">
-<rect x="34" y="110" width="170" height="52" rx="8" class="dg-box"/>
-<text x="119" y="132" text-anchor="middle" class="dg-t">ディスクとして使う</text>
-<text x="119" y="150" text-anchor="middle" class="dg-s">FSは利用者が構築</text>
-</g>
-<g data-node="f2">
-<rect x="224" y="110" width="170" height="52" rx="8" class="dg-box"/>
-<text x="309" y="132" text-anchor="middle" class="dg-t">フォルダ+ファイル</text>
-<text x="309" y="150" text-anchor="middle" class="dg-s">パスでアクセス</text>
-</g>
-<g data-node="o2">
-<rect x="414" y="110" width="170" height="52" rx="8" class="dg-box"/>
-<text x="499" y="132" text-anchor="middle" class="dg-t">データ+メタデータ</text>
-<text x="499" y="150" text-anchor="middle" class="dg-s">キーでアクセス</text>
-</g>
-<g data-node="b3">
-<rect x="34" y="193" width="170" height="40" rx="8" class="dg-ok"/>
-<text x="119" y="217" text-anchor="middle" class="dg-t">例: PCのSSD</text>
-</g>
-<g data-node="f3">
-<rect x="224" y="193" width="170" height="40" rx="8" class="dg-ok"/>
-<text x="309" y="217" text-anchor="middle" class="dg-t">例: NAS</text>
-</g>
-<g data-node="o3">
-<rect x="414" y="193" width="170" height="40" rx="8" class="dg-ok"/>
-<text x="499" y="217" text-anchor="middle" class="dg-t">例: 写真の保管</text>
-</g>
-<path d="M119.0,85.0 L119.0,110.0" class="dg-line" marker-end="url(#storage-types-dgterms-storage-types-1)"/>
-<path d="M309.0,85.0 L309.0,110.0" class="dg-line" marker-end="url(#storage-types-dgterms-storage-types-1)"/>
-<path d="M499.0,85.0 L499.0,110.0" class="dg-line" marker-end="url(#storage-types-dgterms-storage-types-1)"/>
-<path d="M119.0,162.0 L119.0,193.0" class="dg-line" marker-end="url(#storage-types-dgterms-storage-types-1)"/>
-<path d="M309.0,162.0 L309.0,193.0" class="dg-line" marker-end="url(#storage-types-dgterms-storage-types-1)"/>
-<path d="M499.0,162.0 L499.0,193.0" class="dg-line" marker-end="url(#storage-types-dgterms-storage-types-1)"/>
-</svg>
+<div class="ref-body" data-src="../../../terms/storage-types.html" data-slug="storage-types">
+<noscript><p class="booklet-help"><a href="../../../terms/storage-types.html">ブロック・ファイル・オブジェクトストレージのページ</a>で本文を読めます。</p></noscript>
 </div>
-<figcaption>図1 3種類のストレージの違い。どれも最終的にはHDD/SSDに保存されるが、「利用者にどんな単位で見せるか」が異なる。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
-<div class="table-wrap"><table class="stack">
-<tr><th></th><th>ブロックストレージ</th><th>ファイルストレージ</th><th>オブジェクトストレージ</th></tr>
-<tr><td data-label="">管理単位</td><td data-label="ブロックストレージ"><strong>ブロック</strong></td><td data-label="ファイルストレージ"><strong>ファイル</strong></td><td data-label="オブジェクトストレージ"><strong>オブジェクト</strong></td></tr>
-<tr><td data-label="">利用者から見えるもの</td><td data-label="ブロックストレージ">ディスク/ボリューム</td><td data-label="ファイルストレージ">ファイル・フォルダ</td><td data-label="オブジェクトストレージ">オブジェクト</td></tr>
-<tr><td data-label="">ファイルシステム</td><td data-label="ブロックストレージ">利用者側で構築する</td><td data-label="ファイルストレージ">ストレージ側が提供</td><td data-label="オブジェクトストレージ">基本的に使わない</td></tr>
-<tr><td data-label="">階層構造</td><td data-label="ブロックストレージ">基本なし</td><td data-label="ファイルストレージ"><strong>あり</strong></td><td data-label="オブジェクトストレージ">基本はフラット(キーのプレフィックスで階層を表現できる)</td></tr>
-<tr><td data-label="">アクセスのイメージ</td><td data-label="ブロックストレージ">ディスクとして利用</td><td data-label="ファイルストレージ">パスでファイルにアクセス</td><td data-label="オブジェクトストレージ">オブジェクトキーでアクセス</td></tr>
-<tr><td data-label="">具体例</td><td data-label="ブロックストレージ">PCのSSD、外付けSSD、サーバーのディスク、RAID</td><td data-label="ファイルストレージ">NAS、Windowsファイルサーバー、Linux/NFSファイルサーバー</td><td data-label="オブジェクトストレージ">写真・動画・バックアップなどの保管</td></tr>
-<tr><td data-label="">AWSサービス</td><td data-label="ブロックストレージ"><strong>Amazon EBS</strong></td><td data-label="ファイルストレージ"><strong>Amazon EFS</strong></td><td data-label="オブジェクトストレージ"><strong>Amazon S3</strong></td></tr>
-</table></div>
-
-<h3 id="storage-types-c1-1">ブロックストレージ<a class="anchor" href="#storage-types-c1-1" aria-label="この見出しへのリンク">#</a></h3>
-<p>ストレージを<strong>ブロック単位の領域</strong>として提供します。PCのSSDでは、ユーザーには <code>C:\photo.jpg</code> のようなファイルとして見えますが、ストレージ上ではデータがブロックに分かれて管理されています。</p>
-<p>重要なのは、<strong>ブロックストレージにファイルシステムを作っただけで「ファイルストレージ」になるわけではない</strong>ことです。ブロックストレージの上に利用者がファイルシステムを構築し、ファイルとして使っています。</p>
-
-<h3 id="storage-types-c1-2">ファイルストレージ<a class="anchor" href="#storage-types-c1-2" aria-label="この見出しへのリンク">#</a></h3>
-<p><strong>ファイルとフォルダという階層構造を利用者に提供する</strong>ストレージです。NASでは <code>\\NAS\写真\2026\photo01.jpg</code> のように<strong>ファイルパス</strong>でデータにアクセスします。</p>
-<p>裏側ではHDD/SSDにデータが保存されているので、「ファイルストレージはブロックを使わない」という意味ではありません。違いは、<strong>利用者にファイルシステムとファイル/フォルダというインターフェイスを提供している</strong>ことです。</p>
-
-<h3 id="storage-types-c1-3">オブジェクトストレージ<a class="anchor" href="#storage-types-c1-3" aria-label="この見出しへのリンク">#</a></h3>
-<p>データを<strong>オブジェクト</strong>という単位で管理します。オブジェクトは「データ+メタデータ+識別情報(キーなど)」で構成されます。例えば写真なら、Key: <code>photo.jpg</code>、Data: JPEGデータ、Metadata: Content-Type・サイズなど、という形です。</p>
-<p><strong>「メタデータがあるからオブジェクトストレージ」ではありません</strong>。NASのファイルにもサイズ・作成日時・所有者などのメタデータがありますが、NASはファイルストレージです。違いは<strong>データを何という単位で管理するか</strong>です。</p>
-
-<h3 id="storage-types-c1-4">S3にフォルダを作れるのに、なぜ「階層構造がない」のか<a class="anchor" href="#storage-types-c1-4" aria-label="この見出しへのリンク">#</a></h3>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 550 261" style="max-width:550px;min-width:520px" role="img" aria-label="図2 階層構造の違い。ファイルストレージには実際のディレクトリがある。S3はフラットで、「photos/2026/」はディレクトリではなく、キーの一部(プレフィックス)にすぎない。"><defs><marker id="storage-types-dgterms-storage-types-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<rect x="22" y="3" width="204" height="234" rx="10" class="dg-group"/>
-<text x="32" y="18" class="dg-s">ファイルストレージ(階層あり)</text>
-<rect x="322" y="73" width="204" height="94" rx="10" class="dg-group"/>
-<text x="332" y="88" class="dg-s">S3(フラット)</text>
-<g data-node="d1">
-<rect x="34" y="33" width="180" height="52" rx="8" class="dg-box"/>
-<text x="124" y="54" text-anchor="middle" class="dg-t">photos/</text>
-<text x="124" y="72" text-anchor="middle" class="dg-s">ディレクトリ</text>
-</g>
-<g data-node="d2">
-<rect x="34" y="103" width="180" height="52" rx="8" class="dg-box"/>
-<text x="124" y="124" text-anchor="middle" class="dg-t">2026/</text>
-<text x="124" y="142" text-anchor="middle" class="dg-s">ディレクトリ</text>
-</g>
-<g data-node="d3">
-<rect x="34" y="173" width="180" height="52" rx="8" class="dg-ok"/>
-<text x="124" y="194" text-anchor="middle" class="dg-t">a.jpg</text>
-<text x="124" y="212" text-anchor="middle" class="dg-s">ファイル</text>
-</g>
-<g data-node="obj">
-<rect x="334" y="103" width="180" height="52" rx="8" class="dg-accent"/>
-<text x="424" y="124" text-anchor="middle" class="dg-tb">オブジェクト</text>
-<text x="424" y="142" text-anchor="middle" class="dg-s">Key: photos/2026/a.jpg</text>
-</g>
-<path d="M124.0,85.0 L124.0,103.0" class="dg-line" marker-end="url(#storage-types-dgterms-storage-types-2)"/>
-<path d="M124.0,155.0 L124.0,173.0" class="dg-line" marker-end="url(#storage-types-dgterms-storage-types-2)"/>
-</svg>
-</div>
-<figcaption>図2 階層構造の違い。ファイルストレージには実際のディレクトリがある。S3はフラットで、「photos/2026/」はディレクトリではなく、キーの一部(プレフィックス)にすぎない。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
-<p>S3のコンソールでは <code>photos/2026/trip/photo.jpg</code> がフォルダの中にあるように見えますが、<code>photos</code>・<code>2026</code>・<code>trip</code> というディレクトリが実在するわけではありません。実際には <code>Key = photos/2026/trip/photo.jpg</code> という<strong>1つのオブジェクトキー</strong>として管理されています。S3では <code>/</code> を使って階層を<strong>表現</strong>できますが、ファイルストレージの実際のディレクトリ階層とは異なります。</p>
-</section>
-
-<section class="chapter">
-<h2 id="storage-types-c2">2. 関連する用語<a class="anchor" href="#storage-types-c2" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="../../../terms/performance-metrics.html">IOPS・スループット・レイテンシー</a>:ストレージの性能を表す指標</li>
-<li><a href="../../../terms/encryption.html">保存時の暗号化と転送時の暗号化</a>:保存データの暗号化の考え方</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="storage-types-c3">3. 関連サービス<a class="anchor" href="#storage-types-c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="../../../services/ebs.html">Amazon EBS</a>:ブロックストレージ</li>
-<li><a href="../../../services/efs.html">Amazon EFS</a>/<a href="../../../services/fsx.html">Amazon FSx</a>:ファイルストレージ</li>
-<li><a href="../../../services/s3.html">Amazon S3</a>:オブジェクトストレージ</li>
-</ul>
-</section>
 </article>
 <article class="booklet-page" id="p-vector-search">
 <div class="page-head hero">
@@ -256,76 +71,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p class="lead">意味的な類似度を基に関連データを探す検索方式</p>
 </div>
 </div>
-<section class="chapter">
-<h2 id="vector-search-c1">1. 詳しい説明<a class="anchor" href="#vector-search-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>埋め込み(embedding)</strong>は、文章や画像などの特徴を数値の配列(ベクトル)で表現したものです。<strong>ベクトル検索</strong>は、検索語のベクトルと近いベクトルを探し、文字列が完全一致しなくても意味の近いデータを取得します。</p>
-<h3 id="vector-search-c1-1">ベクトルインデックス<a class="anchor" href="#vector-search-c1-1" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li><strong>HNSW</strong>:階層的な近傍グラフを作り、高速な近似近傍検索を行う。検索速度・再現率・メモリ使用量の調整が必要。</li>
-<li><strong>IVF</strong>:ベクトルを複数のクラスタに分け、候補クラスタを絞って検索する。クラスタ数や探索範囲が検索精度・速度に影響する。</li>
-</ul>
-<p>近似検索は全件を厳密比較する方法より高速になりやすい一方、最も近い結果が必ず含まれるとは限りません。検索精度、応答時間、メモリ、更新頻度、フィルター条件を評価して選びます。</p>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 1109 232" style="max-width:1109px;min-width:887px" role="img" aria-label="図1 ベクトル検索の流れ。元データと検索語をベクトル化し、近傍インデックスから意味的に近いデータを探す。"><defs><marker id="vector-search-dgterms-vector-search-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="data">
-<rect x="34" y="73" width="150" height="52" rx="8" class="dg-blue"/>
-<text x="109" y="94" text-anchor="middle" class="dg-t">文書・画像</text>
-<text x="109" y="112" text-anchor="middle" class="dg-s">元データ</text>
-</g>
-<g data-node="embed">
-<rect x="323" y="73" width="150" height="52" rx="8" class="dg-accent"/>
-<text x="398" y="94" text-anchor="middle" class="dg-tb">埋め込みモデル</text>
-<text x="398" y="112" text-anchor="middle" class="dg-s">ベクトル化</text>
-</g>
-<g data-node="index">
-<rect x="629" y="73" width="150" height="52" rx="8" class="dg-box"/>
-<text x="704" y="94" text-anchor="middle" class="dg-t">Vector Index</text>
-<text x="704" y="112" text-anchor="middle" class="dg-s">HNSW・IVF</text>
-</g>
-<g data-node="query">
-<rect x="323" y="156" width="150" height="52" rx="8" class="dg-blue"/>
-<text x="398" y="177" text-anchor="middle" class="dg-t">検索語</text>
-<text x="398" y="195" text-anchor="middle" class="dg-s">同じモデルで変換</text>
-</g>
-<g data-node="result">
-<rect x="935" y="73" width="150" height="52" rx="8" class="dg-ok"/>
-<text x="1010" y="94" text-anchor="middle" class="dg-t">類似データ</text>
-<text x="1010" y="112" text-anchor="middle" class="dg-s">関連順に返す</text>
-</g>
-<path d="M184.0,99.0 L323.0,99.0" class="dg-line" marker-end="url(#vector-search-dgterms-vector-search-1)"/>
-<path d="M473.0,99.0 L629.0,99.0" class="dg-line" marker-end="url(#vector-search-dgterms-vector-search-1)"/>
-<path d="M473.0,161.3 L629.0,119.2" class="dg-line" marker-end="url(#vector-search-dgterms-vector-search-1)"/>
-<path d="M779.0,99.0 L935.0,99.0" class="dg-line" marker-end="url(#vector-search-dgterms-vector-search-1)"/>
-</svg>
+<div class="ref-body" data-src="../../../terms/vector-search.html" data-slug="vector-search">
+<noscript><p class="booklet-help"><a href="../../../terms/vector-search.html">ベクトル検索のページ</a>で本文を読めます。</p></noscript>
 </div>
-<figcaption>図1 ベクトル検索の流れ。元データと検索語をベクトル化し、近傍インデックスから意味的に近いデータを探す。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
-
-<h3 id="vector-search-c1-2">検索拡張生成との関係<a class="anchor" href="#vector-search-c1-2" aria-label="この見出しへのリンク">#</a></h3>
-<p>検索拡張生成(RAG)では、文書を分割して埋め込みを作り、質問に近い断片を検索して生成モデルへ渡します。Bedrock Knowledge Basesなどのマネージド機能が、取り込み・ベクトル化・検索の一部を支援します。生成モデルの出力と、検索インデックスの品質は別々に評価します。</p>
-<p>「ベクトル化」は文書をベクトル表現に変換することです。CPUのSIMD演算などを指す「ベクトル化処理」とは意味が異なります。</p>
-</section>
-
-<section class="chapter">
-<h2 id="vector-search-c2">2. 関連する用語<a class="anchor" href="#vector-search-c2" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="#p-data-store-selection">データストアの選び方</a>:検索パターンに合った保存先</li>
-<li><a href="../../../terms/open-table-formats.html">オープンテーブル形式</a>:ベクトルの元となる文書データの管理</li>
-<li><a href="../../../terms/data-governance.html">データガバナンス</a>:検索対象の権限とプライバシー</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="vector-search-c3">3. 関連サービス<a class="anchor" href="#vector-search-c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="../../../services/bedrock.html">Amazon Bedrock</a>:Knowledge BasesなどRAG構成</li>
-<li><a href="../../../services/opensearch.html">Amazon OpenSearch Service</a>:ベクトル検索と全文検索</li>
-<li><a href="../../../services/aurora.html">Amazon Aurora</a>:pgvectorによるベクトル検索</li>
-<li><a href="../../../services/memorydb.html">Amazon MemoryDB</a>:低遅延なベクトル検索の選択肢</li>
-</ul>
-</section>
 </article>
 <nav class="pager">
   <a class="prev" href="step2-5.html"><span class="label">← 前の項目</span>プログラミングとIaC(1.4)</a>
@@ -334,5 +82,6 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script src="../../../js/reference.js" defer></script>
 </body>
 </html>

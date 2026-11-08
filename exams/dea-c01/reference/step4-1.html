@@ -32,7 +32,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
     <nav class="site-nav"><a href="../../../services/index.html">サービス</a><a href="../../../terms/index.html">用語</a><a href="../../../usecases/index.html">運用シナリオ</a><a href="../../../news/index.html">ニュース</a><a href="../../../exams/index.html" class="current">試験別</a><a href="../../../links.html">公式リンク</a></nav>
   </div>
 </header>
-<main class="booklet guide">
+<main class="booklet guide" data-incl="athena,quick,redshift">
 <div class="page-head booklet-cover">
 <p class="booklet-site">ステップ4 データ運用とサポート(分野3・22%)</p>
 <h1>分析とクエリ</h1>
@@ -47,163 +47,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p class="lead">S3上のデータを標準SQLで直接分析するサーバーレスなクエリサービス</p>
 </div>
 </div>
-<section class="chapter">
-<h2 id="athena-c1">1. サービス概要<a class="anchor" href="#athena-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>Amazon Athena</strong>は、<strong>S3に保存されたデータを標準SQLで直接分析</strong>できる<strong>サーバーレス</strong>なクエリサービスです。データベースにデータを読み込む必要がなく、サーバーの管理も不要です。</p>
-</section>
-
-<section class="chapter">
-<h2 id="athena-c2">2. 主な機能・特徴<a class="anchor" href="#athena-c2" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>CSV、JSON、Parquet、ORC、Avroなどの形式に対応。</li>
-<li>テーブル定義(スキーマ)は<strong>AWS Glue データカタログ</strong>で管理する。</li>
-<li>クエリ結果はS3に出力される。</li>
-</ul>
-
-<h3 id="athena-c2-1">仕組み<a class="anchor" href="#athena-c2-1" aria-label="この見出しへのリンク">#</a></h3>
-<p>Athenaは、Glueデータカタログに登録したテーブル定義(データの場所・形式・列)をもとに、S3のオブジェクトを読みながらSQLを実行します。サーバーの準備は不要で、クエリは並列に実行されて自動で拡張されます。料金は<strong>スキャンしたデータ量</strong>で決まるため、読むデータを減らすことが費用の削減につながります。</p>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 684 252" style="max-width:684px;min-width:547px" role="img" aria-label="図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。"><defs><marker id="athena-dgservices-athena-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="s3">
-<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
-<text x="109" y="104" text-anchor="middle" class="dg-t">S3</text>
-<text x="109" y="122" text-anchor="middle" class="dg-s">CSV・Parquetなど</text>
-</g>
-<g data-node="glue">
-<rect x="34" y="176" width="150" height="52" rx="8" class="dg-box"/>
-<text x="109" y="198" text-anchor="middle" class="dg-t">Glueデータカタログ</text>
-<text x="109" y="216" text-anchor="middle" class="dg-s">テーブル定義</text>
-</g>
-<g data-node="ath">
-<rect x="272" y="83" width="150" height="52" rx="8" class="dg-accent"/>
-<text x="347" y="104" text-anchor="middle" class="dg-tb">Athena</text>
-<text x="347" y="122" text-anchor="middle" class="dg-s">SQLを実行</text>
-</g>
-<g data-node="res">
-<rect x="510" y="83" width="150" height="52" rx="8" class="dg-ok"/>
-<text x="585" y="104" text-anchor="middle" class="dg-t">クエリ結果</text>
-<text x="585" y="122" text-anchor="middle" class="dg-s">S3に出力</text>
-</g>
-<g data-node="user">
-<rect x="510" y="182" width="150" height="40" rx="8" class="dg-blue"/>
-<text x="585" y="206" text-anchor="middle" class="dg-t">分析者・BI</text>
-</g>
-<path d="M184.0,109.0 L272.0,109.0" class="dg-line" marker-end="url(#athena-dgservices-athena-1)"/>
-<text x="228" y="113" text-anchor="middle" class="dg-s dg-halo">スキャン</text>
-<path d="M175.2,176.5 L280.8,135.0" class="dg-line dg-dash" marker-end="url(#athena-dgservices-athena-1)"/>
-<path d="M422.0,109.0 L510.0,109.0" class="dg-line" marker-end="url(#athena-dgservices-athena-1)"/>
-<path d="M534.1,182.5 L413.2,135.0" class="dg-line" marker-end="url(#athena-dgservices-athena-1)"/>
-<text x="474" y="163" text-anchor="middle" class="dg-s dg-halo">SQL</text>
-</svg>
+<div class="ref-body" data-src="../../../services/athena.html" data-slug="athena">
+<noscript><p class="booklet-help"><a href="../../../services/athena.html">Amazon Athenaのページ</a>で本文を読めます。</p></noscript>
 </div>
-<figcaption>図1 Athenaの仕組み。Glueデータカタログのテーブル定義を使って、S3のデータを直接SQLでスキャンし、結果をS3に出力する。料金はスキャンしたデータ量で決まる。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
-<p>SQLのほかに、Apache SparkのPythonコードをノートブックからAthenaで実行できます。S3以外のデータも、フェデレーテッドクエリでLambda関数のコネクタを経由して分析できます。</p>
-
-<h3 id="athena-c2-2">スキャン量を減らす<a class="anchor" href="#athena-c2-2" aria-label="この見出しへのリンク">#</a></h3>
-<p><strong>パーティション</strong>は、日付などの値ごとにS3のフォルダを分けておく仕組みです。<code>WHERE</code>句でパーティションのキーを指定すると、Athenaはその値のフォルダだけを読みます。</p>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 463 286" style="max-width:463px;min-width:463px" role="img" aria-label="図2 パーティションによるスキャン量の削減。WHEREでパーティションのキーを指定すると、該当するフォルダ(この例では dt=2026-10-01)だけを読み、ほかのフォルダは読まない。"><defs><marker id="athena-dgservices-athena-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="q">
-<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
-<text x="109" y="104" text-anchor="middle" class="dg-t">クエリ</text>
-<text x="109" y="122" text-anchor="middle" class="dg-s">日付で絞り込む</text>
-</g>
-<g data-node="p1">
-<rect x="289" y="40" width="150" height="52" rx="8" class="dg-ok"/>
-<text x="364" y="62" text-anchor="middle" class="dg-t">dt=2026-10-01</text>
-<text x="364" y="80" text-anchor="middle" class="dg-s">読む</text>
-</g>
-<g data-node="p2">
-<rect x="289" y="126" width="150" height="52" rx="8" class="dg-box"/>
-<text x="364" y="147" text-anchor="middle" class="dg-t">dt=2026-09-30</text>
-<text x="364" y="165" text-anchor="middle" class="dg-s">読まない</text>
-</g>
-<g data-node="p3">
-<rect x="289" y="210" width="150" height="52" rx="8" class="dg-box"/>
-<text x="364" y="232" text-anchor="middle" class="dg-t">dt=2026-10-02</text>
-<text x="364" y="250" text-anchor="middle" class="dg-s">読まない</text>
-</g>
-<path d="M184.0,96.5 L289.0,79.0" class="dg-line" marker-end="url(#athena-dgservices-athena-2)"/>
-<text x="236" y="92" text-anchor="middle" class="dg-s dg-halo">スキャン</text>
-<path d="M184.0,121.5 L289.0,139.0" class="dg-line dg-dash" marker-end="url(#athena-dgservices-athena-2)"/>
-<path d="M161.0,135.0 L312.0,210.5" class="dg-line dg-dash" marker-end="url(#athena-dgservices-athena-2)"/>
-</svg>
-</div>
-<figcaption>図2 パーティションによるスキャン量の削減。WHEREでパーティションのキーを指定すると、該当するフォルダ(この例では dt=2026-10-01)だけを読み、ほかのフォルダは読まない。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
-<p>データを<strong>列指向形式(Parquet・ORC)</strong>にすると、クエリに必要な列だけを読めます。<strong>圧縮</strong>(GZIP・SNAPPY・ZSTDなど)をかけると、S3上の容量と読み取る量も減ります。既存のCSVなどは、CTAS(<code>CREATE TABLE AS SELECT</code>)でParquetやORCに変換できます。公式ドキュメントでは、圧縮・パーティション・列指向形式の組み合わせで、クエリあたりのコストを最大90%減らせるとされています。</p>
-
-<h3 id="athena-c2-3">設定の要点<a class="anchor" href="#athena-c2-3" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li><strong>テーブルの作成</strong>:<code>CREATE TABLE</code>で、データの場所(<code>LOCATION</code>・S3のプレフィックス)、形式、パーティションのキー(<code>PARTITIONED BY</code>)を指定する。</li>
-<li><strong>パーティションの追加</strong>:<code>dt=2026-10-01</code>のようなHive形式なら<code>MSCK REPAIR TABLE</code>で登録する。それ以外の形式は<code>ALTER TABLE ... ADD PARTITION</code>で追加する。</li>
-<li><strong>ワークグループ</strong>:チームや用途ごとに、クエリ結果の保存先、暗号化の設定、IAMによるアクセス制御を分けて管理する。暗号化はワークグループ単位で決まるため、暗号化が必要な結果と不要な結果は別のワークグループにする。</li>
-<li><strong>データ使用量の制御</strong>:クエリ単位とワークグループ単位で、スキャンするデータ量のしきい値を設定する。しきい値を超えたときの動作を決められ、CloudWatchアラームで通知もできる。</li>
-</ul>
-
-<h3 id="athena-c2-4">制限<a class="anchor" href="#athena-c2-4" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li>1回のクエリの文字列は256KBまで(変更できない)。長いクエリは分けて実行する。</li>
-<li>1回のスキャンで読めるパーティションは100万個まで。</li>
-<li>DMLクエリ(SELECT・CTAS・INSERT INTO)には、同時に実行できる数の上限(リージョンにより異なる)と実行時間の上限がある。実行時間は申請により最長240分まで延ばせる。</li>
-<li>キャンセルや失敗したクエリの途中までの結果が、S3に残ることがある。S3のライフサイクルルールで削除する。</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="athena-c3">3. ユースケース<a class="anchor" href="#athena-c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>S3に出力されたCloudTrail・ALB・VPCフローログのアドホックな分析</li>
-<li>データレイク(S3)に対する集計クエリ</li>
-<li>BIツール(Amazon QuickのQuick Sightなど)のデータソース</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="athena-c4">4. 料金の考え方<a class="anchor" href="#athena-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>クエリでスキャンしたデータ量</strong>に応じて課金されます。スキャン量は1MB単位で切り上げられ、1クエリあたり最低10MBで計算されます。CREATE・ALTER・DROPなどのDDLと、失敗したクエリは無料です。キャンセルしたクエリは、キャンセルまでにスキャンした分が課金されます。パーティション分割・列指向形式・圧縮でスキャン量を減らすと、コストを大きく下げられます。料金の考え方は用語ページ「<a href="../../../terms/pricing-basics.html">料金の基本</a>」を参照してください。</p>
-</section>
-
-<section class="chapter">
-<h2 id="athena-c5">5. 関連サービス<a class="anchor" href="#athena-c5" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="../../../services/s3.html">Amazon S3</a>:分析対象のデータの保存先</li>
-<li><a href="../../../services/cloudtrail.html">AWS CloudTrail</a>:S3に出力したログの分析</li>
-<li><a href="../../../services/data-firehose.html">Amazon Data Firehose</a>:ストリーミングデータをS3に配信し、Athenaで分析する</li>
-<li><a href="../../../services/lambda.html">AWS Lambda</a>:フェデレーテッドクエリで、S3以外のデータに接続するコネクタの実行</li>
-<li><a href="../../../services/opensearch.html">Amazon OpenSearch Service</a>:全文検索・リアルタイム分析</li>
-<li><a href="../../../services/cloudwatch.html">Amazon CloudWatch</a>:スキャン量のアラーム</li>
-<li><a href="../../../services/glue.html">AWS Glue</a>:テーブル定義・クローラー・ETL</li>
-<li><a href="../../../services/lake-formation.html">AWS Lake Formation</a>:データレイクの細粒度アクセス制御</li>
-<li><a href="#p-redshift">Amazon Redshift</a>:データウェアハウス・Spectrum</li>
-<li><a href="#p-quick">Amazon Quick</a>:分析結果の可視化</li>
-<li>関連する用語:<a href="../../../terms/managed-serverless.html">マネージドサービスとサーバーレス</a>、<a href="../../../terms/pricing-basics.html">料金の基本</a></li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="athena-c6">6. 試験・実務でのポイント<a class="anchor" href="#athena-c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
-<li>「S3のデータ」「SQL」「サーバーレス」「アドホック分析」→ <strong>Athena</strong>。</li>
-<li>コスト削減 → <strong>パーティション+Parquet/ORC+圧縮</strong>でスキャン量を減らす。</li>
-<li>特定の期間だけを分析したい → <code>WHERE</code>でパーティションのキーを指定する(読むのはその範囲だけ)。</li>
-<li>Hive形式でないパーティションを追加したい → <code>MSCK REPAIR TABLE</code>は使えず、<code>ALTER TABLE ... ADD PARTITION</code>で追加する。</li>
-<li>誤って大量のデータをスキャンして高額になるのを防ぎたい → クエリ単位・ワークグループ単位の<strong>データ使用量の制御</strong>とCloudWatchアラーム。</li>
-<li>テーブルの定義を一元管理したい → <strong>AWS Glue データカタログ</strong>。</li>
-</ul></div>
-</section>
-
-<section class="chapter">
-<h2 id="athena-c7">7. まとめ<a class="anchor" href="#athena-c7" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>AthenaはS3のデータをSQLで直接分析するサーバーレスサービス。料金はスキャン量で決まる。</li>
-</ul>
-</section>
 </article>
 <article class="booklet-page" id="p-quick">
 <div class="page-head hero" style="--cat:#8C4FFF">
@@ -213,96 +59,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p class="lead">データを可視化してダッシュボードや分析結果を共有するサービス</p>
 </div>
 </div>
-<section class="chapter">
-<h2 id="quick-c1">1. サービス概要<a class="anchor" href="#quick-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>Amazon Quick</strong>は、自然言語による分析や業務自動化などを含むAIサービスです。その中の<strong>Quick Sight</strong>機能が、データソースへの接続、可視化、BIダッシュボード作成を担います。Quick Sightは以前のAmazon QuickSightを引き継ぐ機能で、既存のAPIや統合は継続して利用できます。</p>
-</section>
-
-<section class="chapter">
-<h2 id="quick-c2">2. 主な機能・特徴<a class="anchor" href="#quick-c2" aria-label="この見出しへのリンク">#</a></h2>
-<h3 id="quick-c2-1">Quick SightによるBI<a class="anchor" href="#quick-c2-1" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li>Athena、Redshift、S3などのデータソースを使って分析し、グラフやダッシュボードを作る。</li>
-<li>SPICEインメモリエンジンにデータを取り込む方式と、対応データソースに直接クエリする方式を使い分ける。</li>
-<li>ダッシュボードを組織内で共有し、ユーザー・グループごとに閲覧権限を管理する。</li>
-</ul>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 788 209" style="max-width:788px;min-width:630px" role="img" aria-label="図1 Quick SightによるBI。AthenaやRedshiftの分析結果を可視化し、ダッシュボードとして利用者に共有する。"><defs><marker id="quick-dgservices-quick-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="ath">
-<rect x="34" y="36" width="130" height="52" rx="8" class="dg-blue"/>
-<text x="99" y="57" text-anchor="middle" class="dg-t">Athena</text>
-<text x="99" y="75" text-anchor="middle" class="dg-s">S3のSQL分析</text>
-</g>
-<g data-node="rs">
-<rect x="34" y="133" width="130" height="52" rx="8" class="dg-blue"/>
-<text x="99" y="154" text-anchor="middle" class="dg-t">Redshift</text>
-<text x="99" y="172" text-anchor="middle" class="dg-s">集計データ</text>
-</g>
-<g data-node="quick">
-<rect x="334" y="80" width="130" height="52" rx="8" class="dg-accent"/>
-<text x="399" y="102" text-anchor="middle" class="dg-tb">Quick Sight</text>
-<text x="399" y="120" text-anchor="middle" class="dg-s">可視化・分析</text>
-</g>
-<g data-node="user">
-<rect x="634" y="80" width="130" height="52" rx="8" class="dg-ok"/>
-<text x="699" y="102" text-anchor="middle" class="dg-t">利用者</text>
-<text x="699" y="120" text-anchor="middle" class="dg-s">共有ダッシュボード</text>
-</g>
-<path d="M164.0,71.2 L334.0,96.8" class="dg-line" marker-end="url(#quick-dgservices-quick-1)"/>
-<path d="M164.0,147.6 L334.0,117.9" class="dg-line" marker-end="url(#quick-dgservices-quick-1)"/>
-<path d="M464.0,106.5 L634.0,106.5" class="dg-line" marker-end="url(#quick-dgservices-quick-1)"/>
-</svg>
+<div class="ref-body" data-src="../../../services/quick.html" data-slug="quick">
+<noscript><p class="booklet-help"><a href="../../../services/quick.html">Amazon Quickのページ</a>で本文を読めます。</p></noscript>
 </div>
-<figcaption>図1 Quick SightによるBI。AthenaやRedshiftの分析結果を可視化し、ダッシュボードとして利用者に共有する。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
-
-<h3 id="quick-c2-2">データ更新と権限<a class="anchor" href="#quick-c2-2" aria-label="この見出しへのリンク">#</a></h3>
-<p>SPICEを使う場合はデータセットの更新を設定し、更新失敗や容量を監視します。直接クエリは基盤側のクエリ性能と同時実行の影響を受けます。利用者に必要な閲覧権限を付与し、データセットやダッシュボードの共有範囲を確認します。</p>
-</section>
-
-<section class="chapter">
-<h2 id="quick-c3">3. ユースケース<a class="anchor" href="#quick-c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>分析者が作成したレポートを部署や経営層に共有する。</li>
-<li>AthenaやRedshiftのデータをグラフ・ダッシュボードで可視化する。</li>
-<li>SPICEを使ってダッシュボードの応答性を高める。</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="quick-c4">4. 料金の考え方<a class="anchor" href="#quick-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>契約するユーザー機能・プラン、利用者数、容量、セッションなどに応じて料金が異なります。SPICE容量やデータソース側のクエリ料金も別途考慮します。組織向けの契約条件と最新の料金表を確認してください。</p>
-</section>
-
-<section class="chapter">
-<h2 id="quick-c5">5. 関連サービス<a class="anchor" href="#quick-c5" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="#p-athena">Amazon Athena</a>:S3データのSQLクエリ</li>
-<li><a href="#p-redshift">Amazon Redshift</a>:分析用データウェアハウス</li>
-<li><a href="../../../services/glue.html">AWS Glue</a>:データカタログとETL</li>
-<li><a href="../../../services/s3.html">Amazon S3</a>:データレイク</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="quick-c6">6. 試験・実務でのポイント<a class="anchor" href="#quick-c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
-<li>データをグラフやダッシュボードで可視化し、共有する → <strong>Quick Sight</strong>。</li>
-<li>応答性を優先してデータをインメモリに取り込む → SPICE。最新データを基盤から直接読む → 直接クエリを比較する。</li>
-<li>データ分析や可視化サービスと、データ変換・保存サービスの役割を区別する。</li>
-<li>名称はAmazon Quick、BI機能はQuick Sight。旧称や既存APIに関する記述と混同しない。</li>
-</ul></div>
-</section>
-
-<section class="chapter">
-<h2 id="quick-c7">7. まとめ<a class="anchor" href="#quick-c7" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>Amazon QuickのQuick Sight機能は、データ可視化とBIダッシュボードを提供する。</li>
-<li>SPICEへの取り込みと直接クエリを、鮮度・性能・料金で使い分ける。</li>
-</ul>
-</section>
 </article>
 <article class="booklet-page" id="p-redshift">
 <div class="page-head hero" style="--cat:#8C4FFF">
@@ -312,118 +71,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p class="lead">大規模な分析クエリを実行するマネージドデータウェアハウス</p>
 </div>
 </div>
-<section class="chapter">
-<h2 id="redshift-c1">1. サービス概要<a class="anchor" href="#redshift-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>Amazon Redshift</strong>は、大量の構造化データをSQLで集計・分析するデータウェアハウスです。列指向の保存と並列処理で分析クエリを実行し、S3のデータレイクやBIツールとも連携します。</p>
-</section>
-
-<section class="chapter">
-<h2 id="redshift-c2">2. 主な機能・特徴<a class="anchor" href="#redshift-c2" aria-label="この見出しへのリンク">#</a></h2>
-<h3 id="redshift-c2-1">プロビジョンドとServerless<a class="anchor" href="#redshift-c2-1" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li><strong>プロビジョンド</strong>:クラスターのノード構成を選び、継続的なワークロードの容量を管理する。</li>
-<li><strong>Redshift Serverless</strong>:データウェアハウスの容量を個別に管理せず、ワークロードに応じて処理能力を利用する。</li>
-</ul>
-<p>どちらもSQLで分析できます。継続的で予測しやすい処理か、変動が大きく管理負荷を下げたい処理かで選びます。</p>
-
-<h3 id="redshift-c2-2">データの取り込みと連携<a class="anchor" href="#redshift-c2-2" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li><code>COPY</code>でS3などからデータをロードし、<code>UNLOAD</code>でクエリ結果をS3へ出力する。</li>
-<li><strong>Redshift Spectrum</strong>で、S3上のデータをクラスターのテーブルにロードせずにクエリする。外部テーブルの定義にGlue Data Catalogを利用できる。</li>
-<li>フェデレーテッドクエリでRDSやAuroraなどの外部データソースを参照する。</li>
-<li>データ共有で別のRedshiftデータウェアハウスへデータを共有し、複製を抑えた分析を行う。</li>
-</ul>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 718 234" style="max-width:718px;min-width:574px" role="img" aria-label="図1 Amazon Redshiftの分析。S3からロードするほか、SpectrumでS3上のデータを直接参照し、クエリ結果をBIや別のRedshiftへ共有できる。"><defs><marker id="redshift-dgservices-redshift-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="src">
-<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
-<text x="109" y="100" text-anchor="middle" class="dg-t">S3</text>
-<text x="109" y="118" text-anchor="middle" class="dg-s">COPYでロード</text>
-</g>
-<g data-node="wh">
-<rect x="289" y="78" width="150" height="52" rx="8" class="dg-accent"/>
-<text x="364" y="100" text-anchor="middle" class="dg-tb">Redshift</text>
-<text x="364" y="118" text-anchor="middle" class="dg-s">SQL・集計</text>
-</g>
-<g data-node="bi">
-<rect x="544" y="78" width="150" height="52" rx="8" class="dg-blue"/>
-<text x="619" y="100" text-anchor="middle" class="dg-t">BIツール</text>
-<text x="619" y="118" text-anchor="middle" class="dg-s">ダッシュボード</text>
-</g>
-<g data-node="lake">
-<rect x="289" y="158" width="150" height="52" rx="8" class="dg-box"/>
-<text x="364" y="180" text-anchor="middle" class="dg-t">S3データレイク</text>
-<text x="364" y="198" text-anchor="middle" class="dg-s">Spectrumで参照</text>
-</g>
-<g data-node="share">
-<rect x="544" y="158" width="150" height="52" rx="8" class="dg-ok"/>
-<text x="619" y="180" text-anchor="middle" class="dg-t">別クラスター</text>
-<text x="619" y="198" text-anchor="middle" class="dg-s">データ共有</text>
-</g>
-<path d="M184.0,104.0 L289.0,104.0" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
-<text x="236" y="108" text-anchor="middle" class="dg-s dg-halo">COPY</text>
-<path d="M439.0,104.0 L544.0,104.0" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
-<path d="M364.0,158.0 L364.0,130.0" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
-<text x="364" y="148" text-anchor="middle" class="dg-s dg-halo">Spectrum</text>
-<path d="M439.0,127.5 L544.0,160.5" class="dg-line" marker-end="url(#redshift-dgservices-redshift-1)"/>
-<text x="492" y="148" text-anchor="middle" class="dg-s dg-halo">共有</text>
-</svg>
+<div class="ref-body" data-src="../../../services/redshift.html" data-slug="redshift">
+<noscript><p class="booklet-help"><a href="../../../services/redshift.html">Amazon Redshiftのページ</a>で本文を読めます。</p></noscript>
 </div>
-<figcaption>図1 Amazon Redshiftの分析。S3からロードするほか、SpectrumでS3上のデータを直接参照し、クエリ結果をBIや別のRedshiftへ共有できる。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
-
-<h3 id="redshift-c2-3">テーブル設計と同時実行<a class="anchor" href="#redshift-c2-3" aria-label="この見出しへのリンク">#</a></h3>
-<p>クエリのアクセスパターンに応じて、列のデータ型、ソートキー、分散方法を設計します。列指向形式や圧縮はスキャン量を抑えます。テーブルや行のロック、トランザクションの競合が発生した場合は、長時間トランザクションや同時更新を調査します。分析性能はクエリプラン、スキャン量、分散キーのデータ偏りも確認します。</p>
-</section>
-
-<section class="chapter">
-<h2 id="redshift-c3">3. ユースケース<a class="anchor" href="#redshift-c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>業務システムやS3のデータを統合した大規模なSQL分析。</li>
-<li>BIダッシュボード向けの集計テーブルやマテリアライズドビュー。</li>
-<li>S3データレイクとデータウェアハウスを組み合わせた分析。</li>
-<li>別のRedshift利用者への管理されたデータ共有。</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="redshift-c4">4. 料金の考え方<a class="anchor" href="#redshift-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>プロビジョンドでは主に利用するノードの容量と稼働時間、Serverlessでは処理容量の利用量などが課金要因です。ストレージ、バックアップ、データ転送、Spectrumのスキャンなども確認します。アイドル時間が長いか、負荷が一定か変動するかを踏まえて方式を選びます。</p>
-</section>
-
-<section class="chapter">
-<h2 id="redshift-c5">5. 関連サービス<a class="anchor" href="#redshift-c5" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="../../../services/s3.html">Amazon S3</a>:ロード元、UNLOAD先、Spectrumのデータレイク</li>
-<li><a href="../../../services/glue.html">AWS Glue</a>:カタログとETL</li>
-<li><a href="../../../services/lake-formation.html">AWS Lake Formation</a>:データレイクのアクセス制御</li>
-<li><a href="#p-athena">Amazon Athena</a>:サーバーレスSQLでのデータレイク分析</li>
-<li><a href="#p-quick">Amazon Quick</a>:Quick SightのBIダッシュボード</li>
-<li><a href="../../../services/appflow.html">Amazon AppFlow</a>:SaaSデータの取り込み</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="redshift-c6">6. 試験・実務でのポイント<a class="anchor" href="#redshift-c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
-<li>大規模な分析用SQLデータウェアハウス → <strong class="em">Amazon Redshift</strong>。</li>
-<li>データをS3からロードする → <code>COPY</code>。クエリ結果をS3へ出力する → <code>UNLOAD</code>。</li>
-<li>S3のデータをロードせずに分析 → <strong>Redshift Spectrum</strong>。</li>
-<li>負荷変動が大きく容量管理を減らしたい → Serverless。一定負荷で容量を管理したい → プロビジョンドを比較する。</li>
-<li>他のデータウェアハウスへ読み取り用データを渡す → データ共有。データベース間の移送方法と区別する。</li>
-</ul></div>
-</section>
-
-<section class="chapter">
-<h2 id="redshift-c7">7. まとめ<a class="anchor" href="#redshift-c7" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>Redshiftは、SQLによる大規模分析向けのデータウェアハウス。</li>
-<li>COPY/UNLOAD、Spectrum、フェデレーテッドクエリ、データ共有で複数のデータソースと連携する。</li>
-<li>ノード容量・クエリ・ストレージなど、方式別の料金要因を比較する。</li>
-</ul>
-</section>
 </article>
 <nav class="pager">
   <a class="prev" href="step3-5.html"><span class="label">← 前の項目</span>カタログ・系譜</a>
@@ -432,5 +82,6 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script src="../../../js/reference.js" defer></script>
 </body>
 </html>

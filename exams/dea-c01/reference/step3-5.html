@@ -32,7 +32,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
     <nav class="site-nav"><a href="../../../services/index.html">サービス</a><a href="../../../terms/index.html">用語</a><a href="../../../usecases/index.html">運用シナリオ</a><a href="../../../news/index.html">ニュース</a><a href="../../../exams/index.html" class="current">試験別</a><a href="../../../links.html">公式リンク</a></nav>
   </div>
 </header>
-<main class="booklet guide">
+<main class="booklet guide" data-incl="glue,sagemaker-unified-studio">
 <div class="page-head booklet-cover">
 <p class="booklet-site">ステップ3 データストアの管理(分野2・26%)</p>
 <h1>カタログ・系譜</h1>
@@ -47,118 +47,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p class="lead">データの発見・カタログ化・ETLをサーバーレスで行うデータ統合サービス</p>
 </div>
 </div>
-<section class="chapter">
-<h2 id="glue-c1">1. サービス概要<a class="anchor" href="#glue-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>AWS Glue</strong>は、複数のデータソースを発見・接続し、データカタログに登録して、分析用に抽出・変換・ロード(ETL)するマネージドサービスです。サーバーを管理せずに、バッチとストリーミングのデータ統合を行えます。</p>
-</section>
-
-<section class="chapter">
-<h2 id="glue-c2">2. 主な機能・特徴<a class="anchor" href="#glue-c2" aria-label="この見出しへのリンク">#</a></h2>
-<h3 id="glue-c2-1">AWS Glue Data Catalog<a class="anchor" href="#glue-c2-1" aria-label="この見出しへのリンク">#</a></h3>
-<p>データベース、テーブル、列、形式、S3上の場所などのメタデータを一元管理します。<strong>データそのものを保存する場所ではなく、データをどう読むかを記録するカタログ</strong>です。Athena、Redshift Spectrum、EMRなどが同じテーブル定義を参照できます。</p>
-
-<h3 id="glue-c2-2">クローラーと接続<a class="anchor" href="#glue-c2-2" aria-label="この見出しへのリンク">#</a></h3>
-<p><strong>クローラー</strong>はS3やJDBC接続先などのデータを調べ、形式やスキーマを推測してData Catalogにテーブルを作成・更新します。スキーマ変更の検出にも使えます。既知のスキーマを厳密に管理したいときは、クローラー任せにせずテーブル定義を明示します。</p>
-
-<h3 id="glue-c2-3">ETLジョブ<a class="anchor" href="#glue-c2-3" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li>AWS Glue Studioのビジュアルエディター、ノートブック、スクリプトでジョブを作成する。</li>
-<li>Apache SparkまたはRayを実行エンジンとして、データの結合・整形・形式変換などを行う。</li>
-<li>ジョブブックマークで処理済みデータを追跡し、再実行時に新しいデータだけを処理できる。ソースや変換の種類によって対応範囲が異なる。</li>
-<li>トリガーやワークフローでジョブ・クローラーの順序や依存関係を管理する。</li>
-</ul>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 684 218" style="max-width:684px;min-width:547px" role="img" aria-label="図1 AWS Glueによるデータ統合。クローラーがスキーマをカタログ化し、ジョブがデータを変換して保存先へ出力する。"><defs><marker id="glue-dgservices-glue-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="src">
-<rect x="34" y="78" width="150" height="52" rx="8" class="dg-blue"/>
-<text x="109" y="100" text-anchor="middle" class="dg-t">データソース</text>
-<text x="109" y="118" text-anchor="middle" class="dg-s">S3・DB・SaaS</text>
-</g>
-<g data-node="crawl">
-<rect x="272" y="38" width="150" height="52" rx="8" class="dg-accent"/>
-<text x="347" y="60" text-anchor="middle" class="dg-tb">クローラー</text>
-<text x="347" y="78" text-anchor="middle" class="dg-s">スキーマを検出</text>
-</g>
-<g data-node="cat">
-<rect x="510" y="38" width="150" height="52" rx="8" class="dg-box"/>
-<text x="585" y="60" text-anchor="middle" class="dg-t">Data Catalog</text>
-<text x="585" y="78" text-anchor="middle" class="dg-s">メタデータ</text>
-</g>
-<g data-node="job">
-<rect x="272" y="142" width="150" height="52" rx="8" class="dg-accent"/>
-<text x="347" y="164" text-anchor="middle" class="dg-tb">Glueジョブ</text>
-<text x="347" y="182" text-anchor="middle" class="dg-s">抽出・変換</text>
-</g>
-<g data-node="dest">
-<rect x="510" y="142" width="150" height="52" rx="8" class="dg-ok"/>
-<text x="585" y="164" text-anchor="middle" class="dg-t">保存先</text>
-<text x="585" y="182" text-anchor="middle" class="dg-s">S3・Redshift</text>
-</g>
-<path d="M184.0,91.4 L272.0,76.6" class="dg-line" marker-end="url(#glue-dgservices-glue-1)"/>
-<path d="M422.0,64.0 L510.0,64.0" class="dg-line" marker-end="url(#glue-dgservices-glue-1)"/>
-<path d="M525.5,90.0 L406.5,142.0" class="dg-line dg-dash" marker-end="url(#glue-dgservices-glue-1)"/>
-<path d="M184.0,124.2 L272.0,147.8" class="dg-line" marker-end="url(#glue-dgservices-glue-1)"/>
-<path d="M422.0,168.0 L510.0,168.0" class="dg-line" marker-end="url(#glue-dgservices-glue-1)"/>
-</svg>
+<div class="ref-body" data-src="../../../services/glue.html" data-slug="glue">
+<noscript><p class="booklet-help"><a href="../../../services/glue.html">AWS Glueのページ</a>で本文を読めます。</p></noscript>
 </div>
-<figcaption>図1 AWS Glueによるデータ統合。クローラーがスキーマをカタログ化し、ジョブがデータを変換して保存先へ出力する。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
-
-<h3 id="glue-c2-4">データ品質と準備<a class="anchor" href="#glue-c2-4" aria-label="この見出しへのリンク">#</a></h3>
-<p><strong>AWS Glue Data Quality</strong>では、ルールを定義して欠損・重複・値の範囲などを評価し、結果を確認できます。AWS Glue DataBrewはビジュアル操作でデータのプロファイル確認や変換レシピ作成を行うデータ準備機能です。詳細は<a href="../../../terms/data-quality.html">データ品質</a>を参照してください。</p>
-
-<h3 id="glue-c2-5">ストリーミングETL<a class="anchor" href="#glue-c2-5" aria-label="この見出しへのリンク">#</a></h3>
-<p>Kinesis Data StreamsやAmazon MSKなどのストリームを継続的に読み取り、変換して保存先へ書き込めます。リアルタイム処理にはチェックポイントや重複処理への考慮が必要です。</p>
-</section>
-
-<section class="chapter">
-<h2 id="glue-c3">3. ユースケース<a class="anchor" href="#glue-c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>複数形式のデータをS3に集め、Parquetに変換して分析しやすくする。</li>
-<li>データカタログとクローラーで、Athenaから検索できるテーブルを作る。</li>
-<li>データ品質ルールをETLパイプラインに組み込み、不正なデータを検出する。</li>
-<li>ストリーミングデータを変換してデータレイクへ取り込む。</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="glue-c4">4. 料金の考え方<a class="anchor" href="#glue-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>ジョブやクローラーの実行に使う処理能力と実行時間などに応じて課金されます。実行エンジンや機能によって料金体系が異なるため、ジョブの規模・頻度・ワーカー設定を見直します。S3、CloudWatch Logs、データ転送などの利用料は別途発生します。</p>
-</section>
-
-<section class="chapter">
-<h2 id="glue-c5">5. 関連サービス<a class="anchor" href="#glue-c5" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="../../../services/s3.html">Amazon S3</a>:データレイクの保存先</li>
-<li><a href="../../../services/athena.html">Amazon Athena</a>:Data Catalogを参照してS3をSQL分析</li>
-<li><a href="../../../services/lake-formation.html">AWS Lake Formation</a>:Data Catalogとデータレイクのアクセス制御</li>
-<li><a href="../../../services/redshift.html">Amazon Redshift</a>:データウェアハウスへのロード・分析</li>
-<li><a href="../../../services/kinesis.html">Amazon Kinesis</a>/<a href="../../../services/msk.html">Amazon MSK</a>:ストリーミングデータの取り込み</li>
-<li><a href="../../../services/mwaa.html">Amazon MWAA</a>:複数ジョブを含むパイプラインのオーケストレーション</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="glue-c6">6. 試験・実務でのポイント<a class="anchor" href="#glue-c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
-<li>データの場所・形式・スキーマを共有するメタデータの保管先 → <strong>AWS Glue Data Catalog</strong>。</li>
-<li>S3上のデータを調べてスキーマを推測し、カタログ登録 → <strong>クローラー</strong>。</li>
-<li>大規模なデータ変換 → GlueのSparkジョブ。画面上で変換処理を作る → Glue Studio。</li>
-<li>ルールに基づく品質評価 → Glue Data Quality。対話的なプロファイル・レシピ作成 → Glue DataBrew。</li>
-<li>データカタログはメタデータであり、実データはS3やデータベースに存在する。</li>
-</ul></div>
-</section>
-
-<section class="chapter">
-<h2 id="glue-c7">7. まとめ<a class="anchor" href="#glue-c7" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>AWS Glueは、データのカタログ化・ETL・品質評価を統合するマネージドサービス。</li>
-<li>Data Catalogがテーブル定義を保持し、クローラーがスキーマを検出する。</li>
-<li>ジョブ・トリガー・ワークフローでバッチやストリーミングの処理を構成できる。</li>
-</ul>
-</section>
 </article>
 <article class="booklet-page" id="p-sagemaker-unified-studio">
 <div class="page-head hero" style="--cat:#8C4FFF">
@@ -168,111 +59,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <p class="lead">データ・分析・AIの作業をプロジェクト単位でまとめる統合開発環境</p>
 </div>
 </div>
-<section class="chapter">
-<h2 id="sagemaker-unified-studio-c1">1. サービス概要<a class="anchor" href="#sagemaker-unified-studio-c1" aria-label="この見出しへのリンク">#</a></h2>
-<p><strong>Amazon SageMaker Unified Studio</strong>は、データ、分析、AI・機械学習の作業を共通の環境にまとめる開発体験です。管理者が設定するドメインの中で、チームはプロジェクトを作成し、データの発見・準備・分析・共有を行います。</p>
-</section>
-
-<section class="chapter">
-<h2 id="sagemaker-unified-studio-c2">2. 主な機能・特徴<a class="anchor" href="#sagemaker-unified-studio-c2" aria-label="この見出しへのリンク">#</a></h2>
-<h3 id="sagemaker-unified-studio-c2-1">ドメイン・ドメインユニット・プロジェクト<a class="anchor" href="#sagemaker-unified-studio-c2-1" aria-label="この見出しへのリンク">#</a></h3>
-<ul>
-<li><strong>ドメイン</strong>:組織のユーザー、認証、共有環境などをまとめる管理境界。</li>
-<li><strong>ドメインユニット</strong>:ドメイン内を部門やチームに分け、委任管理や設定の適用範囲を整理する単位。</li>
-<li><strong>プロジェクト</strong>:データ、メンバー、処理資源、アクセス権をユースケースごとにまとめる作業領域。</li>
-</ul>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 713 234" style="max-width:713px;min-width:570px" role="img" aria-label="図1 SageMaker Unified Studioの構成。ドメイン内のドメインユニットで組織を分け、プロジェクト単位でメンバー・データ・作業を管理する。"><defs><marker id="sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="domain">
-<rect x="34" y="78" width="130" height="52" rx="8" class="dg-accent"/>
-<text x="99" y="100" text-anchor="middle" class="dg-tb">ドメイン</text>
-<text x="99" y="118" text-anchor="middle" class="dg-s">組織の境界</text>
-</g>
-<g data-node="unit1">
-<rect x="274" y="38" width="130" height="52" rx="8" class="dg-blue"/>
-<text x="339" y="60" text-anchor="middle" class="dg-t">ドメインユニット</text>
-<text x="339" y="78" text-anchor="middle" class="dg-s">分析部門</text>
-</g>
-<g data-node="unit2">
-<rect x="274" y="158" width="130" height="52" rx="8" class="dg-blue"/>
-<text x="339" y="180" text-anchor="middle" class="dg-t">ドメインユニット</text>
-<text x="339" y="198" text-anchor="middle" class="dg-s">データ部門</text>
-</g>
-<g data-node="p1">
-<rect x="559" y="38" width="130" height="52" rx="8" class="dg-box"/>
-<text x="624" y="60" text-anchor="middle" class="dg-t">プロジェクト</text>
-<text x="624" y="78" text-anchor="middle" class="dg-s">共有データ・処理</text>
-</g>
-<g data-node="p2">
-<rect x="559" y="158" width="130" height="52" rx="8" class="dg-box"/>
-<text x="624" y="180" text-anchor="middle" class="dg-t">プロジェクト</text>
-<text x="624" y="198" text-anchor="middle" class="dg-s">権限・資産</text>
-</g>
-<path d="M164.0,93.2 L274.0,74.8" class="dg-line" marker-end="url(#sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1)"/>
-<path d="M164.0,125.7 L274.0,162.3" class="dg-line" marker-end="url(#sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1)"/>
-<path d="M404.0,64.0 L559.0,64.0" class="dg-line" marker-end="url(#sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1)"/>
-<path d="M404.0,184.0 L559.0,184.0" class="dg-line" marker-end="url(#sagemaker-unified-studio-dgservices-sagemaker-unified-studio-1)"/>
-</svg>
+<div class="ref-body" data-src="../../../services/sagemaker-unified-studio.html" data-slug="sagemaker-unified-studio">
+<noscript><p class="booklet-help"><a href="../../../services/sagemaker-unified-studio.html">Amazon SageMaker Unified Studioのページ</a>で本文を読めます。</p></noscript>
 </div>
-<figcaption>図1 SageMaker Unified Studioの構成。ドメイン内のドメインユニットで組織を分け、プロジェクト単位でメンバー・データ・作業を管理する。</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
-
-<h3 id="sagemaker-unified-studio-c2-2">カタログとデータ準備<a class="anchor" href="#sagemaker-unified-studio-c2-2" aria-label="この見出しへのリンク">#</a></h3>
-<p>カタログを使ってデータ資産を発見し、アクセスを申請・共有できます。ビジネス向けカタログは、データの意味や所有者などの情報を利用者が理解しやすい形で示します。データ準備にはビジュアルな操作やノートブックなどを使い、データの来歴を追跡する機能と組み合わせます。</p>
-<p>データ準備機能にはAmazon SageMaker Data Wranglerがあります。現在のData Wrangler体験はSageMaker Canvasに統合されており、視覚的な変換やデータ品質の確認、フローの出力を行います。試験ガイドにある名称と、現行の提供形態を区別して押さえます。</p>
-<p>プロジェクトがデータを発見できることと、実データを読み取れることは別です。カタログ上の共有・承認と、Lake Formation、IAM、基盤サービス側の権限を確認します。</p>
-
-<h3 id="sagemaker-unified-studio-c2-3">データリネージ<a class="anchor" href="#sagemaker-unified-studio-c2-3" aria-label="この見出しへのリンク">#</a></h3>
-<p><strong>データリネージ</strong>は、データがどのソースから取り込まれ、どの処理を経て、どの出力や利用者につながるかを追跡する考え方です。変更の影響調査、品質問題の原因特定、監査に役立ちます。</p>
-</section>
-
-<section class="chapter">
-<h2 id="sagemaker-unified-studio-c3">3. ユースケース<a class="anchor" href="#sagemaker-unified-studio-c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>部門ごとにプロジェクトとデータアクセスを分けた共同分析。</li>
-<li>カタログから必要なデータを発見し、所有者にアクセスを申請する。</li>
-<li>データの加工履歴や依存関係を追跡して、変更の影響を調べる。</li>
-<li>データ準備、SQL分析、AI開発を共通の作業環境から行う。</li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="sagemaker-unified-studio-c4">4. 料金の考え方<a class="anchor" href="#sagemaker-unified-studio-c4" aria-label="この見出しへのリンク">#</a></h2>
-<p>Unified Studioの利用に加え、プロジェクトから利用する計算資源、ストレージ、データカタログ、分析・AIサービスなどに料金が発生します。ドメインやプロジェクトの数そのものだけでなく、実行した処理と保存データの料金を確認します。</p>
-</section>
-
-<section class="chapter">
-<h2 id="sagemaker-unified-studio-c5">5. 関連サービス<a class="anchor" href="#sagemaker-unified-studio-c5" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="#p-glue">AWS Glue</a>:技術メタデータとETL</li>
-<li><a href="../../../services/lake-formation.html">AWS Lake Formation</a>:データレイクの権限・共有</li>
-<li><a href="../../../services/s3.html">Amazon S3</a>:データレイクの保存先</li>
-<li><a href="../../../services/athena.html">Amazon Athena</a>:SQLでの探索・分析</li>
-<li><a href="../../../services/macie.html">Amazon Macie</a>:個人情報を含む機密データの検出</li>
-<li>関連する用語:<a href="../../../terms/data-governance.html">データガバナンス</a></li>
-</ul>
-</section>
-
-<section class="chapter">
-<h2 id="sagemaker-unified-studio-c6">6. 試験・実務でのポイント<a class="anchor" href="#sagemaker-unified-studio-c6" aria-label="この見出しへのリンク">#</a></h2>
-<div class="point"><ul>
-<li>組織の作業環境を構成する順序は、ドメイン → ドメインユニット → プロジェクト。</li>
-<li>プロジェクトは作業と共有の境界であり、基盤データの権限も別途必要。</li>
-<li>カタログはデータを見つける入口、Lake FormationやIAMは実データへのアクセス制御を担う。</li>
-<li>ソース・処理・出力のつながりを調査する → データリネージ。</li>
-</ul></div>
-</section>
-
-<section class="chapter">
-<h2 id="sagemaker-unified-studio-c7">7. まとめ<a class="anchor" href="#sagemaker-unified-studio-c7" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li>SageMaker Unified Studioは、データ・分析・AIの共同作業環境。</li>
-<li>ドメイン、ドメインユニット、プロジェクトで組織と作業を分ける。</li>
-<li>カタログでの発見・共有と、実データのアクセス権を区別する。</li>
-</ul>
-</section>
 </article>
 <nav class="pager">
   <a class="prev" href="step3-4.html"><span class="label">← 前の項目</span>ライフサイクル</a>
@@ -281,5 +70,6 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </nav>
 </main>
 <a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<script src="../../../js/reference.js" defer></script>
 </body>
 </html>
