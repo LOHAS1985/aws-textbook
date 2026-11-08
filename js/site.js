@@ -99,11 +99,6 @@
     var inner = document.querySelector(".site-header .inner");
     if (!inner) return;
     var tools = el("div", "site-tools");
-    var search = el("a", "tool-btn",
-      '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>');
-    search.href = base + "index.html#search";
-    search.setAttribute("aria-label", "全ページを検索");
-    search.title = "全ページを検索(/)";
     var btn = el("button", "tool-btn tool-aa", "Aa");
     btn.type = "button";
     btn.setAttribute("aria-label", "表示設定");
@@ -136,22 +131,10 @@
       count.hidden = !n;
       count.textContent = n;
     });
-    tools.appendChild(search);
     tools.appendChild(mine);
     tools.appendChild(btn);
     tools.appendChild(panel);
     inner.appendChild(tools);
-
-    // 「/」キーで検索へ(検索欄のあるページは、そのページの検索欄を使う)
-    if (!document.getElementById("site-q") && !document.getElementById("toc-q")) {
-      document.addEventListener("keydown", function (e) {
-        var t = e.target.tagName;
-        if (e.key === "/" && t !== "INPUT" && t !== "TEXTAREA" && !e.ctrlKey && !e.metaKey) {
-          e.preventDefault();
-          location.href = search.href;
-        }
-      });
-    }
   }
 
   // ---- 読み上げ ----
