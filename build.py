@@ -994,6 +994,21 @@ def write_search_fulltext(loaded):
     (OUT / "search.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
 
+# ホームの入口のカードの色(AWS公式アイコンの配色に近い色。カードの上の帯と件数に使う)
+TOP_CARD_COLORS = {"services": "#ED7100", "terms": "#8C4FFF", "usecases": "#7AA116", "news": "#01A88D",
+                   "exams": "#DD344C", "links": "#5A6B7B"}
+
+
+def top_card(href, name, count, color):
+    """ホームの入口のカード。名前・件数(大きく)・矢印を並べる。件数が空のときは出さない。"""
+    m = re.fullmatch(r"(\d+)(\S*)", count)  # 例: 122ページ・12資格
+    shown = (f'<span class="top-card-count">{m.group(1)}<small>{m.group(2)}</small></span>' if m
+             else f'<span class="top-card-count"><small>{html.escape(count)}</small></span>' if count else "")
+    return (f'  <li><a class="top-card" href="{href}" style="--cat:{color}">'
+            f'<span class="top-card-name">{html.escape(name)}</span>{shown}'
+            '<span class="top-card-go" aria-hidden="true">›</span></a></li>\n')
+
+
 def render_top(loaded, exams, exam_pages):
     desc = "AWS認定の学習用に、AWS共通のサービス・用語・運用シナリオと、試験別の学習範囲・問題集をまとめた教科書"
     parts = [head(SITE_TITLE, "", desc), header(""), "<main>\n",
@@ -1027,16 +1042,16 @@ def render_top(loaded, exams, exam_pages):
                  + SITE_SEARCH_SCRIPT.replace("__INDEX__", json.dumps(index, ensure_ascii=False))
                  .replace("__HELPERS__", search_helpers()))
 
-    parts.append('<h2>AWS共通</h2>\n<ul class="card-list top-cards">\n')
+    parts.append('<h2>AWS共通</h2>\n<ul class="top-cards">\n')
     for c in COLLECTIONS:
         n = len(loaded[c["key"]])
-        badge = f"{n}ページ" if n else "準備中"
-        parts.append(f'  <li><a href="{c["key"]}/index.html"><span class="name">{c["label"]}'
-                     f'<span class="badge">{badge}</span></span></a></li>\n')
-    parts.append('  <li><a href="links.html"><span class="name">公式リンク</span></a></li>\n')
+        parts.append(top_card(f'{c["key"]}/index.html', c["label"], f"{n}ページ" if n else "準備中",
+                              TOP_CARD_COLORS[c["key"]]))
+    parts.append(top_card("links.html", "公式リンク", "", TOP_CARD_COLORS["links"]))
     parts.append("</ul>\n")
-    parts.append('<h2>試験別</h2>\n<ul class="card-list top-cards">\n'
-                 f'  <li><a href="exams/index.html"><span class="name">AWS認定の試験別<span class="badge">{len(exams)}資格</span></span></a></li>\n</ul>\n')
+    parts.append('<h2>試験別</h2>\n<ul class="top-cards">\n'
+                 + top_card("exams/index.html", "AWS認定の試験別", f"{len(exams)}資格", TOP_CARD_COLORS["exams"])
+                 + "</ul>\n")
 
     # 最近更新したページ(直近5件。ニュースは一覧から読むので除く)
     recent = sorted(((p, c) for c in COLLECTIONS if c["key"] != "news" for p in loaded[c["key"]]),

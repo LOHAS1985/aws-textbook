@@ -574,10 +574,24 @@ th { background: var(--accent-soft); white-space: nowrap; }
 .row-list a:hover .name { text-decoration: underline; }
 .row-list .name { flex: 1 1 auto; min-width: 0; font-weight: 700; color: var(--link); overflow-wrap: anywhere; }
 .row-list .date { flex: 0 0 auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.top-cards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-top: 20px; }
-.top-cards a { padding: 18px 20px; }
-.top-cards .name { font-size: 18px; margin-bottom: 4px; }
-.top-cards .badge { white-space: nowrap; }
+/* ホームの入口のカード: 上の色の帯・大きな件数・右の矢印。ホバーで少し浮く(--cat はカードごとの色) */
+.top-cards { list-style: none; padding: 0; margin: 12px 0 28px; display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.top-card { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+  min-height: 104px; padding: 16px 40px 14px 18px; box-sizing: border-box;
+  background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--cat, var(--accent));
+  border-radius: 14px; color: var(--text); text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+.top-card:hover, .top-card:focus-visible { transform: translateY(-2px); border-color: var(--cat, var(--accent));
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); }
+.top-card-name { font-size: 16px; font-weight: 700; line-height: 1.35; }
+.top-card-count { font-size: 26px; font-weight: 700; line-height: 1; color: var(--cat, var(--accent));
+  font-variant-numeric: tabular-nums; }
+.top-card-count small { font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 4px; }
+.top-card-go { position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  font-size: 22px; color: var(--cat, var(--accent)); opacity: 0.45; transition: opacity 0.15s; }
+.top-card:hover .top-card-go, .top-card:focus-visible .top-card-go { opacity: 1; }
+@media (max-width: 600px) { .top-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; } .top-card { min-height: 96px; } }
 /* 試験の一覧・試験の入口: 1行に1試験(コード・名前・状態を横に並べる)。学習中は強調色、合格済みは緑 */
 .exam-list { list-style: none; padding: 0; margin: 0 0 24px; border-top: 1px solid var(--border); }
 .exam-list li { border-bottom: 1px solid var(--border); border-left: 4px solid transparent; }
