@@ -32,7 +32,7 @@ EXAMS_DIR = SRC / "exams"  # 試験別(試験ごとのフォルダ: exam.json・
 EXAM_LEVELS = [("foundational", "基礎"), ("associate", "アソシエイト"), ("professional", "プロフェッショナル"),
                ("specialty", "スペシャリティ")]
 # 試験別の表示に使う仮想のコレクション(一覧はないが、ページの描画・検査で既存の仕組みを使う)
-EXAM_COL = {"key": "exams", "label": "試験別", "desc": "AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる",
+EXAM_COL = {"key": "exams", "label": "AWS認定資格", "desc": "AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる",
             "categories": [], "order": None}
 QUESTION_COL = {"key": "questions", "label": "問題集", "desc": "試験別のシナリオ型問題で、AWSの知識と選択理由を確認",
                 "categories": [], "script": "quiz.js", "order": None}
@@ -566,7 +566,7 @@ def header(prefix, current=None):
     links = "".join(
         f'<a href="{prefix}{c["key"]}/index.html"{cur if c["key"] == current else ""}>'
         f'{c["label"]}</a>' for c in COLLECTIONS if c.get("nav", True))
-    links += f'<a href="{prefix}exams/index.html"{cur if current == "exams" else ""}>試験別</a>'
+    links += f'<a href="{prefix}exams/index.html"{cur if current == "exams" else ""}>AWS認定資格</a>'
     links += f'<a href="{prefix}links.html"{cur if current == "links" else ""}>公式リンク</a>'
     return f"""<header class="site-header" id="top">
   <div class="inner">
@@ -1011,8 +1011,7 @@ def top_card(href, name, count, color):
 
 def render_top(loaded, exams, exam_pages):
     desc = "AWS認定の学習用に、AWS共通のサービス・用語・運用シナリオと、試験別の学習範囲・問題集をまとめた教科書"
-    parts = [head(SITE_TITLE, "", desc), header(""), "<main>\n",
-             f'<div class="page-head"><h1>{SITE_TITLE}</h1></div>\n']
+    parts = [head(SITE_TITLE, "", desc), header(""), "<main>\n"]
 
     # 全ページ横断の検索(タイトル・説明・カテゴリ・小見出しが対象)
     index = []
@@ -1028,7 +1027,7 @@ def render_top(loaded, exams, exam_pages):
         for p in loaded[c["key"]]:
             headings = [plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S)]
             extra = question_search_text(p) if c["key"] == "questions" else ""
-            index.append({"t": p["title"], "c": f'{c["label"]}(試験別)', "u": p["path"] + ".html", "i": "",
+            index.append({"t": p["title"], "c": c["label"], "u": p["path"] + ".html", "i": "",
                           "g": "exams", "f": search_fields(p, headings, extra)})
     parts.append('<div class="toc-search site-search" id="search">\n'
                  '  <input type="search" id="site-q" placeholder="全ページを検索(例: ロードバランサー、IMDSv2、DR)"'
@@ -1049,8 +1048,8 @@ def render_top(loaded, exams, exam_pages):
                               TOP_CARD_COLORS[c["key"]]))
     parts.append(top_card("links.html", "公式リンク", "", TOP_CARD_COLORS["links"]))
     parts.append("</ul>\n")
-    parts.append('<h2>試験別</h2>\n<ul class="top-cards">\n'
-                 + top_card("exams/index.html", "AWS認定の試験別", f"{len(exams)}資格", TOP_CARD_COLORS["exams"])
+    parts.append('<h2>AWS認定資格</h2>\n<ul class="top-cards">\n'
+                 + top_card("exams/index.html", "資格ごとの学習", f"{len(exams)}資格", TOP_CARD_COLORS["exams"])
                  + "</ul>\n")
 
     # 最近更新したページ(直近5件。ニュースは一覧から読むので除く)
@@ -1639,8 +1638,8 @@ def short_name(exam):
 
 def exams_index_html(exams):
     """試験の一覧。級ごとに、1行に1試験(コード・名前・状態)を並べる。学習中・合格済みは色で示す。"""
-    parts = [head(f"試験別 | {SITE_TITLE}", "../", "AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる"),
-             header("../", "exams"), "<main>\n", '<div class="page-head"><h1>試験別</h1></div>\n']
+    parts = [head(f"AWS認定資格 | {SITE_TITLE}", "../", "AWS認定の試験ごとに、学習範囲・ロードマップと参考書・問題集をまとめる"),
+             header("../", "exams"), "<main>\n", '<div class="page-head"><h1>AWS認定資格</h1></div>\n']
     for key, label in EXAM_LEVELS:
         group = [e for e in exams if e["level"] == key]
         if not group:
@@ -1822,7 +1821,7 @@ def figure_legend(body):
 
 # 検索の種類のチップ(トップの全ページ検索)。値は検索データの "g"
 SEARCH_KINDS = [("all", "すべて"), ("services", "サービス"), ("terms", "用語"), ("usecases", "運用シナリオ"),
-                ("news", "ニュース"), ("exams", "試験別・問題集")]
+                ("news", "ニュース"), ("exams", "AWS認定資格・問題集")]
 
 # 読みの辞書: 漢字で始まる見出しの読み(ひらがな)。索引の並びとかな行の振り分けに使う。漢字で始まる見出しを増やしたら足す
 READINGS = {
