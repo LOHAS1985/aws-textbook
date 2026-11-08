@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IAM Identity Center:リージョンをまたぐ信頼されたID伝播 | 2026年10月27日のAWSニュース | AWS教科書</title>
+<meta name="description" content="別リージョンのサービスにも、利用者本人のIDを引き継いで渡せるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">試験別</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">2026年10月</a>
+  <p class="news-date"><time datetime="2026-10-27">2026年10月27日</time>のAWSニュース</p>
+  <h1>IAM Identity Center:リージョンをまたぐ信頼されたID伝播</h1>
+  <p class="lead">別リージョンのサービスにも、利用者本人のIDを引き継いで渡せるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>信頼されたID伝播(Trusted identity propagation)は、利用者本人のIDとグループ情報をリクエストと一緒に運び、AWSサービス側が「誰がアクセスしたか」で権限を決め、記録できるようにする仕組みです。これまでは関係するサービスがすべて同じリージョンにある必要がありました。今回、別リージョンのサービスにもIDを引き継げるようになりました。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 116" style="max-width:480px;min-width:480px" role="img" aria-label="図1 信頼されたID伝播の範囲"><defs><marker id="dgnews-2026-10-27-03-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">同じリージョン内のみ</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">リージョンをまたいで</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-27-03-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">リージョン越えに対応</text>
+</svg>
+</div>
+<figcaption>図1 信頼されたID伝播の範囲</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>計算とデータを別リージョンに置く、空いている場所で処理する、災害対策で分けるといった構成でも、個人単位の細かな権限と監査記録を保てます。これまでの回避策だった「個人を区別できない広いIAMロール」や「1リージョンへの集約」が不要になります。</dd>
+<dt>試験・実務への影響</dt><dd>最小権限と監査の考え方が、マルチリージョン構成でも保てるようになった、という整理で十分です。IAM Identity Centerを提供するすべてのリージョンで、追加料金なしで使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/identity-center.html">IAM Identity Center</a>、<a href="../services/iam.html">IAM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-iam-identity-center-cross-region-tip/">AWS IAM Identity Center now supports cross-Region trusted identity propagation</a>(2026-10-26)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-10-27-02.html"><span class="label">← 前へ 2026年10月27日</span>KMS:ML-KEMに対応</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-10-27-04.html"><span class="label">次へ → 2026年10月27日</span>RDS:SQL Serverの最新の更新に対応</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

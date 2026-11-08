@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudFront:ISPとTLSの詳細をオリジンへ転送 | 2026年10月31日のAWSニュース | AWS教科書</title>
+<meta name="description" content="CloudFrontが閲覧者のISPとTLSの情報を、ヘッダーとしてオリジンに渡せるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">試験別</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">2026年10月</a>
+  <p class="news-date"><time datetime="2026-10-31">2026年10月31日</time>のAWSニュース</p>
+  <h1>CloudFront:ISPとTLSの詳細をオリジンへ転送</h1>
+  <p class="lead">CloudFrontが閲覧者のISPとTLSの情報を、ヘッダーとしてオリジンに渡せるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>CloudFrontは、閲覧者の情報をヘッダーとしてオリジン(配信元のサーバー)に渡せます。今回、2つのヘッダーが加わりました。CloudFront-Viewer-ISPは、閲覧者が使っているインターネット接続事業者(ISP)の名前です。CloudFront-Viewer-TLS-Detailsは、その接続で使った暗号の方式(鍵交換・署名方式など)で、「ポスト量子暗号」(将来の量子コンピューターでも破られにくいとされる暗号)を使った接続かどうかが分かります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 973 116" style="max-width:973px;min-width:778px" role="img" aria-label="図1 新しいヘッダーをオリジンで活用する流れ"><defs><marker id="dgnews-2026-10-31-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="viewer">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">閲覧者</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">ISP・TLS接続</text>
+</g>
+<g data-node="cf">
+<rect x="289" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="62" text-anchor="middle" class="dg-tb">CloudFront</text>
+<text x="364" y="80" text-anchor="middle" class="dg-s">オリジンリクエスト</text>
+</g>
+<g data-node="origin">
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">オリジン</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">ヘッダーを受け取る</text>
+</g>
+<g data-node="log">
+<rect x="799" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="874" y="62" text-anchor="middle" class="dg-t">分析</text>
+<text x="874" y="80" text-anchor="middle" class="dg-s">ISP別・暗号方式別</text>
+</g>
+<path d="M184.0,66.5 L289.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-31-02-1)"/>
+<path d="M439.0,66.5 L544.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-31-02-1)"/>
+<text x="492" y="70" text-anchor="middle" class="dg-s dg-halo">新ヘッダーを転送</text>
+<path d="M694.0,66.5 L799.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-31-02-1)"/>
+</svg>
+</div>
+<figcaption>図1 新しいヘッダーをオリジンで活用する流れ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>ISPごとに通信量や遅さを比べたり、特定のISPからの不審なアクセスを切り分けたりできます。TLS詳細では、ポスト量子暗号で接続している閲覧者の割合や、まだ対応していないクライアントを調べられます。どちらも任意のヘッダーで、使うには、オリジンリクエストポリシーに追加してディストリビューションに関連付けます。</dd>
+<dt>試験・実務への影響</dt><dd>オリジンに渡す内容は、オリジンリクエストポリシーで決めます。ヘッダーを増やしてもキャッシュのキーには含まれないので、キャッシュの効率は変わりません(キャッシュポリシーとの違いに注意)。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudfront.html">CloudFront</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/cloudfront-viewer-isp-post-quantum-visbility/">Amazon CloudFront now provides viewer ISP and post-quantum TLS details</a>(2026-10-30)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-10-31-01.html"><span class="label">← 前へ 2026年10月31日</span>WAF:CloudFront向けSDKの自動組み込み</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-10-31-03.html"><span class="label">次へ → 2026年10月31日</span>RDS for Oracle:自動マイナーバージョンアップグレードを任意に</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
