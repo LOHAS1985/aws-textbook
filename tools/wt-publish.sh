@@ -41,7 +41,7 @@ git pull --ff-only origin main
 cd "$wt"
 restore_generated_book
 git add -A -- . ':!book'
-git add -A -- book/css/style.css book/icons book/js/quiz.js book/js/sim.js book/js/site.js book/js/mypage.js book/manifest.webmanifest
+git add -A -- book/css/style.css book/icons book/js/quiz.js book/js/sim.js book/js/site.js book/js/mypage.js book/js/reference.js book/manifest.webmanifest
 git diff --cached --quiet || git commit -q -m "$subject" -m "$trailer"
 if ! git rebase main; then
   echo "リベースで衝突しました。$wt で解消して git rebase --continue を実行してから、もう一度このスクリプトを実行してください" >&2

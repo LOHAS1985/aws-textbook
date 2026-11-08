@@ -32,7 +32,8 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/icons/・book/manifest.webmanifest … ホーム画面用アイコンとWebアプリ設定(アイコンは `python tools/make_icons.py book/icons` で再生成)
 - book/js/sim.js … 運用シナリオの構成演習(タブ・答え合わせ・自由構成)と、一覧への演習の結果の表示(直接編集する)
 - book/js/quiz.js … 問題集の採点と、試験一覧への最高得点・挑戦回数の表示(直接編集する)
-- book/sw.js … オフラインで読むための Service Worker(生成物。直接編集しない)。build.py が book/ の全ファイルとその内容のハッシュを書き込み、利用者のブラウザは初回に全ファイル(約10.9MB・544ファイル。gzip で約3MB。検索の全文 book/search.json を含む)を保存し、更新時は変わったファイルだけを取り直す。book/ に置くファイルを増やすと自動で保存対象になる(大きいまとめ冊子 book/print/ は除く)。サイズを変える場合は、この数字も直す
+- book/js/reference.js … 参考書ページ(book/exams/{試験ID}/reference/)の本文の組み立て(直接編集する)。参考書は本文を書き写さず、項目で参照しているページ(book/services・terms・usecases)を読み込んで並べる。見出し・説明は HTML に書き、本文は JavaScript が入れる。JavaScript が動かない環境では、元のページへのリンクを出す。読み込むのは同じサイトの HTML なので、Service Worker が保存していればオフラインでも動く。PC・スマホで表示と印刷ができることは、実際のブラウザで確認している
+- book/sw.js … オフラインで読むための Service Worker(生成物。直接編集しない)。build.py が book/ の全ファイルとその内容のハッシュを書き込み、利用者のブラウザは初回に全ファイル(約9.7MB・545ファイル。gzip で約2.7MB。検索の全文 book/search.json を含む)を保存し、更新時は変わったファイルだけを取り直す。book/ に置くファイルを増やすと自動で保存対象になる(大きいまとめ冊子 book/print/ は除く)。サイズを変える場合は、この数字も直す
 - book/js/site.js … 全ページ共通の読みやすさ・使いやすさの機能(直接編集する)。ヘッダーの検索ボタンと表示設定(テーマ・文字サイズ・読み上げの速さ。localStorage に保存)、ページ見出しの下の「読み上げ」「印刷」ボタン(読み上げは表示中の内容だけを読む。運用シナリオの解説は「解説を読む」を開いたときだけ読む)、本文中のサービス・用語へのリンクのポップアップ(マウスを重ねる/スマホは1回タップで説明、2回目で移動)
 - book/js/glossary.js … ポップアップの内容(サービス・用語の title と lead。build.py が作る生成物)
 - book/print/{services,terms,usecases}.html … 印刷・PDF用のまとめ冊子(コレクションの全ページを1つにしたもの。build.py が作る生成物)。各一覧ページの上部から案内する
@@ -137,7 +138,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
   `git grep -n -E "^(<<<<<<< |>>>>>>> |=======$)" -- src book`
   と、ビルドの WARNING が新しく増えていないこと(checks.py の FORBIDDEN が、競合マーカー・コードブロックの囲み・作業の痕跡・仮の文言を WARNING にする。出たら必ず直す)
 - 手元に未コミットの変更があるまま `git pull --autostash` を使うと、変更が衝突してマーカーが残ることがある。pull 後は `git status` で `UU`(未解決)が無いことを確認する。deploy.sh を使えない環境では、先に変更をコミットしてから `git pull --rebase origin refs/heads/main` を行い、book/ はビルドし直す
-- HTMLは素のHTML+CSSのみ(外部ライブラリなし)。JavaScriptは build.py が出力する一覧の絞り込み、トップページの全ページ検索、オフライン用の Service Worker(sw.js と各ページでの登録)、運用シナリオの構成演習(book/js/sim.js)、問題集の採点(book/js/quiz.js)、共通の読みやすさ・使いやすさの機能(book/js/site.js)に使う。site.js の機能は JavaScript が動くときだけボタンを出し、動かなくても本文はそのまま読めるようにする。JavaScriptが動かない環境でも、運用シナリオは全章を読め、問題集は選択肢と答え・解説を確認できるようにする
+- HTMLは素のHTML+CSSのみ(外部ライブラリなし)。JavaScriptは build.py が出力する一覧の絞り込み、トップページの全ページ検索、オフライン用の Service Worker(sw.js と各ページでの登録)、運用シナリオの構成演習(book/js/sim.js)、問題集の採点(book/js/quiz.js)、共通の読みやすさ・使いやすさの機能(book/js/site.js)、参考書の本文の組み立て(book/js/reference.js)に使う。参考書だけは、本文そのものが JavaScript で組み立てられる(動かない環境では元のページへのリンクを出す)。それ以外のページは、本文を JavaScript なしで読めるようにする。site.js の機能は JavaScript が動くときだけボタンを出し、動かなくても本文はそのまま読めるようにする。JavaScriptが動かない環境でも、運用シナリオは全章を読め、問題集は選択肢と答え・解説を確認できるようにする
 - サービスの一覧はサービス名だけのコンパクトな表示(lead は表示しないが、絞り込みの検索対象には含める)
 - 全ページに「目次へ戻る」「前へ/次へ」のリンクを付ける(build.py が自動で付ける)
 - コレクション間のリンクは相対パス(例: 用語ページから `../services/vpc.html`)

@@ -1695,34 +1695,38 @@ def item_pager(prev, nxt):
             + link(nxt, "next", "次の項目 →") + '\n</nav>\n')
 
 
+REF_SCRIPT = '<script src="../../../js/reference.js" defer></script>\n'
+
+
 def reference_item_html(exam, step, item, prev, nxt, loaded):
-    """参考書の1項目分のページ。その項目で参照しているページの本文を、順番どおりに並べる(印刷用)。"""
+    """参考書の1項目分のページ。見出し・説明は HTML に書き、本文は元のページを book/js/reference.js が読み込んで並べる。
+    同じ本文を参考書ごとに書き写さないため、サイズが小さくなる。JavaScript が動かないときは元のページへのリンクを出す。"""
     pages = []
     for key, slug in item["refs"]:
         p = next((x for x in loaded.get(key, []) if x["slug"] == slug), None)
         if p is not None:
             pages.append((key, p))
-    included = {p["slug"] for _, p in pages}
+    included = ",".join(p["slug"] for _, p in pages)
     articles = []
     for key, p in pages:
-        # book/exams/{試験ID}/reference/ から見たリンクにする。項目の中にないページへのリンクは通常のページへ向ける
-        article = booklet_body(key, p).replace('href="../', 'href="../../../')
-        article = re.sub(r'href="#p-([\w-]+)"',
-                         lambda m: m.group(0) if m.group(1) in included else f'href="../../../{key}/{m.group(1)}.html"',
-                         article)
+        # book/exams/{試験ID}/reference/ から見た元のページ(JavaScript はここから本文を読み込む)
+        src = f"../../../{key}/{p['slug']}.html"
         articles.append(f'<article class="booklet-page" id="p-{p["slug"]}">\n'
                         f'<div class="page-head hero"{cat_style(_by_key[key], p["category"])}>\n<div class="hero-text">\n'
                         f'<span class="category">{html.escape(p["category"])}</span>\n<h1>{html.escape(p["title"])}</h1>\n'
                         + (f'<p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
-                        + "</div>\n</div>\n" + article + "\n</article>\n")
+                        + "</div>\n</div>\n"
+                        f'<div class="ref-body" data-src="{src}" data-slug="{p["slug"]}">\n'
+                        f'<noscript><p class="booklet-help"><a href="{src}">{html.escape(p["title"])}のページ</a>で本文を読めます。</p></noscript>\n'
+                        "</div>\n</article>\n")
     return (head(f"{item['label']} | {SITE_TITLE}", "../../../", "") + header("../../../", "exams")
-            + '<main class="booklet guide">\n'
+            + f'<main class="booklet guide" data-incl="{included}">\n'
             + f'<div class="page-head booklet-cover">\n<p class="booklet-site">{html.escape(step["title"])}</p>\n'
             + f'<h1>{html.escape(item["label"])}</h1>\n'
             + '<p class="booklet-help">この項目で使うサービス・用語を、参考書としてまとめたページです。'
             'ブラウザーの印刷(Ctrl+P)から、紙に印刷するかPDFとして保存してください。</p>\n'
             + '<p class="booklet-help"><button type="button" class="booklet-print" onclick="print()">印刷・PDFに保存</button></p>\n'
-            + "</div>\n" + "".join(articles) + item_pager(prev, nxt) + "</main>\n" + TO_TOP + TAIL)
+            + "</div>\n" + "".join(articles) + item_pager(prev, nxt) + "</main>\n" + TO_TOP + REF_SCRIPT + TAIL)
 
 
 def write_reference_pages(exam, page, loaded):
