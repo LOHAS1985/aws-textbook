@@ -997,14 +997,13 @@ def render_top(loaded, exams, exam_pages):
             icon = c["key"] == "services" and (ICON_DIR / f'{p["slug"]}.svg').exists()
             index.append({"t": p["title"], "c": c["label"], "u": f'{c["key"]}/{p["slug"]}.html',
                           "i": f'icons/services/{p["slug"]}.svg' if icon else "",
-                          "d": plain(p["lead"]), "g": c["key"],
-                          "f": search_fields(p, headings, extra)})
+                          "g": c["key"], "f": search_fields(p, headings, extra)})
     for c in (EXAM_COL, QUESTION_COL):
         for p in loaded[c["key"]]:
             headings = [plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S)]
             extra = question_search_text(p) if c["key"] == "questions" else ""
             index.append({"t": p["title"], "c": f'{c["label"]}(試験別)', "u": p["path"] + ".html", "i": "",
-                          "d": plain(p["lead"]), "g": "exams", "f": search_fields(p, headings, extra)})
+                          "g": "exams", "f": search_fields(p, headings, extra)})
     parts.append('<div class="toc-search site-search" id="search">\n'
                  '  <input type="search" id="site-q" placeholder="全ページを検索(例: ロードバランサー、IMDSv2、DR)"'
                  ' aria-label="全ページを検索" autocomplete="off">\n'
@@ -1119,7 +1118,8 @@ __HELPERS__
       if (!best) return null;
       total += best.s;
       var shown = best.f.name === "lead" || best.f.name === "other" ? snip(best.t, best.v.t) : best.t;
-      why.push((best.v.o ? "言い換え「" + best.v.o + "→" + best.v.t + "」・" : "") + best.f.label + "「" + shown + "」");
+      var label = (best.v.o ? "言い換え「" + best.v.o + "→" + best.v.t + "」・" : "") + best.f.label + "「" + shown + "」";
+      if (why.indexOf(label) < 0) why.push(label);  // 2語とも同じ項目に一致しても、根拠は1つにまとめる
     }
     return {s: total, why: why};
   }
@@ -1138,7 +1138,7 @@ __HELPERS__
       var p = x.p;
       var icon = p.i ? '<img class="svc-icon" src="' + p.i + '" alt="" width="20" height="20">' : "";
       return '<li><a href="' + p.u + '"><span class="badge">' + esc(p.c) + '</span>' + icon + '<span class="name">' +
-        esc(p.t) + '</span><span class="desc">' + esc(p.d) + '</span>' +
+        esc(p.t) + '</span>' +
         '<span class="why">根拠: ' + x.why.slice(0, 3).map(function (w) { return esc(w); }).join(" / ") + '</span></a></li>';
     }).join("") || '<li class="empty-state">該当するページがありません。</li>';
     list.hidden = false;
