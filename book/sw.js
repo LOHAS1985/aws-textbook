@@ -1,10 +1,10 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "45118a716bb1";
+var CACHE = PREFIX + "e369e86d2a6e";
 var FILES = {
 "chooser.html": "04ca5be91a92",
 "compare.html": "4ef5124c29e1",
-"css/style.css": "5fef01c64fbd",
+"css/style.css": "dd80f996d1d4",
 "exams/ai-business-strategist/index.html": "db9762eb531b",
 "exams/ai-business-strategist/scope.html": "4d5972720348",
 "exams/aif-c01/index.html": "4d51639936cb",
@@ -221,7 +221,7 @@ var FILES = {
 "icons/services/waf.svg": "e67f918f21cf",
 "icons/services/well-architected-tool.svg": "1a660c904e61",
 "icons/services/xray.svg": "49c3a0c3f4e8",
-"index.html": "e8ee98edb2a4",
+"index.html": "956f0d5951ed",
 "js/glossary.js": "75cc97bdae0c",
 "js/mypage.js": "acda7541b712",
 "js/quiz.js": "d5b39b8d2230",
@@ -302,7 +302,7 @@ var FILES = {
 "news/2026-11-08-03.html": "97dc0598471b",
 "news/2026-11-08-04.html": "8c6b720fe570",
 "news/2026-11-08.html": "98eebe7ef181",
-"news/index.html": "2eea989d9d4e",
+"news/index.html": "aa600f478883",
 "questions/dea-c01.html": "597c478d394b",
 "questions/index.html": "61dcbc436f23",
 "services/acm.html": "bbe506fc8a54",
@@ -373,7 +373,7 @@ var FILES = {
 "services/iam.html": "455345c838f9",
 "services/identity-center.html": "e59ceb0f81f5",
 "services/image-builder.html": "9c7c46b4bb4a",
-"services/index.html": "621395b3a224",
+"services/index.html": "466e955a9e36",
 "services/inspector.html": "89d80983123b",
 "services/ipam.html": "77ce7240ec08",
 "services/kendra.html": "00ed0afc3f09",
@@ -459,7 +459,7 @@ var FILES = {
 "terms/iam-roles-credentials.html": "d4839143b31c",
 "terms/inbound-traffic.html": "9e5592314914",
 "terms/index-all.html": "594320303f78",
-"terms/index.html": "6091348cba7f",
+"terms/index.html": "627cbfef8e70",
 "terms/instance-profile.html": "3bb2422db949",
 "terms/json-yaml.html": "0e32043bb8f5",
 "terms/managed-serverless.html": "e905f92221a9",
@@ -520,7 +520,7 @@ var FILES = {
 "usecases/hybrid-dns-resolver.html": "76961e8afda0",
 "usecases/hybrid-multi-vpc.html": "3c74beff3ff6",
 "usecases/identity-center-sso.html": "861ae4f31a45",
-"usecases/index.html": "f990ee95f7d3",
+"usecases/index.html": "56a35e6dabec",
 "usecases/lambda-canary-release.html": "8a5d4e3ba6b4",
 "usecases/log-error-alert.html": "fbf2492d6743",
 "usecases/multi-account-stacksets.html": "0d667a3ff028",

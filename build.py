@@ -887,7 +887,7 @@ SYNONYMS = [
     ["sts", "assumerole", "一時的な認証情報", "ロールの引き受け"],
     ["cognito", "ユーザー認証", "サインイン"],
     ["api gateway", "apigw", "rest api"],
-    ["imds", "imdsv2", "メタデータ", "metadata"],
+    ["imds", "imdsv2", "インスタンスメタデータ", "instance metadata"],
     ["インスタンスプロファイル", "instance profile", "instanceprofile", "ec2のロール"],
     ["ホストゾーン", "hosted zone", "パブリックホストゾーン", "プライベートホストゾーン", "phz"],
     ["resolver", "リゾルバー", "インバウンドエンドポイント", "アウトバウンドエンドポイント", "転送ルール", "条件付きフォワーダー"],
@@ -976,6 +976,13 @@ __HELPERS__
 """
 
 
+def search_fields(p, headings, extra=""):
+    """トップの全ページ検索の根拠に使う項目。項目ごとの重みは SITE_SEARCH_SCRIPT の FIELDS と対応させる。
+    本文の全文は入れない(検索データが大きくなりすぎるため。本文の内容は小見出し・説明・関連サービスで拾う)。"""
+    return {"uses": p.get("uses", []), "heading": headings, "lead": plain(p["lead"]),
+            "category": p["category"], "other": " ".join([p["slug"], p.get("date", ""), extra])}
+
+
 def render_top(loaded, exams, exam_pages):
     desc = "AWS認定の学習用に、AWS共通のサービス・用語・運用シナリオと、試験別の学習範囲・問題集をまとめた教科書"
     parts = [head(SITE_TITLE, "", desc), header(""), "<main>\n",
@@ -985,21 +992,19 @@ def render_top(loaded, exams, exam_pages):
     index = []
     for c in COLLECTIONS:
         for p in loaded[c["key"]]:
-            h3 = " ".join(plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S))
-            if c["key"] == "questions":
-                h3 += " " + question_search_text(p)
+            headings = [plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S)]
+            extra = question_search_text(p) if c["key"] == "questions" else ""
             icon = c["key"] == "services" and (ICON_DIR / f'{p["slug"]}.svg').exists()
             index.append({"t": p["title"], "c": c["label"], "u": f'{c["key"]}/{p["slug"]}.html',
                           "i": f'icons/services/{p["slug"]}.svg' if icon else "",
                           "d": plain(p["lead"]), "g": c["key"],
-                          "k": search_keys(p, p["category"], h3)})
+                          "f": search_fields(p, headings, extra)})
     for c in (EXAM_COL, QUESTION_COL):
         for p in loaded[c["key"]]:
-            h3 = " ".join(plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S))
-            if c["key"] == "questions":
-                h3 += " " + question_search_text(p)
+            headings = [plain(h) for h in re.findall(r"<h3[^>]*>(.*?)</h3>", p["body"], re.S)]
+            extra = question_search_text(p) if c["key"] == "questions" else ""
             index.append({"t": p["title"], "c": f'{c["label"]}(試験別)', "u": p["path"] + ".html", "i": "",
-                          "d": plain(p["lead"]), "g": "exams", "k": search_keys(p, p["category"], h3)})
+                          "d": plain(p["lead"]), "g": "exams", "f": search_fields(p, headings, extra)})
     parts.append('<div class="toc-search site-search" id="search">\n'
                  '  <input type="search" id="site-q" placeholder="全ページを検索(例: ロードバランサー、IMDSv2、DR)"'
                  ' aria-label="全ページを検索" autocomplete="off">\n'
@@ -1055,7 +1060,7 @@ def render_top(loaded, exams, exam_pages):
     return "".join(parts)
 
 
-# トップの全ページ検索(スペース区切りのAND検索。タイトルに一致したページを先に並べる)
+# トップの全ページ検索(スペース区切りのAND検索。項目ごとの重みで点数を付け、点数の高い順に並べ、根拠を出す)
 SITE_SEARCH_SCRIPT = """<script>
 (function () {
   var pages = __INDEX__;
@@ -1068,18 +1073,73 @@ __HELPERS__
   if (location.hash === "#search") q.focus();
   kinds.hidden = false;
   function esc(s) { return s.replace(/[&<>"]/g, function (c) { return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }
-  function apply() {
-    var words = terms(q.value);
-    if (!words.length) { list.hidden = true; hits.textContent = ""; return; }
-    var found = pages.filter(function (p) { return (kind === "all" || p.g === kind) && hitAll(p.k, words); });
-    found.sort(function (a, b) {
-      return (hitAll(norm(a.t), words) ? 0 : 1) - (hitAll(norm(b.t), words) ? 0 : 1);
+  // 項目ごとの重み(大きいほど強い一致)。語ごとに最も強い一致を採り、全語に一致したページだけを点数順に出す
+  var FIELDS = [
+    {name: "title", label: "タイトル", w: 10, texts: function (p) { return [p.t]; }},
+    {name: "uses", label: "関連サービス", w: 6, texts: function (p) { return p.f.uses; }},
+    {name: "heading", label: "小見出し", w: 4, texts: function (p) { return p.f.heading; }},
+    {name: "lead", label: "説明", w: 4, texts: function (p) { return p.f.lead ? [p.f.lead] : []; }},
+    {name: "category", label: "カテゴリ", w: 2, texts: function (p) { return [p.f.category]; }},
+    {name: "other", label: "その他", w: 1, texts: function (p) { return [p.f.other]; }}
+  ];
+  // 言い換えは元の語より弱い重みにする(直接の一致が言い換えより先に来る)。SYN は build.py の SYNONYMS
+  function variants(w) {
+    var out = [{t: w, f: 1, o: ""}];
+    SYN.forEach(function (g) {
+      if (g.indexOf(w) < 0) return;
+      g.forEach(function (a) { if (a !== w) out.push({t: a, f: 0.5, o: w}); });
     });
+    return out;
+  }
+  // 短い英字(dr・ha など)は、ほかの語の一部に当たらないよう単語として探す
+  function hasTerm(text, term) {
+    var s = norm(text || "");
+    return /^[a-z0-9]{1,3}$/.test(term) ? new RegExp("(^|[^a-z0-9])" + term + "([^a-z0-9]|$)").test(s) : s.indexOf(term) >= 0;
+  }
+  // 説明・その他は長いので、一致した語の前後だけを根拠に出す
+  function snip(text, term) {
+    var s = norm(text), i = s.indexOf(term);
+    if (i < 0) return s.slice(0, 30);
+    var a = Math.max(0, i - 12);
+    return (a > 0 ? "…" : "") + s.substr(a, term.length + 30) + "…";
+  }
+  function score(p, words) {
+    var total = 0, why = [];
+    for (var i = 0; i < words.length; i++) {
+      var best = null;
+      variants(words[i]).forEach(function (v) {
+        FIELDS.forEach(function (f) {
+          f.texts(p).forEach(function (t) {
+            if (!hasTerm(t, v.t)) return;
+            var s = f.w * v.f;
+            if (!best || s > best.s) best = {s: s, f: f, t: t, v: v};
+          });
+        });
+      });
+      if (!best) return null;
+      total += best.s;
+      var shown = best.f.name === "lead" || best.f.name === "other" ? snip(best.t, best.v.t) : best.t;
+      why.push((best.v.o ? "言い換え「" + best.v.o + "→" + best.v.t + "」・" : "") + best.f.label + "「" + shown + "」");
+    }
+    return {s: total, why: why};
+  }
+  function apply() {
+    var words = norm(q.value).trim().split(/\\s+/).filter(Boolean);
+    if (!words.length) { list.hidden = true; hits.textContent = ""; return; }
+    var found = [];
+    pages.forEach(function (p, n) {
+      if (kind !== "all" && p.g !== kind) return;
+      var r = score(p, words);
+      if (r) found.push({p: p, s: r.s, why: r.why, n: n});
+    });
+    found.sort(function (a, b) { return b.s - a.s || a.n - b.n; });
     hits.textContent = found.length + "件" + (found.length > 30 ? "(先頭30件を表示)" : "");
-    list.innerHTML = found.slice(0, 30).map(function (p) {
+    list.innerHTML = found.slice(0, 30).map(function (x) {
+      var p = x.p;
       var icon = p.i ? '<img class="svc-icon" src="' + p.i + '" alt="" width="20" height="20">' : "";
       return '<li><a href="' + p.u + '"><span class="badge">' + esc(p.c) + '</span>' + icon + '<span class="name">' +
-        esc(p.t) + '</span><span class="desc">' + esc(p.d) + '</span></a></li>';
+        esc(p.t) + '</span><span class="desc">' + esc(p.d) + '</span>' +
+        '<span class="why">根拠: ' + x.why.slice(0, 3).map(function (w) { return esc(w); }).join(" / ") + '</span></a></li>';
     }).join("") || '<li class="empty-state">該当するページがありません。</li>';
     list.hidden = false;
   }
