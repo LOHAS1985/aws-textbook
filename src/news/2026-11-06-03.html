@@ -1,0 +1,25 @@
+<!-- title: DynamoDB:S3からの一括書き込み(bulk put items) -->
+<!-- category: 2026年11月 -->
+<!-- lead: DynamoDBで、S3に置いたデータを既存のテーブルへ一括で書き込めるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>他のシステムが出力してS3に置いたデータを、既存のDynamoDBテーブルに取り込みたい場面は多くあります。これまでは、取り込み用の処理を自分で作り、テーブルの容量も管理する必要がありました。bulk put itemsは、S3にある入力ファイルの場所を指定するだけで、DynamoDBが書き込みを進めるフルマネージドの機能です。既存のワークロードに影響を与えにくく、項目ごとに条件式を付けて「新規のみ書く」「バージョンが合うときだけ書く」といった制御もできます。ほとんどの用途には標準の階層、時間に余裕がない処理には高速な階層を選びます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node s3 0 0 blue "S3" "入力ファイル"
+node bulk 1.6 0 accent "bulk put items" "DynamoDBが書き込む"
+node tbl 3.2 0 ok "DynamoDB" "既存のテーブル"
+node pipe 1.6 1 box "独自の取り込み処理" "これまで必要だった"
+edge s3 bulk
+edge bulk tbl
+edge s3 pipe dash
+edge pipe tbl dash
+<figcaption>図1 S3からの取り込み(点線はこれまでの方法)</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>日次の更新、カタログ情報の拡充、過去データの一括投入、移行などを、取り込み処理の開発なしで行えます。</dd>
+<dt>試験・実務への影響</dt><dd>S3からDynamoDBに新しいテーブルとして取り込む機能とは別に、既存のテーブルへ書き込めるようになった点がポイントです。条件式を使うと、既存の項目を上書きしない取り込みもできます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/dynamodb.html">DynamoDB</a>、<a href="../services/s3.html">S3</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-dynamodb-now-supports-bulk-put-items/">Amazon DynamoDB now supports bulk put items</a>(2026-11-05)</dd>
+</dl>
+</section>

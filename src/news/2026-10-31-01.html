@@ -1,0 +1,20 @@
+<!-- title: WAF:CloudFront向けSDKの自動組み込み -->
+<!-- category: 2026年10月 -->
+<!-- lead: CloudFrontが配信するHTMLに、WAFのSDKを自動で組み込めるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS WAFのマネージドルールのうち、Bot Control(ボット対策。ターゲット型の検査レベル)、ATP(アカウント乗っ取り防止)、ACFP(アカウント作成の不正防止)は、利用者のブラウザ側の情報も判断材料にします。その情報を集めるのが「WAF JavaScript SDK」で、これまでは守りたい全ページに自分でscriptタグを追加する必要がありました。今回、CloudFrontが配信するHTMLにこのタグを自動で追加する設定が使えるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "各ページに自分で" "タグを追加・維持"
+node after 1.6 0 ok "これから" "CloudFrontが" "タグを自動で追加"
+edge before after "自動組み込み"
+<figcaption>図1 SDKのscriptタグの追加方法の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アプリのコードやビルド、デプロイを変えずに済みます。WAFでルールを有効にしたのにタグの入れ忘れで効果が出ない、という設定ミスも防げます。対象は、CloudFrontで使うウェブACLのうち、上の3つのルールグループを1つ以上含むものです。コンソールで新しくウェブACLを作る場合は初期状態でオンですが、プログラム(CLI・CloudFormationなど)で作る場合はオフで、既存のウェブACLも変わりません。追加料金はありません。</dd>
+<dt>試験・実務への影響</dt><dd>ボット対策やアカウント乗っ取り対策は、WAFのマネージドルールで行うのが基本です。CloudFrontにWAFを付けて配信する構成も定番なので、役割分担(CloudFrontが配信、WAFが検査)とあわせて押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/waf.html">WAF</a>、<a href="../services/cloudfront.html">CloudFront</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-waf-automatic-sdk-integration-amazon-cloudfront/">AWS WAF announces automatic SDK integration for Amazon CloudFront distributions</a>(2026-10-30)</dd>
+</dl>
+</section>

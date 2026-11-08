@@ -1,0 +1,22 @@
+<!-- title: KMS:ML-KEMに対応 -->
+<!-- category: 2026年10月 -->
+<!-- lead: KMSがポスト量子暗号のML-KEMに対応し、将来の量子コンピューターへの備えに使えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>ML-KEMは、2者が盗み見られずに「共有の秘密(暗号の鍵のもと)」を取り決めるための、ポスト量子暗号(将来の量子コンピューターでも解かれにくい暗号)の標準方式です。いま通信を記録しておき、将来解読する「今盗んで後で解読」という攻撃への備えになります。KMSがこの方式の鍵(ML-KEM-512・768・1024)を扱えるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node client 0 0 blue "相手・アプリ" "公開鍵で処理"
+node kms 1.6 0 accent "KMS" "秘密鍵はHSM内に保管"
+node secret 3.2 0 ok "共有の秘密" "32バイト"
+edge client kms "暗号文を送る"
+edge kms secret "Decapsulateで復元"
+<figcaption>図1 ML-KEMで共有の秘密を取り決める流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>公開鍵で作った暗号文から、KMS内の秘密鍵を使って共有の秘密を復元します(Decapsulate API)。秘密鍵は認証済みのHSM(専用の暗号ハードウェア)から出ません。公開鍵は GetPublicKey で取り出して取引先やアプリに配れます。</dd>
+<dt>試験・実務への影響</dt><dd>現時点で試験の中心ではありませんが、KMSで扱える鍵の種類が増えたと押さえておけば十分です。中東(UAE・バーレーン)と中国を除くKMSの提供リージョンで使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/kms.html">KMS</a>、<a href="../terms/encryption.html">暗号化</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/kms-ml-kem-post-quantum/">AWS Key Management Service now supports ML-KEM for post-quantum key encapsulation</a>(2026-10-26)</dd>
+</dl>
+</section>

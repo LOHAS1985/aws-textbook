@@ -1,0 +1,20 @@
+<!-- title: Aurora Serverless:最大384 ACUに対応 -->
+<!-- category: 2026年10月 -->
+<!-- lead: Aurora Serverlessの容量の上限が384 ACUまで広がりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Aurora Serverlessは、負荷に合わせてデータベースの容量が自動で増減するAuroraの構成です。容量はACU(Aurora Capacity Unit)という単位で表し、1 ACUはおよそ2 GiBのメモリと、それに見合うCPUやネットワークの能力です。Aurora PostgreSQL互換エディションで、設定できる容量の上限が256 ACUから384 ACUへ50%引き上げられ、1つのデータベースで最大768 GiB相当のメモリまで拡張できます。処理がないときは容量がゼロまで下がる点は変わりません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "最大256 ACU" "約512 GiBのメモリ"
+node after 1.6 0 ok "これから" "最大384 ACU" "約768 GiBのメモリ"
+edge before after "上限を50%引き上げ"
+<figcaption>図1 Aurora Serverlessの容量の上限</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>負荷の波が大きく、ときどき重い処理が来るアプリでも、容量を固定で持たずに自動で増減する構成のまま対応できる範囲が広がります。新しいクラスターでは対応するエンジンのバージョンを選んで最大容量を384まで設定し、既存のクラスターはプラットフォームバージョン4であれば、停止なしで設定を変更するだけです。古いプラットフォームバージョンの場合は、保留中のメンテナンスアクションでバージョン4へ上げます。</dd>
+<dt>試験・実務への影響</dt><dd>最大容量の設定値は、性能と費用の上限を決める大事な設定です。上限を上げると、急な負荷では使った分だけ料金も増えるため、CloudWatchでACUの使用状況を見ながら決めます。対応するのはAurora PostgreSQL 18.4・17.10・16.14・15.18・14.23(プラットフォームバージョン4)です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/aurora.html">Aurora</a>、<a href="../terms/managed-serverless.html">マネージドとサーバーレス</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aurora-serverless-supports-384-acu/">Amazon Aurora serverless now supports up to 384 ACUs</a>(2026-10-27)</dd>
+</dl>
+</section>

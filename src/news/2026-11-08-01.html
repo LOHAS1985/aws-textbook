@@ -1,0 +1,22 @@
+<!-- title: EC2 Capacity Blocks:前払い料金の按分 -->
+<!-- category: 2026年11月 -->
+<!-- lead: EC2 Capacity Blocksの前払い料金が、予約期間に按分されてCost ExplorerとCUR 2.0で見えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>EC2 Capacity Blocks for ML は、機械学習向けのGPUインスタンスを、あらかじめ決めた期間だけ確実に使えるように予約する仕組みです。料金は予約するときに前払いします。これまでは、その前払い料金が購入日に1回だけ請求として現れるため、どのチームやプロジェクトがどれだけ使ったのかをコストと結び付けにくい状態でした。今回、Cost Explorer と、コストと使用状況レポートの新しい形式であるCUR 2.0(Data Exports)で、前払い料金を予約期間にわたって按分(日割りのように配分)して表示できるようになりました。使ったインスタンスごとの費用と、使われずに余った分の費用も分けて見えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "前払いが購入日に" "1回だけ表示"
+node after 1.6 0 ok "これから" "予約期間に按分して" "使用状況と並べて表示"
+node use 3.2 0 accent "チーム・案件ごとの" "配分と未使用分の" "把握"
+edge before after "今回の発表"
+edge after use
+<figcaption>図1 前払い料金が使用状況と並べて見られる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>GPUの費用を、実際に使ったチームやアプリケーションに割り当てられます。予約のうち使われなかった割合も分かるので、次の購入量を決める材料になります。</dd>
+<dt>試験・実務への影響</dt><dd>CUR 2.0では reservation_amortized_upfront_fee_for_billing_period や reservation_effective_cost などの列に按分後の金額が入ります。Cost Explorerでは按分(amortized)のコスト表示に切り替えて確認します。追加料金はなく、GovCloudと中国リージョン以外のすべてのリージョンで使えます。「前払いの料金を期間にならして見る」という考え方は、Savings Plansやリザーブドインスタンスのコスト分析でも出てきます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cost-explorer.html">Cost Explorer</a>、<a href="../services/cost-and-usage-reports.html">コストと使用状況レポート</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/savings-plans.html">Savings Plans</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-ec2-capacity-blocks-ml/">AWS launches support for amortization of EC2 Capacity Blocks for ML</a>(2026-11-06)</dd>
+</dl>
+</section>

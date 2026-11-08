@@ -1,0 +1,24 @@
+<!-- title: IAM Roles Anywhere:証明書の失効確認を自動化 -->
+<!-- category: 2026年11月 -->
+<!-- lead: IAM Roles AnywhereがCRL(証明書の失効リスト)を自動で取得して更新するようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>IAM Roles Anywhereは、AWSの外(オンプレミスなど)のサーバーが、X.509証明書を使ってIAMロールの一時的な認証情報を受け取る仕組みです。証明書が盗まれたり不要になったりしたときは、認証局(CA)がその証明書を「失効」させ、失効した証明書の一覧(CRL)を公開します。これまではCRLをIAM Roles Anywhereに自分でインポートし、CAが更新するたびにインポートし直す必要がありました。今回、証明書に埋め込まれたCRLの配布先URL(CDP)から、IAM Roles Anywhereが自動でCRLを取得して定期的に更新するようになりました。失効した証明書での認証情報の要求は拒否されます。信頼アンカー(信頼するCAの登録)で有効にでき、追加料金はありません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node srv 0 0 blue "AWS外のサーバー" "証明書で認証"
+node ra 1.6 0 accent "IAM Roles" "Anywhere"
+node cdp 3.2 0 box "CAの配布先(CDP)" "失効リスト(CRL)"
+node role 1.6 1 ok "IAMロール" "一時的な認証情報"
+edge srv ra "認証の要求"
+edge ra cdp "CRLを自動取得"
+edge ra role "失効していなければ"
+<figcaption>図1 失効確認の流れ(CRLの取得と更新は自動)</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>CRLの再インポートを忘れて、失効済みの証明書が使われ続けるリスクを減らせます。運用の手間も減ります。</dd>
+<dt>試験・実務への影響</dt><dd>AWS Private CAでも自前のPKIでも使えますが、証明書にインターネットから到達できるCDPのURLが必要です。AWSの外のワークロードにアクセスキーを持たせず、証明書と一時的な認証情報で認証するのが基本の考え方です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/iam.html">IAM</a>、<a href="../services/private-ca.html">Private CA</a>、<a href="../services/sts.html">STS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/iam-roles-anywhere-cdp/">IAM Roles Anywhere now supports automatic certificate revocation checking</a>(2026-11-05)</dd>
+</dl>
+</section>

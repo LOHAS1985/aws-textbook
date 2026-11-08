@@ -1,0 +1,22 @@
+<!-- title: Redshift:SUPER型の文字列上限を拡大 -->
+<!-- category: 2026年11月 -->
+<!-- lead: RedshiftのSUPER型で、文字列1つの上限が最大1,600万バイトに広がりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>RedshiftのSUPER型は、JSONのような構造が決まっていないデータ(半構造化データ)を、そのまま1つの列に入れて、PartiQLというSQLに近い言語で検索できるデータ型です。これまでSUPER型の中の文字列1つは、最大65,535バイトまででした。今回、これが最大1,600万バイトまで広がりました。契約書や利用規約のような長い文章を、取り込む前に分割や加工をしなくても、そのまま入れて検索できます。使うには、データベースのパラメータで有効にする必要があります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "文字列1つは" "最大65,535バイト"
+node after 1.6 0 ok "これから" "文字列1つは" "最大1,600万バイト"
+node opt 3.2 0 accent "DBパラメータで" "有効にして使う"
+edge before after "今回の発表"
+edge after opt
+<figcaption>図1 SUPER型の文字列の上限が広がった</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>JSON・Parquet・テキスト・CSVのファイルから取り込むときや、ELT(取り込んだあとにRedshift内で変換する方式)で、長い文字列を切り詰めずに扱えます。JSON_PARSE・CONCAT・LISTAGGなどの関数も、長い文字列を入出力できます。</dd>
+<dt>試験・実務への影響</dt><dd>有効化はオプトイン(自分で設定を変えたときだけ有効)で、勝手には変わりません。すべてのリージョンで使えます。データエンジニアリングでは、「構造が決まっていないデータはSUPER型に入れる」という使い分けと、上限の違いを押さえておくと役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/redshift.html">Redshift</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-redshift-expands-super-to-16-million-bytes/">Amazon Redshift expands SUPER data type to store strings up to 16 million bytes</a>(2026-11-06)</dd>
+</dl>
+</section>

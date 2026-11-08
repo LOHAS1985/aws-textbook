@@ -1,0 +1,25 @@
+<!-- title: CloudWatch:トレース送信にAPIキーが使える -->
+<!-- category: 2026年11月 -->
+<!-- lead: CloudWatchへのトレース送信に、APIキーによる認証を使えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>OpenTelemetryは、アプリの処理の流れ(トレース)などを集めるための共通の規格です。CloudWatchは、X-RayのOTLPエンドポイント(トレースの受け口)でトレースを受け取れます。これまで、送るときはAWS Signature Version 4(SigV4。AWSの認証情報でリクエストに署名する方式)が必要でした。今回、HTTPのAuthorizationヘッダーにベアラートークン(APIキー)を入れる方法も選べるようになりました。オンプレミスや他社クラウドのアプリ、CI/CDパイプライン、固定のヘッダーしか設定できない外部ツールなど、AWS SDKや短期の認証情報を使えない送信元でも、トレースを送れます。どちらの方法で送っても、Transaction SearchやApplication Signalsなどの機能は同じように使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 0 blue "アプリ" "AWS外・CI/CDなど"
+node key 1.6 0 accent "APIキー" "認証ヘッダー"
+node cw 3.2 0 ok "CloudWatch" "トレースを受信"
+node sig 1.6 1 box "SigV4署名" "従来の方法(推奨)"
+edge app key
+edge key cw
+edge app sig dash
+edge sig cw dash
+<figcaption>図1 トレース送信の認証方法(実線が今回追加された方法)</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>AWSの認証情報を持たせにくい環境からでも、設定の手間を抑えてトレースを集められます。</dd>
+<dt>試験・実務への影響</dt><dd>AWSの発表では、SigV4が引き続き推奨される方法とされています。APIキーは固定の秘密情報なので、漏えいしないよう管理し、可能な限りIAMの短期の認証情報を使うのが基本です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/xray.html">X-Ray</a>、<a href="../services/iam.html">IAM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-cloudwatch-api-keys-opentelemetry/">Amazon CloudWatch now supports API keys for OpenTelemetry traces</a>(2026-11-03)</dd>
+</dl>
+</section>

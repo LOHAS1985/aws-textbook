@@ -1,0 +1,22 @@
+<!-- title: Security Hub:SBOMインベントリ -->
+<!-- category: 2026年11月 -->
+<!-- lead: Security HubでSBOM(部品表)をもとにしたソフトウェアの一覧を確認できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>SBOM(Software Bill of Materials)は、あるシステムにどんなソフトウェア部品(パッケージ)がどのバージョンで入っているかを書き出した「部品表」です。脆弱性が見つかったとき、「その部品を使っているのはどこか」をすぐ調べるために使います。Security Hubは、InspectorがEC2インスタンス・ECRのコンテナイメージ・Lambda関数について作るSBOMを集め、組織全体のパッケージ一覧として表示します。パッケージごとにバージョン・種類・入っているリソースの数が分かり、アカウントやリージョンで絞り込めます。リソースの詳細画面では、そのリソースに入っているソフトウェアを一覧でき、検出結果の優先度を判断する材料になります。APIでも取得できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node src 0 0 blue "EC2・ECR・Lambda" "入っている" "パッケージ"
+node insp 1.6 0 box "Inspector" "SBOMを作る"
+node hub 3.2 0 accent "Security Hub" "組織全体の" "SBOMインベントリ"
+edge src insp "スキャン"
+edge insp hub "自動で集約"
+<figcaption>図1 InspectorのSBOMがSecurity Hubに集まる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>新しい脆弱性が公表されたとき、該当のパッケージを使っているリソースを、アカウントをまたいで1か所で探せます。</dd>
+<dt>試験・実務への影響</dt><dd>Security Hub Essentialsに追加料金なしで含まれ、新しい有効化の操作は要りません。Inspectorが有効なところで自動的に表示されます。「脆弱性のスキャンはInspector、結果の集約はSecurity Hub」という役割分担を押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/security-hub.html">Security Hub</a>、<a href="../services/inspector.html">Inspector</a>、<a href="../services/ecr.html">ECR</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/security-hub-sbom-inventory/">AWS Security Hub now provides an SBOM inventory for your compute resources</a>(2026-11-06)</dd>
+</dl>
+</section>

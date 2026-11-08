@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECS Managed Instances:インスタンスをまたいだ集約 | 2026年10月29日のAWSニュース | AWS教科書</title>
+<meta name="description" content="ECS Managed Instancesで、タスクを少ないインスタンスに詰め直して無駄を減らせるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">試験別</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">2026年10月</a>
+  <p class="news-date"><time datetime="2026-10-29">2026年10月29日</time>のAWSニュース</p>
+  <h1>ECS Managed Instances:インスタンスをまたいだ集約</h1>
+  <p class="lead">ECS Managed Instancesで、タスクを少ないインスタンスに詰め直して無駄を減らせるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>ECS Managed Instancesは、コンテナを動かすEC2インスタンスをAWSが選んで運用してくれるECSの構成です。使われていない空き容量を片付けて、負荷の低いインスタンスのタスクを寄せ集める最適化を自動で行います。これまでは1台ずつ別々に「もっと小さいものに替えられるか」を調べていたため、選べるインスタンスの種類が少ないと節約の余地が見つかりにくい状態でした。今回、複数のインスタンスを同時に見て、タスクを少ない台数に詰め直す「クロスインスタンス集約」と、スポットインスタンスにも同じ考え方を使う「スポット集約」が追加されました。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 116" style="max-width:480px;min-width:480px" role="img" aria-label="図1 タスクの詰め直し方の違い"><defs><marker id="dgnews-2026-10-29-03-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">1台ずつ判断</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">複数台をまとめて判断</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-29-03-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">集約に対応</text>
+</svg>
+</div>
+<figcaption>図1 タスクの詰め直し方の違い</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>AWSの説明では、あるテストで19台が13台になり、CPUの使用率は42%から91%に上がっています。タスクは先に新しい場所で起動してから古い場所を止める順番で入れ替わるので、止まらずに寄せられます。追加の料金はなく、既存のものも含めてすべての容量プロバイダーに自動で適用されます。スポット集約では、置き換え先の容量があることを確かめてから動きます。</dd>
+<dt>試験・実務への影響</dt><dd>コスト最適化の問いでは、「使われていない容量を減らす」ことが基本になります。マネージドな最適化に任せられる部分と、自分で決める部分(インスタンスの種類の範囲など)を区別しておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ecs.html">ECS</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/auto-scaling.html">Auto Scaling</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/ecs-managed-instances-consolidation/">Amazon ECS Managed Instances adds cross-instance and Spot consolidation</a>(2026-10-28)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-10-29-02.html"><span class="label">← 前へ 2026年10月29日</span>IAM Identity Center:Identity Storeの変更通知</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-10-29-04.html"><span class="label">次へ → 2026年10月29日</span>EKS Auto Mode:Gateway APIに対応</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

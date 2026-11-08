@@ -1,0 +1,22 @@
+<!-- title: Lambda:自己管理Kafkaでキュー方式を利用 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Lambdaが、自分で運用するKafkaからキュー方式で読み取れるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Apache Kafkaは大量のデータの流れを扱う仕組みで、データは「パーティション」という単位に分かれて保存されます。LambdaがKafkaからデータを受け取るときは、イベントソースマッピング(ESM。元のデータを読み取って関数を呼び出す仕組み)を使います。従来は、1つのパーティションを1つの読み取り役しか担当できず、並列度を上げるにはパーティション数を増やす必要がありました。今回、自分で運用するKafkaやConfluent Cloudを対象に「キュー」方式(ConsumptionMode を Queue にする)が使えるようになりました。1つのパーティションから複数の読み取り役が同時に取り出せるため、パーティション数に縛られずに処理を広げられます。ただし順序は保証されないので、順序が重要でない処理向けです。Apache Kafka 4.2以降などの対応したクラスターが必要です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "1パーティションに" "読み取り役は1つ"
+node after 1.6 0 ok "これから" "1パーティションを" "複数で並列に処理"
+node note 3.2 0 ng "注意" "順序は" "保証されない"
+edge before after "キュー方式"
+edge after note
+<figcaption>図1 キュー方式による並列処理の変化</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>画像変換や通知送信のように、1件ずつが独立した処理なら、急にデータが増えても素早くさばけます。遅い1件が、同じパーティションの他の処理を止めることもありません。</dd>
+<dt>試験・実務への影響</dt><dd>順序の保証が必要な処理と、速さを優先する処理で、読み取り方式を使い分けます。メッセージの扱いの違いは、メッセージングサービスの比較と合わせて理解しておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/lambda.html">Lambda</a>、<a href="../terms/messaging-comparison.html">メッセージングサービスの選び方</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-lambda-queue-kafka-esm/">AWS Lambda now supports queues for Apache Kafka in self-managed Kafka event sources</a>(2026-11-02)</dd>
+</dl>
+</section>

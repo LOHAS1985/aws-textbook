@@ -1,0 +1,22 @@
+<!-- title: EC2:ImdsV1EnabledメトリクスでIMDSv2への移行を追跡 -->
+<!-- category: 2026年11月 -->
+<!-- lead: IMDSv1が有効なインスタンスを数えるメトリクスが加わり、IMDSv2への移行を追跡できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>EC2のインスタンスメタデータサービス(IMDS)は、インスタンスが自分の情報や一時的な認証情報を取得する窓口です。IMDSv1は単純なリクエストだけで取得でき、アプリの脆弱性を突かれると認証情報を盗まれるおそれがあるため、トークンを使うIMDSv2への移行が推奨されています。今回、IMDSv1がまだ有効なインスタンスを示す ImdsV1Enabled というCloudWatchメトリクスが追加されました。ダッシュボードやアラームで、移行が済んでいないインスタンスを追跡できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "自分で全インスタンスの" "設定を調べる"
+node after 1.6 0 ok "これから" "メトリクスと" "アラームで追跡"
+node done 3.2 0 accent "IMDSv2" "への移行を完了"
+edge before after "今回の発表"
+edge after done
+<figcaption>図1 移行状況の確認が自動化される</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アカウントやリージョンをまたいで、独自のツールを作らずに移行の漏れを見つけ、優先順位を付けられます。</dd>
+<dt>試験・実務への影響</dt><dd>すべてのリージョンで追加料金なしで使えます。「IMDSv2を必須にする」設定とあわせて、セキュリティ対策の定番として覚えておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ec2.html">EC2</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/ec2-imdsv1enabled-cloudwatch-metric/">Amazon EC2 now publishes ImdsV1Enabled CloudWatch metric</a>(2026-11-05)</dd>
+</dl>
+</section>

@@ -113,6 +113,7 @@ COLLECTIONS = [
         "desc": "AWSを学ぶうえで押さえておきたい用語の解説",
         "categories": ["AWSの基礎", "ネットワーク", "セキュリティ・認証", "ストレージ", "設計・運用", "サービスの選び方"],
         "search": "用語・キーワードで絞り込み(例: IP、暗号化、DNS)",
+        "rows": True,  # 一覧は1行に1ページ(概要は出さない)
         "order": [
             "shared-responsibility", "region-az", "default-vpc", "root-user", "access-methods", "arn", "tags",
             "pricing-basics", "support-plans", "service-quotas", "sla-availability", "managed-serverless",
@@ -173,8 +174,8 @@ COLLECTIONS = [
         ],
     },
     {
-        # src/news/YYYY-MM-DD.html を毎日1件、クラウドの定期エージェントが追加する。
-        # category は「YYYY年M月」。新しい日付から順に並べる
+        # src/news/YYYY-MM-DD-NN.html を発表(トピック)ごとに、クラウドの定期エージェントが追加する。
+        # NN はその日の中の番号(1から)。category は「YYYY年M月」。新しい日付から順に並べ、同じ日の中は番号の順
         "key": "news",
         "label": "ニュース",
         "desc": "AWSの新しい発表を、図解つきで分かりやすく解説(毎日更新)",
@@ -182,6 +183,7 @@ COLLECTIONS = [
         "search": "サービス名・キーワードで絞り込み(例: Lambda、料金、東京リージョン)",
         "order": [],
         "newest_first": True,
+        "rows": True,  # 一覧は1行に1ページ(概要は出さない)
     },
 ]
 _by_key = {c["key"]: c for c in COLLECTIONS}
@@ -241,9 +243,12 @@ def load_pages(col, warnings, updated):
             meta.pop("lead")
         page_date = ""
         if col["key"] == "news":
-            # ニュースの日付はファイル名から作り、タイトル(見出しだけ)とは分けて表示する
-            y, m, d = slug.split("-")
-            page_date = f"{int(y)}年{int(m)}月{int(d)}日"
+            # ニュースの日付はファイル名(YYYY-MM-DD-NN)から作り、タイトル(見出しだけ)とは分けて表示する
+            if NEWS_SLUG_RE.fullmatch(slug):
+                y, m, d = slug[:10].split("-")
+                page_date = f"{int(y)}年{int(m)}月{int(d)}日"
+            else:
+                warnings.append(f"{where}: ニュースのファイル名は YYYY-MM-DD-NN.html にします(NN は同じ日の中の番号)")
             if "のAWSニュース" in meta.get("title", ""):
                 warnings.append(f"{where}: ニュースの title には日付を書きません(主な発表だけを書く)")
         pages.append({
@@ -260,8 +265,17 @@ def load_pages(col, warnings, updated):
     order = {s: i for i, s in enumerate(col["order"])}
     pages.sort(key=lambda p: (order.get(p["slug"], len(order)), p["title"]))
     if col.get("newest_first"):
-        pages.sort(key=lambda p: p["slug"], reverse=True)
+        # 新しい日付から。同じ日の中は番号の順(注目の発表が先)
+        pages.sort(key=lambda p: news_sort_key(p["slug"]), reverse=True)
     return pages
+
+
+NEWS_SLUG_RE = re.compile(r"(\d{4}-\d{2}-\d{2})-(\d{2})")
+
+
+def news_sort_key(slug):
+    m = NEWS_SLUG_RE.fullmatch(slug)
+    return (m.group(1), -int(m.group(2))) if m else ("", 0)
 
 
 DEA_C01_SKILL_COUNTS = {
@@ -539,6 +553,10 @@ def service_icon(slug, prefix, size):
             f'width="{size}" height="{size}" loading="lazy">')
 
 
+# アイコンがない項目の空き(並べた名前の開始位置をそろえる。svc-icon-blank の幅はアイコンの 28px に合わせる)
+BLANK_ICON = '<span class="svc-icon-blank" aria-hidden="true"></span>'
+
+
 def fmt_date(ts):
     return time.strftime("%Y-%m-%d", time.localtime(ts))
 
@@ -597,7 +615,7 @@ def render_page(col, pages, i, prefix="../"):
                      + (f'  <div class="hero-icon">{icon}</div>\n' if icon else "")
                      + '  <div class="hero-text">\n'
                      + f'  <a class="category" href="index.html#cat{cat_no}">{html.escape(p["category"])}</a>\n'
-                     + (f'  <p class="news-date"><time datetime="{p["slug"]}">{p["date"]}</time>のAWSニュース</p>\n'
+                     + (f'  <p class="news-date"><time datetime="{p["slug"][:10]}">{p["date"]}</time>のAWSニュース</p>\n'
                         if p["date"] else "")
                      + f'  <h1>{html.escape(p["title"])}</h1>\n'
                      + (f'  <p class="lead">{p["lead"]}</p>\n' if p["lead"] else "")
@@ -679,8 +697,6 @@ def cat_style(col, category):
 def render_collection_index(col, pages, loaded):
     parts = [head(f"{col['label']} | {SITE_TITLE}", "../", col["desc"]), header("../", col["key"]), "<main>\n",
              f'<div class="page-head"><h1>{col["label"]}</h1><p class="lead">{col["desc"]}</p></div>\n']
-    if col["key"] in SELECTION_KEYS:
-        parts.append(selection_entry("../", "index-all.html" if col["key"] == "terms" else "../terms/index-all.html"))
     if col["key"] == "questions":
         parts.append('<p class="cat-desc" id="quiz-storage-note" hidden>このブラウザーでは保存済みの成績を読み込めません。</p>\n')
     if col["key"] in BOOKLET_KEYS and pages:
@@ -714,17 +730,22 @@ def render_collection_index(col, pages, loaded):
                          f'<span class="count">({len(items)})</span></h2>\n')
             if category in descs:
                 parts.append(f'<p class="cat-desc">{html.escape(descs[category])}</p>\n')
-            parts.append('<ul class="card-list">\n')
+            parts.append(f'<ul class="{"row-list" if col.get("rows") else "card-list"}">\n')
         for p in items:
             # 一覧には表示しない lead・カテゴリも検索対象に含める
             extra = question_search_text(p) if col["key"] == "questions" else ""
             keys = search_keys(p, category, extra)
             if compact:
                 tip = html.escape(p["title"] + (":" + plain(p["lead"]) if p["lead"] else ""))
-                inner = (f'{service_icon(p["slug"], "../", 28)}'
+                inner = (f'{service_icon(p["slug"], "../", 28) or BLANK_ICON}'
                          f'<span class="name">{html.escape(p["title"])}</span><span class="go" aria-hidden="true">›</span>')
                 parts.append(f'  <li data-keys="{html.escape(keys)}"><a href="{p["slug"]}.html" '
                              f'title="{tip}">{inner}</a></li>\n')
+            elif col.get("rows"):
+                # 1行に1ページ。概要(lead)は一覧に出さず、検索の対象にだけ含める
+                inner = ((f'<time class="date" datetime="{p["slug"][:10]}">{p["date"]}</time>' if p["date"] else "")
+                         + f'<span class="name">{html.escape(p["title"])}</span>')
+                parts.append(f'  <li data-keys="{html.escape(keys)}"><a href="{p["slug"]}.html">{inner}</a></li>\n')
             else:
                 inner = ((f'<time class="date" datetime="{p["slug"]}">{p["date"]}</time>' if p["date"] else "")
                          + f'<span class="name">{html.escape(p["title"])}</span>'
@@ -1003,7 +1024,6 @@ def render_top(loaded, exams, exam_pages):
     parts.append('<h2>試験別</h2>\n<ul class="card-list top-cards">\n'
                  f'  <li><a href="exams/index.html"><span class="name">AWS認定の試験別<span class="badge">{len(exams)}資格</span></span>'
                  '<span class="desc">試験ごとの学習範囲・ロードマップと参考書・問題集</span></a></li>\n</ul>\n')
-    parts.append(selection_entry("", "terms/index-all.html"))
 
     # 試験分野ごとの入口(運用シナリオのカテゴリへ)
     parts.append('<section class="top-section">\n<h2>試験分野から学ぶ(SOA-C03)</h2>\n'
@@ -1018,7 +1038,7 @@ def render_top(loaded, exams, exam_pages):
     if loaded["news"]:
         parts.append('<section class="top-section">\n<h2>最新のAWSニュース</h2>\n<ul class="recent-list">\n')
         for p in loaded["news"][:5]:
-            parts.append(f'  <li><time datetime="{p["slug"]}">{p["slug"]}</time>'
+            parts.append(f'  <li><time datetime="{p["slug"][:10]}">{p["slug"][:10]}</time>'
                          f'<a href="news/{p["slug"]}.html">{html.escape(p["title"])}</a></li>\n')
         parts.append('</ul>\n<p class="cat-desc"><a href="news/index.html">ニュースの一覧へ</a></p>\n</section>\n')
 
@@ -1247,6 +1267,18 @@ def write_redirects(col, pages):
             f'<title>{SITE_TITLE}</title>\n</head>\n<body>\n'
             f'<p>このページは{col["label"]}に移りました。<a href="{url}">移動先を開く</a></p>\n</body>\n</html>\n',
             encoding="utf-8")
+
+
+def write_news_day_redirects(pages):
+    """日ごとのページだった頃のURL(book/news/YYYY-MM-DD.html)から、その日の最初の発表のページへ転送する。"""
+    seen = set()
+    for p in pages:
+        day = p["slug"][:10]
+        if day in seen:
+            continue
+        seen.add(day)
+        (OUT / "news" / f"{day}.html").write_text(
+            redirect_html(f"{p['slug']}.html", f"{p['date']}のAWSニュース"), encoding="utf-8")
 
 
 def official_url(kind, path):
@@ -1697,15 +1729,6 @@ def figure_legend(body):
 
 # ---- 選び方の入口・索引・比較表・選び方診断・マイページ(生成ページ) ----
 
-SELECTION_KEYS = ("services", "terms", "usecases")  # 目次の上に「選び方の入口」を出すコレクション
-
-
-def selection_entry(prefix, index_all):
-    """目次の上の「選び方の入口」。prefix はそのページからの相対パス、index_all は用語の索引へのパス。"""
-    return (f'<p class="booklet-link">選び方の入口:<a href="{prefix}compare.html">サービスの比較表</a>・'
-            f'<a href="{prefix}chooser.html">選び方診断</a>・<a href="{index_all}">用語・サービスの索引</a></p>\n')
-
-
 # 検索の種類のチップ(トップの全ページ検索)。値は検索データの "g"
 SEARCH_KINDS = [("all", "すべて"), ("services", "サービス"), ("terms", "用語"), ("usecases", "運用シナリオ"),
                 ("news", "ニュース"), ("exams", "試験別・問題集")]
@@ -1771,7 +1794,7 @@ def render_index_all(loaded):
             parts.append('<ul class="svc-list">\n')
             for key, p in items:
                 href = f"../services/{p['slug']}.html" if key == "services" else f"{p['slug']}.html"
-                icon = service_icon(p["slug"], "../", 28) if key == "services" else ""
+                icon = (service_icon(p["slug"], "../", 28) if key == "services" else "") or BLANK_ICON
                 parts.append(f'  <li><a href="{href}">{icon}<span class="name">{html.escape(p["title"])}</span>'
                              f'<span class="badge">{html.escape(p["category"])}</span></a></li>\n')
             parts.append("</ul>\n")
@@ -2136,6 +2159,8 @@ def main():
         (out_dir / "index.html").write_text(render_collection_index(col, pages, loaded), encoding="utf-8")
         if col.get("old_key"):
             write_redirects(col, pages)
+        if col["key"] == "news":
+            write_news_day_redirects(pages)
     print_dir = OUT / "print"
     if print_dir.exists():
         shutil.rmtree(print_dir)

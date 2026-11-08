@@ -1,0 +1,20 @@
+<!-- title: Lambda:SOCIによるコンテナの高速起動 -->
+<!-- category: 2026年10月 -->
+<!-- lead: Lambda Managed Instancesで、大きなコンテナイメージの起動を速くするSOCIが使えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Lambdaは、コンテナイメージで関数を動かせます。イメージが数GBと大きいと、新しい実行環境を用意するたびに全体をダウンロードするため、起動に時間がかかります。SOCI(Seekable OCI)は、イメージの中身の目次(インデックス)を付けておき、起動の各段階で必要なファイルだけを取り込む「遅延読み込み」を可能にする仕組みです。今回、Lambda Managed Instances(Lambdaを専用のインスタンス上で動かす構成)で、これが使えるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "イメージ全体を" "起動前に取得"
+node after 1.6 0 ok "これから" "必要なファイルだけ" "段階ごとに取得"
+edge before after "SOCIに対応"
+<figcaption>図1 コンテナイメージの読み込み方の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>AWSの説明では、コンテナの起動時間が最大70%短くなります。大量のデータ処理や、負荷に応じて環境が増えるAPIなどで、増えるときの待ち時間を減らせます。使うには、イメージのSOCIインデックスを作ってECRに置き、関数のイメージURIをそのタグにして関数のバージョンを発行します。Lambdaが自動で見つけるので、ほかの設定は要りません。</dd>
+<dt>試験・実務への影響</dt><dd>起動の遅さ(コールドスタート)への対策として、イメージを小さくする工夫に加え、読み込み方の工夫もあると知っておくと役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/lambda.html">Lambda</a>、<a href="../services/ecr.html">ECR</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-lambda-seekable-oci-soci/">AWS Lambda supports Seekable OCI (SOCI) lazy loading for Lambda Managed Instances</a>(2026-10-28)</dd>
+</dl>
+</section>

@@ -1,0 +1,24 @@
+<!-- title: AWS Backup:Redshiftのリストアテスト -->
+<!-- category: 2026年10月 -->
+<!-- lead: AWS Backupのリストアテストの対象に、Redshiftが加わりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>バックアップは、取っていても「実際に戻せるか」「どれくらい時間がかかるか」を試していないと、災害のときに困ります。AWS Backupの「リストアテスト」は、バックアップ(復旧ポイント)を選んで決まった周期で自動的に復元し、完了までの時間を測る機能です。今回、この対象にデータウェアハウスのAmazon Redshiftが加わりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node plan 0 0 blue "リストアテスト" "計画(スケジュール)"
+node rp 1.4 0 box "復旧ポイント" "最新またはランダム"
+node test 2.8 0 accent "テスト用に復元" "Redshift"
+node res 4.2 0 ok "所要時間を測定" "RTOと比べる"
+edge plan rp "選ぶ"
+edge rp test "復元"
+edge test res "検証後に削除"
+<figcaption>図1 リストアテストの流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>計画に対象のRedshiftをARNまたはタグで割り当てるだけで、復元の確認を自動化できます。復元したリソースを確かめる検証(リストアテストの検証)を付けることもでき、テスト用のリソースはそのあと削除されます。復元にかかった時間を目標復旧時間(RTO)と比べられるので、監査などで復旧の準備ができていることを示す材料にもなります。</dd>
+<dt>試験・実務への影響</dt><dd>「バックアップは取るだけでなく、復元できることを定期的に確かめる」という信頼性の考え方を、実際に仕組みにできる機能です。復旧の目標を決める考え方は災害対策のページも合わせて確認しておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/backup.html">AWS Backup</a>、<a href="../terms/dr-strategies.html">災害対策(DR)の戦略</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-backup-adds-redshift-restore-testing/">AWS Backup adds restore testing support for Amazon Redshift</a>(2026-10-28)</dd>
+</dl>
+</section>

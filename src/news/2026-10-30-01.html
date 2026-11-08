@@ -1,0 +1,20 @@
+<!-- title: RDS:追加ボリュームのストレージ自動拡張 -->
+<!-- category: 2026年10月 -->
+<!-- lead: RDSの追加ボリュームでも、容量の自動拡張が使えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>RDSには、データベースの使用量が容量に近づくと、停止せずに容量を自動で増やす「ストレージ自動拡張」があります。RDS for OracleとRDS for SQL Serverは、主となるボリュームのほかに最大3つの追加ボリュームを持てますが、これまで自動拡張は主ボリュームだけが対象で、追加ボリュームの容量は自分で見積もって用意する必要がありました。今回、追加ボリュームにも自動拡張が使えるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "追加ボリュームは" "手動で容量を用意"
+node after 1.6 0 ok "これから" "上限だけ決めれば" "自動で増える"
+edge before after "自動拡張に対応"
+<figcaption>図1 追加ボリュームの容量管理の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>容量を少なく見積もると、いっぱいになってアプリケーションが止まるおそれがあり、多く見積もると使わない分の費用がかかります。ボリュームごとに最大容量の上限を設定しておけば、RDSが実際の使用量を見て、足りなくなりそうなときに増やします。既存のDBインスタンスにも使え、自動拡張に追加の料金はなく、用意した容量の分だけ支払います。コンソール、CLI、APIで有効にできます。</dd>
+<dt>試験・実務への影響</dt><dd>「容量不足によるDBの停止を、運用の手間なく防ぐ」問いの定番は、ストレージ自動拡張です。上限を設定しておかないと際限なく増えて費用がふくらむ点も押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/rds.html">RDS</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-rds-oracle-sqlserver-autoscaling-additional-storage-volumes/">Amazon RDS for Oracle and SQL Server now support storage autoscaling on additional storage volumes</a>(2026-10-29)</dd>
+</dl>
+</section>

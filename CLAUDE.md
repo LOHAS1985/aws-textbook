@@ -14,7 +14,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 
 ## フォルダ構成
 - src/{services,terms,usecases}/{slug}.html … 各ページの本文(編集するのはこちら)
-- src/news/YYYY-MM-DD.html … ニュース(AWS共通)
+- src/news/YYYY-MM-DD-NN.html … ニュース(AWS共通)。発表(トピック)ごとに1ページ。NN はその日の中の番号(1から)
 - src/exams/{試験ID}/exam.json … 試験の情報(正式名称・試験コード・級・状態・公式試験ガイドのURL・分野・配点・タスク)。全資格ぶんを置く。公式の試験ガイド(PDF)から作る
 - src/exams/{試験ID}/scope.html … 学習範囲の本文(任意)。分野・配点・タスクの表は exam.json から自動で作る
 - src/exams/{試験ID}/roadmap.html … 学習ロードマップ(任意)。本文のリンクの順に、リンク先のページを印刷用の「参考書」として後ろに続ける。本文の参照は `../services/`・`../terms/`・`../usecases/` へのリンク。問題集へは `questions.html` で、同じ試験のページへリンクする
@@ -37,7 +37,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - book/js/glossary.js … ポップアップの内容(サービス・用語の title と lead。build.py が作る生成物)
 - book/print/{services,terms,usecases}.html … 印刷・PDF用のまとめ冊子(コレクションの全ページを1つにしたもの。build.py が作る生成物)。各一覧ページの上部から案内する
 - deploy.sh … `sh deploy.sh "メッセージ"` で GitHub の最新を取り込み(pull)→ビルド→コミット→push し、book/ を gh-pages ブランチに公開する
-- src/news/YYYY-MM-DD.html・NEWS.md … AWSニュースのページと、その作り方の手順書。Claude Code の定期実行(クラウドのルーティン)が毎日 NEWS.md に従ってニュースを追加し push する。ニュースはヘッダー・トップページの「最新のAWSニュース」・ニュースの一覧から読む。ニュースをもとに既存のページを直すことはしない
+- src/news/YYYY-MM-DD-NN.html・NEWS.md … AWSニュースの発表ごとのページと、その作り方の手順書。Claude Code の定期実行(クラウドのルーティン)が毎日 NEWS.md に従ってニュースを追加し push する。ニュースはヘッダー・トップページの「最新のAWSニュース」・ニュースの一覧(1行に1発表。概要は出さない)から読む。旧URL(book/news/YYYY-MM-DD.html)は、その日の最初の発表へ転送する。ニュースをもとに既存のページを直すことはしない
 
 ## 公開(GitHub Pages)
 - リポジトリ: https://github.com/LOHAS1985/aws-textbook (public)

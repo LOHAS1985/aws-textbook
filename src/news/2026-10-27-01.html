@@ -1,0 +1,20 @@
+<!-- title: EC2 Auto Scaling:Launch Before Terminateをアカウント単位で設定 -->
+<!-- category: 2026年10月 -->
+<!-- lead: 置き換えで「先に起動してから終了」する動作を、アカウント全体の既定として一度に有効にできるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Auto Scalingは、不調なインスタンスや古くなったインスタンスを新しいものに置き換えます。これまでの置き換えは「終了してから起動」が基本で、その間は台数が一時的に減ることがありました。「Launch Before Terminate(終了の前に起動)」は、先に代わりのインスタンスを起動し、ヘルスチェックに合格してから古い方を終了する動作です。今回、この動作をAutoScalingグループごとではなく、アカウント全体の既定として一度に有効にできるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "終了してから起動" "一時的に台数が減る"
+node after 1.6 0 ok "これから" "先に起動し正常確認" "その後に古い方を終了"
+edge before after "アカウント設定で既定に"
+<figcaption>図1 インスタンス置き換えの動作の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>インスタンスの更新(インスタンスリフレッシュ)、AZ間のリバランス、ヘルスチェック失敗による置き換え、最大インスタンス有効期間による置き換えのどれでも、処理能力を落とさずに入れ替えられます。設定を一度するだけで、グループの追加漏れも防げます。新しい <code>PutAccountSetting</code> と <code>DescribeAccountSettings</code> のAPI(コンソール・CLI・SDKからも操作可)で管理します。</dd>
+<dt>試験・実務への影響</dt><dd>可用性を保ちながら入れ替える方法として押さえておきたい動作です。先に起動する分、置き換え中は一時的に台数が増えるため、上限や費用にも目を配ります。追加料金はなく、すべてのリージョンで使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/auto-scaling.html">Auto Scaling</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/ec2-auto-scaling-launch-before-terminate/">AWS EC2 Auto Scaling now supports Launch Before Terminate at account-level to replace instances</a>(2026-10-26)</dd>
+</dl>
+</section>

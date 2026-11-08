@@ -1,0 +1,33 @@
+<!-- title: EC2・VPC:全リソースタイプで関連リソースを表示 -->
+<!-- category: 2026年11月 -->
+<!-- lead: EC2とVPCの全リソースタイプで、関連するリソースを一覧できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>EC2やVPCのコンソールには、あるリソースと関係するリソースを一覧できる「関連リソース」の表示があります。これまでは、この表示を使えるのはセキュリティグループだけでした。今回、EC2インスタンス、EBSボリューム、起動テンプレート、Auto Scalingグループ、サブネット、ルートテーブルなど、EC2とVPCのすべてのリソースタイプで使えるようになりました。「関連リソース」タブはコンソールのツールバーに移り、見つけやすくなっています。AWS Global Viewでも同様に表示されます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "セキュリティグループ" "だけ関連を表示"
+node after 1.6 0 ok "これから" "すべてのEC2・VPC" "リソースで表示"
+node use 3.2 0 accent "調査が楽に" "ページを行き来せず" "つながりを確認"
+edge before after "今回の発表"
+edge after use
+<figcaption>図1 関連リソース表示の対象の広がり</figcaption>
+</figure>
+<figure class="figure" data-diagram>
+grid 170 85
+node inst 1.6 0 accent "EC2インスタンス" "調べたいリソース"
+node ebs 0 1 box "EBSボリューム"
+node sg 1.6 1 box "セキュリティ" "グループ"
+node sub 3.2 1 box "サブネット" "ルートテーブル"
+edge inst ebs
+edge inst sg
+edge inst sub
+<figcaption>図2 インスタンスから関連するリソースをたどるイメージ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>障害の調査で、インスタンスに付いているボリューム・セキュリティグループ・サブネット・ルートテーブルを、ページを移動せずに確認できます。サブネットから、ルートテーブルやネットワークACL、中のインスタンスをたどる設定確認もしやすくなります。</dd>
+<dt>試験・実務への影響</dt><dd>通信できない原因の切り分けでは、インスタンスのセキュリティグループ、サブネットのルートテーブルやネットワークACLを順に確認します。コンソールの機能追加なので試験の知識が変わるわけではありませんが、構成の見直しや監査の作業が速くなります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ec2.html">EC2</a>、<a href="../services/vpc.html">VPC</a>、<a href="../services/ebs.html">EBS</a>、<a href="../services/auto-scaling.html">Auto Scaling</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/ec2-vpc-related-resources-all-types/">Amazon EC2 and VPC now display related resources for all resource types</a>(2026-11-04)</dd>
+</dl>
+</section>

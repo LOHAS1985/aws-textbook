@@ -1,0 +1,24 @@
+<!-- title: EKS Auto Mode:Gateway APIに対応 -->
+<!-- category: 2026年10月 -->
+<!-- lead: EKS Auto ModeでGateway APIを書くだけで、裏側の負荷分散の仕組みを自動で用意できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>EKS Auto Modeは、Kubernetes(コンテナを管理する仕組み)のクラスター運用をAWSに任せられるEKSの機能です。Gateway APIは、アプリへの通信の入り口をKubernetesの標準的な書き方で定義する新しい仕組みで、従来のIngressの後継にあたります。今回、Gateway(入り口)とHTTPRoute(どのパスやヘッダーをどこへ送るか)を書くだけで、裏側のロードバランサーなどをEKS Auto Modeが自動で用意してくれるようになりました。別のコントローラーを自分で入れる必要はありません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node user 0 0 blue "利用者" "HTTP・gRPC"
+node lb 1.5 0 accent "ロードバランサー" "Auto Modeが自動作成"
+node route 3 0 box "HTTPRoute" "で定義した振り分け"
+node pod 4.5 0 ok "アプリ(Pod)"
+edge user lb
+edge lb route
+edge route pod "重み付け・ヘッダーで振り分け"
+<figcaption>図1 Gateway APIでの通信の流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>HTTPとgRPCの振り分け、複数のチームが使うときの名前空間をまたいだ振り分け、重みを付けて割合で分ける通信の分割、ヘッダーによる振り分けに対応しています。ACMの証明書も自動で見つけてTLSに使います。Ingressを使った既存のアプリはそのまま動くので、少しずつ移行できます。料金は、用意されたロードバランサーの分だけです。</dd>
+<dt>試験・実務への影響</dt><dd>重み付けの分割は、新しいバージョンを少しずつ流して確かめるカナリアリリースに使えます。ELBがKubernetesの設定から自動で作られる、という関係を押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/eks.html">EKS</a>、<a href="../services/elb.html">ELB</a>、<a href="../services/acm.html">ACM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-eks-auto-mode-kubernetes-gateway-api/">Amazon EKS Auto Mode now supports Kubernetes Gateway API</a>(2026-10-28)</dd>
+</dl>
+</section>

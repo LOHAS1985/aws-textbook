@@ -1,0 +1,24 @@
+<!-- title: IAM Identity Center:Identity Storeの変更通知 -->
+<!-- category: 2026年10月 -->
+<!-- lead: IAM Identity Centerのユーザーやグループの変更が、EventBridgeへリアルタイムに届くようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>IAM Identity Centerの「Identity Store」は、従業員のユーザーやグループを保管しておく場所です。今回、ユーザー・グループ・グループへの所属などが作成・更新・削除されたときに、EventBridge(イベントをきっかけに処理をつなぐサービス)へリアルタイムでイベントが届くようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node store 0 0 blue "Identity Store" "ユーザー・グループ" "の変更"
+node eb 1.5 0 accent "EventBridge" "ルールで絞り込み"
+node fn 3 0 box "Lambda" "監査・通知・同期"
+node out 4.5 0 ok "SIEM・社内システム" "へ連携"
+edge store eb "イベント"
+edge eb fn "起動"
+edge fn out
+<figcaption>図1 変更を検知して自動で処理する流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>変更を定期的に調べに行かなくても、起きた時点で処理を動かせます。例えば、ユーザーが追加されたことを監査ログへ残す、セキュリティ製品へ知らせる、特定のグループに入った人の権限を別のシステムにも反映する、といった自動化ができます。追加の料金はなく、EventBridgeの通常の料金だけがかかります。</dd>
+<dt>試験・実務への影響</dt><dd>「イベントを検知して自動で対応する」パターンの具体例です。誰がいつアクセス権を得たかを見張るセキュリティ運用に使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/identity-center.html">IAM Identity Center</a>、<a href="../services/eventbridge.html">EventBridge</a>、<a href="../services/lambda.html">Lambda</a>、<a href="../terms/event-driven-remediation.html">イベント駆動の自動修復</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-identity-store-change-notifications/">AWS IAM Identity Center's Identity Store now supports change notifications through Amazon EventBridge</a>(2026-10-28)</dd>
+</dl>
+</section>

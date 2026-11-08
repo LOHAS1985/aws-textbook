@@ -1,0 +1,22 @@
+<!-- title: Lambda耐久関数:既定の上限を引き上げ -->
+<!-- category: 2026年11月 -->
+<!-- lead: Lambda耐久関数の既定の上限が引き上げられました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Lambdaの耐久関数(durable functions)は、最長1年かかる複数ステップの処理を、途中経過の保存(チェックポイント)や自動リトライを使って確実に進める機能です。待っている間は計算料金がかかりません。今回、既定のクォータ(上限)が引き上げられました。米国東部(バージニア北部)・米国西部(オレゴン)・欧州(アイルランド)以外のリージョンでの新しい値は次のとおりで、この3リージョンはその2倍です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "実行中 100万" "開始 300回/秒"
+node after 1.6 0 ok "これから" "実行中 500万" "開始 3,000回/秒"
+node req 3.2 0 blue "上限の" "引き上げ申請" "が不要に"
+edge before after "今回の発表"
+edge after req
+<figcaption>図1 既定の上限が上がった(上限は代表的な2項目)</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>注文処理や文書処理などで、申請なしにより多くの実行を並行して進められます。状態の確認・一覧・履歴取得・停止のAPIも10倍の頻度で呼べるので、ダッシュボードやスクリプトでの監視がしやすくなります。</dd>
+<dt>試験・実務への影響</dt><dd>実行中の数は100万から500万、チェックポイントの取得などは毎秒1,000から10,000、コールバック関連は毎秒300から3,000に上がりました。クォータが原因のスロットリングは、Service Quotasで確認して調整するのが基本です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/lambda.html">Lambda</a>、<a href="../services/step-functions.html">Step Functions</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/lambda-durable-functions-default-quotas/">AWS Lambda durable functions increases default execution and API quotas</a>(2026-11-05)</dd>
+</dl>
+</section>

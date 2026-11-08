@@ -1,0 +1,23 @@
+<!-- title: Transit Gateway・Cloud WAN:1:1 NAT -->
+<!-- category: 2026年10月 -->
+<!-- lead: Transit GatewayとCloud WANの接続の口に、1対1でアドレスを置き換える機能が加わりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>NAT(ネットワークアドレス変換)は、通信の途中でIPアドレスを別のアドレスに書き換える仕組みです。今回、Transit Gateway(複数のVPCやオンプレミスをつなぐ中継点)と Cloud WAN(世界中のネットワークをまとめて管理するサービス)の「アタッチメント(接続の口)」に、1対1でアドレスを置き換える機能が加わりました。内部ではリージョナルなプライベートNATゲートウェイが使われ、AWSが運用・拡張します。</p>
+<p>これまでCIDR(IPアドレスの範囲)が同じ10.0.0.0/16同士のネットワークは、そのままでは通信できませんでした。企業の合併、パートナーとのVPN接続、マルチクラウド接続などでよく起きる問題です。今回の機能では、片方のアドレスを重ならない範囲に変換するルールをアタッチメントに設定するだけで接続できます。変換は往復の通信で自動的に行われ、戻り通信用のルールは要りません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node a 0 0 blue "VPC A" "10.0.0.0/16"
+node tgw 1.6 0 accent "Transit Gateway" "1:1 NATで変換"
+node b 3.2 0 box "VPC B" "10.0.0.0/16(重複)"
+edge a tgw "A側を別の範囲へ"
+edge tgw b "往復を自動変換"
+<figcaption>図1 同じCIDRのVPC同士を、アタッチメントの変換でつなぐ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アドレスの振り直しやNATアプライアンス(NAT用のサーバー)の構築・戻り通信のルール作成が不要になる。コンソール、CLI、CloudFormationで設定でき、変換された通信はCloudWatchのメトリクスとEventBridgeのイベントで確認できる。</dd>
+<dt>試験・実務への影響</dt><dd>「CIDRが重なるVPCは、ピアリングやTransit Gatewayではそのままつなげない」という前提は変わらない。ただし、重なる場合の解決策として、アタッチメントでの1:1 NATという選択肢が増えた。料金はAmazon VPCの料金ページで確認する。</dd>
+<dt>関連するページ</dt><dd><a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../services/vpc.html">VPC</a>、<a href="../services/site-to-site-vpn.html">Site-to-Site VPN</a>、<a href="../services/direct-connect.html">Direct Connect</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/aws-transit-gateway-cloud-wan-1-1-nat/">AWS Transit Gateway and AWS Cloud WAN now support 1:1 NAT</a>(2026-10-23)</dd>
+</dl>
+</section>

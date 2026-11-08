@@ -1,0 +1,22 @@
+<!-- title: Parameter Store:組み込みデータ型で値を自動検証 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Parameter Storeのパラメータに、データ型を指定して値の形式を自動で検証できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Systems ManagerのParameter Storeは、アプリの設定値やパスワードなどをまとめて保存する場所です。今回、パラメータに「データ型」を指定できるようになり、値を保存・更新する(PutParameter)ときに、その型として正しい形式かどうかを自動で確認します。型は13種類で、リージョン名、アカウントID、真偽値、整数、小数、バイナリ、ホスト名、メールアドレス、IPv4・IPv6アドレスは標準・高度の両方のパラメータで使えます。URL、JSON、JSONC(コメント付きJSON)は高度なパラメータで使えます。型に合わない値は、アプリが読む前に保存の時点で拒否されます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "どんな文字列も" "保存できた"
+node after 1.6 0 ok "これから" "型に合わない値は" "保存時に拒否"
+node app 3.2 0 accent "アプリ" "正しい形式の値だけ" "を読む"
+edge before after "今回の発表"
+edge after app
+<figcaption>図1 保存時に値を検証するようになった</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>設定値の書き間違い(IPアドレスの打ち間違いなど)が原因の障害を、検証用のコードを書かずに防げます。コンソールやDescribeParameters APIで、型を条件にパラメータを絞り込むこともできます。</dd>
+<dt>試験・実務への影響</dt><dd>既存の文字列パラメータの型は後から変更できます。AllowedPattern(正規表現による制限)と組み合わせて、さらに細かく制限することもできます。URL・JSON・JSONCの型を使うパラメータは高度なパラメータとして課金されるので、料金の考え方は変わりません。</dd>
+<dt>関連するページ</dt><dd><a href="../services/systems-manager.html">Systems Manager</a>、<a href="../services/secrets-manager.html">Secrets Manager</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-ssm-parameter-store-allows-organization-validation-with-new-data-types/">AWS Systems Manager Parameter Store now allows organization and validation with built-in data types</a>(2026-11-05)</dd>
+</dl>
+</section>

@@ -1,0 +1,22 @@
+<!-- title: CloudFront:Service Quotasで上限を自分で引き上げ -->
+<!-- category: 2026年11月 -->
+<!-- lead: CloudFrontの上限(クォータ)を、Service Quotasから自分で引き上げられるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWSのサービスには、作れるリソースの数などに上限(クォータ)があります。CloudFrontでも、ディストリビューションの数、キャッシュポリシー、オリジン、代替ドメイン名などに上限があります。これまでは上限を上げたいとき、サポートケースを開いて人の審査を待つ必要がありました。今回、CloudFrontがService Quotas(各サービスの上限を一か所で確認・申請できるサービス)に対応し、28種類の上限をコンソールやAPIで扱えるようになりました。Business Support以上のプランなら、公開されているしきい値の範囲内の申請は自動で承認されます。一部の上限は使用量が5分ごとにCloudWatchへ送られるので、上限に近づいたらアラームで気づけます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "サポートケースを" "開いて審査待ち"
+node after 1.6 0 ok "これから" "Service Quotasで" "申請、範囲内は自動承認"
+node cw 3.2 0 accent "CloudWatch" "使用量を監視し" "アラームで事前に通知"
+edge before after "今回の発表"
+edge after cw
+<figcaption>図1 CloudFrontの上限引き上げの流れの変化</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>審査を待たずに上限を上げられるため、急なサービス拡大でも止まりにくくなります。使用量のアラームを組み合わせれば、上限に達する前に余裕をもって対応できます。</dd>
+<dt>試験・実務への影響</dt><dd>「上限に達してリソースを作れない」問題は、Service Quotasで確認して引き上げを申請するのが基本の対応です。上限の使用量をCloudWatchアラームで監視する運用も押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudfront.html">CloudFront</a>、<a href="../terms/service-quotas.html">Service Quotas</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/cloudfront-self-service-quotas/">Amazon CloudFront now supports self-service increases in AWS Service Quotas</a>(2026-11-02)</dd>
+</dl>
+</section>

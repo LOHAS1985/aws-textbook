@@ -1,0 +1,24 @@
+<!-- title: Step Functions:AIエージェントの道具として利用 -->
+<!-- category: 2026年10月 -->
+<!-- lead: 既存のStep Functionsのワークフローを、AIエージェントの道具として使えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Step Functionsは、複数の処理を決めた順番で実行する「ワークフロー」を作るサービスです。今回、Bedrock AgentCore Gatewayという仕組みを通じて、既存のワークフローをAIエージェントの「道具(ツール)」として使えるようになりました。AgentCore Gatewayは、MCP(AIが外部の道具を呼び出すための共通の決まり)でエージェントと道具をつなぐ入り口です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node agent 0 0 blue "AIエージェント" "いつ実行するか判断"
+node gw 1.5 0 accent "AgentCore" "Gateway"
+node sfn 3 0 box "Step Functions" "ワークフロー"
+node steps 4.5 0 ok "定義した順に" "毎回同じ手順で実行"
+edge agent gw "MCP"
+edge gw sfn "呼び出し"
+edge sfn steps
+<figcaption>図1 エージェントがワークフローを呼び出す流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>エージェントが実行するかどうかと渡す入力を決め、手順そのものはStep Functionsが定義どおりに進めます。そのため、返金の確認・承認・処理のように守るべき手順がある業務を、毎回同じ順番で実行させられます。エージェントは実行状況も調べられ、夜間に失敗した処理がどこで止まったかを担当者に伝える、といった使い方もできます。StandardとExpressの両方のワークフローが対象で、料金はStep FunctionsとAgentCore Gatewayそれぞれの通常料金です。</dd>
+<dt>試験・実務への影響</dt><dd>AIに任せる部分と、手順を固定したい部分を分ける考え方の例です。ワークフローの実行履歴で失敗した箇所を調べる運用は、これまでと同じです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/step-functions.html">Step Functions</a>、<a href="../services/bedrock.html">Bedrock</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/step-functions-workflows-ai-agent-tools/">AWS Step Functions workflows now available as AI agent tools</a>(2026-10-29)</dd>
+</dl>
+</section>

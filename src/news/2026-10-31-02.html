@@ -1,0 +1,24 @@
+<!-- title: CloudFront:ISPとTLSの詳細をオリジンへ転送 -->
+<!-- category: 2026年10月 -->
+<!-- lead: CloudFrontが閲覧者のISPとTLSの情報を、ヘッダーとしてオリジンに渡せるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>CloudFrontは、閲覧者の情報をヘッダーとしてオリジン(配信元のサーバー)に渡せます。今回、2つのヘッダーが加わりました。CloudFront-Viewer-ISPは、閲覧者が使っているインターネット接続事業者(ISP)の名前です。CloudFront-Viewer-TLS-Detailsは、その接続で使った暗号の方式(鍵交換・署名方式など)で、「ポスト量子暗号」(将来の量子コンピューターでも破られにくいとされる暗号)を使った接続かどうかが分かります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node viewer 0 0 blue "閲覧者" "ISP・TLS接続"
+node cf 1.5 0 accent "CloudFront" "オリジンリクエスト" "ポリシー"
+node origin 3 0 box "オリジン" "ヘッダーを受け取る"
+node log 4.5 0 ok "分析" "ISP別・暗号方式別"
+edge viewer cf
+edge cf origin "新ヘッダーを転送"
+edge origin log
+<figcaption>図1 新しいヘッダーをオリジンで活用する流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>ISPごとに通信量や遅さを比べたり、特定のISPからの不審なアクセスを切り分けたりできます。TLS詳細では、ポスト量子暗号で接続している閲覧者の割合や、まだ対応していないクライアントを調べられます。どちらも任意のヘッダーで、使うには、オリジンリクエストポリシーに追加してディストリビューションに関連付けます。</dd>
+<dt>試験・実務への影響</dt><dd>オリジンに渡す内容は、オリジンリクエストポリシーで決めます。ヘッダーを増やしてもキャッシュのキーには含まれないので、キャッシュの効率は変わりません(キャッシュポリシーとの違いに注意)。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudfront.html">CloudFront</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/cloudfront-viewer-isp-post-quantum-visbility/">Amazon CloudFront now provides viewer ISP and post-quantum TLS details</a>(2026-10-30)</dd>
+</dl>
+</section>

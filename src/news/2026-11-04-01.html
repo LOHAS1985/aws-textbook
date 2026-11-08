@@ -1,0 +1,34 @@
+<!-- title: Inspector:EC2のAMIを起動前にスキャン -->
+<!-- category: 2026年11月 -->
+<!-- lead: Inspectorで、EC2インスタンスを起動する前にAMIの脆弱性をスキャンできるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AMI(Amazon Machine Image)は、EC2インスタンスを起動するための「ひな形」となるイメージです。Amazon Inspectorは、ソフトウェアの脆弱性を自動で見つけるサービスです。これまでInspectorは、動いているEC2インスタンスなどを主な対象にしていたため、古いパッケージを含むAMIから多数のインスタンスを起動したあとでしか、問題に気づけないことがありました。今回、AMIそのものをスキャンできるようになり、インスタンスの起動やソフトウェアの追加インストールは不要になりました。AMI一覧を継続的に監視して新しく見つかった脆弱性を検出する方法と、EC2コンソールから特定のAMIだけを1回調べる方法があります。アカウント単位でも、組織全体(Organizations)でも有効にでき、検出結果はSecurity Hubにも届きます。</p>
+<p>スキャン結果は「Allowed AMIs」(アカウントで使ってよいAMIを条件で絞る設定)と組み合わせられます。セキュリティ基準を満たさないAMIを使えないようにする設定を、宣言型ポリシー(Declarative Policies。組織全体に設定を強制する仕組み)で全アカウントに適用できます。EC2 Image Builderでイメージを作っている場合は、パイプラインにスキャンを組み込み、基準を満たさないAMIの配布を止められます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "AMIから起動した後に" "脆弱性に気づく"
+node after 1.6 0 ok "これから" "起動前にAMIを" "Inspectorでスキャン"
+node block 3.2 0 accent "Allowed AMIs" "基準を満たさない" "AMIは使えない"
+edge before after "今回の発表"
+edge after block "スキャン結果を反映"
+<figcaption>図1 AMIの脆弱性を調べるタイミングの変化</figcaption>
+</figure>
+<figure class="figure" data-diagram>
+grid 170 85
+node build 0 0 blue "Image Builder" "AMIを作る"
+node scan 1.6 0 accent "Inspector" "AMIをスキャン"
+node ok 3.2 0 ok "基準を満たす" "AMIを配布・起動"
+node hub 1.6 1 box "Security Hub" "検出結果を集約"
+edge build scan
+edge scan ok
+edge scan hub dash
+<figcaption>図2 イメージ作成から配布までにスキャンを入れる流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>問題のあるAMIを、起動して広がる前に見つけて直せます。インスタンスにエージェントを入れる必要もなく、AMIの管理を一か所でそろえられます。</dd>
+<dt>試験・実務への影響</dt><dd>脆弱性の検出はInspector、設定の変更履歴の記録と評価はAWS Config、脅威の検出はGuardDuty、という役割の違いを押さえましょう。「AMIを安全な状態に保ち、承認されたものだけを使わせたい」という要件には、スキャンと許可するAMIの制限の組み合わせが答えになります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/inspector.html">Inspector</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/image-builder.html">EC2 Image Builder</a>、<a href="../services/security-hub.html">Security Hub</a>、<a href="../services/organizations.html">Organizations</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/ec2-amis-scanned-through-inspector/">EC2 Amazon Machine Images can now be scanned for vulnerabilities through Amazon Inspector</a>(2026-11-02)</dd>
+</dl>
+</section>

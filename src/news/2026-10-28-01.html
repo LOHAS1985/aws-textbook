@@ -1,0 +1,20 @@
+<!-- title: ECR:レプリケーションバックフィル -->
+<!-- category: 2026年10月 -->
+<!-- lead: すでに保存してあるイメージを、レプリケーション先へまとめて複製できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>ECR(コンテナイメージを保管するレジストリ)には、イメージを別のリージョンやアカウントへ自動で複製する「レプリケーション」機能があります。ただし、複製されるのは設定を有効にしたあとにプッシュされたイメージだけでした。すでにあるイメージを複製するには、タグを付け直してプッシュし直す手間がかかっていました。今回の「レプリケーションバックフィル(後追い複製)」は、すでに保存してあるイメージをまとめて複製先へ複製する機能です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "設定後の分だけ複製" "既存分は付け直し"
+node after 1.6 0 ok "これから" "既存分も一括複製" "API1回で完了"
+edge before after "バックフィルに対応"
+<figcaption>図1 レプリケーション対象の違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>新しいリージョンへ展開するとき、レプリケーションのルールを変えたとき、災害対策(DR)の準備を確かめるとき、コンプライアンスのために全リージョンへ同じイメージをそろえたいときに便利です。バックフィルのジョブは同時に最大10個まで動かせ、進み具合とイメージごとの結果は新しいAPIで確認できます。途中で止めても、複製済みのイメージは削除されません。</dd>
+<dt>試験・実務への影響</dt><dd>コンテナ基盤を複数リージョンで用意する災害対策では、イメージが複製先にそろっているかが復旧の前提になります。「設定後に追加した分だけが複製される」というこれまでの決まりと、既存分は今回のバックフィルで補えることをセットで押さえておくとよいでしょう。ECRが使えるすべてのリージョンで利用できます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ecr.html">ECR</a>、<a href="../services/ecs.html">ECS</a>、<a href="../services/eks.html">EKS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/replication-backfill-amazon-ecr/">Amazon ECR now supports replication backfill for existing container images</a>(2026-10-26)</dd>
+</dl>
+</section>

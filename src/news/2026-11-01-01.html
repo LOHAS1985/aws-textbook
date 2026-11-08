@@ -1,0 +1,24 @@
+<!-- title: Managed Prometheus:MSKのコンシューマーグループのメトリクスを収集 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Managed PrometheusのコレクターでMSKのコンシューマーグループのメトリクスを集められるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Amazon MSKは、データの流れ(ストリーム)を扱うApache Kafkaを、AWSが運用してくれるサービスです。Kafkaでは、データを受け取って処理する側を「コンシューマー」、そのまとまりを「コンシューマーグループ」と呼びます。処理が追いつかずに未処理のデータがたまっている量が「ラグ」で、ラグが増え続けるのは処理が詰まっているサインです。今回、Managed Prometheusの「コレクター」(監視対象からメトリクスを自動で集める仕組み)が、このラグなどのコンシューマーグループのメトリクスを集められるようになりました。集めた値は、Managed Prometheusのワークスペースか、CloudWatchに取り込んで調べられます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node msk 0 0 blue "MSKクラスター" "コンシューマー" "グループ"
+node col 1.5 0 accent "コレクター" "メトリクスを" "自動で収集"
+node amp 3 0 ok "Managed" "Prometheus" "ワークスペース"
+node cw 3 1.2 ok "CloudWatch" "グラフ・アラーム"
+edge msk col "ラグなど"
+edge col amp
+edge col cw
+<figcaption>図1 MSKのメトリクスが監視の場所に届く流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>収集用のエージェントを自分でサーバーに入れて動かし続ける手間が要りません。ラグの増加を検知して、処理の詰まりに早く気づけます。</dd>
+<dt>試験・実務への影響</dt><dd>監視の基本は「メトリクスを集める、見える化する、しきい値でアラームを出す」の流れです。CloudWatchに取り込めば、アラームで通知や自動対応につなげられます。Prometheus形式で扱いたい場合はManaged Prometheusを選ぶ、という使い分けも押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/managed-prometheus.html">Managed Prometheus</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/prometheus-collectors-msk-metrics/">Managed Prometheus collectors now support Amazon MSK consumer-group metrics</a>(2026-10-30)</dd>
+</dl>
+</section>

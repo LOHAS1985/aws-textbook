@@ -1,0 +1,22 @@
+<!-- title: Glue Data Catalog:外部Icebergカタログの一時的な認証情報に対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Glue Data Catalogが、外部のIcebergカタログが発行する一時的な認証情報を使えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Apache Iceberg は、データレイク上の表を管理するオープンなテーブル形式で、AWS以外のカタログ(表の一覧や場所を管理する仕組み)でも使われています。Glue Data Catalogは、そうした外部のIcebergカタログに接続(フェデレーション)して、AthenaやEMR、Redshift、Glueから表を読めます。これまでは、AWS側のIAMロールにS3バケットへのアクセス権を持たせる方法でした。今回、外部のカタログが発行する一時的な認証情報(S3の特定のパスに限定されたもの)を使う方法が加わりました。外部カタログが許可した表だけを読めます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node ext 0 0 blue "外部のIceberg" "カタログ" "一時認証情報を発行"
+node glue 1.6 0 accent "Glue Data" "Catalog" "+ Lake Formation"
+node eng 3.2 0 box "Athena・EMR" "Redshift・Glue" "で表を読む"
+edge ext glue "接続"
+edge glue eng "アクセス制御"
+<figcaption>図1 外部カタログの一時認証情報で外部の表を読む</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>S3全体へのアクセス権を持つIAMロールを用意しなくても、外部カタログが認めた表だけに絞って読めます。Lake Formationが、どの分析エンジンから読む場合でも行や列のレベルまで権限を絞り、AWSアカウントをまたいだ共有も管理します。</dd>
+<dt>試験・実務への影響</dt><dd>Lake Formationのコンソール・AWS CLI・SDKから設定します。AWSのすべての商用リージョン(GlueとLake Formationがあるところ)で使えます。「最小権限」と「一時的な認証情報」という、セキュリティの基本の考え方がデータレイクでも使われる例です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/glue.html">Glue</a>、<a href="../services/lake-formation.html">Lake Formation</a>、<a href="../services/athena.html">Athena</a>、<a href="../services/emr.html">EMR</a>、<a href="../services/redshift.html">Redshift</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/glue-catalog-vended-credentials-iceberg/">AWS Glue Data Catalog now supports catalog-vended credentials with Apache Iceberg REST catalog federation</a>(2026-11-06)</dd>
+</dl>
+</section>
