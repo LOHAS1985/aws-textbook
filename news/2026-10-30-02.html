@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step Functions:AIエージェントの道具として利用 | 2026年10月30日のAWSニュース | AWS教科書</title>
+<meta name="description" content="既存のStep Functionsのワークフローを、AIエージェントの道具として使えるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">試験別</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat2">2026年10月</a>
+  <p class="news-date"><time datetime="2026-10-30">2026年10月30日</time>のAWSニュース</p>
+  <h1>Step Functions:AIエージェントの道具として利用</h1>
+  <p class="lead">既存のStep Functionsのワークフローを、AIエージェントの道具として使えるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-08">2026-11-08</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Step Functionsは、複数の処理を決めた順番で実行する「ワークフロー」を作るサービスです。今回、Bedrock AgentCore Gatewayという仕組みを通じて、既存のワークフローをAIエージェントの「道具(ツール)」として使えるようになりました。AgentCore Gatewayは、MCP(AIが外部の道具を呼び出すための共通の決まり)でエージェントと道具をつなぐ入り口です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 973 116" style="max-width:973px;min-width:778px" role="img" aria-label="図1 エージェントがワークフローを呼び出す流れ"><defs><marker id="dgnews-2026-10-30-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="agent">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">AIエージェント</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">いつ実行するか判断</text>
+</g>
+<g data-node="gw">
+<rect x="289" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="62" text-anchor="middle" class="dg-tb">AgentCore</text>
+<text x="364" y="80" text-anchor="middle" class="dg-s">Gateway</text>
+</g>
+<g data-node="sfn">
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">Step Functions</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">ワークフロー</text>
+</g>
+<g data-node="steps">
+<rect x="799" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="874" y="62" text-anchor="middle" class="dg-t">定義した順に</text>
+<text x="874" y="80" text-anchor="middle" class="dg-s">毎回同じ手順で実行</text>
+</g>
+<path d="M184.0,66.5 L289.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-30-02-1)"/>
+<text x="236" y="70" text-anchor="middle" class="dg-s dg-halo">MCP</text>
+<path d="M439.0,66.5 L544.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-30-02-1)"/>
+<text x="492" y="70" text-anchor="middle" class="dg-s dg-halo">呼び出し</text>
+<path d="M694.0,66.5 L799.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-10-30-02-1)"/>
+</svg>
+</div>
+<figcaption>図1 エージェントがワークフローを呼び出す流れ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>エージェントが実行するかどうかと渡す入力を決め、手順そのものはStep Functionsが定義どおりに進めます。そのため、返金の確認・承認・処理のように守るべき手順がある業務を、毎回同じ順番で実行させられます。エージェントは実行状況も調べられ、夜間に失敗した処理がどこで止まったかを担当者に伝える、といった使い方もできます。StandardとExpressの両方のワークフローが対象で、料金はStep FunctionsとAgentCore Gatewayそれぞれの通常料金です。</dd>
+<dt>試験・実務への影響</dt><dd>AIに任せる部分と、手順を固定したい部分を分ける考え方の例です。ワークフローの実行履歴で失敗した箇所を調べる運用は、これまでと同じです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/step-functions.html">Step Functions</a>、<a href="../services/bedrock.html">Bedrock</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/step-functions-workflows-ai-agent-tools/">AWS Step Functions workflows now available as AI agent tools</a>(2026-10-29)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-10-30-01.html"><span class="label">← 前へ 2026年10月30日</span>RDS:追加ボリュームのストレージ自動拡張</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-10-30-03.html"><span class="label">次へ → 2026年10月30日</span>Lambda:SOCIによるコンテナの高速起動</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

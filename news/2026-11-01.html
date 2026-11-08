@@ -2,111 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Managed PrometheusコレクターのMSKコンシューマーグループ監視・MSKのTLS 1.3対応 | 2026年11月1日のAWSニュース | AWS教科書</title>
-<meta name="description" content="Managed Prometheusのコレクターが、MSK(マネージドKafka)の「コンシューマーグループ」のメトリクスも自動で集められるようになり、処理の遅れを監視しやすくなりました。">
-<script>
-// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
-try {
-  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
-  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
-  if (s.size) document.documentElement.setAttribute("data-size", s.size);
-} catch (e) {}
-</script>
-<link rel="stylesheet" href="../css/style.css">
-<link rel="icon" type="image/png" href="../icons/favicon-32.png">
-<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
-<link rel="manifest" href="../manifest.webmanifest">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
-<script>
-if ("serviceWorker" in navigator && location.protocol !== "file:") {
-  navigator.serviceWorker.register("../sw.js").catch(function () {});
-}
-</script>
-<script src="../js/site.js" defer></script>
+<meta http-equiv="refresh" content="0; url=2026-11-01-01.html">
+<link rel="canonical" href="2026-11-01-01.html">
+<title>AWS教科書</title>
 </head>
 <body>
-<header class="site-header" id="top">
-  <div class="inner">
-    <a class="site-title" href="../index.html">AWS教科書</a>
-    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">試験別</a><a href="../links.html">公式リンク</a></nav>
-  </div>
-</header>
-<main>
-<div class="page-head hero">
-  <div class="hero-text">
-  <a class="category" href="index.html#cat1">2026年11月</a>
-  <p class="news-date"><time datetime="2026-11-01">2026年11月1日</time>のAWSニュース</p>
-  <h1>Managed PrometheusコレクターのMSKコンシューマーグループ監視・MSKのTLS 1.3対応</h1>
-  <p class="lead">Managed Prometheusのコレクターが、MSK(マネージドKafka)の「コンシューマーグループ」のメトリクスも自動で集められるようになり、処理の遅れを監視しやすくなりました。</p>
-  <p class="updated">最終更新:<time datetime="2026-11-01">2026-11-01</time></p>
-  </div>
-</div>
-<section class="chapter">
-<h2 id="c1">1. 今日のまとめ<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
-<div class="table-wrap"><table>
-<tr><th>発表</th><th>何が変わったか</th><th>関連するページ</th></tr>
-<tr><td><a href="#n1">Managed Prometheus:MSKのコンシューマーグループのメトリクスを収集</a></td><td>Kafkaの処理の遅れ(ラグ)などを、エージェントを自分で動かさずに集めて、PrometheusワークスペースやCloudWatchに取り込める</td><td><a href="../services/managed-prometheus.html">Managed Prometheus</a>、<a href="../services/cloudwatch.html">CloudWatch</a></td></tr>
-</table></div>
-</section>
-
-<section class="chapter">
-<h2 id="c2">2. 注目の発表<a class="anchor" href="#c2" aria-label="この見出しへのリンク">#</a></h2>
-<h3 id="n1">Managed Prometheus:MSKのコンシューマーグループのメトリクスを収集<a class="anchor" href="#n1" aria-label="この見出しへのリンク">#</a></h3>
-<p>Amazon MSKは、データの流れ(ストリーム)を扱うApache Kafkaを、AWSが運用してくれるサービスです。Kafkaでは、データを受け取って処理する側を「コンシューマー」、そのまとまりを「コンシューマーグループ」と呼びます。処理が追いつかずに未処理のデータがたまっている量が「ラグ」で、ラグが増え続けるのは処理が詰まっているサインです。今回、Managed Prometheusの「コレクター」(監視対象からメトリクスを自動で集める仕組み)が、このラグなどのコンシューマーグループのメトリクスを集められるようになりました。集めた値は、Managed Prometheusのワークスペースか、CloudWatchに取り込んで調べられます。</p>
-<figure class="figure">
-<div class="fig-scroll">
-<svg viewBox="0 0 718 218" style="max-width:718px;min-width:574px" role="img" aria-label="図1 MSKのメトリクスが監視の場所に届く流れ"><defs><marker id="dgnews-2026-11-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
-<g data-node="msk">
-<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
-<text x="109" y="62" text-anchor="middle" class="dg-t">MSKクラスター</text>
-<text x="109" y="80" text-anchor="middle" class="dg-s">コンシューマー</text>
-</g>
-<g data-node="col">
-<rect x="289" y="40" width="150" height="52" rx="8" class="dg-accent"/>
-<text x="364" y="62" text-anchor="middle" class="dg-tb">コレクター</text>
-<text x="364" y="80" text-anchor="middle" class="dg-s">メトリクスを</text>
-</g>
-<g data-node="amp">
-<rect x="544" y="40" width="150" height="52" rx="8" class="dg-ok"/>
-<text x="619" y="62" text-anchor="middle" class="dg-t">Managed</text>
-<text x="619" y="80" text-anchor="middle" class="dg-s">Prometheus</text>
-</g>
-<g data-node="cw">
-<rect x="544" y="142" width="150" height="52" rx="8" class="dg-ok"/>
-<text x="619" y="164" text-anchor="middle" class="dg-t">CloudWatch</text>
-<text x="619" y="182" text-anchor="middle" class="dg-s">グラフ・アラーム</text>
-</g>
-<path d="M184.0,66.5 L289.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-01-1)"/>
-<text x="236" y="70" text-anchor="middle" class="dg-s dg-halo">ラグなど</text>
-<path d="M439.0,66.5 L544.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-01-1)"/>
-<path d="M429.0,92.5 L554.0,142.5" class="dg-line" marker-end="url(#dgnews-2026-11-01-1)"/>
-</svg>
-</div>
-<figcaption>図1 MSKのメトリクスが監視の場所に届く流れ</figcaption>
-</figure>
-<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
-<dl>
-<dt>何がうれしいか</dt><dd>収集用のエージェントを自分でサーバーに入れて動かし続ける手間が要りません。ラグの増加を検知して、処理の詰まりに早く気づけます。</dd>
-<dt>試験・実務への影響</dt><dd>監視の基本は「メトリクスを集める、見える化する、しきい値でアラームを出す」の流れです。CloudWatchに取り込めば、アラームで通知や自動対応につなげられます。Prometheus形式で扱いたい場合はManaged Prometheusを選ぶ、という使い分けも押さえておきましょう。</dd>
-<dt>関連するページ</dt><dd><a href="../services/managed-prometheus.html">Managed Prometheus</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
-<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/prometheus-collectors-msk-metrics/">Managed Prometheus collectors now support Amazon MSK consumer-group metrics</a>(2026-10-30)</dd>
-</dl>
-</section>
-
-<section class="chapter">
-<h2 id="c3">3. その他の発表<a class="anchor" href="#c3" aria-label="この見出しへのリンク">#</a></h2>
-<ul>
-<li><a href="https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-msk-tls/">MSK:TLS 1.3に対応</a>:プロビジョニング型のクラスターで、暗号化ポリシーを選ぶとTLS 1.3(通信の暗号化の新しい版)を使えます。TLS 1.2と1.3の両方を許すポリシーなら、クライアントを順に更新できます。</li>
-</ul>
-</section>
-<nav class="pager">
-  <a class="prev" href="2026-11-03.html"><span class="label">← 前へ 2026年11月3日</span>CloudFrontのクォータ引き上げをセルフサービス化・RDSスナップショットごとの料金表示・LambdaのKafkaキュー対応</a>
-  <a class="toc" href="index.html">目次へ戻る</a>
-  <a class="next" href="2026-10-31.html"><span class="label">次へ → 2026年10月31日</span>WAFのSDK自動組み込み・CloudFrontの新ヘッダー・RDS for Oracleの自動アップグレード任意化</a>
-</nav>
-</main>
-<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+<p>このページは2026年11月1日のAWSニュースに移りました。<a href="2026-11-01-01.html">移動先を開く</a></p>
 </body>
 </html>
