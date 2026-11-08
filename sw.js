@@ -1,6 +1,6 @@
 // build.py が生成するファイル(直接編集しない)
 var PREFIX = "aws-textbook-";
-var CACHE = PREFIX + "53de7f264272";
+var CACHE = PREFIX + "44c856acf342";
 var FILES = {
 "chooser.html": "04ca5be91a92",
 "compare.html": "4ef5124c29e1",
@@ -225,6 +225,7 @@ var FILES = {
 "js/glossary.js": "75cc97bdae0c",
 "js/mypage.js": "acda7541b712",
 "js/quiz.js": "d5b39b8d2230",
+"js/reference.js": "89c4012863d7",
 "js/sim.js": "47dc98b12055",
 "js/site.js": "3299290f8c32",
 "links.html": "5a95eae6e707",
