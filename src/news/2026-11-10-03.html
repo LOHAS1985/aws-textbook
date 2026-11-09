@@ -1,0 +1,22 @@
+<!-- title: EKS Auto Mode・Karpenter:GPUとEFAのDynamic Resource Allocationに対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: EKS Auto ModeとKarpenterが、DRAで条件を宣言したGPUやEFAに合わせてEC2を自動で増減できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Dynamic Resource Allocation(DRA)は、Kubernetes でGPUなどのデバイスを「どんな性質のものが欲しいか」という条件で要求できる仕組みです。ResourceClaim というオブジェクトに、GPUのモデルやアーキテクチャなどの条件を書き、ワークロードがそれを参照します。今回、Amazon EKS Auto Mode と Karpenter(需要に合わせてEC2を自動で起動するツール)が、NVIDIA GPUと EFA(高速なネットワークデバイス)のDRAに対応しました。条件に合う最も安いインスタンスを Karpenter が起動し、GPUをポッド間で共有したり、PCIe上で近いGPUとEFAを組み合わせて割り当てたりできます。Auto Mode ではドライバーが組み込み済みです。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node claim 0 0 blue "ResourceClaim" "(GPU・EFAの条件)"
+node scale 1.6 0 accent "Karpenter /" "EKS Auto Mode"
+node ec2 3.2 0 ok "条件に合う最安の" "EC2を起動"
+edge claim scale "ポッドが要求"
+edge scale ec2 "自動で増減"
+<figcaption>図1 デバイスの条件に合わせてインスタンスが選ばれる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>分散学習や推論で、GPUとネットワークの配置を最適に保ちながら、必要な分だけインスタンスを動かせます。デバイスプラグイン方式と同じノードで混ざって起きる過剰割り当ては、Auto Mode が自動で防ぎます。</dd>
+<dt>試験・実務への影響</dt><dd>Karpenter は全バージョンのKubernetesで、Auto Mode はKubernetes 1.36以降で使えます。GovCloudと中国のリージョンを除くすべてのリージョンで利用できます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/eks.html">EKS</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/auto-scaling.html">Auto Scaling</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-karpenter-dra/">Amazon EKS Auto Mode and Karpenter now support Dynamic Resource Allocation</a>(2026-11-09)</dd>
+</dl>
+</section>

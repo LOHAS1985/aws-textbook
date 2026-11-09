@@ -1,0 +1,22 @@
+<!-- title: Athena:利用状況を自動で記録するシステムテーブル -->
+<!-- category: 2026年11月 -->
+<!-- lead: Athenaが、クエリの利用状況を管理されたIcebergテーブルに自動で記録し、SQLでそのまま集計できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Amazon Athena は、S3にあるデータをSQLで調べるサービスです。これまで、誰がどのワークグループでどれだけデータをスキャンしたかを調べるには、GetQueryExecution などのAPI、CloudWatch のメトリクス、CloudTrail のログを集めて、自分で集計の仕組みを作る必要がありました。今回、Athena が利用状況を自動で記録する「システムテーブル」が使えるようになりました。有効にすると、クエリの完了から数分で、ワークグループをまたいだ利用データが読み取り専用のテーブルに入ります。テーブルは Apache Iceberg(大きなデータ向けのオープンなテーブル形式)で、S3 Tables の上に作られ、スキーマ・パーティション・圧縮などの管理は AWS が行います。保持期間は設定できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node q 0 0 blue "Athenaの" "クエリ実行" "(各ワークグループ)"
+node sys 1.6 0 accent "システムテーブル" "(Iceberg形式)"
+node sql 3.2 0 ok "SQLで集計" "ワークグループ・" "ユーザー別のスキャン量"
+edge q sys "自動で記録"
+edge sys sql "Athenaで検索"
+<figcaption>図1 利用状況が自動で記録され、SQLで集計できる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>query_executions テーブルを検索すれば、ワークグループ別・ユーザー別・テーブル別のスキャン量を、ETLなどの自作パイプラインなしで集計できます。コスト配分のダッシュボードや、重いクエリの洗い出しに使えます。Icebergなので DuckDB、Amazon Redshift、Amazon EMR など他のエンジンからも読めます。</dd>
+<dt>試験・実務への影響</dt><dd>Athenaの料金はスキャン量に応じて決まるため、「誰がどれだけ使ったか」を把握する運用の問いと相性がよい機能です。従来のAPI・CloudWatch メトリクス・CloudTrail ログは引き続き使えます。有効化はAthenaのコンソールかAPIで行い、AthenaとS3 Tablesが使えるすべてのリージョンで利用できます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/athena.html">Athena</a>、<a href="../services/s3.html">S3</a>、<a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/cloudtrail.html">CloudTrail</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/athena-system-tables/">Amazon Athena introduces system tables for observability, auditing, and usage analytics</a>(2026-11-09)</dd>
+</dl>
+</section>

@@ -1,0 +1,22 @@
+<!-- title: EKS・ECS・EC2:Nitro Sandboxesでポッドやタスクをハードウェアで隔離 -->
+<!-- category: 2026年11月 -->
+<!-- lead: EKSのポッドやECSのタスクを、1つずつNitroハイパーバイザー管理の軽量VMで隔離して動かせるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Nitro Sandboxes は、Nitro ハイパーバイザー(仮想マシンを動かす基盤のソフトウェア)が管理する軽量なVMです。EKS のポッドや ECS のタスクを、それぞれ専用のVMの中で動かせるので、1台のEC2インスタンスを共有しながら、ワークロード同士をVMの境界で分離できます。信頼できないコードや、複数の顧客が共用する環境、規制のある業務、AIが生成したコードの実行などで役立ちます。EKS・ECSでは設定を1行変えるだけで有効にでき、Pod Identity、VPC CNI、EBS/EFS/S3、CloudWatch はそのまま使えます。EC2上で自分のAMIや仮想マシンモニター(Firecracker など)と組み合わせて直接使うこともできます。暗号化された証明(アテステーション)で整合性を確かめてから、秘密情報を渡すことも可能です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "ポッド・タスクは" "同じインスタンスを共有"
+node after 1.6 0 ok "これから" "ポッド・タスクごとに" "専用の軽量VM"
+node use 3.2 0 accent "隔離が必要な" "ワークロードの" "安全な実行"
+edge before after "1行の設定"
+edge after use
+<figcaption>図1 ポッド・タスクごとにVMの境界で隔離する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>インスタンスをワークロードごとに分けなくても強い隔離が得られ、1台を複数のワークロードで共有できるため利用率が上がり、コストを抑えられます。</dd>
+<dt>試験・実務への影響</dt><dd>ほとんどのNitroベースのEC2インスタンスで、すべての商用リージョンで使え、追加料金はありません。「同じホスト上でワークロードをどう分離するか」という、セキュリティの設計の選択肢が増えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/eks.html">EKS</a>、<a href="../services/ecs.html">ECS</a>、<a href="../services/ec2.html">EC2</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/nitro-sandboxes-eks-ecs-ec2/">Introducing AWS Nitro Sandboxes on Amazon EKS, ECS and EC2 for hardware isolated pods, tasks and VMs</a>(2026-11-09)</dd>
+</dl>
+</section>

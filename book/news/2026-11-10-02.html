@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EKS・ECS・EC2:Nitro Sandboxesでポッドやタスクをハードウェアで隔離 | 2026年11月10日のAWSニュース | AWS教科書</title>
+<meta name="description" content="EKSのポッドやECSのタスクを、1つずつNitroハイパーバイザー管理の軽量VMで隔離して動かせるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-10">2026年11月10日</time>のAWSニュース</p>
+  <h1>EKS・ECS・EC2:Nitro Sandboxesでポッドやタスクをハードウェアで隔離</h1>
+  <p class="lead">EKSのポッドやECSのタスクを、1つずつNitroハイパーバイザー管理の軽量VMで隔離して動かせるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-10">2026-11-10</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS Nitro Sandboxes は、Nitro ハイパーバイザー(仮想マシンを動かす基盤のソフトウェア)が管理する軽量なVMです。EKS のポッドや ECS のタスクを、それぞれ専用のVMの中で動かせるので、1台のEC2インスタンスを共有しながら、ワークロード同士をVMの境界で分離できます。信頼できないコードや、複数の顧客が共用する環境、規制のある業務、AIが生成したコードの実行などで役立ちます。EKS・ECSでは設定を1行変えるだけで有効にでき、Pod Identity、VPC CNI、EBS/EFS/S3、CloudWatch はそのまま使えます。EC2上で自分のAMIや仮想マシンモニター(Firecracker など)と組み合わせて直接使うこともできます。暗号化された証明(アテステーション)で整合性を確かめてから、秘密情報を渡すことも可能です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 ポッド・タスクごとにVMの境界で隔離する"><defs><marker id="dgnews-2026-11-10-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">ポッド・タスクは</text>
+</g>
+<g data-node="after">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">ポッド・タスクごとに</text>
+</g>
+<g data-node="use">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="653" y="62" text-anchor="middle" class="dg-tb">隔離が必要な</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">ワークロードの</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-10-02-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">1行の設定</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-10-02-1)"/>
+</svg>
+</div>
+<figcaption>図1 ポッド・タスクごとにVMの境界で隔離する</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>インスタンスをワークロードごとに分けなくても強い隔離が得られ、1台を複数のワークロードで共有できるため利用率が上がり、コストを抑えられます。</dd>
+<dt>試験・実務への影響</dt><dd>ほとんどのNitroベースのEC2インスタンスで、すべての商用リージョンで使え、追加料金はありません。「同じホスト上でワークロードをどう分離するか」という、セキュリティの設計の選択肢が増えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/eks.html">EKS</a>、<a href="../services/ecs.html">ECS</a>、<a href="../services/ec2.html">EC2</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/nitro-sandboxes-eks-ecs-ec2/">Introducing AWS Nitro Sandboxes on Amazon EKS, ECS and EC2 for hardware isolated pods, tasks and VMs</a>(2026-11-09)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-10-01.html"><span class="label">← 前へ 2026年11月10日</span>Athena:利用状況を自動で記録するシステムテーブル</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-10-03.html"><span class="label">次へ → 2026年11月10日</span>EKS Auto Mode・Karpenter:GPUとEFAのDynamic Resource Allocationに対応</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
