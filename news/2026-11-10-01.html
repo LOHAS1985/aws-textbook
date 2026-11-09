@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Athena:利用状況を自動で記録するシステムテーブル | 2026年11月10日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Athenaが、クエリの利用状況を管理されたIcebergテーブルに自動で記録し、SQLでそのまま集計できるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-10">2026年11月10日</time>のAWSニュース</p>
+  <h1>Athena:利用状況を自動で記録するシステムテーブル</h1>
+  <p class="lead">Athenaが、クエリの利用状況を管理されたIcebergテーブルに自動で記録し、SQLでそのまま集計できるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-10">2026-11-10</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Amazon Athena は、S3にあるデータをSQLで調べるサービスです。これまで、誰がどのワークグループでどれだけデータをスキャンしたかを調べるには、GetQueryExecution などのAPI、CloudWatch のメトリクス、CloudTrail のログを集めて、自分で集計の仕組みを作る必要がありました。今回、Athena が利用状況を自動で記録する「システムテーブル」が使えるようになりました。有効にすると、クエリの完了から数分で、ワークグループをまたいだ利用データが読み取り専用のテーブルに入ります。テーブルは Apache Iceberg(大きなデータ向けのオープンなテーブル形式)で、S3 Tables の上に作られ、スキーマ・パーティション・圧縮などの管理は AWS が行います。保持期間は設定できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 利用状況が自動で記録され、SQLで集計できる"><defs><marker id="dgnews-2026-11-10-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="q">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">Athenaの</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">クエリ実行</text>
+</g>
+<g data-node="sys">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="62" text-anchor="middle" class="dg-tb">システムテーブル</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">(Iceberg形式)</text>
+</g>
+<g data-node="sql">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="62" text-anchor="middle" class="dg-t">SQLで集計</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">ワークグループ・</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-10-01-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">自動で記録</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-10-01-1)"/>
+<text x="517" y="70" text-anchor="middle" class="dg-s dg-halo">Athenaで検索</text>
+</svg>
+</div>
+<figcaption>図1 利用状況が自動で記録され、SQLで集計できる</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>query_executions テーブルを検索すれば、ワークグループ別・ユーザー別・テーブル別のスキャン量を、ETLなどの自作パイプラインなしで集計できます。コスト配分のダッシュボードや、重いクエリの洗い出しに使えます。Icebergなので DuckDB、Amazon Redshift、Amazon EMR など他のエンジンからも読めます。</dd>
+<dt>試験・実務への影響</dt><dd>Athenaの料金はスキャン量に応じて決まるため、「誰がどれだけ使ったか」を把握する運用の問いと相性がよい機能です。従来のAPI・CloudWatch メトリクス・CloudTrail ログは引き続き使えます。有効化はAthenaのコンソールかAPIで行い、AthenaとS3 Tablesが使えるすべてのリージョンで利用できます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/athena.html">Athena</a>、<a href="../services/s3.html">S3</a>、<a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/cloudtrail.html">CloudTrail</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/athena-system-tables/">Amazon Athena introduces system tables for observability, auditing, and usage analytics</a>(2026-11-09)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-10-02.html"><span class="label">次へ → 2026年11月10日</span>EKS・ECS・EC2:Nitro Sandboxesでポッドやタスクをハードウェアで隔離</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
