@@ -1,0 +1,22 @@
+<!-- title: STS:パーティションをまたぐフェデレーション -->
+<!-- category: 2026年11月 -->
+<!-- lead: アクセスキーを使わずに、別のパーティションのIAMロールへ一時的な認証情報で切り替えられるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWSのリージョンは「パーティション」というグループに分かれています(通常の商用リージョン、AWS GovCloud (US)、中国リージョン、欧州ソブリンクラウドなど)。パーティションごとにIAMが独立しているため、別のパーティションのリソースを操作するには、有効期限のないIAMユーザーのアクセスキーを使うことが多くありました。今回、AWS STS が、パーティションをまたぐフェデレーション(外部のIDを信頼して一時的な権限を渡す仕組み)に対応しました。ワークロードは、自分のパーティションのSTSで GetWebIdentityToken API を使って短期のトークンを受け取り、そのトークンを AssumeRoleWithWebIdentity API に渡して、相手のパーティションのロールの一時認証情報を得ます。どちらも既存のAPIです。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node wl 0 0 blue "ワークロード" "(パーティションA)"
+node tok 1.6 0 accent "短期トークン" "GetWebIdentityToken"
+node role 3.2 0 ok "一時認証情報" "(パーティションB)"
+edge wl tok "STSに要求"
+edge tok role "AssumeRoleWithWebIdentity"
+<figcaption>図1 トークンを交換して別パーティションのロールを引き受ける</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>期限のないアクセスキーを持ち回る必要がなくなり、認証情報の漏えいリスクと管理の手間が減ります。トークンの利用は両方のパーティションの CloudTrail で追跡できます。統合したセキュリティ報告や、運用ツールの一元化などに向きます。追加料金はなく、商用・GovCloud (US)・中国・欧州ソブリンクラウドのリージョンで使えます。</dd>
+<dt>試験・実務への影響</dt><dd>「長期の認証情報を使わずにアクセスを許可する」というセキュリティの原則を、パーティション間にも適用できます。PKI(公開鍵基盤)を使っている場合は IAM Roles Anywhere という別の方法もあります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/sts.html">STS</a>、<a href="../services/iam.html">IAM</a>、<a href="../services/cloudtrail.html">CloudTrail</a>、<a href="../services/organizations.html">Organizations</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-sts-cross-partition">AWS STS now supports cross-partition federation for AWS identities</a>(2026-11-09)</dd>
+</dl>
+</section>

@@ -1,0 +1,24 @@
+<!-- title: Route 53 Profiles:1つのVPCに複数のProfileを関連付け -->
+<!-- category: 2026年11月 -->
+<!-- lead: 1つのVPCに複数のRoute 53 Profileを優先順位つきで関連付けられるようになり、チームごとにDNS設定を分けて管理できます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Route 53 Profiles は、プライベートホストゾーン、Resolver の転送ルール、DNS Firewall のルールグループなどのDNS関連の設定を1つにまとめ、複数のVPCに共有する仕組みです。これまでは1つのVPCに関連付けられる Profile は1つだけで、セキュリティチームとネットワークチームの設定を同じ Profile に入れる必要がありました。今回、1つのVPCに複数の Profile を関連付けられるようになりました。各 Profile には優先順位を付け、番号の小さいものから評価されます。例えばセキュリティチームは DNS Firewall の Profile を、ネットワークチームはプライベートホストゾーンと転送ルールの Profile を、それぞれ自分で管理できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node sec 0 0 accent "Profile A" "DNS Firewall" "(セキュリティチーム)"
+node net 0 1 accent "Profile B" "ホストゾーン・" "転送ルール"
+node vpc 1.8 0.5 blue "VPC"
+node res 3.4 0.5 ok "優先順位の順に" "評価されてDNS解決"
+edge sec vpc "優先 1"
+edge net vpc "優先 2"
+edge vpc res
+<figcaption>図1 複数のProfileを優先順位つきでVPCに関連付ける</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>設定の持ち主ごとに Profile を分けられるので、IAM の権限も最小限に絞りやすく、他のチームの設定を壊す心配が減ります。</dd>
+<dt>試験・実務への影響</dt><dd>多数のVPCやアカウントでDNS設定を共通化する構成の設計で、役割分担をどう分けるかの選択肢が増えます。Profile とVPCの関連付けは、通常のRoute 53 Profiles の料金で課金されます。Profiles が使えるリージョンで利用できます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/route53.html">Route 53</a>、<a href="../services/dns-firewall.html">DNS Firewall</a>、<a href="../services/vpc.html">VPC</a>、<a href="../terms/dns.html">DNS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/route-53-profiles-multiple-per-vpc/">Amazon Route 53 Profiles now supports multiple Profiles per VPC</a>(2026-11-09)</dd>
+</dl>
+</section>

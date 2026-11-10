@@ -1,0 +1,22 @@
+<!-- title: CloudWatch Logs:アカウント単位の保持期間ポリシー -->
+<!-- category: 2026年11月 -->
+<!-- lead: ログの保持期間を、ログループごとではなくアカウント全体またはプレフィックス単位でまとめて決められるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>CloudWatch Logs では、ログを残す期間(保持期間)をログループごとに設定します。ログループが増えるほど設定漏れが起こりやすく、期間を決めていないログループは無期限に保存されて料金がかさみがちでした。今回、アカウント単位の保持ポリシーが使えるようになり、1つのポリシーで多くのログループの保持期間をそろえて管理できます。対象は、アカウント内のすべてのログループ、または名前が指定した文字列(例: /aws/lambda)で始まるものです。既存のログループ、新しく作られるログループ、その両方のどれに適用するかも選べます。複数のポリシーが同じログループに当てはまるときは、保持期間が最も長いものが使われます。例えば全体に90日、/security で始まるものに1年のポリシーを置くと、セキュリティ関連のログは1年残ります。ポリシーは1つのアカウント・リージョンにつき20個まで作れます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "ログループごとに" "保持期間を設定"
+node pol 1.6 0 accent "アカウント単位の" "保持ポリシー" "(全体・プレフィックス)"
+node after 3.2 0 ok "多数のログループが" "同じ基準にそろう"
+edge before pol "今回の発表"
+edge pol after "自動で適用"
+<figcaption>図1 ログループごとの設定から、ポリシーでまとめて管理へ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>保持期間の設定漏れを防げ、組織の標準(例: 一般は90日、監査用は1年)をポリシーとして一括で守れます。無期限保存による不要なコストも減らせます。コンソール・AWS CLI・SDK から管理でき、追加料金はありません。</dd>
+<dt>試験・実務への影響</dt><dd>「ログの保存コストを抑えつつ、監査要件の期間は確実に残す」という運用の問いに使える手段が増えました。複数のポリシーが重なったときは長い期間が優先される点を押さえておきましょう。中東(バーレーン)と中東(UAE)を除く商用リージョンで使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../terms/monitoring-logging-comparison.html">監視・ログサービスの選び方</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-cloudwatch-log-retention/">Amazon CloudWatch Logs announces account-level retention policies</a>(2026-11-09)</dd>
+</dl>
+</section>

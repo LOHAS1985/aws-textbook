@@ -1,0 +1,22 @@
+<!-- title: CloudWatch:PromQLアラームでAuto Scalingを実行 -->
+<!-- category: 2026年11月 -->
+<!-- lead: PromQLで書いたCloudWatchアラームから、EC2 Auto ScalingとApplication Auto Scalingのステップ・シンプルスケーリングを動かせるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>PromQL は、Prometheus 形式のメトリクスを検索・計算するための問い合わせ言語です。CloudWatch では PromQL でアラームを作れますが、これまでアラームからのスケーリング操作には、通常のメトリクスアラームを別に用意する必要がありました。今回、PromQL アラームのアクションとして、EC2 Auto Scaling と Application Auto Scaling のステップスケーリング・シンプルスケーリングのポリシーを指定できるようになりました。問い合わせは1本の系列を返す必要があり、その値をしきい値と比べます。ステップスケーリングでは、しきい値をどれだけ超えたかに応じて増減量が変わります。ターゲット追跡スケーリングは現時点で対象外です。設定はコンソール、PutMetricAlarm API、CLI、SDK、CloudFormation から行えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node met 0 0 blue "OpenTelemetryの" "メトリクス"
+node alarm 1.6 0 accent "PromQLアラーム" "しきい値を超過"
+node scale 3.2 0 ok "Auto Scaling" "台数・容量を調整"
+edge met alarm "PromQLで評価"
+edge alarm scale "ポリシーを実行"
+<figcaption>図1 PromQLアラームがスケーリングを起動する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>ダッシュボードやアラートで使っている OpenTelemetry のメトリクスをそのままスケーリングの判断に使え、スケーリング用に同じ指標の通常アラームを二重に管理する手間が減ります。料金は通常の CloudWatch アラームと同じです。</dd>
+<dt>試験・実務への影響</dt><dd>「アラームでスケーリングを動かす」流れは従来と同じで、対応するポリシーの種類(ステップ・シンプルのみ)を押さえておくと選択肢の見分けに役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/auto-scaling.html">Auto Scaling</a>、<a href="../services/ec2.html">EC2</a>、<a href="../terms/high-availability-scaling.html">高可用性とスケーリング</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-cloudwatch-alarms-autoscaling-group-actions">CloudWatch PromQL alarms now support EC2 and Application Auto Scaling</a>(2026-11-10)</dd>
+</dl>
+</section>
