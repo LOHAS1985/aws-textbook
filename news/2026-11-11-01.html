@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudWatch Logs:アカウント単位の保持期間ポリシー | 2026年11月11日のAWSニュース | AWS教科書</title>
+<meta name="description" content="ログの保持期間を、ログループごとではなくアカウント全体またはプレフィックス単位でまとめて決められるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-11">2026年11月11日</time>のAWSニュース</p>
+  <h1>CloudWatch Logs:アカウント単位の保持期間ポリシー</h1>
+  <p class="lead">ログの保持期間を、ログループごとではなくアカウント全体またはプレフィックス単位でまとめて決められるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-11">2026-11-11</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>CloudWatch Logs では、ログを残す期間(保持期間)をログループごとに設定します。ログループが増えるほど設定漏れが起こりやすく、期間を決めていないログループは無期限に保存されて料金がかさみがちでした。今回、アカウント単位の保持ポリシーが使えるようになり、1つのポリシーで多くのログループの保持期間をそろえて管理できます。対象は、アカウント内のすべてのログループ、または名前が指定した文字列(例: /aws/lambda)で始まるものです。既存のログループ、新しく作られるログループ、その両方のどれに適用するかも選べます。複数のポリシーが同じログループに当てはまるときは、保持期間が最も長いものが使われます。例えば全体に90日、/security で始まるものに1年のポリシーを置くと、セキュリティ関連のログは1年残ります。ポリシーは1つのアカウント・リージョンにつき20個まで作れます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 ログループごとの設定から、ポリシーでまとめて管理へ"><defs><marker id="dgnews-2026-11-11-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">ログループごとに</text>
+</g>
+<g data-node="pol">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="62" text-anchor="middle" class="dg-tb">アカウント単位の</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">保持ポリシー</text>
+</g>
+<g data-node="after">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="62" text-anchor="middle" class="dg-t">多数のログループが</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">同じ基準にそろう</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-11-01-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-11-01-1)"/>
+<text x="517" y="70" text-anchor="middle" class="dg-s dg-halo">自動で適用</text>
+</svg>
+</div>
+<figcaption>図1 ログループごとの設定から、ポリシーでまとめて管理へ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>保持期間の設定漏れを防げ、組織の標準(例: 一般は90日、監査用は1年)をポリシーとして一括で守れます。無期限保存による不要なコストも減らせます。コンソール・AWS CLI・SDK から管理でき、追加料金はありません。</dd>
+<dt>試験・実務への影響</dt><dd>「ログの保存コストを抑えつつ、監査要件の期間は確実に残す」という運用の問いに使える手段が増えました。複数のポリシーが重なったときは長い期間が優先される点を押さえておきましょう。中東(バーレーン)と中東(UAE)を除く商用リージョンで使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../terms/monitoring-logging-comparison.html">監視・ログサービスの選び方</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-cloudwatch-log-retention/">Amazon CloudWatch Logs announces account-level retention policies</a>(2026-11-09)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-11-02.html"><span class="label">次へ → 2026年11月11日</span>Route 53 Profiles:1つのVPCに複数のProfileを関連付け</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
