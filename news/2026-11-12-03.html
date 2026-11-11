@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EKS Auto Mode:Podにセキュリティグループを適用 | 2026年11月12日のAWSニュース | AWS教科書</title>
+<meta name="description" content="EKS Auto Mode で、Pod ごとに EC2 のセキュリティグループを割り当てられるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-12">2026年11月12日</time>のAWSニュース</p>
+  <h1>EKS Auto Mode:Podにセキュリティグループを適用</h1>
+  <p class="lead">EKS Auto Mode で、Pod ごとに EC2 のセキュリティグループを割り当てられるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-12">2026-11-12</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Amazon EKS の Auto Mode(ノードの管理を AWS に任せるモード)で、Pod(コンテナをまとめて動かす最小の単位)ごとに EC2 のセキュリティグループを適用できるようになりました。これまでは、同じノードで動く Pod は、そのノードのセキュリティグループを共有していました。RDS や ElastiCache のように、接続元をセキュリティグループで許可するデータベースへ特定のアプリだけをつなぐには、アプリごとにノードのグループを分ける必要がありました。今回は SecurityGroupPolicy というリソースで「どの Pod にどのセキュリティグループを付けるか」を決めます。同じノード上でも Pod ごとに別のグループを持てるので、ノードプールを増やさずにネットワークを分離できます。ポリシーに当てはまらない Pod は、これまでどおりノードのグループを使います。Kubernetes 1.36 以降のクラスターが対象で、追加料金なしで EKS Auto Mode に含まれます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 786 202" style="max-width:786px;min-width:629px" role="img" aria-label="図1 同じノードの Pod ごとに接続先を制御する"><defs><marker id="dgnews-2026-11-12-03-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="a">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="62" text-anchor="middle" class="dg-tb">Pod A</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">SG-A を適用</text>
+</g>
+<g data-node="b">
+<rect x="34" y="126" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="147" text-anchor="middle" class="dg-tb">Pod B</text>
+<text x="109" y="165" text-anchor="middle" class="dg-s">SG-B を適用</text>
+</g>
+<g data-node="n">
+<rect x="323" y="89" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="398" y="113" text-anchor="middle" class="dg-t">同じノード</text>
+</g>
+<g data-node="db">
+<rect x="612" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="687" y="62" text-anchor="middle" class="dg-t">RDS</text>
+<text x="687" y="80" text-anchor="middle" class="dg-s">SG-A からだけ許可</text>
+</g>
+<g data-node="ng">
+<rect x="612" y="126" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="687" y="147" text-anchor="middle" class="dg-t">Pod B は</text>
+<text x="687" y="165" text-anchor="middle" class="dg-s">接続できない</text>
+</g>
+<path d="M184.0,77.5 L323.0,98.0" class="dg-line" marker-end="url(#dgnews-2026-11-12-03-1)"/>
+<path d="M184.0,140.5 L323.0,120.0" class="dg-line" marker-end="url(#dgnews-2026-11-12-03-1)"/>
+<path d="M473.0,98.0 L612.0,77.5" class="dg-line" marker-end="url(#dgnews-2026-11-12-03-1)"/>
+<path d="M473.0,120.0 L612.0,140.5" class="dg-line dg-dash" marker-end="url(#dgnews-2026-11-12-03-1)"/>
+<text x="542" y="134" text-anchor="middle" class="dg-s dg-halo">SG-Bは許可されない</text>
+</svg>
+</div>
+<figcaption>図1 同じノードの Pod ごとに接続先を制御する</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>VPC のほかのリソースと同じ「セキュリティグループ」の考え方で、Pod の通信を最小限に絞れます。ノードの分け方を気にせずに設計できます。</dd>
+<dt>試験・実務への影響</dt><dd>コンテナ環境のネットワーク分離で、ノード単位ではなく Pod 単位で制御する選択肢が加わります。使えるリージョンは EKS Auto Mode と同じです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/eks.html">EKS</a>、<a href="../services/vpc.html">VPC</a>、<a href="../terms/nacl-security-group.html">セキュリティグループとネットワークACL</a>、<a href="../services/rds.html">RDS</a>、<a href="../services/elasticache.html">ElastiCache</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-security-groups-for-pods/">Amazon EKS Auto Mode now supports security groups for Pods</a>(2026-11-11)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-12-02.html"><span class="label">← 前へ 2026年11月12日</span>OpenSearch Service:マネージドのリージョン間ディザスタリカバリ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-12-04.html"><span class="label">次へ → 2026年11月12日</span>SES:メールIDなどの上限が引き上げ</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
