@@ -1,0 +1,25 @@
+<!-- title: OpenSearch Service:マネージドのリージョン間ディザスタリカバリ -->
+<!-- category: 2026年11月 -->
+<!-- lead: 2つのリージョンのドメインを組にするだけで、自前でレプリケーションを作らずに、別リージョンへの災害対策ができるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Amazon OpenSearch Service で、リージョンをまたぐディザスタリカバリ(DR。災害時に別の場所で業務を続ける備え)をマネージドで使えるようになりました。2つのリージョンにそれぞれドメインを作ったあと、API 1回またはコンソールの数ステップで、プライマリ(本番側)とセカンダリ(待機側)の組にできます。セカンダリは常にプライマリと同期され、目標は RPO(どこまでのデータ損失を許せるか)が1分未満、RTO(復旧にかかる時間)が20分未満です。計画的な作業(メンテナンスやリージョンの切り替え訓練)では「スイッチオーバー」で2つの役割を入れ替え、データ損失はありません。プライマリが使えなくなったときは「フェイルオーバー」でセカンダリを昇格させ、失われるデータは同期の遅れ分に限られます。切り替え後は、新しいプライマリに新しいセカンダリを組ませて保護を戻します。同期の状況や遅れは CloudWatch のメトリクスで確認できます。</p>
+<p>利用には OpenSearch 3.7 以降が必要で、同じアカウント内のドメインが対象です(カスタマーマネージドの KMS キーで暗号化したドメインも可)。UltraWarm ストレージや OpenSearch Optimized インスタンス(OR1・OR2)を使うドメインは対象外です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 0.5 blue "アプリケーション"
+node pri 1.8 0 accent "プライマリ" "ドメイン" "(リージョンA)"
+node sec 1.8 1 box "セカンダリ" "ドメイン" "(リージョンB)"
+node pro 3.8 1 ok "昇格して" "新しいプライマリ"
+edge app pri
+edge pri sec "常時同期"
+edge sec pro "障害時 フェイルオーバー"
+<figcaption>図1 2つのリージョンのドメインを組にして同期する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>レプリケーションの仕組みを自分で作って運用する手間が要らなくなり、RPO・RTO の目標も明示されています。追加料金もありません。</dd>
+<dt>試験・実務への影響</dt><dd>DR 戦略の選択で、「リージョン間で常時同期する待機側を持つ」ウォームスタンバイに近い構成が検索・分析基盤でも手軽に取れます。料金はセカンダリのドメインとリージョン間のデータ転送が通常どおりかかります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/opensearch.html">OpenSearch Service</a>、<a href="../terms/dr-strategies.html">災害対策(DR)の戦略</a>、<a href="../terms/region-az.html">リージョンとAZ</a>、<a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/kms.html">KMS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-opensearch-service-managed-cross-region-disaster-recovery/">Amazon OpenSearch Service announces managed cross-Region disaster recovery</a>(2026-11-10)</dd>
+</dl>
+</section>

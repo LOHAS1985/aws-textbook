@@ -1,0 +1,26 @@
+<!-- title: EKS Auto Mode:Podにセキュリティグループを適用 -->
+<!-- category: 2026年11月 -->
+<!-- lead: EKS Auto Mode で、Pod ごとに EC2 のセキュリティグループを割り当てられるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Amazon EKS の Auto Mode(ノードの管理を AWS に任せるモード)で、Pod(コンテナをまとめて動かす最小の単位)ごとに EC2 のセキュリティグループを適用できるようになりました。これまでは、同じノードで動く Pod は、そのノードのセキュリティグループを共有していました。RDS や ElastiCache のように、接続元をセキュリティグループで許可するデータベースへ特定のアプリだけをつなぐには、アプリごとにノードのグループを分ける必要がありました。今回は SecurityGroupPolicy というリソースで「どの Pod にどのセキュリティグループを付けるか」を決めます。同じノード上でも Pod ごとに別のグループを持てるので、ノードプールを増やさずにネットワークを分離できます。ポリシーに当てはまらない Pod は、これまでどおりノードのグループを使います。Kubernetes 1.36 以降のクラスターが対象で、追加料金なしで EKS Auto Mode に含まれます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node a 0 0 accent "Pod A" "SG-A を適用"
+node b 0 1 accent "Pod B" "SG-B を適用"
+node n 1.7 0.5 blue "同じノード"
+node db 3.4 0 ok "RDS" "SG-A からだけ許可"
+node ng 3.4 1 ng "Pod B は" "接続できない"
+edge a n
+edge b n
+edge n db
+edge n ng "SG-Bは許可されない" dash
+<figcaption>図1 同じノードの Pod ごとに接続先を制御する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>VPC のほかのリソースと同じ「セキュリティグループ」の考え方で、Pod の通信を最小限に絞れます。ノードの分け方を気にせずに設計できます。</dd>
+<dt>試験・実務への影響</dt><dd>コンテナ環境のネットワーク分離で、ノード単位ではなく Pod 単位で制御する選択肢が加わります。使えるリージョンは EKS Auto Mode と同じです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/eks.html">EKS</a>、<a href="../services/vpc.html">VPC</a>、<a href="../terms/nacl-security-group.html">セキュリティグループとネットワークACL</a>、<a href="../services/rds.html">RDS</a>、<a href="../services/elasticache.html">ElastiCache</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-security-groups-for-pods/">Amazon EKS Auto Mode now supports security groups for Pods</a>(2026-11-11)</dd>
+</dl>
+</section>

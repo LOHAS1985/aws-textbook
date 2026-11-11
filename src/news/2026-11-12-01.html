@@ -1,0 +1,24 @@
+<!-- title: Network Firewall:次世代ファイアウォール(NGFW)ポリシー -->
+<!-- category: 2026年11月 -->
+<!-- lead: Network Firewall に、ファイアウォール(通信の許可・拒否)とIPS(攻撃の検知・遮断)を重ねて管理する新しいポリシーの形式が加わりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Network Firewall は、VPC を出入りする通信を検査・制御するマネージドサービスです。通信の扱いは「ポリシー」にまとめたルールグループで決めます。今回、次世代ファイアウォール(NGFW)ポリシーという新しいポリシーの形式が使えるようになりました。通信を許可・拒否する「ファイアウォールのルール」と、攻撃を見つけて止める「IPSのルール」(IPS は侵入防止システムのこと)を、混ぜずに別々の層として重ねる考え方です。ファイアウォールのルールは「承認したドメインへの通信だけ許可する」といった、既定で拒否する形で書きます。IPS のルールには、AWS や AWS Marketplace のパートナーが提供し自動で更新されるマネージドルールグループや、自分で作るルールグループを使えます。2つの層はそれぞれ別にルールの容量(キャパシティ)を持つので、片方を増やすともう片方が足りなくなる、という取り合いがなくなります。ほかのポリシーと共有しないルールは、あらかじめ容量を確保せずに必要な分だけ使う「埋め込みルールグループ」にできます。NGFW ポリシーでは、すべてのルールが通信の前後関係(接続の状態)を踏まえて評価されるステートフルな動きになります。既存のポリシーはそのまま動き続け、IPS のルールにも後方互換性があります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node old 0 0 box "これまで" "ファイアウォールと" "IPSを混ぜて管理"
+node fw 1.8 0 accent "層1" "ファイアウォール" "既定で拒否" "許可する通信を書く"
+node ips 3.6 0 accent "層2: IPS" "攻撃を検知・遮断" "(マネージドも可)"
+node ok 5.4 0 ok "容量は層ごと" "取り合いなし"
+edge old fw "NGFWポリシー"
+edge fw ips
+edge ips ok
+<figcaption>図1 ファイアウォールとIPSを別々の層として重ねる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>ルールの役割が層ごとに分かれて読みやすくなり、容量の配分に悩まずに済みます。新しい脅威への対策は、自動更新されるIPSのマネージドルールグループに任せられます。</dd>
+<dt>試験・実務への影響</dt><dd>VPC の出口で「許可するドメインだけ通す」構成や、検査用VPCに通信を集める構成を設計するときの選択肢が増えます。NGFW ポリシー自体の追加料金はありません(Network Firewall の通常料金は別にかかります)。商用リージョンと AWS GovCloud (US) で使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/network-firewall.html">Network Firewall</a>、<a href="../services/vpc.html">VPC</a>、<a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../terms/outbound-traffic.html">アウトバウンド通信</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/network-firewall-launches-ngfw-policy/">AWS Network Firewall launches next-generation firewall policy</a>(2026-11-10)</dd>
+</dl>
+</section>

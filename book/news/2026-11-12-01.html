@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network Firewall:次世代ファイアウォール(NGFW)ポリシー | 2026年11月12日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Network Firewall に、ファイアウォール(通信の許可・拒否)とIPS(攻撃の検知・遮断)を重ねて管理する新しいポリシーの形式が加わりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-12">2026年11月12日</time>のAWSニュース</p>
+  <h1>Network Firewall:次世代ファイアウォール(NGFW)ポリシー</h1>
+  <p class="lead">Network Firewall に、ファイアウォール(通信の許可・拒否)とIPS(攻撃の検知・遮断)を重ねて管理する新しいポリシーの形式が加わりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-12">2026-11-12</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS Network Firewall は、VPC を出入りする通信を検査・制御するマネージドサービスです。通信の扱いは「ポリシー」にまとめたルールグループで決めます。今回、次世代ファイアウォール(NGFW)ポリシーという新しいポリシーの形式が使えるようになりました。通信を許可・拒否する「ファイアウォールのルール」と、攻撃を見つけて止める「IPSのルール」(IPS は侵入防止システムのこと)を、混ぜずに別々の層として重ねる考え方です。ファイアウォールのルールは「承認したドメインへの通信だけ許可する」といった、既定で拒否する形で書きます。IPS のルールには、AWS や AWS Marketplace のパートナーが提供し自動で更新されるマネージドルールグループや、自分で作るルールグループを使えます。2つの層はそれぞれ別にルールの容量(キャパシティ)を持つので、片方を増やすともう片方が足りなくなる、という取り合いがなくなります。ほかのポリシーと共有しないルールは、あらかじめ容量を確保せずに必要な分だけ使う「埋め込みルールグループ」にできます。NGFW ポリシーでは、すべてのルールが通信の前後関係(接続の状態)を踏まえて評価されるステートフルな動きになります。既存のポリシーはそのまま動き続け、IPS のルールにも後方互換性があります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 116" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 ファイアウォールとIPSを別々の層として重ねる"><defs><marker id="dgnews-2026-11-12-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="old">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">ファイアウォールと</text>
+</g>
+<g data-node="fw">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="415" y="62" text-anchor="middle" class="dg-tb">層1</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">ファイアウォール</text>
+</g>
+<g data-node="ips">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="721" y="62" text-anchor="middle" class="dg-tb">層2: IPS</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">攻撃を検知・遮断</text>
+</g>
+<g data-node="ok">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-t">容量は層ごと</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">取り合いなし</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-12-01-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">NGFWポリシー</text>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-12-01-1)"/>
+<path d="M796.0,66.5 L952.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-12-01-1)"/>
+</svg>
+</div>
+<figcaption>図1 ファイアウォールとIPSを別々の層として重ねる</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>ルールの役割が層ごとに分かれて読みやすくなり、容量の配分に悩まずに済みます。新しい脅威への対策は、自動更新されるIPSのマネージドルールグループに任せられます。</dd>
+<dt>試験・実務への影響</dt><dd>VPC の出口で「許可するドメインだけ通す」構成や、検査用VPCに通信を集める構成を設計するときの選択肢が増えます。NGFW ポリシー自体の追加料金はありません(Network Firewall の通常料金は別にかかります)。商用リージョンと AWS GovCloud (US) で使えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/network-firewall.html">Network Firewall</a>、<a href="../services/vpc.html">VPC</a>、<a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../terms/outbound-traffic.html">アウトバウンド通信</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/network-firewall-launches-ngfw-policy/">AWS Network Firewall launches next-generation firewall policy</a>(2026-11-10)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-12-02.html"><span class="label">次へ → 2026年11月12日</span>OpenSearch Service:マネージドのリージョン間ディザスタリカバリ</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
