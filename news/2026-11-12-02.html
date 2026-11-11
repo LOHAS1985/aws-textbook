@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenSearch Service:マネージドのリージョン間ディザスタリカバリ | 2026年11月12日のAWSニュース | AWS教科書</title>
+<meta name="description" content="2つのリージョンのドメインを組にするだけで、自前でレプリケーションを作らずに、別リージョンへの災害対策ができるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-12">2026年11月12日</time>のAWSニュース</p>
+  <h1>OpenSearch Service:マネージドのリージョン間ディザスタリカバリ</h1>
+  <p class="lead">2つのリージョンのドメインを組にするだけで、自前でレプリケーションを作らずに、別リージョンへの災害対策ができるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-12">2026-11-12</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Amazon OpenSearch Service で、リージョンをまたぐディザスタリカバリ(DR。災害時に別の場所で業務を続ける備え)をマネージドで使えるようになりました。2つのリージョンにそれぞれドメインを作ったあと、API 1回またはコンソールの数ステップで、プライマリ(本番側)とセカンダリ(待機側)の組にできます。セカンダリは常にプライマリと同期され、目標は RPO(どこまでのデータ損失を許せるか)が1分未満、RTO(復旧にかかる時間)が20分未満です。計画的な作業(メンテナンスやリージョンの切り替え訓練)では「スイッチオーバー」で2つの役割を入れ替え、データ損失はありません。プライマリが使えなくなったときは「フェイルオーバー」でセカンダリを昇格させ、失われるデータは同期の遅れ分に限られます。切り替え後は、新しいプライマリに新しいセカンダリを組ませて保護を戻します。同期の状況や遅れは CloudWatch のメトリクスで確認できます。</p>
+<p>利用には OpenSearch 3.7 以降が必要で、同じアカウント内のドメインが対象です(カスタマーマネージドの KMS キーで暗号化したドメインも可)。UltraWarm ストレージや OpenSearch Optimized インスタンス(OR1・OR2)を使うドメインは対象外です。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 854 202" style="max-width:854px;min-width:683px" role="img" aria-label="図1 2つのリージョンのドメインを組にして同期する"><defs><marker id="dgnews-2026-11-12-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="app">
+<rect x="34" y="89" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="113" text-anchor="middle" class="dg-t">アプリケーション</text>
+</g>
+<g data-node="pri">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="415" y="62" text-anchor="middle" class="dg-tb">プライマリ</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">ドメイン</text>
+</g>
+<g data-node="sec">
+<rect x="340" y="126" width="150" height="52" rx="8" class="dg-box"/>
+<text x="415" y="147" text-anchor="middle" class="dg-t">セカンダリ</text>
+<text x="415" y="165" text-anchor="middle" class="dg-s">ドメイン</text>
+</g>
+<g data-node="pro">
+<rect x="680" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="755" y="147" text-anchor="middle" class="dg-t">昇格して</text>
+<text x="755" y="165" text-anchor="middle" class="dg-s">新しいプライマリ</text>
+</g>
+<path d="M184.0,98.6 L340.0,76.9" class="dg-line" marker-end="url(#dgnews-2026-11-12-02-1)"/>
+<path d="M415.0,92.5 L415.0,125.5" class="dg-line" marker-end="url(#dgnews-2026-11-12-02-1)"/>
+<text x="415" y="113" text-anchor="middle" class="dg-s dg-halo">常時同期</text>
+<path d="M490.0,151.5 L680.0,151.5" class="dg-line" marker-end="url(#dgnews-2026-11-12-02-1)"/>
+<text x="585" y="156" text-anchor="middle" class="dg-s dg-halo">障害時 フェイルオーバー</text>
+</svg>
+</div>
+<figcaption>図1 2つのリージョンのドメインを組にして同期する</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>レプリケーションの仕組みを自分で作って運用する手間が要らなくなり、RPO・RTO の目標も明示されています。追加料金もありません。</dd>
+<dt>試験・実務への影響</dt><dd>DR 戦略の選択で、「リージョン間で常時同期する待機側を持つ」ウォームスタンバイに近い構成が検索・分析基盤でも手軽に取れます。料金はセカンダリのドメインとリージョン間のデータ転送が通常どおりかかります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/opensearch.html">OpenSearch Service</a>、<a href="../terms/dr-strategies.html">災害対策(DR)の戦略</a>、<a href="../terms/region-az.html">リージョンとAZ</a>、<a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/kms.html">KMS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-opensearch-service-managed-cross-region-disaster-recovery/">Amazon OpenSearch Service announces managed cross-Region disaster recovery</a>(2026-11-10)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-12-01.html"><span class="label">← 前へ 2026年11月12日</span>Network Firewall:次世代ファイアウォール(NGFW)ポリシー</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-12-03.html"><span class="label">次へ → 2026年11月12日</span>EKS Auto Mode:Podにセキュリティグループを適用</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
