@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cognito:ユーザープールのセッション管理 | 2026年11月13日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Cognito のユーザープールで、サインイン中のセッションを一覧して個別に取り消せるようになり、SSOセッションの有効時間も変えられます。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-13">2026年11月13日</time>のAWSニュース</p>
+  <h1>Cognito:ユーザープールのセッション管理</h1>
+  <p class="lead">Cognito のユーザープールで、サインイン中のセッションを一覧して個別に取り消せるようになり、SSOセッションの有効時間も変えられます。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-13">2026-11-13</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Amazon Cognito のユーザープールに、セッション管理の機能が加わりました。セッションには2種類あります。SSO セッションは、マネージドログイン経由でサインインしたときにできる、再認証なしでほかのアプリクライアントも使えるようにするものです。トークンセッションは、アプリクライアントにサインインしてトークンを受け取ったときにできるものです。新機能では、ユーザーごとのこの2種類の有効なセッションを、全端末・全アプリクライアントぶんまとめて一覧でき、必要に応じて取り消せます。各セッションには、種類、アプリクライアントID、端末の種類、最後に操作した時刻と場所、最初にサインインした時刻が入るので、自作の管理画面に使えます。個別の取り消し(関連するセッションごとも可)と、1ユーザーの全セッションを終了するグローバルサインアウトを使えます。ユーザーごとの有効なトークンセッションの上限数も設定できます。また、SSO セッションの再利用時間は、これまでの1時間固定から、アプリクライアントごとに設定できるようになりました。Essentials または Plus プランで使えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 116" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 セッションを見て、必要なものだけ終了する"><defs><marker id="dgnews-2026-11-13-03-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">セッションは見えない</text>
+</g>
+<g data-node="list">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="415" y="62" text-anchor="middle" class="dg-tb">セッションを一覧</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">端末・場所・時刻</text>
+</g>
+<g data-node="act">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="721" y="62" text-anchor="middle" class="dg-tb">個別に取り消し</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">またはグローバル</text>
+</g>
+<g data-node="ok">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-t">不審なセッションを</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">すぐ遮断</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-13-03-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-13-03-1)"/>
+<path d="M796.0,66.5 L952.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-13-03-1)"/>
+</svg>
+</div>
+<figcaption>図1 セッションを見て、必要なものだけ終了する</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>端末の紛失や不正利用の疑いがあるとき、そのセッションだけを止められます。SSO の有効時間を、アプリの安全性の要件に合わせて決められます。</dd>
+<dt>試験・実務への影響</dt><dd>Cognito は利用者(アプリのエンドユーザー)の認証に使い、AWS の操作権限を持つ IAM とは役割が違う点が試験でも問われます。セッションの取り消しは、トークンの有効期限を待たずに利用を止めたいときの手段になります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cognito.html">Cognito</a>、<a href="../services/iam.html">IAM</a>、<a href="../services/cloudformation.html">CloudFormation</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-cognito-session-management/">Amazon Cognito now supports user pool session management</a>(2026-11-11)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-13-02.html"><span class="label">← 前へ 2026年11月13日</span>Cloud WAN:フローログに対応</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-13-04.html"><span class="label">次へ → 2026年11月13日</span>Backup:EKSの復元でリソース修飾子に対応</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
