@@ -1,0 +1,24 @@
+<!-- title: Cloud WAN:フローログに対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Cloud WAN で、グローバルネットワーク全体の通信を1か所で記録できるフローログが使えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Cloud WAN は、複数のリージョン・VPC・オンプレミスをまとめて結ぶ広域ネットワークを管理するサービスです。今回、フローログ(通信1本ごとの送信元・宛先・ポート・通信量などの記録)に対応しました。これまでは、全体の通信を把握するために、多数の VPC・アカウント・リージョンのフローログを集めて突き合わせる必要があり、ログの閲覧のために別のチームへ依頼することもありました。今後は、コアネットワークを管理する側が、VPC 間、リージョン間、Direct Connect・Site-to-Site VPN・SD-WAN で接続したオンプレミスとの通信を、1つのまとまった記録として見られます。記録には IP アドレスやポート、プロトコル、通信量、パケット損失の数に加え、セグメント、リージョン、アタッチメントなど Cloud WAN 固有の情報が入ります。有効にする範囲は、コアネットワーク全体、1つのコアネットワークエッジ、個々のアタッチメントから選べ、出力先は CloudWatch Logs、S3、Amazon Data Firehose です。Cloud WAN 側の追加料金はなく、出力先の通常料金だけがかかります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "VPC・アカウントごとの" "ログを集めて突き合わせ"
+node cw 1.8 0 accent "Cloud WAN" "コアネットワークで" "フローログを有効化"
+node dst 3.6 0 blue "出力先" "CloudWatch Logs" "S3・Firehose"
+node ok 5.4 0 ok "全体の通信を" "1か所で確認"
+edge before cw "今回の発表"
+edge cw dst
+edge dst ok
+<figcaption>図1 広域ネットワークの通信記録を一元化する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>接続トラブルの調査、帯域の使われ方の把握、不審な通信の発見、監査用の記録の保管を、各 VPC のログを集めずに行えます。</dd>
+<dt>試験・実務への影響</dt><dd>通信の記録は「VPC フローログ」が基本ですが、Cloud WAN で全体をまとめて見たい場合は、この機能が選択肢になります。出力先ごとに保存料金が変わる点も押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../terms/vpc-flow-logs.html">VPCフローログ</a>、<a href="../services/vpc.html">VPC</a>、<a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../services/direct-connect.html">Direct Connect</a>、<a href="../services/site-to-site-vpn.html">Site-to-Site VPN</a>、<a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/s3.html">S3</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-cloud-wan-flow-logs/">AWS Cloud WAN now supports Flow Logs</a>(2026-11-11)</dd>
+</dl>
+</section>

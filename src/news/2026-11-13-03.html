@@ -1,0 +1,24 @@
+<!-- title: Cognito:ユーザープールのセッション管理 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Cognito のユーザープールで、サインイン中のセッションを一覧して個別に取り消せるようになり、SSOセッションの有効時間も変えられます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Amazon Cognito のユーザープールに、セッション管理の機能が加わりました。セッションには2種類あります。SSO セッションは、マネージドログイン経由でサインインしたときにできる、再認証なしでほかのアプリクライアントも使えるようにするものです。トークンセッションは、アプリクライアントにサインインしてトークンを受け取ったときにできるものです。新機能では、ユーザーごとのこの2種類の有効なセッションを、全端末・全アプリクライアントぶんまとめて一覧でき、必要に応じて取り消せます。各セッションには、種類、アプリクライアントID、端末の種類、最後に操作した時刻と場所、最初にサインインした時刻が入るので、自作の管理画面に使えます。個別の取り消し(関連するセッションごとも可)と、1ユーザーの全セッションを終了するグローバルサインアウトを使えます。ユーザーごとの有効なトークンセッションの上限数も設定できます。また、SSO セッションの再利用時間は、これまでの1時間固定から、アプリクライアントごとに設定できるようになりました。Essentials または Plus プランで使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "セッションは見えない" "SSOは1時間固定"
+node list 1.8 0 accent "セッションを一覧" "端末・場所・時刻"
+node act 3.6 0 accent "個別に取り消し" "またはグローバル" "サインアウト"
+node ok 5.4 0 ok "不審なセッションを" "すぐ遮断"
+edge before list "今回の発表"
+edge list act
+edge act ok
+<figcaption>図1 セッションを見て、必要なものだけ終了する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>端末の紛失や不正利用の疑いがあるとき、そのセッションだけを止められます。SSO の有効時間を、アプリの安全性の要件に合わせて決められます。</dd>
+<dt>試験・実務への影響</dt><dd>Cognito は利用者(アプリのエンドユーザー)の認証に使い、AWS の操作権限を持つ IAM とは役割が違う点が試験でも問われます。セッションの取り消しは、トークンの有効期限を待たずに利用を止めたいときの手段になります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cognito.html">Cognito</a>、<a href="../services/iam.html">IAM</a>、<a href="../services/cloudformation.html">CloudFormation</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-cognito-session-management/">Amazon Cognito now supports user pool session management</a>(2026-11-11)</dd>
+</dl>
+</section>

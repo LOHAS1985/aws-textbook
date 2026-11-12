@@ -1,0 +1,24 @@
+<!-- title: Backup:EKSの復元でリソース修飾子に対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: AWS Backup の EKS 復元で、復元時に Kubernetes のリソースを自動で書き換える「リソース修飾子」が使えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Backup で取った Amazon EKS のバックアップを、別のアカウントや別のリージョンへ復元すると、復元されたクラスターに元の環境にひもづいた情報が残ることがあります。例えば IAM ロール、データベースのエンドポイント、ECR(コンテナイメージの保管場所)のレジストリ URL などです。これまでは、復元のたびにそれらを探して手作業で直す必要があり、時間がかかり、ミスも起きやすい作業でした。今回追加されたリソース修飾子は、Kubernetes のリソースを復元時に変換するルールを YAML ファイルで1回書いておくと、AWS Backup が復元の一部として自動で適用してくれる機能です。クロスアカウント・クロスリージョンのディザスタリカバリ(DR)の手順を確実にできます。商用リージョンと AWS GovCloud (US) で使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node bk 0 0 blue "EKSの" "バックアップ" "(別アカウント・別リージョン)"
+node rule 1.8 0 accent "リソース修飾子" "YAMLの変換ルール"
+node rs 3.6 0 accent "復元" "ロール・DB先・" "ECR URLを書き換え"
+node ok 5.4 0 ok "手作業なしで" "移行先に合う"
+edge bk rule
+edge rule rs "復元時に適用"
+edge rs ok
+<figcaption>図1 復元の途中で移行先に合わせて自動変換する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>復元後の修正漏れによる障害を減らし、DR の訓練や本番での復旧を同じ手順で素早く行えます。</dd>
+<dt>試験・実務への影響</dt><dd>バックアップを別リージョン・別アカウントへコピーする構成は、信頼性・事業継続の定番です。「復元してからが本番」という視点で、環境差分の吸収まで含めて手順を設計します。</dd>
+<dt>関連するページ</dt><dd><a href="../services/backup.html">Backup</a>、<a href="../services/eks.html">EKS</a>、<a href="../terms/dr-strategies.html">ディザスタリカバリの戦略</a>、<a href="../services/iam.html">IAM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-backup-resource-modifiers-eks/">AWS Backup now supports resource modifiers for Amazon EKS restores</a>(2026-11-12)</dd>
+</dl>
+</section>

@@ -1,0 +1,24 @@
+<!-- title: Route 53 Domains:期限切れ・削除したドメインを自分で復元 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Route 53 Domains で、期限切れや削除したドメインを AWS サポートへの依頼なしに、利用者が自分で復元できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Amazon Route 53 Domains は、ドメイン名の登録・更新を行うサービスです。更新を忘れたり、支払い方法の期限が切れたり、誤って削除したりしたドメインは、これまでは AWS サポートへ依頼しないと復元できませんでした。今回から、Route 53 のコンソール、AWS CLI、AWS SDK から自分で復元できます。手順は、ドメイン名を入力し、表示される復元の料金を確認して承諾し、リクエストを送るだけです。Route 53 が TLD(.com などのドメインの末尾)を管理するレジストリと連携して登録を復活させ、ドメインをアカウントへ戻します。復元できる期間はレジストリごとに決まっていて、期間を過ぎると復元できません。復元の料金は、通常の登録や更新より高くなるのが一般的です。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "AWSサポートへ" "復元を依頼"
+node user 1.8 0 blue "利用者" "ドメイン名を入力" "料金を承諾"
+node reg 3.6 0 accent "Route 53" "レジストリと連携" "登録を復活"
+node done 5.4 0 ok "ドメインが戻る" "Webやメールも復旧"
+edge before user "今回の発表"
+edge user reg
+edge reg done
+<figcaption>図1 ドメインの復元が自分の操作で完了する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>更新の失敗で Web サイトやメールが止まったとき、サポートの返事を待たずにすぐ復旧を始められます。</dd>
+<dt>試験・実務への影響</dt><dd>復元できる期間はレジストリごとに異なり、料金も高くなるため、やはり自動更新を有効にして期限切れを防ぐのが基本です。更新の失敗は CloudWatch などの通知で早く気づける仕組みも組み合わせます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/route53.html">Route 53</a>、<a href="../terms/dns.html">DNS</a>、<a href="../terms/dns-record-types.html">DNSレコードの種類</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/route-53-domains-self-service-restore/">Amazon Route 53 Domains now supports self-service restore for expired and deleted domains</a>(2026-11-12)</dd>
+</dl>
+</section>

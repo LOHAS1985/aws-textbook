@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backup:EKSの復元でリソース修飾子に対応 | 2026年11月13日のAWSニュース | AWS教科書</title>
+<meta name="description" content="AWS Backup の EKS 復元で、復元時に Kubernetes のリソースを自動で書き換える「リソース修飾子」が使えるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-13">2026年11月13日</time>のAWSニュース</p>
+  <h1>Backup:EKSの復元でリソース修飾子に対応</h1>
+  <p class="lead">AWS Backup の EKS 復元で、復元時に Kubernetes のリソースを自動で書き換える「リソース修飾子」が使えるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-13">2026-11-13</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS Backup で取った Amazon EKS のバックアップを、別のアカウントや別のリージョンへ復元すると、復元されたクラスターに元の環境にひもづいた情報が残ることがあります。例えば IAM ロール、データベースのエンドポイント、ECR(コンテナイメージの保管場所)のレジストリ URL などです。これまでは、復元のたびにそれらを探して手作業で直す必要があり、時間がかかり、ミスも起きやすい作業でした。今回追加されたリソース修飾子は、Kubernetes のリソースを復元時に変換するルールを YAML ファイルで1回書いておくと、AWS Backup が復元の一部として自動で適用してくれる機能です。クロスアカウント・クロスリージョンのディザスタリカバリ(DR)の手順を確実にできます。商用リージョンと AWS GovCloud (US) で使えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 116" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 復元の途中で移行先に合わせて自動変換する"><defs><marker id="dgnews-2026-11-13-04-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="bk">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">EKSの</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">バックアップ</text>
+</g>
+<g data-node="rule">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="415" y="62" text-anchor="middle" class="dg-tb">リソース修飾子</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">YAMLの変換ルール</text>
+</g>
+<g data-node="rs">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="721" y="62" text-anchor="middle" class="dg-tb">復元</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">ロール・DB先・</text>
+</g>
+<g data-node="ok">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-t">手作業なしで</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">移行先に合う</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-13-04-1)"/>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-13-04-1)"/>
+<text x="568" y="70" text-anchor="middle" class="dg-s dg-halo">復元時に適用</text>
+<path d="M796.0,66.5 L952.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-13-04-1)"/>
+</svg>
+</div>
+<figcaption>図1 復元の途中で移行先に合わせて自動変換する</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>復元後の修正漏れによる障害を減らし、DR の訓練や本番での復旧を同じ手順で素早く行えます。</dd>
+<dt>試験・実務への影響</dt><dd>バックアップを別リージョン・別アカウントへコピーする構成は、信頼性・事業継続の定番です。「復元してからが本番」という視点で、環境差分の吸収まで含めて手順を設計します。</dd>
+<dt>関連するページ</dt><dd><a href="../services/backup.html">Backup</a>、<a href="../services/eks.html">EKS</a>、<a href="../terms/dr-strategies.html">ディザスタリカバリの戦略</a>、<a href="../services/iam.html">IAM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-backup-resource-modifiers-eks/">AWS Backup now supports resource modifiers for Amazon EKS restores</a>(2026-11-12)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-13-03.html"><span class="label">← 前へ 2026年11月13日</span>Cognito:ユーザープールのセッション管理</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-13-05.html"><span class="label">次へ → 2026年11月13日</span>Lambda MicroVMs:x86アーキテクチャに対応</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
