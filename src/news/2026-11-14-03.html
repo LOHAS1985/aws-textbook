@@ -1,0 +1,26 @@
+<!-- title: Security Hub CSPM:Organizations の宣言型ポリシーで一元設定 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Security Hub CSPM を、Organizations の宣言型ポリシーで組織全体にまとめて有効化・設定できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Security Hub CSPM は、AWS の設定がセキュリティの基準に沿っているかを自動で点検するサービスです。今回、AWS Organizations の宣言型ポリシー(あるべき設定を宣言すると、組織内のアカウントがその状態に保たれるポリシー)に対応しました。組織内のすべてのアカウント・リージョンで Security Hub CSPM を有効にし、どのセキュリティ基準・コントロールを使うかを定義できます。全体に適用することも、特定のアカウントとリージョンの組み合わせに絞ることもできます。</p>
+<p>各アカウントの設定がポリシーと食い違う状態(設定のずれ)を防ぎ、新しく作られたアカウントにも自動で適用されます。宣言型ポリシーは、組織全体で管理する方法として推奨されるようになり、GuardDuty や Inspector などとそろった管理方法です。従来の中央設定も、移行する準備ができるまで使えます。移行するときは、コンソールの移行機能が既存の中央設定ポリシーを宣言型ポリシーに変換して適用します。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node org 0 0 accent "Organizations" "宣言型ポリシーを" "組織に付ける"
+node a1 1.8 0 ok "既存アカウント" "設定をポリシーに維持"
+node a2 3.6 0 ok "新しいアカウント" "作成時に基準を適用"
+node hub 5.4 0 blue "CSPM" "全アカウントで" "有効"
+edge org a1
+edge org a2
+edge a1 hub
+edge a2 hub
+<figcaption>図1 ポリシー1つで組織全体の設定をそろえる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アカウントごとの個別設定が要らなくなり、設定のずれや有効化の漏れを防げます。リージョンごとの設定も柔軟に変えられます。</dd>
+<dt>試験・実務への影響</dt><dd>マルチアカウントでのセキュリティ運用では、Organizations によるポリシーベースの一元管理が基本になっています。従来の中央設定との違いも押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/security-hub.html">Security Hub</a>、<a href="../services/organizations.html">Organizations</a>、<a href="../services/guardduty.html">GuardDuty</a>、<a href="../services/inspector.html">Inspector</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/security-hub-cspm-org-policies/">AWS Security Hub CSPM now supports centralized configuration with AWS Organizations declarative policies</a>(2026-11-13)</dd>
+</dl>
+</section>

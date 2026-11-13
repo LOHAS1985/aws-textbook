@@ -1,0 +1,23 @@
+<!-- title: Backup:論理的にエアギャップしたボールトでEBSスナップショットアーカイブに対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: 論理的にエアギャップしたボールトのEBSバックアップを、低コストのスナップショットアーカイブへ移せるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Backup の論理的にエアギャップしたボールトは、バックアップを変更できない状態でロックし、アカウントや組織をまたいで安全に共有でき、そのまま復元もできるボールトです。今回、このボールトにある EBS のバックアップを、めったに読まないスナップショット向けの低コストな階層である EBS スナップショットアーカイブへ移せるようになりました。</p>
+<p>設定は、月に1回以下の頻度で動くバックアッププランのルールで、論理的にエアギャップしたボールトをバックアップ先またはコピー先に指定し、ライフサイクルで「EBS スナップショットをアーカイブ」を有効にして、通常の保管場所に置く期間を決めるだけです。長期保管や法令対応の要件を、低い保管料金で満たせます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node plan 0 0 blue "バックアッププラン" "月1回以下の" "ルール"
+node vault 1.8 0 accent "エアギャップ" "ボールト" "変更不可"
+node arc 3.6 0 ok "スナップショット" "アーカイブ" "低コストで長期保管"
+edge plan vault "保存"
+edge vault arc "期間後に移行"
+<figcaption>図1 ロックしたバックアップを低コストで長期保管する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>ランサムウェア対策になる変更不可の保管と、長期保管のコスト削減を両立できます。</dd>
+<dt>試験・実務への影響</dt><dd>バックアップの保管期間・コスト・改ざん対策を比べる問題で、ボールトロックやアーカイブ階層とあわせて整理しておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/backup.html">Backup</a>、<a href="../services/ebs.html">EBS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-backup-lag-vault-ebs-archive/">AWS Backup adds logically air-gapped vault support for Amazon EBS Snapshots Archive</a>(2026-11-12)</dd>
+</dl>
+</section>

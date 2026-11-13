@@ -1,0 +1,25 @@
+<!-- title: Route 53:レコードセットの保護に対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Route 53 で、重要な DNS レコードを誤って変更できないように、ホストゾーン側で保護できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Amazon Route 53 のレコードセット保護は、ゾーンの頂点(ドメイン名そのもの)のレコードや MX レコード(メールの配送先)、本番の接続先など、変更されると困るレコードを保護する機能です。保護したレコードへの変更は、権限のある人が保護を外すまで拒否されます。</p>
+<p>これまで同じことをするには、ホストゾーンを変更できるすべてのユーザー・ロールの IAM ポリシーにレコード単位の条件を書く必要があり、変更が拒否されても、保護が原因かどうかが呼び出し側に分かりませんでした。今回は、名前とタイプを指定してホストゾーンに保護を付けるだけです。1つの保護は、同じ名前・タイプのレコード(識別子違いや、加重・レイテンシーなどのルーティングポリシーのレコード)をまとめて守ります。レコードがまだ存在しない段階で保護を作り、作成そのものを防ぐこともできます。保護には256文字までのコメントで理由を残せます。保護を外せる人は、IAM で DeleteResourceRecordSetProtections の権限を絞って制御します。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "全員のIAMポリシーに" "条件を書いて制限"
+node prot 1.8 0 accent "レコードセット保護" "名前とタイプを指定して" "ホストゾーンで保護"
+node ng 3.6 0 ng "変更はブロック" "誤操作を防ぐ"
+node ok 5.4 0 ok "保護の解除" "権限のある人だけ"
+edge before prot "今回の発表"
+edge prot ng
+edge prot ok "権限を絞る"
+<figcaption>図1 ホストゾーン側で重要なレコードを守る</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>全員のポリシーを直さなくても、重要なレコードの誤変更・誤削除を防げます。理由のコメントも残せます。</dd>
+<dt>試験・実務への影響</dt><dd>DNS の誤設定による障害の予防策として、IAM の権限制御とあわせて説明できるようにしておくと役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/route53.html">Route 53</a>、<a href="../services/iam.html">IAM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-route-53-record-set-protection/">Amazon Route 53 now supports record set protection</a>(2026-11-12)</dd>
+</dl>
+</section>

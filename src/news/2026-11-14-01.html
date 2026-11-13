@@ -1,0 +1,25 @@
+<!-- title: Secrets Manager:アカウントをまたぐレプリケーションに対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Secrets Manager のシークレットを、別の AWS アカウントへ自動で複製できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Secrets Manager は、パスワードや API キーなどの秘密情報(シークレット)を安全に保管し、ローテーション(定期的な更新)も自動化するサービスです。これまでもリージョンをまたぐ複製はできましたが、今回、アカウントをまたぐレプリケーションに対応しました。元のシークレット(プライマリ)を持つアカウントとは別のアカウントに、同じ内容のコピー(レプリカ)を作り、値が変わるたび(ローテーションを含む)自動で同期されます。</p>
+<p>レプリカは独立したリソースで、レプリカ側のアカウントが持つカスタマー管理の KMS キーで暗号化されます。そのため、KMS キーの共有や、アカウント間のシークレットポリシーの設定は要りません。セキュリティ担当のアカウントで一元的にシークレットを管理しつつ、利用側の各アカウントはすぐ近くのコピーを読めます。また、ランサムウェアやアカウント侵害に備え、復旧専用の別アカウントに最新のコピーを置く使い方もできます。必要ならレプリカを単独のシークレットに昇格できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "KMSキーとポリシーを" "共有して参照"
+node pri 1.8 0 accent "プライマリ" "管理アカウントの" "シークレット"
+node rep 3.6 0 ok "レプリカ" "別アカウントで" "独自のKMSキーで暗号化"
+node app 5.4 0 blue "利用側の" "アプリケーション"
+edge before pri "今回の発表"
+edge pri rep "自動で同期"
+edge rep app "ローカルで読み取り"
+<figcaption>図1 シークレットを別アカウントへ自動で複製する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>鍵やポリシーをアカウント間で共有せずに、最新のシークレットを各アカウントへ配れます。復旧用の隔離アカウントへのバックアップにも使えます。</dd>
+<dt>試験・実務への影響</dt><dd>「リージョン間の複製」に加え「アカウント間の複製」が選択肢になりました。マルチアカウント構成での機密情報の配布や、事業継続の設計で押さえておきたい機能です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/secrets-manager.html">Secrets Manager</a>、<a href="../services/kms.html">KMS</a>、<a href="../services/organizations.html">Organizations</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/secrets-manager-cross-account/">AWS Secrets Manager now supports cross-account replication</a>(2026-11-13)</dd>
+</dl>
+</section>
