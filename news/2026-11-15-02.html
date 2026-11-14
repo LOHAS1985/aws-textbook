@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aurora PostgreSQL:express configuration を CloudFormation で作成可能に | 2026年11月15日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Aurora PostgreSQL の express configuration(数秒で作れる簡易構成)を、CloudFormation のテンプレートから1つの項目で作れるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-15">2026年11月15日</time>のAWSニュース</p>
+  <h1>Aurora PostgreSQL:express configuration を CloudFormation で作成可能に</h1>
+  <p class="lead">Aurora PostgreSQL の express configuration(数秒で作れる簡易構成)を、CloudFormation のテンプレートから1つの項目で作れるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-15">2026-11-15</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Aurora PostgreSQL の express configuration は、サーバーレスのデータベースを数秒で作って、すぐに使い始められる作成方法です。今回、これを AWS CloudFormation(テンプレートでインフラを自動作成するサービス)から使えるようになりました。</p>
+<p>AWS::RDS::DBCluster リソースに、作成時だけ指定できる withExpressConfiguration というプロパティが加わりました。これを指定すると、クラスターと最初のDBインスタンスが一度に作られます。これまでのようにインスタンスを別のリソースとして書いて管理する必要がなく、テンプレートが短くなります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 820 116" style="max-width:820px;min-width:656px" role="img" aria-label="図1 テンプレートの記述が1つにまとまる"><defs><marker id="dgnews-2026-11-15-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">クラスターと</text>
+</g>
+<g data-node="after">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="415" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">1つの指定で</text>
+</g>
+<g data-node="db">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="721" y="62" text-anchor="middle" class="dg-tb">Aurora</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">PostgreSQL</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-15-02-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-15-02-1)"/>
+<text x="568" y="70" text-anchor="middle" class="dg-s dg-halo">CloudFormation で作成</text>
+</svg>
+</div>
+<figcaption>図1 テンプレートの記述が1つにまとまる</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>手早く作れる express configuration を、コンソールだけでなくコードで繰り返し再現できます。テンプレートも単純になります。</dd>
+<dt>試験・実務への影響</dt><dd>データベースを手作業ではなくテンプレートで作るのは、運用の基本です。Aurora もCloudFormationで構築できる、という流れで押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/aurora.html">Aurora</a>、<a href="../services/cloudformation.html">CloudFormation</a>、<a href="../services/rds.html">RDS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aurora-postgresql-cloudformation/">Aurora PostgreSQL with express configuration now supported in CloudFormation</a>(2026-11-13)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-15-01.html"><span class="label">← 前へ 2026年11月15日</span>Systems Manager:Google Cloud の VM を簡単に接続(Cloud Connector)</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-15-03.html"><span class="label">次へ → 2026年11月15日</span>Batch:EKS のジョブで Linux capabilities・seccomp・Pod 単位の設定に対応</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

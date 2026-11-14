@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Systems Manager:Google Cloud の VM を簡単に接続(Cloud Connector) | 2026年11月15日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Systems Manager の Cloud Connector が Google Cloud に対応し、Google Cloud の VM へ SSM Agent をまとめて配布して一元管理できるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-15">2026年11月15日</time>のAWSニュース</p>
+  <h1>Systems Manager:Google Cloud の VM を簡単に接続(Cloud Connector)</h1>
+  <p class="lead">Systems Manager の Cloud Connector が Google Cloud に対応し、Google Cloud の VM へ SSM Agent をまとめて配布して一元管理できるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-15">2026-11-15</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS Systems Manager は、サーバーの管理(コマンド実行、パッチ適用、構成の維持など)を一か所から行うサービスです。管理したいサーバーには SSM Agent(管理用の常駐プログラム)を入れる必要があります。Cloud Connector は、AWS 以外のクラウドにあるサーバーを Systems Manager につなぐ機能で、これまで Azure に対応していました。今回、Google Cloud の仮想マシン(VM)にも対応しました。</p>
+<p>Google Cloud 側の VM へ、SSM Agent を手作業で入れて回る必要がありません。多数の VM へ自動で配布できます。つないだ VM は、EC2 インスタンスやオンプレミスのサーバーと同じ一覧に並び、Session Manager(ブラウザーからの接続)、Run Command、Patch Manager などを同じ手順で使えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 116" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 Google Cloud の VM を Systems Manager で一元管理する流れ"><defs><marker id="dgnews-2026-11-15-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">クラウドごとに</text>
+</g>
+<g data-node="gcp">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="415" y="62" text-anchor="middle" class="dg-t">Google Cloud</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">の VM</text>
+</g>
+<g data-node="cc">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="721" y="62" text-anchor="middle" class="dg-tb">Cloud Connector</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">SSM Agent を</text>
+</g>
+<g data-node="ssm">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-t">Systems Manager</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">EC2・Azure等と</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-15-01-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-15-01-1)"/>
+<text x="568" y="70" text-anchor="middle" class="dg-s dg-halo">接続</text>
+<path d="M796.0,66.5 L952.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-15-01-1)"/>
+<text x="874" y="70" text-anchor="middle" class="dg-s dg-halo">一元管理</text>
+</svg>
+</div>
+<figcaption>図1 Google Cloud の VM を Systems Manager で一元管理する流れ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>複数のクラウドを使っていても、パッチ適用や作業の自動化を同じ方法でそろえられ、運用の手間が減ります。</dd>
+<dt>試験・実務への影響</dt><dd>Systems Manager は、AWS だけでなくオンプレミスや他クラウドのサーバーも管理できる、というのが運用の定番の出題ポイントです。対象が Google Cloud まで広がったと押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/systems-manager.html">Systems Manager</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/systems-manager-google-cloud-support/">AWS Systems Manager simplifies onboarding of Google Cloud VMs for centralized management</a>(2026-11-13)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-15-02.html"><span class="label">次へ → 2026年11月15日</span>Aurora PostgreSQL:express configuration を CloudFormation で作成可能に</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
