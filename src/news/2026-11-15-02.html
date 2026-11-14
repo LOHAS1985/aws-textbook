@@ -1,0 +1,23 @@
+<!-- title: Aurora PostgreSQL:express configuration を CloudFormation で作成可能に -->
+<!-- category: 2026年11月 -->
+<!-- lead: Aurora PostgreSQL の express configuration(数秒で作れる簡易構成)を、CloudFormation のテンプレートから1つの項目で作れるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Aurora PostgreSQL の express configuration は、サーバーレスのデータベースを数秒で作って、すぐに使い始められる作成方法です。今回、これを AWS CloudFormation(テンプレートでインフラを自動作成するサービス)から使えるようになりました。</p>
+<p>AWS::RDS::DBCluster リソースに、作成時だけ指定できる withExpressConfiguration というプロパティが加わりました。これを指定すると、クラスターと最初のDBインスタンスが一度に作られます。これまでのようにインスタンスを別のリソースとして書いて管理する必要がなく、テンプレートが短くなります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "クラスターと" "インスタンスを別々に記述"
+node after 1.8 0 ok "これから" "1つの指定で" "両方作成"
+node db 3.6 0 accent "Aurora" "PostgreSQL" "サーバーレス"
+edge before after "今回の発表"
+edge after db "CloudFormation で作成"
+<figcaption>図1 テンプレートの記述が1つにまとまる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>手早く作れる express configuration を、コンソールだけでなくコードで繰り返し再現できます。テンプレートも単純になります。</dd>
+<dt>試験・実務への影響</dt><dd>データベースを手作業ではなくテンプレートで作るのは、運用の基本です。Aurora もCloudFormationで構築できる、という流れで押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/aurora.html">Aurora</a>、<a href="../services/cloudformation.html">CloudFormation</a>、<a href="../services/rds.html">RDS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aurora-postgresql-cloudformation/">Aurora PostgreSQL with express configuration now supported in CloudFormation</a>(2026-11-13)</dd>
+</dl>
+</section>

@@ -1,0 +1,25 @@
+<!-- title: Systems Manager:Google Cloud の VM を簡単に接続(Cloud Connector) -->
+<!-- category: 2026年11月 -->
+<!-- lead: Systems Manager の Cloud Connector が Google Cloud に対応し、Google Cloud の VM へ SSM Agent をまとめて配布して一元管理できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Systems Manager は、サーバーの管理(コマンド実行、パッチ適用、構成の維持など)を一か所から行うサービスです。管理したいサーバーには SSM Agent(管理用の常駐プログラム)を入れる必要があります。Cloud Connector は、AWS 以外のクラウドにあるサーバーを Systems Manager につなぐ機能で、これまで Azure に対応していました。今回、Google Cloud の仮想マシン(VM)にも対応しました。</p>
+<p>Google Cloud 側の VM へ、SSM Agent を手作業で入れて回る必要がありません。多数の VM へ自動で配布できます。つないだ VM は、EC2 インスタンスやオンプレミスのサーバーと同じ一覧に並び、Session Manager(ブラウザーからの接続)、Run Command、Patch Manager などを同じ手順で使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "クラウドごとに" "別々に設定・管理"
+node gcp 1.8 0 blue "Google Cloud" "の VM"
+node cc 3.6 0 accent "Cloud Connector" "SSM Agent を" "自動で配布"
+node ssm 5.4 0 ok "Systems Manager" "EC2・Azure等と" "同じ画面で管理"
+edge before gcp "今回の発表"
+edge gcp cc "接続"
+edge cc ssm "一元管理"
+<figcaption>図1 Google Cloud の VM を Systems Manager で一元管理する流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>複数のクラウドを使っていても、パッチ適用や作業の自動化を同じ方法でそろえられ、運用の手間が減ります。</dd>
+<dt>試験・実務への影響</dt><dd>Systems Manager は、AWS だけでなくオンプレミスや他クラウドのサーバーも管理できる、というのが運用の定番の出題ポイントです。対象が Google Cloud まで広がったと押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/systems-manager.html">Systems Manager</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/systems-manager-google-cloud-support/">AWS Systems Manager simplifies onboarding of Google Cloud VMs for centralized management</a>(2026-11-13)</dd>
+</dl>
+</section>
