@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPC・Transit Gateway・Cloud WAN:リージョン間通信に99.999%のSLA | 2026年11月18日のAWSニュース | AWS教科書</title>
+<meta name="description" content="VPC のリージョン間ピアリング、Transit Gateway、Cloud WAN で、新機能 Multipath Resilience を使うとリージョン間通信に99.999%の可用性 SLA が適用されます。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-18">2026年11月18日</time>のAWSニュース</p>
+  <h1>VPC・Transit Gateway・Cloud WAN:リージョン間通信に99.999%のSLA</h1>
+  <p class="lead">VPC のリージョン間ピアリング、Transit Gateway、Cloud WAN で、新機能 Multipath Resilience を使うとリージョン間通信に99.999%の可用性 SLA が適用されます。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-18">2026-11-18</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS のバックボーン(AWS 内部の高速な通信網)は、リージョン同士を物理的に別ルートの光ファイバーでつないでいます。経路が切れても、自動で健全な経路へ数秒以内に切り替わります。ただし、経路の一部だけが劣化した場合などは、復旧まで数分かかることがありました。</p>
+<p>新機能 Multipath Resilience(複数の経路を使って耐障害性を高める機能)を有効にすると、VPC のリージョン間ピアリング、AWS Transit Gateway、AWS Cloud WAN を通るリージョン間の通信に、99.999%の可用性を保証する SLA(サービスレベルアグリーメント。AWS が約束する稼働率)が適用されます。決済処理や金融取引、電話、ライブ配信のように、数秒の途切れも許されないシステムが対象です。これまでは、アプリケーション側で接続を分けたり、各リージョンにデータを複製したりして対処していました。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 116" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 Multipath Resilience でリージョン間通信の可用性を高める流れ"><defs><marker id="dgnews-2026-11-18-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">経路の劣化で</text>
+</g>
+<g data-node="app">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="415" y="62" text-anchor="middle" class="dg-t">リージョン間の</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">通信</text>
+</g>
+<g data-node="mp">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="721" y="62" text-anchor="middle" class="dg-tb">Multipath</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">Resilience</text>
+</g>
+<g data-node="sla">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-t">99.999% SLA</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">数秒の途切れも</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-18-01-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-18-01-1)"/>
+<text x="568" y="70" text-anchor="middle" class="dg-s dg-halo">有効にする</text>
+<path d="M796.0,66.5 L952.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-18-01-1)"/>
+<text x="874" y="70" text-anchor="middle" class="dg-s dg-halo">保証</text>
+</svg>
+</div>
+<figcaption>図1 Multipath Resilience でリージョン間通信の可用性を高める流れ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>アプリケーションを作り替えずに、リージョン間通信の信頼性を設定だけで高められます。</dd>
+<dt>試験・実務への影響</dt><dd>信頼性・事業継続の分野では、複数リージョンの構成とネットワークの冗長化が定番の題材です。リージョン間をつなぐ手段として、ピアリング・Transit Gateway・Cloud WAN の3つがあり、いずれも対象になると押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/vpc.html">VPC</a>、<a href="../services/transit-gateway.html">Transit Gateway</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/vpc-tgw-cloudwan-99999-sla/">Amazon VPC, AWS Transit Gateway, and AWS Cloud WAN now offer a 99.999% availability SLA for cross-Region traffic</a>(2026-11-17)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-18-02.html"><span class="label">次へ → 2026年11月18日</span>IAM:Access Troubleshooter でアクセス拒否の原因を調べる</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
