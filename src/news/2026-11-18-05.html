@@ -1,0 +1,25 @@
+<!-- title: AWS Backup:RDS が論理的エアギャップ vault に対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: AWS Backup の論理的エアギャップ vault が Amazon RDS の DB インスタンスに対応し、改ざんできない隔離されたバックアップを作れます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>論理的エアギャップ vault は、AWS Backup でバックアップを入れる特別な保管場所(vault)です。ロックされたままの変更できないバックアップを、元のアカウントから論理的に隔離して保管します。誤操作やランサムウェア、アカウントの乗っ取りでバックアップごと消されることを防げます。以前から対応していたリソースに加え、今回 RDS の DB インスタンスも対象になりました。</p>
+<p>バックアッププランで、同じリージョンの論理的エアギャップ vault をコピー先に指定します。vault は RAM で他のアカウントと共有でき、共有先から直接リストアも始められるので、障害時の復旧が早くなります。アカウントの侵害に備え、マルチパーティ承認も使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node rds 0 0 blue "RDS" "DB インスタンス"
+node plan 1.8 0 accent "バックアップ" "プラン" "コピー先に指定"
+node vault 3.6 0 ok "エアギャップ" "vault" "変更できない"
+node other 5.4 0 box "別アカウント" "共有して" "直接リストア"
+edge rds plan "対象にする"
+edge plan vault "コピー"
+edge vault other "RAM で共有"
+<figcaption>図1 RDS のバックアップを隔離して保管し、復旧に使う流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>ランサムウェアやアカウントの侵害からデータベースのバックアップを守り、安全に復旧できます。</dd>
+<dt>試験・実務への影響</dt><dd>信頼性・事業継続では、バックアップの保護(Vault Lock、クロスアカウント、クロスリージョン)が出題されます。RDS も論理的エアギャップ vault で守れると押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/backup.html">Backup</a>、<a href="../services/rds.html">RDS</a>、<a href="../services/ram.html">RAM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-backup-air-gapped-vault-rds/">AWS Backup adds logically air-gapped vault support for Amazon RDS</a>(2026-11-16)</dd>
+</dl>
+</section>

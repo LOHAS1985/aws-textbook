@@ -1,0 +1,25 @@
+<!-- title: VPC・Transit Gateway・Cloud WAN:リージョン間通信に99.999%のSLA -->
+<!-- category: 2026年11月 -->
+<!-- lead: VPC のリージョン間ピアリング、Transit Gateway、Cloud WAN で、新機能 Multipath Resilience を使うとリージョン間通信に99.999%の可用性 SLA が適用されます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS のバックボーン(AWS 内部の高速な通信網)は、リージョン同士を物理的に別ルートの光ファイバーでつないでいます。経路が切れても、自動で健全な経路へ数秒以内に切り替わります。ただし、経路の一部だけが劣化した場合などは、復旧まで数分かかることがありました。</p>
+<p>新機能 Multipath Resilience(複数の経路を使って耐障害性を高める機能)を有効にすると、VPC のリージョン間ピアリング、AWS Transit Gateway、AWS Cloud WAN を通るリージョン間の通信に、99.999%の可用性を保証する SLA(サービスレベルアグリーメント。AWS が約束する稼働率)が適用されます。決済処理や金融取引、電話、ライブ配信のように、数秒の途切れも許されないシステムが対象です。これまでは、アプリケーション側で接続を分けたり、各リージョンにデータを複製したりして対処していました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "経路の劣化で" "数分途切れることも"
+node app 1.8 0 blue "リージョン間の" "通信"
+node mp 3.6 0 accent "Multipath" "Resilience" "複数経路を活用"
+node sla 5.4 0 ok "99.999% SLA" "数秒の途切れも" "抑える"
+edge before app "今回の発表"
+edge app mp "有効にする"
+edge mp sla "保証"
+<figcaption>図1 Multipath Resilience でリージョン間通信の可用性を高める流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>アプリケーションを作り替えずに、リージョン間通信の信頼性を設定だけで高められます。</dd>
+<dt>試験・実務への影響</dt><dd>信頼性・事業継続の分野では、複数リージョンの構成とネットワークの冗長化が定番の題材です。リージョン間をつなぐ手段として、ピアリング・Transit Gateway・Cloud WAN の3つがあり、いずれも対象になると押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/vpc.html">VPC</a>、<a href="../services/transit-gateway.html">Transit Gateway</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/vpc-tgw-cloudwan-99999-sla/">Amazon VPC, AWS Transit Gateway, and AWS Cloud WAN now offer a 99.999% availability SLA for cross-Region traffic</a>(2026-11-17)</dd>
+</dl>
+</section>

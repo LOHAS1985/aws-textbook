@@ -1,0 +1,25 @@
+<!-- title: IAM:Access Troubleshooter でアクセス拒否の原因を調べる -->
+<!-- category: 2026年11月 -->
+<!-- lead: アクセス拒否のエラーに付く識別子から、評価されたポリシーや認可の状況を確認できる IAM の新機能 Access Troubleshooter が発表されました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>「Access Denied(アクセス拒否)」は、AWS の運用で最もよく出会うエラーの1つです。これまでは、エラーに出る拒否したポリシーの ARN(リソースの識別名)だけが手がかりで、他にどのポリシーが評価されたか、どんな条件で判定されたかは分からず、試行錯誤になりがちでした。</p>
+<p>Access Troubleshooter では、対応するサービスや API のアクセス拒否メッセージに一意の識別子が付きます。この識別子を使うと、そのリクエストで評価されたポリシー、リクエストの認可コンテキスト(誰が、どの操作を、どんな条件で行ったかという情報)、評価の結果を取得できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "拒否したポリシーの" "ARN だけが手がかり"
+node err 1.8 0 ng "Access Denied" "識別子つきの" "エラー"
+node ts 3.6 0 accent "Access" "Troubleshooter" "評価の詳細を取得"
+node fix 5.4 0 ok "原因を特定" "ポリシーを修正"
+edge before err "今回の発表"
+edge err ts "識別子を使う"
+edge ts fix "分析"
+<figcaption>図1 識別子から拒否の原因をたどる流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>拒否の原因を、複数のポリシーや条件をまたいで素早く突き止められ、権限の修正にかかる時間が短くなります。</dd>
+<dt>試験・実務への影響</dt><dd>ポリシーの評価では、明示的な拒否が優先されることや、SCP・権限境界・セッションポリシーも判定に関わることが出題されます。原因調査の手段が増えたと押さえておきましょう。対応するサービスは限られるため、利用前にドキュメントで確認が必要です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/iam.html">IAM</a>、<a href="../services/cloudtrail.html">CloudTrail</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/iam-access-troubleshooter/">AWS IAM announces Access Troubleshooter to debug access denied errors</a>(2026-11-17)</dd>
+</dl>
+</section>

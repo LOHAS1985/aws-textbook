@@ -1,0 +1,25 @@
+<!-- title: API Gateway:REST API が JWT オーソライザーに対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: API Gateway の REST API に、コードを書かずにトークンを検証できる JWT オーソライザーが追加されました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>JWT(JSON Web Token)は、利用者の身元や権限を署名つきで表すトークンです。API Gateway の REST API で Amazon Cognito 以外の ID プロバイダー(OpenID Connect や OAuth 2.0 に対応したもの)のトークンを検証するには、これまで Lambda オーソライザー(検証用の Lambda 関数)を自分で書いて運用する必要がありました。</p>
+<p>今回、API Gateway 自体がトークンを検証する JWT オーソライザーが追加されました。発行元(issuer)、受け付ける audience、許可する署名アルゴリズムなどを設定するだけで、リクエストごとに署名・発行元・有効期限・クレーム(トークンに含まれる情報)が検証されます。1つのオーソライザーを複数のメソッドに付け、メソッドごとに必要なスコープを変えることもできます。リージョン、エッジ最適化、プライベートのどの REST API でも使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "Lambda 関数で" "検証コードを運用"
+node cl 1.8 0 blue "クライアント" "トークン付き" "リクエスト"
+node jwt 3.6 0 accent "JWT" "オーソライザー" "設定だけで検証"
+node api 5.4 0 ok "バックエンド" "検証済みだけ" "到達"
+edge before cl "今回の発表"
+edge cl jwt "送信"
+edge jwt api "許可"
+<figcaption>図1 API Gateway が直接トークンを検証する流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>認証用のコードと Lambda 関数の運用が不要になり、設定だけで外部の ID プロバイダーに対応できます。</dd>
+<dt>試験・実務への影響</dt><dd>API の認証方式(IAM 認可、Cognito、Lambda オーソライザー)の使い分けは定番の出題です。JWT オーソライザーという選択肢が REST API にも加わったと押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/api-gateway.html">API Gateway</a>、<a href="../services/cognito.html">Cognito</a>、<a href="../services/lambda.html">Lambda</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-api-gateway-rest-jwt-authorizers">Amazon API Gateway REST APIs now support JWT authorizers</a>(2026-11-17)</dd>
+</dl>
+</section>

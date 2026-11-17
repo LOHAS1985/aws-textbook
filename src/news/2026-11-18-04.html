@@ -1,0 +1,25 @@
+<!-- title: KMS:AWS RAM でキーを共有できるように -->
+<!-- category: 2026年11月 -->
+<!-- lead: KMS のキーを AWS Resource Access Manager 経由で、他のアカウントや組織、特定の IAM ロール・ユーザーと共有できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>他のアカウントに KMS キー(暗号化に使う鍵)を使わせるには、これまでキーポリシー(キーごとのアクセス制御の文書)を手作業で書き換える必要がありました。今回、AWS RAM(Resource Access Manager。リソースを他のアカウントと共有するサービス)との連携が追加され、リソース共有を作って共有したいキーと権限と相手を選ぶだけで共有できます。</p>
+<p>権限は RAM のマネージドアクセス許可として再利用できます。AWS が用意したものに加え、自分や SaaS 事業者、セキュリティ部門が作ったカスタマー管理のアクセス許可も使えます。キーポリシーは変更されないので、キーの管理権限は手元に残ります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "キーポリシーを" "手作業で編集"
+node key 1.8 0 accent "KMS キー" "共有したい鍵"
+node ram 3.6 0 accent "AWS RAM" "リソース共有と" "アクセス許可"
+node acc 5.4 0 blue "他のアカウント" "組織・ロール"
+edge before key "今回の発表"
+edge key ram "共有を作る"
+edge ram acc "利用を許可"
+<figcaption>図1 RAM を使った KMS キー共有の流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>キーポリシーを書き換えずに共有でき、共有の範囲や権限をまとめて管理できます。</dd>
+<dt>試験・実務への影響</dt><dd>暗号化したデータをアカウント間で共有する場面は、バックアップやディザスタリカバリで頻出です。キーポリシーによる共有に加え、RAM を使う方法があると押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/kms.html">KMS</a>、<a href="../services/ram.html">RAM</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/kms-key-sharing-resource-access-manager/">AWS KMS now supports key sharing with AWS Resource Access Manager</a>(2026-11-16)</dd>
+</dl>
+</section>

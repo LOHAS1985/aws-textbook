@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IAM:Access Troubleshooter でアクセス拒否の原因を調べる | 2026年11月18日のAWSニュース | AWS教科書</title>
+<meta name="description" content="アクセス拒否のエラーに付く識別子から、評価されたポリシーや認可の状況を確認できる IAM の新機能 Access Troubleshooter が発表されました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-18">2026年11月18日</time>のAWSニュース</p>
+  <h1>IAM:Access Troubleshooter でアクセス拒否の原因を調べる</h1>
+  <p class="lead">アクセス拒否のエラーに付く識別子から、評価されたポリシーや認可の状況を確認できる IAM の新機能 Access Troubleshooter が発表されました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-18">2026-11-18</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>「Access Denied(アクセス拒否)」は、AWS の運用で最もよく出会うエラーの1つです。これまでは、エラーに出る拒否したポリシーの ARN(リソースの識別名)だけが手がかりで、他にどのポリシーが評価されたか、どんな条件で判定されたかは分からず、試行錯誤になりがちでした。</p>
+<p>Access Troubleshooter では、対応するサービスや API のアクセス拒否メッセージに一意の識別子が付きます。この識別子を使うと、そのリクエストで評価されたポリシー、リクエストの認可コンテキスト(誰が、どの操作を、どんな条件で行ったかという情報)、評価の結果を取得できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 116" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 識別子から拒否の原因をたどる流れ"><defs><marker id="dgnews-2026-11-18-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">拒否したポリシーの</text>
+</g>
+<g data-node="err">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="415" y="62" text-anchor="middle" class="dg-t">Access Denied</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">識別子つきの</text>
+</g>
+<g data-node="ts">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="721" y="62" text-anchor="middle" class="dg-tb">Access</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">Troubleshooter</text>
+</g>
+<g data-node="fix">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-t">原因を特定</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">ポリシーを修正</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-18-02-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-18-02-1)"/>
+<text x="568" y="70" text-anchor="middle" class="dg-s dg-halo">識別子を使う</text>
+<path d="M796.0,66.5 L952.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-18-02-1)"/>
+<text x="874" y="70" text-anchor="middle" class="dg-s dg-halo">分析</text>
+</svg>
+</div>
+<figcaption>図1 識別子から拒否の原因をたどる流れ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>拒否の原因を、複数のポリシーや条件をまたいで素早く突き止められ、権限の修正にかかる時間が短くなります。</dd>
+<dt>試験・実務への影響</dt><dd>ポリシーの評価では、明示的な拒否が優先されることや、SCP・権限境界・セッションポリシーも判定に関わることが出題されます。原因調査の手段が増えたと押さえておきましょう。対応するサービスは限られるため、利用前にドキュメントで確認が必要です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/iam.html">IAM</a>、<a href="../services/cloudtrail.html">CloudTrail</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/iam-access-troubleshooter/">AWS IAM announces Access Troubleshooter to debug access denied errors</a>(2026-11-17)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-18-01.html"><span class="label">← 前へ 2026年11月18日</span>VPC・Transit Gateway・Cloud WAN:リージョン間通信に99.999%のSLA</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-18-03.html"><span class="label">次へ → 2026年11月18日</span>API Gateway:REST API が JWT オーソライザーに対応</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
