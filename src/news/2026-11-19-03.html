@@ -1,0 +1,25 @@
+<!-- title: RDS:ストレージボリュームの初期化を高速化 -->
+<!-- category: 2026年11月 -->
+<!-- lead: RDS のポイントインタイムリストア・リードレプリカ作成・Multi-AZ 変換で、ボリュームの初期化が最大4TiB/時間になり、フル性能に達するまでの時間が読みやすくなりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>RDS でポイントインタイムリストア(ある時点の状態へ戻す復元)、リードレプリカの作成、Single-AZ から Multi-AZ への変換を行うと、スナップショットから新しいストレージボリュームが作られ、データブロックが Amazon S3 から裏でダウンロードされます。この初期化が終わるまでは、まだ取り込まれていないブロックに触れるたびに I/O の遅延が増えることがありました。しかも、初期化の速さはワークロード次第で、いつ完全な性能になるか分かりませんでした。</p>
+<p>今回の変更で、インスタンスごとに、gp3 と io2 のボリューム全体で最大毎時4TiB の速さで初期化されます。アカウント全体で同時に初期化する量が帯域を超える場合は、残りを可能な範囲で処理するため、以前より遅くなることはありません。初期化中も DB インスタンスは使えます。既定で有効なので設定は不要で、追加料金もありません。進み具合は、コンソールや DescribeDBInstances API の StorageOperationStatus と StorageOperationPercentProgress で確認できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "初期化の速さが" "ワークロード次第"
+node op 1.8 0 blue "復元・レプリカ" "作成・Multi-AZ化"
+node fast 3.6 0 accent "高速初期化" "最大4TiB/時間"
+node ok 5.4 0 ok "フル性能に" "達する時間が" "予測しやすい"
+edge before op "今回の発表"
+edge op fast "S3から取り込み"
+edge fast ok "進捗を確認"
+<figcaption>図1 高速化されたストレージボリューム初期化の流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>障害後の復元や読み取りを増やすためのレプリカ追加のあと、通常の性能に戻るまでの見通しが立てやすくなります。</dd>
+<dt>試験・実務への影響</dt><dd>信頼性・事業継続の分野では、復元や Multi-AZ 変換のあとの性能と、スナップショットのブロックが後から取り込まれる仕組みを理解しておくと、設計の判断に役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/rds.html">RDS</a>、<a href="../services/backup.html">Backup</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-rds-fast-storage-volume-initialization/">Amazon RDS now supports fast storage volume initialization</a>(2026-11-18)</dd>
+</dl>
+</section>

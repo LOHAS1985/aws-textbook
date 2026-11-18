@@ -1,0 +1,25 @@
+<!-- title: Transit Gateway:Gateway Load Balancer を直接アタッチできるように -->
+<!-- category: 2026年11月 -->
+<!-- lead: Transit Gateway に「ネットワークファンクションアタッチメント」が加わり、Gateway Load Balancer 配下のファイアウォールを専用サブネットなしでつなげます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>複数の VPC をつなぐハブである Transit Gateway は、通信をファイアウォールなどのセキュリティ機器へ通してから届けたい場面でよく使われます。機器は Gateway Load Balancer(GWLB。機器をまとめて負荷分散するロードバランサー)の背後に置きますが、これまでは検査用の VPC に GWLB エンドポイント専用のサブネットとルートテーブルを自分で作る必要がありました。</p>
+<p>今回、Transit Gateway に Gateway Load Balancer 型のネットワークファンクションアタッチメントが追加されました。GWLB のエンドポイントサービスを指定すると、選んだアベイラビリティーゾーンにエンドポイントを Transit Gateway が作って管理します。エンドポイントサービスは別アカウントにあっても構いません。また、通信を送るときに、どのアタッチメント・VPC・サブネット・セキュリティグループから来たかという情報を付け、ファイアウォール側が IP アドレスだけでなくこの情報でもセグメント分離のルールを決められます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "検査用VPCに" "エンドポイント用" "サブネットとルート"
+node tgw 1.8 0 blue "Transit Gateway"
+node att 3.6 0 accent "ネットワーク" "ファンクション" "アタッチメント"
+node fw 5.4 0 ok "GWLB配下の" "ファイアウォール"
+edge before tgw "今回の発表"
+edge tgw att "通信を送る"
+edge att fw "検査"
+<figcaption>図1 Transit Gateway から GWLB 配下のファイアウォールへ直接つなぐ流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>検査用 VPC の複雑なサブネット・ルート設計が減り、ファイアウォールの集中配置を簡単に作れます。</dd>
+<dt>試験・実務への影響</dt><dd>ネットワーク・コンテンツ配信やセキュリティの分野で、複数 VPC の通信を集中検査する構成は定番です。Transit Gateway と GWLB の組み合わせとして押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../services/elb.html">Elastic Load Balancing</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/transit-gateway-gwlb-integration/">AWS Transit Gateway supports native integration with Gateway Load Balancer</a>(2026-11-17)</dd>
+</dl>
+</section>

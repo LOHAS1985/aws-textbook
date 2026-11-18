@@ -1,0 +1,25 @@
+<!-- title: Cost Optimization Hub:アイドル状態の EC2 インスタンスをその場で停止 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Cost Optimization Hub の推奨画面から、アイドル状態の EC2 インスタンスを直接停止できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Cost Optimization Hub は、複数のアカウントとリージョンにまたがるコスト削減の推奨をまとめて優先度順に表示するサービスです。アイドルの(ほとんど使われていない)EC2 インスタンスの推奨も含まれますが、これまでは停止するために EC2 コンソールへ移り、対象のインスタンスを探す必要がありました。</p>
+<p>今回、Savings opportunities(コスト削減の機会)の画面で、アイドルのインスタンスの推奨の横にある「停止」を選ぶだけで止められるようになりました。確認画面には、対象のインスタンス・アカウント・リージョンに加え、停止で失われるもの(インスタンスストアのデータやメモリ上のデータ)と、停止後も課金が続くもの(EBS ボリュームや Elastic IP アドレス)が表示されます。停止は終了ではないので、EBS ボリュームは消えず、EC2 コンソールからまた起動できます。追加の設定は不要で、今の権限で使えます。アイドルの推奨を受け取るには、Cost Optimization Hub と Compute Optimizer を有効にしておきます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "EC2コンソールで" "探して停止"
+node rec 1.8 0 blue "アイドルの" "推奨を確認"
+node stop 3.6 0 accent "推奨画面から" "停止"
+node ok 5.4 0 ok "コンピューティング" "料金を削減" "(EBSは課金継続)"
+edge before rec "今回の発表"
+edge rec stop "確認画面で承認"
+edge stop ok "後で再起動も可"
+<figcaption>図1 推奨の確認から停止までを1つの画面で行う流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>推奨の確認から実行までを1画面で終えられ、削減の取りこぼしが減ります。</dd>
+<dt>試験・実務への影響</dt><dd>コスト最適化では、停止してもEBSやElastic IPの料金が続く点が試験でも実務でも問われます。停止と終了の違いとあわせて覚えましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/compute-optimizer.html">Compute Optimizer</a>、<a href="../services/ec2.html">EC2</a>、<a href="../services/ebs.html">EBS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/cost-hub-stop-idle-ec2/">Cost Optimization Hub now supports stopping idle Amazon EC2 instances</a>(2026-11-17)</dd>
+</dl>
+</section>

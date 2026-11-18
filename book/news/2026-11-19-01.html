@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transit Gateway:Gateway Load Balancer を直接アタッチできるように | 2026年11月19日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Transit Gateway に「ネットワークファンクションアタッチメント」が加わり、Gateway Load Balancer 配下のファイアウォールを専用サブネットなしでつなげます。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-19">2026年11月19日</time>のAWSニュース</p>
+  <h1>Transit Gateway:Gateway Load Balancer を直接アタッチできるように</h1>
+  <p class="lead">Transit Gateway に「ネットワークファンクションアタッチメント」が加わり、Gateway Load Balancer 配下のファイアウォールを専用サブネットなしでつなげます。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-19">2026-11-19</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>複数の VPC をつなぐハブである Transit Gateway は、通信をファイアウォールなどのセキュリティ機器へ通してから届けたい場面でよく使われます。機器は Gateway Load Balancer(GWLB。機器をまとめて負荷分散するロードバランサー)の背後に置きますが、これまでは検査用の VPC に GWLB エンドポイント専用のサブネットとルートテーブルを自分で作る必要がありました。</p>
+<p>今回、Transit Gateway に Gateway Load Balancer 型のネットワークファンクションアタッチメントが追加されました。GWLB のエンドポイントサービスを指定すると、選んだアベイラビリティーゾーンにエンドポイントを Transit Gateway が作って管理します。エンドポイントサービスは別アカウントにあっても構いません。また、通信を送るときに、どのアタッチメント・VPC・サブネット・セキュリティグループから来たかという情報を付け、ファイアウォール側が IP アドレスだけでなくこの情報でもセグメント分離のルールを決められます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 116" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 Transit Gateway から GWLB 配下のファイアウォールへ直接つなぐ流れ"><defs><marker id="dgnews-2026-11-19-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">検査用VPCに</text>
+</g>
+<g data-node="tgw">
+<rect x="340" y="46" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="415" y="70" text-anchor="middle" class="dg-t">Transit Gateway</text>
+</g>
+<g data-node="att">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="721" y="62" text-anchor="middle" class="dg-tb">ネットワーク</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">ファンクション</text>
+</g>
+<g data-node="fw">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-t">GWLB配下の</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">ファイアウォール</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-19-01-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-19-01-1)"/>
+<text x="568" y="70" text-anchor="middle" class="dg-s dg-halo">通信を送る</text>
+<path d="M796.0,66.5 L952.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-19-01-1)"/>
+<text x="874" y="70" text-anchor="middle" class="dg-s dg-halo">検査</text>
+</svg>
+</div>
+<figcaption>図1 Transit Gateway から GWLB 配下のファイアウォールへ直接つなぐ流れ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>検査用 VPC の複雑なサブネット・ルート設計が減り、ファイアウォールの集中配置を簡単に作れます。</dd>
+<dt>試験・実務への影響</dt><dd>ネットワーク・コンテンツ配信やセキュリティの分野で、複数 VPC の通信を集中検査する構成は定番です。Transit Gateway と GWLB の組み合わせとして押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../services/elb.html">Elastic Load Balancing</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/transit-gateway-gwlb-integration/">AWS Transit Gateway supports native integration with Gateway Load Balancer</a>(2026-11-17)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-19-02.html"><span class="label">次へ → 2026年11月19日</span>Config:マネージド適合パックを提供</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
