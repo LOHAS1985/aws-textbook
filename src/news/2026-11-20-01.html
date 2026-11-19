@@ -1,0 +1,22 @@
+<!-- title: Systems Manager Parameter Store:API のスループット上限が引き上げ -->
+<!-- category: 2026年11月 -->
+<!-- lead: 高スループット設定を有効にしている Parameter Store で、パラメータの取得・登録・削除などの API の秒間リクエスト上限が約5〜10倍になりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Parameter Store は、設定値やパスワードなどを保存しておく Systems Manager の機能です。API には1秒あたりに受け付けられる回数(TPS)の上限があり、上限を超えるとスロットリング(受け付け拒否)のエラーになります。今回、高スループット設定(上限を引き上げる設定)を有効にしているアカウントで、5つの API の既定の上限が上がりました。追加料金はなく、すべてのリージョンが対象です。</p>
+<p>自分で上限を決めていた場合は、その値がそのまま保たれます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "一覧取得 100" "登録 10" "削除 5"
+node after 1.8 0 ok "これから" "一覧取得 500" "登録 50" "削除 50"
+edge before after "上限(TPS)を引き上げ"
+<figcaption>図1 高スループット設定での上限の変化(パス単位の一覧取得・登録・削除)</figcaption>
+</figure>
+<p>ほかに、DescribeParameters が10から100、GetParameterHistory が10から100になっています。多数の Lambda 関数が同時に起動して設定を読み込む場面や、大量のパラメータを一括で作成・削除する場面で、スロットリングが起きにくくなります。</p>
+<dl>
+<dt>何がうれしいか</dt><dd>スロットリングへの対策(リトライ処理や起動時間をずらす工夫)を減らせます。</dd>
+<dt>試験・実務への影響</dt><dd>「Parameter Store の API がスロットリングされる」という場面では、高スループット設定の有効化が対策の1つです。上限の数字そのものより、設定の有無で上限が変わることを押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/systems-manager.html">Systems Manager</a>、<a href="../services/lambda.html">Lambda</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/parameter-store-raises-api-throughput-limits/">AWS Systems Manager Parameter Store raises API throughput limits</a>(2026-11-19)</dd>
+</dl>
+</section>

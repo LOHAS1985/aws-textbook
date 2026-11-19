@@ -1,0 +1,25 @@
+<!-- title: CloudFront Functions:ネットワーク呼び出しに対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: CloudFront Functions から外部の API を呼び出せるようになり、リクエスト処理中にその応答で判断できます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>CloudFront Functions は、CloudFront のエッジ(利用者に近い拠点)で、リクエストやレスポンスを軽く書き換えるための機能です。これまでは外部への問い合わせができなかったため、問い合わせが必要な処理は Lambda@Edge を使うか、オリジン側に移す必要がありました。今回、<code>cf.fetch()</code>(API を呼び出して応答を使う)と <code>cf.beacon()</code>(待たせずに分析イベントを送る)が使えるようになりました。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "外部への問い合わせは" "Lambda@Edgeか" "オリジンで処理"
+node user 1.8 0 blue "利用者" "リクエスト"
+node cff 3.6 0 accent "CloudFront" "Functions" "cf.fetch()"
+node api 5.4 0 ok "外部API" "認可・不正検知"
+edge before user "今回の発表"
+edge user cff "リクエスト"
+edge cff api "問い合わせ"
+<figcaption>図1 エッジの関数から API を呼び出して判断する</figcaption>
+</figure>
+<p>オリジンの設定(OAC、VPC オリジン、接続の再利用)をそのまま使います。料金は呼び出し100万回あたり0.10ドルで、通常の Functions の料金に加わります。フラットレートプランの Pro 以上では追加料金がありません。</p>
+<dl>
+<dt>何がうれしいか</dt><dd>認可の確認や不正検知サービスへの問い合わせを、エッジで軽く行えます。</dd>
+<dt>試験・実務への影響</dt><dd>CloudFront Functions と Lambda@Edge の使い分け(軽い処理か、重い処理か)は定番です。できることが広がっても、まず両者の違いを押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudfront.html">CloudFront</a>、<a href="../services/lambda.html">Lambda</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/cloudfront-functions-network-calls/">Amazon CloudFront Functions now supports network calls</a>(2026-11-18)</dd>
+</dl>
+</section>

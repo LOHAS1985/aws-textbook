@@ -1,0 +1,25 @@
+<!-- title: AWS Health:イベントにリソースタグとアカウントタグを付与 -->
+<!-- category: 2026年11月 -->
+<!-- lead: AWS Health のイベントにタグを付けられるようになり、タグを条件にした絞り込みや EventBridge での自動対応ができます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Health は、自分のリソースに影響する障害やメンテナンスなどを知らせるサービスです。これまでのイベントは、どのリソースが影響を受けるかは分かっても、それが本番か開発か、どのチームのものかまでは分かりにくいものでした。今回、Health のイベントに、リソースタグ(対応するサービスのみ)とアカウントタグを付けられるようになりました。AWS Health Dashboard の設定ページで有効にします。</p>
+<p>タグは、Health Dashboard と Health API での絞り込みに使えます。また EventBridge のルールの条件にもでき、例えば本番タグが付いたリソースのイベントだけチケットを自動で作る、特定のチームに通知する、といった自動化ができます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node ev 0 0 blue "Healthイベント" "(タグ付き)"
+node eb 1.8 0 accent "EventBridge" "タグで判定"
+node a1 3.6 0 ok "本番のみ" "チケット作成"
+node a2 3.6 1 box "開発" "通知なし"
+edge ev eb "イベント発生"
+edge eb a1 "env=prod"
+edge eb a2 "それ以外" dash
+<figcaption>図1 タグを条件にして通知先を振り分ける例</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>大規模な環境で、重要なリソースへのイベントを見分けて、対応の優先順位や通知先を決めやすくなります。</dd>
+<dt>試験・実務への影響</dt><dd>Health イベントを EventBridge で受けて自動対応する構成は定番です。タグで対象を絞れる点を覚えておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/health-dashboard.html">Health Dashboard</a>、<a href="../services/eventbridge.html">EventBridge</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-health-supports-tags/">AWS Health now supports resource and account tags</a>(2026-11-19)</dd>
+</dl>
+</section>

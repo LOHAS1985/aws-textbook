@@ -1,0 +1,26 @@
+<!-- title: CloudWatch:VPC のネットワーク経路を監視するパフォーマンスモニター -->
+<!-- category: 2026年11月 -->
+<!-- lead: CloudWatch Network Monitoring のパフォーマンスモニターで、VPC 内の通信経路の遅延や健全性をソフトウェアなしで確認し、遅いのが AWS ネットワーク側かを切り分けられます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>アプリケーションが遅いとき、原因がアプリケーション側なのか、通信経路(ネットワーク)側なのかを切り分けるのは大変です。CloudWatch Network Monitoring に追加されたパフォーマンスモニターは、VPC を選ぶだけで、その VPC の通信経路ごとのレイテンシー、トラフィック量、ネットワーク影響スコア(経路の健全性を示す値)を確認できます。エージェントなどのインストールは要りません。</p>
+<p>経路には、同じ AZ 内・AZ 間・リージョン間・AWS サービスへの接続が含まれ、対象は TCP・UDP・ICMP の通信です。指標は CloudWatch に出るので、ダッシュボードやアラームに使えます。AWS Organizations と連携すれば、複数のアカウントやリージョンの VPC も監視できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node vpc 0 0 blue "VPC内の通信" "AZ内・AZ間" "リージョン間"
+node pm 1.8 0 accent "パフォーマンス" "モニター"
+node cw 3.6 0 ok "CloudWatch" "遅延・スコア" "アラーム"
+node judge 5.4 0 box "遅い原因は" "AWSネットワーク?" "アプリ?"
+edge vpc pm "経路を測定"
+edge pm cw "指標を公開"
+edge cw judge "切り分け"
+<figcaption>図1 パフォーマンスモニターで通信経路の状態を確認する流れ</figcaption>
+</figure>
+<p>似た機能のフローモニターは、EC2 や EKS のエージェントを使って、再送が起きている接続など個別の通信を調べます。パフォーマンスモニターは AWS 側の経路の状態を見るもの、という違いです。</p>
+<dl>
+<dt>何がうれしいか</dt><dd>ネットワーク経路が健全なら、アプリケーション側の調査に集中できます。</dd>
+<dt>試験・実務への影響</dt><dd>監視・ログの分野で、ネットワークの遅延を CloudWatch の指標とアラームで検知する、という考え方につながります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/cloudwatch-network-path-monitoring/">Amazon CloudWatch simplifies network performance monitoring for your Amazon Virtual Private Cloud (VPC)</a>(2026-11-18)</dd>
+</dl>
+</section>

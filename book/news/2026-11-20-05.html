@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudFront Functions:ネットワーク呼び出しに対応 | 2026年11月20日のAWSニュース | AWS教科書</title>
+<meta name="description" content="CloudFront Functions から外部の API を呼び出せるようになり、リクエスト処理中にその応答で判断できます。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-20">2026年11月20日</time>のAWSニュース</p>
+  <h1>CloudFront Functions:ネットワーク呼び出しに対応</h1>
+  <p class="lead">CloudFront Functions から外部の API を呼び出せるようになり、リクエスト処理中にその応答で判断できます。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-20">2026-11-20</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>CloudFront Functions は、CloudFront のエッジ(利用者に近い拠点)で、リクエストやレスポンスを軽く書き換えるための機能です。これまでは外部への問い合わせができなかったため、問い合わせが必要な処理は Lambda@Edge を使うか、オリジン側に移す必要がありました。今回、<code>cf.fetch()</code>(API を呼び出して応答を使う)と <code>cf.beacon()</code>(待たせずに分析イベントを送る)が使えるようになりました。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 116" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 エッジの関数から API を呼び出して判断する"><defs><marker id="dgnews-2026-11-20-05-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">外部への問い合わせは</text>
+</g>
+<g data-node="user">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="415" y="62" text-anchor="middle" class="dg-t">利用者</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">リクエスト</text>
+</g>
+<g data-node="cff">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="721" y="62" text-anchor="middle" class="dg-tb">CloudFront</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">Functions</text>
+</g>
+<g data-node="api">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-t">外部API</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">認可・不正検知</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-20-05-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-20-05-1)"/>
+<text x="568" y="70" text-anchor="middle" class="dg-s dg-halo">リクエスト</text>
+<path d="M796.0,66.5 L952.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-20-05-1)"/>
+<text x="874" y="70" text-anchor="middle" class="dg-s dg-halo">問い合わせ</text>
+</svg>
+</div>
+<figcaption>図1 エッジの関数から API を呼び出して判断する</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<p>オリジンの設定(OAC、VPC オリジン、接続の再利用)をそのまま使います。料金は呼び出し100万回あたり0.10ドルで、通常の Functions の料金に加わります。フラットレートプランの Pro 以上では追加料金がありません。</p>
+<dl>
+<dt>何がうれしいか</dt><dd>認可の確認や不正検知サービスへの問い合わせを、エッジで軽く行えます。</dd>
+<dt>試験・実務への影響</dt><dd>CloudFront Functions と Lambda@Edge の使い分け(軽い処理か、重い処理か)は定番です。できることが広がっても、まず両者の違いを押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudfront.html">CloudFront</a>、<a href="../services/lambda.html">Lambda</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/cloudfront-functions-network-calls/">Amazon CloudFront Functions now supports network calls</a>(2026-11-18)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-20-04.html"><span class="label">← 前へ 2026年11月20日</span>S3 レプリケーション:除外設定とマルチリージョンキーの対応づけ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-20-06.html"><span class="label">次へ → 2026年11月20日</span>CloudFront:標準ログに CMCD などのフィールドを追加</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

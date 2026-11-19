@@ -1,0 +1,29 @@
+<!-- title: S3 レプリケーション:除外設定とマルチリージョンキーの対応づけ -->
+<!-- category: 2026年11月 -->
+<!-- lead: S3 レプリケーションで、特定のプレフィックスやタグのオブジェクトを除外でき、コピー先ではマルチリージョンの KMS キーで暗号化されるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>S3 レプリケーションは、バケットのオブジェクトを別のバケット(別リージョンでも可)へ自動でコピーする機能です。共有バケットでは、コピーしないデータを避けたり、暗号化キーを対応づけたりするために、レプリケーションルールが何本も必要になりがちでした。今回の2つの機能で、ルールを1本にまとめられます。</p>
+<ul>
+<li><strong>除外(exclusions)</strong>:バケット全体をコピー対象にしたまま、特定のプレフィックスやタグが付いたオブジェクト(ログや実験用データなど)を対象から外せます。</li>
+<li><strong>マルチリージョンキーの対応づけ</strong>:コピー先のリージョンにある、対応する KMS マルチリージョンキーでレプリカを暗号化します。テナントごとに別のキーを使うバケットでも、1本のルールで済みます。</li>
+</ul>
+<figure class="figure" data-diagram>
+grid 170 85
+node src 0 0 blue "コピー元" "バケット"
+node rule 1.8 0 accent "レプリケーション" "ルール1本" "除外 + キー対応"
+node dst 3.6 0 ok "コピー先" "バケット" "対応キーで暗号化"
+node skip 1.8 1 box "除外した" "ログなど"
+edge src rule "全体を対象"
+edge rule dst "コピー"
+edge rule skip "コピーしない" dash
+<figcaption>図1 1本のルールで除外とキーの対応づけを行う</figcaption>
+</figure>
+<p>どちらも任意の機能で、追加料金なし、すべてのリージョンで使えます。SDK・CLI・API・コンソールから設定します。</p>
+<dl>
+<dt>何がうれしいか</dt><dd>ルールの数が減って管理しやすくなり、後から追加されたテナントも自動で対象になります。</dd>
+<dt>試験・実務への影響</dt><dd>信頼性・事業継続の分野で、S3 のクロスリージョンレプリケーションと KMS キーの扱いはよく問われます。コピー先で使うキーが別になる点を押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/s3.html">S3</a>、<a href="../services/kms.html">KMS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-s3-replication-exclusions-multi-region-key-resolution/">Amazon S3 Replication adds exclusions and Multi-Region key resolution</a>(2026-11-18)</dd>
+</dl>
+</section>
