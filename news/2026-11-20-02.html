@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudWatch:VPC のネットワーク経路を監視するパフォーマンスモニター | 2026年11月20日のAWSニュース | AWS教科書</title>
+<meta name="description" content="CloudWatch Network Monitoring のパフォーマンスモニターで、VPC 内の通信経路の遅延や健全性をソフトウェアなしで確認し、遅いのが AWS ネットワーク側かを切り分けられます。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-20">2026年11月20日</time>のAWSニュース</p>
+  <h1>CloudWatch:VPC のネットワーク経路を監視するパフォーマンスモニター</h1>
+  <p class="lead">CloudWatch Network Monitoring のパフォーマンスモニターで、VPC 内の通信経路の遅延や健全性をソフトウェアなしで確認し、遅いのが AWS ネットワーク側かを切り分けられます。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-20">2026-11-20</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>アプリケーションが遅いとき、原因がアプリケーション側なのか、通信経路(ネットワーク)側なのかを切り分けるのは大変です。CloudWatch Network Monitoring に追加されたパフォーマンスモニターは、VPC を選ぶだけで、その VPC の通信経路ごとのレイテンシー、トラフィック量、ネットワーク影響スコア(経路の健全性を示す値)を確認できます。エージェントなどのインストールは要りません。</p>
+<p>経路には、同じ AZ 内・AZ 間・リージョン間・AWS サービスへの接続が含まれ、対象は TCP・UDP・ICMP の通信です。指標は CloudWatch に出るので、ダッシュボードやアラームに使えます。AWS Organizations と連携すれば、複数のアカウントやリージョンの VPC も監視できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 116" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 パフォーマンスモニターで通信経路の状態を確認する流れ"><defs><marker id="dgnews-2026-11-20-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="vpc">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">VPC内の通信</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">AZ内・AZ間</text>
+</g>
+<g data-node="pm">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="415" y="62" text-anchor="middle" class="dg-tb">パフォーマンス</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">モニター</text>
+</g>
+<g data-node="cw">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="721" y="62" text-anchor="middle" class="dg-t">CloudWatch</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">遅延・スコア</text>
+</g>
+<g data-node="judge">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-t">遅い原因は</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">AWSネットワーク?</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-20-02-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">経路を測定</text>
+<path d="M490.0,66.5 L646.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-20-02-1)"/>
+<text x="568" y="70" text-anchor="middle" class="dg-s dg-halo">指標を公開</text>
+<path d="M796.0,66.5 L952.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-20-02-1)"/>
+<text x="874" y="70" text-anchor="middle" class="dg-s dg-halo">切り分け</text>
+</svg>
+</div>
+<figcaption>図1 パフォーマンスモニターで通信経路の状態を確認する流れ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<p>似た機能のフローモニターは、EC2 や EKS のエージェントを使って、再送が起きている接続など個別の通信を調べます。パフォーマンスモニターは AWS 側の経路の状態を見るもの、という違いです。</p>
+<dl>
+<dt>何がうれしいか</dt><dd>ネットワーク経路が健全なら、アプリケーション側の調査に集中できます。</dd>
+<dt>試験・実務への影響</dt><dd>監視・ログの分野で、ネットワークの遅延を CloudWatch の指標とアラームで検知する、という考え方につながります。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/cloudwatch-network-path-monitoring/">Amazon CloudWatch simplifies network performance monitoring for your Amazon Virtual Private Cloud (VPC)</a>(2026-11-18)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-20-01.html"><span class="label">← 前へ 2026年11月20日</span>Systems Manager Parameter Store:API のスループット上限が引き上げ</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-20-03.html"><span class="label">次へ → 2026年11月20日</span>AWS Health:イベントにリソースタグとアカウントタグを付与</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
