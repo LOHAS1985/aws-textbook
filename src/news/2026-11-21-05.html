@@ -1,0 +1,25 @@
+<!-- title: STS:実行時に権限を絞り込む GetScopedCredentials -->
+<!-- category: 2026年11月 -->
+<!-- lead: 手持ちの一時的な認証情報から、権限や有効期間をさらに絞った認証情報を作れる API が加わりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>STS(Security Token Service)は、有効期限のある一時的な認証情報を発行するサービスです。新しい API「GetScopedCredentials」は、いま使っている一時的な認証情報を元に、権限、有効期間、またはその両方を狭めた認証情報を作ります。呼び出した人の ID は引き継がれ、権限と期間は元より広くなりません(狭める方向にだけ変えられます)。</p>
+<p>AI エージェントやサブエージェント、個々のワークロードに、必要な権限だけを持たせた認証情報を渡す用途を想定しています。この API を使えるかどうかは IAM ポリシーで制御でき、呼び出しは CloudTrail に記録されます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node o 0 0.4 blue "元の認証情報" "S3・DynamoDB など" "広い権限"
+node api 1.6 0.4 accent "GetScoped" "Credentials"
+node s1 3.2 -0.2 ok "認証情報 A" "S3 の読み取りのみ"
+node s2 3.2 1 ok "認証情報 B" "短い有効期間"
+edge o api
+edge api s1
+edge api s2
+<figcaption>図1 1つの認証情報から、狭い権限の認証情報を作る</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>実行時に、最小権限の認証情報を手軽に作れます。IAM ロールを権限の組み合わせごとに増やさずに済みます。</dd>
+<dt>試験・実務への影響</dt><dd>「最小権限の原則」を実行時に適用する手段の1つです。権限を広げることはできない点が試験で問われやすい考え方です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/sts.html">STS</a>、<a href="../services/iam.html">IAM</a>、<a href="../services/cloudtrail.html">CloudTrail</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/sts-getscopedcredentials/">AWS STS announces GetScopedCredentials to scope down permissions at runtime</a>(2026-11-19)</dd>
+</dl>
+</section>

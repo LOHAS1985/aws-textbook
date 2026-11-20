@@ -1,0 +1,24 @@
+<!-- title: Aurora:クラスターを別の VPC へ移動できるように -->
+<!-- category: 2026年11月 -->
+<!-- lead: Aurora MySQL と PostgreSQL のクラスターを、データを移行せずに API 1回で別の VPC へ移せるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>データベースを置く VPC は、IP アドレスの空きが足りなくなったり、ネットワークを整理し直したりする場面で変えたくなります。これまでは、移動先の VPC に新しいクラスターを作ってデータを移行し、アプリの接続先も変える必要がありました。</p>
+<p>今回、ModifyDBCluster API を1回呼ぶ(RDS コンソールの変更操作でも可)だけで、既存のクラスターを別の VPC へ移せます。データはそのまま、クラスターのエンドポイントも変わらず、接続が切れるのは短い時間だけです。移動の前に、元の VPC に結びついた機能(Aurora グローバルデータベース、RDS Proxy、Blue/Green デプロイ)をオフにし、移動後に設定し直します。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node b1 0 0 box "これまで" "新クラスターを作成" "データ移行"
+node b2 1.6 0 ng "接続文字列を変更"
+node a1 0 1.2 accent "これから" "ModifyDBCluster" "を1回呼ぶ"
+node a2 1.6 1.2 ok "データも" "エンドポイントも" "そのまま"
+edge b1 b2
+edge a1 a2
+<figcaption>図1 VPC の移動手順の比較</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>CIDR の重複や IP 不足への対応、ネットワークの統合を、移行作業なしで行えます。</dd>
+<dt>試験・実務への影響</dt><dd>「データベースを別の VPC へ移したい」という問いで、スナップショットの復元以外の選択肢が増えました。移動前に Global Database や RDS Proxy をオフにする条件が落とし穴です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/aurora.html">Aurora</a>、<a href="../services/rds.html">RDS</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aurora-move-clusters-to-different-vpc/">Amazon Aurora now supports moving clusters to a different VPC</a>(2026-11-19)</dd>
+</dl>
+</section>

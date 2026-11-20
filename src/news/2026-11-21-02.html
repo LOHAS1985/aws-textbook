@@ -1,0 +1,26 @@
+<!-- title: Network Load Balancer:相互TLS認証(mTLS)に対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: NLB の TLS リスナーでクライアント証明書を検証できるようになり、信頼できるクライアントだけを通せます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>通常の TLS は、クライアントがサーバーの証明書を確かめる一方向の認証です。相互TLS(mTLS)は、サーバーもクライアントに証明書(X.509)の提示を求め、双方が身元を確かめ合います。IoT デバイスや API 間通信、規制の厳しい環境でよく使われます。</p>
+<p>これまで NLB で mTLS を使うには、自前の仕組みやサードパーティのプロキシが必要でした。今回、NLB の TLS リスナーがクライアント証明書の検証を行えるようになり、重い認証処理を NLB に任せられます。手順は、信頼する認証局(CA)の証明書をまとめた「トラストストア」を作り、リスナーに付けるだけです。AWS Private CA の CA も使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node c1 0 -0.1 blue "信頼できる" "クライアント" "(有効な証明書)"
+node c2 0 1.1 ng "不明なクライアント" "(証明書なし・失効)"
+node nlb 1.6 0.5 accent "NLB" "TLS リスナー" "+ トラストストア"
+node t 3.2 0.5 ok "ターゲット" "(証明書の処理は不要)"
+edge c1 nlb "通す"
+edge c2 nlb "拒否" dash
+edge nlb t
+<figcaption>図1 NLB でクライアント証明書を検証する</figcaption>
+</figure>
+<p>トラストストアには、信頼しなくなった証明書を止めるための失効リスト(CRL)を加えられます。また、証明書の Common Name、Organizational Unit、SAN の DNS 名や URI(SPIFFE ID など)で、通すクライアントを絞り込めます。</p>
+<dl>
+<dt>何がうれしいか</dt><dd>バックエンドのアプリに証明書の処理を書かずに、クライアントを認証できます。</dd>
+<dt>試験・実務への影響</dt><dd>「クライアント側も証明書で認証したい」という要件では mTLS が候補です。ALB に続いて NLB でも使えるようになったので、プロトコルに合わせたロードバランサーの選び方と合わせて確認しましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/elb.html">Elastic Load Balancing</a>、<a href="../services/private-ca.html">Private CA</a>、<a href="../terms/tls-termination.html">TLS終端</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/network-load-balancer-mtls/">AWS Network Load Balancer now supports mutual TLS authentication</a>(2026-11-19)</dd>
+</dl>
+</section>

@@ -1,0 +1,35 @@
+<!-- title: Route 53:プライベートなエンドポイントにもヘルスチェックが可能に -->
+<!-- category: 2026年11月 -->
+<!-- lead: インターネットに公開していない内部のサーバーにも Route 53 のヘルスチェックを使え、異常時の DNS フェイルオーバーが自動でできるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Route 53 のヘルスチェックは、対象が正常かを定期的に確認し、異常なら DNS の応答を正常な宛先へ切り替える(DNS フェイルオーバー)仕組みです。これまでは、インターネットから到達できる宛先しか確認できませんでした。そのため、内部の API やデータベース、プライベートサブネット内のサーバーでは、CloudWatch アラーム・Lambda 関数・Route 53 の API を組み合わせた自前の仕組みが必要で、切り替えに数分かかっていました。</p>
+<p>今回の「プライベートエンドポイントのヘルスチェック」では、VPC から到達できる宛先なら、IP アドレス・ドメイン名・ポートを指定して HTTP・HTTPS・TCP で確認できます。プライベートホストゾーンのレコードに関連付ければ、異常な宛先を外す切り替えを Route 53 が自動で行います。Direct Connect や Site-to-Site VPN の先にあるオンプレミスの宛先も対象で、Transit Gateway や Cloud WAN をはさんだリージョン間の災害対策にも使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node b1 0 0 box "これまで" "CloudWatch アラーム" "+ Lambda + API"
+node b2 1.6 0 ng "切り替えに数分"
+node a1 0 1.2 accent "これから" "プライベート" "ヘルスチェック"
+node a2 1.6 1.2 ok "数秒で検知" "自動フェイルオーバー"
+edge b1 b2
+edge a1 a2
+<figcaption>図1 内部の宛先のフェイルオーバーの比較</figcaption>
+</figure>
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 0 blue "VPC 内のアプリ"
+node r53 1.2 0 accent "Route 53" "プライベート" "ホストゾーン"
+node ok 2.4 -0.5 ok "正常な宛先" "(プライマリ)"
+node ng 2.4 0.5 ng "異常な宛先"
+edge app r53 "名前解決"
+edge r53 ok "応答する"
+edge r53 ng "外す" dash
+<figcaption>図2 異常な宛先を DNS の応答から自動で外す</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>自前の監視と切り替えの仕組みが要らなくなり、運用の手間が減ります。切り替えも速くなります。インターネットへの公開も不要です。</dd>
+<dt>試験・実務への影響</dt><dd>「内部のリソースの DNS フェイルオーバーを、管理の手間を増やさず行いたい」という場面の答えになります。ヘルスチェックはこれまで公開エンドポイントが前提だった、という違いを押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/route53.html">Route 53</a>、<a href="../services/direct-connect.html">Direct Connect</a>、<a href="../services/site-to-site-vpn.html">Site-to-Site VPN</a>、<a href="../services/transit-gateway.html">Transit Gateway</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/route-53-private-endpoint-health-checks/">Amazon Route 53 now supports health checks for private endpoints</a>(2026-11-19)</dd>
+</dl>
+</section>

@@ -1,0 +1,27 @@
+<!-- title: EC2:パフォーマンスステータスチェックと詳細モニタリングの新メトリクス -->
+<!-- category: 2026年11月 -->
+<!-- lead: GPU などの性能に影響するハードウェアの状態を検知するチェックと、10秒間隔の CPU 使用率などのメトリクスが加わりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>EC2 には、インスタンスやシステムの異常を検知するステータスチェックがあります。今回、アクセラレーテッドコンピューティングインスタンス(GPU などを搭載したインスタンス)向けに「パフォーマンスステータスチェック」が加わりました。完全な故障ではないが性能に影響するハードウェアの状態を検知し、「再起動して GPU メモリの再マッピングを完了させる」のように、取るべき対応も示してくれます。追加料金はありません。</p>
+<p>あわせて、詳細モニタリング(Detailed Monitoring)に新しいメトリクスが加わりました。OpenTelemetry 形式のメトリクス、1分間隔の GPU メトリクス、10秒間隔の CPU 使用率です。これらは必要なものを選んで有効にでき(オプトイン)、CloudWatch の通常の料金がかかります。インスタンス内にエージェントを入れなくても取得できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node ec2 0 0.5 blue "EC2" "(GPU インスタンス)"
+node psc 1.6 0 accent "パフォーマンス" "ステータスチェック" "性能低下を検知"
+node met 1.6 1.1 accent "詳細モニタリング" "10秒 CPU・GPU"
+node act 3.2 0 ok "推奨の対応" "(例: 再起動)"
+node cw 3.2 1.1 ok "CloudWatch" "アラーム" "Auto Scaling"
+edge ec2 psc
+edge ec2 met
+edge psc act
+edge met cw
+<figcaption>図1 新しい2つの監視の流れ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>性能が落ちた原因がハードウェア側かどうかを切り分けやすくなります。10秒の CPU 使用率は、Auto Scaling のスケールの判断を細かくするのに役立ちます。</dd>
+<dt>試験・実務への影響</dt><dd>基本の詳細モニタリングは1分間隔(標準は5分)です。10秒間隔のメトリクスは今回の新しいオプションだと区別しましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/ec2.html">EC2</a>、<a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/auto-scaling.html">Auto Scaling</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/ec2-performance-status-checks/">Amazon EC2 launches performance status checks and new utilization metrics for EC2 Detailed Monitoring</a>(2026-11-19)</dd>
+</dl>
+</section>
