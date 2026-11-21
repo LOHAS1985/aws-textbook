@@ -257,8 +257,6 @@ def _check_question_paper(raw, where, warnings):
     if not questions:
         warnings.append(f"{where}: 問題(quiz-q)がありません")
         return
-    if where == "exams/dea-c01/questions" and len(questions) != 200:
-        warnings.append(f"{where}: DEA-C01の問題は200問にしてください(現在{len(questions)}問)")
     ids = set()
     domains = {str(domain): 0 for domain in range(1, 5)}
     difficulties = {"basic": 0, "intermediate": 0, "advanced": 0}
@@ -327,11 +325,15 @@ def _check_question_paper(raw, where, warnings):
                  for item in re.findall(r'<li>(.*?)</li>', explanation.group(1), re.S)):  # 先頭の「A:」を除いて見る
             warnings.append(f"{where}: 問{n}の誤答の解説が空になっている選択肢があります")
     if where == "exams/dea-c01/questions":
-        if ids != {str(question_id) for question_id in range(1, 201)}:
-            warnings.append(f"{where}: 問題IDは1〜200の連番にしてください")
-        expected = {"1": 68, "2": 52, "3": 44, "4": 36}
-        if domains != expected:
-            warnings.append(f"{where}: 200問の出題分野の配分が公式ガイドと一致しません({domains})")
+        total = len(questions)
+        if ids != {str(question_id) for question_id in range(1, total + 1)}:
+            warnings.append(f"{where}: 問題IDは1〜{total}の連番にしてください")
+        weights = {"1": 34, "2": 26, "3": 22, "4": 18}  # 公式ガイドの配点(%)
+        for domain, weight in weights.items():
+            share = domains[domain] * 100 / total
+            if abs(share - weight) > 3:
+                warnings.append(f"{where}: 分野{domain}の問題数の割合が公式の配点({weight}%)から3ポイントを超えてずれています"
+                                f"({domains[domain]}問・{share:.1f}%)")
         if any(count < 25 for count in difficulties.values()):
             warnings.append(f"{where}: 難易度を基礎・標準・応用に十分分散してください({difficulties})")
         if types["single"] < 100 or types["multiple"] < 40:

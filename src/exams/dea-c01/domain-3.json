@@ -1730,5 +1730,589 @@
                 "label": "AWS Glue"
             }
         ]
+    },
+    {
+        "id": 237,
+        "title": "Lambdaからの集計実行",
+        "skill": "3.1.5",
+        "difficulty": "intermediate",
+        "type": "single",
+        "stem": "データ基盤チームは、Lambda関数からAmazon Redshiftの集計SQLを実行し、成功と失敗のどちらでも完了を契機に後続の処理を起動したい。SQLは数分かかるため関数で完了を待ち続けたくない。JDBCドライバーの同梱、接続の維持、データベースのパスワード埋め込みも避けたい。",
+        "instruction": "最も適切なものを1つ選んでください。",
+        "answer": [
+            "b"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "Lambda関数にJDBCドライバーを同梱し、同期的に接続してSQLの完了まで待機する",
+                "why": "動作はするが、ドライバーの同梱と接続管理が必要で、完了まで関数を待機させる点も要件に反する。"
+            },
+            {
+                "id": "b",
+                "text": "Redshift Data APIのExecuteStatementで非同期に実行し、完了イベントをEventBridgeで受けて後続処理を起動する",
+                "why": "正解です。Data APIはHTTPSエンドポイント経由でSQLを非同期に実行でき、ドライバーや永続接続が不要で、認証はSecrets Managerまたは一時的な認証情報を使える。WithEventを有効にすると、完了(FINISHED/FAILED)がEventBridgeに通知され、待機なしで後続処理を起動できる。"
+            },
+            {
+                "id": "c",
+                "text": "Amazon RDS Data APIを使い、RedshiftのクラスターへSQLを送信する",
+                "why": "RDS Data APIはAurora向けの機能であり、Amazon Redshiftのクラスターには使えない。"
+            },
+            {
+                "id": "d",
+                "text": "Redshiftをパブリックアクセス可能にし、パスワードをLambdaの環境変数に保存して接続する",
+                "why": "パスワードの埋め込みを避ける要件に反し、公開経路を作るためセキュリティ面でも不適切。完了待ちの問題も解決しない。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/redshift.html",
+                "label": "Amazon Redshift"
+            },
+            {
+                "href": "../services/eventbridge.html",
+                "label": "Amazon EventBridge"
+            },
+            {
+                "href": "../services/secrets-manager.html",
+                "label": "AWS Secrets Manager"
+            }
+        ]
+    },
+    {
+        "id": 238,
+        "title": "顧客メールアドレスの加工",
+        "skill": "3.1.6",
+        "difficulty": "intermediate",
+        "type": "single",
+        "stem": "マーケティング分析チームへ顧客データを月次で渡す前に、メールアドレス列をAWS Glue DataBrewのレシピで加工し、毎回同じ加工をジョブで適用する。複数のデータセット間で同じ顧客を結合できる必要がある一方、元のメールアドレスに戻す手段は残したくない。",
+        "instruction": "最も適切なものを1つ選んでください。",
+        "answer": [
+            "c"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "確率的暗号化を適用し、分析チームには暗号化キーを渡さない",
+                "why": "確率的暗号化は同じ値でも毎回異なる暗号文になり、データセット間の結合ができない。キーがあれば復号できる点も要件に合わない。"
+            },
+            {
+                "id": "b",
+                "text": "列の値を行ごとにシャッフルする",
+                "why": "値が別の行に入れ替わるため、顧客とメールアドレスの対応が崩れ、データセット間で同じ顧客を結合できない。"
+            },
+            {
+                "id": "c",
+                "text": "ハッシュ化の変換を適用する",
+                "why": "正解です。ハッシュ関数は同じ入力から同じ値を生成するため、データセット間で結合に使える。一方向の変換なので元の値に戻す手段は残らない。"
+            },
+            {
+                "id": "d",
+                "text": "決定論的暗号化を適用する",
+                "why": "同じ値は同じ暗号文になり結合はできるが、KMSキーなどで復号できる可逆な方式であり、元に戻す手段を残さない要件に反する。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/databrew.html",
+                "label": "AWS Glue DataBrew"
+            },
+            {
+                "href": "../terms/data-governance.html",
+                "label": "データガバナンス"
+            }
+        ]
+    },
+    {
+        "id": 239,
+        "title": "チーム別のAthena管理",
+        "skill": "3.1.7",
+        "difficulty": "intermediate",
+        "type": "multiple",
+        "stem": "同じアカウントで、アドホック分析チームとバッチ集計チームが、それぞれのIAMロールで、同じS3バケットのデータにAmazon Athenaでクエリする。アドホック側の想定外の大量スキャンは上限を超えたら自動で止めたい。バッチ側はCTASで大量のデータを読むため、上限は適用しない。結果の保存先はチームごとに固定し、利用者が変更できないようにする。費用もチーム別に把握したい。",
+        "instruction": "適切なものを2つ選んでください。",
+        "answer": [
+            "a",
+            "c"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "チームごとにワークグループを作成し、費用配分タグを付け、クエリごとのスキャン量の上限を設定する",
+                "why": "正解です。ワークグループ単位で、クエリごとのデータ使用量の制限(超過したクエリを自動停止)とタグによる費用の区別ができる。"
+            },
+            {
+                "id": "b",
+                "text": "全員がprimaryワークグループを使い、利用者がクエリごとに結果の保存先を指定する",
+                "why": "チームの区別も、保存先の固定も、スキャン量の上限の適用もできない。利用者の設定任せでは要件を満たさない。"
+            },
+            {
+                "id": "c",
+                "text": "ワークグループでクライアント側設定の上書きを有効にし、結果の保存先を固定する",
+                "why": "正解です。上書きを有効にすると、クエリの結果保存先などをワークグループの設定で強制でき、利用者が変更できない。"
+            },
+            {
+                "id": "d",
+                "text": "CloudWatchアラームでスキャン量を監視し、通知を受けた担当者が手動でクエリを停止する",
+                "why": "動作はするが自動で止める要件に反し、担当者の対応が間に合わなければ大量スキャンが完了してしまう。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/athena.html",
+                "label": "Amazon Athena"
+            },
+            {
+                "href": "../terms/tags.html",
+                "label": "タグ"
+            }
+        ]
+    },
+    {
+        "id": 240,
+        "title": "朝のダッシュボード遅延",
+        "skill": "3.2.1",
+        "difficulty": "basic",
+        "type": "single",
+        "stem": "営業企画部は、AthenaでS3の売上データを参照するQuick Sightのダッシュボードを、約300人の営業担当へ毎朝公開している。朝は表示が遅く、Athenaのクエリ料金も増えている。利用者が期間や商品で絞り込める必要があり、データ更新は1日1回で足りる。",
+        "instruction": "最も適切なものを1つ選んでください。",
+        "answer": [
+            "a"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "データセットをSPICEに取り込み、毎朝の定時更新を設定する",
+                "why": "正解です。SPICEに取り込むと、利用者の操作はインメモリのデータに対して実行され、表示が速くなる。Athenaへのクエリは定時更新時だけになり、クエリ料金も抑えられる。更新が1日1回で足りる要件にも合う。"
+            },
+            {
+                "id": "b",
+                "text": "ダイレクトクエリのまま、Athenaのクエリ同時実行数のクォータを引き上げる",
+                "why": "同時実行の制限は緩和できても、操作のたびにAthenaへクエリが走るため、表示速度とクエリ料金の問題は解決しない。"
+            },
+            {
+                "id": "c",
+                "text": "ダッシュボードを毎朝PDFにして、メールで全員に送信する",
+                "why": "要件の絞り込み操作ができず、動作はしても要件を満たさない。"
+            },
+            {
+                "id": "d",
+                "text": "Athenaの結果を毎朝CSVとして出力し、各担当者へ配布して手元で集計してもらう",
+                "why": "共有ダッシュボードとしての運用ができず、利用者ごとの集計作業も発生する。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/quick.html",
+                "label": "Amazon Quick"
+            },
+            {
+                "href": "../services/athena.html",
+                "label": "Amazon Athena"
+            }
+        ]
+    },
+    {
+        "id": 241,
+        "title": "運用指標のダッシュボード",
+        "skill": "3.3.2",
+        "difficulty": "intermediate",
+        "type": "multiple",
+        "stem": "データ基盤チームは、GlueとEMRの稼働状況を、CloudWatchのメトリクス、CloudTrailログを集めたCloudWatch Logs、Managed Service for Prometheusの指標で追跡している。既存のGrafanaダッシュボードを再利用し、サーバー運用を避けたい。利用者はIAM Identity Centerで認証し、運用担当は編集、監査担当は閲覧のみとする。",
+        "instruction": "適切なものを2つ選んでください。",
+        "answer": [
+            "b",
+            "c"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "EC2にGrafanaをインストールし、ソフトウェアの更新と冗長化をチームで運用する",
+                "why": "動作はするが、サーバー運用を避ける要件に反する。パッチ適用や可用性の管理もチームの負担になる。"
+            },
+            {
+                "id": "b",
+                "text": "Amazon Managed Grafanaのワークスペースに各データソースを追加し、既存のダッシュボードをインポートする",
+                "why": "正解です。Managed GrafanaはCloudWatch、CloudWatch Logs、Prometheusなどを1つのダッシュボードで可視化でき、サーバー管理が不要。既存のGrafanaダッシュボードも活用できる。"
+            },
+            {
+                "id": "c",
+                "text": "IAM Identity Centerのユーザーやグループをワークスペースに割り当て、運用担当にEditor、監査担当にViewerのロールを付与する",
+                "why": "正解です。Managed Grafanaの利用者はIAM Identity Centerなどで認証し、Viewer・Editor・Adminのロールで権限を分けられる。監査担当を閲覧のみにできる。"
+            },
+            {
+                "id": "d",
+                "text": "Quick SightでCloudTrailログをSPICEに取り込み、運用指標のダッシュボードを作成する",
+                "why": "BIツールであり、Prometheusの指標を含む時系列の運用監視や、既存Grafanaダッシュボードの再利用には向かない。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/managed-grafana.html",
+                "label": "Amazon Managed Grafana"
+            },
+            {
+                "href": "../services/cloudwatch.html",
+                "label": "Amazon CloudWatch"
+            },
+            {
+                "href": "../services/managed-prometheus.html",
+                "label": "Amazon Managed Service for Prometheus"
+            }
+        ]
+    },
+    {
+        "id": 242,
+        "title": "取り込み停止時の通知漏れ",
+        "skill": "3.3.3",
+        "difficulty": "intermediate",
+        "type": "single",
+        "stem": "毎時、EventBridgeのスケジュールで起動されるLambda関数が、取り込み件数をカスタムメトリクスとして発行している。件数がしきい値を下回ればSNSへ通知するアラームを設定したが、関数が停止してメトリクスが届かなくなった際には通知が来なかった。停止時にもALARM状態で通知したい。",
+        "instruction": "最も適切なものを1つ選んでください。",
+        "answer": [
+            "d"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "欠落データを正常(notBreaching)として扱う設定にする",
+                "why": "欠落時に正常とみなすため、メトリクスが届かない間はOKのままになり、通知が来ない。"
+            },
+            {
+                "id": "b",
+                "text": "アラームの評価期間(Period)を短くして、より細かく評価する",
+                "why": "データポイントが届かない問題は変わらず、評価を細かくしても欠落時にALARMにはならない。"
+            },
+            {
+                "id": "c",
+                "text": "SNSトピックの配信再試行回数を増やす",
+                "why": "通知の配信失敗に備える設定であり、アラームが状態遷移しない原因には対処できない。"
+            },
+            {
+                "id": "d",
+                "text": "欠落データをしきい値違反(breaching)として扱う設定にする",
+                "why": "正解です。既定では欠落するとINSUFFICIENT_DATAになりALARMへ遷移しない。欠落データを違反として扱えば、メトリクスが途絶えたときにALARMとなり、SNSへ通知できる。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/cloudwatch.html",
+                "label": "Amazon CloudWatch"
+            },
+            {
+                "href": "../terms/cloudwatch-alarm-states.html",
+                "label": "CloudWatchアラームの状態"
+            },
+            {
+                "href": "../services/sns.html",
+                "label": "Amazon SNS"
+            }
+        ]
+    },
+    {
+        "id": 243,
+        "title": "VPC内Glueジョブの失敗",
+        "skill": "3.3.6",
+        "difficulty": "intermediate",
+        "type": "single",
+        "stem": "AWS Glueジョブが、プライベートサブネット内のRDS for PostgreSQLをJDBCで読み込み、結果をS3へ書き出す。接続テストは成功し、データの読み込みも始まるが、ジョブはS3への書き込み段階でタイムアウトする。サブネットのルートテーブルにはVPC内のローカル経路しかなく、NATゲートウェイはない。ジョブのIAMロールにはS3への書き込み権限を付与済みで、インターネットへの経路は設けない方針である。",
+        "instruction": "最も適切なものを1つ選んでください。",
+        "answer": [
+            "a"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "S3のゲートウェイVPCエンドポイントを作成し、Glue接続のサブネットのルートテーブルに関連付ける",
+                "why": "正解です。VPC内で動くGlueジョブがS3へアクセスするには、S3へ到達する経路が必要になる。ゲートウェイVPCエンドポイントなら、インターネットを経由せずプライベートな経路でS3へ書き込める。"
+            },
+            {
+                "id": "b",
+                "text": "NATゲートウェイを追加し、プライベートサブネットからインターネット経由でS3へ出る",
+                "why": "S3へは到達できるが、インターネットへの経路を設けない方針に反する。"
+            },
+            {
+                "id": "c",
+                "text": "ジョブのワーカー数(DPU)を増やして、書き込み処理を高速化する",
+                "why": "原因はネットワーク経路であり、計算資源の不足ではない。ワーカーを増やしても到達できずタイムアウトする。"
+            },
+            {
+                "id": "d",
+                "text": "S3バケットポリシーでGlueジョブのロールにPutObjectを許可する",
+                "why": "権限の不足ならAccess Deniedのエラーになる。経路がないことによるタイムアウトとは症状が異なり、ポリシーでは解決しない。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/glue.html",
+                "label": "AWS Glue"
+            },
+            {
+                "href": "../terms/vpc-endpoint.html",
+                "label": "VPCエンドポイント"
+            }
+        ]
+    },
+    {
+        "id": 244,
+        "title": "ログ保持期間の自動設定",
+        "skill": "3.3.7",
+        "difficulty": "basic",
+        "type": "multiple",
+        "stem": "GlueジョブやLambda関数が、実行のたびにCloudWatch Logsのロググループを自動作成する。保持期間は「失効しない」のままで、保管費用が増えている。監査方針ではログの保持を90日以内とする。新規と既存を問わず保持期間を90日にそろえ、設定漏れを手作業に頼らず防ぎたい。",
+        "instruction": "適切なものを2つ選んでください。",
+        "answer": [
+            "b",
+            "d"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "ログをS3へ定期エクスポートし、S3のライフサイクルルールで90日後に削除する",
+                "why": "S3側のコピーは削除できても、CloudWatch Logs側のログは残り続けるため、保管費用の問題は解決しない。"
+            },
+            {
+                "id": "b",
+                "text": "ロググループの作成(CreateLogGroup)をEventBridgeルールで検知し、Lambda関数で保持期間を90日に設定する",
+                "why": "正解です。自動作成されるロググループの作成をトリガーに、PutRetentionPolicyで保持期間を設定でき、新規のロググループの設定漏れを防げる。"
+            },
+            {
+                "id": "c",
+                "text": "CloudWatchアラームでログの保管量を監視し、超過したら担当者がログを手動で削除する",
+                "why": "手作業に頼らない要件に反し、監視もアラームだけでは保持期間の設定にならない。"
+            },
+            {
+                "id": "d",
+                "text": "DescribeLogGroupsで既存のロググループを列挙し、保持期間が未設定のものに90日を設定する処理を実行する",
+                "why": "正解です。既存のロググループは作成イベントの対象にならないため、一覧から保持期間が未設定のものを見つけて設定する処理が別途必要になる。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/cloudwatch.html",
+                "label": "Amazon CloudWatch"
+            },
+            {
+                "href": "../services/eventbridge.html",
+                "label": "Amazon EventBridge"
+            },
+            {
+                "href": "../services/lambda.html",
+                "label": "AWS Lambda"
+            }
+        ]
+    },
+    {
+        "id": 245,
+        "title": "受注データの品質ルール",
+        "skill": "3.4.2",
+        "difficulty": "intermediate",
+        "type": "multiple",
+        "stem": "AWS Glue ETLジョブで受注データを取り込む際、品質ルールをDQDLで定義する。customer_idはすべて顧客マスターに存在すること、emailは最大5%まで欠損を許容することが要件である。この要件を満たすルールを2つ選んでください。",
+        "instruction": "要件を満たすルールを2つ選んでください。",
+        "answer": [
+            "a",
+            "d"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "ReferentialIntegrityルールで、customer_idの顧客マスターとの一致率が1.0であることを検査する",
+                "why": "正解です。ReferentialIntegrityは、列の値が参照データセットに存在する割合を検査でき、すべてがマスターに存在する要件を表せる。"
+            },
+            {
+                "id": "b",
+                "text": "IsCompleteルールで、email列に欠損がないことを検査する",
+                "why": "IsCompleteは欠損が1件もないことを求めるため、5%までの欠損を許容する要件に反し、正常なデータも不合格になる。"
+            },
+            {
+                "id": "c",
+                "text": "ColumnValuesルールで、customer_idが0より大きいことを検査する",
+                "why": "値の範囲を調べるだけで、顧客マスターに存在するかは確認できない。"
+            },
+            {
+                "id": "d",
+                "text": "Completenessルールで、email列の非欠損率が0.95以上であることを検査する",
+                "why": "正解です。Completenessは列の非欠損の割合を求めるので、5%までの欠損を許容する条件を割合のしきい値で表せる。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/glue.html",
+                "label": "AWS Glue"
+            },
+            {
+                "href": "../terms/data-quality.html",
+                "label": "データ品質"
+            }
+        ]
+    },
+    {
+        "id": 246,
+        "title": "件数の変動に合う品質検査",
+        "skill": "3.4.2",
+        "difficulty": "advanced",
+        "type": "single",
+        "stem": "日次のGlue ETLジョブは毎日約1,000万行を取り込むが、件数は曜日や季節で変動し、固定のしきい値では誤検知が多い。直近7回の実行の平均件数に対し、当日の件数が70%を下回ったら品質エラーとして検出したい。ルールの定義方法として適切なものはどれか。",
+        "instruction": "最も適切なものを1つ選んでください。",
+        "answer": [
+            "c"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "RowCountの固定しきい値を、過去の最大件数に設定する",
+                "why": "件数の変動に追随できず、通常の少ない日も異常と判定されるため、固定しきい値による誤検知の問題が残る。"
+            },
+            {
+                "id": "b",
+                "text": "DataFreshnessルールで、データの更新時刻が新しいことを検査する",
+                "why": "鮮度を検査するルールであり、行数が直近の傾向より大きく減ったことは検出できない。"
+            },
+            {
+                "id": "c",
+                "text": "GlueのETLジョブ内のデータ品質評価で、RowCountを直近7回の平均(avg(last(7)))の0.7倍と比較する動的ルールを定義する",
+                "why": "正解です。動的ルールはlast()演算子で過去の実行時の測定値と比較でき、avgなどの集計関数と組み合わせて変動に追随するしきい値を作れる。動的ルールはGlue ETLで使える。"
+            },
+            {
+                "id": "d",
+                "text": "Data Catalogのテーブルに対するデータ品質タスクで、同じ動的ルールを定義する",
+                "why": "動的ルールはGlue ETLでのみ対応し、Data Catalogのテーブルに対するデータ品質では使えないため、この方法では定義できない。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/glue.html",
+                "label": "AWS Glue"
+            },
+            {
+                "href": "../terms/data-quality.html",
+                "label": "データ品質"
+            }
+        ]
+    },
+    {
+        "id": 247,
+        "title": "移行後のデータ不一致",
+        "skill": "3.4.3",
+        "difficulty": "advanced",
+        "type": "single",
+        "stem": "Aurora MySQLからAmazon Redshiftへ、AWS DMSのフルロードとCDCで複製している。データ検証を有効にしたところ、テーブル統計で一部が「Mismatched records」、別のテーブルが「No primary key」と表示された。データ再同期は設定しておらず、ソースの更新は切り替え直前まで続く。切り替え前の対応として適切なものはどれか。",
+        "instruction": "最も適切なものを1つ選んでください。",
+        "answer": [
+            "a"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "不一致の行はターゲットの検証失敗テーブルで確認して修正し、主キーのない表は集計値の照合などで別途確認する",
+                "why": "正解です。検証で不一致となった行は、ターゲットのawsdms_control.awsdms_validation_failures_v1に記録される。主キーや一意インデックスのないテーブルはDMSの検証対象にならないため、別の確認が必要になる。"
+            },
+            {
+                "id": "b",
+                "text": "不一致はCDC遅延による一時的な表示として放置し、主キーのない表は検証済みと同じ扱いにする",
+                "why": "不一致が実際の差異である可能性があり、放置してはいけない。No primary keyは検証できていない状態であり、検証済みとは扱えない。"
+            },
+            {
+                "id": "c",
+                "text": "どちらの表もDMSが差異を自動で修復するため、追加の確認を行わずに切り替える",
+                "why": "データ再同期を設定していないため、DMSは差異を自動で修復しない。検証は差異を報告するだけである。"
+            },
+            {
+                "id": "d",
+                "text": "主キーのない表はタスクを再起動してキーを自動生成させ、検証済みの状態にする",
+                "why": "DMSの検証は、主キーまたは一意インデックスを前提とし、再起動してもキーは生成されない。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/dms.html",
+                "label": "AWS Database Migration Service"
+            },
+            {
+                "href": "../services/redshift.html",
+                "label": "Amazon Redshift"
+            }
+        ]
+    },
+    {
+        "id": 248,
+        "title": "整形レシピ作成時の標本",
+        "skill": "3.4.4",
+        "difficulty": "basic",
+        "type": "single",
+        "stem": "S3のCSVは注文日順に追記された数千万行である。DataBrewのプロジェクトで整形レシピを作る際、既定の先頭500行には古い形式の日付しか含まれず、新しい表記ゆれを見逃した。全期間の傾向が反映された標本でレシピを作りたい。",
+        "instruction": "最も適切なものを1つ選んでください。",
+        "answer": [
+            "d"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "先頭行の標本の行数を上限の5,000行まで増やす",
+                "why": "標本が先頭の行に偏る点は変わらず、日付順のデータでは新しい形式が含まれない可能性が高い。"
+            },
+            {
+                "id": "b",
+                "text": "最新のファイルだけを別のデータセットにして、先頭500行を標本にする",
+                "why": "新しい形式は見られるが、古い形式が含まれなくなり、全期間の傾向を反映できない。"
+            },
+            {
+                "id": "c",
+                "text": "標本は変更せず、全件でレシピジョブを実行し、出力の誤りを見てからレシピを修正する",
+                "why": "動作はするが、設計時に確認する目的に反し、全件処理のやり直しで時間と費用がかかる。"
+            },
+            {
+                "id": "d",
+                "text": "プロジェクトのサンプリング方法を、ランダムな行に変更する",
+                "why": "正解です。DataBrewのプロジェクトの標本は、先頭のn行かランダムな行を選べる。日付順のデータでは、ランダムに抽出すると全期間の形式が含まれやすい。レシピジョブは全件に適用される。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/databrew.html",
+                "label": "AWS Glue DataBrew"
+            }
+        ]
+    },
+    {
+        "id": 249,
+        "title": "一部のスライスに偏る行",
+        "skill": "3.4.5",
+        "difficulty": "advanced",
+        "type": "single",
+        "stem": "Amazon Redshiftの大きなイベントテーブルは、取り込んだ行の約6割が同じ値「UNKNOWN」になるカテゴリ列をDISTKEYにしている。クエリが遅く、一部のスライスだけディスク使用率が高い。このテーブルは主に集計に使い、他の大きな表との結合は少ない。均等に分散させたい。",
+        "instruction": "最も適切なものを1つ選んでください。",
+        "answer": [
+            "b"
+        ],
+        "choices": [
+            {
+                "id": "a",
+                "text": "クラスターのノード数を増やして、リサイズする",
+                "why": "「UNKNOWN」の行は同じキー値なので同じスライスに集まる。ノードを増やしても、偏りそのものは解消しない。"
+            },
+            {
+                "id": "b",
+                "text": "分散スタイルをEVENまたはAUTOに変更する",
+                "why": "正解です。キー値に依存せず行を均等に分散するEVENや、Redshiftが自動で選ぶAUTOに変更すれば、特定のスライスへの偏りを避けられる。結合の共置が必要ない点も条件に合う。"
+            },
+            {
+                "id": "c",
+                "text": "同じ列にソートキーを追加する",
+                "why": "ソートキーは各スライス内の並び順を決めるもので、行をスライスへ分散する方法は変わらないため、偏りは解消しない。"
+            },
+            {
+                "id": "d",
+                "text": "分散スタイルをALLに変更して、全ノードにテーブルを複製する",
+                "why": "大きなテーブルを全ノードへ複製するため、ストレージとロードの負荷が過大になる。ALLは小さな結合用のテーブル向けである。"
+            }
+        ],
+        "links": [
+            {
+                "href": "../services/redshift.html",
+                "label": "Amazon Redshift"
+            }
+        ]
     }
 ]

@@ -14,7 +14,7 @@ primary="$(cd "$(dirname "$0")/.." && cd "$(git rev-parse --git-common-dir)/.." 
 wt="$primary/../aws-textbook-wt/$name"
 [ -d "$wt" ] || { echo "worktree がありません: $wt" >&2; exit 1; }
 subject="$(date +%Y-%m-%d) $msg"
-trailer="Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>"
+trailer="Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 if ! python -c "" 2>/dev/null; then
   echo "Python が見つからないためビルドできません(公開を中止します)" >&2
   exit 1

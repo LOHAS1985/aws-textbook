@@ -317,9 +317,9 @@ def add_question_bank(page, src_dir):
                 question_titles[question_id] = title
             questions[domain].append(render_question(question, domain, title))
 
-    expected_ids = {str(question_id) for question_id in range(1, 201)}
+    expected_ids = {str(question_id) for question_id in range(1, len(question_titles) + 1)}
     if set(question_titles) != expected_ids:
-        raise ValueError(f"{src_dir}: 問1〜200の選択画面用タイトルが必要です")
+        raise ValueError(f"{src_dir}: 問題IDが1からの連番になっていないか、選択画面用タイトルがありません")
     if len(set(question_titles.values())) != len(question_titles):
         raise ValueError(f"{src_dir}: 選択画面用タイトルが重複しています")
 
