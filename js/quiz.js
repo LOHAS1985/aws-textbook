@@ -245,7 +245,7 @@
   selection.hidden = true;
   randomButton = modeCard(randomButton,
     '<svg viewBox="0 0 48 48" focusable="false"><path d="M8 14h6c11 0 11 20 22 20h4M32 29l8 5-8 5M8 34h6c5 0 7-5 10-10s5-10 10-10h6M32 9l8 5-8 5"/></svg>',
-    "模擬試験", "ランダム", "全200問からランダムに出題。試験のようにまとめて挑戦できます。", "200 問");
+    "模擬試験", "ランダム", "全" + questions.length + "問からランダムに出題。試験のようにまとめて挑戦できます。", questions.length + " 問");
   chooseButton = modeCard(chooseButton,
     '<svg viewBox="0 0 48 48" focusable="false"><path d="M20 10h19v30H9V10h5M18 7h12v7H18zM16 23l3 3 6-7M29 24h5M16 33l3 3 6-7M29 34h5"/></svg>',
     "弱点を復習", "問題を選ぶ", "解きたい問題だけを選択。間違えた問題の復習にも使えます。", "自由に選択");
