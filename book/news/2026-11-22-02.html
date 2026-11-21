@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Route 53:Advanced Hosted Zones と、プライベートホストゾーンのパブリック DNS フォールバック | 2026年11月22日のAWSニュース | AWS教科書</title>
+<meta name="description" content="誤った DNS 変更を防ぐガードレールや変更履歴を備えた新しいホストゾーンの種類が登場し、プライベートゾーンで見つからない名前をパブリック DNS から引けるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-22">2026年11月22日</time>のAWSニュース</p>
+  <h1>Route 53:Advanced Hosted Zones と、プライベートホストゾーンのパブリック DNS フォールバック</h1>
+  <p class="lead">誤った DNS 変更を防ぐガードレールや変更履歴を備えた新しいホストゾーンの種類が登場し、プライベートゾーンで見つからない名前をパブリック DNS から引けるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-22">2026-11-22</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Route 53 に、ホストゾーン(ドメインの DNS レコードをまとめたもの)の新しい種類「Advanced Hosted Zones」が加わりました。料金は標準のホストゾーンとは別です。主な機能は3つです。</p>
+<ul>
+<li>変更ガードレール:まだクエリを受けているレコード、同じゾーン内のエイリアスレコードの向き先、使用中の委任(NS レコードによるサブドメインの任せ先)を削除する変更を、Route 53 が拒否します。IaC ツールからの変更にも働きます。</li>
+<li>変更履歴:レコード単位の変更の記録を365日間残します。</li>
+<li>パブリック DNS フォールバック:プライベートホストゾーンにないレコードを、NXDOMAIN(その名前はない、という DNS の応答)にせず、パブリック DNS から引きます。</li>
+</ul>
+<p>これまでプライベートホストゾーンは、関連付けた VPC でそのドメインの名前をすべて自分で答える扱いでした。ゾーンにない名前は NXDOMAIN になるため、一部の名前だけ内部向けにしたくても、パブリックゾーンの全レコードをコピーして同期し続ける必要がありました。フォールバックを使えば、内部向けにしたい名前だけを登録すれば足ります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 684 218" style="max-width:684px;min-width:547px" role="img" aria-label="図1 プライベートホストゾーンのフォールバックの前後"><defs><marker id="dgnews-2026-11-22-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="b0">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">ゾーンにない名前</text>
+</g>
+<g data-node="b1">
+<rect x="272" y="46" width="150" height="40" rx="8" class="dg-ng"/>
+<text x="347" y="70" text-anchor="middle" class="dg-t">NXDOMAIN</text>
+</g>
+<g data-node="b2">
+<rect x="510" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="585" y="62" text-anchor="middle" class="dg-t">全レコードを</text>
+<text x="585" y="80" text-anchor="middle" class="dg-s">コピーして同期</text>
+</g>
+<g data-node="a0">
+<rect x="34" y="142" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="164" text-anchor="middle" class="dg-tb">これから</text>
+<text x="109" y="182" text-anchor="middle" class="dg-s">ゾーンにない名前</text>
+</g>
+<g data-node="a1">
+<rect x="272" y="142" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="347" y="164" text-anchor="middle" class="dg-t">パブリック DNS</text>
+<text x="347" y="182" text-anchor="middle" class="dg-s">から引く</text>
+</g>
+<g data-node="a2">
+<rect x="510" y="142" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="585" y="164" text-anchor="middle" class="dg-t">内部向けの名前</text>
+<text x="585" y="182" text-anchor="middle" class="dg-s">だけ登録</text>
+</g>
+<path d="M184.0,66.5 L272.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-02-1)"/>
+<path d="M422.0,66.5 L510.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-02-1)"/>
+<text x="466" y="70" text-anchor="middle" class="dg-s dg-halo">回避策</text>
+<path d="M184.0,168.5 L272.0,168.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-02-1)"/>
+<path d="M422.0,168.5 L510.0,168.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-02-1)"/>
+<text x="466" y="172" text-anchor="middle" class="dg-s dg-halo">必要なのは</text>
+</svg>
+</div>
+<figcaption>図1 プライベートホストゾーンのフォールバックの前後</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 616 159" style="max-width:616px;min-width:520px" role="img" aria-label="図2 変更ガードレールの判定"><defs><marker id="dgnews-2026-11-22-02-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="chg">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">レコードの</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">削除リクエスト</text>
+</g>
+<g data-node="gd">
+<rect x="238" y="46" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="313" y="70" text-anchor="middle" class="dg-tb">変更ガードレール</text>
+</g>
+<g data-node="ok">
+<rect x="442" y="-2" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="517" y="20" text-anchor="middle" class="dg-t">使われていない</text>
+<text x="517" y="38" text-anchor="middle" class="dg-s">→ 削除できる</text>
+</g>
+<g data-node="ng">
+<rect x="442" y="83" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="517" y="104" text-anchor="middle" class="dg-t">使用中</text>
+<text x="517" y="122" text-anchor="middle" class="dg-s">→ 全体を拒否</text>
+</g>
+<path d="M184.0,66.5 L238.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-02-2)"/>
+<text x="211" y="70" text-anchor="middle" class="dg-s dg-halo">検査</text>
+<path d="M388.0,50.9 L442.0,39.6" class="dg-line" marker-end="url(#dgnews-2026-11-22-02-2)"/>
+<path d="M388.0,82.1 L442.0,93.4" class="dg-line" marker-end="url(#dgnews-2026-11-22-02-2)"/>
+</svg>
+</div>
+<figcaption>図2 変更ガードレールの判定</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>DNS の誤操作による障害を防ぎやすくなります。ハイブリッド構成などで内外の DNS を分けるときの管理も軽くなります。</dd>
+<dt>試験・実務への影響</dt><dd>DNS の変更ミスは、サービス全体の停止につながります。「誤ったレコード削除を防ぎたい」「内部と外部で同じドメインを使い分けたい」という場面の選択肢として覚えておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/route53.html">Route 53</a>、<a href="../terms/dns.html">DNS</a>、<a href="../terms/dns-record-types.html">DNSレコードの種類</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/route-53-offers-advanced-hosted-zones/">Amazon Route 53 now offers Advanced Hosted Zones</a>(2026-11-20)、<a href="https://aws.amazon.com/about-aws/whats-new/2026/11/route-53-public-dns-fallback/">Amazon Route 53 private hosted zones now support public DNS fallback</a>(2026-11-20)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-22-01.html"><span class="label">← 前へ 2026年11月22日</span>Route 53:同じ AZ のリソースへ答える AZ アフィニティルーティング</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-22-03.html"><span class="label">次へ → 2026年11月22日</span>S3:汎用バケットの読み取りリクエスト上限が約2倍に</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

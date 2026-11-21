@@ -1,0 +1,35 @@
+<!-- title: Network Firewall:インターネットゲートウェイに自動で適用する Internet firewall(プレビュー) -->
+<!-- category: 2026年11月 -->
+<!-- lead: ルーティングの変更なしに、組織内の全 VPC のインターネットゲートウェイへ同じファイアウォールのルールを適用できるようになります(パブリックプレビュー)。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Network Firewall に「自動 Internet firewall」(automated Internet firewall)モードがパブリックプレビューで加わりました。これまでは VPC ごとに専用のサブネットへファイアウォールのエンドポイントを置き、インターネットに出る全サブネットのルートテーブルを書き換え、さらに抜け道ができていないかを監視する必要がありました。</p>
+<p>新モードでは、ルールを一か所で定義するだけで、AWS が対象の VPC のインターネットゲートウェイで通信を検査します。アカウント全体・組織・OU・選んだ VPC を対象にでき、今後作る VPC やサブネットにも自動で広げられます。NAT(プライベートな IP アドレスをパブリックなものに変換する機能)も内蔵し、フィルタリング・NAT・ログの取得をまとめて行います。初期設定のポリシーには、AWS の脅威情報を使うアクティブ脅威防御を含むマネージドルールグループが入ります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node b0 0 0 box "これまで" "VPC ごとに" "エンドポイント"
+node b1 1.6 0 box "ルート変更" "+ 抜け道の監視"
+node a0 0 1.2 accent "これから" "ルールを" "一か所で定義"
+node a1 1.6 1.2 ok "全 VPC の" "IGW で自動検査"
+edge b0 b1
+edge a0 a1
+<figcaption>図1 VPC ごとの構築から一括適用へ</figcaption>
+</figure>
+<figure class="figure" data-diagram>
+grid 170 85
+node net 0 0 blue "インターネット"
+node igw 1.2 0 accent "インターネット" "ゲートウェイ" "(検査・NAT)"
+node vpc1 2.4 -0.5 ok "VPC A"
+node vpc2 2.4 0.5 ok "VPC B"
+edge net igw "出入りの通信"
+edge igw vpc1
+edge igw vpc2
+<figcaption>図2 インターネットゲートウェイで通信を検査する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>多数の VPC があっても、構成の手間や検査の漏れを減らせます。</dd>
+<dt>試験・実務への影響</dt><dd>プレビューの機能で、試験には出にくい内容です。従来の構成(検査用 VPC やエンドポイントの配置)を理解したうえで、手間をどう減らすかの流れとして知っておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/network-firewall.html">Network Firewall</a>、<a href="../services/vpc.html">VPC</a>、<a href="../services/transit-gateway.html">Transit Gateway</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/network-firewall-automated-internet/">AWS Network Firewall introduces automated Internet firewall in public preview</a>(2026-11-20)</dd>
+</dl>
+</section>

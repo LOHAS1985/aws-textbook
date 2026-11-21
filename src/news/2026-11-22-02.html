@@ -1,0 +1,44 @@
+<!-- title: Route 53:Advanced Hosted Zones と、プライベートホストゾーンのパブリック DNS フォールバック -->
+<!-- category: 2026年11月 -->
+<!-- lead: 誤った DNS 変更を防ぐガードレールや変更履歴を備えた新しいホストゾーンの種類が登場し、プライベートゾーンで見つからない名前をパブリック DNS から引けるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Route 53 に、ホストゾーン(ドメインの DNS レコードをまとめたもの)の新しい種類「Advanced Hosted Zones」が加わりました。料金は標準のホストゾーンとは別です。主な機能は3つです。</p>
+<ul>
+<li>変更ガードレール:まだクエリを受けているレコード、同じゾーン内のエイリアスレコードの向き先、使用中の委任(NS レコードによるサブドメインの任せ先)を削除する変更を、Route 53 が拒否します。IaC ツールからの変更にも働きます。</li>
+<li>変更履歴:レコード単位の変更の記録を365日間残します。</li>
+<li>パブリック DNS フォールバック:プライベートホストゾーンにないレコードを、NXDOMAIN(その名前はない、という DNS の応答)にせず、パブリック DNS から引きます。</li>
+</ul>
+<p>これまでプライベートホストゾーンは、関連付けた VPC でそのドメインの名前をすべて自分で答える扱いでした。ゾーンにない名前は NXDOMAIN になるため、一部の名前だけ内部向けにしたくても、パブリックゾーンの全レコードをコピーして同期し続ける必要がありました。フォールバックを使えば、内部向けにしたい名前だけを登録すれば足ります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node b0 0 0 box "これまで" "ゾーンにない名前"
+node b1 1.4 0 ng "NXDOMAIN"
+node b2 2.8 0 box "全レコードを" "コピーして同期"
+node a0 0 1.2 accent "これから" "ゾーンにない名前"
+node a1 1.4 1.2 ok "パブリック DNS" "から引く"
+node a2 2.8 1.2 ok "内部向けの名前" "だけ登録"
+edge b0 b1
+edge b1 b2 "回避策"
+edge a0 a1
+edge a1 a2 "必要なのは"
+<figcaption>図1 プライベートホストゾーンのフォールバックの前後</figcaption>
+</figure>
+<figure class="figure" data-diagram>
+grid 170 85
+node chg 0 0 blue "レコードの" "削除リクエスト"
+node gd 1.2 0 accent "変更ガードレール"
+node ok 2.4 -0.5 ok "使われていない" "→ 削除できる"
+node ng 2.4 0.5 ng "使用中" "→ 全体を拒否"
+edge chg gd "検査"
+edge gd ok
+edge gd ng
+<figcaption>図2 変更ガードレールの判定</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>DNS の誤操作による障害を防ぎやすくなります。ハイブリッド構成などで内外の DNS を分けるときの管理も軽くなります。</dd>
+<dt>試験・実務への影響</dt><dd>DNS の変更ミスは、サービス全体の停止につながります。「誤ったレコード削除を防ぎたい」「内部と外部で同じドメインを使い分けたい」という場面の選択肢として覚えておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/route53.html">Route 53</a>、<a href="../terms/dns.html">DNS</a>、<a href="../terms/dns-record-types.html">DNSレコードの種類</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/route-53-offers-advanced-hosted-zones/">Amazon Route 53 now offers Advanced Hosted Zones</a>(2026-11-20)、<a href="https://aws.amazon.com/about-aws/whats-new/2026/11/route-53-public-dns-fallback/">Amazon Route 53 private hosted zones now support public DNS fallback</a>(2026-11-20)</dd>
+</dl>
+</section>

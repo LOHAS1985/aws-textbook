@@ -1,0 +1,40 @@
+<!-- title: Route 53:同じ AZ のリソースへ答える AZ アフィニティルーティング -->
+<!-- category: 2026年11月 -->
+<!-- lead: VPC 内のクライアントからの DNS クエリに、そのクライアントと同じアベイラビリティーゾーンのリソースを返せるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Route 53 に、新しいルーティングポリシー「AZ アフィニティルーティング」が加わりました。VPC 内のクライアントが名前解決をすると、そのクライアントと同じアベイラビリティーゾーン(AZ。同じリージョン内の独立したデータセンター群)にあるリソースの IP アドレスを優先して返します。通信が AZ をまたがないので、遅延が小さくなります。</p>
+<p>レコードには「場所の種類」として、AZ・ゾーングループ・リージョン・グローバルのどれかを指定します。AZ のレコードでは use1-az1 のような AZ ID を書きます。クライアントの AZ に合うレコードがなければ、ゾーングループ、リージョン、グローバルの順に、範囲の広い場所のレコードへ切り替わります。ヘルスチェックも関連付けられ、異常なら次の場所のレコードで答えます。パブリックホストゾーンとプライベートホストゾーンのどちらでも使え、インターネットからのクエリにはグローバルのレコードが答えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node c1 0 -0.5 blue "クライアント" "(AZ-a)"
+node c2 0 0.5 blue "クライアント" "(AZ-b)"
+node r53 1.2 0 accent "Route 53" "AZ アフィニティ" "レコード"
+node a 2.4 -0.5 ok "AZ-a のサーバー"
+node b 2.4 0.5 ok "AZ-b のサーバー"
+edge c1 r53 "名前解決"
+edge c2 r53 "名前解決"
+edge r53 a "AZ-a には" "こちらを返す"
+edge r53 b "AZ-b には" "こちらを返す"
+<figcaption>図1 クライアントと同じ AZ のサーバーを返す</figcaption>
+</figure>
+<figure class="figure" data-diagram>
+grid 170 85
+node q 0 0 blue "クエリ"
+node az 1.2 0 accent "AZ のレコード"
+node zg 2.4 0 box "ゾーングループ" "のレコード"
+node rg 3.6 0 box "リージョン" "のレコード"
+node gl 4.8 0 box "グローバル" "のレコード"
+edge q az
+edge az zg "なければ" dash
+edge zg rg "なければ" dash
+edge rg gl "なければ" dash
+<figcaption>図2 一致するレコードがないときは範囲の広い場所へ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>AZ をまたぐ通信が減り、応答が速くなります。AZ をまたぐデータ転送の料金も抑えやすくなります。</dd>
+<dt>試験・実務への影響</dt><dd>ルーティングポリシーの選択肢が増えました。「遅延を小さくしたい」ときの、レイテンシールーティング(リージョン間)との使い分けを押さえましょう。AZ 内に閉じたい場合はこちらです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/route53.html">Route 53</a>、<a href="../terms/dns.html">DNS</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/route-53-affinity-routing/">Amazon Route 53 now supports Availability Zone (AZ) affinity routing</a>(2026-11-20)</dd>
+</dl>
+</section>

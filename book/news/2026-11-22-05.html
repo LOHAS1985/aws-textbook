@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network Firewall:インターネットゲートウェイに自動で適用する Internet firewall(プレビュー) | 2026年11月22日のAWSニュース | AWS教科書</title>
+<meta name="description" content="ルーティングの変更なしに、組織内の全 VPC のインターネットゲートウェイへ同じファイアウォールのルールを適用できるようになります(パブリックプレビュー)。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-22">2026年11月22日</time>のAWSニュース</p>
+  <h1>Network Firewall:インターネットゲートウェイに自動で適用する Internet firewall(プレビュー)</h1>
+  <p class="lead">ルーティングの変更なしに、組織内の全 VPC のインターネットゲートウェイへ同じファイアウォールのルールを適用できるようになります(パブリックプレビュー)。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-22">2026-11-22</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Network Firewall に「自動 Internet firewall」(automated Internet firewall)モードがパブリックプレビューで加わりました。これまでは VPC ごとに専用のサブネットへファイアウォールのエンドポイントを置き、インターネットに出る全サブネットのルートテーブルを書き換え、さらに抜け道ができていないかを監視する必要がありました。</p>
+<p>新モードでは、ルールを一か所で定義するだけで、AWS が対象の VPC のインターネットゲートウェイで通信を検査します。アカウント全体・組織・OU・選んだ VPC を対象にでき、今後作る VPC やサブネットにも自動で広げられます。NAT(プライベートな IP アドレスをパブリックなものに変換する機能)も内蔵し、フィルタリング・NAT・ログの取得をまとめて行います。初期設定のポリシーには、AWS の脅威情報を使うアクティブ脅威防御を含むマネージドルールグループが入ります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 480 218" style="max-width:480px;min-width:480px" role="img" aria-label="図1 VPC ごとの構築から一括適用へ"><defs><marker id="dgnews-2026-11-22-05-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="b0">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">VPC ごとに</text>
+</g>
+<g data-node="b1">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">ルート変更</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">+ 抜け道の監視</text>
+</g>
+<g data-node="a0">
+<rect x="34" y="142" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="164" text-anchor="middle" class="dg-tb">これから</text>
+<text x="109" y="182" text-anchor="middle" class="dg-s">ルールを</text>
+</g>
+<g data-node="a1">
+<rect x="306" y="142" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="164" text-anchor="middle" class="dg-t">全 VPC の</text>
+<text x="381" y="182" text-anchor="middle" class="dg-s">IGW で自動検査</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-05-1)"/>
+<path d="M184.0,168.5 L306.0,168.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-05-1)"/>
+</svg>
+</div>
+<figcaption>図1 VPC ごとの構築から一括適用へ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 616 153" style="max-width:616px;min-width:520px" role="img" aria-label="図2 インターネットゲートウェイで通信を検査する"><defs><marker id="dgnews-2026-11-22-05-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="net">
+<rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="70" text-anchor="middle" class="dg-t">インターネット</text>
+</g>
+<g data-node="igw">
+<rect x="238" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="313" y="62" text-anchor="middle" class="dg-tb">インターネット</text>
+<text x="313" y="80" text-anchor="middle" class="dg-s">ゲートウェイ</text>
+</g>
+<g data-node="vpc1">
+<rect x="442" y="4" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="517" y="28" text-anchor="middle" class="dg-t">VPC A</text>
+</g>
+<g data-node="vpc2">
+<rect x="442" y="89" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="517" y="113" text-anchor="middle" class="dg-t">VPC B</text>
+</g>
+<path d="M184.0,66.5 L238.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-05-2)"/>
+<text x="211" y="70" text-anchor="middle" class="dg-s dg-halo">出入りの通信</text>
+<path d="M388.0,50.9 L442.0,39.6" class="dg-line" marker-end="url(#dgnews-2026-11-22-05-2)"/>
+<path d="M388.0,82.1 L442.0,93.4" class="dg-line" marker-end="url(#dgnews-2026-11-22-05-2)"/>
+</svg>
+</div>
+<figcaption>図2 インターネットゲートウェイで通信を検査する</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>多数の VPC があっても、構成の手間や検査の漏れを減らせます。</dd>
+<dt>試験・実務への影響</dt><dd>プレビューの機能で、試験には出にくい内容です。従来の構成(検査用 VPC やエンドポイントの配置)を理解したうえで、手間をどう減らすかの流れとして知っておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/network-firewall.html">Network Firewall</a>、<a href="../services/vpc.html">VPC</a>、<a href="../services/transit-gateway.html">Transit Gateway</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/network-firewall-automated-internet/">AWS Network Firewall introduces automated Internet firewall in public preview</a>(2026-11-20)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-22-04.html"><span class="label">← 前へ 2026年11月22日</span>AWS Backup:DynamoDB の増分バックアップに対応</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-22-06.html"><span class="label">次へ → 2026年11月22日</span>Lambda:Event Function の状態変化を EventBridge へ通知</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

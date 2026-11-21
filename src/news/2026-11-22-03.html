@@ -1,0 +1,23 @@
+<!-- title: S3:汎用バケットの読み取りリクエスト上限が約2倍に -->
+<!-- category: 2026年11月 -->
+<!-- lead: 汎用バケットで、1秒あたりの GET/HEAD リクエストが少なくとも11,000件まで処理できるようになりました(従来は5,500件)。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>S3 の汎用バケットは、プレフィックス(オブジェクトキーの先頭部分)ごとに1秒あたり処理できるリクエスト数の目安があります。今回、読み取り(GET/HEAD)の目安が5,500件から11,000件以上に上がりました。機械学習の学習データや分析のように、大量のオブジェクトを読む処理が速くなります。</p>
+<p>既存のリクエストに自動で適用され、アプリの変更や追加料金は要りません。さらに伸ばしたい場合は、これまでどおりリクエストを複数のプレフィックスに分散します。S3 はプレフィックスごとに独立して拡張するためです。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node b 0 0 box "これまで" "GET/HEAD" "5,500件/秒"
+node a 1.6 0 ok "これから" "GET/HEAD" "11,000件以上/秒"
+node p 3.2 0 accent "さらに増やすには" "プレフィックスを" "分散する"
+edge b a "自動で適用"
+edge a p
+<figcaption>図1 読み取りの上限の変化</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>設定を変えずに、読み取り中心の処理のスループットが上がります。</dd>
+<dt>試験・実務への影響</dt><dd>数字は変わっても、「高いリクエスト率が必要ならプレフィックスを分散する」という考え方は同じです。書き込み(PUT/COPY/POST/DELETE)の目安は今回の発表には含まれません。</dd>
+<dt>関連するページ</dt><dd><a href="../services/s3.html">S3</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-s3-increases-read-request-rate/">Amazon S3 increases the read request rate for general purpose buckets by up to 2x</a>(2026-11-20)</dd>
+</dl>
+</section>

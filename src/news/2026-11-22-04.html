@@ -1,0 +1,24 @@
+<!-- title: AWS Backup:DynamoDB の増分バックアップに対応 -->
+<!-- category: 2026年11月 -->
+<!-- lead: DynamoDB テーブルのバックアップで変更分だけを保存でき、保存容量を抑えながら最短1時間ごとに取得できます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Backup での DynamoDB テーブルのバックアップが、増分バックアップに対応しました。最初に全体(フル)を取り、その後は前回から変わったデータだけを保存します。15日ごとに新しいフルバックアップを取ります。頻度は1時間ごとから週1回まで選べ、どの復旧ポイントからでも復元できます。</p>
+<p>バックアップは通常のボールトのほか、論理的にエアギャップされたボールト(コピーを分離して保護する保管先)にも置け、別リージョンへのコピーも増分になります。新しく DynamoDB を保護するお客様は自動で有効になり、すでに使っている場合は AWS Backup の設定の詳細機能で有効にします。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node b 0 0 box "これまで" "毎回フル" "コピー"
+node b2 1.6 0 ng "容量が増え" "頻度も上げにくい"
+node a 0 1.2 accent "これから" "フル+変更分" "(15日ごとにフル)"
+node a2 1.6 1.2 ok "容量を節約" "最短1時間ごと"
+edge b b2
+edge a a2
+<figcaption>図1 フルバックアップと増分バックアップの違い</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>バックアップの料金を抑えつつ、RPO(失ってよいデータ量の目安)を短くできます。</dd>
+<dt>試験・実務への影響</dt><dd>信頼性・事業継続の問題で、バックアップ頻度と保存容量のバランスが問われるときの選択肢です。ポイントインタイムリカバリ(DynamoDB 自体の機能)との違いは、AWS Backup の保管ルールやボールトで一元管理できる点です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/backup.html">Backup</a>、<a href="../services/dynamodb.html">DynamoDB</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-backup-incremental-backups-dynamodb/">AWS Backup now supports incremental backups for Amazon DynamoDB</a>(2026-11-20)</dd>
+</dl>
+</section>
