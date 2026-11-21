@@ -292,6 +292,11 @@ def add_question_bank(page, src_dir):
     titles = json.loads(title_path.read_text(encoding="utf-8"))
     if set(titles) != {str(question_id) for question_id in range(1, 101)}:
         raise ValueError(f"{title_path}: 問1〜100の選択画面用タイトルが必要です")
+    skills_path = src_dir / "dea-c01-skills.json"  # 問1〜10(questions.html内)のSkill番号
+    old_skills = json.loads(skills_path.read_text(encoding="utf-8"))
+    valid_all = {f"{d}.{t}.{n}" for d, tasks in DEA_C01_SKILL_COUNTS.items() for t, c in tasks.items() for n in range(1, c + 1)}
+    if set(old_skills) != {str(question_id) for question_id in range(1, 11)} or not set(old_skills.values()) <= valid_all:
+        raise ValueError(f"{skills_path}: 問1〜10のSkill番号が不足しているか、公式ガイドにない番号があります")
     page = annotate_existing_questions(page, titles)
     questions = {domain: [] for domain in range(1, 5)}
     question_titles = dict(titles)
@@ -310,10 +315,10 @@ def add_question_bank(page, src_dir):
             title = question.get("title", titles.get(question_id))
             if not title:
                 raise ValueError(f"{path}: 問{question_id}の選択画面用タイトルがありません")
+            skill = question.get("skill", "")
+            if skill not in valid_skills:
+                raise ValueError(f"{path}: 問{question_id}のSkill「{skill}」が公式ガイドの分野{domain}にありません")
             if int(question_id) > 100:
-                skill = question.get("skill", "")
-                if skill not in valid_skills:
-                    raise ValueError(f"{path}: 問{question_id}のSkill「{skill}」が公式ガイドにありません")
                 question_titles[question_id] = title
             questions[domain].append(render_question(question, domain, title))
 

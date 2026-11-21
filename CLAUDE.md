@@ -103,7 +103,7 @@ AWS初学者〜AWS認定資格(SAA程度)の学習者
 - 試験の入口(book/exams/{試験ID}/index.html)には、作られているページだけを並べる
 - 旧URL(book/questions/・book/guides/・book/terms/data-engineer-exam-map.html)は build.py の LEGACY_PAGES で新しいページへ転送する
 - 問題集は試験ごとに1ページ(src/exams/{試験ID}/questions.html)。カテゴリ名は試験ID(例: DEA-C01)
-- DEA-C01の問題は公式試験ガイドの分野・配点に沿って配置する。総問題数は固定しない。分野ごとの問題数の割合が公式の配点(34/26/22/18%)から±3ポイント以内であることと、問題IDが1からの連番であることを checks.py で検査する。問1〜100の選択画面用タイトルは `src/exams/dea-c01/dea-c01-titles.json`、追加問題のタイトルと公式ガイドのスキル番号は各 `src/exams/dea-c01/domain-N.json` の設問データで管理する
+- DEA-C01の問題は公式試験ガイドの分野・配点に沿って配置する。総問題数は固定しない。分野ごとの問題数の割合が公式の配点(34/26/22/18%)から±3ポイント以内であることと、問題IDが1からの連番であることを checks.py で検査する。問1〜100の選択画面用タイトルは `src/exams/dea-c01/dea-c01-titles.json`、追加問題のタイトルと、問11以降すべての公式ガイドのスキル番号は各 `src/exams/dea-c01/domain-N.json` の設問データで、問1〜10(questions.html内)のスキル番号は `src/exams/dea-c01/dea-c01-skills.json` で管理する。build.py が全問のスキル番号を公式ガイドと照合する
 - 問題文は実務の状況・制約・目標を示すシナリオ型にし、サービスの暗記だけで解けないよう要件から選ばせる。出題形式・難易度・文章量は [問題集の作成方針.md](問題集の作成方針.md) を参照する
 - 1問あたり選択肢は4つを基本とし、単一選択または「2つ選択」を明記する。正解だけでなく不正解の各選択肢も、要件を満たさない理由を解説する
 - 選択式の問いは `<section class="quiz-q" data-answer="a" data-type="single">` で記述する。複数選択では正解値をカンマで区切り、`data-type="multiple"` とする。各問いにラジオボタンまたはチェックボックス、`<details class="quiz-answer">` の答えと解説を置く
