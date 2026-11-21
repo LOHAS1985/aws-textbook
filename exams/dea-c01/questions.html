@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DEA-C01 問題集 | AWS教科書</title>
-<meta name="description" content="DEA-C01の出題範囲に沿った実務判断を練習する200問">
+<meta name="description" content="DEA-C01の出題範囲に沿った実務判断を練習する260問">
 <script>
 // 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
 try {
@@ -1391,6 +1391,400 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../../terms/data-engineering-basics.html">データエンジニアリングの基礎</a><a href="../../services/step-functions.html">AWS Step Functions</a></p></details>
 </section>
+<section class="quiz-q" data-id="201" data-title="特定レコードで処理が停止" data-domain="1" data-difficulty="intermediate" data-answer="b" data-type="single">
+<h4>問201 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">Amazon Kinesis Data Streamsのシャードを、AWS Lambdaのイベントソースマッピングで処理しています。形式が不正な1レコードで関数が毎回失敗し、同じバッチの再試行が続いて後続レコードの処理が止まりました。他のレコードの処理を進めつつ、失敗したレコードは後で調査したいと考えています。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q201" value="a"> 関数のタイムアウトを最大値に延長し、同じバッチが成功するまで再試行を続けさせる</label></li>
+<li><label><input type="radio" name="q201" value="b"> 失敗時のバッチ分割、最大再試行回数、最大レコード経過時間を設定し、失敗時の送信先を指定する</label></li>
+<li><label><input type="radio" name="q201" value="c"> ストリームのデータ保持期間を延長し、問題が解消するまで読み取りを止める</label></li>
+<li><label><input type="radio" name="q201" value="d"> 並列処理係数を引き上げ、同じシャードを複数の関数呼び出しで読み取る</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。バッチを分割して不正レコードを切り分け、再試行の上限を超えたレコードの情報を送信先へ退避できるため、後続の処理を進めつつ調査用に保管できます。</p>
+<ul>
+<li><strong>A:</strong> 不正なレコードは何度試しても失敗するため問題が解消せず、後続レコードの処理も止まったままになります。</li>
+<li><strong>C:</strong> 保持期間の延長はレコードを残す期間を延ばすだけで、不正レコードを取り除かない限り読み取りを再開しても同じ失敗を繰り返します。</li>
+<li><strong>D:</strong> 並列度を上げても、不正レコードを含むバッチが再試行され続ける原因は変わらず、後続の処理が止まる問題を解消できません。</li>
+</ul>
+<p><a href="../../services/kinesis.html">Amazon Kinesis</a><a href="../../services/lambda.html">AWS Lambda</a></p></details>
+</section>
+<section class="quiz-q" data-id="202" data-title="テーブル更新の変更履歴" data-domain="1" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
+<h4>問202 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">Amazon DynamoDBの注文テーブルで、更新と削除の前後の属性値を下流の監査処理が受け取る必要があります。変更は発生順に近い形で取得し、数分以内にAWS Lambdaで処理します。実装として適切なものを選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q202" value="a"> テーブルでDynamoDB Streamsを有効にし、ストリームのビューの種類を新旧両方のイメージにする</label></li>
+<li><label><input type="checkbox" name="q202" value="b"> ビューの種類をキー属性のみにし、変更後の値はLambdaがテーブルを再読み取りして得る</label></li>
+<li><label><input type="checkbox" name="q202" value="c"> ストリームをLambdaのイベントソースマッピングで読み取り、処理結果を下流へ渡す</label></li>
+<li><label><input type="checkbox" name="q202" value="d"> ポイントインタイムリカバリを有効にし、変更の差分を継続的に読み取る</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、C</strong></p>
+<p>正解です。Lambdaがストリームを読み取り、変更が起きてから数分以内に処理できます。ポーリングのアプリケーションを運用する必要もありません。</p>
+<ul>
+<li><strong>B:</strong> 更新前の値や削除済み項目の内容は、テーブルを読み直しても取得できず、前後の値を受け取る要件を満たしません。</li>
+<li><strong>D:</strong> ポイントインタイムリカバリは過去の時点への復元のための機能で、変更を継続的に配信するものではなく、数分以内の処理要件を満たしません。</li>
+</ul>
+<p><a href="../../services/dynamodb.html">Amazon DynamoDB</a><a href="../../services/lambda.html">AWS Lambda</a></p></details>
+</section>
+<section class="quiz-q" data-id="203" data-title="月末データの書き出し" data-domain="1" data-difficulty="basic" data-answer="d" data-type="single">
+<h4>問203 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">本番のAmazon RDS for MySQLから、月末時点の全テーブルをAmazon S3へ保存し、Amazon Athenaで分析します。本番データベースへの追加負荷を避け、列指向形式で保存します。継続的な変更の追跡は不要で、取り込みは月に1回です。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q203" value="a"> 営業時間中に分析用のクエリで全テーブルをSELECTし、CSVとして出力する</label></li>
+<li><label><input type="radio" name="q203" value="b"> AWS DMSの変更データキャプチャのタスクを常時実行し、S3へ複製し続ける</label></li>
+<li><label><input type="radio" name="q203" value="c"> 自動バックアップの保持期間を延長し、バックアップを分析で参照できるようにする</label></li>
+<li><label><input type="radio" name="q203" value="d"> 月末のスナップショットをAmazon S3へエクスポートし、Parquet形式で保存する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。スナップショットから抽出するため本番インスタンスへの負荷を避けられ、Parquet形式でS3に書き出されるのでAthenaで分析できます。</p>
+<ul>
+<li><strong>A:</strong> 本番データベースへ読み取り負荷がかかるため、追加負荷を避ける要件を満たしません。列指向形式でもありません。</li>
+<li><strong>B:</strong> 月に1回の取り込みには継続的な複製は不要で、レプリケーション基盤の運用と料金が常に発生します。</li>
+<li><strong>C:</strong> バックアップは分析用のファイルとしてS3へ出力されず、Athenaから直接読み取れません。</li>
+</ul>
+<p><a href="../../services/rds.html">Amazon RDS</a><a href="../../services/s3.html">Amazon S3</a><a href="../../services/athena.html">Amazon Athena</a></p></details>
+</section>
+<section class="quiz-q" data-id="204" data-title="大きなテーブルの並列読み取り" data-domain="1" data-difficulty="advanced" data-answer="c" data-type="single">
+<h4>問204 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">AWS Glue ETLジョブが、オンプレミスのPostgreSQLにある数億行のテーブルをJDBC接続で毎晩全件読み直しています。ワーカーを増やしても読み取り段階の時間が変わりません。ソース側の主キーは数値で、値は均等に分布しています。夜間の処理枠は2時間で、ソースDBへの同時接続は多くても10本までに抑える必要があります。読み取り時間を短縮する設定はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q204" value="a"> ワーカー数とワーカータイプをさらに引き上げ、読み取り方法は変えずに実行する</label></li>
+<li><label><input type="radio" name="q204" value="b"> ジョブの再試行回数を増やし、読み取りに時間がかかった場合に再実行させる</label></li>
+<li><label><input type="radio" name="q204" value="c"> 数値の主キーをhashfield、並列読み取り数のhashpartitionsを10に指定する</label></li>
+<li><label><input type="radio" name="q204" value="d"> ジョブブックマークを無効にし、読み取り前の状態確認を省く</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>正解です。テーブルを論理的に分割した重複のないクエリが並列に実行され、均等な数値の列を使うので各分割の件数もそろいます。hashpartitionsを10以下にすれば、同時接続数の上限も守れます。</p>
+<ul>
+<li><strong>A:</strong> 既定では1本のクエリで読み取るため、ワーカーを増やしても読み取り段階は並列化されず、料金だけが増えます。</li>
+<li><strong>B:</strong> 問題は読み取りの失敗ではなく並列度の不足です。再試行を増やしても所要時間は短くならず、再実行で時間が延びます。</li>
+<li><strong>D:</strong> 読み取りの並列度は変わらず、増分処理でもなくなるため、処理対象が増えて時間が延びる可能性があります。</li>
+</ul>
+<p><a href="../../services/glue.html">AWS Glue</a></p></details>
+</section>
+<section class="quiz-q" data-id="205" data-title="変換コンテナの起動時間" data-domain="1" data-difficulty="intermediate" data-answer="b,d" data-type="multiple">
+<h4>問205 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">データ変換用のコンテナを、AWS Fargate上のAmazon ECSタスクで実行しています。ビルド用ツールを含む約4GBのイメージで起動に時間がかかり、タスクに割り当てた8GBのメモリのうち、実際の使用量は2GB程度です。起動時間とコストを下げる方法を選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q205" value="a"> Amazon ECRのライフサイクルポリシーで古いイメージを削除し、リポジトリ内のイメージ数を減らす</label></li>
+<li><label><input type="checkbox" name="q205" value="b"> マルチステージビルドと軽量なベースイメージを使い、実行に不要なツールを除いてイメージを小さくする</label></li>
+<li><label><input type="checkbox" name="q205" value="c"> タスクのCPUを上限まで引き上げ、イメージの取得を高速にする</label></li>
+<li><label><input type="checkbox" name="q205" value="d"> Container Insightsの実測値をもとに、タスクのメモリを実使用量に余裕を加えた値へ見直す</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B、D</strong></p>
+<p>正解です。実測値に合わせて割り当てを適正化すると、使っていないメモリ分の料金を抑えられます。</p>
+<ul>
+<li><strong>A:</strong> 保管料金には効きますが、実行するイメージの大きさや起動時間、タスクの割り当てメモリは変わりません。</li>
+<li><strong>C:</strong> イメージの取得時間は主にイメージの大きさに左右され、CPUの引き上げは料金を増やすだけで起動時間の短縮策になりません。</li>
+</ul>
+<p><a href="../../services/ecs.html">Amazon ECS</a><a href="../../services/ecr.html">Amazon ECR</a></p></details>
+</section>
+<section class="quiz-q" data-id="206" data-title="急ぎでない変換のコスト" data-domain="1" data-difficulty="basic" data-answer="a" data-type="single">
+<h4>問206 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">テスト環境用のAWS Glue Sparkジョブ(AWS Glue 4.0、G.1Xワーカー)を毎週実行しています。完了期限は翌営業日で、開始が多少遅れても問題ありません。スクリプトを変えずに実行コストを下げる設定はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q206" value="a"> ジョブの実行クラスをFLEXに変更して実行する</label></li>
+<li><label><input type="radio" name="q206" value="b"> ワーカータイプをより大きいものに変更し、実行時間を短縮する</label></li>
+<li><label><input type="radio" name="q206" value="c"> ジョブの最大同時実行数を増やし、複数の実行を並列に開始する</label></li>
+<li><label><input type="radio" name="q206" value="d"> ジョブのタイムアウトを短く設定し、長時間の実行を止める</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。柔軟な実行クラスは開始時刻や所要時間にばらつきを許容できる非緊急のジョブ向けで、標準より低い料金で実行できます。</p>
+<ul>
+<li><strong>B:</strong> ワーカー当たりの単価が上がり、料金が下がる保証がありません。実行クラスの見直しによるコスト削減でもありません。</li>
+<li><strong>C:</strong> 並列に動くワーカーが増えるため、料金は下がらず増加します。</li>
+<li><strong>D:</strong> 処理が完了前に打ち切られる恐れがあり、実行1回当たりの単価は変わりません。</li>
+</ul>
+<p><a href="../../services/glue.html">AWS Glue</a></p></details>
+</section>
+<section class="quiz-q" data-id="207" data-title="書き込み時の503エラー" data-domain="1" data-difficulty="advanced" data-answer="b" data-type="single">
+<h4>問207 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">ファイル変換用のAWS Lambda関数が数千並列で動き、出力を同じAmazon S3プレフィックスへ毎秒数千件書き込んでいます。ログには一定時間ごとに503 Slow Downが記録され、一部の実行が失敗します。入力の欠落はなく、関数の処理自体は正常で、メモリやタイムアウトを変えても失敗の頻度は変わりませんでした。失敗の原因の切り分けと、対処として適切なものはどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q207" value="a"> Lambda関数のメモリを増やして処理を速め、並列実行数は維持する</label></li>
+<li><label><input type="radio" name="q207" value="b"> 出力キーのプレフィックスを分散させ、SDKの再試行をエクスポネンシャルバックオフで有効にする</label></li>
+<li><label><input type="radio" name="q207" value="c"> S3バケットのバージョニングを有効にし、書き込みの競合を避ける</label></li>
+<li><label><input type="radio" name="q207" value="d"> S3 Transfer Accelerationを有効にし、アップロードを高速化する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。S3の要求レートはプレフィックス単位で扱われるため、書き込み先を分散すれば負荷が分かれます。一時的な503はバックオフ付きの再試行で吸収できます。</p>
+<ul>
+<li><strong>A:</strong> エラーの原因はS3側の要求レートで、関数の処理速度ではありません。書き込みの要求頻度は変わらず、エラーも解消しません。</li>
+<li><strong>C:</strong> 503 Slow Downは書き込みの競合ではなく要求レートの超過で起きます。バージョニングは解決策になりません。</li>
+<li><strong>D:</strong> 遠距離からの転送を速める機能で、プレフィックス当たりの要求レートの問題は解消しません。</li>
+</ul>
+<p><a href="../../services/s3.html">Amazon S3</a><a href="../../terms/throttling-retry.html">スロットリングと再試行</a></p></details>
+</section>
+<section class="quiz-q" data-id="208" data-title="取引先別のAPI利用制限" data-domain="1" data-difficulty="intermediate" data-answer="b,c" data-type="multiple">
+<h4>問208 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">取引先ごとに集計結果を返すデータAPIを、Amazon API Gateway(REST API)とAWS Lambdaで公開します。取引先ごとの1日の呼び出し回数と秒間のリクエスト数に上限を設け、許可された送信元IPアドレス以外からの要求はバックエンドの前で遮断します。適切な設定を選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q208" value="a"> Lambda関数の予約同時実行数を取引先の数に合わせて設定する</label></li>
+<li><label><input type="checkbox" name="q208" value="b"> 取引先ごとにAPIキーを発行し、使用量プランでスロットリングとクォータを設定する</label></li>
+<li><label><input type="checkbox" name="q208" value="c"> AWS WAFのWeb ACLをAPI Gatewayのステージに関連付け、許可するIPアドレスのルールを設定する</label></li>
+<li><label><input type="checkbox" name="q208" value="d"> 集計ファイルをAmazon S3に置き、署名付きURLを取引先へ配布する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B、C</strong></p>
+<p>正解です。WAFはREST APIのステージに関連付けられ、許可されたIPアドレス以外の要求を、Lambdaが呼び出される前に遮断できます。</p>
+<ul>
+<li><strong>A:</strong> 関数全体の同時実行数の上限で、取引先ごとの呼び出し回数やレートの制限にはなりません。</li>
+<li><strong>D:</strong> 有効期間内はURLを知る誰でも取得でき、取引先ごとの呼び出し回数やIPアドレスの制限を実装できません。</li>
+</ul>
+<p><a href="../../services/api-gateway.html">Amazon API Gateway</a><a href="../../services/waf.html">AWS WAF</a><a href="../../services/lambda.html">AWS Lambda</a></p></details>
+</section>
+<section class="quiz-q" data-id="209" data-title="大量文書の夜間要約" data-domain="1" data-difficulty="intermediate" data-answer="a" data-type="single">
+<h4>問209 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">コールセンターの通話記録の文字起こし約50万件を、Amazon Bedrockの基盤モデルで夜間にまとめて要約し、結果をAmazon S3へ保存します。結果は翌朝までにそろえばよく、リアルタイムの応答は不要です。スロットリングを避けつつ料金を抑える呼び出し方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q209" value="a"> 入力をJSON Lines形式でS3に置き、バッチ推論ジョブで処理して結果をS3へ出力する</label></li>
+<li><label><input type="radio" name="q209" value="b"> Lambda関数から全件をオンデマンドで並列に呼び出し、スロットリング時はすぐに再送する</label></li>
+<li><label><input type="radio" name="q209" value="c"> プロビジョンドスループットを購入し、夜間以外も含めて処理能力を確保しておく</label></li>
+<li><label><input type="radio" name="q209" value="d"> ナレッジベースを作成し、全件を1つのプロンプトにまとめて要約させる</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。バッチ推論は大量の入力を非同期に処理し、結果をS3へ書き出します。即時応答が不要な処理を、オンデマンドの呼び出しより低い料金で実行できます。</p>
+<ul>
+<li><strong>B:</strong> オンデマンドの呼び出し上限に達しやすく、即時の再送で負荷が増えます。即時応答が不要な処理に割安な方式でもありません。</li>
+<li><strong>C:</strong> 夜間のバッチだけのために処理能力を常時確保すると、使わない時間帯の料金が発生し、コスト抑制の要件に合いません。</li>
+<li><strong>D:</strong> 通話ごとの要約が必要で、1つのプロンプトに全件を入れるとコンテキストの上限を超えます。ナレッジベースは検索拡張のための機能です。</li>
+</ul>
+<p><a href="../../services/bedrock.html">Amazon Bedrock</a><a href="../../services/s3.html">Amazon S3</a></p></details>
+</section>
+<section class="quiz-q" data-id="210" data-title="高頻度な短時間ワークフロー" data-domain="1" data-difficulty="advanced" data-answer="c" data-type="single">
+<h4>問210 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">Amazon S3に届く小さなファイルごとに、検証、変換、登録の3つのAWS Lambda関数を順に実行します。イベントは1日に数百万件あり、各処理は1分以内に終わります。実行履歴を個別に長期保持する必要はなく、同じファイルを再処理しても結果が変わらない冪等な処理です。失敗時はイベントを再投入できます。状態遷移の料金を抑えたい場合に適するオーケストレーションはどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q210" value="a"> Step Functionsのスタンダードワークフローを、イベントごとに起動する</label></li>
+<li><label><input type="radio" name="q210" value="b"> Amazon MWAAのDAGを、イベントごとにトリガーする</label></li>
+<li><label><input type="radio" name="q210" value="c"> Step Functionsのエクスプレスワークフローを使う</label></li>
+<li><label><input type="radio" name="q210" value="d"> AWS Glueのワークフローにトリガーを定義し、イベントごとに実行する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>正解です。短時間で高頻度の処理向けで、実行回数と実行時間に基づく課金のため大量実行でも抑えられます。冪等な処理なので、非同期実行の少なくとも1回の実行にも対応できます。</p>
+<ul>
+<li><strong>A:</strong> 状態遷移の数に応じて課金されるため、数百万件規模では料金が大きくなります。長時間実行や実行履歴の保持が必要な場合に向く方式です。</li>
+<li><strong>B:</strong> 環境の稼働に対する料金がかかり、1分以内に終わる大量のイベント単位の処理には向きません。</li>
+<li><strong>D:</strong> Glueのワークフローはクローラーとジョブの連携用で、Lambda関数を順に呼ぶ高頻度のイベント処理には向きません。</li>
+</ul>
+<p><a href="../../services/step-functions.html">AWS Step Functions</a><a href="../../services/lambda.html">AWS Lambda</a></p></details>
+</section>
+<section class="quiz-q" data-id="211" data-title="数百万ファイルの並列変換" data-domain="1" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
+<h4>問211 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">Amazon S3にある約200万件のJSONファイルを、AWS Step Functionsから1ファイルずつAWS Lambdaで変換します。失敗が全体の1%未満なら後から再処理するため、一部の失敗で全体を止めたくありません。ファイルの一覧が大きく、1回の状態入力には収まりません。同時実行数は、下流のLambdaの上限を超えないよう制御します。適切な設計を選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q211" value="a"> Mapステートを分散モードにし、ItemReaderでS3の対象一覧を読み取り、並列数の上限を設定する</label></li>
+<li><label><input type="checkbox" name="q211" value="b"> インラインモードのMapステートに全ファイル名を入力として渡し、並列数を最大にする</label></li>
+<li><label><input type="checkbox" name="q211" value="c"> Parallelステートに多数のブランチを定義し、全ブランチを同時に実行する</label></li>
+<li><label><input type="checkbox" name="q211" value="d"> 許容する失敗の割合を設定し、閾値内ならMap Run全体を継続させ、失敗した項目は結果の出力から特定して再処理する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、D</strong></p>
+<p>正解です。失敗率が閾値以内であれば処理を継続でき、失敗分だけを後から再処理できます。</p>
+<ul>
+<li><strong>B:</strong> インラインモードは入力のサイズに上限があり、同時に実行できる反復数も限られるため、200万件の一覧を渡せません。</li>
+<li><strong>C:</strong> ブランチ数は定義時に固定され、200万件規模のデータを動的に処理する用途には向きません。</li>
+</ul>
+<p><a href="../../services/step-functions.html">AWS Step Functions</a><a href="../../services/s3.html">Amazon S3</a></p></details>
+</section>
+<section class="quiz-q" data-id="212" data-title="重複処理と不正メッセージ" data-domain="1" data-difficulty="intermediate" data-answer="c,d" data-type="multiple">
+<h4>問212 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">注文処理用のAmazon SQSスタンダードキューを、AWS Lambdaで処理しています。関数の処理には最大90秒かかりますが、可視性タイムアウトは既定の30秒のため、同じメッセージが重複して処理されています。また、形式が不正なメッセージが何度も再配信されています。適切な設定を選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q212" value="a"> キューの配信遅延を90秒に設定し、再配信を遅らせる</label></li>
+<li><label><input type="checkbox" name="q212" value="b"> メッセージの保持期間を最大に延長し、再配信されるメッセージを長く残す</label></li>
+<li><label><input type="checkbox" name="q212" value="c"> 可視性タイムアウトを、関数のタイムアウトより十分に長く設定する</label></li>
+<li><label><input type="checkbox" name="q212" value="d"> デッドレターキューを設定し、最大受信回数を超えたメッセージを移す</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C、D</strong></p>
+<p>正解です。再配信を繰り返す不正なメッセージを通常のキューから分離し、後で調査できます。</p>
+<ul>
+<li><strong>A:</strong> 配信遅延はメッセージが最初に受信可能になるまでの時間で、処理中のメッセージが再び見える問題は解消しません。</li>
+<li><strong>B:</strong> 不正なメッセージがキューに長く残るだけで、重複処理も繰り返しの再配信も解消しません。</li>
+</ul>
+<p><a href="../../services/sqs.html">Amazon SQS</a><a href="../../services/lambda.html">AWS Lambda</a><a href="../../terms/messaging-comparison.html">メッセージングサービスの比較</a></p></details>
+</section>
+<section class="quiz-q" data-id="213" data-title="対象期間の絞り込み" data-domain="1" data-difficulty="intermediate" data-answer="d" data-type="single">
+<h4>問213 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">AWS Glueジョブが、年月でパーティション分割された5年分のS3テーブルをData Catalog経由で読み込み、読み込み後にfilterで直近1か月分に絞っています。必要なのは直近1か月分だけで、処理に時間がかかっています。出力を変えずに実行時間を短縮する変更はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q213" value="a"> 読み込み後のfilterを、結合や集計の直前の工程へ移す</label></li>
+<li><label><input type="radio" name="q213" value="b"> ワーカー数を増やし、全期間の読み込みを並列で速くする</label></li>
+<li><label><input type="radio" name="q213" value="c"> 読み込み後にcoalesceで出力のファイル数を減らす</label></li>
+<li><label><input type="radio" name="q213" value="d"> 読み込み時にpush_down_predicateでパーティション条件を指定する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。条件に合うパーティションだけを読み込むため、読み込む量が減り、後続の処理も含めて実行時間を短縮できます。</p>
+<ul>
+<li><strong>A:</strong> filterの位置を変えても、全期間のパーティションを読み込む点は変わらず、読み込みの時間は短縮されません。</li>
+<li><strong>B:</strong> 不要なパーティションを読む点が残り、料金も増えます。</li>
+<li><strong>C:</strong> 出力側の調整で、読み込む対象を減らす効果はありません。</li>
+</ul>
+<p><a href="../../services/glue.html">AWS Glue</a></p></details>
+</section>
+<section class="quiz-q" data-id="214" data-title="関数の処理時間の短縮" data-domain="1" data-difficulty="basic" data-answer="b" data-type="single">
+<h4>問214 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">CPU負荷の高いデータ整形を行うAWS Lambda関数が、メモリ128MBの設定で毎回40秒近くかかっています。メモリの使用量は64MB程度です。コードを変更せず、実行時間の短縮と料金の両方を確認しながら設定を決める方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q214" value="a"> プロビジョニング済み同時実行で、実行環境を事前に起動しておく</label></li>
+<li><label><input type="radio" name="q214" value="b"> メモリ設定を段階的に増やし、実行時間と料金を比較して決める</label></li>
+<li><label><input type="radio" name="q214" value="c"> 予約同時実行数を引き上げ、並列に動かせる実行枠を確保する</label></li>
+<li><label><input type="radio" name="q214" value="d"> 関数のタイムアウトを延長し、長い実行を許可する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。Lambdaではメモリ設定に比例してCPUが割り当てられるため、メモリを増やすと実行時間が短くなる場合があり、料金との釣り合いを比較して決められます。</p>
+<ul>
+<li><strong>A:</strong> 初回起動の遅延を減らす機能で、CPU負荷の高い処理そのものの実行時間は変わりません。</li>
+<li><strong>C:</strong> 同時に実行できる数の上限や確保の設定で、1回の実行時間は変わりません。</li>
+<li><strong>D:</strong> 処理が途中で打ち切られる失敗は防げますが、処理時間は短縮されません。</li>
+</ul>
+<p><a href="../../services/lambda.html">AWS Lambda</a></p></details>
+</section>
+<section class="quiz-q" data-id="215" data-title="スクリプトの変更管理" data-domain="1" data-difficulty="basic" data-answer="a,c" data-type="multiple">
+<h4>問215 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">データ変換用のAWS Glueスクリプトを複数人がコンソールで直接編集しており、誰がいつ何を変えたか分からず、不具合時に前の版へ戻せません。変更履歴とロールバックができ、変換ロジックの品質も確認できる開発の進め方を選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q215" value="a"> スクリプトをGitリポジトリで管理し、プルリクエストのレビューを経て本線へ反映する</label></li>
+<li><label><input type="checkbox" name="q215" value="b"> 変更内容をスクリプト冒頭のコメントに追記し、同じファイルを共有して上書きする</label></li>
+<li><label><input type="checkbox" name="q215" value="c"> 変換ロジックを関数に分け、サンプルデータを使う単体テストをコミットごとに自動実行する</label></li>
+<li><label><input type="checkbox" name="q215" value="d"> 本番のデータを開発者の端末へ複製し、手元で動作を確認する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、C</strong></p>
+<p>正解です。ロジックの変更による不具合を、本番へ反映する前に自動で検出できます。</p>
+<ul>
+<li><strong>B:</strong> コメントは書き換えや書き忘れが起こり、正確な履歴になりません。前の版へ戻す手段もありません。</li>
+<li><strong>D:</strong> 管理外の場所に本番データを置く情報管理上の問題があり、変更履歴やロールバックの要件にも関係しません。</li>
+</ul>
+<p><a href="../../services/glue.html">AWS Glue</a><a href="../../terms/terraform-git.html">TerraformとGit</a></p></details>
+</section>
+<section class="quiz-q" data-id="216" data-title="スタック削除時のデータ保持" data-domain="1" data-difficulty="intermediate" data-answer="c" data-type="single">
+<h4>問216 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">開発のたびにAWS CloudFormationのスタックを作成・削除してデータ基盤を再現しています。スタックにはデータレイク用のAmazon S3バケットも含まれますが、スタックを削除してもバケットと取り込み済みのデータは残す必要があります。テンプレートでの対処はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q216" value="a"> バケットのバージョニングを有効にし、削除後に復元できるようにする</label></li>
+<li><label><input type="radio" name="q216" value="b"> スタックの削除前にバケット内のデータを別のバケットへコピーする</label></li>
+<li><label><input type="radio" name="q216" value="c"> バケットのリソースにDeletionPolicyのRetainを指定する</label></li>
+<li><label><input type="radio" name="q216" value="d"> スタックの終了保護を有効にして、削除を防ぐ</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>正解です。スタックを削除してもリソースが削除されずに残るため、バケットと中のデータを保持できます。</p>
+<ul>
+<li><strong>A:</strong> バージョニングはオブジェクトの上書きや削除への対策で、スタック削除時にバケットを残す設定ではありません。</li>
+<li><strong>B:</strong> 手作業が必要になり、元のバケットは削除の対象のままです。次回の再作成でも同じバケットを使い続ける要件を満たしません。</li>
+<li><strong>D:</strong> スタックの削除自体ができなくなり、開発のたびに環境を作成・削除する運用ができません。</li>
+</ul>
+<p><a href="../../services/cloudformation.html">AWS CloudFormation</a></p></details>
+</section>
+<section class="quiz-q" data-id="217" data-title="共通構成の繰り返し展開" data-domain="1" data-difficulty="intermediate" data-answer="a" data-type="single">
+<h4>問217 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">複数のチームが、S3バケット、イベントルール、Lambda関数、Glueジョブからなる同じ取り込み構成を、チームごとに値を変えて繰り返しデプロイします。構成の標準を一元管理し、各チームは最小限の設定だけを書く形にしたい場合の方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q217" value="a"> AWS CDKで構成を再利用可能なコンストラクトにまとめ、パッケージとして配布し、各チームが引数で値を渡す</label></li>
+<li><label><input type="radio" name="q217" value="b"> 完成したテンプレートをチームごとにコピーし、各チームが必要な箇所を書き換える</label></li>
+<li><label><input type="radio" name="q217" value="c"> 構築手順書を共有し、各チームがコンソールで手作業で構築する</label></li>
+<li><label><input type="radio" name="q217" value="d"> 1つのスタックに全チームのリソースを入れ、全員が同じテンプレートを編集する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。標準の構成を1か所で保守でき、各チームは引数で値を渡すだけでデプロイできます。標準を更新すれば、各チームが新しい版を取り込む形で反映できます。</p>
+<ul>
+<li><strong>B:</strong> 標準を更新しても各コピーへ反映されず、チームごとに内容が分かれていきます。</li>
+<li><strong>C:</strong> 手作業のため構成の差異や設定ミスが生じ、繰り返しのデプロイの再現性が保てません。</li>
+<li><strong>D:</strong> 変更の影響範囲が全チームに及び、チームごとの値の違いも扱いにくくなります。</li>
+</ul>
+<p><a href="../../services/cdk.html">AWS CDK</a><a href="../../services/codeartifact.html">AWS CodeArtifact</a></p></details>
+</section>
+<section class="quiz-q" data-id="218" data-title="複数アカウントへの一括配備" data-domain="1" data-difficulty="advanced" data-answer="d" data-type="single">
+<h4>問218 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">AWS Organizationsで管理する40のアカウントに、同じData Catalog用のIAMロールとログ用S3バケットを標準構成として展開します。今後追加されるアカウントにも自動で適用し、変更はテンプレートを1つ更新するだけで全アカウントへ反映したいと考えています。各アカウントの管理者に展開作業は依頼せず、展開結果は管理アカウントで一覧確認します。適切な方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q218" value="a"> 各アカウントにサインインし、同じCloudFormationスタックを手動で作成・更新する</label></li>
+<li><label><input type="radio" name="q218" value="b"> 管理アカウントからAWS CDKのデプロイをスクリプトでループ実行する</label></li>
+<li><label><input type="radio" name="q218" value="c"> AWS Service Catalogのポートフォリオを共有し、各アカウントが製品を起動する</label></li>
+<li><label><input type="radio" name="q218" value="d"> StackSetsをサービス管理で作成し、対象のOUへの自動デプロイを有効にする</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。Organizationsと連携して対象のOU内のアカウントへ一括で展開し、新しく追加されるアカウントにも自動で適用できます。テンプレートの更新も一括で反映されます。</p>
+<ul>
+<li><strong>A:</strong> 追加されたアカウントへ自動では適用されず、40のアカウントの更新で漏れや差異が生じやすくなります。</li>
+<li><strong>B:</strong> 既存のアカウントには展開できますが、新しく追加されるアカウントへは自動で適用されず、スクリプトの保守も必要です。</li>
+<li><strong>C:</strong> 各アカウントが製品を起動する操作が必要で、自動展開や全アカウントへの一括更新の要件を満たしません。</li>
+</ul>
+<p><a href="../../services/cloudformation.html">AWS CloudFormation</a><a href="../../services/organizations.html">AWS Organizations</a></p></details>
+</section>
+<section class="quiz-q" data-id="219" data-title="関数の段階的な切り替え" data-domain="1" data-difficulty="intermediate" data-answer="b" data-type="single">
+<h4>問219 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">データ変換用のAWS Lambda関数の新バージョンを、AWS CodePipelineから本番へデプロイします。最初は少量のトラフィックだけを新バージョンへ流し、エラー率のCloudWatchアラームが発生したら自動で前のバージョンへ戻したい場合の構成はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q219" value="a"> CodeBuildで関数のコードを直接上書き更新し、エラーを検知したら担当者が手動で戻す</label></li>
+<li><label><input type="radio" name="q219" value="b"> CodeDeployのカナリア方式のトラフィック移行を使い、アラームで自動ロールバックする</label></li>
+<li><label><input type="radio" name="q219" value="c"> 新旧の関数を別々に作成し、Amazon Route 53の加重ルーティングで切り替える</label></li>
+<li><label><input type="radio" name="q219" value="d"> 新しいバージョンだけに予約同時実行数を設定して切り替える</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。エイリアスの向き先を新バージョンへ段階的に移し、アラームが発生すれば自動で前のバージョンへ戻せます。</p>
+<ul>
+<li><strong>A:</strong> 段階的な切り替えも自動のロールバックもなく、要件を満たしません。</li>
+<li><strong>C:</strong> Route 53のDNSでは関数の呼び出し先を切り替えられず、アラームに基づく自動ロールバックもできません。</li>
+<li><strong>D:</strong> 同時実行数の上限を設定するだけで、トラフィックの比率の制御や自動のロールバックはできません。</li>
+</ul>
+<p><a href="../../services/codedeploy.html">AWS CodeDeploy</a><a href="../../services/codepipeline.html">AWS CodePipeline</a><a href="../../services/lambda.html">AWS Lambda</a></p></details>
+</section>
+<section class="quiz-q" data-id="220" data-title="ビルド時の認証情報" data-domain="1" data-difficulty="intermediate" data-answer="c" data-type="single">
+<h4>問220 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">AWS CodePipelineのビルドステージで、AWS CodeBuildが統合テストのためにデータベースのパスワードを使います。リポジトリやビルドログにパスワードを残さず、ローテーションされても常に最新の値を使いたい場合の設定はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q220" value="a"> パスワードをbuildspec.ymlの環境変数に平文で記述し、リポジトリで管理する</label></li>
+<li><label><input type="radio" name="q220" value="b"> パスワードをCodeBuildプロジェクトのプレーンテキストの環境変数に設定する</label></li>
+<li><label><input type="radio" name="q220" value="c"> パスワードをSecrets Managerに保存し、buildspecの参照とロールの権限で取得する</label></li>
+<li><label><input type="radio" name="q220" value="d"> パスワードをS3バケットのテキストファイルに保管し、ビルド時に取得して内容をログへ出力して確認する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>正解です。ビルドの実行時に最新の値が取得され、リポジトリにも設定にも値が残りません。ローテーションにも自動で追従できます。</p>
+<ul>
+<li><strong>A:</strong> パスワードがリポジトリに残り、ローテーションされても追従できません。</li>
+<li><strong>B:</strong> プロジェクトの設定から値を参照でき、ローテーションのたびに手作業での更新が必要になります。</li>
+<li><strong>D:</strong> ログにパスワードが残るため、ビルドログに残さない要件を満たしません。</li>
+</ul>
+<p><a href="../../services/codebuild.html">AWS CodeBuild</a><a href="../../services/secrets-manager.html">AWS Secrets Manager</a></p></details>
+</section>
 </div>
 
 <div class="quiz-domain">
@@ -2434,6 +2828,321 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../../services/bedrock.html">Amazon Bedrock</a><a href="../../terms/vector-search.html">ベクトル検索</a></p></details>
 </section>
+<section class="quiz-q" data-id="221" data-title="Cassandra環境の移行" data-domain="2" data-difficulty="basic" data-answer="b" data-type="single">
+<h4>問221 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">EC2上で運用するApache Cassandraの保守とパッチ適用が負担です。アプリケーションはCQLで書かれており変更は最小限にしたい一方、利用量は日によって大きく変動します。サーバー管理が不要で従量課金の移行先はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q221" value="a"> Amazon DynamoDBのオンデマンドキャパシティモード</label></li>
+<li><label><input type="radio" name="q221" value="b"> Amazon Keyspacesのオンデマンドキャパシティモード</label></li>
+<li><label><input type="radio" name="q221" value="c"> Amazon DocumentDBのクラスターへ移行する</label></li>
+<li><label><input type="radio" name="q221" value="d"> より大きなEC2インスタンスでCassandraを再構築しAuto Scalingを設定</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。Keyspacesはサーバーレスで、既存のCQLアプリケーションとツールをほぼそのまま使えます。オンデマンドモードなら変動する負荷に合わせて自動で対応し、リクエスト量に応じて課金されます。</p>
+<ul>
+<li><strong>A:</strong> サーバー管理は不要で従量課金ですが、アクセスにはCQLではなくDynamoDB独自のAPIを使うため、アプリケーションの書き換え範囲が大きくなり、変更を最小限にする要件を満たしません。</li>
+<li><strong>C:</strong> MongoDB互換のドキュメントデータベースで、CQLやCassandraのワイドカラム型のデータモデルを使えません。アプリケーションの大幅な作り直しが必要になり、変更を最小限にする要件に合いません。</li>
+<li><strong>D:</strong> 動作はしますが、Cassandraのノード管理、パッチ適用、スケール時のデータ再配置を引き続き運用する必要があり、サーバー管理を不要にする要件を満たしません。</li>
+</ul>
+<p><a href="../../services/keyspaces.html">Amazon Keyspaces</a><a href="../../services/dynamodb.html">Amazon DynamoDB</a></p></details>
+</section>
+<section class="quiz-q" data-id="222" data-title="関係性データの検索" data-domain="2" data-difficulty="basic" data-answer="d" data-type="single">
+<h4>問222 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">SNS事業者が、利用者同士のフォロー関係をたどって友人の友人を数段階先まで探索し、おすすめを表示します。現在のリレーショナルデータベースでは多段の自己結合が遅くなっています。関係の走査をミリ秒単位で行える専用データストアはどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q222" value="a"> Amazon Redshift</label></li>
+<li><label><input type="radio" name="q222" value="b"> Amazon DynamoDBとグローバルセカンダリインデックス</label></li>
+<li><label><input type="radio" name="q222" value="c"> Amazon DocumentDB</label></li>
+<li><label><input type="radio" name="q222" value="d"> Amazon Neptune</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。Neptuneはグラフデータベースで、頂点と辺の関係を直接たどる走査に最適化され、GremlinやopenCypherで多段の関係を短い応答時間で問い合わせられます。</p>
+<ul>
+<li><strong>A:</strong> 列指向のデータウェアハウスで、大規模な集計には向きますが、利用者の操作に即応する多段の関係走査を低レイテンシーで繰り返す用途には設計されていません。</li>
+<li><strong>B:</strong> キーによる単純な検索は高速ですが、数段階先まで関係をたどるクエリーを1回の操作で表現できず、アプリケーション側で何度も問い合わせることになります。</li>
+<li><strong>C:</strong> ドキュメント単位の保存と検索に向き、多段の関係をたどるには参照の繰り返しやアプリケーション側の処理が必要です。関係の走査に最適化された仕組みではありません。</li>
+</ul>
+<p><a href="../../services/neptune.html">Amazon Neptune</a><a href="../../terms/data-store-selection.html">データストアの選び方</a></p></details>
+</section>
+<section class="quiz-q" data-id="223" data-title="商品説明の意味検索" data-domain="2" data-difficulty="advanced" data-answer="a" data-type="single">
+<h4>問223 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">ECサイトの商品マスタと在庫はAmazon Aurora PostgreSQLで管理しています。商品説明の埋め込みベクトルによる類似商品検索を追加し、価格帯や在庫有無のSQL条件と1つのクエリーで組み合わせたい要件です。商品は数百万件あり、検索は数十ミリ秒台で応答する必要があります。在庫の更新は即座に検索結果へ反映し、専用データストアの運用は増やさない方針です。最も適切な構成はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q223" value="a"> Aurora PostgreSQLのpgvectorとHNSWインデックスを使う</label></li>
+<li><label><input type="radio" name="q223" value="b"> ベクトルをAmazon S3に保存し、検索のたびにAWS Lambdaで全件の類似度を計算する</label></li>
+<li><label><input type="radio" name="q223" value="c"> ベクトルをAmazon DynamoDBの属性に保存し、Scanで類似度を計算する</label></li>
+<li><label><input type="radio" name="q223" value="d"> 夜間に商品データをコピーした別のデータストアで検索する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。pgvectorで埋め込みを既存のテーブルに保存でき、HNSWインデックスで近似最近傍検索を低遅延に行えます。価格や在庫のSQL条件との組み合わせも同じクエリーで書け、新しいデータストアも不要です。</p>
+<ul>
+<li><strong>B:</strong> 数百万件の全件比較は低遅延になりません。S3上のオブジェクトでは価格帯や在庫のSQL条件を同じクエリーで組み合わせることもできず、検索処理の自前実装も増えます。</li>
+<li><strong>C:</strong> Scanは全項目の読み取りになり、件数が多いと遅くコストも増えます。近似最近傍検索のインデックスがなく、SQL条件との結合もできないため、低遅延の要件を満たしません。</li>
+<li><strong>D:</strong> コピー運用と別のデータストアの管理が増え、専用データストアを増やさない方針に反します。夜間コピーでは在庫の変更も検索結果へすぐには反映されません。</li>
+</ul>
+<p><a href="../../services/aurora.html">Amazon Aurora</a><a href="../../terms/vector-search.html">ベクトル検索</a></p></details>
+</section>
+<section class="quiz-q" data-id="224" data-title="外部データの定期入手" data-domain="2" data-difficulty="basic" data-answer="c" data-type="single">
+<h4>問224 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">マーケティングチームが、第三者が提供する人口統計データを月次でAmazon S3のデータレイクに取り込んで分析します。提供元が更新するたびに手作業でファイルをダウンロードする運用をやめ、新しい版が自動的にS3へ届くようにしたい要件です。適切な方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q224" value="a"> AWS DataSyncで提供元のNFSストレージとS3を同期する</label></li>
+<li><label><input type="radio" name="q224" value="b"> AWS Transfer FamilyでSFTPサーバーを用意し、提供元にファイルを送信してもらう</label></li>
+<li><label><input type="radio" name="q224" value="c"> AWS Data Exchangeで購読し、新しい版をS3へ自動エクスポートする</label></li>
+<li><label><input type="radio" name="q224" value="d"> Amazon AppFlowでSaaSアプリケーションのコネクタを設定する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>正解です。Data Exchangeでは購読したファイル型データセットの新しい版を、指定したS3バケットへ自動でエクスポートでき、手作業のダウンロードをなくせます。</p>
+<ul>
+<li><strong>A:</strong> DataSyncは自社の管理下にあるオンプレミスや他クラウドのストレージとの転送に使うサービスです。第三者が提供するデータ製品を購読して受け取る仕組みではありません。</li>
+<li><strong>B:</strong> 提供元が送信処理を実装する必要があり、購読で更新を受け取る方法ではありません。さらに受信用サーバーの管理も加わり、手作業をなくす要件への近道になりません。</li>
+<li><strong>D:</strong> AppFlowはSalesforceなどのSaaSアプリケーションとAWSの間でデータを転送するサービスです。第三者が配布するデータ製品の購読と更新の受け取りには使いません。</li>
+</ul>
+<p><a href="../../services/data-exchange.html">AWS Data Exchange</a><a href="../../services/transfer-family.html">AWS Transfer Family</a></p></details>
+</section>
+<section class="quiz-q" data-id="225" data-title="運用DBの最新データ参照" data-domain="2" data-difficulty="intermediate" data-answer="d" data-type="single">
+<h4>問225 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">Amazon Redshiftの売上分析に、Amazon Aurora PostgreSQLで稼働する注文管理データベースの最新ステータスを組み合わせたい要件です。データは毎分更新され、分析者は常に最新値を参照します。夜間バッチでの複製は避け、Redshiftのクエリーから直接参照して結合したいと考えています。適切な方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q225" value="a"> Redshift Spectrumの外部テーブルでAuroraのテーブルを参照する</label></li>
+<li><label><input type="radio" name="q225" value="b"> 夜間にAuroraのデータをS3へエクスポートし、RedshiftへCOPYでロードする</label></li>
+<li><label><input type="radio" name="q225" value="c"> Redshiftにマテリアライズドビューを作成し、夜間に更新する</label></li>
+<li><label><input type="radio" name="q225" value="d"> フェデレーテッドクエリーの外部スキーマでAuroraへ直接接続する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。フェデレーテッドクエリーはAurora PostgreSQLなどの運用データベースへRedshiftから直接問い合わせ、データを複製せずに最新の値を自分のテーブルと結合できます。</p>
+<ul>
+<li><strong>A:</strong> Redshift SpectrumはAmazon S3上のデータを参照する機能で、Auroraのテーブルを直接参照する対象ではありません。そのため、運用データベースの最新値を直接結合する要件を満たしません。</li>
+<li><strong>B:</strong> ロードしたデータは夜間時点の内容で、毎分更新される最新ステータスを参照できません。夜間バッチでの複製を避ける要件にも反します。</li>
+<li><strong>C:</strong> マテリアライズドビューは事前計算した結果を保持するもので、更新時点より後の変更は反映されません。夜間更新では最新値を常に参照する要件を満たしません。</li>
+</ul>
+<p><a href="../../services/redshift.html">Amazon Redshift</a><a href="../../services/aurora.html">Amazon Aurora</a></p></details>
+</section>
+<section class="quiz-q" data-id="226" data-title="S3集計の繰り返し実行" data-domain="2" data-difficulty="advanced" data-answer="b" data-type="single">
+<h4>問226 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">Redshift Spectrumの外部テーブルで、Amazon S3上の大量のParquetを朝のダッシュボードが同じ条件で集計しています。複数ユーザーが同時に開くたびにS3の走査と集計が繰り返され、応答が遅く走査量も増えています。S3のデータは日次で追加され、既存ファイルは更新されません。集計条件は固定で、日次更新の結果で足ります。全データのRedshiftへのロードを避けて改善する方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q226" value="a"> 外部テーブルを削除し、全データをCOPYでRedshiftのテーブルへロードする</label></li>
+<li><label><input type="radio" name="q226" value="b"> 外部テーブルを元にマテリアライズドビューを作成し、データ追加後に更新する</label></li>
+<li><label><input type="radio" name="q226" value="c"> S3のデータをフェデレーテッドクエリーで参照する</label></li>
+<li><label><input type="radio" name="q226" value="d"> Redshiftクラスターを大きなノードタイプへ変更し、同じ外部テーブルのクエリーを実行する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。Redshiftは外部テーブルを元にしたマテリアライズドビューを作成でき、集計結果を事前計算して保持します。ダッシュボードの繰り返しのクエリーはS3を再走査せず、日次の追加後にREFRESHで更新できます。</p>
+<ul>
+<li><strong>A:</strong> 性能は改善し得ますが、全データをRedshiftへロードして保存することになり、全データのロードを避ける要件に反します。ロード処理と保存容量も増えます。</li>
+<li><strong>C:</strong> フェデレーテッドクエリーの対象はAuroraやRDSなどの運用データベースで、S3上のファイルではありません。S3の走査が繰り返される問題の解決にもなりません。</li>
+<li><strong>D:</strong> 処理能力は上がり得ますが、同じ集計を毎回S3から計算し直す点は変わらず、走査量も減りません。結果を再利用して繰り返しの処理を減らせません。</li>
+</ul>
+<p><a href="../../services/redshift.html">Amazon Redshift</a><a href="../../services/s3.html">Amazon S3</a></p></details>
+</section>
+<section class="quiz-q" data-id="227" data-title="同時実行ジョブの競合" data-domain="2" data-difficulty="advanced" data-answer="a" data-type="single">
+<h4>問227 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">Amazon Redshiftで、2つの夜間ETLが同じ売上表と集計表を1つのトランザクション内で読み書きしています。途中で失敗しても中間状態を残さないため、1つのトランザクションにする必要があります。分離レベルはSERIALIZABLEで、時々シリアライズ可能分離違反のエラー(1023)により片方がロールバックされます。処理の原子性は保ち、失敗による再実行を発生させない方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q227" value="a"> 各ETLの冒頭で、関係する全テーブルを同順にLOCKする</label></li>
+<li><label><input type="radio" name="q227" value="b"> エラーを検知したら、ジョブを自動で再実行する処理を追加する</label></li>
+<li><label><input type="radio" name="q227" value="c"> トランザクション内の各文を、自動コミットに分けて実行する</label></li>
+<li><label><input type="radio" name="q227" value="d"> クラスターのノード数を増やし、処理の並列度を上げる</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。LOCKは明示的な表ロックで、他のトランザクションは解放を待機します。トランザクション開始時に関係する全テーブルを同じ順序で取得すると、直列に実行されてエラー1023を防げ、原子性も保てます。</p>
+<ul>
+<li><strong>B:</strong> 再実行で成功することはありますが、ロールバックとやり直しは引き続き発生します。失敗による再実行を発生させない要件を満たしません。</li>
+<li><strong>C:</strong> 競合は減り得ますが、複数の更新を1つの単位として確定・取り消しする原子性が失われます。原子性を保つ要件に反します。</li>
+<li><strong>D:</strong> 計算資源を増やしても、トランザクション同士が直列化できるかどうかの競合は変わりません。表ロックによる実行順の制御がなければエラーは解消しません。</li>
+</ul>
+<p><a href="../../services/redshift.html">Amazon Redshift</a></p></details>
+</section>
+<section class="quiz-q" data-id="228" data-title="変更データの取り込み" data-domain="2" data-difficulty="intermediate" data-answer="c" data-type="single">
+<h4>問228 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">AWS DMSが出力する注文の変更履歴(挿入・更新・削除)を、Amazon S3上の分析テーブルへ毎日反映します。現在はHive形式のParquetで、更新のたびに該当パーティション全体を書き直しており、時間と費用が増えています。Athenaで行単位の更新と過去時点の参照もできるようにしたい要件です。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q228" value="a"> 変更履歴を別のS3プレフィックスへ追記し、クエリー側で最新行を抽出する</label></li>
+<li><label><input type="radio" name="q228" value="b"> ParquetをCSV形式へ変更して、書き直し処理を高速化する</label></li>
+<li><label><input type="radio" name="q228" value="c"> Apache Icebergへ変更し、AthenaのMERGE INTOで反映する</label></li>
+<li><label><input type="radio" name="q228" value="d"> 分析データをすべてAmazon DynamoDBのテーブルへ移行する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>正解です。Icebergはスナップショットで管理されるオープンテーブル形式で、AthenaのMERGE INTOにより行単位で挿入・更新・削除を反映できます。パーティション全体の書き直しが不要になり、過去のスナップショットも参照できます。</p>
+<ul>
+<li><strong>A:</strong> 動作はしますが、データが増えるほどクエリーの走査量と複雑さが増えます。行単位の更新を直接反映せず、過去時点を参照する仕組みも提供されません。</li>
+<li><strong>B:</strong> CSVは行単位の更新や削除を扱う仕組みがなく、パーティション書き直しの問題は残ります。列指向でないため走査量も増え、過去時点の参照もできません。</li>
+<li><strong>D:</strong> キー単位の更新には向きますが、大量データの集計分析には適しません。S3上のデータをAthenaでSQL分析する前提も崩れてしまいます。</li>
+</ul>
+<p><a href="../../terms/open-table-formats.html">オープンテーブル形式</a><a href="../../services/athena.html">Amazon Athena</a><a href="../../services/dms.html">AWS DMS</a></p></details>
+</section>
+<section class="quiz-q" data-id="229" data-title="表形式データの運用負荷" data-domain="2" data-difficulty="intermediate" data-answer="b,c" data-type="multiple">
+<h4>問229 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">ストリーム由来のイベントを、Amazon S3上のApache Icebergテーブルへ1分ごとに書き込んでいます。小さなファイルが増えるため、チームはAWS Glueジョブで定期的にコンパクションと古いスナップショットの削除を自作運用しています。Athenaでの参照は維持しつつ、この保守作業を減らす方法を2つ選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q229" value="a"> S3 Intelligent-Tieringを有効にして、小さなファイルを自動的に統合する</label></li>
+<li><label><input type="checkbox" name="q229" value="b"> テーブルをAmazon S3 Tablesのテーブルバケット内のテーブルとして作成する</label></li>
+<li><label><input type="checkbox" name="q229" value="c"> テーブルバケットをAWS Glue Data Catalogと統合し、Athenaから参照する</label></li>
+<li><label><input type="checkbox" name="q229" value="d"> S3 Lifecycleルールで小さなオブジェクトを結合する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B、C</strong></p>
+<p>正解です。テーブルバケットをGlue Data Catalogへ統合すると、AthenaやAmazon Redshiftなどの分析サービスから、これまでと同様にSQLで参照できます。</p>
+<ul>
+<li><strong>A:</strong> Intelligent-Tieringはアクセス頻度に応じて保存階層を変えるもので、小さなファイルの統合は行いません。コンパクションの保守作業を減らせません。</li>
+<li><strong>D:</strong> Lifecycleルールはオブジェクトの移行や期限切れ削除を行う機能で、ファイルの結合はできません。期限切れ削除を設定するとIcebergテーブルが参照するデータファイルを壊すおそれもあります。</li>
+</ul>
+<p><a href="../../services/s3.html">Amazon S3</a><a href="../../terms/open-table-formats.html">オープンテーブル形式</a><a href="../../services/athena.html">Amazon Athena</a></p></details>
+</section>
+<section class="quiz-q" data-id="230" data-title="別アカウントのテーブル参照" data-domain="2" data-difficulty="intermediate" data-answer="a,d" data-type="multiple">
+<h4>問230 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">データ基盤アカウントのAWS Glue Data Catalogに、AWS Lake Formationで管理するテーブルがあります。分析アカウントのアナリストが、Amazon S3のデータをコピーせず、Amazon Athenaでそのテーブルをクエリーしたい要件です。テーブルは日付でパーティション分割され、毎日パーティションが追加されます。両アカウントは別々の組織に所属しています。必要な設定を2つ選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q230" value="a"> データ基盤アカウントで、分析アカウントへLake Formationのクロスアカウント権限を付与する</label></li>
+<li><label><input type="checkbox" name="q230" value="b"> 分析アカウントのIAMユーザーへ、S3バケットポリシーだけを設定する</label></li>
+<li><label><input type="checkbox" name="q230" value="c"> 分析アカウントでGlueクローラーを実行し、テーブル定義を作り直す</label></li>
+<li><label><input type="checkbox" name="q230" value="d"> 分析アカウントで共有テーブルへのリソースリンクを作成し、アナリストへ権限を付与する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、D</strong></p>
+<p>正解です。Athenaなどのサービスは、共有されたテーブルをクエリーする際にリソースリンクが必要です。リンクを分析アカウントのデータベースに作り、アナリストへ権限を付与します。</p>
+<ul>
+<li><strong>B:</strong> S3へのアクセス許可だけではカタログのテーブル定義を参照できません。Lake Formationで管理されるテーブルは、Lake Formationの権限付与も必要です。</li>
+<li><strong>C:</strong> 別のテーブル定義を作ると、共有元の定義とLake Formationの権限管理から外れます。パーティションなどの更新も共有元と自動では同期されず、二重管理になります。</li>
+</ul>
+<p><a href="../../services/lake-formation.html">AWS Lake Formation</a><a href="../../services/glue.html">AWS Glue</a><a href="../../services/athena.html">Amazon Athena</a></p></details>
+</section>
+<section class="quiz-q" data-id="231" data-title="データ利用の申請と承認" data-domain="2" data-difficulty="intermediate" data-answer="b" data-type="single">
+<h4>問231 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">全社のデータ製品を、利用者が業務用語や説明で検索して見つけ、必要なら利用を申請し、データ所有者の承認後に使えるようにしたい要件です。対象はAWS Glueのテーブルで、承認のたびに管理者がAWS Lake FormationやIAMの権限を手作業で設定する運用は避けたいと考えています。適した方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q231" value="a"> Glue Data Catalogだけを公開し、利用者へLake Formation権限を事前に付与する</label></li>
+<li><label><input type="radio" name="q231" value="b"> SageMaker Catalogへ公開し、利用申請を所有者が承認する</label></li>
+<li><label><input type="radio" name="q231" value="c"> AWS Data Exchangeでデータ製品を公開する</label></li>
+<li><label><input type="radio" name="q231" value="d"> S3バケットの一覧を共有し、アクセスの申請はメールで受け付ける</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。SageMaker Catalogは説明や用語集などの業務メタデータで検索でき、申請と承認のフローを備えます。Glueテーブルなどの管理対象アセットは、承認後に権限の付与が自動で行われます。</p>
+<ul>
+<li><strong>A:</strong> 技術的なメタデータの検索はできますが、利用申請と所有者の承認という業務フローがありません。事前の一括付与は、承認後にだけ使えるようにする要件にも反します。</li>
+<li><strong>C:</strong> Data Exchangeは主に提供者と購読者の間でデータ製品を取引・配信するサービスです。社内データの業務用語による検索と、Glueテーブルへの権限付与を自動で行う用途のものではありません。</li>
+<li><strong>D:</strong> 業務メタデータによる検索の仕組みがなく、承認後の権限設定も手作業のままです。管理者の手作業を避ける要件を満たしません。</li>
+</ul>
+<p><a href="../../services/sagemaker-unified-studio.html">Amazon SageMaker Unified Studio</a><a href="../../services/lake-formation.html">AWS Lake Formation</a><a href="../../terms/data-governance.html">データガバナンス</a></p></details>
+</section>
+<section class="quiz-q" data-id="232" data-title="大容量ファイルのロード" data-domain="2" data-difficulty="intermediate" data-answer="c,d" data-type="multiple">
+<h4>問232 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">Amazon S3上のgzip圧縮した単一CSV(約120GB)を、スライス数32のAmazon RedshiftへCOPYで取り込んでいますが、ロードに長時間かかります。ロード時間を短縮する方法を2つ選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q232" value="a"> ノードタイプを大きくして、同じ単一ファイルをロードする</label></li>
+<li><label><input type="checkbox" name="q232" value="b"> 分割したファイルごとにCOPYコマンドを同時に複数実行する</label></li>
+<li><label><input type="checkbox" name="q232" value="c"> ファイルを同程度のサイズに分割し、ファイル数をスライス数の倍数にする</label></li>
+<li><label><input type="checkbox" name="q232" value="d"> 分割したファイルを共通のプレフィックス配下に置き、1つのCOPYでプレフィックスまたはマニフェストを指定する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C、D</strong></p>
+<p>正解です。1つのCOPYで複数ファイルを指定すると、Redshiftがファイルを各スライスへ割り当てて並列にロードします。マニフェストなら対象ファイルを明示できます。</p>
+<ul>
+<li><strong>A:</strong> 圧縮された単一ファイルは分割できず、ほぼ直列に読み込まれます。ノードを大きくしても各スライスが並列にロードする状態にならず、改善は限定的です。</li>
+<li><strong>B:</strong> 1つのテーブルへ複数のCOPYを並行して実行すると、ロードが直列化され遅くなります。複数ファイルは1つのCOPYでまとめて読み込むほうが並列性を活かせます。</li>
+</ul>
+<p><a href="../../services/redshift.html">Amazon Redshift</a><a href="../../services/s3.html">Amazon S3</a></p></details>
+</section>
+<section class="quiz-q" data-id="233" data-title="複数サービスの保護" data-domain="2" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
+<h4>問233 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">東京リージョンのAmazon RDS、Amazon DynamoDB、Amazon EFSのバックアップを、サービスごとのスクリプトで個別に管理しています。バックアップは毎日取得して35日間保持する共通ルールにそろえたい状況です。リージョン障害に備えて大阪リージョンでも復元でき、誤操作や不正による削除から保持期間中のバックアップを守りたい要件です。適切な設定を2つ選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q233" value="a"> AWS Backupのバックアッププランでリソースを割り当て、大阪リージョンのボールトへのコピールールを設定する</label></li>
+<li><label><input type="checkbox" name="q233" value="b"> 東京リージョンのバックアップボールトで、保持期間を長く設定する</label></li>
+<li><label><input type="checkbox" name="q233" value="c"> バックアップボールトにAWS Backup Vault Lockを設定し、保持期間中の削除を防ぐ</label></li>
+<li><label><input type="checkbox" name="q233" value="d"> 運用担当者が毎日各サービスのスナップショットを手動で作成し、S3へエクスポートする</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、C</strong></p>
+<p>正解です。Vault Lockはボールト内の復旧ポイントの削除や保持期間の短縮を制限し、誤操作や不正による削除からバックアップを守ります。</p>
+<ul>
+<li><strong>B:</strong> 保持期間を延ばしても、バックアップは東京リージョンに残るため、リージョン障害時に大阪で復元できません。削除からの保護にもなりません。</li>
+<li><strong>D:</strong> 手作業で一元管理できず、リージョンをまたぐコピーも保証されません。S3へのエクスポートだけでは、保持期間中の削除を防ぐ設定にもなりません。</li>
+</ul>
+<p><a href="../../services/backup.html">AWS Backup</a><a href="../../services/rds.html">Amazon RDS</a><a href="../../services/dynamodb.html">Amazon DynamoDB</a></p></details>
+</section>
+<section class="quiz-q" data-id="234" data-title="分散の偏る大規模テーブル" data-domain="2" data-difficulty="basic" data-answer="d" data-type="single">
+<h4>問234 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">Amazon Redshiftの注文テーブルは分散キーに都道府県コードを指定しています。特定の都道府県が全体の半分近くを占め、一部のスライスに行が偏ってクエリーが遅くなっています。この表は顧客IDで顧客表とよく結合されます。見直す設計はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q234" value="a"> 分散スタイルをALLに変更し、全ノードへ全行を複製する</label></li>
+<li><label><input type="radio" name="q234" value="b"> 分散キーを、値の種類が数個しかない注文ステータスの列に変更する</label></li>
+<li><label><input type="radio" name="q234" value="c"> 分散キーはそのままにして、ソートキーだけを設定し直す</label></li>
+<li><label><input type="radio" name="q234" value="d"> 結合に使う、値の種類が多い顧客IDを分散キーにする</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。値の種類が多い列なら行が各スライスに均等に分散して偏りが解消されます。結合キーなら顧客表とも同じ場所に配置でき、結合時のデータ移動も減らせます。</p>
+<ul>
+<li><strong>A:</strong> 大規模な注文テーブルの全行を全ノードに複製すると、保存容量が大きく増え、ロードや更新の負荷も重くなります。ALLは更新が少ない小さな表向けです。</li>
+<li><strong>B:</strong> 値の種類が少ない列では、行が少数のスライスに集中し、偏りがさらに悪化します。偏りの解消にも結合の最適化にもなりません。</li>
+<li><strong>C:</strong> ソートキーはスライス内の行の並び順を決めるもので、行をどのスライスに配置するかは変わりません。スライス間の偏りは解消されません。</li>
+</ul>
+<p><a href="../../services/redshift.html">Amazon Redshift</a></p></details>
+</section>
+<section class="quiz-q" data-id="235" data-title="移行前の工数見積もり" data-domain="2" data-difficulty="intermediate" data-answer="a" data-type="single">
+<h4>問235 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">オンプレミスのOracleデータベースをAmazon Aurora PostgreSQLへ移行する計画で、移行先のDBはまだ作成していません。移行前に、スキーマやストアドプロシージャのうち自動で変換できる範囲と、手作業が必要な箇所を把握して工数を見積もりたい要件です。適切な方法はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q235" value="a"> DMS Schema Conversionの仮想ターゲットで評価レポートを作成する</label></li>
+<li><label><input type="radio" name="q235" value="b"> AWS DMSのフルロードタスクを実行し、作成されたテーブルを確認する</label></li>
+<li><label><input type="radio" name="q235" value="c"> AWS Glueクローラーで移行元を走査し、Data Catalogのテーブル定義を比較する</label></li>
+<li><label><input type="radio" name="q235" value="d"> Aurora PostgreSQLを先に作成し、Oracleのスクリプトをそのまま実行して失敗箇所を確認する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。DMS Schema Conversionは移行元のメタデータを評価し、自動変換できる範囲と手作業が必要な箇所を評価レポートで示します。移行先が未作成でも仮想ターゲットで評価できます。</p>
+<ul>
+<li><strong>B:</strong> DMSのタスクはデータの移行が目的で、ストアドプロシージャなどのスキーマ変換や、自動変換の範囲を評価するレポートは提供しません。移行先のDBも必要です。</li>
+<li><strong>C:</strong> クローラーはデータの構造を推定してカタログへ登録する機能で、OracleとPostgreSQLのSQL方言の違いやストアドプロシージャの変換難易度を評価できません。</li>
+<li><strong>D:</strong> 試行錯誤で失敗を確認するだけで、変換可否をまとめて見積もるレポートが得られません。移行先をまだ作成していない状況にも合いません。</li>
+</ul>
+<p><a href="../../services/dms.html">AWS DMS</a><a href="../../services/aurora.html">Amazon Aurora</a></p></details>
+</section>
+<section class="quiz-q" data-id="236" data-title="指標の算出元の追跡" data-domain="2" data-difficulty="advanced" data-answer="b,d" data-type="multiple">
+<h4>問236 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">経営ダッシュボードの売上指標が前週から不自然に変化しました。データは複数のAWS Glueジョブの変換とAmazon Redshiftを経由し、一部の加工はAirflowで動くカスタムのSparkジョブです。原因の列と変換元を遡って特定できるようにする方法を2つ選んでください。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q236" value="a"> CloudWatch Logsの保持期間を延ばし、各ジョブのログを人手で読む</label></li>
+<li><label><input type="checkbox" name="q236" value="b"> Amazon SageMaker Catalogのデータソース接続で、GlueとRedshiftのデータリネージ取得を有効にする</label></li>
+<li><label><input type="checkbox" name="q236" value="c"> AWS Configのルールで、テーブルの構成変更を記録する</label></li>
+<li><label><input type="checkbox" name="q236" value="d"> 自動取得の対象外のジョブは、OpenLineage互換のイベントをSageMaker Catalogへ送信する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B、D</strong></p>
+<p>正解です。SageMaker CatalogはOpenLineage互換のAPIでイベントを受け取れます。カスタムのSparkジョブからも送信すれば、同じリネージグラフに加えて全体を追跡できます。</p>
+<ul>
+<li><strong>A:</strong> ログからは個々のジョブの動作しか分からず、データ資産同士の関係や、列がどの変換を経て作られたかを可視化できません。系統の追跡にはなりません。</li>
+<li><strong>C:</strong> AWS Configはリソースの構成変更を記録するサービスで、データがどのジョブや変換を経由して作られたかというデータの流れは追跡できません。</li>
+</ul>
+<p><a href="../../services/sagemaker-unified-studio.html">Amazon SageMaker Unified Studio</a><a href="../../services/glue.html">AWS Glue</a><a href="../../terms/data-governance.html">データガバナンス</a></p></details>
+</section>
 </div>
 
 <div class="quiz-domain">
@@ -3316,6 +4025,262 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 </ul>
 <p><a href="../../services/emr.html">Amazon EMR</a><a href="../../services/glue.html">AWS Glue</a></p></details>
 </section>
+<section class="quiz-q" data-id="237" data-title="Lambdaからの集計実行" data-domain="3" data-difficulty="intermediate" data-answer="b" data-type="single">
+<h4>問237 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">データ基盤チームは、Lambda関数からAmazon Redshiftの集計SQLを実行し、成功と失敗のどちらでも完了を契機に後続の処理を起動したい。SQLは数分かかるため関数で完了を待ち続けたくない。JDBCドライバーの同梱、接続の維持、データベースのパスワード埋め込みも避けたい。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q237" value="a"> Lambda関数にJDBCドライバーを同梱し、同期的に接続してSQLの完了まで待機する</label></li>
+<li><label><input type="radio" name="q237" value="b"> Redshift Data APIのExecuteStatementで非同期に実行し、完了イベントをEventBridgeで受けて後続処理を起動する</label></li>
+<li><label><input type="radio" name="q237" value="c"> Amazon RDS Data APIを使い、RedshiftのクラスターへSQLを送信する</label></li>
+<li><label><input type="radio" name="q237" value="d"> Redshiftをパブリックアクセス可能にし、パスワードをLambdaの環境変数に保存して接続する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。Data APIはHTTPSエンドポイント経由でSQLを非同期に実行でき、ドライバーや永続接続が不要で、認証はSecrets Managerまたは一時的な認証情報を使える。WithEventを有効にすると、完了(FINISHED/FAILED)がEventBridgeに通知され、待機なしで後続処理を起動できる。</p>
+<ul>
+<li><strong>A:</strong> 動作はするが、ドライバーの同梱と接続管理が必要で、完了まで関数を待機させる点も要件に反する。</li>
+<li><strong>C:</strong> RDS Data APIはAurora向けの機能であり、Amazon Redshiftのクラスターには使えない。</li>
+<li><strong>D:</strong> パスワードの埋め込みを避ける要件に反し、公開経路を作るためセキュリティ面でも不適切。完了待ちの問題も解決しない。</li>
+</ul>
+<p><a href="../../services/redshift.html">Amazon Redshift</a><a href="../../services/eventbridge.html">Amazon EventBridge</a><a href="../../services/secrets-manager.html">AWS Secrets Manager</a></p></details>
+</section>
+<section class="quiz-q" data-id="238" data-title="顧客メールアドレスの加工" data-domain="3" data-difficulty="intermediate" data-answer="c" data-type="single">
+<h4>問238 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">マーケティング分析チームへ顧客データを月次で渡す前に、メールアドレス列をAWS Glue DataBrewのレシピで加工し、毎回同じ加工をジョブで適用する。複数のデータセット間で同じ顧客を結合できる必要がある一方、元のメールアドレスに戻す手段は残したくない。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q238" value="a"> 確率的暗号化を適用し、分析チームには暗号化キーを渡さない</label></li>
+<li><label><input type="radio" name="q238" value="b"> 列の値を行ごとにシャッフルする</label></li>
+<li><label><input type="radio" name="q238" value="c"> ハッシュ化の変換を適用する</label></li>
+<li><label><input type="radio" name="q238" value="d"> 決定論的暗号化を適用する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>正解です。ハッシュ関数は同じ入力から同じ値を生成するため、データセット間で結合に使える。一方向の変換なので元の値に戻す手段は残らない。</p>
+<ul>
+<li><strong>A:</strong> 確率的暗号化は同じ値でも毎回異なる暗号文になり、データセット間の結合ができない。キーがあれば復号できる点も要件に合わない。</li>
+<li><strong>B:</strong> 値が別の行に入れ替わるため、顧客とメールアドレスの対応が崩れ、データセット間で同じ顧客を結合できない。</li>
+<li><strong>D:</strong> 同じ値は同じ暗号文になり結合はできるが、KMSキーなどで復号できる可逆な方式であり、元に戻す手段を残さない要件に反する。</li>
+</ul>
+<p><a href="../../services/databrew.html">AWS Glue DataBrew</a><a href="../../terms/data-governance.html">データガバナンス</a></p></details>
+</section>
+<section class="quiz-q" data-id="239" data-title="チーム別のAthena管理" data-domain="3" data-difficulty="intermediate" data-answer="a,c" data-type="multiple">
+<h4>問239 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">同じアカウントで、アドホック分析チームとバッチ集計チームが、それぞれのIAMロールで、同じS3バケットのデータにAmazon Athenaでクエリする。アドホック側の想定外の大量スキャンは上限を超えたら自動で止めたい。バッチ側はCTASで大量のデータを読むため、上限は適用しない。結果の保存先はチームごとに固定し、利用者が変更できないようにする。費用もチーム別に把握したい。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q239" value="a"> チームごとにワークグループを作成し、費用配分タグを付け、クエリごとのスキャン量の上限を設定する</label></li>
+<li><label><input type="checkbox" name="q239" value="b"> 全員がprimaryワークグループを使い、利用者がクエリごとに結果の保存先を指定する</label></li>
+<li><label><input type="checkbox" name="q239" value="c"> ワークグループでクライアント側設定の上書きを有効にし、結果の保存先を固定する</label></li>
+<li><label><input type="checkbox" name="q239" value="d"> CloudWatchアラームでスキャン量を監視し、通知を受けた担当者が手動でクエリを停止する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、C</strong></p>
+<p>正解です。上書きを有効にすると、クエリの結果保存先などをワークグループの設定で強制でき、利用者が変更できない。</p>
+<ul>
+<li><strong>B:</strong> チームの区別も、保存先の固定も、スキャン量の上限の適用もできない。利用者の設定任せでは要件を満たさない。</li>
+<li><strong>D:</strong> 動作はするが自動で止める要件に反し、担当者の対応が間に合わなければ大量スキャンが完了してしまう。</li>
+</ul>
+<p><a href="../../services/athena.html">Amazon Athena</a><a href="../../terms/tags.html">タグ</a></p></details>
+</section>
+<section class="quiz-q" data-id="240" data-title="朝のダッシュボード遅延" data-domain="3" data-difficulty="basic" data-answer="a" data-type="single">
+<h4>問240 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">営業企画部は、AthenaでS3の売上データを参照するQuick Sightのダッシュボードを、約300人の営業担当へ毎朝公開している。朝は表示が遅く、Athenaのクエリ料金も増えている。利用者が期間や商品で絞り込める必要があり、データ更新は1日1回で足りる。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q240" value="a"> データセットをSPICEに取り込み、毎朝の定時更新を設定する</label></li>
+<li><label><input type="radio" name="q240" value="b"> ダイレクトクエリのまま、Athenaのクエリ同時実行数のクォータを引き上げる</label></li>
+<li><label><input type="radio" name="q240" value="c"> ダッシュボードを毎朝PDFにして、メールで全員に送信する</label></li>
+<li><label><input type="radio" name="q240" value="d"> Athenaの結果を毎朝CSVとして出力し、各担当者へ配布して手元で集計してもらう</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。SPICEに取り込むと、利用者の操作はインメモリのデータに対して実行され、表示が速くなる。Athenaへのクエリは定時更新時だけになり、クエリ料金も抑えられる。更新が1日1回で足りる要件にも合う。</p>
+<ul>
+<li><strong>B:</strong> 同時実行の制限は緩和できても、操作のたびにAthenaへクエリが走るため、表示速度とクエリ料金の問題は解決しない。</li>
+<li><strong>C:</strong> 要件の絞り込み操作ができず、動作はしても要件を満たさない。</li>
+<li><strong>D:</strong> 共有ダッシュボードとしての運用ができず、利用者ごとの集計作業も発生する。</li>
+</ul>
+<p><a href="../../services/quick.html">Amazon Quick</a><a href="../../services/athena.html">Amazon Athena</a></p></details>
+</section>
+<section class="quiz-q" data-id="241" data-title="運用指標のダッシュボード" data-domain="3" data-difficulty="intermediate" data-answer="b,c" data-type="multiple">
+<h4>問241 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">データ基盤チームは、GlueとEMRの稼働状況を、CloudWatchのメトリクス、CloudTrailログを集めたCloudWatch Logs、Managed Service for Prometheusの指標で追跡している。既存のGrafanaダッシュボードを再利用し、サーバー運用を避けたい。利用者はIAM Identity Centerで認証し、運用担当は編集、監査担当は閲覧のみとする。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q241" value="a"> EC2にGrafanaをインストールし、ソフトウェアの更新と冗長化をチームで運用する</label></li>
+<li><label><input type="checkbox" name="q241" value="b"> Amazon Managed Grafanaのワークスペースに各データソースを追加し、既存のダッシュボードをインポートする</label></li>
+<li><label><input type="checkbox" name="q241" value="c"> IAM Identity Centerのユーザーやグループをワークスペースに割り当て、運用担当にEditor、監査担当にViewerのロールを付与する</label></li>
+<li><label><input type="checkbox" name="q241" value="d"> Quick SightでCloudTrailログをSPICEに取り込み、運用指標のダッシュボードを作成する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B、C</strong></p>
+<p>正解です。Managed Grafanaの利用者はIAM Identity Centerなどで認証し、Viewer・Editor・Adminのロールで権限を分けられる。監査担当を閲覧のみにできる。</p>
+<ul>
+<li><strong>A:</strong> 動作はするが、サーバー運用を避ける要件に反する。パッチ適用や可用性の管理もチームの負担になる。</li>
+<li><strong>D:</strong> BIツールであり、Prometheusの指標を含む時系列の運用監視や、既存Grafanaダッシュボードの再利用には向かない。</li>
+</ul>
+<p><a href="../../services/managed-grafana.html">Amazon Managed Grafana</a><a href="../../services/cloudwatch.html">Amazon CloudWatch</a><a href="../../services/managed-prometheus.html">Amazon Managed Service for Prometheus</a></p></details>
+</section>
+<section class="quiz-q" data-id="242" data-title="取り込み停止時の通知漏れ" data-domain="3" data-difficulty="intermediate" data-answer="d" data-type="single">
+<h4>問242 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">毎時、EventBridgeのスケジュールで起動されるLambda関数が、取り込み件数をカスタムメトリクスとして発行している。件数がしきい値を下回ればSNSへ通知するアラームを設定したが、関数が停止してメトリクスが届かなくなった際には通知が来なかった。停止時にもALARM状態で通知したい。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q242" value="a"> 欠落データを正常(notBreaching)として扱う設定にする</label></li>
+<li><label><input type="radio" name="q242" value="b"> アラームの評価期間(Period)を短くして、より細かく評価する</label></li>
+<li><label><input type="radio" name="q242" value="c"> SNSトピックの配信再試行回数を増やす</label></li>
+<li><label><input type="radio" name="q242" value="d"> 欠落データをしきい値違反(breaching)として扱う設定にする</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。既定では欠落するとINSUFFICIENT_DATAになりALARMへ遷移しない。欠落データを違反として扱えば、メトリクスが途絶えたときにALARMとなり、SNSへ通知できる。</p>
+<ul>
+<li><strong>A:</strong> 欠落時に正常とみなすため、メトリクスが届かない間はOKのままになり、通知が来ない。</li>
+<li><strong>B:</strong> データポイントが届かない問題は変わらず、評価を細かくしても欠落時にALARMにはならない。</li>
+<li><strong>C:</strong> 通知の配信失敗に備える設定であり、アラームが状態遷移しない原因には対処できない。</li>
+</ul>
+<p><a href="../../services/cloudwatch.html">Amazon CloudWatch</a><a href="../../terms/cloudwatch-alarm-states.html">CloudWatchアラームの状態</a><a href="../../services/sns.html">Amazon SNS</a></p></details>
+</section>
+<section class="quiz-q" data-id="243" data-title="VPC内Glueジョブの失敗" data-domain="3" data-difficulty="intermediate" data-answer="a" data-type="single">
+<h4>問243 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">AWS Glueジョブが、プライベートサブネット内のRDS for PostgreSQLをJDBCで読み込み、結果をS3へ書き出す。接続テストは成功し、データの読み込みも始まるが、ジョブはS3への書き込み段階でタイムアウトする。サブネットのルートテーブルにはVPC内のローカル経路しかなく、NATゲートウェイはない。ジョブのIAMロールにはS3への書き込み権限を付与済みで、インターネットへの経路は設けない方針である。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q243" value="a"> S3のゲートウェイVPCエンドポイントを作成し、Glue接続のサブネットのルートテーブルに関連付ける</label></li>
+<li><label><input type="radio" name="q243" value="b"> NATゲートウェイを追加し、プライベートサブネットからインターネット経由でS3へ出る</label></li>
+<li><label><input type="radio" name="q243" value="c"> ジョブのワーカー数(DPU)を増やして、書き込み処理を高速化する</label></li>
+<li><label><input type="radio" name="q243" value="d"> S3バケットポリシーでGlueジョブのロールにPutObjectを許可する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。VPC内で動くGlueジョブがS3へアクセスするには、S3へ到達する経路が必要になる。ゲートウェイVPCエンドポイントなら、インターネットを経由せずプライベートな経路でS3へ書き込める。</p>
+<ul>
+<li><strong>B:</strong> S3へは到達できるが、インターネットへの経路を設けない方針に反する。</li>
+<li><strong>C:</strong> 原因はネットワーク経路であり、計算資源の不足ではない。ワーカーを増やしても到達できずタイムアウトする。</li>
+<li><strong>D:</strong> 権限の不足ならAccess Deniedのエラーになる。経路がないことによるタイムアウトとは症状が異なり、ポリシーでは解決しない。</li>
+</ul>
+<p><a href="../../services/glue.html">AWS Glue</a><a href="../../terms/vpc-endpoint.html">VPCエンドポイント</a></p></details>
+</section>
+<section class="quiz-q" data-id="244" data-title="ログ保持期間の自動設定" data-domain="3" data-difficulty="basic" data-answer="b,d" data-type="multiple">
+<h4>問244 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">GlueジョブやLambda関数が、実行のたびにCloudWatch Logsのロググループを自動作成する。保持期間は「失効しない」のままで、保管費用が増えている。監査方針ではログの保持を90日以内とする。新規と既存を問わず保持期間を90日にそろえ、設定漏れを手作業に頼らず防ぎたい。</p>
+<fieldset class="quiz-options"><legend>適切なものを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q244" value="a"> ログをS3へ定期エクスポートし、S3のライフサイクルルールで90日後に削除する</label></li>
+<li><label><input type="checkbox" name="q244" value="b"> ロググループの作成(CreateLogGroup)をEventBridgeルールで検知し、Lambda関数で保持期間を90日に設定する</label></li>
+<li><label><input type="checkbox" name="q244" value="c"> CloudWatchアラームでログの保管量を監視し、超過したら担当者がログを手動で削除する</label></li>
+<li><label><input type="checkbox" name="q244" value="d"> DescribeLogGroupsで既存のロググループを列挙し、保持期間が未設定のものに90日を設定する処理を実行する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B、D</strong></p>
+<p>正解です。既存のロググループは作成イベントの対象にならないため、一覧から保持期間が未設定のものを見つけて設定する処理が別途必要になる。</p>
+<ul>
+<li><strong>A:</strong> S3側のコピーは削除できても、CloudWatch Logs側のログは残り続けるため、保管費用の問題は解決しない。</li>
+<li><strong>C:</strong> 手作業に頼らない要件に反し、監視もアラームだけでは保持期間の設定にならない。</li>
+</ul>
+<p><a href="../../services/cloudwatch.html">Amazon CloudWatch</a><a href="../../services/eventbridge.html">Amazon EventBridge</a><a href="../../services/lambda.html">AWS Lambda</a></p></details>
+</section>
+<section class="quiz-q" data-id="245" data-title="受注データの品質ルール" data-domain="3" data-difficulty="intermediate" data-answer="a,d" data-type="multiple">
+<h4>問245 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">AWS Glue ETLジョブで受注データを取り込む際、品質ルールをDQDLで定義する。customer_idはすべて顧客マスターに存在すること、emailは最大5%まで欠損を許容することが要件である。この要件を満たすルールを2つ選んでください。</p>
+<fieldset class="quiz-options"><legend>要件を満たすルールを2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q245" value="a"> ReferentialIntegrityルールで、customer_idの顧客マスターとの一致率が1.0であることを検査する</label></li>
+<li><label><input type="checkbox" name="q245" value="b"> IsCompleteルールで、email列に欠損がないことを検査する</label></li>
+<li><label><input type="checkbox" name="q245" value="c"> ColumnValuesルールで、customer_idが0より大きいことを検査する</label></li>
+<li><label><input type="checkbox" name="q245" value="d"> Completenessルールで、email列の非欠損率が0.95以上であることを検査する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、D</strong></p>
+<p>正解です。Completenessは列の非欠損の割合を求めるので、5%までの欠損を許容する条件を割合のしきい値で表せる。</p>
+<ul>
+<li><strong>B:</strong> IsCompleteは欠損が1件もないことを求めるため、5%までの欠損を許容する要件に反し、正常なデータも不合格になる。</li>
+<li><strong>C:</strong> 値の範囲を調べるだけで、顧客マスターに存在するかは確認できない。</li>
+</ul>
+<p><a href="../../services/glue.html">AWS Glue</a><a href="../../terms/data-quality.html">データ品質</a></p></details>
+</section>
+<section class="quiz-q" data-id="246" data-title="件数の変動に合う品質検査" data-domain="3" data-difficulty="advanced" data-answer="c" data-type="single">
+<h4>問246 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">日次のGlue ETLジョブは毎日約1,000万行を取り込むが、件数は曜日や季節で変動し、固定のしきい値では誤検知が多い。直近7回の実行の平均件数に対し、当日の件数が70%を下回ったら品質エラーとして検出したい。ルールの定義方法として適切なものはどれか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q246" value="a"> RowCountの固定しきい値を、過去の最大件数に設定する</label></li>
+<li><label><input type="radio" name="q246" value="b"> DataFreshnessルールで、データの更新時刻が新しいことを検査する</label></li>
+<li><label><input type="radio" name="q246" value="c"> GlueのETLジョブ内のデータ品質評価で、RowCountを直近7回の平均(avg(last(7)))の0.7倍と比較する動的ルールを定義する</label></li>
+<li><label><input type="radio" name="q246" value="d"> Data Catalogのテーブルに対するデータ品質タスクで、同じ動的ルールを定義する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>正解です。動的ルールはlast()演算子で過去の実行時の測定値と比較でき、avgなどの集計関数と組み合わせて変動に追随するしきい値を作れる。動的ルールはGlue ETLで使える。</p>
+<ul>
+<li><strong>A:</strong> 件数の変動に追随できず、通常の少ない日も異常と判定されるため、固定しきい値による誤検知の問題が残る。</li>
+<li><strong>B:</strong> 鮮度を検査するルールであり、行数が直近の傾向より大きく減ったことは検出できない。</li>
+<li><strong>D:</strong> 動的ルールはGlue ETLでのみ対応し、Data Catalogのテーブルに対するデータ品質では使えないため、この方法では定義できない。</li>
+</ul>
+<p><a href="../../services/glue.html">AWS Glue</a><a href="../../terms/data-quality.html">データ品質</a></p></details>
+</section>
+<section class="quiz-q" data-id="247" data-title="移行後のデータ不一致" data-domain="3" data-difficulty="advanced" data-answer="a" data-type="single">
+<h4>問247 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">Aurora MySQLからAmazon Redshiftへ、AWS DMSのフルロードとCDCで複製している。データ検証を有効にしたところ、テーブル統計で一部が「Mismatched records」、別のテーブルが「No primary key」と表示された。データ再同期は設定しておらず、ソースの更新は切り替え直前まで続く。切り替え前の対応として適切なものはどれか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q247" value="a"> 不一致の行はターゲットの検証失敗テーブルで確認して修正し、主キーのない表は集計値の照合などで別途確認する</label></li>
+<li><label><input type="radio" name="q247" value="b"> 不一致はCDC遅延による一時的な表示として放置し、主キーのない表は検証済みと同じ扱いにする</label></li>
+<li><label><input type="radio" name="q247" value="c"> どちらの表もDMSが差異を自動で修復するため、追加の確認を行わずに切り替える</label></li>
+<li><label><input type="radio" name="q247" value="d"> 主キーのない表はタスクを再起動してキーを自動生成させ、検証済みの状態にする</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。検証で不一致となった行は、ターゲットのawsdms_control.awsdms_validation_failures_v1に記録される。主キーや一意インデックスのないテーブルはDMSの検証対象にならないため、別の確認が必要になる。</p>
+<ul>
+<li><strong>B:</strong> 不一致が実際の差異である可能性があり、放置してはいけない。No primary keyは検証できていない状態であり、検証済みとは扱えない。</li>
+<li><strong>C:</strong> データ再同期を設定していないため、DMSは差異を自動で修復しない。検証は差異を報告するだけである。</li>
+<li><strong>D:</strong> DMSの検証は、主キーまたは一意インデックスを前提とし、再起動してもキーは生成されない。</li>
+</ul>
+<p><a href="../../services/dms.html">AWS Database Migration Service</a><a href="../../services/redshift.html">Amazon Redshift</a></p></details>
+</section>
+<section class="quiz-q" data-id="248" data-title="整形レシピ作成時の標本" data-domain="3" data-difficulty="basic" data-answer="d" data-type="single">
+<h4>問248 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">S3のCSVは注文日順に追記された数千万行である。DataBrewのプロジェクトで整形レシピを作る際、既定の先頭500行には古い形式の日付しか含まれず、新しい表記ゆれを見逃した。全期間の傾向が反映された標本でレシピを作りたい。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q248" value="a"> 先頭行の標本の行数を上限の5,000行まで増やす</label></li>
+<li><label><input type="radio" name="q248" value="b"> 最新のファイルだけを別のデータセットにして、先頭500行を標本にする</label></li>
+<li><label><input type="radio" name="q248" value="c"> 標本は変更せず、全件でレシピジョブを実行し、出力の誤りを見てからレシピを修正する</label></li>
+<li><label><input type="radio" name="q248" value="d"> プロジェクトのサンプリング方法を、ランダムな行に変更する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。DataBrewのプロジェクトの標本は、先頭のn行かランダムな行を選べる。日付順のデータでは、ランダムに抽出すると全期間の形式が含まれやすい。レシピジョブは全件に適用される。</p>
+<ul>
+<li><strong>A:</strong> 標本が先頭の行に偏る点は変わらず、日付順のデータでは新しい形式が含まれない可能性が高い。</li>
+<li><strong>B:</strong> 新しい形式は見られるが、古い形式が含まれなくなり、全期間の傾向を反映できない。</li>
+<li><strong>C:</strong> 動作はするが、設計時に確認する目的に反し、全件処理のやり直しで時間と費用がかかる。</li>
+</ul>
+<p><a href="../../services/databrew.html">AWS Glue DataBrew</a></p></details>
+</section>
+<section class="quiz-q" data-id="249" data-title="一部のスライスに偏る行" data-domain="3" data-difficulty="advanced" data-answer="b" data-type="single">
+<h4>問249 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">Amazon Redshiftの大きなイベントテーブルは、取り込んだ行の約6割が同じ値「UNKNOWN」になるカテゴリ列をDISTKEYにしている。クエリが遅く、一部のスライスだけディスク使用率が高い。このテーブルは主に集計に使い、他の大きな表との結合は少ない。均等に分散させたい。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q249" value="a"> クラスターのノード数を増やして、リサイズする</label></li>
+<li><label><input type="radio" name="q249" value="b"> 分散スタイルをEVENまたはAUTOに変更する</label></li>
+<li><label><input type="radio" name="q249" value="c"> 同じ列にソートキーを追加する</label></li>
+<li><label><input type="radio" name="q249" value="d"> 分散スタイルをALLに変更して、全ノードにテーブルを複製する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。キー値に依存せず行を均等に分散するEVENや、Redshiftが自動で選ぶAUTOに変更すれば、特定のスライスへの偏りを避けられる。結合の共置が必要ない点も条件に合う。</p>
+<ul>
+<li><strong>A:</strong> 「UNKNOWN」の行は同じキー値なので同じスライスに集まる。ノードを増やしても、偏りそのものは解消しない。</li>
+<li><strong>C:</strong> ソートキーは各スライス内の並び順を決めるもので、行をスライスへ分散する方法は変わらないため、偏りは解消しない。</li>
+<li><strong>D:</strong> 大きなテーブルを全ノードへ複製するため、ストレージとロードの負荷が過大になる。ALLは小さな結合用のテーブル向けである。</li>
+</ul>
+<p><a href="../../services/redshift.html">Amazon Redshift</a></p></details>
+</section>
 </div>
 
 <div class="quiz-domain">
@@ -4032,6 +4997,221 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 <li><strong>D:</strong> 共有認証情報では個人を識別できず、最小権限やプロジェクト単位の管理にも反します。</li>
 </ul>
 <p><a href="../../services/sagemaker-unified-studio.html">Amazon SageMaker Unified Studio</a></p></details>
+</section>
+<section class="quiz-q" data-id="250" data-title="デプロイ時の権限分離" data-domain="4" data-difficulty="intermediate" data-answer="c" data-type="single">
+<h4>問250 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">データ基盤チームはAWS CloudFormationで、Glueジョブ、S3バケット、IAMロールを作成します。デプロイ担当者の個人権限にはリソース作成権限を持たせず、スタックの操作中だけ必要な権限を使わせたい場合、どのように構成しますか。担当者にIAMユーザーの長期アクセスキーは配りません。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q250" value="a"> 担当者のIAMユーザーに、Glue・S3・IAMのリソース作成権限をすべて直接付与する</label></li>
+<li><label><input type="radio" name="q250" value="b"> テンプレートのパラメータにIAMユーザーのアクセスキーを渡し、スタック内の処理で使わせる</label></li>
+<li><label><input type="radio" name="q250" value="c"> 必要な権限だけを持つCloudFormationサービスロールを作成し、担当者にはスタック操作とそのロールへのiam:PassRoleだけを許可する</label></li>
+<li><label><input type="radio" name="q250" value="d"> 担当者にAdministratorAccessを付与し、スタックの作成が終わったら権限を外す</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: C</strong></p>
+<p>正解です。サービスロールを指定すると、CloudFormationはスタック操作時にそのロールの権限でリソースを作成します。担当者にはスタック操作とロールの受け渡し(iam:PassRole)だけを許可すればよく、個人にリソース作成権限は不要です。</p>
+<ul>
+<li><strong>A:</strong> 担当者個人にリソース作成権限を持たせない要件に反します。スタック操作以外の場面でも広い権限を使えてしまいます。</li>
+<li><strong>B:</strong> 長期アクセスキーを使わない要件に反します。キーがテンプレートや操作履歴に残り、漏えいの危険も高まります。</li>
+<li><strong>D:</strong> 作成中は担当者個人が広範な権限を持つため、最小権限の方針に反します。付与と取り消しの運用も増えます。</li>
+</ul>
+<p><a href="../../services/cloudformation.html">AWS CloudFormation</a><a href="../../terms/iam-passrole.html">iam:PassRole</a><a href="../../terms/iam-roles-credentials.html">IAMロールと一時認証情報</a></p></details>
+</section>
+<section class="quiz-q" data-id="251" data-title="S3への閉域経路の制限" data-domain="4" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
+<h4>問251 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">プライベートサブネットのEMRクラスターが、S3のゲートウェイエンドポイント経由で自社バケットを読み書きしています。情報漏えい対策として、このVPCから他社アカウントのバケットへデータを書き出せないようにし、さらに分析用バケットはこのエンドポイント経由以外のアクセスを拒否したい場合に必要な設定を選んでください。対象は分析専用のVPCで、管理用ロールの例外は別途設計済みとします。</p>
+<fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q251" value="a"> VPCエンドポイントのポリシーで、アクセスできるバケットを自社のバケットだけに限定する</label></li>
+<li><label><input type="checkbox" name="q251" value="b"> S3のゲートウェイエンドポイントにセキュリティグループを関連付け、宛先バケットを制限する</label></li>
+<li><label><input type="checkbox" name="q251" value="c"> 分析用バケットのバケットポリシーで、aws:SourceVpceがこのエンドポイントのIDでないリクエストを拒否する</label></li>
+<li><label><input type="checkbox" name="q251" value="d"> NATゲートウェイ経由の通信に切り替え、ネットワークACLで宛先バケットを制御する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、C</strong></p>
+<p>正解です。バケットポリシーのaws:SourceVpce条件で、特定のエンドポイント経由以外のリクエストを拒否できます。バケット側からも経路を制限できます。</p>
+<ul>
+<li><strong>B:</strong> ゲートウェイエンドポイントにはセキュリティグループを関連付けられません。また、セキュリティグループはバケット単位の宛先を判別できません。</li>
+<li><strong>D:</strong> ネットワークACLはIPアドレス単位の制御で、バケット単位の宛先制限には向きません。インターネット経由にもなり、閉域経路の要件も満たしません。</li>
+</ul>
+<p><a href="../../terms/vpc-endpoint.html">VPCエンドポイント</a><a href="../../services/s3.html">Amazon S3</a><a href="../../services/vpc.html">Amazon VPC</a></p></details>
+</section>
+<section class="quiz-q" data-id="252" data-title="RDS移行後の責任範囲" data-domain="4" data-difficulty="basic" data-answer="b,d" data-type="multiple">
+<h4>問252 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">データチームは、EC2上で自己管理していたPostgreSQLをAmazon RDS for PostgreSQLへ移行しました。ホストOSの保守やデータベースエンジンのインストールはAWSに任せられます。責任共有モデルにおいて、移行後もチームの責任として残る作業を選んでください。</p>
+<fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q252" value="a"> データベースサーバーを収容する施設の、物理的なセキュリティ管理</label></li>
+<li><label><input type="checkbox" name="q252" value="b"> データベース内のユーザーとロールを設計し、最小権限になるよう権限を付与する</label></li>
+<li><label><input type="checkbox" name="q252" value="c"> データベースを動かすホストOSへのセキュリティパッチの適用</label></li>
+<li><label><input type="checkbox" name="q252" value="d"> セキュリティグループで、データベースへの接続元を必要な範囲に制限する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B、D</strong></p>
+<p>正解です。ネットワークのアクセス制御の設定は、マネージドサービスでも利用者側の責任です。</p>
+<ul>
+<li><strong>A:</strong> 施設の物理的な保護はAWSの責任で、RDSを使っても利用者の作業にはなりません。</li>
+<li><strong>C:</strong> RDSではホストOSの保守はAWSが担当します。利用者が個別に適用する作業ではありません。</li>
+</ul>
+<p><a href="../../services/rds.html">Amazon RDS</a><a href="../../terms/shared-responsibility.html">責任共有モデル</a><a href="../../terms/managed-serverless.html">マネージドとサーバーレス</a></p></details>
+</section>
+<section class="quiz-q" data-id="253" data-title="大きなファイルの暗号化" data-domain="4" data-difficulty="intermediate" data-answer="a" data-type="single">
+<h4>問253 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">Lambda関数が、1ファイル数百MBの帳票をS3へ置く前にクライアント側で暗号化します。鍵管理にはAWS KMSのカスタマーマネージドキーを使い、ファイルごとに異なるデータキーで暗号化し、KMSの鍵そのものは外へ出さない構成にしたい場合、どの方法が適切ですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q253" value="a"> KMSのGenerateDataKeyでデータキーを取得し、平文のデータキーでファイルを暗号化して、暗号化済みデータキーを暗号文と一緒に保存する</label></li>
+<li><label><input type="radio" name="q253" value="b"> ファイルを4KBずつに分割し、すべてのブロックでKMSのEncrypt APIを直接呼び出す</label></li>
+<li><label><input type="radio" name="q253" value="c"> KMSからキーマテリアルをエクスポートし、Lambdaの環境変数に保存して暗号化に使う</label></li>
+<li><label><input type="radio" name="q253" value="d"> KMSを使わず、コード内に固定の共通鍵を埋め込んで全ファイルを同じ鍵で暗号化する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A</strong></p>
+<p>正解です。エンベロープ暗号化の方法です。KMSのキーがデータキーを保護し、大きなファイルの暗号化はローカルで行うため、KMSへの呼び出しは少なく済みます。ファイルごとに別のデータキーも使えます。</p>
+<ul>
+<li><strong>B:</strong> 動作はしますが、数百MBでは呼び出し回数が膨大になり、スロットリングや料金の面で現実的ではありません。ファイルごとのデータキーを使う要件も満たしません。</li>
+<li><strong>C:</strong> KMSのキーマテリアルは平文でエクスポートできません。鍵そのものを外へ出さない要件にも反します。</li>
+<li><strong>D:</strong> ファイルごとに異なるデータキーを使う要件に反します。KMSによる鍵管理や使用履歴の記録も利用できません。</li>
+</ul>
+<p><a href="../../services/kms.html">AWS KMS</a><a href="../../terms/encryption.html">暗号化の基礎</a></p></details>
+</section>
+<section class="quiz-q" data-id="254" data-title="データイベントの記録範囲" data-domain="4" data-difficulty="intermediate" data-answer="d" data-type="single">
+<h4>問254 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">規制対象の顧客データは、S3バケットのcustomer/プレフィックスにあります。オブジェクトの書き込みと削除を誰が実行したかをCloudTrailで記録する必要がありますが、読み取り中心の他のプレフィックスまで記録するとデータイベントの料金が増えます。記録対象を必要な範囲に絞る設定はどれですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q254" value="a"> 管理イベントの記録をWriteOnlyに設定する</label></li>
+<li><label><input type="radio" name="q254" value="b"> S3のサーバーアクセスログを有効にし、CloudTrailの代わりに使う</label></li>
+<li><label><input type="radio" name="q254" value="c"> 全バケットのS3データイベントをすべて記録し、調査時にプレフィックスで絞り込む</label></li>
+<li><label><input type="radio" name="q254" value="d"> 高度なイベントセレクターで、S3オブジェクトのデータイベントを対象バケットのcustomer/プレフィックスのARNに限定し、readOnlyがfalseのイベントだけを記録する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。高度なイベントセレクターでは、resources.ARNのプレフィックスやreadOnlyなどの項目でデータイベントを絞り込めます。書き込みと削除だけを必要な範囲に限って記録できます。</p>
+<ul>
+<li><strong>A:</strong> 管理イベントはバケット設定の変更などのコントロールプレーン操作です。PutObjectやDeleteObjectなどオブジェクト単位の操作はデータイベントで、記録されません。</li>
+<li><strong>B:</strong> CloudTrailで記録するという要件を満たしません。サーバーアクセスログはAPIの呼び出し履歴を扱うCloudTrailとは別の仕組みです。</li>
+<li><strong>C:</strong> 記録はできますが、不要なデータイベントの料金が発生します。記録範囲を絞る要件を満たしません。</li>
+</ul>
+<p><a href="../../services/cloudtrail.html">AWS CloudTrail</a><a href="../../services/s3.html">Amazon S3</a></p></details>
+</section>
+<section class="quiz-q" data-id="255" data-title="複数関数のエラー集計" data-domain="4" data-difficulty="basic" data-answer="b" data-type="single">
+<h4>問255 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">5つのLambda関数のログが、それぞれ別のCloudWatch Logsロググループに出力されています。障害調査のため、直近3時間のERROR行を関数別に集計したいと考えています。ログの移動や、新しい分析基盤の構築は行いたくありません。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q255" value="a"> ロググループをS3へエクスポートし、Athenaでテーブルを作成してクエリする</label></li>
+<li><label><input type="radio" name="q255" value="b"> CloudWatch Logs Insightsで5つのロググループを対象に指定し、ERRORで絞り込んでロググループ別に集計するクエリを実行する</label></li>
+<li><label><input type="radio" name="q255" value="c"> Amazon OpenSearch Serviceのドメインを作成し、サブスクリプションフィルターですべてのログを取り込む</label></li>
+<li><label><input type="radio" name="q255" value="d"> 各ログストリームを手作業でダウンロードし、表計算ソフトで集計する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。Logs Insightsは複数のロググループを対象に、保存済みログへ直接クエリできます。ログの移動や基盤の追加は不要です。</p>
+<ul>
+<li><strong>A:</strong> 動作はしますが、エクスポートとテーブル定義の準備が必要です。ログを移動しない要件を満たしません。</li>
+<li><strong>C:</strong> ドメインの構築と運用が必要になり、新しい基盤を作らない要件に反します。</li>
+<li><strong>D:</strong> 手作業が多く、直近3時間の調査を素早く行う用途に向きません。また、ログ量が多いと現実的ではありません。</li>
+</ul>
+<p><a href="../../services/cloudwatch.html">Amazon CloudWatch</a><a href="../../services/athena.html">Amazon Athena</a></p></details>
+</section>
+<section class="quiz-q" data-id="256" data-title="大量ログの加工処理" data-domain="4" data-difficulty="advanced" data-answer="a,d" data-type="multiple">
+<h4>問256 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">複数のシステムが出力する独自形式のアプリケーションログが、S3に毎日数TB蓄積されます。複数行にまたがるスタックトレースの結合など、チームが持つSparkのカスタムパーサーを使った加工が必要で、結果は分析用のParquetに変換します。日次の処理は4時間以内に終える必要があります。実行コストを抑え、処理後に計算資源を残さない構成として適切なものを選んでください。</p>
+<fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q256" value="a"> 日次でAmazon EMRクラスターを起動し、Sparkジョブでログを加工してParquetをS3へ書き込み、完了後にクラスターを終了する</label></li>
+<li><label><input type="checkbox" name="q256" value="b"> S3イベントでファイルごとにLambda関数を起動し、1回の実行内でログを加工する</label></li>
+<li><label><input type="checkbox" name="q256" value="c"> CloudWatch Logs Insightsで全ログにクエリを実行し、結果をそのままParquetとして保存する</label></li>
+<li><label><input type="checkbox" name="q256" value="d"> EMRのタスクノードにスポットインスタンスを使い、入力と出力をS3に置いて、HDFSには永続データを置かない</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、D</strong></p>
+<p>正解です。入出力をS3に置けば、スポットインスタンスが中断されても永続データは失われません。タスクノードに安価な容量を使い、コストを抑えられます。</p>
+<ul>
+<li><strong>B:</strong> 1回の実行時間やメモリには上限があり、数TBの加工には向きません。複数行にまたがる処理を含め、既存のSparkパーサーも再利用できません。</li>
+<li><strong>C:</strong> Logs Insightsは、CloudWatch Logsに保存されたログを検索する機能です。S3上の大量ログを加工してParquetに書き出す用途には使えません。</li>
+</ul>
+<p><a href="../../services/emr.html">Amazon EMR</a><a href="../../services/s3.html">Amazon S3</a></p></details>
+</section>
+<section class="quiz-q" data-id="257" data-title="別アカウントでの売上参照" data-domain="4" data-difficulty="intermediate" data-answer="b,c" data-type="multiple">
+<h4>問257 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">販売部門のアカウントにあるRedshift RA3クラスターの売上テーブルを、分析部門の別アカウントにあるRedshiftクラスターから参照させます。データを複製せず、販売部門の最新データをいつでもクエリできるようにしたい場合に必要な手順を選んでください。</p>
+<fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q257" value="a"> 販売側クラスターのスナップショットを週次で分析側アカウントに共有し、復元する</label></li>
+<li><label><input type="checkbox" name="q257" value="b"> 販売側でデータ共有を作成して対象のスキーマとテーブルを追加し、分析側アカウントの利用を認可する</label></li>
+<li><label><input type="checkbox" name="q257" value="c"> 分析側で共有を自分のクラスターに関連付け、共有からデータベースを作成して利用者に権限を付与する</label></li>
+<li><label><input type="checkbox" name="q257" value="d"> 販売側のテーブルをUNLOADでS3へ出力し、分析側が定期的にCOPYで取り込む</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B、C</strong></p>
+<p>正解です。利用側の管理者が共有を関連付け、共有からデータベースを作成します。利用者に権限を付与すれば、複製なしで最新のデータをクエリできます。</p>
+<ul>
+<li><strong>A:</strong> データが複製され、復元時点までの内容しか参照できません。常に最新のデータを参照する要件を満たしません。</li>
+<li><strong>D:</strong> データが複製され、取り込み間隔の分だけ遅れます。複製せず最新データを参照する要件に反します。</li>
+</ul>
+<p><a href="../../services/redshift.html">Amazon Redshift</a><a href="../../terms/data-governance.html">データガバナンス</a></p></details>
+</section>
+<section class="quiz-q" data-id="258" data-title="社内独自IDの検出" data-domain="4" data-difficulty="intermediate" data-answer="d" data-type="single">
+<h4>問258 <span class="quiz-difficulty">標準</span></h4>
+<p class="quiz-stem">S3に蓄積した問い合わせデータに、社内の会員番号(MB-に続く8桁の数字)が含まれる可能性があります。管理対象の個人情報として検出し、保管場所を把握する必要があります。マネージドな検出ルールだけでは会員番号を判別できません。どの対応が適切ですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q258" value="a"> Lake Formationで会員番号を含む列にLF-Tagを付け、データ内容の検出に利用する</label></li>
+<li><label><input type="radio" name="q258" value="b"> AWS Glueのクローラーを実行し、会員番号を含む列を自動的に分類する</label></li>
+<li><label><input type="radio" name="q258" value="c"> Amazon Macieの管理対象データ識別子だけで機密データ検出ジョブを実行する</label></li>
+<li><label><input type="radio" name="q258" value="d"> Amazon Macieでカスタムデータ識別子(正規表現とキーワード)を作成し、対象バケットの機密データ検出ジョブに指定する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: D</strong></p>
+<p>正解です。Macieのカスタムデータ識別子は、正規表現とキーワードで独自の形式を定義できます。検出ジョブで、会員番号を含むオブジェクトを見つけられます。</p>
+<ul>
+<li><strong>A:</strong> LF-Tagはアクセス権限を管理する仕組みです。オブジェクトの内容を調べて機密データを見つける機能ではなく、対象列を把握済みであることが前提です。</li>
+<li><strong>B:</strong> クローラーはスキーマやデータ形式を検出するものです。個人情報の内容を判定する機能ではありません。</li>
+<li><strong>C:</strong> 管理対象データ識別子は、一般的な機密データの種類を検出します。社内独自の会員番号の形式は含まれません。</li>
+</ul>
+<p><a href="../../services/macie.html">Amazon Macie</a><a href="../../services/lake-formation.html">AWS Lake Formation</a></p></details>
+</section>
+<section class="quiz-q" data-id="259" data-title="利用リージョンの統制" data-domain="4" data-difficulty="advanced" data-answer="a,c" data-type="multiple">
+<h4>問259 <span class="quiz-difficulty">応用</span></h4>
+<p class="quiz-stem">データ主権の規程で、顧客データを扱うメンバーアカウント群はEUのリージョン(eu-west-1、eu-central-1)だけで運用する必要があります。対象は約40アカウントで、今後追加されるアカウントも自動的に対象にします。管理者権限を持つ利用者でも他のリージョンでリソースを作成できないようにし、IAMやRoute 53などのグローバルサービスは引き続き使えるようにします。AWS Organizationsで必要な設定を選んでください。</p>
+<fieldset class="quiz-options"><legend>要件を満たす選択肢を2つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="checkbox" name="q259" value="a"> 対象のOUにSCPをアタッチし、aws:RequestedRegionが許可リージョン以外の場合にアクションを拒否する</label></li>
+<li><label><input type="checkbox" name="q259" value="b"> 各アカウントのIAMユーザーに、他リージョンでの作成を禁止するIAMポリシーを個別に付ける</label></li>
+<li><label><input type="checkbox" name="q259" value="c"> そのSCPで、IAMやRoute 53などのグローバルサービスのアクションをNotActionで拒否の対象から除外する</label></li>
+<li><label><input type="checkbox" name="q259" value="d"> AWS Configのルールで他リージョンのリソースを検出し、担当者へ通知する</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: A、C</strong></p>
+<p>正解です。グローバルサービスはリージョンが固定されないため、拒否の対象に含めると利用できなくなります。NotActionで除外し、利用を継続させます。</p>
+<ul>
+<li><strong>B:</strong> 管理者権限を持つ主体は自分でポリシーを外せ、新しいロールやアカウントにも設定の漏れが出ます。組織全体で統制する要件を満たしません。</li>
+<li><strong>D:</strong> 事後に検知するだけで、作成そのものは防げません。他リージョンで作成できないようにする要件を満たしません。</li>
+</ul>
+<p><a href="../../services/organizations.html">AWS Organizations</a><a href="../../terms/data-governance.html">データガバナンス</a><a href="../../terms/region-az.html">リージョンとAZ</a></p></details>
+</section>
+<section class="quiz-q" data-id="260" data-title="外部データの購読と取り込み" data-domain="4" data-difficulty="basic" data-answer="b" data-type="single">
+<h4>問260 <span class="quiz-difficulty">基礎</span></h4>
+<p class="quiz-stem">マーケティング部門は、外部のデータ提供会社が週次で更新する市場データを利用します。契約と請求はAWS経由で一元管理し、更新のたびに手作業でダウンロードせず、自社のS3バケットへ自動的に取り込める必要があります。どの方法が適切ですか。</p>
+<fieldset class="quiz-options"><legend>最も適切なものを1つ選んでください。</legend>
+<ol class="quiz-choices">
+<li><label><input type="radio" name="q260" value="a"> Lake Formationで、データ提供会社のアカウントとクロスアカウント共有を設定する</label></li>
+<li><label><input type="radio" name="q260" value="b"> AWS Data Exchangeでデータセットを購読し、新しいリビジョンを自社のS3バケットへ自動エクスポートするよう設定する</label></li>
+<li><label><input type="radio" name="q260" value="c"> データ提供会社に署名付きURLを毎週発行してもらい、担当者がダウンロードする</label></li>
+<li><label><input type="radio" name="q260" value="d"> AWS Transfer Familyのサーバーを構築し、データ提供会社に毎週SFTPでアップロードさせる</label></li>
+</ol></fieldset>
+<details class="quiz-answer"><summary>答えと解説を確認</summary>
+<p><strong>正解: B</strong></p>
+<p>正解です。Data Exchangeは、サードパーティのデータ製品の購読と請求をAWSで管理できます。購読したデータセットの新しいリビジョンは、S3バケットへ自動エクスポートできます。</p>
+<ul>
+<li><strong>A:</strong> 提供会社が自社のカタログを共有する前提の仕組みで、商用データの契約や請求を扱う機能はありません。</li>
+<li><strong>C:</strong> 手作業が必要で、自動で取り込む要件を満たしません。契約や請求の一元管理もできません。</li>
+<li><strong>D:</strong> サーバーの運用が必要で、契約や請求をAWSで管理する要件も満たしません。</li>
+</ul>
+<p><a href="../../services/data-exchange.html">AWS Data Exchange</a><a href="../../services/s3.html">Amazon S3</a></p></details>
 </section>
 
 </div>
