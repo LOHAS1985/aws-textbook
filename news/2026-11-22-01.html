@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Route 53:同じ AZ のリソースへ答える AZ アフィニティルーティング | 2026年11月22日のAWSニュース | AWS教科書</title>
+<meta name="description" content="VPC 内のクライアントからの DNS クエリに、そのクライアントと同じアベイラビリティーゾーンのリソースを返せるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-22">2026年11月22日</time>のAWSニュース</p>
+  <h1>Route 53:同じ AZ のリソースへ答える AZ アフィニティルーティング</h1>
+  <p class="lead">VPC 内のクライアントからの DNS クエリに、そのクライアントと同じアベイラビリティーゾーンのリソースを返せるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-22">2026-11-22</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Route 53 に、新しいルーティングポリシー「AZ アフィニティルーティング」が加わりました。VPC 内のクライアントが名前解決をすると、そのクライアントと同じアベイラビリティーゾーン(AZ。同じリージョン内の独立したデータセンター群)にあるリソースの IP アドレスを優先して返します。通信が AZ をまたがないので、遅延が小さくなります。</p>
+<p>レコードには「場所の種類」として、AZ・ゾーングループ・リージョン・グローバルのどれかを指定します。AZ のレコードでは use1-az1 のような AZ ID を書きます。クライアントの AZ に合うレコードがなければ、ゾーングループ、リージョン、グローバルの順に、範囲の広い場所のレコードへ切り替わります。ヘルスチェックも関連付けられ、異常なら次の場所のレコードで答えます。パブリックホストゾーンとプライベートホストゾーンのどちらでも使え、インターネットからのクエリにはグローバルのレコードが答えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 616 159" style="max-width:616px;min-width:520px" role="img" aria-label="図1 クライアントと同じ AZ のサーバーを返す"><defs><marker id="dgnews-2026-11-22-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="c1">
+<rect x="34" y="-2" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="20" text-anchor="middle" class="dg-t">クライアント</text>
+<text x="109" y="38" text-anchor="middle" class="dg-s">(AZ-a)</text>
+</g>
+<g data-node="c2">
+<rect x="34" y="83" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="104" text-anchor="middle" class="dg-t">クライアント</text>
+<text x="109" y="122" text-anchor="middle" class="dg-s">(AZ-b)</text>
+</g>
+<g data-node="r53">
+<rect x="238" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="313" y="62" text-anchor="middle" class="dg-tb">Route 53</text>
+<text x="313" y="80" text-anchor="middle" class="dg-s">AZ アフィニティ</text>
+</g>
+<g data-node="a">
+<rect x="442" y="4" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="517" y="28" text-anchor="middle" class="dg-t">AZ-a のサーバー</text>
+</g>
+<g data-node="b">
+<rect x="442" y="89" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="517" y="113" text-anchor="middle" class="dg-t">AZ-b のサーバー</text>
+</g>
+<path d="M184.0,39.6 L238.0,50.9" class="dg-line" marker-end="url(#dgnews-2026-11-22-01-1)"/>
+<text x="211" y="49" text-anchor="middle" class="dg-s dg-halo">名前解決</text>
+<path d="M184.0,93.4 L238.0,82.1" class="dg-line" marker-end="url(#dgnews-2026-11-22-01-1)"/>
+<text x="211" y="92" text-anchor="middle" class="dg-s dg-halo">名前解決</text>
+<path d="M388.0,50.9 L442.0,39.6" class="dg-line" marker-end="url(#dgnews-2026-11-22-01-1)"/>
+<text x="415" y="49" text-anchor="middle" class="dg-s dg-halo">AZ-a には</text>
+<path d="M388.0,82.1 L442.0,93.4" class="dg-line" marker-end="url(#dgnews-2026-11-22-01-1)"/>
+<text x="415" y="92" text-anchor="middle" class="dg-s dg-halo">AZ-b には</text>
+</svg>
+</div>
+<figcaption>図1 クライアントと同じ AZ のサーバーを返す</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1024 116" style="max-width:1024px;min-width:819px" role="img" aria-label="図2 一致するレコードがないときは範囲の広い場所へ"><defs><marker id="dgnews-2026-11-22-01-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="q">
+<rect x="34" y="46" width="150" height="40" rx="8" class="dg-blue"/>
+<text x="109" y="70" text-anchor="middle" class="dg-t">クエリ</text>
+</g>
+<g data-node="az">
+<rect x="238" y="46" width="150" height="40" rx="8" class="dg-accent"/>
+<text x="313" y="70" text-anchor="middle" class="dg-tb">AZ のレコード</text>
+</g>
+<g data-node="zg">
+<rect x="442" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="517" y="62" text-anchor="middle" class="dg-t">ゾーングループ</text>
+<text x="517" y="80" text-anchor="middle" class="dg-s">のレコード</text>
+</g>
+<g data-node="rg">
+<rect x="646" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="721" y="62" text-anchor="middle" class="dg-t">リージョン</text>
+<text x="721" y="80" text-anchor="middle" class="dg-s">のレコード</text>
+</g>
+<g data-node="gl">
+<rect x="850" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="925" y="62" text-anchor="middle" class="dg-t">グローバル</text>
+<text x="925" y="80" text-anchor="middle" class="dg-s">のレコード</text>
+</g>
+<path d="M184.0,66.5 L238.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-01-2)"/>
+<path d="M388.0,66.5 L442.0,66.5" class="dg-line dg-dash" marker-end="url(#dgnews-2026-11-22-01-2)"/>
+<text x="415" y="70" text-anchor="middle" class="dg-s dg-halo">なければ</text>
+<path d="M592.0,66.5 L646.0,66.5" class="dg-line dg-dash" marker-end="url(#dgnews-2026-11-22-01-2)"/>
+<text x="619" y="70" text-anchor="middle" class="dg-s dg-halo">なければ</text>
+<path d="M796.0,66.5 L850.0,66.5" class="dg-line dg-dash" marker-end="url(#dgnews-2026-11-22-01-2)"/>
+<text x="823" y="70" text-anchor="middle" class="dg-s dg-halo">なければ</text>
+</svg>
+</div>
+<figcaption>図2 一致するレコードがないときは範囲の広い場所へ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>AZ をまたぐ通信が減り、応答が速くなります。AZ をまたぐデータ転送の料金も抑えやすくなります。</dd>
+<dt>試験・実務への影響</dt><dd>ルーティングポリシーの選択肢が増えました。「遅延を小さくしたい」ときの、レイテンシールーティング(リージョン間)との使い分けを押さえましょう。AZ 内に閉じたい場合はこちらです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/route53.html">Route 53</a>、<a href="../terms/dns.html">DNS</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/route-53-affinity-routing/">Amazon Route 53 now supports Availability Zone (AZ) affinity routing</a>(2026-11-20)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-22-02.html"><span class="label">次へ → 2026年11月22日</span>Route 53:Advanced Hosted Zones と、プライベートホストゾーンのパブリック DNS フォールバック</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

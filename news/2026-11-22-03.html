@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S3:汎用バケットの読み取りリクエスト上限が約2倍に | 2026年11月22日のAWSニュース | AWS教科書</title>
+<meta name="description" content="汎用バケットで、1秒あたりの GET/HEAD リクエストが少なくとも11,000件まで処理できるようになりました(従来は5,500件)。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-22">2026年11月22日</time>のAWSニュース</p>
+  <h1>S3:汎用バケットの読み取りリクエスト上限が約2倍に</h1>
+  <p class="lead">汎用バケットで、1秒あたりの GET/HEAD リクエストが少なくとも11,000件まで処理できるようになりました(従来は5,500件)。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-22">2026-11-22</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>S3 の汎用バケットは、プレフィックス(オブジェクトキーの先頭部分)ごとに1秒あたり処理できるリクエスト数の目安があります。今回、読み取り(GET/HEAD)の目安が5,500件から11,000件以上に上がりました。機械学習の学習データや分析のように、大量のオブジェクトを読む処理が速くなります。</p>
+<p>既存のリクエストに自動で適用され、アプリの変更や追加料金は要りません。さらに伸ばしたい場合は、これまでどおりリクエストを複数のプレフィックスに分散します。S3 はプレフィックスごとに独立して拡張するためです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 116" style="max-width:752px;min-width:602px" role="img" aria-label="図1 読み取りの上限の変化"><defs><marker id="dgnews-2026-11-22-03-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="b">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">GET/HEAD</text>
+</g>
+<g data-node="a">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="381" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">GET/HEAD</text>
+</g>
+<g data-node="p">
+<rect x="578" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="653" y="62" text-anchor="middle" class="dg-tb">さらに増やすには</text>
+<text x="653" y="80" text-anchor="middle" class="dg-s">プレフィックスを</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-03-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">自動で適用</text>
+<path d="M456.0,66.5 L578.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-22-03-1)"/>
+</svg>
+</div>
+<figcaption>図1 読み取りの上限の変化</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>設定を変えずに、読み取り中心の処理のスループットが上がります。</dd>
+<dt>試験・実務への影響</dt><dd>数字は変わっても、「高いリクエスト率が必要ならプレフィックスを分散する」という考え方は同じです。書き込み(PUT/COPY/POST/DELETE)の目安は今回の発表には含まれません。</dd>
+<dt>関連するページ</dt><dd><a href="../services/s3.html">S3</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-s3-increases-read-request-rate/">Amazon S3 increases the read request rate for general purpose buckets by up to 2x</a>(2026-11-20)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-22-02.html"><span class="label">← 前へ 2026年11月22日</span>Route 53:Advanced Hosted Zones と、プライベートホストゾーンのパブリック DNS フォールバック</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-22-04.html"><span class="label">次へ → 2026年11月22日</span>AWS Backup:DynamoDB の増分バックアップに対応</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
