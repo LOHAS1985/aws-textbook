@@ -1,0 +1,25 @@
+<!-- title: RDS for Oracle:切り替えても接続先が変わらないプライマリエンドポイント -->
+<!-- category: 2026年11月 -->
+<!-- lead: RDS for Oracle のレプリカ構成で、現在のプライマリを常に指すDNS名が使えるようになり、切り替え後に接続文字列を変える必要がなくなりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>RDS for Oracle に「プライマリエンドポイント」が加わりました。レプリカ構成で、今のプライマリ DB インスタンスを常に指す DNS 名です。スイッチオーバー(計画的にレプリカを新しいプライマリへ昇格させる切り替え)をすると、RDS が自動でこの名前の向き先を新しいプライマリへ変えます。</p>
+<p>これまでは切り替えのたびに、アプリの接続文字列や DNS レコードを書き換える必要があり、変更の承認や関係チームとの調整がかかっていました。同じリージョンのレプリカにも、クロスリージョンのレプリカにも使えるので、災害対策の訓練もやりやすくなります。Enterprise Edition のインスタンスには追加料金なしで最初からあり、従来のインスタンスのエンドポイントもそのまま使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 0 blue "アプリ" "(接続先は固定)"
+node ep 1.3 0 accent "プライマリ" "エンドポイント"
+node old 2.6 -0.6 box "切り替え前の" "プライマリ"
+node new 2.6 0.6 ok "切り替え後の" "プライマリ"
+edge app ep
+edge ep old "切り替え前" dash
+edge ep new "切り替え後"
+<figcaption>図1 向き先は RDS が自動で付け替える</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>切り替えの作業からアプリ側の変更がなくなり、訓練も本番の切り替えも手順が簡単になります。</dd>
+<dt>試験・実務への影響</dt><dd>「フェイルオーバーやスイッチオーバー後に、接続先を変えずに使い続ける」という考え方は、信頼性・事業継続の定番です。DNS 名で向き先を隠す仕組みとして押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/rds.html">RDS</a>、<a href="../terms/dns.html">DNS</a>、<a href="../services/route53.html">Route 53</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/rds-oracle-primary-endpoint-v2">Amazon RDS for Oracle now supports Primary Endpoint</a>(2026-11-20)</dd>
+</dl>
+</section>

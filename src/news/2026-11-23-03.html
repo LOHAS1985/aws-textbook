@@ -1,0 +1,27 @@
+<!-- title: CloudWatch:EKS アドオンが自社アプリのテレメトリも受け付ける -->
+<!-- category: 2026年11月 -->
+<!-- lead: CloudWatch Observability EKS アドオンが、アプリの OpenTelemetry データと Prometheus メトリクスを直接受け取れるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>EKS で CloudWatch Observability アドオンを使うと、CloudWatch エージェントがクラスターの監視データを集めます。今回、このエージェントがアプリケーション自身のテレメトリ(メトリクス・トレース・ログなどの観測データ)も受け付けるようになりました。別にコレクター(データを集めて転送する仕組み)を用意して運用する必要がありません。</p>
+<p>OpenTelemetry(監視データの共通の形式)の SDK を組み込んだアプリは、各ノードでエージェントが待ち受ける OTLP エンドポイント(標準で有効)へ送ります。メトリクスは CloudWatch メトリクスとして PromQL で検索でき、トレースは X-Ray に、ログは CloudWatch Logs に入ります。Prometheus 形式のメトリクスは、標準の ServiceMonitor と PodMonitor の定義に従ってエージェントが取得します。バージョン8.0.0以降が対象で、取り込みは1GBあたり0.08ドルです。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node app 0 0 blue "アプリ" "OTel /" "Prometheus"
+node ag 1.4 0 accent "CloudWatch" "エージェント" "(EKS アドオン)"
+node m 2.8 -0.7 ok "CloudWatch" "メトリクス"
+node t 2.8 0 ok "X-Ray" "トレース"
+node l 2.8 0.7 ok "CloudWatch" "Logs"
+edge app ag "送信・取得"
+edge ag m
+edge ag t
+edge ag l
+<figcaption>図1 エージェントが種類ごとに振り分ける</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>クラスターの監視とアプリの監視を、同じエージェント・同じ属性(Kubernetes・ホストなど)で結び付けて調べられます。チームごとに自分のアプリの監視対象を定義できます。</dd>
+<dt>試験・実務への影響</dt><dd>EKS の監視で、追加のコレクターを運用せずに済む選択肢です。ログは CloudWatch Logs、トレースは X-Ray、という行き先の整理も確認しておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/eks.html">EKS</a>、<a href="../services/xray.html">X-Ray</a>、<a href="../services/managed-prometheus.html">Managed Service for Prometheus</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/cloudwatch-eks-addon-custom-telemetry">Amazon CloudWatch Observability EKS add-on now supports custom OpenTelemetry and Prometheus telemetry</a>(2026-11-20)</dd>
+</dl>
+</section>

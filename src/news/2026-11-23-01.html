@@ -1,0 +1,25 @@
+<!-- title: CloudWatch Omni:Azure のログ・メトリクス・トレースを集められるように -->
+<!-- category: 2026年11月 -->
+<!-- lead: CloudWatch Omni が Azure のリソースログ・メトリクス・VNet フローログ・トレースを集め、AWS のデータと並べて見られるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>CloudWatch Omni(複数のクラウドや環境の監視データを1か所で見るための機能)が、Microsoft Azure のデータの収集に対応しました。集められるのは、Azure のリソースログ、Azure Monitor のプラットフォームメトリクス、仮想ネットワーク(VNet)のフローログ、Application Insights のトレースです。</p>
+<p>設定は、Microsoft Entra ID(Azure のユーザー管理サービス)のテナントを AWS アカウントとリージョンに接続するところから始めます。集めるデータの種類・サブスクリプション・Azure のリージョン・リソースの種類・タグを選べます。集めたデータは CloudWatch に入り、障害の調査では Azure 上のサービスの遅いリクエストから AWS 側の依存先まで、画面を切り替えずにたどれます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node az 0 0 blue "Azure" "ログ・メトリクス" "トレース"
+node conn 1.3 0 accent "Omni の" "コネクター" "(Entra ID 接続)"
+node cw 2.6 0 ok "CloudWatch" "AWS のデータと" "並べて確認"
+node aws 1.3 1 blue "AWS のリソース"
+edge az conn "収集"
+edge conn cw
+edge aws cw
+<figcaption>図1 Azure と AWS のデータを CloudWatch に集める</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>AWS と Azure の両方で動かしているシステムでも、監視ツールを分けたり自前の収集の仕組みを作ったりせずに、全体を1つの画面で見られます。</dd>
+<dt>試験・実務への影響</dt><dd>CloudWatch は AWS の中だけでなく、他のクラウドのデータも集める方向に広がっています。取り込んだデータには CloudWatch の料金がかかる点も覚えておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/xray.html">X-Ray</a>、<a href="../terms/vpc-flow-logs.html">VPCフローログ</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-cloudwatch-omni-microsoft-azure">Amazon CloudWatch Omni now supports Microsoft Azure platform logs, metrics and traces</a>(2026-11-21)</dd>
+</dl>
+</section>

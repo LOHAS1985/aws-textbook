@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EventBridge:カスタムイベントバスが Webhook を直接受け取れるように | 2026年11月23日のAWSニュース | AWS教科書</title>
+<meta name="description" content="拡張カスタムイベントバスに Webhook イベントの受信口ができ、自前の API エンドポイントなしで外部からイベントを受け取れます。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-23">2026年11月23日</time>のAWSニュース</p>
+  <h1>EventBridge:カスタムイベントバスが Webhook を直接受け取れるように</h1>
+  <p class="lead">拡張カスタムイベントバスに Webhook イベントの受信口ができ、自前の API エンドポイントなしで外部からイベントを受け取れます。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-23">2026-11-23</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Webhook は、外部のサービスが出来事(出荷状況の更新など)を HTTPS で相手のURLへ知らせる仕組みです。これまで、AWS で Webhook を受けるには、API Gateway と Lambda などで受け口を作って運用する必要がありました。</p>
+<p>今回、EventBridge の拡張カスタムイベントバスに「Webhook イベントソース」を作ると、EventBridge が HTTPS のURLを用意します。届いたリクエストは、HMAC 署名・固定トークン・基本認証のいずれかで検証され、通ったものだけがバスに入ります。その後は、ルールにあたるサブスクライバーが絞り込んで配信するのは、これまでのイベントと同じです。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 616 168" style="max-width:616px;min-width:520px" role="img" aria-label="図1 Webhook の受け口を自分で作らなくてよい"><defs><marker id="dgnews-2026-11-23-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="b0">
+<rect x="34" y="-2" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="20" text-anchor="middle" class="dg-t">SaaS など</text>
+<text x="109" y="38" text-anchor="middle" class="dg-s">(外部)</text>
+</g>
+<g data-node="b1">
+<rect x="238" y="-2" width="150" height="52" rx="8" class="dg-box"/>
+<text x="313" y="20" text-anchor="middle" class="dg-t">API Gateway</text>
+<text x="313" y="38" text-anchor="middle" class="dg-s">+ Lambda</text>
+</g>
+<g data-node="b2">
+<rect x="442" y="4" width="150" height="40" rx="8" class="dg-box"/>
+<text x="517" y="28" text-anchor="middle" class="dg-t">イベントバス</text>
+</g>
+<g data-node="a0">
+<rect x="34" y="92" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="113" text-anchor="middle" class="dg-t">SaaS など</text>
+<text x="109" y="131" text-anchor="middle" class="dg-s">(外部)</text>
+</g>
+<g data-node="a1">
+<rect x="238" y="92" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="313" y="113" text-anchor="middle" class="dg-tb">Webhook</text>
+<text x="313" y="131" text-anchor="middle" class="dg-s">イベントソース</text>
+</g>
+<g data-node="a2">
+<rect x="442" y="98" width="150" height="40" rx="8" class="dg-ok"/>
+<text x="517" y="122" text-anchor="middle" class="dg-t">イベントバス</text>
+</g>
+<path d="M184.0,24.0 L238.0,24.0" class="dg-line" marker-end="url(#dgnews-2026-11-23-02-1)"/>
+<text x="211" y="28" text-anchor="middle" class="dg-s dg-halo">これまで</text>
+<path d="M388.0,24.0 L442.0,24.0" class="dg-line" marker-end="url(#dgnews-2026-11-23-02-1)"/>
+<path d="M184.0,117.5 L238.0,117.5" class="dg-line" marker-end="url(#dgnews-2026-11-23-02-1)"/>
+<text x="211" y="122" text-anchor="middle" class="dg-s dg-halo">これから</text>
+<path d="M388.0,117.5 L442.0,117.5" class="dg-line" marker-end="url(#dgnews-2026-11-23-02-1)"/>
+<text x="415" y="122" text-anchor="middle" class="dg-s dg-halo">認証して受信</text>
+</svg>
+</div>
+<figcaption>図1 Webhook の受け口を自分で作らなくてよい</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>受け口用の API とコンピューティングを作って運用する手間がなくなります。Webhook の分の追加料金はなく、通常のカスタムイベントバスへの入力として課金されます。</dd>
+<dt>試験・実務への影響</dt><dd>「外部のSaaSからのイベントを、運用の手間を増やさずに取り込む」という場面で、選べる構成が増えました。疎結合なイベント駆動の構成の一部として押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/eventbridge.html">EventBridge</a>、<a href="../services/api-gateway.html">API Gateway</a>、<a href="../services/lambda.html">Lambda</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eventbridge-webhook-events">Amazon EventBridge Custom event bus now supports Webhook Events</a>(2026-11-20)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-23-01.html"><span class="label">← 前へ 2026年11月23日</span>CloudWatch Omni:Azure のログ・メトリクス・トレースを集められるように</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-23-03.html"><span class="label">次へ → 2026年11月23日</span>CloudWatch:EKS アドオンが自社アプリのテレメトリも受け付ける</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

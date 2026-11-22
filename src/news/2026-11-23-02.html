@@ -1,0 +1,28 @@
+<!-- title: EventBridge:カスタムイベントバスが Webhook を直接受け取れるように -->
+<!-- category: 2026年11月 -->
+<!-- lead: 拡張カスタムイベントバスに Webhook イベントの受信口ができ、自前の API エンドポイントなしで外部からイベントを受け取れます。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Webhook は、外部のサービスが出来事(出荷状況の更新など)を HTTPS で相手のURLへ知らせる仕組みです。これまで、AWS で Webhook を受けるには、API Gateway と Lambda などで受け口を作って運用する必要がありました。</p>
+<p>今回、EventBridge の拡張カスタムイベントバスに「Webhook イベントソース」を作ると、EventBridge が HTTPS のURLを用意します。届いたリクエストは、HMAC 署名・固定トークン・基本認証のいずれかで検証され、通ったものだけがバスに入ります。その後は、ルールにあたるサブスクライバーが絞り込んで配信するのは、これまでのイベントと同じです。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node b0 0 -0.5 box "SaaS など" "(外部)"
+node b1 1.2 -0.5 box "API Gateway" "+ Lambda"
+node b2 2.4 -0.5 box "イベントバス"
+node a0 0 0.6 blue "SaaS など" "(外部)"
+node a1 1.2 0.6 accent "Webhook" "イベントソース"
+node a2 2.4 0.6 ok "イベントバス"
+edge b0 b1 "これまで"
+edge b1 b2
+edge a0 a1 "これから"
+edge a1 a2 "認証して受信"
+<figcaption>図1 Webhook の受け口を自分で作らなくてよい</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>受け口用の API とコンピューティングを作って運用する手間がなくなります。Webhook の分の追加料金はなく、通常のカスタムイベントバスへの入力として課金されます。</dd>
+<dt>試験・実務への影響</dt><dd>「外部のSaaSからのイベントを、運用の手間を増やさずに取り込む」という場面で、選べる構成が増えました。疎結合なイベント駆動の構成の一部として押さえておきましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/eventbridge.html">EventBridge</a>、<a href="../services/api-gateway.html">API Gateway</a>、<a href="../services/lambda.html">Lambda</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eventbridge-webhook-events">Amazon EventBridge Custom event bus now supports Webhook Events</a>(2026-11-20)</dd>
+</dl>
+</section>
