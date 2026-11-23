@@ -1,0 +1,21 @@
+<!-- title: Global Accelerator:TLS リスナーの NLB でもクライアント IP を保持 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Global Accelerator が、TLS リスナーを持つ NLB へ送る通信でも、元のクライアント IP アドレスを保持できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Global Accelerator(世界中の利用者を、AWS のネットワーク経由で最寄りのエンドポイントへ導くサービス)は、「クライアント IP アドレスの保持」を有効にすると、アプリ側で利用者の本当の IP アドレスを見られます。これまでは、この設定をした高速化の対象に、TLS リスナーを持つ NLB(Network Load Balancer。TLS の暗号化をここで解く)を追加できませんでした。TLS を NLB で終わらせるか、クライアント IP を見るかの二択でした。今回、両方を同時に使えます。</p>
+<p>追加の設定は不要で、通常の NLB と同じようにエンドポイントへ追加するだけです。HTTP 以外の TCP 通信、固定 IP が必要なアプリ、大量の通信など、レイヤー7のロードバランサーが向かない場面で役立ちます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "TLS終端か" "クライアントIPか"
+node after 1.6 0 ok "これから" "TLS終端も" "クライアントIPも"
+edge before after "今回の発表"
+<figcaption>図1 TLS 終端とクライアント IP の保持を両立</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>本当のクライアント IP をもとにした、セキュリティグループでの制限、地域によるブロック、レート制限、不正検知、監査ログ、許可リストが使えます。追加料金はなく、通常の Global Accelerator の料金です。</dd>
+<dt>試験・実務への影響</dt><dd>クライアント IP を見る必要があるときに、プロキシ経由で IP が変わる点は定番の論点です。Global Accelerator と NLB の組み合わせで解決できることを覚えておきましょう。GovCloud と中国のリージョンは対象外です。</dd>
+<dt>関連するページ</dt><dd><a href="../services/global-accelerator.html">Global Accelerator</a>、<a href="../services/elb.html">Elastic Load Balancing</a>、<a href="../terms/tls-termination.html">TLS終端</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/global-accelerator-client-ip-nlb-tls/">AWS Global Accelerator now preserves client IPs for NLBs with TLS listeners</a>(2026-11-23)</dd>
+</dl>
+</section>

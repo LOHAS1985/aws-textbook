@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Systems Manager:Automation で Azure・Google Cloud の運用作業も自動化 | 2026年11月24日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Systems Manager Automation のランブックが、AWS だけでなく Azure と Google Cloud のリソースも対象にできるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-24">2026年11月24日</time>のAWSニュース</p>
+  <h1>Systems Manager:Automation で Azure・Google Cloud の運用作業も自動化</h1>
+  <p class="lead">Systems Manager Automation のランブックが、AWS だけでなく Azure と Google Cloud のリソースも対象にできるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-24">2026-11-24</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>Systems Manager Automation(手順書=ランブックを作り、運用作業を自動で実行する機能)が、Microsoft Azure と Google Cloud のリソースを操作できるようになりました。誤った設定の修正や使われていないリソースの片付けなどを、クラウドごとに別のツールや認証情報を用意せず、1か所から実行できます。</p>
+<p>Azure や Google Cloud の API を呼ぶ、リソースの状態を確認する、操作の完了を待つ、という6つの新しいアクションが加わりました。対象は、Azure ならサブスクリプション・リージョン・リソースグループ・種類・タグ、Google Cloud ならプロジェクト・ゾーン・アセットの種類・ラベルで絞れます。コードを書く場合の aws:executeScript には両クラウドの Python SDK が入り、一時的な認証情報は Systems Manager の Cloud Connector から渡されるので、ランブックに秘密情報を保存しません。段階的な実行、承認での一時停止、エラーが多いときの中断も従来どおり使えます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 202" style="max-width:718px;min-width:574px" role="img" aria-label="図1 1つのランブックから複数のクラウドを操作する"><defs><marker id="dgnews-2026-11-24-02-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="rb">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="109" y="62" text-anchor="middle" class="dg-tb">Automation</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">ランブック</text>
+</g>
+<g data-node="cc">
+<rect x="289" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="364" y="62" text-anchor="middle" class="dg-t">Cloud Connector</text>
+<text x="364" y="80" text-anchor="middle" class="dg-s">一時的な認証情報</text>
+</g>
+<g data-node="az">
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">Azure の</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">リソース</text>
+</g>
+<g data-node="gc">
+<rect x="544" y="126" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="147" text-anchor="middle" class="dg-t">Google Cloud の</text>
+<text x="619" y="165" text-anchor="middle" class="dg-s">リソース</text>
+</g>
+<path d="M184.0,66.5 L289.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-24-02-1)"/>
+<path d="M439.0,66.5 L544.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-24-02-1)"/>
+<text x="492" y="70" text-anchor="middle" class="dg-s dg-halo">操作</text>
+<path d="M439.0,91.5 L544.0,126.5" class="dg-line" marker-end="url(#dgnews-2026-11-24-02-1)"/>
+<text x="492" y="113" text-anchor="middle" class="dg-s dg-halo">操作</text>
+</svg>
+</div>
+<figcaption>図1 1つのランブックから複数のクラウドを操作する</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>複数のクラウドを使う環境でも、承認・段階実行・エラー時の中断といった安全な仕組みをそのまま使えます。AWS が用意したランブックで、Azure や Google Cloud の仮想マシンへ SSM Agent や Amazon Inspector のエージェントも入れられます。</dd>
+<dt>試験・実務への影響</dt><dd>Automation のランブックは運用の自動化と自動修復の中心です。対象が AWS の外にも広がったと押さえておきましょう。利用できるのは Cloud Connector を作れるリージョンです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/systems-manager.html">Systems Manager</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/systems-manager-multicloud-automation/">AWS Systems Manager Automation now automates operational tasks in Azure and Google Cloud</a>(2026-11-23)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-24-01.html"><span class="label">← 前へ 2026年11月24日</span>CodeDeploy:デプロイ中に Auto Scaling の処理を一時停止できるように</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-24-03.html"><span class="label">次へ → 2026年11月24日</span>Global Accelerator:TLS リスナーの NLB でもクライアント IP を保持</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

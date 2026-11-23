@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CodeDeploy:デプロイ中に Auto Scaling の処理を一時停止できるように | 2026年11月24日のAWSニュース | AWS教科書</title>
+<meta name="description" content="CodeDeploy が EC2 のインプレースデプロイ中、Auto Scaling グループの Terminate などの処理を自動で止めて再開してくれるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-24">2026年11月24日</time>のAWSニュース</p>
+  <h1>CodeDeploy:デプロイ中に Auto Scaling の処理を一時停止できるように</h1>
+  <p class="lead">CodeDeploy が EC2 のインプレースデプロイ中、Auto Scaling グループの Terminate などの処理を自動で止めて再開してくれるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-24">2026-11-24</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>CodeDeploy で EC2 インスタンスへ「インプレースデプロイ」(今動いているインスタンスの上でアプリを入れ替える方式)を行うとき、Auto Scaling グループ(以下 ASG)の処理を一時停止できるようになりました。デプロイ中に ASG がインスタンスを終了したり入れ替えたりすると、更新中のインスタンスが消えてデプロイが失敗することがあります。これまでは、止めて戻すためのスクリプトを自分で書く必要がありました。</p>
+<p>止められる処理は Terminate(インスタンスの終了)、AZRebalance(AZ間の台数の均等化)、InstanceRefresh(インスタンスの入れ替え)、ScheduledActions(スケジュールによる台数変更)です。好きな組み合わせを、デプロイグループ全体、または1回のデプロイに対して選べます。CodeDeploy はデプロイの前に停止し、成功・失敗・停止のいずれでも終わったときに再開します。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 718 116" style="max-width:718px;min-width:574px" role="img" aria-label="図1 ASG の処理を CodeDeploy が自動で止めて戻す"><defs><marker id="dgnews-2026-11-24-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">スクリプトで</text>
+</g>
+<g data-node="dep">
+<rect x="289" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="364" y="62" text-anchor="middle" class="dg-tb">CodeDeploy</text>
+<text x="364" y="80" text-anchor="middle" class="dg-s">デプロイ前に</text>
+</g>
+<g data-node="asg">
+<rect x="544" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="619" y="62" text-anchor="middle" class="dg-t">ASG</text>
+<text x="619" y="80" text-anchor="middle" class="dg-s">デプロイ後に</text>
+</g>
+<path d="M184.0,66.5 L289.0,66.5" class="dg-line dg-dash" marker-end="url(#dgnews-2026-11-24-01-1)"/>
+<text x="236" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M439.0,66.5 L544.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-24-01-1)"/>
+</svg>
+</div>
+<figcaption>図1 ASG の処理を CodeDeploy が自動で止めて戻す</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span><span class="fig-item"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true" focusable="false" style="vertical-align:-1px"><line x1="1" y1="5" x2="21" y2="5" class="dg-line dg-dash"/></svg> 点線の矢印(使われない・切り替え前・補足)</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>停止と再開のスクリプトが要らなくなり、デプロイが途中で失敗しても処理の再開し忘れが起きません。デプロイグループの設定にすれば、既存のパイプラインが始めるデプロイにも効きます。</dd>
+<dt>試験・実務への影響</dt><dd>ASG とデプロイを組み合わせる運用では、スケールインや AZ の再均等化が更新中のインスタンスに影響することを意識しておきましょう。設定はコンソール・CLI・SDK から行えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/codedeploy.html">CodeDeploy</a>、<a href="../services/auto-scaling.html">Auto Scaling</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-codedeploy-suspend-asg-processes/">AWS CodeDeploy now supports suspending Amazon EC2 Auto Scaling processes</a>(2026-11-23)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-24-02.html"><span class="label">次へ → 2026年11月24日</span>Systems Manager:Automation で Azure・Google Cloud の運用作業も自動化</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>

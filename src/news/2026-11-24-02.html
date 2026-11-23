@@ -1,0 +1,25 @@
+<!-- title: Systems Manager:Automation で Azure・Google Cloud の運用作業も自動化 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Systems Manager Automation のランブックが、AWS だけでなく Azure と Google Cloud のリソースも対象にできるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Systems Manager Automation(手順書=ランブックを作り、運用作業を自動で実行する機能)が、Microsoft Azure と Google Cloud のリソースを操作できるようになりました。誤った設定の修正や使われていないリソースの片付けなどを、クラウドごとに別のツールや認証情報を用意せず、1か所から実行できます。</p>
+<p>Azure や Google Cloud の API を呼ぶ、リソースの状態を確認する、操作の完了を待つ、という6つの新しいアクションが加わりました。対象は、Azure ならサブスクリプション・リージョン・リソースグループ・種類・タグ、Google Cloud ならプロジェクト・ゾーン・アセットの種類・ラベルで絞れます。コードを書く場合の aws:executeScript には両クラウドの Python SDK が入り、一時的な認証情報は Systems Manager の Cloud Connector から渡されるので、ランブックに秘密情報を保存しません。段階的な実行、承認での一時停止、エラーが多いときの中断も従来どおり使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node rb 0 0 accent "Automation" "ランブック" "(1か所で作成)"
+node cc 1.5 0 blue "Cloud Connector" "一時的な認証情報"
+node az 3 0 ok "Azure の" "リソース"
+node gc 3 1 ok "Google Cloud の" "リソース"
+edge rb cc
+edge cc az "操作"
+edge cc gc "操作"
+<figcaption>図1 1つのランブックから複数のクラウドを操作する</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>複数のクラウドを使う環境でも、承認・段階実行・エラー時の中断といった安全な仕組みをそのまま使えます。AWS が用意したランブックで、Azure や Google Cloud の仮想マシンへ SSM Agent や Amazon Inspector のエージェントも入れられます。</dd>
+<dt>試験・実務への影響</dt><dd>Automation のランブックは運用の自動化と自動修復の中心です。対象が AWS の外にも広がったと押さえておきましょう。利用できるのは Cloud Connector を作れるリージョンです。</dd>
+<dt>関連するページ</dt><dd><a href="../services/systems-manager.html">Systems Manager</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/systems-manager-multicloud-automation/">AWS Systems Manager Automation now automates operational tasks in Azure and Google Cloud</a>(2026-11-23)</dd>
+</dl>
+</section>

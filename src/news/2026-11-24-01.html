@@ -1,0 +1,23 @@
+<!-- title: CodeDeploy:デプロイ中に Auto Scaling の処理を一時停止できるように -->
+<!-- category: 2026年11月 -->
+<!-- lead: CodeDeploy が EC2 のインプレースデプロイ中、Auto Scaling グループの Terminate などの処理を自動で止めて再開してくれるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>CodeDeploy で EC2 インスタンスへ「インプレースデプロイ」(今動いているインスタンスの上でアプリを入れ替える方式)を行うとき、Auto Scaling グループ(以下 ASG)の処理を一時停止できるようになりました。デプロイ中に ASG がインスタンスを終了したり入れ替えたりすると、更新中のインスタンスが消えてデプロイが失敗することがあります。これまでは、止めて戻すためのスクリプトを自分で書く必要がありました。</p>
+<p>止められる処理は Terminate(インスタンスの終了)、AZRebalance(AZ間の台数の均等化)、InstanceRefresh(インスタンスの入れ替え)、ScheduledActions(スケジュールによる台数変更)です。好きな組み合わせを、デプロイグループ全体、または1回のデプロイに対して選べます。CodeDeploy はデプロイの前に停止し、成功・失敗・停止のいずれでも終わったときに再開します。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "スクリプトで" "停止と再開"
+node dep 1.5 0 accent "CodeDeploy" "デプロイ前に" "処理を停止"
+node asg 3 0 ok "ASG" "デプロイ後に" "自動で再開"
+edge before dep "今回の発表" dash
+edge dep asg
+<figcaption>図1 ASG の処理を CodeDeploy が自動で止めて戻す</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>停止と再開のスクリプトが要らなくなり、デプロイが途中で失敗しても処理の再開し忘れが起きません。デプロイグループの設定にすれば、既存のパイプラインが始めるデプロイにも効きます。</dd>
+<dt>試験・実務への影響</dt><dd>ASG とデプロイを組み合わせる運用では、スケールインや AZ の再均等化が更新中のインスタンスに影響することを意識しておきましょう。設定はコンソール・CLI・SDK から行えます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/codedeploy.html">CodeDeploy</a>、<a href="../services/auto-scaling.html">Auto Scaling</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-codedeploy-suspend-asg-processes/">AWS CodeDeploy now supports suspending Amazon EC2 Auto Scaling processes</a>(2026-11-23)</dd>
+</dl>
+</section>
