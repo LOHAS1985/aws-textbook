@@ -1,0 +1,25 @@
+<!-- title: WAF と API Gateway:API を自動で見つけて守る API Portal と API Security -->
+<!-- category: 2026年11月 -->
+<!-- lead: API Gateway の API Portal が組織内の API を自動で洗い出し、AWS WAF の API Security ルールグループで、見つかった API を守れるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>API Gateway に「API Portal」が加わりました。Amazon API Gateway、Application Load Balancer、CloudFront の背後にある API を、AWS 側のトラフィックログと構成の記録から、AWS 組織全体で自動的に見つけます。エージェントの導入やログの転送は要りません。見つけた API は、管理対象にするまでは「シャドー API」(把握されていない API)として扱われ、公開か非公開かの分類、使われなくなったゾンビ API の検出、認証・スロットリング・WAF の有無といったセキュリティ状況の評価も行われます。</p>
+<p>WAF で守っていない API には、新しい「API Security」マネージドルールグループを使えます。他人のデータの ID に書き換えて読み取る BOLA、偽造トークンや盗んだパスワードを使う認証の突破、隠れたルートを探る偵察といった代表的な攻撃を、カスタムルールを書かずに防ぎます。検知したイベントは API Portal の結果にまとまります。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node src 0 0 blue "ALB・API Gateway" "CloudFront" "のトラフィック"
+node portal 1.6 0 accent "API Portal" "API を自動で" "発見・評価"
+node gap 3.2 -0.6 ng "保護のない API" "シャドー・ゾンビ"
+node waf 3.2 0.6 ok "WAF" "API Security" "ルールグループ"
+edge src portal
+edge portal gap "見つける"
+edge gap waf "保護を有効化"
+<figcaption>図1 発見から保護までを自動でつなぐ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>誰も把握していない API や放置された API を洗い出し、WAF の保護漏れまで一画面で確認できます。ルールを自作せずに、API への主要な攻撃を防げます。</dd>
+<dt>試験・実務への影響</dt><dd>公開している API の棚卸しと WAF の適用は、セキュリティ運用の基本です。API Portal は32のリージョンで提供され、既存の API Gateway のポータルは「Documentation Portals」の項目から引き続き管理できます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/api-gateway.html">API Gateway</a>、<a href="../services/waf.html">WAF</a>、<a href="../services/elb.html">Elastic Load Balancing</a>、<a href="../services/cloudfront.html">CloudFront</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/api-security-with-waf/">AWS WAF announces automated discovery and protection for API endpoints</a>(2026-11-23)、<a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-api-gateway-announces-api-portal/">Amazon API Gateway announces API Portal</a>(2026-11-23)</dd>
+</dl>
+</section>

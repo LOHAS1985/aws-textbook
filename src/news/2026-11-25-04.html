@@ -1,0 +1,25 @@
+<!-- title: Inspector:ECR と EC2 の脆弱性に「実行時の到達可能性」を表示 -->
+<!-- category: 2026年11月 -->
+<!-- lead: Inspector が、見つけた脆弱性のうち実際に使われている可能性があるものを自動で判定し、対応の優先順位を付けやすくなりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Amazon Inspector の ECR(コンテナイメージ)と EC2 の検出結果に、「ランタイムの到達可能性(runtime reachability)」の分析が加わりました。これまでの Inspector は、使われていないパッケージも含めて見つかった脆弱性をすべて報告していたため、本当に危険なものを人手で見分ける必要がありました。</p>
+<p>新しい分析では、コンテナイメージの場合は、脆弱なパッケージがアプリの Dockerfile で指定する WORKDIR・ENTRYPOINT・CMD のパスの中にあるかを調べます。EC2 の場合は、直近のスキャンで、そのパッケージがプロセスとして動いているのが観測されたかを調べます。EC2 では、エージェント型スキャンを行う Inspector VM Scanner の利用が必要です。新しく作られる検出結果から対象になり、既存の結果は順次反映されます。追加料金はかかりません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node all 0 0 box "脆弱性すべて" "未使用の" "パッケージも含む"
+node check 1.6 0 accent "Inspector" "到達可能性の" "分析"
+node hi 3.2 -0.6 ok "到達の可能性あり" "優先して対応"
+node lo 3.2 0.6 box "到達しにくい" "後回しにできる"
+edge all check
+edge check hi "使われている"
+edge check lo "使われていない" dash
+<figcaption>図1 到達可能性で対応の優先順位を付ける</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>大量の検出結果の中から、実際に悪用されうるものに絞って対応できます。コンテナが多い環境ほど、確認の手間とノイズが減ります。</dd>
+<dt>試験・実務への影響</dt><dd>Inspector は EC2・ECR・Lambda を継続的にスキャンして脆弱性を見つけるサービスです。今回は、検出の「量」ではなく「優先順位」を付ける機能が増えたと捉えましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/inspector.html">Inspector</a>、<a href="../services/ecr.html">ECR</a>、<a href="../services/ec2.html">EC2</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/inspector-runtime-reachability/">Amazon Inspector expands runtime reachability analysis for ECR and EC2 findings</a>(2026-11-23)</dd>
+</dl>
+</section>

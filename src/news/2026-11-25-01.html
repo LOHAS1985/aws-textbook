@@ -1,0 +1,23 @@
+<!-- title: AWS Sign-In:サインインの有効期間を最大90日まで設定可能に -->
+<!-- category: 2026年11月 -->
+<!-- lead: AWS CLI などの OAuth 対応ツールで、IAM ユーザーやロールごとにサインインの有効期間を最大90日まで延ばせるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Sign-In に、「サインインの有効期間(Sign-in duration)」の設定が加わりました。これは、OAuth(アプリに自分の代わりの操作を許可する仕組み)で開始したサインインのセッションが、どれだけ有効なままでいられるかを決める値で、IAM ユーザーや IAM ロールごとに最大90日まで設定できます。対象は AWS CLI の <code>aws login</code>、AWS MCP Server など OAuth に対応したツールです。マネジメントコンソールのセッションには影響しません。</p>
+<p>長時間動き続ける開発作業や AI エージェントは、サインインや同意の確認が何度も挟まると止まってしまいます。そこで固定のアクセスキーを使いがちですが、アクセスキーは漏れると長く悪用されます。今回の設定なら、短命で更新される認証情報のまま中断を減らせます。管理者が明示的に設定しない限り、既存の有効期間は変わりません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 ng "これまで" "短い期間で" "再サインイン"
+node key 1.5 -0.6 box "固定の" "アクセスキー" "(漏れると危険)"
+node now 3 0 ok "これから" "最大90日" "更新され続ける"
+edge before key "避けたい回避策" dash
+edge before now "有効期間を設定"
+<figcaption>図1 アクセスキーに頼らず、サインインの有効期間を延ばす</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>長時間の作業やエージェントが、再サインインで止まりにくくなります。静的なアクセスキーを発行せずに済み、設定は IAM コンソール・AWS CLI・IAM API から行えます。</dd>
+<dt>試験・実務への影響</dt><dd>認証情報は長期のアクセスキーより、期限付きの一時的なものを使うのが基本です。有効期間はユーザーやロールごとに管理者が決める点と、コンソールのセッションとは別の設定である点を押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/iam.html">IAM</a>、<a href="../services/sts.html">STS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/configurable-aws-sign-in-duration/">AWS Sign-In introduces configurable Sign-in duration of up to 90 days</a>(2026-11-23)</dd>
+</dl>
+</section>

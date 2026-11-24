@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WAF と API Gateway:API を自動で見つけて守る API Portal と API Security | 2026年11月25日のAWSニュース | AWS教科書</title>
+<meta name="description" content="API Gateway の API Portal が組織内の API を自動で洗い出し、AWS WAF の API Security ルールグループで、見つかった API を守れるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-25">2026年11月25日</time>のAWSニュース</p>
+  <h1>WAF と API Gateway:API を自動で見つけて守る API Portal と API Security</h1>
+  <p class="lead">API Gateway の API Portal が組織内の API を自動で洗い出し、AWS WAF の API Security ルールグループで、見つかった API を守れるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-25">2026-11-25</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>API Gateway に「API Portal」が加わりました。Amazon API Gateway、Application Load Balancer、CloudFront の背後にある API を、AWS 側のトラフィックログと構成の記録から、AWS 組織全体で自動的に見つけます。エージェントの導入やログの転送は要りません。見つけた API は、管理対象にするまでは「シャドー API」(把握されていない API)として扱われ、公開か非公開かの分類、使われなくなったゾンビ API の検出、認証・スロットリング・WAF の有無といったセキュリティ状況の評価も行われます。</p>
+<p>WAF で守っていない API には、新しい「API Security」マネージドルールグループを使えます。他人のデータの ID に書き換えて読み取る BOLA、偽造トークンや盗んだパスワードを使う認証の突破、隠れたルートを探る偵察といった代表的な攻撃を、カスタムルールを書かずに防ぎます。検知したイベントは API Portal の結果にまとまります。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 168" style="max-width:752px;min-width:602px" role="img" aria-label="図1 発見から保護までを自動でつなぐ"><defs><marker id="dgnews-2026-11-25-03-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="src">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">ALB・API Gateway</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">CloudFront</text>
+</g>
+<g data-node="portal">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="62" text-anchor="middle" class="dg-tb">API Portal</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">API を自動で</text>
+</g>
+<g data-node="gap">
+<rect x="578" y="-10" width="150" height="52" rx="8" class="dg-ng"/>
+<text x="653" y="11" text-anchor="middle" class="dg-t">保護のない API</text>
+<text x="653" y="29" text-anchor="middle" class="dg-s">シャドー・ゾンビ</text>
+</g>
+<g data-node="waf">
+<rect x="578" y="92" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="113" text-anchor="middle" class="dg-t">WAF</text>
+<text x="653" y="131" text-anchor="middle" class="dg-s">API Security</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-25-03-1)"/>
+<path d="M456.0,52.4 L578.0,29.6" class="dg-line" marker-end="url(#dgnews-2026-11-25-03-1)"/>
+<text x="517" y="45" text-anchor="middle" class="dg-s dg-halo">見つける</text>
+<path d="M653.0,41.5 L653.0,91.5" class="dg-line" marker-end="url(#dgnews-2026-11-25-03-1)"/>
+<text x="653" y="70" text-anchor="middle" class="dg-s dg-halo">保護を有効化</text>
+</svg>
+</div>
+<figcaption>図1 発見から保護までを自動でつなぐ</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ng"/></svg> 失敗・非推奨・障害</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>誰も把握していない API や放置された API を洗い出し、WAF の保護漏れまで一画面で確認できます。ルールを自作せずに、API への主要な攻撃を防げます。</dd>
+<dt>試験・実務への影響</dt><dd>公開している API の棚卸しと WAF の適用は、セキュリティ運用の基本です。API Portal は32のリージョンで提供され、既存の API Gateway のポータルは「Documentation Portals」の項目から引き続き管理できます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/api-gateway.html">API Gateway</a>、<a href="../services/waf.html">WAF</a>、<a href="../services/elb.html">Elastic Load Balancing</a>、<a href="../services/cloudfront.html">CloudFront</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/api-security-with-waf/">AWS WAF announces automated discovery and protection for API endpoints</a>(2026-11-23)、<a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-api-gateway-announces-api-portal/">Amazon API Gateway announces API Portal</a>(2026-11-23)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <a class="prev" href="2026-11-25-02.html"><span class="label">← 前へ 2026年11月25日</span>WAF:料金が「守るもの・検査する通信量・保護の水準」で決まる体系に</a>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-25-04.html"><span class="label">次へ → 2026年11月25日</span>Inspector:ECR と EC2 の脆弱性に「実行時の到達可能性」を表示</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
