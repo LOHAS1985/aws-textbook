@@ -1,0 +1,23 @@
+<!-- title: RDS for SQL Server:1つの DB インスタンスで最大500個のデータベースに -->
+<!-- category: 2026年11月 -->
+<!-- lead: RDS for SQL Server の1インスタンスあたりのデータベース数の上限が、100個から500個に引き上げられました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>RDS for SQL Server で、1つの DB インスタンスに置けるデータベースの数が、これまでの100個から500個になりました。顧客ごとにデータベースを分ける SaaS やマルチテナントのアプリでは、データベースを複数の DB インスタンスに分けていましたが、少ないインスタンスにまとめられます。管理・監視・パッチ適用の対象が減り、ライセンスとインフラのコストも下がります。</p>
+<p>対象は vCPU が4つ以上(xlarge 以上。バースト可能なクラスを除く)の DB インスタンスで、SQL Server の全バージョンが使えます。シングル AZ の各エディションと、Always On 可用性グループを使うマルチ AZ の Enterprise などで使えます。データベースミラーリングを使うマルチ AZ、Standard エディションのマルチ AZ、小さいインスタンスは、従来の上限のままです。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "最大100個" "インスタンスを複数に分割"
+node now 1.8 0 ok "これから" "最大500個" "少ないインスタンスに集約"
+node cond 3.6 0 accent "条件" "xlarge 以上" "(バースト可能を除く)"
+edge before now "上限を引き上げ"
+edge cond now dash
+<figcaption>図1 データベース数の上限と、使える条件</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>インスタンス数を減らして運用とコストを抑えられます。すべての RDS for SQL Server のリージョンで使えます。</dd>
+<dt>試験・実務への影響</dt><dd>数を集約すると、1つのインスタンスの障害の影響が広がります。可用性の設計(マルチ AZ の方式)と、リソースの競合の監視も合わせて考えましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/rds.html">RDS</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/rds-sqlserver-supports-500-databases-per-instance">Amazon RDS for SQL Server now supports up to 500 databases per instance</a>(2026-11-24)</dd>
+</dl>
+</section>

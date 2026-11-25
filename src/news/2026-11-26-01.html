@@ -1,0 +1,26 @@
+<!-- title: IAM:信頼できるアイデンティティの伝播(TIP)が IAM フェデレーションと Roles Anywhere にも拡大 -->
+<!-- category: 2026年11月 -->
+<!-- lead: 利用者やワークロードの身元を、リクエストと一緒に AWS サービスへ引き継ぐ TIP が、IAM フェデレーションや IAM Roles Anywhere でも使えるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>信頼できるアイデンティティの伝播(Trusted identity propagation、TIP)は、「誰の操作か」という身元を、リクエストと一緒に AWS サービスへ引き継ぐ仕組みです。引き継いだ身元は、IAM ポリシーの条件でのアクセス制御や、AWS CloudTrail で操作の元の人・ワークロードを見分けるのに使えます。</p>
+<p>今回、TIP は IAM フェデレーション(SAML や OIDC で外部の ID を使ってサインインする方法)と IAM Roles Anywhere(AWS の外のワークロードが X.509 証明書で IAM ロールを使う仕組み)にも拡大しました。フェデレーションでは、SAML アサーションや OIDC トークンにある身元と、リスクスコアや CI/CD のワークフロー名といった任意の情報を、ロールセッションに対応付けられます。IAM Identity Center では、IAM Identity Center が作るユーザー ID に加えて、ID ソース側のユーザー名も一緒に引き継ぎ、アプリへのアクセスでも AWS アカウントへのアクセスでも同じ形で扱えるようになりました。</p>
+<p>身元は、IAM ロールや AWS サービスの間を移っても保たれ、ロールごとに信頼ポリシーを直す必要はありません。あわせて、IAM の外部向けフェデレーションでは、TIP のセッションの身元を含む、AWS が署名した JWT(JSON Web Token)を発行でき、外部のサービスも元の利用者を判別できます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node user 0 0 blue "利用者・" "ワークロード" "(SAML/OIDC/証明書)"
+node role 1.6 0 accent "IAM ロール" "セッションに" "身元を対応付け"
+node svc 3.2 -0.6 box "AWS サービス" "条件で制御"
+node log 3.2 0.6 ok "CloudTrail" "元の身元を記録"
+edge user role "フェデレーション"
+edge role svc "身元を引き継ぐ"
+edge role log
+<figcaption>図1 TIP で、ロールを経由しても元の身元が引き継がれる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>共有のロールを使っても、操作した人やワークロードを CloudTrail で特定でき、ポリシーの条件で人ごとに制御できます。ロールごとの信頼ポリシーの更新も不要です。すべての商用リージョンなどで使えます。</dd>
+<dt>試験・実務への影響</dt><dd>ロールを引き受けると「誰が操作したか」が分かりにくくなる点が課題でした。身元をセッションに引き継ぐ考え方と、監査には CloudTrail を使うことを押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/iam.html">IAM</a>、<a href="../services/identity-center.html">IAM Identity Center</a>、<a href="../services/sts.html">STS</a>、<a href="../services/cloudtrail.html">CloudTrail</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-iam/">AWS IAM extends trusted identity propagation to IAM federation and IAM Roles Anywhere, and simplifies it in IAM Identity Center</a>(2026-11-25)</dd>
+</dl>
+</section>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IAM:信頼できるアイデンティティの伝播(TIP)が IAM フェデレーションと Roles Anywhere にも拡大 | 2026年11月26日のAWSニュース | AWS教科書</title>
+<meta name="description" content="利用者やワークロードの身元を、リクエストと一緒に AWS サービスへ引き継ぐ TIP が、IAM フェデレーションや IAM Roles Anywhere でも使えるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-26">2026年11月26日</time>のAWSニュース</p>
+  <h1>IAM:信頼できるアイデンティティの伝播(TIP)が IAM フェデレーションと Roles Anywhere にも拡大</h1>
+  <p class="lead">利用者やワークロードの身元を、リクエストと一緒に AWS サービスへ引き継ぐ TIP が、IAM フェデレーションや IAM Roles Anywhere でも使えるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-26">2026-11-26</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>信頼できるアイデンティティの伝播(Trusted identity propagation、TIP)は、「誰の操作か」という身元を、リクエストと一緒に AWS サービスへ引き継ぐ仕組みです。引き継いだ身元は、IAM ポリシーの条件でのアクセス制御や、AWS CloudTrail で操作の元の人・ワークロードを見分けるのに使えます。</p>
+<p>今回、TIP は IAM フェデレーション(SAML や OIDC で外部の ID を使ってサインインする方法)と IAM Roles Anywhere(AWS の外のワークロードが X.509 証明書で IAM ロールを使う仕組み)にも拡大しました。フェデレーションでは、SAML アサーションや OIDC トークンにある身元と、リスクスコアや CI/CD のワークフロー名といった任意の情報を、ロールセッションに対応付けられます。IAM Identity Center では、IAM Identity Center が作るユーザー ID に加えて、ID ソース側のユーザー名も一緒に引き継ぎ、アプリへのアクセスでも AWS アカウントへのアクセスでも同じ形で扱えるようになりました。</p>
+<p>身元は、IAM ロールや AWS サービスの間を移っても保たれ、ロールごとに信頼ポリシーを直す必要はありません。あわせて、IAM の外部向けフェデレーションでは、TIP のセッションの身元を含む、AWS が署名した JWT(JSON Web Token)を発行でき、外部のサービスも元の利用者を判別できます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 752 168" style="max-width:752px;min-width:602px" role="img" aria-label="図1 TIP で、ロールを経由しても元の身元が引き継がれる"><defs><marker id="dgnews-2026-11-26-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="user">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">利用者・</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">ワークロード</text>
+</g>
+<g data-node="role">
+<rect x="306" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="381" y="62" text-anchor="middle" class="dg-tb">IAM ロール</text>
+<text x="381" y="80" text-anchor="middle" class="dg-s">セッションに</text>
+</g>
+<g data-node="svc">
+<rect x="578" y="-10" width="150" height="52" rx="8" class="dg-box"/>
+<text x="653" y="11" text-anchor="middle" class="dg-t">AWS サービス</text>
+<text x="653" y="29" text-anchor="middle" class="dg-s">条件で制御</text>
+</g>
+<g data-node="log">
+<rect x="578" y="92" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="653" y="113" text-anchor="middle" class="dg-t">CloudTrail</text>
+<text x="653" y="131" text-anchor="middle" class="dg-s">元の身元を記録</text>
+</g>
+<path d="M184.0,66.5 L306.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-26-01-1)"/>
+<text x="245" y="70" text-anchor="middle" class="dg-s dg-halo">フェデレーション</text>
+<path d="M456.0,52.4 L578.0,29.6" class="dg-line" marker-end="url(#dgnews-2026-11-26-01-1)"/>
+<text x="517" y="45" text-anchor="middle" class="dg-s dg-halo">身元を引き継ぐ</text>
+<path d="M456.0,80.6 L578.0,103.4" class="dg-line" marker-end="url(#dgnews-2026-11-26-01-1)"/>
+</svg>
+</div>
+<figcaption>図1 TIP で、ロールを経由しても元の身元が引き継がれる</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>共有のロールを使っても、操作した人やワークロードを CloudTrail で特定でき、ポリシーの条件で人ごとに制御できます。ロールごとの信頼ポリシーの更新も不要です。すべての商用リージョンなどで使えます。</dd>
+<dt>試験・実務への影響</dt><dd>ロールを引き受けると「誰が操作したか」が分かりにくくなる点が課題でした。身元をセッションに引き継ぐ考え方と、監査には CloudTrail を使うことを押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/iam.html">IAM</a>、<a href="../services/identity-center.html">IAM Identity Center</a>、<a href="../services/sts.html">STS</a>、<a href="../services/cloudtrail.html">CloudTrail</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-iam/">AWS IAM extends trusted identity propagation to IAM federation and IAM Roles Anywhere, and simplifies it in IAM Identity Center</a>(2026-11-25)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-26-02.html"><span class="label">次へ → 2026年11月26日</span>CloudFormation:リソースタイプを206種類追加し、対応範囲をほぼ網羅</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
