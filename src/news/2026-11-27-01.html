@@ -1,0 +1,26 @@
+<!-- title: ELB:Envoy プロキシを AWS が運用する「ELB for Envoy」が一般提供に -->
+<!-- category: 2026年11月 -->
+<!-- lead: オープンソースのプロキシ Envoy を、パッチ適用や容量管理まで AWS に任せて使える新しいロードバランサーの種類が、一般提供になりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>Envoy は、通信の振り分けや認証、ルーティングの細かな制御ができるオープンソースのプロキシ(クライアントとサーバーの間で通信を中継するソフトウェア)です。自分で Envoy を動かすと、バージョンアップ、脆弱性への対応、アベイラビリティーゾーン(AZ)をまたいだ容量の確保をすべて自分で行う必要がありました。</p>
+<p>今回一般提供になった ELB for Envoy は、Elastic Load Balancing に加わった新しい種類のロードバランサーです。Envoy のプロキシを、ロードバランサーごとに専用の EC2 インスタンス(Nitro System によるハードウェア分離つき)で動かします。脆弱性(CVE)の監視と、Envoy や OS のパッチ適用は AWS が自動で行います。</p>
+<p>手元の Envoy の設定や拡張機能、コントロールプレーンをそのまま持ち込めて、ACM(証明書)や AWS WAF とも少ない設定でつなげられます。WebAssembly や Lua スクリプトで独自の処理を足すこともできます。VPC の中で動き、セキュリティグループにも対応します。Kubernetes の Envoy Gateway を使っている場合は、Gateway API のリソースを書き直さずに移行できます。東京を含む14リージョンで使えます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "Envoy を自分で運用" "更新・パッチ・容量"
+node after 1.8 0 ok "ELB for Envoy" "運用は AWS" "設定はそのまま"
+node ext 3.6 -0.6 accent "拡張・ルーティング" "Wasm・Lua など"
+node integ 3.6 0.6 blue "ACM・WAF" "少ない設定で連携"
+edge before after "移行"
+edge after ext
+edge after integ
+<figcaption>図1 Envoy の運用を AWS に任せ、Envoy の柔軟さは保つ</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>Envoy ならではの細かな制御を使いながら、パッチ適用や容量確保といった運用の負担を減らせます。</dd>
+<dt>試験・実務への影響</dt><dd>通常の用途では ALB・NLB を選び、Envoy の拡張性が必要な場合に ELB for Envoy、という使い分けを押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/elb.html">Elastic Load Balancing</a>、<a href="../services/acm.html">ACM</a>、<a href="../services/waf.html">WAF</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/elastic-load-balancing-for-envoy-generally-available">Elastic Load Balancing for Envoy is now generally available</a>(2026-11-25)</dd>
+</dl>
+</section>

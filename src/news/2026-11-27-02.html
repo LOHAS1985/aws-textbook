@@ -1,0 +1,25 @@
+<!-- title: CloudWatch Omni:アラートから PagerDuty のインシデントを自動作成 -->
+<!-- category: 2026年11月 -->
+<!-- lead: CloudWatch Omni のアラートが発生すると、PagerDuty にインシデントが自動で作られ、既存の当番表やエスカレーションに沿って通知されるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>CloudWatch Omni は、AI エージェント・アプリケーション・インフラの監視をまとめて扱う、フルマネージドの可観測性(システムの状態を調べやすくする仕組み)の機能です。PagerDuty は、障害の通知を当番の担当者へ届け、対応を調整するインシデント管理サービスです。</p>
+<p>今回、Omni のアラートが発生すると PagerDuty のインシデントが自動で作られるようになりました。通知は PagerDuty に設定済みの当番スケジュールやエスカレーションのルールに従って届きます。アラートには重大度・影響を受けるサービス・Omni の関連データへのリンクが付くので、担当者はすぐに調べ始められます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node alert 0 0 accent "Omni アラート" "しきい値を超える"
+node pd 1.8 0 box "PagerDuty" "インシデントを自動作成"
+node oncall 3.6 0 blue "当番の担当者" "スケジュール・" "エスカレーション"
+node link 1.8 1.1 ok "Omni へのリンク" "重大度・対象サービス"
+edge alert pd "連携"
+edge pd oncall "通知"
+edge alert link dash
+<figcaption>図1 アラートから担当者への通知までが自動でつながる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>手作業の通知が不要になり、対応開始までの時間(MTTR の短縮)や、インシデント対応の手順のばらつきを抑えられます。</dd>
+<dt>試験・実務への影響</dt><dd>外部の運用ツールへの通知は、従来は SNS や EventBridge で組むのが定番です。監視から通知・対応までの流れを一貫して設計する考え方を押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../services/cloudwatch.html">CloudWatch</a>、<a href="../services/eventbridge.html">EventBridge</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-cloudwatch-omni-pagerduty/">Amazon CloudWatch Omni now integrates with PagerDuty</a>(2026-11-25)</dd>
+</dl>
+</section>

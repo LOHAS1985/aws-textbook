@@ -1,0 +1,25 @@
+<!-- title: IoT Core:クォータと使用状況を Service Quotas コンソールで確認可能に -->
+<!-- category: 2026年11月 -->
+<!-- lead: IoT Core の主なクォータと現在の使用量が Service Quotas のコンソールに表示され、スロットリングの前にアラームや引き上げ申請ができるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>クォータ(サービスごとの上限値)に達すると、リクエストが制限される「スロットリング」が起きます。これまで IoT Core では、クォータと現在の使用量が Service Quotas のコンソールに出ておらず、使用状況を知るには AWS サポートへ問い合わせる必要がありました。</p>
+<p>今回、デバイスのメッセージ送受信(データプレーン)とリソース管理(コントロールプレーン)の API について、主なクォータと使用量が Service Quotas のコンソールで見られるようになりました。CloudWatch の使用状況メトリクスでアラームを作り、上限に近づいたら通知を受けることもできます。追加料金はかかりません。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "使用量が見えず" "サポートに問い合わせ"
+node sq 1.8 0 ok "Service Quotas" "クォータと使用量を" "コンソールで確認"
+node cw 3.6 -0.6 accent "アラーム" "上限に近づくと通知"
+node up 3.6 0.6 blue "引き上げ申請" "増加の前に実施"
+edge before sq "今回の発表"
+edge sq cw
+edge sq up
+<figcaption>図1 スロットリングの前に、使用量の確認・通知・引き上げ申請ができる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>デバイスが増える前に余裕を確認でき、上限に達して接続や送信が止まる事態を避けやすくなります。</dd>
+<dt>試験・実務への影響</dt><dd>クォータ監視は、使用状況メトリクスのアラームと引き上げ申請の組み合わせが基本です。ほかのサービスにも共通する考え方なので押さえましょう。</dd>
+<dt>関連するページ</dt><dd><a href="../terms/service-quotas.html">Service Quotas</a>、<a href="../services/cloudwatch.html">CloudWatch</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/about-aws/whats-new/2026/11/aws-iot-core-quota-usage-monitoring/">AWS IoT Core quotas and usage are now visible in AWS Service Quotas console</a>(2026-11-25)</dd>
+</dl>
+</section>
