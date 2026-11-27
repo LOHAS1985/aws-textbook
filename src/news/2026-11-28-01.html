@@ -1,0 +1,28 @@
+<!-- title: Network Firewall:IP アドレスではなくリソースで通信を判定するコンテキスト対応ルール -->
+<!-- category: 2026年11月 -->
+<!-- lead: Network Firewall のルールで、送信元・送信先を IP アドレスではなく VPC・サブネット・セキュリティグループなどの AWS リソースで指定できるようになりました。 -->
+<section class="chapter">
+<h2>1. 発表の内容</h2>
+<p>AWS Network Firewall は、VPC を出入りする通信を検査して許可・拒否するマネージドサービスです。これまでルールの送信元・送信先は IP アドレスで書くのが基本でした。ところが、Lambda 関数や Auto Scaling のインスタンスのように増減や入れ替わりが激しいワークロードでは、IP アドレスの一覧を更新する前に新しいリソースが通信を始めてしまい、ルールが追いつかないことがありました。</p>
+<p>今回加わったコンテキスト対応ルールでは、送信元・送信先を VPC、サブネット、セキュリティグループ、Transit Gateway アタッチメントといったリソースの単位で指定できます。例えば「本番用セキュリティグループが付いたリソースから外部への SSH(22番ポート)を拒否する」と書けば、あとからそのセキュリティグループを付けた新しいリソースにも自動で適用されます。</p>
+<p>仕組みは、制御用の流れと通信の流れの2つで成り立っています。まず「コンテキストストア」(通信しうる AWS リソースの一覧表。AWS Network Manager で作ります)が、どんなリソースがあるかをファイアウォールに伝えます。次に Transit Gateway が、通過する各パケットに送信元の情報(VPC・サブネット・アタッチメント・セキュリティグループの ID)の目印を付けます。ファイアウォールはこの目印を読み取り、ルールで使う「コンテキストセット」(リソースをまとめた名前付きの変数)と照合します。</p>
+<p>利用には、Transit Gateway にアタッチしたファイアウォールが必要です。Transit Gateway を AWS RAM で共有すれば、1つのポリシーで複数のアカウントのリソースを扱えます。送信元のコンテキストは全プロトコルで使え、送信先のコンテキストでの照合は TCP のルールで使えます。ファイアウォールのアラートログとフローログには、一致したリソースのコンテキストも記録されます。</p>
+<figure class="figure" data-diagram>
+grid 170 85
+node before 0 0 box "これまで" "IP アドレスで指定" "増減で更新"
+node after 1.8 0 ok "これから" "リソースで指定" "自動で適用"
+node store 3.6 -0.6 blue "コンテキストストア" "リソースの一覧"
+node tgw 3.6 0.6 blue "Transit Gateway" "パケットに目印を付与"
+node fw 5.4 0 accent "Network Firewall" "目印とルールを照合"
+edge before after "今回の発表"
+edge store fw
+edge tgw fw
+<figcaption>図1 IP アドレスの管理をやめ、リソース情報とパケットの目印でルールに一致させる</figcaption>
+</figure>
+<dl>
+<dt>何がうれしいか</dt><dd>スケールアウトや置き換えが頻繁なワークロードでも、IP アドレスの一覧を保守せずに、通信の許可・拒否を保てます。</dd>
+<dt>試験・実務への影響</dt><dd>セキュリティグループはインスタンス単位の許可リスト、Network Firewall は VPC 境界での集中的な検査、という役割の違いを押さえましょう。複数アカウントの通信を Transit Gateway に集めて検査する構成では、リソース単位のルールが使えると覚えておくと選択肢の判断に役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/network-firewall.html">Network Firewall</a>、<a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../services/ram.html">RAM</a>、<a href="../services/lambda.html">Lambda</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/jp/blogs/news/introducing-context-aware-rules-for-aws-network-firewall/">AWS Network Firewall のコンテキスト対応ルールのご紹介: IP アドレスではなく AWS リソースに基づくトラフィック照合</a>(2026-11-27)</dd>
+</dl>
+</section>
