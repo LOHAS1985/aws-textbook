@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network Firewall:IP アドレスではなくリソースで通信を判定するコンテキスト対応ルール | 2026年11月28日のAWSニュース | AWS教科書</title>
+<meta name="description" content="Network Firewall のルールで、送信元・送信先を IP アドレスではなく VPC・サブネット・セキュリティグループなどの AWS リソースで指定できるようになりました。">
+<script>
+// 表示設定(テーマ・文字サイズ)を、画面が描かれる前に反映する(設定画面は js/site.js)
+try {
+  var s = JSON.parse(localStorage.getItem("aws-textbook-prefs") || "{}");
+  if (s.theme) document.documentElement.setAttribute("data-theme", s.theme);
+  if (s.size) document.documentElement.setAttribute("data-size", s.size);
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" type="image/png" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2127" media="(prefers-color-scheme: dark)">
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("../sw.js").catch(function () {});
+}
+</script>
+<script src="../js/site.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="top">
+  <div class="inner">
+    <a class="site-title" href="../index.html">AWS教科書</a>
+    <nav class="site-nav"><a href="../services/index.html">サービス</a><a href="../terms/index.html">用語</a><a href="../usecases/index.html">運用シナリオ</a><a href="../news/index.html" class="current">ニュース</a><a href="../exams/index.html">AWS認定資格</a><a href="../links.html">公式リンク</a></nav>
+  </div>
+</header>
+<main>
+<div class="page-head hero">
+  <div class="hero-text">
+  <a class="category" href="index.html#cat1">2026年11月</a>
+  <p class="news-date"><time datetime="2026-11-28">2026年11月28日</time>のAWSニュース</p>
+  <h1>Network Firewall:IP アドレスではなくリソースで通信を判定するコンテキスト対応ルール</h1>
+  <p class="lead">Network Firewall のルールで、送信元・送信先を IP アドレスではなく VPC・サブネット・セキュリティグループなどの AWS リソースで指定できるようになりました。</p>
+  <p class="updated">最終更新:<time datetime="2026-11-28">2026-11-28</time></p>
+  </div>
+</div>
+<section class="chapter">
+<h2 id="c1">1. 発表の内容<a class="anchor" href="#c1" aria-label="この見出しへのリンク">#</a></h2>
+<p>AWS Network Firewall は、VPC を出入りする通信を検査して許可・拒否するマネージドサービスです。これまでルールの送信元・送信先は IP アドレスで書くのが基本でした。ところが、Lambda 関数や Auto Scaling のインスタンスのように増減や入れ替わりが激しいワークロードでは、IP アドレスの一覧を更新する前に新しいリソースが通信を始めてしまい、ルールが追いつかないことがありました。</p>
+<p>今回加わったコンテキスト対応ルールでは、送信元・送信先を VPC、サブネット、セキュリティグループ、Transit Gateway アタッチメントといったリソースの単位で指定できます。例えば「本番用セキュリティグループが付いたリソースから外部への SSH(22番ポート)を拒否する」と書けば、あとからそのセキュリティグループを付けた新しいリソースにも自動で適用されます。</p>
+<p>仕組みは、制御用の流れと通信の流れの2つで成り立っています。まず「コンテキストストア」(通信しうる AWS リソースの一覧表。AWS Network Manager で作ります)が、どんなリソースがあるかをファイアウォールに伝えます。次に Transit Gateway が、通過する各パケットに送信元の情報(VPC・サブネット・アタッチメント・セキュリティグループの ID)の目印を付けます。ファイアウォールはこの目印を読み取り、ルールで使う「コンテキストセット」(リソースをまとめた名前付きの変数)と照合します。</p>
+<p>利用には、Transit Gateway にアタッチしたファイアウォールが必要です。Transit Gateway を AWS RAM で共有すれば、1つのポリシーで複数のアカウントのリソースを扱えます。送信元のコンテキストは全プロトコルで使え、送信先のコンテキストでの照合は TCP のルールで使えます。ファイアウォールのアラートログとフローログには、一致したリソースのコンテキストも記録されます。</p>
+<figure class="figure">
+<div class="fig-scroll">
+<svg viewBox="0 0 1126 168" style="max-width:1126px;min-width:901px" role="img" aria-label="図1 IP アドレスの管理をやめ、リソース情報とパケットの目印でルールに一致させる"><defs><marker id="dgnews-2026-11-28-01-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+<g data-node="before">
+<rect x="34" y="40" width="150" height="52" rx="8" class="dg-box"/>
+<text x="109" y="62" text-anchor="middle" class="dg-t">これまで</text>
+<text x="109" y="80" text-anchor="middle" class="dg-s">IP アドレスで指定</text>
+</g>
+<g data-node="after">
+<rect x="340" y="40" width="150" height="52" rx="8" class="dg-ok"/>
+<text x="415" y="62" text-anchor="middle" class="dg-t">これから</text>
+<text x="415" y="80" text-anchor="middle" class="dg-s">リソースで指定</text>
+</g>
+<g data-node="store">
+<rect x="646" y="-10" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="721" y="11" text-anchor="middle" class="dg-t">コンテキストストア</text>
+<text x="721" y="29" text-anchor="middle" class="dg-s">リソースの一覧</text>
+</g>
+<g data-node="tgw">
+<rect x="646" y="92" width="150" height="52" rx="8" class="dg-blue"/>
+<text x="721" y="113" text-anchor="middle" class="dg-t">Transit Gateway</text>
+<text x="721" y="131" text-anchor="middle" class="dg-s">パケットに目印を付与</text>
+</g>
+<g data-node="fw">
+<rect x="952" y="40" width="150" height="52" rx="8" class="dg-accent"/>
+<text x="1027" y="62" text-anchor="middle" class="dg-tb">Network Firewall</text>
+<text x="1027" y="80" text-anchor="middle" class="dg-s">目印とルールを照合</text>
+</g>
+<path d="M184.0,66.5 L340.0,66.5" class="dg-line" marker-end="url(#dgnews-2026-11-28-01-1)"/>
+<text x="262" y="70" text-anchor="middle" class="dg-s dg-halo">今回の発表</text>
+<path d="M796.0,28.0 L952.0,54.0" class="dg-line" marker-end="url(#dgnews-2026-11-28-01-1)"/>
+<path d="M796.0,105.0 L952.0,79.0" class="dg-line" marker-end="url(#dgnews-2026-11-28-01-1)"/>
+</svg>
+</div>
+<figcaption>図1 IP アドレスの管理をやめ、リソース情報とパケットの目印でルールに一致させる</figcaption>
+</figure>
+<p class="cat-desc fig-legend"><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-accent"/></svg> 説明の中心</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-ok"/></svg> 成功・推奨・正常</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-blue"/></svg> 利用者・外部・送信元</span><span class="fig-item"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style="vertical-align:-2px"><rect x="1" y="1" width="12" height="12" rx="3" class="dg-box"/></svg> その他の構成要素</span></p>
+<dl>
+<dt>何がうれしいか</dt><dd>スケールアウトや置き換えが頻繁なワークロードでも、IP アドレスの一覧を保守せずに、通信の許可・拒否を保てます。</dd>
+<dt>試験・実務への影響</dt><dd>セキュリティグループはインスタンス単位の許可リスト、Network Firewall は VPC 境界での集中的な検査、という役割の違いを押さえましょう。複数アカウントの通信を Transit Gateway に集めて検査する構成では、リソース単位のルールが使えると覚えておくと選択肢の判断に役立ちます。</dd>
+<dt>関連するページ</dt><dd><a href="../services/network-firewall.html">Network Firewall</a>、<a href="../services/transit-gateway.html">Transit Gateway</a>、<a href="../services/ram.html">RAM</a>、<a href="../services/lambda.html">Lambda</a>、<a href="../services/vpc.html">VPC</a></dd>
+<dt>元の発表</dt><dd><a href="https://aws.amazon.com/jp/blogs/news/introducing-context-aware-rules-for-aws-network-firewall/">AWS Network Firewall のコンテキスト対応ルールのご紹介: IP アドレスではなく AWS リソースに基づくトラフィック照合</a>(2026-11-27)</dd>
+</dl>
+</section>
+<nav class="pager">
+  <span class="prev empty"></span>
+  <a class="toc" href="index.html">目次へ戻る</a>
+  <a class="next" href="2026-11-28-02.html"><span class="label">次へ → 2026年11月28日</span>RDS for PostgreSQL:マイナーバージョン 18.7・17.12・16.16・15.20・14.25 に対応</a>
+</nav>
+</main>
+<a class="to-top" href="#top" aria-label="ページの先頭へ">↑</a>
+</body>
+</html>
